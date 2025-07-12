@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -240,6 +241,7 @@ export interface Auction {
   auctionDate: string | Date;
   endDate?: string | Date | null;
   totalLots?: number;
+  categoryId?: string;
   category?: string;
   auctioneer: string;
   auctioneerId?: string;
@@ -830,6 +832,9 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleId' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'permissions'>>;
+
+
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
 // ============================================================================
@@ -970,6 +975,7 @@ export interface DatabaseAdapter {
     createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
     createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
     createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
+    updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;

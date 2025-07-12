@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -453,6 +454,12 @@ export class MySqlAdapter implements DatabaseAdapter {
         const result = await this.genericCreate('lot_categories', data);
         return { success: result.success, message: result.message };
     }
+
+    async createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean; message: string; subcategoryId?: number }> {
+        const result = await this.genericCreate('subcategories', data);
+        return { success: result.success, message: result.message, subcategoryId: result.insertId };
+    }
+
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
         // Need to handle the 'id' field carefully for settings, as it's not auto-increment

@@ -1,3 +1,4 @@
+
 // src/components/setup/seeding-step.tsx
 'use client';
 
@@ -14,6 +15,29 @@ interface SeedingStepProps {
   onPrev: () => void;
 }
 
+// Dummy server action for simulation. In a real app this would call the `init-db` or `seed` script.
+async function runSeedScript(option: 'essentials' | 'full' | 'none'): Promise<{ success: boolean; message: string }> {
+  if (option === 'none') {
+    return { success: true, message: 'Nenhuma ação executada, conforme solicitado.' };
+  }
+  try {
+    const response = await fetch('/api/run-script', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ script: option === 'full' ? 'db:seed' : 'db:init' }),
+    });
+    
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || 'Falha ao executar o script no servidor.');
+    }
+    return result;
+  } catch (error: any) {
+    console.error(`Error running script for option: ${option}`, error);
+    return { success: false, message: error.message };
+  }
+}
+
 export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
   const [seedOption, setSeedOption] = useState<'essentials' | 'full' | 'none'>('essentials');
   const [isSeeding, setIsSeeding] = useState(false);
@@ -23,16 +47,9 @@ export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
     setIsSeeding(true);
     setSeedResult(null);
     try {
-      // Em uma aplicação real, aqui chamaríamos uma server action
-      // que executa o script de seed correspondente.
-      // Por enquanto, vamos apenas simular.
-      console.log(`Simulating seed with option: ${seedOption}`);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      if (seedOption === 'none') {
-        setSeedResult({ success: true, message: 'Nenhuma ação foi executada.'});
-      } else {
-        setSeedResult({ success: true, message: `Banco de dados populado com sucesso com dados ${seedOption === 'full' ? 'completos' : 'essenciais'}!` });
-      }
+      // Aqui, chamamos a função que executa o script no backend.
+      const result = await runSeedScript(seedOption);
+      setSeedResult(result);
     } catch (error: any) {
        setSeedResult({ success: false, message: `Falha ao popular o banco de dados: ${error.message}` });
     } finally {
@@ -52,7 +69,7 @@ export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
             <div className="flex items-center h-full"><RadioGroupItem value="essentials" id="seed-essentials" /></div>
             <div className="flex-grow">
               <p className="font-semibold">Apenas Dados Essenciais (Recomendado)</p>
-              <p className="text-sm text-muted-foreground">Cria perfis de usuário padrão (admin, user), configurações da plataforma e categorias. Ideal para começar a cadastrar seus próprios dados.</p>
+              <p className="text-sm text-muted-foreground">Cria perfis, configurações, categorias e subcategorias. Ideal para começar a cadastrar seus próprios dados.</p>
             </div>
           </Label>
           <Label htmlFor="seed-full" className="flex items-start gap-4 p-4 border rounded-lg cursor-pointer hover:bg-accent has-[div>input:checked]:bg-accent has-[div>input:checked]:border-primary">

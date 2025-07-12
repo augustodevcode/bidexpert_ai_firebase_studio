@@ -1,8 +1,9 @@
+
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
 import { getDatabaseAdapter } from '../src/lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles } from '../src/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../src/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -37,11 +38,15 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
                     }
                 }
                 await connection.query(statement);
-                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Tabela processada.`);
+                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executado.`);
             } catch (error: any) {
-                // More specific error handling
-                 console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
-                 console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                // Ignore "Duplicate column name" and "Table already exists" errors
+                 if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_TABLE_EXISTS_ERROR') {
+                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Item já existe. Pulando statement.`);
+                } else {
+                     console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
+                     console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                }
             }
         }
         console.log(`--- [DB INIT - ${scriptName}] Script execution finished ---`);
@@ -53,103 +58,11 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     }
 }
 
-async function addColumnIfNotExists(pool: Pool, tableName: string, columnName: string, columnDefinition: string) {
-    const connection = await pool.getConnection();
-    try {
-        const [rows] = await connection.query(
-            `SELECT COUNT(*) as count 
-             FROM INFORMATION_SCHEMA.COLUMNS 
-             WHERE TABLE_SCHEMA = DATABASE() 
-               AND TABLE_NAME = ? 
-               AND COLUMN_NAME = ?`,
-            [tableName, columnName]
-        );
-
-        // @ts-ignore
-        if (rows[0].count === 0) {
-            await connection.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
-            console.log(`[DB INIT - ALTER] ✅ Coluna ${columnName} adicionada à tabela ${tableName}.`);
-        } else {
-            console.log(`[DB INIT - ALTER] 🟡 Coluna ${columnName} já existe na tabela ${tableName}. Ignorando.`);
-        }
-    } catch (error: any) {
-         console.error(`[DB INIT - ALTER] ❌ Erro ao tentar adicionar coluna ${columnName} em ${tableName}: ${error.message}`);
-    } finally {
-        connection.release();
-    }
-}
-
 async function applyAlterations(pool: Pool) {
     console.log('\n--- [DB INIT - ALTER] Applying table alterations ---');
-    
-    // Platform Settings
-    await addColumnIfNotExists(pool, 'platform_settings', 'site_title', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'site_tagline', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'gallery_image_base_path', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'storage_provider', 'VARCHAR(50)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'firebase_storage_bucket', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'active_theme_name', 'VARCHAR(100)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'themes', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'platform_public_id_masks', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'homepage_sections', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'mental_trigger_settings', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'section_badge_visibility', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'map_settings', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'search_pagination_type', 'VARCHAR(50)');
-    await addColumnIfNotExists(pool, 'platform_settings', 'search_items_per_page', 'INT');
-    await addColumnIfNotExists(pool, 'platform_settings', 'search_load_more_count', 'INT');
-    await addColumnIfNotExists(pool, 'platform_settings', 'show_countdown_on_lot_detail', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'platform_settings', 'show_countdown_on_cards', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'platform_settings', 'show_related_lots_on_lot_detail', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'platform_settings', 'related_lots_count', 'INT');
-    await addColumnIfNotExists(pool, 'platform_settings', 'default_urgency_timer_hours', 'INT');
-    await addColumnIfNotExists(pool, 'platform_settings', 'variable_increment_table', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'bidding_settings', 'JSON');
-    await addColumnIfNotExists(pool, 'platform_settings', 'default_list_items_per_page', 'INT');
-    await addColumnIfNotExists(pool, 'platform_settings', 'updated_at', 'DATETIME');
-
-    // Roles
-    await addColumnIfNotExists(pool, 'roles', 'created_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP');
-    await addColumnIfNotExists(pool, 'roles', 'updated_at', 'TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP');
-    await addColumnIfNotExists(pool, 'roles', 'slug', 'VARCHAR(150)');
-    
-    // Auctions
-    await addColumnIfNotExists(pool, 'auctions', 'end_date', 'DATETIME');
-    await addColumnIfNotExists(pool, 'auctions', 'category_id', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'seller_id', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'auctioneer_id', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'image_media_id', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'auctions', 'data_ai_hint', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'auctions', 'is_favorite', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'visits', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'initial_offer', 'DECIMAL(15, 2)');
-    await addColumnIfNotExists(pool, 'auctions', 'auction_stages', 'JSON');
-    await addColumnIfNotExists(pool, 'auctions', 'documents_url', 'VARCHAR(2048)');
-    await addColumnIfNotExists(pool, 'auctions', 'evaluation_report_url', 'VARCHAR(2048)');
-    await addColumnIfNotExists(pool, 'auctions', 'auction_certificate_url', 'VARCHAR(2048)');
-    await addColumnIfNotExists(pool, 'auctions', 'selling_branch', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'auctions', 'automatic_bidding_enabled', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'silent_bidding_enabled', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'allow_multiple_bids_per_user', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'allow_installment_bids', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'soft_close_enabled', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'soft_close_minutes', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'estimated_revenue', 'DECIMAL(15, 2)');
-    await addColumnIfNotExists(pool, 'auctions', 'achieved_revenue', 'DECIMAL(15, 2)');
-    await addColumnIfNotExists(pool, 'auctions', 'total_habilitated_users', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'is_featured_on_marketplace', 'BOOLEAN');
-    await addColumnIfNotExists(pool, 'auctions', 'marketplace_announcement_title', 'VARCHAR(255)');
-    await addColumnIfNotExists(pool, 'auctions', 'judicial_process_id', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'additional_triggers', 'JSON');
-    await addColumnIfNotExists(pool, 'auctions', 'decrement_amount', 'DECIMAL(15, 2)');
-    await addColumnIfNotExists(pool, 'auctions', 'decrement_interval_seconds', 'INT');
-    await addColumnIfNotExists(pool, 'auctions', 'floor_price', 'DECIMAL(15, 2)');
-    await addColumnIfNotExists(pool, 'auctions', 'auto_relist_settings', 'JSON');
-
-
+    await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
     console.log('--- [DB INIT - ALTER] Finished applying alterations ---');
 }
-
 
 async function seedEssentialData(db: any) {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -179,6 +92,26 @@ async function seedEssentialData(db: any) {
         } else {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
         }
+        
+        // Categories & Subcategories
+        console.log("[DB INIT - DML] Checking for categories...");
+        const categories = await db.getLotCategories();
+        if (!categories || categories.length === 0) {
+            console.log("[DB INIT - DML] Populating categories...");
+            for (const category of sampleLotCategories) {
+                await db.createLotCategory(category);
+            }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleLotCategories.length} categories inserted.`);
+
+            console.log("[DB INIT - DML] Populating subcategories...");
+            for (const subcategory of sampleSubcategories) {
+                await db.createSubcategory(subcategory);
+            }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleSubcategories.length} subcategories inserted.`);
+        } else {
+            console.log("[DB INIT - DML] INFO: Categories already exist. Skipping.");
+        }
+
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
     }
