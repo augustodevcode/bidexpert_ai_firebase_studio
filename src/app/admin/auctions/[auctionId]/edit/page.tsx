@@ -6,7 +6,9 @@ import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
+import { getDocumentTemplates, getDocumentTemplate as getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
+import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, DocumentTemplate } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -134,8 +136,48 @@ function FinalizeLotButton({ lot, onFinalized }: { lot: Lot; onFinalized: () => 
 }
 
 function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; userProfile: any }) {
+    const { toast } = useToast();
+    const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
+    
     const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
+    
+    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType']) => {
+        setIsLoading(prev => ({...prev, [type]: true}));
+        toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
+
+        try {
+            const result = await generateDocument({
+                documentType: type,
+                data: {
+                    auction,
+                    currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
+                },
+            });
+
+            if (result.pdfBase64 && result.fileName) {
+                const byteCharacters = atob(result.pdfBase64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = result.fileName;
+                link.click();
+                toast({ title: 'Sucesso!', description: 'Download do PDF iniciado.' });
+            } else {
+                throw new Error("A resposta da API não continha um PDF válido.");
+            }
+        } catch (error: any) {
+            console.error("Error generating document:", error);
+            toast({ title: 'Erro ao Gerar PDF', description: error.message, variant: 'destructive'});
+        } finally {
+            setIsLoading(prev => ({...prev, [type]: false}));
+        }
+    };
     
     return (
         <Card className="shadow-md">
@@ -148,8 +190,8 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" disabled={!hasGenerateReportPerm}>
-                                    <FileText className="mr-2 h-4 w-4"/> Gerar Laudo de Avaliação (PDF)
+                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('EVALUATION_REPORT')} disabled={!hasGenerateReportPerm || isLoading['EVALUATION_REPORT']}>
+                                    {isLoading['EVALUATION_REPORT'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4"/>} Gerar Laudo de Avaliação (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>
@@ -158,8 +200,8 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" disabled={!hasGenerateCertificatePerm}>
-                                    <CheckCircle className="mr-2 h-4 w-4"/> Gerar Relatório de Arremates (PDF)
+                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('AUCTION_CERTIFICATE')} disabled={!hasGenerateCertificatePerm || isLoading['AUCTION_CERTIFICATE']}>
+                                    {isLoading['AUCTION_CERTIFICATE'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4"/>} Gerar Relatório de Arremates (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>

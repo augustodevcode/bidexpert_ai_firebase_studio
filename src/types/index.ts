@@ -21,6 +21,7 @@ export const paymentStatusValues: [PaymentStatus, ...PaymentStatus[]] = [
 
 export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
+export type DocumentTemplateType = 'WINNING_BID_TERM' | 'EVALUATION_REPORT' | 'AUCTION_CERTIFICATE';
 
 export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'ESCRIVAO' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
@@ -989,6 +990,9 @@ export interface DatabaseAdapter {
     createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
     
+    getDocumentTemplates(): Promise<DocumentTemplate[]>;
+    getDocumentTemplate(id: string): Promise<DocumentTemplate | null>;
+
     close?(): Promise<void>;
 }
 

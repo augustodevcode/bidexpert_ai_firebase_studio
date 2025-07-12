@@ -12,8 +12,8 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 import puppeteer from 'puppeteer';
-// import Handlebars from 'handlebars'; // We will add this later
-// import { getDocumentTemplate } from '@/app/admin/document-templates/actions'; // We will use this later
+import Handlebars from 'handlebars';
+import { getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
 
 export const GenerateDocumentInputSchema = z.object({
   documentType: z.enum(['WINNING_BID_TERM', 'EVALUATION_REPORT', 'AUCTION_CERTIFICATE']),
@@ -32,6 +32,17 @@ export async function generateDocument(input: GenerateDocumentInput): Promise<Ge
   return generateDocumentFlow(input);
 }
 
+// Default templates if nothing is found in the database
+const defaultTemplates: Record<GenerateDocumentInput['documentType'], string> = {
+  WINNING_BID_TERM: `
+    <!DOCTYPE html><html><body><h1>Termo de Arrematação (Padrão)</h1><p>Lote: {{lot.title}}</p><p>Arrematante: {{winner.fullName}}</p><p>Valor: R$ {{lot.price}}</p></body></html>`,
+  EVALUATION_REPORT: `
+    <!DOCTYPE html><html><head><style>body { font-family: sans-serif; padding: 2rem; } h1 { color: #F97316; } table { width: 100%; border-collapse: collapse; margin-top: 1rem; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head><body><h1>Laudo de Avaliação (Padrão)</h1><h2>Leilão: {{auction.title}}</h2><p>Este é um laudo de avaliação de exemplo gerado pelo sistema para o leilão acima. Data: {{currentDate}}</p></body></html>`,
+  AUCTION_CERTIFICATE: `
+    <!DOCTYPE html><html><body><h1>Certificado de Leilão (Padrão)</h1><h2>Leilão: {{auction.title}}</h2><p>Certificamos que este leilão foi realizado em {{auction.endDate}}. Total de lotes vendidos: {{auction.totalLotsSold}}</p></body></html>`,
+};
+
+
 const generateDocumentFlow = ai.defineFlow(
   {
     name: 'generateDocumentFlow',
@@ -40,35 +51,19 @@ const generateDocumentFlow = ai.defineFlow(
   },
   async (input) => {
     
-    // Step 1: In a future step, we'll fetch a dynamic HTML template from the database
-    // For now, we'll use a simple hardcoded template.
-    const htmlTemplate = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-          <style>
-              body { font-family: sans-serif; padding: 2rem; }
-              h1 { color: #F97316; } /* Orange */
-              table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
-              th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-              th { background-color: #f2f2f2; }
-          </style>
-      </head>
-      <body>
-          <h1>Relatório de Leilão (Exemplo)</h1>
-          <p>Este é um documento de exemplo gerado pelo sistema.</p>
-          <p>Tipo de Documento Solicitado: <strong>{{documentType}}</strong></p>
-          <h2>Dados Recebidos:</h2>
-          <pre>{{jsonData}}</pre>
-      </body>
-      </html>
-    `;
+    let htmlTemplate = defaultTemplates[input.documentType];
+    
+    // Step 1: Fetch dynamic HTML template from the database if a templateId is provided or a default exists
+    if (input.templateId) {
+      const dbTemplate = await getDocumentTemplateAction(input.templateId);
+      if (dbTemplate?.content) {
+        htmlTemplate = dbTemplate.content;
+      }
+    }
 
-    // Step 2: In a future step, we'll use Handlebars to compile the template.
-    // For now, we'll just do a simple string replacement.
-    const compiledHtml = htmlTemplate
-      .replace('{{documentType}}', input.documentType)
-      .replace('{{jsonData}}', JSON.stringify(input.data, null, 2));
+    // Step 2: Use Handlebars to compile the template.
+    const template = Handlebars.compile(htmlTemplate);
+    const compiledHtml = template(input.data);
       
     // Step 3: Use Puppeteer to generate the PDF
     let browser;
@@ -89,7 +84,7 @@ const generateDocumentFlow = ai.defineFlow(
         console.log('[Puppeteer] PDF generated successfully.');
         
         const pdfBase64 = pdfBuffer.toString('base64');
-        const fileName = `${input.documentType.toLowerCase()}-${Date.now()}.pdf`;
+        const fileName = `${slugify(input.documentType)}-${slugify(input.data?.auction?.title) || Date.now()}.pdf`;
 
         return {
             pdfBase64,

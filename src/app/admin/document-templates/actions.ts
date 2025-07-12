@@ -26,6 +26,18 @@ export async function getDocumentTemplate(id: string): Promise<DocumentTemplate 
     return templates.find(t => t.id === id) || null;
 }
 
+export async function getDocumentTemplateAction(id: string): Promise<DocumentTemplate | null> {
+    const db = await getDatabaseAdapter();
+    // @ts-ignore - Assuming this method exists on the adapter for now
+    if (db.getDocumentTemplate) {
+        // @ts-ignore
+        return db.getDocumentTemplate(id);
+    }
+    // Fallback
+    return getDocumentTemplate(id);
+}
+
+
 export async function createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
     return { success: false, message: "Criação de template não implementada." };
 }
