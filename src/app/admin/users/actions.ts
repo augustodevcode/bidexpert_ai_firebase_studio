@@ -1,3 +1,4 @@
+
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -63,7 +64,8 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   }
 
   // Normalize the search to be case-insensitive and trim whitespace
-  const userRole = roles.find(r => r.name_normalized && r.name_normalized.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => r.name_normalized?.trim().toUpperCase() === 'USER');
+
 
   if (!userRole) {
     throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");

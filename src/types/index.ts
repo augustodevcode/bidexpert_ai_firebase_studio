@@ -318,20 +318,20 @@ export interface UserProfileData {
   email: string;
   password?: string;
   fullName: string;
-  cpf?: string;
-  cellPhone?: string;
-  razaoSocial?: string;
-  cnpj?: string;
+  cpf?: string | null;
+  cellPhone?: string | null;
+  razaoSocial?: string | null;
+  cnpj?: string | null;
   dateOfBirth?: string | Date | null;
-  zipCode?: string;
-  street?: string;
-  number?: string;
-  complement?: string;
-  neighborhood?: string;
-  city?: string;
-  state?: string;
-  avatarUrl?: string;
-  dataAiHint?: string;
+  zipCode?: string | null;
+  street?: string | null;
+  number?: string | null;
+  complement?: string | null;
+  neighborhood?: string | null;
+  city?: string | null;
+  state?: string | null;
+  avatarUrl?: string | null;
+  dataAiHint?: string | null;
   roleIds: string[]; 
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
@@ -342,24 +342,24 @@ export interface UserProfileData {
   updatedAt: string | Date;
   
   // Detalhes PF
-  rgNumber?: string;
-  rgIssuer?: string;
+  rgNumber?: string | null;
+  rgIssuer?: string | null;
   rgIssueDate?: string | Date | null;
-  rgState?: string;
-  homePhone?: string;
-  gender?: string;
-  profession?: string;
-  nationality?: string;
-  maritalStatus?: string;
-  propertyRegime?: string;
-  spouseName?: string;
-  spouseCpf?: string;
+  rgState?: string | null;
+  homePhone?: string | null;
+  gender?: string | null;
+  profession?: string | null;
+  nationality?: string | null;
+  maritalStatus?: string | null;
+  propertyRegime?: string | null;
+  spouseName?: string | null;
+  spouseCpf?: string | null;
 
   // Detalhes PJ
-  inscricaoEstadual?: string;
-  website?: string;
-  responsibleName?: string;
-  responsibleCpf?: string;
+  inscricaoEstadual?: string | null;
+  website?: string | null;
+  responsibleName?: string | null;
+  responsibleCpf?: string | null;
 }
 
 export interface UserProfileWithPermissions extends UserProfileData {
