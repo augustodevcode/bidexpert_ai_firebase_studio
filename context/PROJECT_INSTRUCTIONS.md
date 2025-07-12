@@ -58,4 +58,8 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 *   If you are unsure about how to update a file or what to include, please ask for clarification.
 *   When providing file content for these context files, always provide the *entire* intended content within the `<![CDATA[...` block.
 
+## 5. Project-Specific Conventions
+
+*   **Development Environment:** Remember that in the development environment (`NODE_ENV === 'development'`), we have an automatic login mechanism for the `admin@bidexpert.com.br` user. This is handled in `src/contexts/auth-context.tsx` to streamline development and testing.
+
 By diligently following these instructions, we can build and maintain a persistent context that will greatly enhance the efficiency and effectiveness of our collaboration on the BidExpert project.
