@@ -35,7 +35,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário encontrado:`, { uid: user.uid, email: user.email, roleName: user.roleName });
+    console.log(`[Login Action] Usuário encontrado:`, { id: user.id, email: user.email });
     
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
@@ -51,14 +51,14 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       }
     }
     
-    await createSession(user);
+    await createSession(user as UserProfileWithPermissions);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[Login Action] Erro interno:', error);
-    return { success: false, message: 'Ocorreu um erro interno durante o login.' };
+    return { success: false, message: `Ocorreu um erro interno durante o login: ${error.message}` };
   }
 }
 
@@ -104,7 +104,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
     const adminUser = users.find(u => u.email.toLowerCase() === 'admin@bidexpert.com.br');
 
     if (adminUser) {
-        await createSession(adminUser);
+        await createSession(adminUser as UserProfileWithPermissions);
         console.log('[Dev Action] Sessão de admin criada para desenvolvimento.');
         return adminUser as UserProfileWithPermissions;
     }

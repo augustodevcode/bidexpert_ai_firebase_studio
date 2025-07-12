@@ -12,7 +12,8 @@ import {
   sampleDirectSaleOffers,
   sampleBids,
   sampleUserWins,
-  sampleUsers
+  sampleUsers,
+  sampleRoles
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,26 +24,25 @@ async function ensureJoinTablesExist(db: any) {
   if (db.constructor.name === 'MySqlAdapter') {
     console.log('[DB SEED] Ensuring join tables exist for MySQL...');
     const mysqlDb = db as MySqlAdapter;
-    const createRolesTableSql = `
+    const createUserRolesTableSql = `
         CREATE TABLE IF NOT EXISTS \`user_roles\` (
+            \`id\` INT AUTO_INCREMENT PRIMARY KEY,
             \`user_id\` VARCHAR(255) NOT NULL,
             \`role_id\` VARCHAR(255) NOT NULL,
-            PRIMARY KEY (\`user_id\`, \`role_id\`),
-            FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
-            FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
+            FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`id\`) ON DELETE CASCADE,
+            FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE,
+            UNIQUE KEY \`unique_user_role\` (\`user_id\`, \`role_id\`)
         );
     `;
-    await mysqlDb.executeMutation(createRolesTableSql);
+    await mysqlDb.executeMutation(createUserRolesTableSql);
     console.log('[DB SEED] ✅ SUCCESS: `user_roles` table ensured.');
   }
 }
-
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
     const db = getDatabaseAdapter();
 
-    // Ensure join tables like user_roles are created before seeding data that depends on them.
     await ensureJoinTablesExist(db);
 
     try {
@@ -135,13 +135,30 @@ async function seedFullData() {
             for (const user of usersToCreate) {
                 const { password, ...userData } = user;
                 const hashedPassword = await bcrypt.hash(password, 10);
-                const fullUserData = { ...userData, password: hashedPassword, uid: uuidv4() };
+                const fullUserData = { ...userData, password: hashedPassword, id: userData.uid };
+                delete fullUserData.uid; // Remove uid se 'id' for a PK
+                
                 await userAdapter.createUser(fullUserData);
             }
-            console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
+             console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
         } else {
              console.log(`[DB SEED] 🟡 INFO: createUser not implemented on this adapter.`);
         }
+        
+        console.log('[DB SEED] Linking Admin user to Administrator role...');
+        if (db.constructor.name === 'MySqlAdapter') {
+            const mysqlDb = db as MySqlAdapter;
+            const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
+            const adminRole = sampleRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
+
+            if (adminUser && adminRole) {
+                await mysqlDb.executeMutation('INSERT IGNORE INTO `user_roles` (user_id, role_id) VALUES (?, ?)', [adminUser.uid, adminRole.id]);
+                console.log('[DB SEED] ✅ SUCCESS: Admin user linked to Administrator role.');
+            } else {
+                console.warn('[DB SEED] 🟡 WARNING: Could not find admin user or role in sample data to link.');
+            }
+        }
+
 
     } catch (error: any) {
         console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);
