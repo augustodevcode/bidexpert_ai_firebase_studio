@@ -207,15 +207,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getBens(filter?: { judicialProcessId?: number; sellerId?: number; }): Promise<Bem[]> {
-        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.category_id = cat.id LEFT JOIN `subcategories` sub ON b.subcategory_id = sub.id';
+        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.categoryId = cat.id LEFT JOIN `subcategories` sub ON b.subcategoryId = sub.id';
         const params = [];
         const whereClauses = [];
         if (filter?.judicialProcessId) {
-            whereClauses.push('b.`judicial_process_id` = ?');
+            whereClauses.push('b.`judicialProcessId` = ?');
             params.push(filter.judicialProcessId);
         }
         if (filter?.sellerId) {
-            whereClauses.push('b.`seller_id` = ?');
+            whereClauses.push('b.`sellerId` = ?');
             params.push(filter.sellerId);
         }
         if (whereClauses.length > 0) {
@@ -292,10 +292,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getLotCategories(): Promise<LotCategory[]> { return this.executeQuery('SELECT * FROM `lot_categories` ORDER BY `name`'); }
     
     async getSubcategoriesByParent(parentCategoryId?: number): Promise<Subcategory[]> {
-        if (parentCategoryId) {
-            return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
+        if (parentCategoryId === undefined) {
+          return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `displayOrder`');
         }
-        return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
+        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parentCategoryId` = ? ORDER BY `displayOrder`', [parentCategoryId]);
     }
     async getSubcategory(id: number): Promise<Subcategory | null> {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
@@ -305,7 +305,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
         const users = await this.executeQuery(sql);
         return users.map(u => {
             if (u.permissions && typeof u.permissions === 'string') {
@@ -316,7 +316,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.uid = ?';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
@@ -458,7 +458,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
+    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { roleId: roleId }); }
     
     async createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
         const newId = uuidv4();
