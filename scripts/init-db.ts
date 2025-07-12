@@ -1,8 +1,7 @@
-
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { getDatabaseAdapter } from '../lib/database/get-adapter'; 
+import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../src/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
