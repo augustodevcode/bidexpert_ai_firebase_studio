@@ -60,32 +60,12 @@ export class MySqlAdapter implements DatabaseAdapter {
         try {
             this.pool = mysql.createPool(dbUrl);
             console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
-            this.ensureTablesExist();
         } catch (error: any) {
             this.connectionError = `Falha ao criar o pool de conexões MySQL: ${error.message}`;
             console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
             this.pool = null;
         }
     }
-
-    private async ensureTablesExist() {
-        const createRolesTableSql = `
-            CREATE TABLE IF NOT EXISTS \`user_roles\` (
-                \`user_id\` VARCHAR(255) NOT NULL,
-                \`role_id\` VARCHAR(255) NOT NULL,
-                PRIMARY KEY (\`user_id\`, \`role_id\`),
-                FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
-                FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
-            );
-        `;
-         try {
-            await this.executeMutation(createRolesTableSql);
-            console.log('[MySqlAdapter] Tabela `user_roles` garantida.');
-        } catch (error) {
-            console.error('[MySqlAdapter] Falha ao garantir a tabela `user_roles`:', error);
-        }
-    }
-
 
     private async getConnection() {
         if (this.connectionError) {
@@ -116,7 +96,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         return rows.length > 0 ? rows[0] : null;
     }
     
-    private async executeMutation(sql: string, params: any[] = []): Promise<{ success: boolean; message: string; insertId?: number }> {
+    public async executeMutation(sql: string, params: any[] = []): Promise<{ success: boolean; message: string; insertId?: number }> {
         if (!this.pool) return { success: false, message: 'Sem conexão com o banco de dados.' };
         const connection = await this.getConnection();
         try {
