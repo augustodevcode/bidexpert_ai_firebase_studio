@@ -82,7 +82,7 @@ export default function AdminUsersPage() {
   [users]);
 
   const facetedFilterColumns = useMemo(() => [
-    { id: 'roleName', title: 'Perfil', options: roleOptions },
+    { id: 'roleNames', title: 'Perfil', options: roleOptions },
     { id: 'habilitationStatus', title: 'Habilitação', options: habilitationOptions },
   ], [roleOptions, habilitationOptions]);
 
@@ -121,5 +121,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-
-
