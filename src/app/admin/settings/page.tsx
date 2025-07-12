@@ -295,4 +295,7 @@ export default function AdminSettingsPageWrapper() {
     
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetch
+            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetchInitialSettings} />
+        </Suspense>
+    );
+}
