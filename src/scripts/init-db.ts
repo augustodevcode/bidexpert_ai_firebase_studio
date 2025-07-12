@@ -1,6 +1,6 @@
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts } from '@/lib/sample-data';
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -45,6 +45,16 @@ async function seedEssentialData() {
             await db.createSubcategory(subcategory);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
+        
+        // Courts
+        console.log("[DB INIT - DML] Seeding courts...");
+        const existingCourts = await db.getCourts();
+        const courtsToCreate = sampleCourts.filter(court => !existingCourts.some(ec => ec.slug === court.slug));
+        for (const court of courtsToCreate) {
+            await db.createCourt(court);
+        }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${courtsToCreate.length} new courts inserted.`);
+
 
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
