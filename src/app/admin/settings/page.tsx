@@ -1,21 +1,34 @@
-
 // src/app/admin/settings/page.tsx
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getPlatformSettings } from './actions';
+import { getPlatformSettings, resetSampleDataAction, dropAllTablesAction } from './actions';
 import SettingsForm from './settings-form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
 import { useToast } from '@/hooks/use-toast'; 
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
-    { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Caminhos de mídia, máscaras de ID, etc.' },
+    { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Máscaras de ID, assistente de setup, etc.' },
     { id: 'database', label: 'Fonte de Dados (Dev)', icon: Database, description: 'Altere a fonte de dados para desenvolvimento.' },
     { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
     { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' },
@@ -24,6 +37,125 @@ const settingsSections = [
     { id: 'variableIncrements', label: 'Incremento de Lance', icon: ArrowUpDown, description: 'Defina incrementos variáveis para faixas de preço.' },
     { id: 'maps', label: 'Configurações de Mapa', icon: MapPin, description: 'Provedor de mapa padrão e chaves API.' },
 ];
+
+function DangerZone() {
+    const { toast } = useToast();
+    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [confirmationText, setConfirmationText] = useState('');
+    
+    const handleResetSetup = () => {
+        if(typeof window !== 'undefined') {
+            localStorage.removeItem('bidexpert_setup_complete');
+            toast({ title: "Assistente Reiniciado", description: "A página será recarregada para iniciar a configuração."});
+            setTimeout(() => window.location.href = '/setup', 1000);
+        }
+    };
+    
+    const handleAction = async (action: 'reset' | 'drop') => {
+        setIsActionLoading(true);
+        try {
+            const result = action === 'reset' ? await resetSampleDataAction() : await dropAllTablesAction();
+            if (result.success) {
+                toast({ title: 'Sucesso!', description: result.message });
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+            }
+        } catch(err: any) {
+            toast({ title: 'Erro Crítico', description: err.message, variant: 'destructive' });
+        } finally {
+            setIsActionLoading(false);
+            setConfirmationText('');
+        }
+    }
+
+    return (
+        <Card className="border-destructive mt-6">
+            <CardHeader>
+                <CardTitle className="text-md text-destructive">Zona de Perigo</CardTitle>
+                <CardDescription>Ações irreversíveis para o ambiente de desenvolvimento.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Reiniciar Assistente de Configuração</AlertTitle>
+                    <AlertDescription>
+                        Esta ação forçará o assistente de setup a ser exibido na próxima recarga da página.
+                    </AlertDescription>
+                     <Button variant="outline" size="sm" className="mt-3 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleResetSetup}>
+                        <RefreshCw className="mr-2 h-4 w-4" /> Reiniciar Assistente
+                    </Button>
+                </Alert>
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Zerar Dados de Exemplo</AlertTitle>
+                    <AlertDescription>
+                        Esta ação irá limpar todos os dados de todas as tabelas (TRUNCATE), mas manterá a estrutura das tabelas. Útil para começar um novo seed do zero sem alterar o schema.
+                    </AlertDescription>
+                     <AlertDialog onOpenChange={() => setConfirmationText('')}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="mt-3">
+                            <Trash2 className="mr-2 h-4 w-4" /> Zerar Dados
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Esta ação é irreversível e limpará todas as tabelas. Para confirmar, digite <strong>zerar</strong> abaixo.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-reset">Confirmação</Label>
+                            <Input id="confirm-reset" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isActionLoading}>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleAction('reset')} disabled={confirmationText !== 'zerar' || isActionLoading} className="bg-destructive hover:bg-destructive/90">
+                            {isActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Confirmar e Zerar Dados
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </Alert>
+                <Alert variant="destructive">
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Resetar Banco de Dados</AlertTitle>
+                    <AlertDescription>
+                        Esta ação irá apagar permanentemente todas as tabelas (DROP) do seu banco de dados. Você precisará reiniciar a aplicação para recriá-las.
+                    </AlertDescription>
+                     <AlertDialog onOpenChange={() => setConfirmationText('')}>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm" className="mt-3">
+                            <Trash2 className="mr-2 h-4 w-4" /> Resetar Banco de Dados
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Esta é sua última chance!</AlertDialogTitle>
+                          <AlertDialogDescription>
+                           Ação extremamente destrutiva. Todas as tabelas serão apagadas. Para confirmar, digite <strong>resetar</strong> abaixo.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirm-drop">Confirmação</Label>
+                            <Input id="confirm-drop" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
+                        </div>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel disabled={isActionLoading}>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleAction('drop')} disabled={confirmationText !== 'resetar' || isActionLoading} className="bg-destructive hover:bg-destructive/90">
+                            {isActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Eu entendo, apague tudo.
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                </Alert>
+            </CardContent>
+        </Card>
+    );
+}
 
 interface AdminSettingsPageContentProps {
     initialSettings: PlatformSettings | null;
@@ -118,6 +250,7 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
                 </CardHeader>
                 <CardContent>
                     <SettingsForm initialData={initialSettings} activeSection={activeSection} onUpdateSuccess={onRetry} />
+                    {activeSection === 'general' && <DangerZone />}
                 </CardContent>
             </Card>
         </div>
@@ -162,7 +295,4 @@ export default function AdminSettingsPageWrapper() {
     
     return (
         <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetchInitialSettings} />
-        </Suspense>
-    );
-}
+            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetch

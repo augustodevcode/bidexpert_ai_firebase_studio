@@ -19,3 +19,23 @@ export async function updatePlatformSettings(data: Partial<PlatformSettings>): P
     }
     return result;
 }
+
+export async function resetSampleDataAction(): Promise<{ success: boolean; message: string; }> {
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (typeof db.resetSampleData !== 'function') {
+        return { success: false, message: 'Ação não suportada pelo adaptador de banco de dados atual.' };
+    }
+    // @ts-ignore
+    return db.resetSampleData();
+}
+
+export async function dropAllTablesAction(): Promise<{ success: boolean; message: string; }> {
+    const db = await getDatabaseAdapter();
+    // @ts-ignore
+    if (typeof db.dropAllTables !== 'function') {
+        return { success: false, message: 'Ação não suportada pelo adaptador de banco de dados atual.' };
+    }
+    // @ts-ignore
+    return db.dropAllTables();
+}
