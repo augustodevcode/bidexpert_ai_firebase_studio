@@ -123,8 +123,22 @@ export class PostgresAdapter implements DatabaseAdapter {
         return { success: result.success, message: result.message };
     }
 
-    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
-    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+        const newId = uuidv4();
+        const slug = slugify(data.name);
+        const sql = `INSERT INTO "State" (id, name, uf, slug) VALUES ($1, $2, $3, $4) ON CONFLICT (uf) DO NOTHING RETURNING id`;
+        const result = await this.executeMutation(sql, [newId, data.name, data.uf, slug]);
+        return { success: result.success, message: result.message, stateId: result.rows[0]?.id };
+    }
+
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+        const newId = uuidv4();
+        const slug = slugify(data.name);
+        const sql = `INSERT INTO "City" (id, name, slug, "stateId", "stateUf", "ibgeCode") VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT ("ibgeCode") DO NOTHING RETURNING id`;
+        const result = await this.executeMutation(sql, [newId, data.name, slug, data.stateId, data.stateUf, data.ibgeCode]);
+        return { success: result.success, message: result.message, cityId: result.rows[0]?.id };
+    }
+
     createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
     createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { return this._notImplemented('createAuctioneer'); }
     createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { return this._notImplemented('createCourt'); }

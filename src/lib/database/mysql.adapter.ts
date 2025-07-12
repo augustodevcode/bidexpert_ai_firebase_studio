@@ -138,6 +138,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
         
+        // Remove 'id' from updates if it exists to avoid trying to update the primary key
         if ('id' in updates) delete updates.id;
         
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
@@ -303,7 +304,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
         const users = await this.executeQuery(sql);
         return users.map(u => {
             if (u.permissions && typeof u.permissions === 'string') {
@@ -314,7 +315,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.roleId = r.id WHERE u.uid = ?';
+        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.uid = ?';
         const user = await this.executeQueryForSingle(sql, [userId]);
         if(user && user.permissions && typeof user.permissions === 'string') {
           try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
@@ -463,7 +464,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const fullItem: MediaItem = {
             id: newId,
             urlOriginal: url,
-            urlThumbnail: url,
+            urlThumbnail: url, // For simplicity, thumbnail is same as original in this adapter
             uploadedAt: new Date(),
             uploadedBy: userId,
             ...item,
@@ -493,6 +494,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+        // Need to handle the 'id' field carefully for settings, as it's not auto-increment
         const { id, ...updates } = data;
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
         const fieldsToUpdate = Object.keys(snakeCaseUpdates).map(key => `\`${key}\` = ?`).join(', ');
