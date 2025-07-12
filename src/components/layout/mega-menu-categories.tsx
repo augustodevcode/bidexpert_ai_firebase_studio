@@ -7,9 +7,17 @@ import Image from 'next/image';
 import { NavigationMenuLink } from '@/components/ui/navigation-menu';
 import type { LotCategory } from '@/types';
 import { cn } from '@/lib/utils';
-import { ChevronRight, Tag, ListChecks } from 'lucide-react';
+import { ChevronRight, Tag, ListChecks, type LucideIcon } from 'lucide-react';
 import { slugify } from '@/lib/sample-data-helpers';
 import { Button } from '@/components/ui/button';
+import { icons } from 'lucide-react';
+
+// Função para obter o componente do ícone pelo nome
+const getLucideIcon = (name?: string): LucideIcon | null => {
+  if (!name || typeof name !== 'string') return null;
+  const iconName = name.charAt(0).toUpperCase() + name.slice(1) as keyof typeof icons;
+  return icons[iconName] || null;
+};
 
 interface MegaMenuCategoriesProps {
   categories: LotCategory[];
@@ -20,6 +28,7 @@ const CategoryListItem = React.forwardRef<
   HTMLAnchorElement,
   React.ComponentPropsWithoutRef<'a'> & { category: LotCategory; onHover: () => void; isActive: boolean; onClick?: () => void; href: string; }
 >(({ className, category, onHover, isActive, onClick, href, ...props }, ref) => {
+  const IconComponent = getLucideIcon(category.iconName) || Tag;
   return (
     <li>
       <NavigationMenuLink asChild>
@@ -37,11 +46,7 @@ const CategoryListItem = React.forwardRef<
           {...props}
         >
           <div className="flex items-center gap-2">
-            {category.logoUrl ? (
-                <Image src={category.logoUrl} alt={category.name} width={16} height={16} className="object-contain" />
-            ) : (
-                <Tag className="h-4 w-4 text-primary/90 flex-shrink-0" />
-            )}
+             <IconComponent className="h-4 w-4 text-primary/90 flex-shrink-0" />
             <span className="truncate">{category.name}</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />

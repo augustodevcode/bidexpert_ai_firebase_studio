@@ -1,3 +1,4 @@
+
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
@@ -23,15 +24,28 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     try {
         for (const statement of statements) {
             try {
+                // Specific handling for CREATE TABLE to be idempotent
+                if (statement.trim().toUpperCase().startsWith('CREATE TABLE')) {
+                    const tableNameMatch = statement.match(/CREATE TABLE `([^`]+)`/);
+                    if (tableNameMatch) {
+                        const tableName = tableNameMatch[1];
+                        const [rows] = await connection.query(`SHOW TABLES LIKE ?`, [tableName]);
+                        // @ts-ignore
+                        if (rows.length > 0) {
+                            console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Tabela '${tableName}' já existe. Pulando criação.`);
+                            continue;
+                        }
+                    }
+                }
                 await connection.query(statement);
-                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executed.`);
+                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executado.`);
             } catch (error: any) {
-                // Ignore "Duplicate column name" errors as they are expected if the script runs multiple times.
-                if (error.code === 'ER_DUP_FIELDNAME') {
-                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Column already exists. Skipping statement.`);
+                // Ignore "Duplicate column name" and "Table already exists" errors
+                 if (error.code === 'ER_DUP_FIELDNAME' || error.code === 'ER_TABLE_EXISTS_ERROR') {
+                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Item já existe. Pulando statement.`);
                 } else {
-                    console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
-                    console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                     console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
+                     console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
                 }
             }
         }
@@ -44,6 +58,38 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
     }
 }
 
+async function addColumnIfNotExists(pool: Pool, tableName: string, columnName: string, columnDefinition: string) {
+    const connection = await pool.getConnection();
+    try {
+        const [rows] = await connection.query(
+            `SELECT COUNT(*) as count 
+             FROM INFORMATION_SCHEMA.COLUMNS 
+             WHERE TABLE_SCHEMA = DATABASE() 
+               AND TABLE_NAME = ? 
+               AND COLUMN_NAME = ?`,
+            [tableName, columnName]
+        );
+
+        // @ts-ignore
+        if (rows[0].count === 0) {
+            await connection.query(`ALTER TABLE \`${tableName}\` ADD COLUMN \`${columnName}\` ${columnDefinition}`);
+            console.log(`[DB INIT - ALTER] ✅ Coluna ${columnName} adicionada à tabela ${tableName}.`);
+        } else {
+            console.log(`[DB INIT - ALTER] 🟡 Coluna ${columnName} já existe na tabela ${tableName}. Ignorando.`);
+        }
+    } catch (error: any) {
+         console.error(`[DB INIT - ALTER] ❌ Erro ao tentar adicionar coluna ${columnName} em ${tableName}: ${error.message}`);
+    } finally {
+        connection.release();
+    }
+}
+
+async function applyAlterations(pool: Pool) {
+    console.log('\n--- [DB INIT - ALTER] Applying table alterations ---');
+    await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
+    console.log('--- [DB INIT - ALTER] Finished applying alterations ---');
+}
+
 
 async function seedEssentialData(db: any) {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -52,11 +98,13 @@ async function seedEssentialData(db: any) {
         console.log('[DB INIT - DML] Checking for platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
-            console.log("[DB INIT - DML] Inserting platform settings...");
-            await db.updatePlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] No settings found. Inserting new ones...");
+            await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
         } else {
-            console.log("[DB INIT - DML] INFO: Platform settings already exist. Skipping.");
+            console.log("[DB INIT - DML] Platform settings found. Ensuring they are up-to-date...");
+            await db.updatePlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings updated/verified.");
         }
 
         // Roles
@@ -64,14 +112,10 @@ async function seedEssentialData(db: any) {
         const roles = await db.getRoles();
         if (!roles || roles.length === 0) {
             console.log("[DB INIT - DML] Populating roles...");
-            if (db.createRole) {
-                for (const role of sampleRoles) {
-                    await db.createRole(role);
-                }
-                console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
-            } else {
-                 console.warn("[DB INIT - DML] `createRole` function not found on adapter. Skipping role seeding.");
+            for (const role of sampleRoles) {
+                await db.createRole(role);
             }
+            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
         } else {
             console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
         }
@@ -109,8 +153,8 @@ async function initializeDatabase() {
 
           // Execute DDL (table creation)
           await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
-          // Execute ALTER TABLE script
-          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
+          // Execute ALTER TABLE script programmatically
+          await applyAlterations(pool);
       }
       
       const db = getDatabaseAdapter();

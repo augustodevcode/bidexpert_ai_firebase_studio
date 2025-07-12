@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -77,6 +78,8 @@ export interface PlatformSettings {
     id: string;
     siteTitle: string;
     siteTagline?: string;
+    logoUrl?: string;
+    faviconUrl?: string;
     galleryImageBasePath: string;
     storageProvider: StorageProviderType;
     firebaseStorageBucket?: string | null;
@@ -400,9 +403,8 @@ export interface LotCategory {
   description?: string;
   itemCount?: number;
   hasSubcategories: boolean;
-  logoUrl?: string;
-  logoMediaId?: string | null;
-  dataAiHintLogo?: string | null;
+  iconName?: string | null;
+  dataAiHintIcon?: string | null;
   coverImageUrl?: string;
   coverImageMediaId?: string | null;
   dataAiHintCover?: string | null;

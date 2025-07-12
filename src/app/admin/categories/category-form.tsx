@@ -20,11 +20,12 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { categoryFormSchema, type CategoryFormValues } from './category-form-schema';
 import type { LotCategory, MediaItem } from '@/types';
-import { Loader2, Save, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Image as ImageIcon, Tag, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
+import IconPicker from '@/components/icon-picker';
 
 interface CategoryFormProps {
   initialData?: LotCategory | null;
@@ -34,7 +35,7 @@ interface CategoryFormProps {
   submitButtonText: string;
 }
 
-type DialogTarget = 'logoUrl' | 'coverImageUrl' | 'megaMenuImageUrl';
+type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl';
 
 export default function CategoryForm({
   initialData,
@@ -54,8 +55,8 @@ export default function CategoryForm({
     defaultValues: {
       name: initialData?.name || '',
       description: initialData?.description || '',
-      logoUrl: initialData?.logoUrl || '',
-      dataAiHintLogo: initialData?.dataAiHintLogo || '',
+      iconName: initialData?.iconName || '',
+      dataAiHintIcon: initialData?.dataAiHintIcon || '',
       coverImageUrl: initialData?.coverImageUrl || '',
       dataAiHintCover: initialData?.dataAiHintCover || '',
       megaMenuImageUrl: initialData?.megaMenuImageUrl || '',
@@ -63,7 +64,6 @@ export default function CategoryForm({
     },
   });
 
-  const logoUrlPreview = form.watch('logoUrl');
   const coverImageUrlPreview = form.watch('coverImageUrl');
   const megaMenuImageUrlPreview = form.watch('megaMenuImageUrl');
 
@@ -198,6 +198,21 @@ export default function CategoryForm({
               )}
             />
 
+            <FormField
+                control={form.control}
+                name="iconName"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Ícone da Categoria</FormLabel>
+                        <FormControl>
+                            <IconPicker value={field.value || ''} onChange={field.onChange} />
+                        </FormControl>
+                        <FormDescription>Selecione um ícone da biblioteca Lucide para representar esta categoria.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
+
             <Separator />
             <div className="space-y-1">
               <h3 className="text-md font-semibold flex items-center gap-2"><ImageIcon className="h-4 w-4 text-muted-foreground" /> Imagens da Categoria</h3>
@@ -206,8 +221,6 @@ export default function CategoryForm({
             
             <div className="space-y-6 rounded-md border p-4 bg-background">
               {renderImageInput('coverImageUrl', 'Imagem de Capa (Banner)', 'Esta imagem será usada como banner principal na página da categoria.', coverImageUrlPreview, 'coverImageUrl')}
-              <Separator />
-              {renderImageInput('logoUrl', 'Logo da Categoria', 'Um ícone ou logo pequeno para representar a categoria.', logoUrlPreview, 'logoUrl')}
               <Separator />
               {renderImageInput('megaMenuImageUrl', 'Imagem do Mega Menu', 'Imagem promocional a ser exibida no mega menu.', megaMenuImageUrlPreview, 'megaMenuImageUrl')}
             </div>
