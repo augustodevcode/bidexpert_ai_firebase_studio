@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -935,7 +934,7 @@ export interface DatabaseAdapter {
     getLotsByIds(ids: string[]): Promise<Lot[]>;
     getLotCategories(): Promise<LotCategory[]>;
     
-    getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]>;
+    getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]>;
     getSubcategory(id: string): Promise<Subcategory | null>;
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
     createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
@@ -986,6 +985,7 @@ export interface DatabaseAdapter {
     createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }>;
 
     getPlatformSettings(): Promise<PlatformSettings | null>;
+    createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
     
     close?(): Promise<void>;

@@ -1,4 +1,3 @@
-
 // src/lib/database/postgres.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import { Pool, type QueryResult } from 'pg';
@@ -63,6 +62,9 @@ export class PostgresAdapter implements DatabaseAdapter {
             const result: QueryResult = await client.query(sql, params);
             return { success: true, message: 'Operação realizada com sucesso.', rows: result.rows };
         } catch (error: any) {
+            if (error.code === '23505') { // Unique violation
+                return { success: true, message: 'Item já existe, ignorado.', rows: [] };
+            }
             console.error(`[PostgresAdapter] Erro na mutação: "${sql.substring(0, 100)}...". Erro: ${error.message}`);
             return { success: false, message: `Erro no banco de dados: ${error.message}`, rows: [] };
         } finally {
@@ -100,8 +102,27 @@ export class PostgresAdapter implements DatabaseAdapter {
         return { success: result.success, message: result.message, lotId: result.rows[0]?.id };
     }
 
-    createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createLotCategory'); }
-    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { return this._notImplemented('createSubcategory'); }
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        const { id, name, slug, description, hasSubcategories, iconName, dataAiHintIcon, coverImageUrl, megaMenuImageUrl } = data;
+        const sql = `INSERT INTO "LotCategory" (id, name, slug, description, "hasSubcategories", "iconName", "dataAiHintIcon", "coverImageUrl", "megaMenuImageUrl") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) ON CONFLICT (id) DO NOTHING`;
+        const result = await this.executeMutation(sql, [id, name, slug, description, hasSubcategories, iconName, dataAiHintIcon, coverImageUrl, megaMenuImageUrl]);
+        return { success: result.success, message: result.message };
+    }
+
+    async createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+        const { id, name, slug, parentCategoryId, description, displayOrder } = data;
+        const sql = `INSERT INTO "Subcategory" (id, name, slug, "parentCategoryId", description, "displayOrder") VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING RETURNING id`;
+        const result = await this.executeMutation(sql, [id, name, slug, parentCategoryId, description, displayOrder]);
+        return { success: result.success, message: result.message, subcategoryId: result.rows[0]?.id };
+    }
+
+    async createRole(role: Omit<Role, "id" | "createdAt" | "updatedAt">): Promise<{success: boolean;message: string;}> {
+        const { id, name, name_normalized, description, permissions } = { id: `role-${slugify(role.name)}`, ...role};
+        const sql = `INSERT INTO "Role" (id, name, name_normalized, description, permissions) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (id) DO NOTHING`;
+        const result = await this.executeMutation(sql, [id, name, name_normalized, description, JSON.stringify(permissions)]);
+        return { success: result.success, message: result.message };
+    }
+
     createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
     createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
     createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
@@ -134,10 +155,14 @@ export class PostgresAdapter implements DatabaseAdapter {
         if (!settings) {
             return null;
         }
-        // PostgreSQL JSON/JSONB columns are often automatically parsed
         return settings;
     }
-    async getSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> { return this.executeQuery('SELECT * FROM "Subcategory" WHERE "parentCategoryId" = $1 ORDER BY "displayOrder"', [parentCategoryId]); }
+    async getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]> {
+      if (!parentCategoryId) {
+        return this.executeQuery('SELECT * FROM "Subcategory" ORDER BY "displayOrder"');
+      }
+      return this.executeQuery('SELECT * FROM "Subcategory" WHERE "parentCategoryId" = $1 ORDER BY "displayOrder"', [parentCategoryId]);
+    }
     async getSubcategory(id: string): Promise<Subcategory | null> { return this.executeQueryForSingle('SELECT * FROM "Subcategory" WHERE id = $1', [id]); }
     getBens(filter?: { judicialProcessId?: string | undefined; sellerId?: string | undefined; }): Promise<Bem[]> { return this._notImplemented('getBens'); }
     getBem(id: string): Promise<Bem | null> { return this._notImplemented('getBem'); }
@@ -170,7 +195,16 @@ export class PostgresAdapter implements DatabaseAdapter {
     updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCourt'); }
     updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
     saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
-
+    
+    async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
+      const { id, ...settingsData } = data;
+      const columns = Object.keys(settingsData).map(key => `"${key}"`).join(', ');
+      const values = Object.values(settingsData);
+      const placeholders = values.map((_, i) => `$${i + 2}`).join(', '); // Start from $2
+      const sql = `INSERT INTO "PlatformSettings" (id, ${columns}) VALUES ($1, ${placeholders}) ON CONFLICT (id) DO NOTHING`;
+      const result = await this.executeMutation(sql, [id, ...values]);
+      return { success: result.success, message: result.message };
+    }
 
     async _notImplemented(method: string): Promise<any> { if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null); const message = `[PostgresAdapter] Método ${method} não implementado.`; console.warn(message); return Promise.resolve(method.endsWith('s') ? [] : null); }
 }

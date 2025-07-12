@@ -1,8 +1,8 @@
 // scripts/init-db.ts
 import dotenv from 'dotenv';
 import path from 'path';
-import { getDatabaseAdapter } from '../lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../src/lib/sample-data';
+import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -63,63 +63,49 @@ async function seedEssentialData() {
     const db = getDatabaseAdapter(); // Get a fresh adapter instance AFTER schema changes
     try {
         // Platform Settings
-        console.log('[DB INIT - DML] Checking for platform settings...');
+        console.log('[DB INIT - DML] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
-            console.log("[DB INIT - DML] No settings found. Inserting new ones...");
             await db.createPlatformSettings(samplePlatformSettings);
-            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings inserted.");
         } else {
-            console.log("[DB INIT - DML] Platform settings found. Ensuring they are up-to-date...");
             await db.updatePlatformSettings(samplePlatformSettings);
-            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings updated/verified.");
         }
+        console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings seeded.");
 
         // Roles
-        console.log("[DB INIT - DML] Checking for roles...");
-        const roles = await db.getRoles();
-        if (!roles || roles.length === 0) {
-            console.log("[DB INIT - DML] Populating roles...");
-            for (const role of sampleRoles) {
-                // @ts-ignore
-                await db.createRole(role);
-            }
-            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} roles inserted.`);
-        } else {
-            console.log("[DB INIT - DML] INFO: Roles already exist. Skipping.");
+        console.log("[DB INIT - DML] Seeding roles...");
+        const existingRoles = await db.getRoles();
+        const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
+        for (const role of rolesToCreate) {
+             // @ts-ignore
+             await db.createRole(role);
         }
-        
-        // Categories
-        console.log("[DB INIT - DML] Checking for categories...");
-        const categories = await db.getLotCategories();
-        if (!categories || categories.length === 0) {
-            console.log("[DB INIT - DML] Populating categories...");
-            for (const category of sampleLotCategories) {
-                await db.createLotCategory(category);
-            }
-            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleLotCategories.length} categories inserted.`);
-        } else {
-            console.log("[DB INIT - DML] INFO: Categories already exist. Skipping.");
-        }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
 
-        // Subcategories
-        console.log("[DB INIT - DML] Checking for subcategories...");
-        // @ts-ignore
-        const subcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent(undefined) : []; // Assuming fetching all if no parentId
-        if (!subcategories || subcategories.length === 0) {
-            console.log("[DB INIT - DML] Populating subcategories...");
-            for (const subcategory of sampleSubcategories) {
-                 // @ts-ignore
-                await db.createSubcategory(subcategory);
-            }
-            console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleSubcategories.length} subcategories inserted.`);
-        } else {
-            console.log("[DB INIT - DML] INFO: Subcategories already exist. Skipping.");
+        // Categories
+        console.log("[DB INIT - DML] Seeding categories...");
+        const existingCategories = await db.getLotCategories();
+        const categoriesToCreate = sampleLotCategories.filter(cat => !existingCategories.some(ec => ec.slug === cat.slug));
+        for (const category of categoriesToCreate) {
+            await db.createLotCategory(category);
         }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${categoriesToCreate.length} new categories inserted.`);
+        
+        // Subcategories
+        console.log("[DB INIT - DML] Seeding subcategories...");
+        // @ts-ignore
+        const allSubcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent() : [];
+        const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
+
+        for (const subcategory of subcategoriesToCreate) {
+            await db.createSubcategory(subcategory);
+        }
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
 
 
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
+        throw error;
     }
     
     console.log('--- [DB INIT - DML] Essential Data seeding finished ---');
