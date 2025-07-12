@@ -29,7 +29,7 @@ const settingsSchema = z.object({
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
-const MAX_LOGO_SIZE_MB = 2;
+const MAX_LOGO_SIZE_MB = 10; // Updated to match API limit
 const MAX_LOGO_SIZE_BYTES = MAX_LOGO_SIZE_MB * 1024 * 1024;
 
 export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
@@ -66,7 +66,7 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
     
     const uploadFile = async (file: File): Promise<string | null> => {
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('files', file); // Use 'files' (plural) to match API
         formData.append('path', 'site-assets');
 
         try {
@@ -74,7 +74,7 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
                 method: 'POST',
                 body: formData,
             });
-
+            
             const result = await response.json();
 
             if (!response.ok) {
