@@ -15,7 +15,7 @@ import {
   sampleUsers,
   sampleRoles
 } from '@/lib/sample-data';
-import type { DatabaseAdapter, Role, UserProfileData } from '@/types';
+import type { DatabaseAdapter, Role, UserProfileData, SellerFormData } from '@/types';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
@@ -27,7 +27,7 @@ async function seedFullData() {
     try {
         console.log('[DB SEED] Seeding Sellers...');
         for (const seller of sampleSellers) {
-            await db.createSeller(seller);
+            await db.createSeller(seller as SellerFormData);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
 
@@ -135,7 +135,7 @@ async function seedFullData() {
         }
         
         console.log('[DB SEED] Linking Admin user to Administrator role...');
-        if ('executeMutation' in db) {
+        if ('executeMutation' in db && db.constructor.name === 'MySqlAdapter') {
             const adminUserSample = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
             const adminRoleSample = sampleRoles.find((r: Role) => r.name_normalized === 'ADMINISTRATOR');
 

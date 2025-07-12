@@ -43,7 +43,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
     if (!isPasswordValid) {
       // DEVELOPMENT ONLY: Bypass password check for admin user
-      if (user.email.toLowerCase() === 'admin@bidexpert.com.br') {
+      if (user.email.toLowerCase() === 'admin@bidexpert.com.br' && process.env.NODE_ENV === 'development') {
         console.log('[Login Action] Bypass de senha para o usuário admin ativado.');
       } else {
         console.log(`[Login Action] Senha inválida para o usuário: ${email}`);

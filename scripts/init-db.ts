@@ -11,78 +11,51 @@ async function seedEssentialData() {
     try {
         // Platform Settings
         console.log('[DB INIT - DML] Seeding platform settings...');
-        const settings = await db.getPlatformSettings();
-        
-        if (!settings || Object.keys(settings).length === 0 || !settings.id) {
-            await db.createPlatformSettings(samplePlatformSettings);
-            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
-        } else {
-            console.log("[DB INIT - DML] 🟡 INFO: Platform settings already exist.");
-        }
+        await db.createPlatformSettings(samplePlatformSettings);
+        console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
 
         // Roles
         console.log("[DB INIT - DML] Seeding roles...");
-        const existingRoles = await db.getRoles();
-        const rolesToCreate: Role[] = sampleRoles.filter((role: Role) => !existingRoles.some(er => er.name_normalized === role.name_normalized));
-        for (const role of rolesToCreate) {
+        for (const role of sampleRoles) {
             await db.createRole(role);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleRoles.length} new roles inserted.`);
 
         // Categories
         console.log("[DB INIT - DML] Seeding categories...");
-        const existingCategories = await db.getLotCategories();
-        const categoriesToCreate: LotCategory[] = sampleLotCategories.filter((cat: LotCategory) => !existingCategories.some(ec => ec.slug === cat.slug));
-        for (const category of categoriesToCreate) {
+        for (const category of sampleLotCategories) {
             await db.createLotCategory(category);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${categoriesToCreate.length} new categories inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleLotCategories.length} new categories inserted.`);
         
         // Subcategories
         console.log("[DB INIT - DML] Seeding subcategories...");
-        // @ts-ignore
-        const allSubcategories: Subcategory[] = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent() : [];
-        const subcategoriesToCreate: Subcategory[] = sampleSubcategories.filter((sub: Subcategory) => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
-        for (const subcategory of subcategoriesToCreate) {
+        for (const subcategory of sampleSubcategories) {
             await db.createSubcategory(subcategory);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleSubcategories.length} new subcategories inserted.`);
         
         // States
         console.log("[DB INIT - DML] Seeding states...");
-        const existingStates = await db.getStates();
-        const statesToCreate: StateInfo[] = sampleStates.filter((state: StateInfo) => !existingStates.some(es => es.uf === state.uf));
-        for (const state of statesToCreate) {
+        for (const state of sampleStates) {
              await db.createState(state);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${statesToCreate.length} new states inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleStates.length} new states inserted.`);
         
         // Cities
         console.log("[DB INIT - DML] Seeding cities...");
-        const allDbStates = await db.getStates(); // Get fresh states with DB-generated IDs
-        const existingCities = await db.getCities();
-        const citiesToCreate = sampleCities.map(c => {
-            const parentState = allDbStates.find(s => s.uf === c.stateUf);
-            return {
-                ...c,
-                stateId: parentState?.id,
-            }
-        }).filter(c => c.stateId && !existingCities.some(ec => ec.ibgeCode === c.ibgeCode));
-
-        for (const city of citiesToCreate) {
+        for (const city of sampleCities) {
             await db.createCity(city as CityFormData);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities processed.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleCities.length} new cities processed.`);
 
         // Courts
         console.log("[DB INIT - DML] Seeding courts...");
-        const existingCourts = await db.getCourts();
-        const courtsToCreate: Court[] = sampleCourts.filter((court: Court) => !existingCourts.some(ec => ec.slug === court.slug));
-        for (const court of courtsToCreate) {
+        for (const court of sampleCourts) {
             // @ts-ignore
             await db.createCourt(court);
         }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${courtsToCreate.length} new courts inserted.`);
+        console.log(`[DB INIT - DML] ✅ SUCCESS: ${sampleCourts.length} new courts inserted.`);
 
 
     } catch (error: any) {
