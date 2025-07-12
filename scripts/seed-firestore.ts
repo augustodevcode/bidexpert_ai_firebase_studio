@@ -3,7 +3,7 @@ import { dbAdmin, ensureAdminInitialized } from '../src/lib/firebase/admin';
 import {
   sampleLots,
   sampleAuctions,
-  sampleCategories,
+  sampleLotCategories, // Nome corrigido para corresponder ao JSON
   sampleUsers,
   sampleRoles,
   sampleAuctioneers,
@@ -27,17 +27,18 @@ import {
 } from '../src/lib/sample-data';
 import type { Role } from '../src/types';
 
+// Renomeado 'categories' para 'lotCategories' para corresponder ao JSON
 const collectionsToSeed: { name: string, data: any[] }[] = [
   { name: 'lots', data: sampleLots },
   { name: 'auctions', data: sampleAuctions },
-  { name: 'categories', data: sampleCategories },
+  { name: 'categories', data: sampleLotCategories }, // Usando o nome da coleção como 'categories'
+  { name: 'subcategories', data: sampleSubcategories }, // Adicionado
   { name: 'users', data: sampleUsers },
   { name: 'roles', data: sampleRoles },
   { name: 'auctioneers', data: sampleAuctioneers },
   { name: 'sellers', data: sampleSellers },
   { name: 'states', data: sampleStates },
   { name: 'cities', data: sampleCities },
-  { name: 'subcategories', data: sampleSubcategories },
   { name: 'directSales', data: sampleDirectSaleOffers },
   { name: 'documentTypes', data: sampleDocumentTypes },
   { name: 'notifications', data: sampleNotifications },
@@ -63,6 +64,12 @@ async function seedDatabase() {
     }
 
     for (const collection of collectionsToSeed) {
+        // Renomeado para uma verificação mais clara
+        if (!collection.data || collection.data.length === 0) {
+            console.log(`Coleção '${collection.name}' está vazia nos dados de exemplo. Pulando.`);
+            continue;
+        }
+        
         console.log(`Populando coleção: ${collection.name}...`);
         const collectionRef = dbAdmin.collection(collection.name);
         const snapshot = await collectionRef.limit(1).get();
@@ -78,7 +85,13 @@ async function seedDatabase() {
             const chunk = collection.data.slice(i, i + batchSize);
             
             chunk.forEach((item) => {
-                const docRef = collectionRef.doc(item.id); 
+                // Certifica-se de que cada item tem um 'id' para usar como chave do documento
+                const docId = item.id;
+                if (!docId) {
+                    console.warn(`Item na coleção '${collection.name}' não possui ID e será ignorado.`);
+                    return;
+                }
+                const docRef = collectionRef.doc(docId); 
                 batch.set(docRef, item);
             });
             
