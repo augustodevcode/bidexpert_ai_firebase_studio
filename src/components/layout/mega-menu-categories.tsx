@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -36,7 +37,11 @@ const CategoryListItem = React.forwardRef<
           {...props}
         >
           <div className="flex items-center gap-2">
-            <Tag className="h-4 w-4 text-primary/90 flex-shrink-0" />
+            {category.logoUrl ? (
+                <Image src={category.logoUrl} alt={category.name} width={16} height={16} className="object-contain" />
+            ) : (
+                <Tag className="h-4 w-4 text-primary/90 flex-shrink-0" />
+            )}
             <span className="truncate">{category.name}</span>
           </div>
           <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
@@ -114,7 +119,7 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
           <div className="mt-auto pt-2 border-t border-border">
             <NavigationMenuLink asChild>
               <Link
-                href="/search?tab=categories" // ou uma página dedicada de todas as categorias
+                href="/search?tab=categories"
                 onClick={onLinkClick}
                 className={cn(
                   'flex select-none items-center justify-center rounded-md p-3 text-sm font-semibold text-primary hover:bg-accent hover:text-primary/90 leading-none no-underline outline-none transition-colors focus:bg-accent focus:text-primary/90'
@@ -159,11 +164,11 @@ export default function MegaMenuCategories({ categories, onLinkClick }: MegaMenu
               <Link href={`/category/${hoveredCategory.slug}`} onClick={onLinkClick} className="block group">
                 <div className="relative aspect-[16/9] bg-muted rounded-md overflow-hidden mb-3">
                   <Image 
-                    src={`https://placehold.co/400x225.png?text=${encodeURIComponent(hoveredCategory.name)}`} 
+                    src={hoveredCategory.megaMenuImageUrl || `https://placehold.co/400x225.png`}
                     alt={`Imagem promocional para ${hoveredCategory.name}`}
                     fill
                     className="object-cover transition-transform duration-300 group-hover:scale-105"
-                    data-ai-hint={`${slugify(hoveredCategory.name || "categoria")} promocional`} 
+                    data-ai-hint={hoveredCategory.dataAiHintMegaMenu || `${slugify(hoveredCategory.name || "categoria")} promocional`} 
                   />
                 </div>
               </Link>
