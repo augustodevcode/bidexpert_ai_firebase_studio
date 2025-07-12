@@ -1,12 +1,11 @@
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
-import { samplePlatformSettings } from '@/lib/sample-data';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 function toSnakeCase(str: string): string {
-    if (str === 'id') return str;
+    if (str === 'id' || str === 'uid') return str;
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
 
@@ -97,7 +96,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         return rows.length > 0 ? rows[0] : null;
     }
     
-    private async executeMutation(sql: string, params: any[] = []): Promise<{ success: boolean; message: string; insertId?: number }> {
+    public async executeMutation(sql: string, params: any[] = []): Promise<{ success: boolean; message: string; insertId?: number }> {
         if (!this.pool) return { success: false, message: 'Sem conexão com o banco de dados.' };
         const connection = await this.getConnection();
         try {
@@ -126,7 +125,7 @@ export class MySqlAdapter implements DatabaseAdapter {
       const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
       const values = Object.values(snakeCaseData);
 
-      const sql = `INSERT INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
+      const sql = `INSERT IGNORE INTO \`${tableName}\` (${fields}) VALUES (${placeholders})`;
       const result = await this.executeMutation(sql, values);
       if (result.success) {
         return { success: true, message: "Registro criado com sucesso!", insertId: result.insertId };
@@ -304,22 +303,49 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getSellers(): Promise<SellerProfileInfo[]> { return this.executeQuery('SELECT * FROM `sellers` ORDER BY `name`'); }
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> { return this.executeQuery('SELECT * FROM `auctioneers` ORDER BY `name`'); }
     
-    async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id';
+     async getUsersWithRoles(): Promise<UserProfileData[]> {
+        const sql = `
+            SELECT 
+                u.*, 
+                GROUP_CONCAT(r.id) as role_ids,
+                GROUP_CONCAT(r.name) as role_names,
+                GROUP_CONCAT(r.permissions) as permissions_json
+            FROM \`users\` u
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
+            LEFT JOIN \`roles\` r ON ur.role_id = r.id
+            GROUP BY u.uid
+        `;
         const users = await this.executeQuery(sql);
         return users.map(u => {
-            if (u.permissions && typeof u.permissions === 'string') {
-                try { u.permissions = JSON.parse(u.permissions); } catch(e) { u.permissions = []; }
-            }
+            const allPerms = u.permissionsJson ? u.permissionsJson.split(',').flatMap((p: string) => {
+                try { return JSON.parse(p); } catch { return []; }
+            }) : [];
+            u.permissions = [...new Set(allPerms)];
+            delete u.permissionsJson; // Clean up
             return u;
         });
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const sql = 'SELECT u.*, r.name as `role_name`, r.permissions FROM `users` u LEFT JOIN `roles` r ON u.role_id = r.id WHERE u.uid = ?';
+        const sql = `
+            SELECT 
+                u.*, 
+                GROUP_CONCAT(r.id) as role_ids,
+                GROUP_CONCAT(r.name) as role_names,
+                GROUP_CONCAT(r.permissions) as permissions_json
+            FROM \`users\` u
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
+            LEFT JOIN \`roles\` r ON ur.role_id = r.id
+            WHERE u.uid = ?
+            GROUP BY u.uid
+        `;
         const user = await this.executeQueryForSingle(sql, [userId]);
-        if(user && user.permissions && typeof user.permissions === 'string') {
-          try { user.permissions = JSON.parse(user.permissions); } catch(e) { user.permissions = []; }
+        if (user && user.permissionsJson) {
+            const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
+                try { return JSON.parse(p); } catch { return []; }
+            });
+            user.permissions = [...new Set(allPerms)];
+            delete user.permissionsJson;
         }
         return user;
     }
@@ -458,7 +484,30 @@ export class MySqlAdapter implements DatabaseAdapter {
         return result;
     }
     
-    async updateUserRole(userId: string, roleId: number | null): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('users', userId, { role_id: roleId }); }
+    async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> {
+        const connection = await this.getConnection();
+        try {
+            await connection.beginTransaction();
+            // Delete existing roles for the user
+            await connection.execute('DELETE FROM `user_roles` WHERE `user_id` = ?', [userId]);
+
+            // Insert new roles if any are provided
+            if (roleIds.length > 0) {
+                const values = roleIds.map(roleId => [userId, roleId]);
+                await connection.query('INSERT INTO `user_roles` (`user_id`, `role_id`) VALUES ?', [values]);
+            }
+            
+            await connection.commit();
+            return { success: true, message: "Perfis do usuário atualizados com sucesso." };
+
+        } catch (error: any) {
+            await connection.rollback();
+            console.error(`[MySqlAdapter] Erro na transação de updateUserRoles: ${error.message}`);
+            return { success: false, message: `Erro no banco de dados: ${error.message}` };
+        } finally {
+            connection.release();
+        }
+    }
     
     async createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
         const newId = uuidv4();
