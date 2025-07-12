@@ -21,7 +21,7 @@ import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings } from '@/types';
 import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea'; 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -307,26 +307,6 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
                       )}
                   />
               </CardContent>
-            </Card>
-             <Card className="border-destructive">
-                <CardHeader>
-                    <CardTitle className="text-md text-destructive">Zona de Perigo</CardTitle>
-                    <CardDescription>Ações nesta seção podem ter efeitos significativos na aplicação.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                     <Alert variant="destructive">
-                      <AlertTriangle className="h-4 w-4" />
-                      <AlertTitle>Atenção</AlertTitle>
-                      <AlertDescription>
-                        Esta ação irá limpar a marcação de que o setup foi concluído e forçará o redirecionamento para o assistente de configuração na próxima vez que a página for carregada. Use apenas se precisar reconfigurar a aplicação do zero.
-                      </AlertDescription>
-                    </Alert>
-                </CardContent>
-                <CardFooter>
-                    <Button variant="destructive" type="button" onClick={handleResetSetup}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> Reiniciar Assistente de Configuração
-                    </Button>
-                </CardFooter>
             </Card>
           </section>
         )}
