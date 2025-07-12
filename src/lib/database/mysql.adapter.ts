@@ -263,7 +263,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-      return this.executeMutation('DELETE FROM `auctions` WHERE `id` = ?', [id]);
+      return this.executeMutation('DELETE FROM `auctions` WHERE id = ?', [id]);
     }
 
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {

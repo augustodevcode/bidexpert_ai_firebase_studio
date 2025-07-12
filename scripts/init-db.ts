@@ -12,7 +12,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
 async function executeSchema(pool: Pool) {
     console.log("\n--- [DB INIT - DDL] Executing MySQL Schema ---");
-    const schemaPath = path.join(process.cwd(), 'schema.mysql.sql');
+    const schemaPath = path.join(process.cwd(), 'src', 'schema.mysql.sql');
     if (!fs.existsSync(schemaPath)) {
         console.warn(`[DB INIT - DDL] WARNING: Schema file not found at ${schemaPath}. Skipping table creation.`);
         return;
@@ -22,12 +22,8 @@ async function executeSchema(pool: Pool) {
     
     const connection = await pool.getConnection();
     try {
-        console.log("[DB INIT - DDL] Existing tables before execution:");
-        const [rows] = await connection.query('SHOW TABLES;');
-        console.table((rows as any[]).map(row => Object.values(row)[0]));
-
         for (const statement of statements) {
-            const tableNameMatch = statement.match(/CREATE TABLE(?: IF NOT EXISTS)? `([^`]*)`/i);
+            const tableNameMatch = statement.match(/CREATE TABLE(?: IF NOT EXISTS)?\s*`([^`]*)`/i);
             const tableName = tableNameMatch ? tableNameMatch[1] : 'unknown table';
             try {
                 await connection.query(statement);
@@ -35,7 +31,7 @@ async function executeSchema(pool: Pool) {
             } catch (error: any) {
                 // Log non-critical errors (like FK errors due to dev) and continue
                 console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
-                console.error(`[DB INIT - DDL] -> Failing SQL:\n${statement}`);
+                console.error(`[DB INIT - DDL] -> Failing SQL:\n\n${statement}\n`);
             }
         }
         console.log("--- [DB INIT - DDL] MySQL Schema execution finished ---");
