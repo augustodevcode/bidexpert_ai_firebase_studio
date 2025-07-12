@@ -5,7 +5,7 @@
 - **Item 1.2:** Detalhamento abrangente nos cards e modal de pré-visualização de lotes, com abas para Descrição, Especificações e Documentos.
 - **Item 1.3:** Acessibilidade da documentação (editais) nas páginas de detalhe e no modal de pré-visualização.
 - **Item 2.1:** Criação de perfis detalhados para comitentes e leiloeiros com páginas públicas e listagem de leilões ativos.
-- **Item 2.2:** Implementação completa da funcionalidade de lance, soft-close, e criação das páginas "Meus Arremates" e "Meus Lances" com dados funcionais. **(Esta tarefa)**
+- **Item 2.2:** Implementação completa da funcionalidade de lance, soft-close, e criação das páginas "Meus Arremates" e "Meus Lances" com dados funcionais.
 - **Item 2.3 (Parcial):** Página "Fale Conosco" como canal inicial de contato.
 - **Item 3.2:** Ícones de redes sociais no rodapé e botões de compartilhamento social.
 - **Item 3.5:** SEO básico implementado com metadados dinâmicos nas páginas de leilão, lote e categoria.
@@ -23,6 +23,7 @@
 
 ## NEXT
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
+- **Melhorar o Assistente de Configuração (SaaS):** Transformar o setup inicial em um assistente de configuração para novos clientes (SaaS). O fluxo deve permitir que o cliente configure seu próprio usuário administrador e personalize a plataforma. Incluir um tour guiado pelas funcionalidades principais após a configuração inicial. O uso do wizard de leilões se tornará opcional.
 - **Item 2.3 (Avançado):** Criar seção formal de "Resolução de Disputas" e integrar um sistema de suporte mais robusto (tickets ou chat).
 - **Item 3.1:** Integrar um módulo de blog para marketing de conteúdo, com artigos sobre o mercado de leilões.
 - **Item 3.3:** Criar um sistema de gamificação com pontos/recompensas por atividade e um módulo para gerenciar promoções especiais.
