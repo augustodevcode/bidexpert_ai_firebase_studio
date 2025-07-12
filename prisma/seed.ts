@@ -117,10 +117,16 @@ async function main() {
   // 5. Seed Bens (Assets)
   console.log('[DB SEED] Semeando Bens (Assets)...');
   for (const bem of sampleBens) {
-    await prisma.bem.upsert({ where: { id: bem.id }, update: {}, create: {
-      ...bem,
-      amenities: bem.amenities ? { create: bem.amenities } : undefined,
-    } });
+    const bemDataForPrisma = {
+        ...bem,
+        amenities: undefined, // Remove the raw amenities array if it exists
+    };
+
+    if (bem.amenities && Array.isArray(bem.amenities) && bem.amenities.every(a => typeof a === 'object' && 'value' in a)) {
+        // Correct format, can be used in create
+        bemDataForPrisma.amenities = { create: bem.amenities };
+    }
+    await prisma.bem.upsert({ where: { id: bem.id }, update: {}, create: bemDataForPrisma as any });
   }
 
   // 6. Seed Auctions, Lots, and Bids
@@ -178,3 +184,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+    

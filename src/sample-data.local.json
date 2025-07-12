@@ -217,7 +217,7 @@
       "status": "EM_BREVE",
       "auctionType": "EXTRAJUDICIAL",
       "categoryId": "cat-veiculos",
-      "auctioneerId": "auct-superbid-leiloes",
+      "auctioneerId": "auct-superbid-leiloes-jucesp-n-123",
       "sellerId": "seller-proprietario-particular-1",
       "auctionDate": "2025-07-01T03:52:47.479Z",
       "endDate": "2025-07-01T03:52:47.479Z",
@@ -241,7 +241,7 @@
       "achievedRevenue": 0,
       "totalHabilitatedUsers": 80,
       "category": "Veículos",
-      "auctioneer": "auct-superbid-leiloes",
+      "auctioneer": "SUPERBID Leilões - JUCESP Nº 123",
       "seller": "Proprietário Particular 1",
       "totalLots": 2,
       "createdAt": "2025-05-28T03:52:47.479Z",
@@ -297,7 +297,7 @@
       "endDate": "2025-07-06T03:52:47.479Z",
       "city": "Curitiba",
       "state": "PR",
-      "imageMediaId": "media-auc-mustang-banner",
+      "imageMediaId": "media-lot-mustang-1967-main",
       "dataAiHint": "mustang classico perfil",
       "initialOffer": 150000,
       "visits": 2100,
@@ -451,7 +451,7 @@
       "status": "ABERTO_PARA_LANCES",
       "auctionType": "JUDICIAL",
       "categoryId": "cat-imoveis",
-      "auctioneerId": "auct-superbid-leiloes",
+      "auctioneerId": "auct-superbid-leiloes-jucesp-n-123",
       "sellerId": "seller-vara-civel-de-sao-paulo-tjsp",
       "auctionDate": "2025-06-26T03:52:47.479Z",
       "endDate": "2025-07-06T03:52:47.479Z",
@@ -485,7 +485,7 @@
         "JUDICIAL"
       ],
       "category": "Imóveis",
-      "auctioneer": "auct-superbid-leiloes",
+      "auctioneer": "SUPERBID Leilões - JUCESP Nº 123",
       "seller": "Vara Cível de São Paulo - TJSP",
       "totalLots": 1,
       "createdAt": "2025-04-25T03:52:47.479Z",
@@ -894,7 +894,7 @@
       "publicId": "BEM-PUB-14de5bc7",
       "createdAt": "2025-07-06T01:01:03.774Z",
       "updatedAt": "2025-07-06T01:28:55.035Z",
-      "subcategoryId": "subcat-colheitadeira-a48b"
+      "subcategoryId": "subcat-maquinas-agricolas"
     }
   ],
   "sampleBids": [
@@ -1488,11 +1488,18 @@
     }
   ],
   "sampleLotCategories": [
-    { "name": "Imóveis", "slug": "imoveis", "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.", "id": "cat-imoveis", "itemCount": 5, "hasSubcategories": true, "logoMediaId": null, "coverImageMediaId": "media-cat-imoveis-cover", "megaMenuImageMediaId": null, "dataAiHintLogo": "predio casa", "dataAiHintCover": "imoveis cidade panorama", "dataAiHintMegaMenu": null, "createdAt": "2025-06-02T04:56:12.389Z", "updatedAt": "2025-06-20T04:56:12.389Z" },
-    { "name": "Veículos", "slug": "veiculos", "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.", "id": "cat-veiculos", "itemCount": 5, "hasSubcategories": true, "logoMediaId": null, "coverImageMediaId": null, "megaMenuImageMediaId": null, "dataAiHintLogo": null, "dataAiHintCover": "carros patio leilao", "dataAiHintMegaMenu": null, "createdAt": "2025-06-14T04:56:12.389Z", "updatedAt": "2025-05-25T04:56:12.389Z" },
-    { "name": "Máquinas e Equipamentos", "slug": "maquinas-e-equipamentos", "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.", "id": "cat-maquinas-e-equipamentos", "itemCount": 3, "hasSubcategories": true, "logoMediaId": null, "coverImageMediaId": null, "megaMenuImageMediaId": null, "dataAiHintLogo": null, "dataAiHintCover": "maquinas pesadas industrial", "dataAiHintMegaMenu": null, "createdAt": "2025-06-12T04:56:12.389Z", "updatedAt": "2025-05-27T04:56:12.389Z" },
-    { "id": "cat-eletro-eletronicos-0e98", "name": "Eletro Eletrônicos", "slug": "eletro-eletronicos", "description": "", "itemCount": 0, "hasSubcategories": false, "createdAt": "2025-07-06T01:04:46.498Z", "updatedAt": "2025-07-06T01:04:46.498Z" },
-    { "id":"cat-embarcacoes","name":"Embarcações","slug":"embarcacoes","description":"Lanchas, barcos, veleiros, jet skis.","hasSubcategories":true,"createdAt":"2025-01-01T00:00:00.000Z","updatedAt":"2025-01-01T00:00:00.000Z" }
+    { "id": "cat-imoveis", "name": "Imóveis", "slug": "imoveis", "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.", "iconName": "Building", "dataAiHintIcon": "predio casa" },
+    { "id": "cat-veiculos", "name": "Veículos", "slug": "veiculos", "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.", "iconName": "Car" },
+    { "id": "cat-maquinas-e-equipamentos", "name": "Máquinas e Equipamentos", "slug": "maquinas-e-equipamentos", "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.", "iconName": "Tractor" },
+    { "id": "cat-eletronicos-e-tecnologia", "name": "Eletrônicos e Tecnologia", "slug": "eletronicos-e-tecnologia", "description": "Celulares, computadores, televisores e componentes.", "iconName": "Smartphone" },
+    { "id": "cat-casa-e-decoracao", "name": "Casa e Decoração", "slug": "casa-e-decoracao", "description": "Móveis, eletrodomésticos, utensílios e itens de decoração.", "iconName": "Home" },
+    { "id": "cat-arte-e-antiguidades", "name": "Arte e Antiguidades", "slug": "arte-e-antiguidades", "description": "Obras de arte, antiguidades e itens colecionáveis.", "iconName": "Paintbrush" },
+    { "id": "cat-joias-e-acessorios", "name": "Joias e Acessórios", "slug": "joias-e-acessorios", "description": "Joias, relógios de luxo e bolsas de grife.", "iconName": "Diamond" },
+    { "id": "cat-semoventes", "name": "Semoventes", "slug": "semoventes", "description": "Animais como bovinos, equinos, ovinos e caprinos.", "iconName": "PawPrint" },
+    { "id": "cat-materiais-e-sucatas", "name": "Materiais e Sucatas", "slug": "materiais-e-sucatas", "description": "Materiais de construção e sucatas metálicas.", "iconName": "Wrench" },
+    { "id": "cat-industrial-geral", "name": "Industrial Geral", "slug": "industrial-geral", "description": "Estoques, matéria-prima e mobiliário corporativo.", "iconName": "Factory" },
+    { "id": "cat-embarcacoes", "name": "Embarcações", "slug": "embarcacoes", "description": "Lanchas, barcos, veleiros e jet skis.", "iconName": "Anchor" },
+    { "id": "cat-bens-diversos", "name": "Bens Diversos", "slug": "bens-diversos", "description": "Itens que não se encaixam nas outras categorias.", "iconName": "Hammer" }
   ],
   "sampleLotQuestions": [],
   "sampleLotReviews": [],
@@ -2820,15 +2827,57 @@
     }
   ],
   "sampleSubcategories": [
-    { "name": "Apartamentos", "parentCategoryId": "cat-imoveis", "id": "subcat-imoveis-apartamentos", "slug": "apartamentos" },
-    { "name": "Casas", "parentCategoryId": "cat-imoveis", "id": "subcat-imoveis-casas", "slug": "casas" },
-    { "name": "Carros", "parentCategoryId": "cat-veiculos", "id": "subcat-veiculos-carros", "slug": "carros" },
-    { "name": "Motos", "parentCategoryId": "cat-veiculos", "id": "subcat-veiculos-motos", "slug": "motos" },
-    { "name": "Máquinas Agrícolas", "parentCategoryId": "cat-maquinas-e-equipamentos", "id": "subcat-maquinas-agricolas", "slug": "maquinas-agricolas" },
-    { "name": "Equipamentos de Construção", "parentCategoryId": "cat-maquinas-e-equipamentos", "id": "subcat-equipamentos-construcao", "slug": "equipamentos-construcao" },
-    { "name": "Celulares e Smartphones", "parentCategoryId": "cat-eletronicos-e-tecnologia", "id": "subcat-eletronicos-celulares", "slug": "celulares-e-smartphones" },
-    { "name": "Lanchas e Iates", "parentCategoryId": "cat-embarcacoes", "id": "subcat-embarcacoes-lanchas", "slug": "lanchas-e-iates" },
-    { "name": "Jet Skis", "parentCategoryId": "cat-embarcacoes", "id": "subcat-embarcacoes-jetskis", "slug": "jet-skis" }
+    {"id": "sub-imoveis-apartamentos", "name": "Apartamentos", "parentCategoryId": "cat-imoveis", "slug": "apartamentos"},
+    {"id": "sub-imoveis-casas", "name": "Casas", "parentCategoryId": "cat-imoveis", "slug": "casas"},
+    {"id": "sub-imoveis-terrenos", "name": "Terrenos e Lotes", "parentCategoryId": "cat-imoveis", "slug": "terrenos-e-lotes"},
+    {"id": "sub-imoveis-comercial", "name": "Salas e Lojas Comerciais", "parentCategoryId": "cat-imoveis", "slug": "salas-e-lojas-comerciais"},
+    {"id": "sub-imoveis-industrial", "name": "Galpões e Prédios Industriais", "parentCategoryId": "cat-imoveis", "slug": "galpoes-e-predios-industriais"},
+    {"id": "sub-imoveis-rurais", "name": "Imóveis Rurais", "parentCategoryId": "cat-imoveis", "slug": "imoveis-rurais"},
+
+    {"id": "sub-veiculos-carros", "name": "Carros", "parentCategoryId": "cat-veiculos", "slug": "carros"},
+    {"id": "sub-veiculos-motos", "name": "Motos", "parentCategoryId": "cat-veiculos", "slug": "motos"},
+    {"id": "sub-veiculos-caminhoes", "name": "Caminhões e Ônibus", "parentCategoryId": "cat-veiculos", "slug": "caminhoes-e-onibus"},
+    {"id": "sub-veiculos-pesados", "name": "Veículos Pesados", "parentCategoryId": "cat-veiculos", "slug": "veiculos-pesados"},
+    {"id": "sub-veiculos-aeronaves", "name": "Aeronaves", "parentCategoryId": "cat-veiculos", "slug": "aeronaves"},
+
+    {"id": "sub-maquinas-agricolas", "name": "Máquinas Agrícolas", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "maquinas-agricolas"},
+    {"id": "sub-maquinas-industriais", "name": "Máquinas Industriais", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "maquinas-industriais"},
+    {"id": "sub-maquinas-construcao", "name": "Equipamentos de Construção", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "equipamentos-de-construcao"},
+
+    {"id": "sub-eletronicos-celulares", "name": "Celulares e Tablets", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "celulares-e-tablets"},
+    {"id": "sub-eletronicos-computadores", "name": "Computadores e Notebooks", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "computadores-e-notebooks"},
+    {"id": "sub-eletronicos-audio-video", "name": "Televisores e Áudio", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "televisores-e-audio"},
+    {"id": "sub-eletronicos-componentes", "name": "Componentes e Peças", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "componentes-e-pecas"},
+
+    {"id": "sub-casa-moveis", "name": "Móveis Residenciais", "parentCategoryId": "cat-casa-e-decoracao", "slug": "moveis-residenciais"},
+    {"id": "sub-casa-eletrodomesticos", "name": "Eletrodomésticos", "parentCategoryId": "cat-casa-e-decoracao", "slug": "eletrodomesticos"},
+    {"id": "sub-casa-utensilios", "name": "Utensílios de Cozinha", "parentCategoryId": "cat-casa-e-decoracao", "slug": "utensilios-de-cozinha"},
+    {"id": "sub-casa-decoracao", "name": "Decoração e Iluminação", "parentCategoryId": "cat-casa-e-decoracao", "slug": "decoracao-e-iluminacao"},
+
+    {"id": "sub-arte-obras", "name": "Obras de Arte", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "obras-de-arte"},
+    {"id": "sub-arte-antiguidades", "name": "Antiguidades", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "antiguidades"},
+    {"id": "sub-arte-colecionaveis", "name": "Itens Colecionáveis", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "itens-colecionaveis"},
+    {"id": "sub-arte-numismatica", "name": "Numismática", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "numismatica"},
+
+    {"id": "sub-joias-joias", "name": "Joias", "parentCategoryId": "cat-joias-e-acessorios", "slug": "joias"},
+    {"id": "sub-joias-relogios", "name": "Relógios de Luxo", "parentCategoryId": "cat-joias-e-acessorios", "slug": "relogios-de-luxo"},
+    {"id": "sub-joias-bolsas", "name": "Bolsas de Grife", "parentCategoryId": "cat-joias-e-acessorios", "slug": "bolsas-de-grife"},
+
+    {"id": "sub-semoventes-bovinos", "name": "Bovinos", "parentCategoryId": "cat-semoventes", "slug": "bovinos"},
+    {"id": "sub-semoventes-equinos", "name": "Equinos", "parentCategoryId": "cat-semoventes", "slug": "equinos"},
+    {"id": "sub-semoventes-ovinos-caprinos", "name": "Ovinos e Caprinos", "parentCategoryId": "cat-semoventes", "slug": "ovinos-e-caprinos"},
+
+    {"id": "sub-materiais-construcao", "name": "Materiais de Construção", "parentCategoryId": "cat-materiais-e-sucatas", "slug": "materiais-de-construcao"},
+    {"id": "sub-materiais-sucatas", "name": "Sucatas Metálicas", "parentCategoryId": "cat-materiais-e-sucatas", "slug": "sucatas-metalicas"},
+
+    {"id": "sub-industrial-estoques", "name": "Estoques Industriais", "parentCategoryId": "cat-industrial-geral", "slug": "estoques-industriais"},
+    {"id": "sub-industrial-materia-prima", "name": "Matéria-prima", "parentCategoryId": "cat-industrial-geral", "slug": "materia-prima"},
+    {"id": "sub-industrial-mobiliario", "name": "Mobiliário Corporativo", "parentCategoryId": "cat-industrial-geral", "slug": "mobiliario-corporativo"},
+
+    {"id": "sub-embarcacoes-lanchas", "name": "Lanchas e Iates", "parentCategoryId": "cat-embarcacoes", "slug": "lanchas-e-iates"},
+    {"id": "sub-embarcacoes-jetskis", "name": "Jet Skis", "parentCategoryId": "cat-embarcacoes", "slug": "jet-skis"},
+    {"id": "sub-embarcacoes-veleiros", "name": "Veleiros", "parentCategoryId": "cat-embarcacoes", "slug": "veleiros"},
+    {"id": "sub-embarcacoes-barcos-pesca", "name": "Barcos de Pesca", "parentCategoryId": "cat-embarcacoes", "slug": "barcos-de-pesca"}
   ],
   "sampleUserBids": [],
   "sampleUserDocuments": [],
