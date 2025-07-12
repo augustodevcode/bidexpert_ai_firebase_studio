@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "npm run db:init && next dev --port 9003",
+    "dev": "npm run db:init && npm run db:seed && next dev --port 9003",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
