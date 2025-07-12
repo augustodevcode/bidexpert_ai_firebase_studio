@@ -1,6 +1,8 @@
+
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, getSampleStatesAndCities } from '@/lib/sample-data';
+import type { Role, LotCategory, Subcategory, Court, StateInfo, CityInfo, CityFormData } from '@/types';
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -21,7 +23,7 @@ async function seedEssentialData() {
         // Roles
         console.log("[DB INIT - DML] Seeding roles...");
         const existingRoles = await db.getRoles();
-        const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
+        const rolesToCreate = sampleRoles.filter((role: Role) => !existingRoles.some(er => er.name_normalized === role.name_normalized));
         for (const role of rolesToCreate) {
             await db.createRole(role);
         }
@@ -30,7 +32,7 @@ async function seedEssentialData() {
         // Categories
         console.log("[DB INIT - DML] Seeding categories...");
         const existingCategories = await db.getLotCategories();
-        const categoriesToCreate = sampleLotCategories.filter(cat => !existingCategories.some(ec => ec.slug === cat.slug));
+        const categoriesToCreate = sampleLotCategories.filter((cat: LotCategory) => !existingCategories.some(ec => ec.slug === cat.slug));
         for (const category of categoriesToCreate) {
             await db.createLotCategory(category);
         }
@@ -40,16 +42,18 @@ async function seedEssentialData() {
         console.log("[DB INIT - DML] Seeding subcategories...");
         // @ts-ignore
         const allSubcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent() : [];
-        const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
+        const subcategoriesToCreate = sampleSubcategories.filter((sub: Subcategory) => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
         for (const subcategory of subcategoriesToCreate) {
             await db.createSubcategory(subcategory);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
         
+        const { states, cities } = getSampleStatesAndCities();
+
         // States
         console.log("[DB INIT - DML] Seeding states...");
         const existingStates = await db.getStates();
-        const statesToCreate = sampleStates.filter(state => !existingStates.some(es => es.uf === state.uf));
+        const statesToCreate = states.filter((state: StateInfo) => !existingStates.some(es => es.uf === state.uf));
         for (const state of statesToCreate) {
              await db.createState(state);
         }
@@ -58,16 +62,16 @@ async function seedEssentialData() {
         // Cities
         console.log("[DB INIT - DML] Seeding cities...");
         const existingCities = await db.getCities();
-        const citiesToCreate = sampleCities.filter(city => !existingCities.some(ec => ec.slug === city.slug && ec.stateId === city.stateId));
+        const citiesToCreate = cities.filter((city: CityInfo) => !existingCities.some(ec => ec.slug === city.slug && ec.stateId === city.stateId));
         for (const city of citiesToCreate) {
-             await db.createCity(city);
+             await db.createCity(city as CityFormData);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities inserted.`);
 
         // Courts
         console.log("[DB INIT - DML] Seeding courts...");
         const existingCourts = await db.getCourts();
-        const courtsToCreate = sampleCourts.filter(court => !existingCourts.some(ec => ec.slug === court.slug));
+        const courtsToCreate = sampleCourts.filter((court: Court) => !existingCourts.some(ec => ec.slug === court.slug));
         for (const court of courtsToCreate) {
             // @ts-ignore
             await db.createCourt(court);

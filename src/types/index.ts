@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -268,7 +269,7 @@ export interface Auction {
   allowInstallmentBids: boolean;
   softCloseEnabled: boolean;
   softCloseMinutes: number;
-  estimatedRevenue?: number;
+  estimatedRevenue?: estimatedRevenue;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
   isFeaturedOnMarketplace: boolean;
@@ -279,6 +280,17 @@ export interface Auction {
   decrementAmount?: number | null;
   decrementIntervalSeconds?: number | null;
   floorPrice?: number | null;
+  autoRelistSettings?: {
+    enableAutoRelist: boolean;
+    recurringAutoRelist: boolean;
+    relistIfWinnerNotPaid: boolean;
+    relistIfWinnerNotPaidAfterHours?: number | null;
+    relistIfNoBids: boolean;
+    relistIfNoBidsAfterHours?: number | null;
+    relistIfReserveNotMet: boolean;
+    relistIfReserveNotMetAfterHours?: number | null;
+    relistDurationInHours?: number | null;
+  };
   // Timestamps
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -940,7 +952,7 @@ export interface DatabaseAdapter {
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
     createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
     updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
-    deleteSubcategory(id: string): Promise<{ success: boolean; message: string }>;
+    deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
     
     getStates(): Promise<StateInfo[]>;
     getCities(stateId?: string): Promise<CityInfo[]>;
@@ -997,3 +1009,20 @@ export interface DatabaseAdapter {
 }
 
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'lotCount'>;
+
+export interface BemFormData {
+  title: string;
+  description?: string | null;
+  status: 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
+  categoryId: string;
+  subcategoryId?: string | null;
+  judicialProcessId?: string | null;
+  sellerId?: string | null;
+  evaluationValue?: number | null;
+  imageUrl?: string | null;
+  locationCity?: string;
+  locationState?: string;
+  address?: string;
+  latitude?: number | null;
+  longitude?: string | null;
+}

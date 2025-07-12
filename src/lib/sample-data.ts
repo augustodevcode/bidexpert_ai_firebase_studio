@@ -1,3 +1,4 @@
+
 // src/lib/sample-data.ts
 import { slugify } from './sample-data-helpers';
 import type { StateInfo, CityInfo } from '@/types';
@@ -28,7 +29,7 @@ export const sampleBens = (sampleData as any).sampleBens || [];
 export const samplePlatformSettings = (sampleData as any).samplePlatformSettings || {};
 export const sampleContactMessages = (sampleData as any).sampleContactMessages || [];
 
-export const sampleStates: Omit<StateInfo, 'id' | 'slug' | 'cityCount'>[] = [
+const sampleStatesData: Omit<StateInfo, 'id' | 'slug' | 'cityCount'>[] = [
     { name: 'Acre', uf: 'AC' }, { name: 'Alagoas', uf: 'AL' }, { name: 'Amapá', uf: 'AP' },
     { name: 'Amazonas', uf: 'AM' }, { name: 'Bahia', uf: 'BA' }, { name: 'Ceará', uf: 'CE' },
     { name: 'Distrito Federal', uf: 'DF' }, { name: 'Espírito Santo', uf: 'ES' }, { name: 'Goiás', uf: 'GO' },
@@ -40,7 +41,7 @@ export const sampleStates: Omit<StateInfo, 'id' | 'slug' | 'cityCount'>[] = [
     { name: 'São Paulo', uf: 'SP' }, { name: 'Sergipe', uf: 'SE' }, { name: 'Tocantins', uf: 'TO' }
 ];
 
-export const sampleCities: Omit<CityInfo, 'id' | 'slug' | 'stateId' | 'lotCount'>[] = [
+const sampleCitiesData: Omit<CityInfo, 'id' | 'slug' | 'stateId' | 'lotCount'>[] = [
   // Cidades do Acre (AC)
   { name: 'Acrelândia', stateUf: 'AC', ibgeCode: '1200013'}, { name: 'Assis Brasil', stateUf: 'AC', ibgeCode: '1200054'},
   { name: 'Brasiléia', stateUf: 'AC', ibgeCode: '1200104'}, { name: 'Bujari', stateUf: 'AC', ibgeCode: '1200138'},
@@ -53,7 +54,6 @@ export const sampleCities: Omit<CityInfo, 'id' | 'slug' | 'stateId' | 'lotCount'
   { name: 'Rodrigues Alves', stateUf: 'AC', ibgeCode: '1200427'}, { name: 'Santa Rosa do Purus', stateUf: 'AC', ibgeCode: '1200435'},
   { name: 'Sena Madureira', stateUf: 'AC', ibgeCode: '1200500'}, { name: 'Senador Guiomard', stateUf: 'AC', ibgeCode: '1200450'},
   { name: 'Tarauacá', stateUf: 'AC', ibgeCode: '1200609'}, { name: 'Xapuri', stateUf: 'AC', ibgeCode: '1200708'},
-  // ... (a lista completa seria muito longa para exibir aqui, mas o código irá contê-la)
   { name: 'Maceió', stateUf: 'AL', ibgeCode: '2704302'}, { name: 'Arapiraca', stateUf: 'AL', ibgeCode: '2700300'},
   { name: 'Macapá', stateUf: 'AP', ibgeCode: '1600303'}, { name: 'Santana', stateUf: 'AP', ibgeCode: '1600600'},
   { name: 'Manaus', stateUf: 'AM', ibgeCode: '1302603'}, { name: 'Parintins', stateUf: 'AM', ibgeCode: '1303403'},
@@ -81,6 +81,28 @@ export const sampleCities: Omit<CityInfo, 'id' | 'slug' | 'stateId' | 'lotCount'
   { name: 'São Paulo', stateUf: 'SP', ibgeCode: '3550308'}, { name: 'Guarulhos', stateUf: 'SP', ibgeCode: '3518800'},
   { name: 'Palmas', stateUf: 'TO', ibgeCode: '1721000'}, { name: 'Araguaína', stateUf: 'TO', ibgeCode: '1702109'}
 ];
+
+export function getSampleStatesAndCities() {
+    const states = sampleStatesData.map(s => ({
+        ...s,
+        id: `state-${s.uf.toLowerCase()}`,
+        slug: slugify(s.name)
+    })) as StateInfo[];
+
+    const cities = sampleCitiesData.map(c => {
+        const parentState = states.find(s => s.uf === c.stateUf);
+        return {
+            ...c,
+            id: `city-${slugify(c.name)}-${c.stateUf.toLowerCase()}`,
+            slug: slugify(c.name),
+            stateId: parentState?.id || '',
+        };
+    }) as CityInfo[];
+
+    return { states, cities };
+}
+
+export const { states: sampleStates, cities: sampleCities } = getSampleStatesAndCities();
 
 
 // Helper function to link data
