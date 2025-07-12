@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Regional Federal da 2ª Região (TRF2)",
+  "endereco": "R Acre, 80 - Centro - Rio de Janeiro/RJ - CEP: 20081-000",
+  "telefone": "(21) 2282-8000",
+  "site": "https://www10.trf2.jus.br/portal/",
+  "assessoria_comunicacao": {
+    "telefone": "(21) 2282-8538",
+    "email": "imprensa@trf2.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://www10.trf2.jus.br/memoria/"
+}

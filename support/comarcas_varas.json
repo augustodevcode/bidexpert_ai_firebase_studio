@@ -1,0 +1,145 @@
+[
+  {
+    "tribunal": "Supremo Tribunal Federal (STF)",
+    "endereco": "Praça dos Três Poderes, s/n - Centro - Brasília/DF - CEP: 70175-900",
+    "telefone": "(61) 3217-3000",
+    "site": "http://portal.stf.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3217-3826",
+      "email": "imprensa@stf.jus.br"
+    },
+    "memoria_acervo_arquivistico": "http://portal.stf.jus.br/textos/verTexto.asp?servico=sobreStfAcervoMuseu"
+  },
+  {
+    "tribunal": "Superior Tribunal de Justiça (STJ)",
+    "endereco": "SAFS Quadra 06 Lote 01 Trecho III - Asa Sul - Brasília/DF - CEP: 70095-900",
+    "telefone": "(61) 3319-8000",
+    "site": "https://www.stj.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3319-8593/8069/8026",
+      "email": "imprensa@stj.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.stj.jus.br/sites/portalp/Institucional/Educacao-e-cultura/Museu"
+  },
+  {
+    "tribunal": "Conselho da Justiça Federal (CJF)",
+    "endereco": "Setor de Clubes Esportivos Sul trecho 3 pólo 8 lote 9 - Asa Sul - Brasília/DF - CEP: 70200-003",
+    "telefone": "(61) 3022-7000",
+    "site": "https://www.cjf.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3022-7070 / 3022-7071",
+      "email": "ascom@cjf.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www2.cjf.jus.br/memoriavirtual"
+  },
+  {
+    "tribunal": "Superior Tribunal Militar (STM)",
+    "endereco": "Setor de Autarquias Sul quadra 1 - Edifício-Sede bloco B - Asa Sul - Brasília/DF - CEP: 70098-900",
+    "telefone": "(61) 3313-9292",
+    "site": "https://www.stm.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3313-9220",
+      "email": "ascom@stm.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.stm.jus.br/o-stm-stm/memoria"
+  },
+  {
+    "tribunal": "Tribunal Superior do Trabalho (TST)",
+    "endereco": "SAFS Quadra 8 Conjunto A Blocos A/B/C - Asa Sul - Brasília/DF - CEP: 70070-943",
+    "telefone": "(61) 3043-4300",
+    "site": "http://www.tst.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3043-7882",
+      "email": "secom@tst.jus.br"
+    },
+    "memoria_acervo_arquivistico": "http://www.tst.jus.br/web/guest/apresentacao-memoria-viva"
+  },
+  {
+    "tribunal": "Conselho Superior da Justiça do Trabalho (CSJT)",
+    "endereco": "Setor de Administração Federal Sul quadra 8 conjunto A bloco A, 5º Andar - Asa Sul - Brasília/DF - CEP: 70070-600",
+    "telefone": "(61) 3043-4005",
+    "site": "http://www.csjt.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3043-7882",
+      "email": "secom@tst.jus.br"
+    },
+    "memoria_acervo_arquivistico": "http://www.csjt.jus.br/web/csjt/memoria-da-jt"
+  },
+  {
+    "tribunal": "Tribunal Superior Eleitoral (TSE)",
+    "endereco": "Setor de Administração Federal Sul quadra 7 lotes 1/2 - Asa Sul - Brasília/DF - CEP: 70070-600",
+    "telefone": "(61) 3030-7000",
+    "site": "https://www.tse.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3030-7077/7078",
+      "email": "imprensa@tse.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.tse.jus.br/o-tse/cultura-e-historia/historia-do-tse"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 1ª Região (TRF1)",
+    "endereco": "SAU Sul quadra 2 bloco A - Praça dos Tribunais Superiores - Brasília/DF - CEP: 70070-900",
+    "telefone": "(61) 3314-5225",
+    "site": "https://portal.trf1.jus.br/portaltrf1/pagina-inicial.htm",
+    "assessoria_comunicacao": {
+      "telefone": "(61) 3314-5338",
+      "email": "ascom.trf1@trf1.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://portal.trf1.jus.br/portaltrf1/institucional/memoria-institucional/home-memoria-institucional.htm"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 2ª Região (TRF2)",
+    "endereco": "R Acre, 80 - Centro - Rio de Janeiro/RJ - CEP: 20081-000",
+    "telefone": "(21) 2282-8000",
+    "site": "https://www10.trf2.jus.br/portal/",
+    "assessoria_comunicacao": {
+      "telefone": "(21) 2282-8538",
+      "email": "imprensa@trf2.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www10.trf2.jus.br/memoria/"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 3ª Região (TRF3)",
+    "endereco": "Av Paulista, 1842 - Bela Vista - São Paulo/SP - CEP: 01310-936",
+    "telefone": "(11) 3012-1000",
+    "site": "https://www.trf3.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(11) 3012-1446 / 3012-1301",
+      "email": "acom@trf3.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.trf3.jus.br/seju/memoria-do-tribunal-regional-federal-da-3a-regiao"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 4ª Região (TRF4)",
+    "endereco": "R Otávio Francisco Caruso da Rocha, 300 - Praia de Belas - Porto Alegre/RS - CEP: 90010-395",
+    "telefone": "(51) 3213-3000",
+    "site": "https://www.trf4.jus.br/trf4/controlador.php?acao=principal",
+    "assessoria_comunicacao": {
+      "telefone": "(51) 3213-3030",
+      "email": "imprensa@trf4.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=2183"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 5ª Região (TRF5)",
+    "endereco": "Cais do Apolo, s/n - Edifício Ministro Djaci Falcão - Bairro do Recife - Recife/PE - CEP: 50030-908",
+    "telefone": "(81) 3425-9000",
+    "site": "https://www.trf5.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": "(81) 3425-9065 / 3425-9011 / 3425-9019",
+      "email": "comunicacaosocial@trf5.jus.br"
+    },
+    "memoria_acervo_arquivistico": "https://www.trf5.jus.br/index.php/memorial"
+  },
+  {
+    "tribunal": "Tribunal Regional Federal da 6ª Região (TRF6)",
+    "endereco": "Av. Álvares Cabral, 1805 - Santo Agostinho - Belo Horizonte/MG - CEP: 30170-001",
+    "telefone": "(31) 3501-1300",
+    "site": "https://portal.trf6.jus.br/",
+    "assessoria_comunicacao": {
+      "telefone": null,
+      "email": null
+    },
+    "memoria_acervo_arquivistico": "https://portal.trf6.jus.br/memoria/"
+  }
+]

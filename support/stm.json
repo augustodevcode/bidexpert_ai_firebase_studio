@@ -1,0 +1,11 @@
+{
+  "tribunal": "Superior Tribunal Militar (STM)",
+  "endereco": "Setor de Autarquias Sul quadra 1 - Edifício-Sede bloco B - Asa Sul - Brasília/DF - CEP: 70098-900",
+  "telefone": "(61) 3313-9292",
+  "site": "https://www.stm.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": "(61) 3313-9220",
+    "email": "ascom@stm.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://www.stm.jus.br/o-stm-stm/memoria"
+}

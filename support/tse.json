@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Superior Eleitoral (TSE)",
+  "endereco": "Setor de Administração Federal Sul quadra 7 lotes 1/2 - Asa Sul - Brasília/DF - CEP: 70070-600",
+  "telefone": "(61) 3030-7000",
+  "site": "https://www.tse.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": "(61) 3030-7077/7078",
+    "email": "imprensa@tse.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://www.tse.jus.br/o-tse/cultura-e-historia/historia-do-tse"
+}

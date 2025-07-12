@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Regional Federal da 3ª Região (TRF3)",
+  "endereco": "Av Paulista, 1842 - Bela Vista - São Paulo/SP - CEP: 01310-936",
+  "telefone": "(11) 3012-1000",
+  "site": "https://www.trf3.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": "(11) 3012-1446 / 3012-1301",
+    "email": "acom@trf3.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://www.trf3.jus.br/seju/memoria-do-tribunal-regional-federal-da-3a-regiao"
+}

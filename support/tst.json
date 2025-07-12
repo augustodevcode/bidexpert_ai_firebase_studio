@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Superior do Trabalho (TST)",
+  "endereco": "SAFS Quadra 8 Conjunto A Blocos A/B/C - Asa Sul - Brasília/DF - CEP: 70070-943",
+  "telefone": "(61) 3043-4300",
+  "site": "http://www.tst.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": "(61) 3043-7882",
+    "email": "secom@tst.jus.br"
+  },
+  "memoria_acervo_arquivistico": "http://www.tst.jus.br/web/guest/apresentacao-memoria-viva"
+}

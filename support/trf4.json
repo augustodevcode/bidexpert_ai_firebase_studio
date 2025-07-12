@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Regional Federal da 4ª Região (TRF4)",
+  "endereco": "R Otávio Francisco Caruso da Rocha, 300 - Praia de Belas - Porto Alegre/RS - CEP: 90010-395",
+  "telefone": "(51) 3213-3000",
+  "site": "https://www.trf4.jus.br/trf4/controlador.php?acao=principal",
+  "assessoria_comunicacao": {
+    "telefone": "(51) 3213-3030",
+    "email": "imprensa@trf4.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://www.trf4.jus.br/trf4/controlador.php?acao=pagina_visualizar&id_pagina=2183"
+}

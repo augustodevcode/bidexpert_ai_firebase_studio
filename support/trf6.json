@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Regional Federal da 6ª Região (TRF6)",
+  "endereco": "Av. Álvares Cabral, 1805 - Santo Agostinho - Belo Horizonte/MG - CEP: 30170-001",
+  "telefone": "(31) 3501-1300",
+  "site": "https://portal.trf6.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": null,
+    "email": null
+  },
+  "memoria_acervo_arquivistico": "https://portal.trf6.jus.br/memoria/"
+}

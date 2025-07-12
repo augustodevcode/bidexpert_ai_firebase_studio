@@ -1,0 +1,11 @@
+{
+  "tribunal": "Tribunal Regional Federal da 1ª Região (TRF1)",
+  "endereco": "SAU Sul quadra 2 bloco A - Praça dos Tribunais Superiores - Brasília/DF - CEP: 70070-900",
+  "telefone": "(61) 3314-5225",
+  "site": "https://portal.trf1.jus.br/portaltrf1/pagina-inicial.htm",
+  "assessoria_comunicacao": {
+    "telefone": "(61) 3314-5338",
+    "email": "ascom.trf1@trf1.jus.br"
+  },
+  "memoria_acervo_arquivistico": "https://portal.trf1.jus.br/portaltrf1/institucional/memoria-institucional/home-memoria-institucional.htm"
+}

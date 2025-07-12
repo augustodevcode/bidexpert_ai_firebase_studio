@@ -1,0 +1,11 @@
+{
+  "tribunal": "Supremo Tribunal Federal (STF)",
+  "endereco": "Praça dos Três Poderes, s/n - Centro - Brasília/DF - CEP: 70175-900",
+  "telefone": "(61) 3217-3000",
+  "site": "http://portal.stf.jus.br/",
+  "assessoria_comunicacao": {
+    "telefone": "(61) 3217-3826",
+    "email": "imprensa@stf.jus.br"
+  },
+  "memoria_acervo_arquivistico": "http://portal.stf.jus.br/textos/verTexto.asp?servico=sobreStfAcervoMuseu"
+}
