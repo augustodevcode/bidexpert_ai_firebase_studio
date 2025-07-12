@@ -105,9 +105,11 @@ export class MySqlAdapter implements DatabaseAdapter {
             const header = result as ResultSetHeader;
             return { success: true, message: 'Operação realizada com sucesso.', insertId: header.insertId };
         } catch (error: any) {
-             console.error(`[MySqlAdapter] Erro na mutação: "${sql}". Erro: ${error.message}`);
-             // Re-throw the error instead of handling it here. Let the caller decide how to handle it.
-             throw error;
+             if (error.code === 'ER_DUP_ENTRY') {
+                return { success: true, message: 'Item já existe, ignorado.' };
+            }
+            console.error(`[MySqlAdapter] Erro na mutação: "${sql}". Erro: ${error.message}`);
+            return { success: false, message: `Erro no banco de dados: ${error.message}` };
         } finally {
             connection.release();
         }
@@ -157,7 +159,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
         const values = Object.values(snakeCaseData);
 
-        const sql = `INSERT INTO \`platform_settings\` (${fields}) VALUES (${placeholders}) ON CONFLICT (id) DO UPDATE SET name = VALUES(name)`;
+        const sql = `INSERT IGNORE INTO \`platform_settings\` (${fields}) VALUES (${placeholders})`;
         return this.executeMutation(sql, values);
     }
 
@@ -290,10 +292,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getLotCategories(): Promise<LotCategory[]> { return this.executeQuery('SELECT * FROM `lot_categories` ORDER BY `name`'); }
     
     async getSubcategoriesByParent(parentCategoryId?: number): Promise<Subcategory[]> {
-        if (parentCategoryId === undefined) {
-          return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
+        if (parentCategoryId) {
+            return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
         }
-        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
+        return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
     }
     async getSubcategory(id: number): Promise<Subcategory | null> {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
@@ -341,7 +343,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
         const values = Object.values(snakeCaseData);
 
-        const sql = `INSERT INTO \`roles\` (${fields}) VALUES (${placeholders})`;
+        const sql = `INSERT IGNORE INTO \`roles\` (${fields}) VALUES (${placeholders})`;
         return this.executeMutation(sql, values);
     }
     
@@ -479,7 +481,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const snakeData = convertObjectToSnakeCase(data);
         const fields = Object.keys(snakeData).map(k => `\`${k}\``).join(', ');
         const placeholders = Object.keys(snakeData).map(() => '?').join(', ');
-        const sql = `INSERT INTO \`lot_categories\` (${fields}) VALUES (${placeholders})`;
+        const sql = `INSERT IGNORE INTO \`lot_categories\` (${fields}) VALUES (${placeholders})`;
         return this.executeMutation(sql, Object.values(snakeData));
     }
 
@@ -487,7 +489,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         const snakeData = convertObjectToSnakeCase(data);
         const fields = Object.keys(snakeData).map(k => `\`${k}\``).join(', ');
         const placeholders = Object.keys(snakeData).map(() => '?').join(', ');
-        const sql = `INSERT INTO \`subcategories\` (${fields}) VALUES (${placeholders})`;
+        const sql = `INSERT IGNORE INTO \`subcategories\` (${fields}) VALUES (${placeholders})`;
         const result = await this.executeMutation(sql, Object.values(snakeData));
         return { ...result, subcategoryId: result.insertId };
     }
