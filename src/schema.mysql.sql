@@ -182,5 +182,3 @@ CREATE TABLE IF NOT EXISTS `bens` (`id` INT AUTO_INCREMENT PRIMARY KEY, `public_
 CREATE TABLE IF NOT EXISTS `lot_bens` (`lot_id` INT, `bem_id` INT, PRIMARY KEY (`lot_id`, `bem_id`));
 CREATE TABLE IF NOT EXISTS `document_templates` (`id` VARCHAR(255) PRIMARY KEY, `name` VARCHAR(255), `type` VARCHAR(50), `content` LONGTEXT, `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
 CREATE TABLE IF NOT EXISTS `contact_messages` (`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(255), `email` VARCHAR(255), `subject` VARCHAR(255), `message` TEXT, `is_read` BOOLEAN DEFAULT FALSE, `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
-
-```

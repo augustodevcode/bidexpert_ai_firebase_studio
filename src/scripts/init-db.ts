@@ -2,7 +2,7 @@
 import dotenv from 'dotenv';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/get-adapter'; 
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories } from '../lib/sample-data';
 import fs from 'fs';
 import mysql, { type Pool } from 'mysql2/promise';
 
@@ -60,24 +60,23 @@ async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) 
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
-    const db = getDatabaseAdapter(); // Get a fresh adapter instance AFTER schema changes
+    const db = getDatabaseAdapter(); 
     try {
         // Platform Settings
         console.log('[DB INIT - DML] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             await db.createPlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
         } else {
-            await db.updatePlatformSettings(samplePlatformSettings);
+            console.log("[DB INIT - DML] 🟡 INFO: Platform settings already exist.");
         }
-        console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings seeded.");
 
         // Roles
         console.log("[DB INIT - DML] Seeding roles...");
         const existingRoles = await db.getRoles();
         const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
         for (const role of rolesToCreate) {
-             // @ts-ignore
              await db.createRole(role);
         }
         console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
@@ -94,7 +93,7 @@ async function seedEssentialData() {
         // Subcategories
         console.log("[DB INIT - DML] Seeding subcategories...");
         // @ts-ignore
-        const allSubcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent() : [];
+        const allSubcategories = await db.getSubcategoriesByParent();
         const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
 
         for (const subcategory of subcategoriesToCreate) {
