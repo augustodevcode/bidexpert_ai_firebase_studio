@@ -269,7 +269,7 @@ export interface Auction {
   allowInstallmentBids: boolean;
   softCloseEnabled: boolean;
   softCloseMinutes: number;
-  estimatedRevenue?: estimatedRevenue;
+  estimatedRevenue?: number;
   achievedRevenue?: number;
   totalHabilitatedUsers?: number;
   isFeaturedOnMarketplace: boolean;
@@ -332,7 +332,7 @@ export interface UserProfileData {
   state?: string;
   avatarUrl?: string;
   dataAiHint?: string;
-  roleIds: string[]; // Changed from roleId: string | null
+  roleIds: string[]; 
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
@@ -363,7 +363,7 @@ export interface UserProfileData {
 }
 
 export interface UserProfileWithPermissions extends UserProfileData {
-  roleNames: string[]; // Changed from roleName
+  roleNames: string[];
   permissions: string[];
 }
 
