@@ -1,701 +1,186 @@
--- Schema para BidExpert em MySQL
 
-CREATE TABLE `roles` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `name_normalized` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `permissions` JSON,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `name_normalized_unique` (`name_normalized`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Tabela de Usuários
+CREATE TABLE IF NOT EXISTS `users` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `uid` VARCHAR(255) UNIQUE NOT NULL,
+    `email` VARCHAR(255) UNIQUE NOT NULL,
+    `password` VARCHAR(255),
+    `full_name` VARCHAR(255),
+    `role_id` VARCHAR(255),
+    `habilitation_status` VARCHAR(50),
+    `account_type` VARCHAR(50),
+    `cpf` VARCHAR(20),
+    `date_of_birth` DATE,
+    `razao_social` VARCHAR(255),
+    `cnpj` VARCHAR(20),
+    `inscricao_estadual` VARCHAR(30),
+    `website` VARCHAR(255),
+    `cell_phone` VARCHAR(20),
+    `home_phone` VARCHAR(20),
+    `zip_code` VARCHAR(10),
+    `street` VARCHAR(255),
+    `number` VARCHAR(20),
+    `complement` VARCHAR(100),
+    `neighborhood` VARCHAR(100),
+    `city` VARCHAR(100),
+    `state` VARCHAR(50),
+    `opt_in_marketing` BOOLEAN DEFAULT FALSE,
+    `avatar_url` VARCHAR(255),
+    `data_ai_hint` VARCHAR(100),
+    `seller_id` VARCHAR(255),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `badges` JSON,
+    `rg_number` VARCHAR(50),
+    `rg_issuer` VARCHAR(50),
+    `rg_issue_date` DATE,
+    `rg_state` VARCHAR(2),
+    `gender` VARCHAR(50),
+    `profession` VARCHAR(100),
+    `nationality` VARCHAR(100),
+    `marital_status` VARCHAR(50),
+    `property_regime` VARCHAR(100),
+    `spouse_name` VARCHAR(255),
+    `spouse_cpf` VARCHAR(20),
+    `responsible_name` VARCHAR(255),
+    `responsible_cpf` VARCHAR(20)
+);
 
-CREATE TABLE `users` (
-  `uid` VARCHAR(255) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
-  `password` VARCHAR(255) NOT NULL,
-  `full_name` VARCHAR(255),
-  `cpf` VARCHAR(20),
-  `cell_phone` VARCHAR(20),
-  `razao_social` VARCHAR(255),
-  `cnpj` VARCHAR(20),
-  `date_of_birth` DATE,
-  `zip_code` VARCHAR(10),
-  `street` VARCHAR(255),
-  `number` VARCHAR(20),
-  `complement` VARCHAR(100),
-  `neighborhood` VARCHAR(100),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `avatar_url` VARCHAR(255),
-  `data_ai_hint` VARCHAR(100),
-  `role_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `habilitation_status` VARCHAR(50),
-  `account_type` VARCHAR(50),
-  `badges` JSON,
-  `opt_in_marketing` BOOLEAN DEFAULT FALSE,
-  `rg_number` VARCHAR(50),
-  `rg_issuer` VARCHAR(50),
-  `rg_issue_date` DATE,
-  `rg_state` VARCHAR(2),
-  `home_phone` VARCHAR(20),
-  `gender` VARCHAR(50),
-  `profession` VARCHAR(100),
-  `nationality` VARCHAR(100),
-  `marital_status` VARCHAR(50),
-  `property_regime` VARCHAR(50),
-  `spouse_name` VARCHAR(255),
-  `spouse_cpf` VARCHAR(20),
-  `inscricao_estadual` VARCHAR(50),
-  `website` VARCHAR(255),
-  `responsible_name` VARCHAR(255),
-  `responsible_cpf` VARCHAR(20),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`uid`),
-  UNIQUE KEY `email_unique` (`email`),
-  FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Tabela de Categorias de Lote
+CREATE TABLE IF NOT EXISTS `lot_categories` (
+    `id` VARCHAR(255) PRIMARY KEY,
+    `name` VARCHAR(255) UNIQUE NOT NULL,
+    `slug` VARCHAR(255) UNIQUE NOT NULL,
+    `description` TEXT,
+    `icon_name` VARCHAR(50),
+    `has_subcategories` BOOLEAN DEFAULT FALSE,
+    `data_ai_hint_icon` VARCHAR(100),
+    `cover_image_url` VARCHAR(255),
+    `mega_menu_image_url` VARCHAR(255),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
 
-CREATE TABLE `lot_categories` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `has_subcategories` BOOLEAN DEFAULT FALSE,
-  `icon_name` VARCHAR(50) DEFAULT NULL,
-  `data_ai_hint_icon` VARCHAR(50) DEFAULT NULL,
-  `cover_image_url` VARCHAR(255) DEFAULT NULL,
-  `cover_image_media_id` VARCHAR(255) DEFAULT NULL,
-  `data_ai_hint_cover` VARCHAR(50) DEFAULT NULL,
-  `mega_menu_image_url` VARCHAR(255) DEFAULT NULL,
-  `mega_menu_image_media_id` VARCHAR(255) DEFAULT NULL,
-  `data_ai_hint_mega_menu` VARCHAR(50) DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `slug_unique` (`slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Tabela de Subcategorias
+CREATE TABLE IF NOT EXISTS `subcategories` (
+    `id` VARCHAR(255) PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `slug` VARCHAR(255) NOT NULL,
+    `parent_category_id` VARCHAR(255),
+    `description` TEXT,
+    `display_order` INT DEFAULT 0,
+    `icon_url` VARCHAR(255),
+    `icon_media_id` VARCHAR(255),
+    `data_ai_hint_icon` VARCHAR(100),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (`parent_category_id`) REFERENCES `lot_categories`(`id`) ON DELETE CASCADE
+);
 
-CREATE TABLE `subcategories` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255) NOT NULL,
-  `parent_category_id` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `display_order` INT DEFAULT 0,
-  `icon_url` VARCHAR(255),
-  `icon_media_id` VARCHAR(255),
-  `data_ai_hint_icon` VARCHAR(50),
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`parent_category_id`) REFERENCES `lot_categories`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Tabela de Leilões
+CREATE TABLE IF NOT EXISTS `auctions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `public_id` VARCHAR(255) UNIQUE,
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `status` VARCHAR(50),
+    `auction_date` DATETIME,
+    `end_date` DATETIME,
+    `category_id` VARCHAR(255),
+    `auctioneer_id` INT,
+    `seller_id` INT,
+    `image_url` VARCHAR(255),
+    `data_ai_hint` VARCHAR(100),
+    `is_featured_on_marketplace` BOOLEAN DEFAULT FALSE,
+    `marketplace_announcement_title` VARCHAR(255),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `slug` VARCHAR(255)
+);
 
+-- Tabela de Lotes
+CREATE TABLE IF NOT EXISTS `lots` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `public_id` VARCHAR(255) UNIQUE,
+    `auction_id` INT,
+    `number` VARCHAR(50),
+    `title` VARCHAR(255) NOT NULL,
+    `description` TEXT,
+    `price` DECIMAL(15, 2),
+    `initial_price` DECIMAL(15, 2),
+    `second_initial_price` DECIMAL(15, 2),
+    `status` VARCHAR(50),
+    `bids_count` INT,
+    `views` INT,
+    `is_featured` BOOLEAN,
+    `image_url` VARCHAR(255),
+    `data_ai_hint` VARCHAR(100),
+    `category_id` VARCHAR(255),
+    `subcategory_id` VARCHAR(255),
+    `city_name` VARCHAR(100),
+    `state_uf` VARCHAR(2),
+    `end_date` DATETIME,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `winner_id` VARCHAR(255),
+    `slug` VARCHAR(255)
+);
 
-CREATE TABLE `auctions` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `status` VARCHAR(50) NOT NULL,
-  `auction_date` DATETIME NOT NULL,
-  `end_date` DATETIME,
-  `category` VARCHAR(255),
-  `auctioneer` VARCHAR(255),
-  `seller` VARCHAR(255),
-  `total_lots` INT DEFAULT 0,
-  `image_url` VARCHAR(255),
-  `data_ai_hint` VARCHAR(100),
-  `initial_offer` DECIMAL(15, 2),
-  `visits` INT DEFAULT 0,
-  `is_favorite` BOOLEAN DEFAULT FALSE,
-  `category_id` VARCHAR(255),
-  `auctioneer_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `auction_type` VARCHAR(50),
-  `auction_stages` JSON,
-  `documents_url` VARCHAR(255),
-  `evaluation_report_url` VARCHAR(255),
-  `auction_certificate_url` VARCHAR(255),
-  `selling_branch` VARCHAR(100),
-  `automatic_bidding_enabled` BOOLEAN DEFAULT TRUE,
-  `silent_bidding_enabled` BOOLEAN DEFAULT FALSE,
-  `allow_multiple_bids_per_user` BOOLEAN DEFAULT TRUE,
-  `allow_installment_bids` BOOLEAN DEFAULT FALSE,
-  `soft_close_enabled` BOOLEAN DEFAULT FALSE,
-  `soft_close_minutes` INT DEFAULT 2,
-  `estimated_revenue` DECIMAL(15, 2),
-  `achieved_revenue` DECIMAL(15, 2),
-  `total_habilitated_users` INT DEFAULT 0,
-  `is_featured_on_marketplace` BOOLEAN DEFAULT FALSE,
-  `marketplace_announcement_title` VARCHAR(150),
-  `additional_triggers` JSON,
-  `decrement_amount` DECIMAL(15,2),
-  `decrement_interval_seconds` INT,
-  `floor_price` DECIMAL(15,2),
-  `slug` VARCHAR(255),
-  `image_media_id` VARCHAR(255),
-  `judicial_process_id` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `public_id_unique` (`public_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `lots` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `auction_id` VARCHAR(255) NOT NULL,
-  `auction_public_id` VARCHAR(255),
-  `number` VARCHAR(50),
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `price` DECIMAL(15, 2) NOT NULL,
-  `initial_price` DECIMAL(15, 2),
-  `second_initial_price` DECIMAL(15, 2),
-  `bid_increment_step` DECIMAL(15, 2),
-  `status` VARCHAR(50) NOT NULL,
-  `bids_count` INT DEFAULT 0,
-  `views` INT DEFAULT 0,
-  `is_featured` BOOLEAN DEFAULT FALSE,
-  `is_exclusive` BOOLEAN DEFAULT FALSE,
-  `discount_percentage` INT,
-  `additional_triggers` JSON,
-  `image_url` VARCHAR(255),
-  `image_media_id` VARCHAR(255),
-  `gallery_image_urls` JSON,
-  `media_item_ids` JSON,
-  `bem_ids` JSON,
-  `type` VARCHAR(100),
-  `category_id` VARCHAR(255),
-  `subcategory_name` VARCHAR(255),
-  `subcategoryId` VARCHAR(255),
-  `auction_name` VARCHAR(255),
-  `seller_name` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `auctioneer_id` VARCHAR(255),
-  `city_id` VARCHAR(255),
-  `state_id` VARCHAR(255),
-  `city_name` VARCHAR(255),
-  `state_uf` VARCHAR(2),
-  `latitude` DECIMAL(10, 8),
-  `longitude` DECIMAL(11, 8),
-  `map_address` VARCHAR(255),
-  `map_embed_url` VARCHAR(255),
-  `map_static_image_url` VARCHAR(255),
-  `end_date` DATETIME,
-  `lot_specific_auction_date` DATETIME,
-  `second_auction_date` DATETIME,
-  `condition_lot` VARCHAR(100), -- Renamed from 'condition' to avoid keyword conflict
-  `data_ai_hint` VARCHAR(100),
-  `winner_id` VARCHAR(255),
-  `winning_bid_term_url` VARCHAR(255),
-  `allow_installment_bids` BOOLEAN,
-  `primary_damage` VARCHAR(100),
-  `secondary_damage` VARCHAR(100),
-  `loss_type` VARCHAR(100),
-  `title_brand` VARCHAR(100),
-  `vin_status` VARCHAR(100),
-  `title_info` VARCHAR(255),
-  `body_style` VARCHAR(100),
-  `drive_line_type` VARCHAR(50),
-  `cylinders` VARCHAR(50),
-  `restraint_system` VARCHAR(100),
-  `exterior_interior_color` VARCHAR(100),
-  `options` TEXT,
-  `manufactured_in` VARCHAR(100),
-  `vehicle_class` VARCHAR(100),
-  `vehicle_location_in_branch` VARCHAR(100),
-  `lane_run_number` VARCHAR(50),
-  `aisle_stall` VARCHAR(50),
-  `start_code` VARCHAR(50),
-  `airbags_status` VARCHAR(100),
-  `actual_cash_value` DECIMAL(15, 2),
-  `estimated_repair_cost` DECIMAL(15, 2),
-  `judicial_process_number` VARCHAR(100),
-  `court_district` VARCHAR(100),
-  `court_name` VARCHAR(100),
-  `public_process_url` VARCHAR(255),
-  `property_registration_number` VARCHAR(100),
-  `property_liens` TEXT,
-  `known_debts` TEXT,
-  `additional_documents_info` TEXT,
-  `reserve_price` DECIMAL(15, 2),
-  `evaluation_value` DECIMAL(15, 2),
-  `debt_amount` DECIMAL(15, 2),
-  `itbi_value` DECIMAL(15, 2),
-  `year` INT,
-  `make` VARCHAR(100),
-  `model` VARCHAR(100),
-  `series` VARCHAR(100),
-  `odometer` INT,
-  `has_key` BOOLEAN,
-  `vin` VARCHAR(17),
-  `fuel_type` VARCHAR(50),
-  `transmission_type` VARCHAR(50),
-  `engine_details` VARCHAR(255),
-  `slug` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `public_id_unique_lot` (`public_id`),
-  FOREIGN KEY (`auction_id`) REFERENCES `auctions`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Tabela de Configurações da Plataforma
+CREATE TABLE IF NOT EXISTS `platform_settings` (
+    `id` VARCHAR(255) PRIMARY KEY,
+    `site_title` VARCHAR(255),
+    `site_tagline` VARCHAR(255),
+    `logo_url` VARCHAR(255),
+    `favicon_url` VARCHAR(255),
+    `gallery_image_base_path` VARCHAR(255),
+    `storage_provider` VARCHAR(50),
+    `firebase_storage_bucket` VARCHAR(255),
+    `active_theme_name` VARCHAR(50),
+    `themes` JSON,
+    `platform_public_id_masks` JSON,
+    `homepage_sections` JSON,
+    `mental_trigger_settings` JSON,
+    `section_badge_visibility` JSON,
+    `map_settings` JSON,
+    `search_pagination_type` VARCHAR(50),
+    `search_items_per_page` INT,
+    `search_load_more_count` INT,
+    `show_countdown_on_lot_detail` BOOLEAN,
+    `show_countdown_on_cards` BOOLEAN,
+    `show_related_lots_on_lot_detail` BOOLEAN,
+    `related_lots_count` INT,
+    `default_urgency_timer_hours` INT,
+    `variable_increment_table` JSON,
+    `bidding_settings` JSON,
+    `default_list_items_per_page` INT,
+    `updated_at` TIMESTAMP
+);
 
 
-CREATE TABLE `platform_settings` (
-  `id` VARCHAR(50) NOT NULL,
-  `site_title` VARCHAR(255),
-  `site_tagline` VARCHAR(255),
-  `logo_url` VARCHAR(255),
-  `favicon_url` VARCHAR(255),
-  `gallery_image_base_path` VARCHAR(255),
-  `storage_provider` VARCHAR(50),
-  `firebase_storage_bucket` VARCHAR(255),
-  `active_theme_name` VARCHAR(255),
-  `themes` JSON,
-  `platform_public_id_masks` JSON,
-  `homepage_sections` JSON,
-  `mental_trigger_settings` JSON,
-  `section_badge_visibility` JSON,
-  `map_settings` JSON,
-  `search_pagination_type` VARCHAR(50),
-  `search_items_per_page` INT,
-  `search_load_more_count` INT,
-  `show_countdown_on_lot_detail` BOOLEAN,
-  `show_countdown_on_cards` BOOLEAN,
-  `show_related_lots_on_lot_detail` BOOLEAN,
-  `related_lots_count` INT,
-  `default_urgency_timer_hours` INT,
-  `variable_increment_table` JSON,
-  `bidding_settings` JSON,
-  `default_list_items_per_page` INT,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- Outras tabelas...
+CREATE TABLE IF NOT EXISTS `states` (`id` VARCHAR(255) PRIMARY KEY, `name` VARCHAR(100), `uf` VARCHAR(2), `slug` VARCHAR(100), `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `cities` (`id` VARCHAR(255) PRIMARY KEY, `name` VARCHAR(150), `state_id` VARCHAR(255), `ibge_code` VARCHAR(7), `slug` VARCHAR(150), `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP, `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `sellers` (`id` INT AUTO_INCREMENT PRIMARY KEY, `public_id` VARCHAR(255), `slug` VARCHAR(255), `name` VARCHAR(255), `contact_name` VARCHAR(255), `email` VARCHAR(255), `phone` VARCHAR(20), `address` VARCHAR(255), `city` VARCHAR(100), `state` VARCHAR(100), `zip_code` VARCHAR(20), `website` VARCHAR(255), `logo_url` VARCHAR(255), `data_ai_hint_logo` VARCHAR(100), `description` TEXT, `is_judicial` BOOLEAN, `judicial_branch_id` VARCHAR(255), `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `auctioneers` (`id` INT AUTO_INCREMENT PRIMARY KEY, `public_id` VARCHAR(255), `slug` VARCHAR(255), `name` VARCHAR(255), `registration_number` VARCHAR(50), `contact_name` VARCHAR(255), `email` VARCHAR(255), `phone` VARCHAR(20), `address` VARCHAR(255), `city` VARCHAR(100), `state` VARCHAR(100), `zip_code` VARCHAR(20), `website` VARCHAR(255), `logo_url` VARCHAR(255), `data_ai_hint_logo` VARCHAR(100), `description` TEXT, `user_id` VARCHAR(255), `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `bids` (`id` VARCHAR(255) PRIMARY KEY, `lot_id` VARCHAR(255), `auction_id` VARCHAR(255), `bidder_id` VARCHAR(255), `bidder_display` VARCHAR(255), `amount` DECIMAL(15,2), `timestamp` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `user_wins` (`id` VARCHAR(255) PRIMARY KEY, `lot_id` VARCHAR(255), `user_id` VARCHAR(255), `winning_bid_amount` DECIMAL(15,2), `win_date` TIMESTAMP, `payment_status` VARCHAR(50), `invoice_url` VARCHAR(255));
+CREATE TABLE IF NOT EXISTS `direct_sale_offers` (`id` VARCHAR(255) PRIMARY KEY, `public_id` VARCHAR(255), `title` VARCHAR(255), `description` TEXT, `offer_type` VARCHAR(50), `price` DECIMAL(15,2), `minimum_offer_price` DECIMAL(15,2), `status` VARCHAR(50), `category` VARCHAR(100), `seller_id` VARCHAR(255), `seller_name` VARCHAR(255), `location_city` VARCHAR(100), `location_state` VARCHAR(100), `image_url` VARCHAR(255), `expires_at` TIMESTAMP, `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `reviews` (`id` VARCHAR(255) PRIMARY KEY, `lot_id` VARCHAR(255), `auction_id` VARCHAR(255), `user_id` VARCHAR(255), `user_display_name` VARCHAR(255), `rating` INT, `comment` TEXT, `created_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `lot_questions` (`id` VARCHAR(255) PRIMARY KEY, `lot_id` VARCHAR(255), `auction_id` VARCHAR(255), `user_id` VARCHAR(255), `user_display_name` VARCHAR(255), `question_text` TEXT, `answer_text` TEXT, `is_public` BOOLEAN, `answered_by_user_id` VARCHAR(255), `answered_by_user_display_name` VARCHAR(255), `created_at` TIMESTAMP, `answered_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `document_types` (`id` VARCHAR(255) PRIMARY KEY, `name` VARCHAR(255), `description` TEXT, `is_required` BOOLEAN, `applies_to` VARCHAR(50));
+CREATE TABLE IF NOT EXISTS `user_documents` (`id` VARCHAR(255) PRIMARY KEY, `user_id` VARCHAR(255), `document_type_id` VARCHAR(255), `status` VARCHAR(50), `file_url` VARCHAR(255), `file_name` VARCHAR(255), `rejection_reason` TEXT, `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `notifications` (`id` VARCHAR(255) PRIMARY KEY, `user_id` VARCHAR(255), `message` TEXT, `link` VARCHAR(255), `is_read` BOOLEAN, `created_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `user_lot_max_bids` (`id` VARCHAR(255) PRIMARY KEY, `user_id` VARCHAR(255), `lot_id` VARCHAR(255), `max_amount` DECIMAL(15,2), `is_active` BOOLEAN, `created_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `media_items` (`id` VARCHAR(255) PRIMARY KEY, `file_name` VARCHAR(255), `storage_path` VARCHAR(512), `title` VARCHAR(255), `alt_text` VARCHAR(255), `caption` VARCHAR(512), `description` TEXT, `mime_type` VARCHAR(100), `size_bytes` INT, `url_original` VARCHAR(512), `url_thumbnail` VARCHAR(512), `url_medium` VARCHAR(512), `url_large` VARCHAR(512), `linked_lot_ids` JSON, `data_ai_hint` VARCHAR(100), `uploaded_by` VARCHAR(255), `uploaded_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `courts` (`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(255), `slug` VARCHAR(255), `state_uf` VARCHAR(2), `website` VARCHAR(255), `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `judicial_districts` (`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(255), `slug` VARCHAR(255), `court_id` INT, `state_id` VARCHAR(255), `zip_code` VARCHAR(10), `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `judicial_branches` (`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(255), `slug` VARCHAR(255), `district_id` INT, `contact_name` VARCHAR(255), `phone` VARCHAR(20), `email` VARCHAR(255), `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `judicial_processes` (`id` INT AUTO_INCREMENT PRIMARY KEY, `public_id` VARCHAR(255), `process_number` VARCHAR(100), `is_electronic` BOOLEAN, `court_id` INT, `district_id` INT, `branch_id` INT, `seller_id` INT, `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `judicial_parties` (`id` INT AUTO_INCREMENT PRIMARY KEY, `process_id` INT, `name` VARCHAR(255), `document_number` VARCHAR(50), `party_type` VARCHAR(50));
+CREATE TABLE IF NOT EXISTS `bens` (`id` INT AUTO_INCREMENT PRIMARY KEY, `public_id` VARCHAR(255), `title` VARCHAR(255), `description` TEXT, `status` VARCHAR(50), `category_id` VARCHAR(255), `subcategory_id` VARCHAR(255), `judicial_process_id` INT, `seller_id` INT, `evaluation_value` DECIMAL(15,2), `image_url` VARCHAR(255), `image_media_id` VARCHAR(255), `gallery_image_urls` JSON, `media_item_ids` JSON, `data_ai_hint` VARCHAR(100), `location_city` VARCHAR(100), `location_state` VARCHAR(100), `address` VARCHAR(255), `latitude` DECIMAL(10,8), `longitude` DECIMAL(11,8), `created_at` TIMESTAMP, `updated_at` TIMESTAMP, `plate` VARCHAR(10), `make` VARCHAR(50), `model` VARCHAR(50), `version` VARCHAR(100), `year` INT, `model_year` INT, `mileage` INT, `color` VARCHAR(30), `fuel_type` VARCHAR(30), `transmission_type` VARCHAR(30), `body_type` VARCHAR(50), `vin` VARCHAR(17), `renavam` VARCHAR(11), `engine_power` VARCHAR(50), `number_of_doors` INT, `vehicle_options` TEXT, `detran_status` VARCHAR(100), `debts` TEXT, `running_condition` VARCHAR(100), `body_condition` VARCHAR(100), `tires_condition` VARCHAR(100), `has_key` BOOLEAN, `property_registration_number` VARCHAR(50), `iptu_number` VARCHAR(50), `is_occupied` BOOLEAN, `total_area` DECIMAL(15,2), `built_area` DECIMAL(15,2), `bedrooms` INT, `suites` INT, `bathrooms` INT, `parking_spaces` INT, `construction_type` VARCHAR(100), `finishes` TEXT, `infrastructure` TEXT, `condo_details` TEXT, `improvements` TEXT, `topography` VARCHAR(100), `liens_and_encumbrances` TEXT, `property_debts` TEXT, `unregistered_records` TEXT, `has_habite_se` BOOLEAN, `zoning_restrictions` VARCHAR(200), `amenities` JSON);
+CREATE TABLE IF NOT EXISTS `lot_bens` (`lot_id` INT, `bem_id` INT, PRIMARY KEY (`lot_id`, `bem_id`));
+CREATE TABLE IF NOT EXISTS `document_templates` (`id` VARCHAR(255) PRIMARY KEY, `name` VARCHAR(255), `type` VARCHAR(50), `content` LONGTEXT, `created_at` TIMESTAMP, `updated_at` TIMESTAMP);
+CREATE TABLE IF NOT EXISTS `contact_messages` (`id` INT AUTO_INCREMENT PRIMARY KEY, `name` VARCHAR(255), `email` VARCHAR(255), `subject` VARCHAR(255), `message` TEXT, `is_read` BOOLEAN DEFAULT FALSE, `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 
-
-CREATE TABLE `states` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(100) NOT NULL,
-  `uf` VARCHAR(2) NOT NULL,
-  `slug` VARCHAR(100) NOT NULL,
-  `city_count` INT DEFAULT 0,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `uf_unique` (`uf`),
-  UNIQUE KEY `slug_unique_state` (`slug`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `cities` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(150) NOT NULL,
-  `slug` VARCHAR(150) NOT NULL,
-  `state_id` VARCHAR(255) NOT NULL,
-  `state_uf` VARCHAR(2) NOT NULL,
-  `ibge_code` VARCHAR(7),
-  `lot_count` INT DEFAULT 0,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`state_id`) REFERENCES `states`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `sellers` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `slug` VARCHAR(255),
-  `name` VARCHAR(255) NOT NULL,
-  `contact_name` VARCHAR(150),
-  `email` VARCHAR(255),
-  `phone` VARCHAR(20),
-  `address` VARCHAR(255),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `zip_code` VARCHAR(10),
-  `website` VARCHAR(255),
-  `logo_url` VARCHAR(255),
-  `logo_media_id` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(50),
-  `description` TEXT,
-  `user_id` VARCHAR(255),
-  `member_since` DATETIME,
-  `rating` DECIMAL(3, 2),
-  `active_lots_count` INT DEFAULT 0,
-  `total_sales_value` DECIMAL(15, 2) DEFAULT 0,
-  `auctions_facilitated_count` INT DEFAULT 0,
-  `is_judicial` BOOLEAN DEFAULT FALSE,
-  `judicial_branch_id` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `auctioneers` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `slug` VARCHAR(255),
-  `name` VARCHAR(255) NOT NULL,
-  `registration_number` VARCHAR(50),
-  `contact_name` VARCHAR(150),
-  `email` VARCHAR(255),
-  `phone` VARCHAR(20),
-  `address` VARCHAR(255),
-  `city` VARCHAR(100),
-  `state` VARCHAR(50),
-  `zip_code` VARCHAR(10),
-  `website` VARCHAR(255),
-  `logo_url` VARCHAR(255),
-  `logo_media_id` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(50),
-  `description` TEXT,
-  `user_id` VARCHAR(255),
-  `member_since` DATETIME,
-  `rating` DECIMAL(3, 2),
-  `auctions_conducted_count` INT DEFAULT 0,
-  `total_value_sold` DECIMAL(15, 2) DEFAULT 0,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `bids` (
-  `id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `bidder_id` VARCHAR(255) NOT NULL,
-  `bidder_display` VARCHAR(255),
-  `amount` DECIMAL(15, 2) NOT NULL,
-  `timestamp` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `user_wins` (
-  `id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `winning_bid_amount` DECIMAL(15, 2) NOT NULL,
-  `win_date` DATETIME NOT NULL,
-  `payment_status` VARCHAR(50),
-  `invoice_url` VARCHAR(255),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `direct_sale_offers` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `offer_type` VARCHAR(50),
-  `price` DECIMAL(15, 2),
-  `minimum_offer_price` DECIMAL(15, 2),
-  `status` VARCHAR(50),
-  `category` VARCHAR(100),
-  `seller_id` VARCHAR(255),
-  `seller_name` VARCHAR(255),
-  `seller_logo_url` VARCHAR(255),
-  `data_ai_hint_seller_logo` VARCHAR(50),
-  `location_city` VARCHAR(100),
-  `location_state` VARCHAR(100),
-  `image_url` VARCHAR(255),
-  `image_media_id` VARCHAR(255),
-  `data_ai_hint` VARCHAR(50),
-  `gallery_image_urls` JSON,
-  `media_item_ids` JSON,
-  `items_included` JSON,
-  `views` INT DEFAULT 0,
-  `expires_at` DATETIME,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `reviews` (
-  `id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `user_display_name` VARCHAR(255),
-  `rating` INT NOT NULL,
-  `comment` TEXT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `lot_questions` (
-  `id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `user_display_name` VARCHAR(255),
-  `question_text` TEXT NOT NULL,
-  `answer_text` TEXT,
-  `answered_by_user_id` VARCHAR(255),
-  `answered_by_user_display_name` VARCHAR(255),
-  `answered_at` DATETIME,
-  `is_public` BOOLEAN DEFAULT TRUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `document_types` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `is_required` BOOLEAN DEFAULT TRUE,
-  `applies_to` VARCHAR(50),
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `user_documents` (
-  `id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `document_type_id` VARCHAR(255) NOT NULL,
-  `status` VARCHAR(50),
-  `file_url` VARCHAR(255),
-  `file_name` VARCHAR(255),
-  `rejection_reason` TEXT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`uid`),
-  FOREIGN KEY (`document_type_id`) REFERENCES `document_types`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `notifications` (
-  `id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `message` TEXT NOT NULL,
-  `link` VARCHAR(255),
-  `is_read` BOOLEAN DEFAULT FALSE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`uid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `user_lot_max_bids` (
-  `id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `max_amount` DECIMAL(15, 2) NOT NULL,
-  `is_active` BOOLEAN DEFAULT TRUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `user_lot_unique` (`user_id`, `lot_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `media_items` (
-  `id` VARCHAR(255) NOT NULL,
-  `file_name` VARCHAR(255) NOT NULL,
-  `storage_path` VARCHAR(255) NOT NULL,
-  `title` VARCHAR(255),
-  `alt_text` VARCHAR(255),
-  `caption` VARCHAR(255),
-  `description` TEXT,
-  `mime_type` VARCHAR(100),
-  `size_bytes` INT,
-  `url_original` VARCHAR(255),
-  `url_thumbnail` VARCHAR(255),
-  `url_medium` VARCHAR(255),
-  `url_large` VARCHAR(255),
-  `linked_lot_ids` JSON,
-  `data_ai_hint` VARCHAR(100),
-  `uploaded_by` VARCHAR(255),
-  `uploaded_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `courts` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255),
-  `state_uf` VARCHAR(2),
-  `website` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `judicial_districts` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255),
-  `court_id` VARCHAR(255),
-  `state_id` VARCHAR(255),
-  `zip_code` VARCHAR(10),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `judicial_branches` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `slug` VARCHAR(255),
-  `district_id` VARCHAR(255),
-  `contact_name` VARCHAR(150),
-  `phone` VARCHAR(20),
-  `email` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `judicial_processes` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `process_number` VARCHAR(100) NOT NULL,
-  `is_electronic` BOOLEAN,
-  `court_id` VARCHAR(255),
-  `district_id` VARCHAR(255),
-  `branch_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  UNIQUE KEY `process_number_unique` (`process_number`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `judicial_parties` (
-  `id` VARCHAR(255) NOT NULL,
-  `process_id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `document_number` VARCHAR(50),
-  `party_type` VARCHAR(50),
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`process_id`) REFERENCES `judicial_processes`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `bens` (
-  `id` VARCHAR(255) NOT NULL,
-  `public_id` VARCHAR(255),
-  `title` VARCHAR(255) NOT NULL,
-  `description` TEXT,
-  `status` VARCHAR(50),
-  `category_id` VARCHAR(255),
-  `subcategory_id` VARCHAR(255),
-  `judicial_process_id` VARCHAR(255),
-  `seller_id` VARCHAR(255),
-  `evaluation_value` DECIMAL(15, 2),
-  `image_url` VARCHAR(255),
-  `image_media_id` VARCHAR(255),
-  `gallery_image_urls` JSON,
-  `media_item_ids` JSON,
-  `data_ai_hint` VARCHAR(100),
-  `location_city` VARCHAR(100),
-  `location_state` VARCHAR(100),
-  `address` VARCHAR(255),
-  `latitude` DECIMAL(10, 8),
-  `longitude` DECIMAL(11, 8),
-  `plate` VARCHAR(10),
-  `make` VARCHAR(50),
-  `model` VARCHAR(50),
-  `version` VARCHAR(100),
-  `year` INT,
-  `model_year` INT,
-  `mileage` INT,
-  `color` VARCHAR(30),
-  `fuel_type` VARCHAR(30),
-  `transmission_type` VARCHAR(30),
-  `body_type` VARCHAR(50),
-  `vin` VARCHAR(17),
-  `renavam` VARCHAR(11),
-  `engine_power` VARCHAR(50),
-  `number_of_doors` INT,
-  `vehicle_options` VARCHAR(500),
-  `detran_status` VARCHAR(100),
-  `debts` VARCHAR(500),
-  `running_condition` VARCHAR(100),
-  `body_condition` VARCHAR(100),
-  `tires_condition` VARCHAR(100),
-  `has_key` BOOLEAN,
-  `property_type` VARCHAR(100),
-  `property_registration_number` VARCHAR(50),
-  `iptu_number` VARCHAR(50),
-  `is_occupied` BOOLEAN,
-  `area` DECIMAL(10, 2),
-  `total_area` DECIMAL(10, 2),
-  `built_area` DECIMAL(10, 2),
-  `bedrooms` INT,
-  `suites` INT,
-  `bathrooms` INT,
-  `parking_spaces` INT,
-  `construction_type` VARCHAR(100),
-  `finishes` VARCHAR(500),
-  `infrastructure` VARCHAR(500),
-  `condo_details` VARCHAR(500),
-  `improvements` VARCHAR(500),
-  `topography` VARCHAR(100),
-  `liens_and_encumbrances` TEXT,
-  `property_debts` VARCHAR(500),
-  `unregistered_records` VARCHAR(500),
-  `has_habite_se` BOOLEAN,
-  `zoning_restrictions` VARCHAR(200),
-  `amenities` JSON,
-  `brand` VARCHAR(50),
-  `serial_number` VARCHAR(100),
-  `item_condition` VARCHAR(100),
-  `specifications` TEXT,
-  `included_accessories` VARCHAR(500),
-  `battery_condition` VARCHAR(100),
-  `has_invoice` BOOLEAN,
-  `has_warranty` BOOLEAN,
-  `repair_history` VARCHAR(500),
-  `appliance_capacity` VARCHAR(50),
-  `voltage` VARCHAR(20),
-  `appliance_type` VARCHAR(50),
-  `additional_functions` VARCHAR(200),
-  `hours_used` INT,
-  `engine_type` VARCHAR(50),
-  `capacity_or_power` VARCHAR(100),
-  `maintenance_history` TEXT,
-  `installation_location` VARCHAR(200),
-  `complies_with_nr` VARCHAR(100),
-  `operating_licenses` VARCHAR(200),
-  `breed` VARCHAR(50),
-  `age` VARCHAR(30),
-  `sex` VARCHAR(10),
-  `weight` VARCHAR(30),
-  `individual_id` VARCHAR(50),
-  `purpose` VARCHAR(100),
-  `sanitary_condition` VARCHAR(200),
-  `vaccination_status` VARCHAR(200),
-  `lineage` VARCHAR(200),
-  `is_pregnant` BOOLEAN,
-  `special_skills` VARCHAR(200),
-  `gta_document` VARCHAR(100),
-  `breed_registry_document` VARCHAR(100),
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `lot_bens` (
-  `id` INT AUTO_INCREMENT,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `bem_id` VARCHAR(255) NOT NULL,
-  PRIMARY KEY (`id`),
-  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`bem_id`) REFERENCES `bens`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `document_templates` (
-  `id` VARCHAR(255) NOT NULL,
-  `name` VARCHAR(255) NOT NULL,
-  `type` VARCHAR(50) NOT NULL,
-  `content` LONGTEXT NOT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `contact_messages` (
-  `id` INT AUTO_INCREMENT,
-  `name` VARCHAR(255) NOT NULL,
-  `email` VARCHAR(255) NOT NULL,
-  `subject` VARCHAR(255) NOT NULL,
-  `message` TEXT NOT NULL,
-  `is_read` BOOLEAN DEFAULT FALSE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+```
