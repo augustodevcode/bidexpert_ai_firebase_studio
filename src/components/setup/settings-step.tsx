@@ -63,13 +63,28 @@ export default function SettingsStep({ onNext, onPrev }: SettingsStepProps) {
                 method: 'POST',
                 body: formData,
             });
+
+            if (!response.ok) {
+                let errorBodyText = 'Could not read error body from server response.';
+                try {
+                    errorBodyText = await response.text();
+                } catch (e) {
+                    // Ignore if body can't be read
+                }
+                console.error(`[Upload Error] HTTP Status: ${response.status}. Response Body:`, errorBodyText);
+                throw new Error(`Falha no servidor durante o upload (Status: ${response.status}).`);
+            }
+
             const result = await response.json();
-            if (response.ok && result.success && result.urls && result.urls.length > 0) {
+
+            if (result.success && result.urls && result.urls.length > 0) {
                 return result.urls[0];
             } else {
-                throw new Error(result.message || 'Falha no upload do arquivo.');
+                console.error('[Upload Error] Server responded OK, but operation failed. Result:', result);
+                throw new Error(result.message || 'Falha no upload do arquivo. O servidor respondeu, mas a operação não foi bem-sucedida.');
             }
         } catch (error: any) {
+            console.error('[Upload Error] Catch block:', error);
             toast({ title: 'Erro de Upload', description: error.message, variant: 'destructive' });
             return null;
         }
