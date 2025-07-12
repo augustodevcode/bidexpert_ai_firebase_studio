@@ -6,6 +6,7 @@ import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { revalidatePath } from 'next/cache';
+import { writeFile } from 'fs/promises';
 
 const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
@@ -22,121 +23,94 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {
-    const contentType = request.headers.get('content-type');
-    
-    if (!contentType || !contentType.includes('multipart/form-data')) {
-      return NextResponse.json(
-        { success: false, message: 'Content-Type deve ser multipart/form-data' },
-        { status: 400 }
-      );
-    }
-
     const formData = await request.formData();
-    const files = formData.getAll('files') as File[];
-    
+    const files = formData.getAll('file') as File[]; // Changed from 'files' to 'file' to match form
+    const uploadPath = formData.get('path') as string || 'media'; // 'media' or 'site-assets'
+    const userId = formData.get('userId') as string | null; // Optional userId
+
     if (!files || files.length === 0) {
       return NextResponse.json(
         { success: false, message: 'Nenhum arquivo fornecido' },
         { status: 400 }
       );
     }
-
-    const { storage, error: storageError } = ensureAdminInitialized();
-    if (!storage || storageError) {
-        return NextResponse.json({ success: false, message: `Storage service not initialized: ${storageError?.message}` }, { status: 500 });
-    }
     
-    const db = await getDatabaseAdapter();
-
-    const uploadedItems: MediaItem[] = [];
+    // Using local file system storage
+    const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
+    const publicUrls: string[] = [];
 
     for (const file of files) {
-      let storagePath: string | undefined = undefined;
-      try {
-        if (file.size > MAX_FILE_SIZE_BYTES) {
-          uploadErrors.push({ 
-            fileName: file.name, 
-            message: `Arquivo excede ${MAX_FILE_SIZE_MB}MB (${(file.size / 1024 / 1024).toFixed(2)}MB)` 
-          });
+       if (file.size > MAX_FILE_SIZE_BYTES) {
+          uploadErrors.push({ fileName: file.name, message: `Arquivo excede ${MAX_FILE_SIZE_MB}MB.` });
           continue;
         }
-
         if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-          uploadErrors.push({ 
-            fileName: file.name, 
-            message: `Tipo '${file.type}' não permitido` 
-          });
+          uploadErrors.push({ fileName: file.name, message: `Tipo '${file.type}' não permitido.` });
           continue;
         }
 
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+
         const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         const uniqueFilename = `${uuidv4()}-${sanitizedFileName}`;
-        storagePath = `media/${uniqueFilename}`;
-
-        const fileRef = storage.bucket().file(storagePath);
         
-        await fileRef.save(fileBuffer, {
-            metadata: { contentType: file.type }
-        });
-        await fileRef.makePublic();
-        const publicUrl = fileRef.publicUrl();
+        // Define path based on 'path' form data
+        const relativeUploadDir = path.join('public', 'uploads', uploadPath);
+        const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
+        await writeFile(path.join(absoluteUploadDir, uniqueFilename), buffer);
+        
+        const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
+        publicUrls.push(publicUrl);
 
-        const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
-          fileName: file.name,
-          storagePath: storagePath,
-          title: path.basename(file.name, path.extname(file.name)),
-          altText: path.basename(file.name, path.extname(file.name)),
-          mimeType: file.type,
-          sizeBytes: file.size,
-          urlOriginal: publicUrl,
-          urlThumbnail: publicUrl, // Placeholder
-          urlMedium: publicUrl, // Placeholder
-          urlLarge: publicUrl, // Placeholder
-          linkedLotIds: [],
-          dataAiHint: (formData.get(`dataAiHint_${file.name}`) as string) || 'upload usuario',
-          uploadedBy: 'admin_placeholder', // Should come from session in a real app
-        };
-
-        const createResult = await db.createMediaItem(itemData, publicUrl, 'admin_placeholder');
-
-        if (createResult.success && createResult.item) {
-          uploadedItems.push(createResult.item);
-        } else {
-          throw new Error(createResult.message);
+        // For media library uploads, create a record in DB
+        if (uploadPath === 'media') {
+            const db = await getDatabaseAdapter();
+            const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
+                fileName: file.name,
+                storagePath: publicUrl,
+                title: path.basename(file.name, path.extname(file.name)),
+                altText: path.basename(file.name, path.extname(file.name)),
+                mimeType: file.type,
+                sizeBytes: file.size,
+                urlOriginal: publicUrl,
+                urlThumbnail: publicUrl,
+                urlMedium: publicUrl,
+                urlLarge: publicUrl,
+                linkedLotIds: [],
+                dataAiHint: 'upload usuario',
+                uploadedBy: userId || 'system-seed',
+            };
+            const createResult = await db.createMediaItem(itemData, publicUrl, userId || 'system-seed');
+            if (createResult.success && createResult.item) {
+                uploadedItems.push(createResult.item);
+            } else {
+                uploadErrors.push({ fileName: file.name, message: createResult.message });
+            }
         }
-
-      } catch (error: any) {
-        // Attempt to clean up orphaned file in storage if DB write fails
-        if (storagePath) {
-          await storage.bucket().file(storagePath).delete().catch(e => console.warn(`Failed to cleanup orphaned file ${storagePath}`, e));
-        }
-        uploadErrors.push({ 
-          fileName: file.name, 
-          message: error.message || 'Erro desconhecido durante o processamento do arquivo.'
-        });
-      }
     }
     
     let message = '';
-    if (uploadedItems.length > 0) {
-      message += `${uploadedItems.length} arquivo(s) enviado(s) com sucesso. `;
-      revalidatePath('/admin/media');
-      console.log("[API Upload] Revalidated path /admin/media");
+    if (publicUrls.length > 0) {
+      message += `${publicUrls.length} arquivo(s) enviado(s) com sucesso. `;
+      if (uploadPath === 'media') {
+        revalidatePath('/admin/media');
+      }
     }
     if (uploadErrors.length > 0) {
       message += `${uploadErrors.length} arquivo(s) falharam.`;
     }
 
-    const success = uploadErrors.length === 0 && uploadedItems.length > 0;
-    const statusCode = success ? 200 : (uploadedItems.length > 0 ? 207 : 400); // 207 Multi-Status
+    const success = uploadErrors.length === 0;
+    const statusCode = success ? 200 : (publicUrls.length > 0 ? 207 : 400);
 
     return NextResponse.json({
       success,
-      message: message.trim(),
+      message,
       items: uploadedItems,
-      errors: uploadErrors.length > 0 ? uploadErrors : undefined
+      urls: publicUrls, // Return URLs for all uploads, including site-assets
+      errors: uploadErrors.length > 0 ? uploadErrors : undefined,
     }, { status: statusCode });
 
   } catch (error: any) {

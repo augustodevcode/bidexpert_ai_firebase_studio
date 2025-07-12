@@ -1,4 +1,4 @@
-      'use client';
+'use client';
 
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
@@ -97,6 +97,7 @@ export default function Header() {
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
+  const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLinkOrMobileMenuCloseClick = useCallback(() => {
@@ -393,10 +394,13 @@ export default function Header() {
                 <SheetContent side="left" className="w-[300px] sm:w-[400px] p-0 bg-card text-card-foreground flex flex-col">
                     <SheetHeader className="p-4 border-b flex-shrink-0">
                       <SheetTitle className="flex items-center space-x-2 text-lg font-semibold">
-                        <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
-                          <AvatarImage src="https://placehold.co/40x40.png?text=BE" alt={`${siteTitle} Logo Small`} data-ai-hint="logo initial" />
-                          <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
-                        </Avatar>
+                         {siteLogoUrl ? (
+                            <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="object-contain" />
+                          ) : (
+                            <Avatar className="h-8 w-8 bg-primary text-primary-foreground">
+                                <AvatarFallback>{siteTitle.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                          )}
                         <span className="text-primary">{siteTitle}</span>
                       </SheetTitle>
                     </SheetHeader>
@@ -424,7 +428,11 @@ export default function Header() {
             </div>
             <Link href="/" className="mr-4 flex flex-col items-start sm:items-center sm:flex-row sm:space-x-3">
               <div className="flex items-center space-x-2 sm:space-x-3">
-                <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+                 {siteLogoUrl ? (
+                    <Image src={siteLogoUrl} alt={`${siteTitle} Logo`} width={40} height={40} className="object-contain" />
+                 ) : (
+                    <Coins className="h-8 w-8 sm:h-10 sm:w-10 text-primary" />
+                 )}
                 <span className="font-bold text-xl sm:text-3xl">
                   {isLoading ? <Skeleton className="h-8 w-32" /> : siteTitle}
                 </span>
