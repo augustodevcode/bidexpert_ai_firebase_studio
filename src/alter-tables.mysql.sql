@@ -1,56 +1,19 @@
 -- src/alter-tables.mysql.sql
+-- Este arquivo contém alterações no schema que podem ser aplicadas a um banco de dados existente.
 
--- Adiciona colunas faltantes à tabela `platform_settings` se elas não existirem.
--- Este script é seguro para ser executado múltiplas vezes.
-ALTER TABLE `platform_settings` ADD COLUMN IF NOT EXISTS `logo_url` VARCHAR(255) DEFAULT NULL;
-ALTER TABLE `platform_settings` ADD COLUMN IF NOT EXISTS `favicon_url` VARCHAR(255) DEFAULT NULL;
+ALTER TABLE `platform_settings`
+ADD COLUMN `logo_url` VARCHAR(255) NULL AFTER `site_tagline`,
+ADD COLUMN `favicon_url` VARCHAR(255) NULL AFTER `logo_url`;
 
--- Adiciona a coluna faltante `parent_category_id` à tabela `subcategories`.
-ALTER TABLE `subcategories` ADD COLUMN IF NOT EXISTS `parent_category_id` VARCHAR(255) NOT NULL;
+ALTER TABLE `subcategories`
+ADD COLUMN `parent_category_id` VARCHAR(255) NOT NULL AFTER `slug`;
 
--- Adiciona a coluna faltante `auctioneer_logo_url` à tabela `auctions`.
-ALTER TABLE `auctions` ADD COLUMN IF NOT EXISTS `auctioneer_logo_url` VARCHAR(255) DEFAULT NULL;
-
--- Adiciona colunas para armazenar dados de revisão de lotes
-ALTER TABLE `lots` ADD COLUMN IF NOT EXISTS `winner_id` VARCHAR(255) DEFAULT NULL;
-
--- Adiciona tabela de revisões
-CREATE TABLE IF NOT EXISTS `reviews` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `user_display_name` VARCHAR(255),
-  `rating` INT NOT NULL,
-  `comment` TEXT,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  KEY `idx_lot_id` (`lot_id`)
-);
-
--- Adiciona tabela de perguntas
-CREATE TABLE IF NOT EXISTS `lot_questions` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `auction_id` VARCHAR(255) NOT NULL,
-  `user_id` VARCHAR(255) NOT NULL,
-  `user_display_name` VARCHAR(255),
-  `question_text` TEXT NOT NULL,
-  `answer_text` TEXT,
-  `answered_by_user_id` VARCHAR(255),
-  `answered_by_user_display_name` VARCHAR(255),
-  `is_public` BOOLEAN DEFAULT TRUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `answered_at` TIMESTAMP NULL,
-  KEY `idx_lot_id` (`lot_id`)
-);
-
--- Adiciona tabela de lances máximos (proxy bids)
-CREATE TABLE IF NOT EXISTS `user_lot_max_bids` (
-  `id` VARCHAR(255) NOT NULL PRIMARY KEY,
-  `user_id` VARCHAR(255) NOT NULL,
-  `lot_id` VARCHAR(255) NOT NULL,
-  `max_amount` DECIMAL(12, 2) NOT NULL,
-  `is_active` BOOLEAN DEFAULT TRUE,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE KEY `idx_user_lot` (`user_id`, `lot_id`)
-);
+ALTER TABLE `lot_categories`
+ADD COLUMN `icon_name` VARCHAR(100) NULL AFTER `has_subcategories`,
+ADD COLUMN `data_ai_hint_icon` VARCHAR(100) NULL AFTER `icon_name`,
+ADD COLUMN `cover_image_url` VARCHAR(255) NULL AFTER `data_ai_hint_icon`,
+ADD COLUMN `cover_image_media_id` VARCHAR(255) NULL AFTER `cover_image_url`,
+ADD COLUMN `data_ai_hint_cover` VARCHAR(100) NULL AFTER `cover_image_media_id`,
+ADD COLUMN `mega_menu_image_url` VARCHAR(255) NULL AFTER `data_ai_hint_cover`,
+ADD COLUMN `mega_menu_image_media_id` VARCHAR(255) NULL AFTER `mega_menu_image_url`,
+ADD COLUMN `data_ai_hint_mega_menu` VARCHAR(100) NULL AFTER `mega_menu_image_media_id`;
