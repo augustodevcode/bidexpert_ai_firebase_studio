@@ -10,41 +10,40 @@ import mysql, { type Pool } from 'mysql2/promise';
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') });
 dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
-async function executeSchema(pool: Pool) {
-    console.log("\n--- [DB INIT - DDL] Executing MySQL Schema ---");
-    const schemaPath = path.join(process.cwd(), 'src', 'schema.mysql.sql');
-    if (!fs.existsSync(schemaPath)) {
-        console.warn(`[DB INIT - DDL] WARNING: Schema file not found at ${schemaPath}. Skipping table creation.`);
+async function executeSqlFile(pool: Pool, filePath: string, scriptName: string) {
+    console.log(`\n--- [DB INIT - ${scriptName}] Executing MySQL Script: ${path.basename(filePath)} ---`);
+    if (!fs.existsSync(filePath)) {
+        console.warn(`[DB INIT - ${scriptName}] WARNING: Script file not found at ${filePath}. Skipping.`);
         return;
     }
-    const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-    const statements = schemaSql.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
+    const sqlScript = fs.readFileSync(filePath, 'utf8');
+    const statements = sqlScript.split(/;\s*$/m).filter(s => s.trim().length > 0 && !s.trim().startsWith('--'));
     
     const connection = await pool.getConnection();
     try {
-        console.log("[DB INIT - DDL] Existing tables before execution:");
-        const [rows] = await connection.query('SHOW TABLES;');
-        console.table((rows as any[]).map(row => Object.values(row)[0]));
-
         for (const statement of statements) {
-            const tableNameMatch = statement.match(/CREATE TABLE(?: IF NOT EXISTS)? `([^`]*)`/i);
-            const tableName = tableNameMatch ? tableNameMatch[1] : 'unknown table';
             try {
                 await connection.query(statement);
-                console.log(`[DB INIT - DDL] ✅ SUCCESS: Table '${tableName}' processed.`);
+                console.log(`[DB INIT - ${scriptName}] ✅ SUCCESS: Statement executed.`);
             } catch (error: any) {
-                console.error(`[DB INIT - DDL] ❌ ERROR on table '${tableName}': ${error.message}`);
-                console.error(`[DB INIT - DDL] -> Failing SQL:\n\n${statement}\n`);
+                // Ignore "Duplicate column name" errors as they are expected if the script runs multiple times.
+                if (error.code === 'ER_DUP_FIELDNAME') {
+                    console.log(`[DB INIT - ${scriptName}] 🟡 INFO: Column already exists. Skipping statement.`);
+                } else {
+                    console.error(`[DB INIT - ${scriptName}] ❌ ERROR: ${error.message}`);
+                    console.error(`[DB INIT - ${scriptName}] -> Failing SQL:\n\n${statement}\n`);
+                }
             }
         }
-        console.log("--- [DB INIT - DDL] MySQL Schema execution finished ---");
+        console.log(`--- [DB INIT - ${scriptName}] Script execution finished ---`);
     } catch (error) {
-        console.error("[DB INIT - DDL] CRITICAL ERROR during schema execution:", error);
+        console.error(`[DB INIT - ${scriptName}] CRITICAL ERROR during script execution:`, error);
         throw error;
     } finally {
         connection.release();
     }
 }
+
 
 async function seedEssentialData(db: any) {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
@@ -107,7 +106,11 @@ async function initializeDatabase() {
           const connection = await pool.getConnection();
           console.log(`[DB INIT] 🔌 MySQL database connection established successfully.`);
           connection.release();
-          await executeSchema(pool);
+
+          // Execute DDL (table creation)
+          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'schema.mysql.sql'), 'DDL-CREATE');
+          // Execute ALTER TABLE script
+          await executeSqlFile(pool, path.join(process.cwd(), 'src', 'alter-tables.mysql.sql'), 'DDL-ALTER');
       }
       
       const db = getDatabaseAdapter();

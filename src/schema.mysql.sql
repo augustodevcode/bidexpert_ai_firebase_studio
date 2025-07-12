@@ -1,17 +1,14 @@
--- Arquivo: src/schema.mysql.sql
--- Descrição: Schema completo para o banco de dados MySQL do BidExpert.
+-- BidExpert MySQL Schema
+-- Updated to use snake_case for column names and INT AUTO_INCREMENT for primary keys.
 
--- ============================================================================
--- NÍVEL 1: Tabelas Independentes (sem chaves estrangeiras para outras tabelas da app)
--- ============================================================================
-
+-- Nível 1: Independentes
 CREATE TABLE IF NOT EXISTS `platform_settings` (
   `id` VARCHAR(100) NOT NULL PRIMARY KEY,
-  `site_title` VARCHAR(100),
-  `site_tagline` VARCHAR(200),
+  `site_title` VARCHAR(255),
+  `site_tagline` VARCHAR(255),
   `gallery_image_base_path` VARCHAR(255),
   `storage_provider` VARCHAR(50),
-  `firebase_storage_bucket` VARCHAR(200),
+  `firebase_storage_bucket` VARCHAR(255),
   `active_theme_name` VARCHAR(100),
   `themes` JSON,
   `platform_public_id_masks` JSON,
@@ -19,7 +16,6 @@ CREATE TABLE IF NOT EXISTS `platform_settings` (
   `mental_trigger_settings` JSON,
   `section_badge_visibility` JSON,
   `map_settings` JSON,
-  `bidding_settings` JSON,
   `search_pagination_type` VARCHAR(50),
   `search_items_per_page` INT,
   `search_load_more_count` INT,
@@ -29,6 +25,7 @@ CREATE TABLE IF NOT EXISTS `platform_settings` (
   `related_lots_count` INT,
   `default_urgency_timer_hours` INT,
   `variable_increment_table` JSON,
+  `bidding_settings` JSON,
   `default_list_items_per_page` INT,
   `updated_at` DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -37,7 +34,7 @@ CREATE TABLE IF NOT EXISTS `roles` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
   `name_normalized` VARCHAR(100) NOT NULL UNIQUE,
-  `description` VARCHAR(500),
+  `description` TEXT,
   `permissions` JSON,
   `created_at` DATETIME,
   `updated_at` DATETIME
@@ -45,66 +42,78 @@ CREATE TABLE IF NOT EXISTS `roles` (
 
 CREATE TABLE IF NOT EXISTS `states` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(100) NOT NULL UNIQUE,
+  `name` VARCHAR(100) NOT NULL,
   `uf` VARCHAR(2) NOT NULL UNIQUE,
-  `slug` VARCHAR(100) UNIQUE,
-  `created_at` DATETIME,
-  `updated_at` DATETIME
+  `slug` VARCHAR(100) NOT NULL UNIQUE,
+  `city_count` INT DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `lot_categories` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(100) NOT NULL UNIQUE,
-  `slug` VARCHAR(100) UNIQUE,
-  `description` VARCHAR(500),
+  `name` VARCHAR(100) NOT NULL,
+  `slug` VARCHAR(100) NOT NULL UNIQUE,
+  `description` TEXT,
+  `item_count` INT DEFAULT 0,
   `has_subcategories` BOOLEAN DEFAULT FALSE,
   `logo_url` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(50),
+  `logo_media_id` VARCHAR(100),
+  `data_ai_hint_logo` VARCHAR(100),
   `cover_image_url` VARCHAR(255),
-  `data_ai_hint_cover` VARCHAR(50),
+  `cover_image_media_id` VARCHAR(100),
+  `data_ai_hint_cover` VARCHAR(100),
   `mega_menu_image_url` VARCHAR(255),
-  `data_ai_hint_mega_menu` VARCHAR(50),
+  `mega_menu_image_media_id` VARCHAR(100),
+  `data_ai_hint_mega_menu` VARCHAR(100),
   `created_at` DATETIME,
   `updated_at` DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `document_templates` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(150) NOT NULL,
   `type` VARCHAR(50) NOT NULL,
-  `content` TEXT,
+  `content` TEXT NOT NULL,
   `created_at` DATETIME,
   `updated_at` DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `contact_messages` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
-  `name` VARCHAR(150) NOT NULL,
-  `email` VARCHAR(150) NOT NULL,
-  `subject` VARCHAR(200),
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `subject` VARCHAR(255) NOT NULL,
   `message` TEXT NOT NULL,
   `is_read` BOOLEAN DEFAULT FALSE,
   `created_at` DATETIME
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `document_types` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
-  `description` VARCHAR(255),
-  `is_required` BOOLEAN DEFAULT TRUE,
-  `applies_to` VARCHAR(50) -- e.g., 'PHYSICAL', 'LEGAL', 'ALL'
+  `description` TEXT,
+  `is_required` BOOLEAN DEFAULT FALSE,
+  `applies_to` VARCHAR(50) NOT NULL -- PHYSICAL, LEGAL, ALL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- NÍVEL 2: Dependem apenas do Nível 1
--- ============================================================================
+CREATE TABLE IF NOT EXISTS `courts` (
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(150) NOT NULL,
+  `slug` VARCHAR(150) UNIQUE,
+  `state_uf` VARCHAR(2) NOT NULL,
+  `website` VARCHAR(255),
+  `created_at` DATETIME,
+  `updated_at` DATETIME
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Nível 2: Primeira dependência
 CREATE TABLE IF NOT EXISTS `cities` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(150) NOT NULL,
   `slug` VARCHAR(150),
   `state_id` INT NOT NULL,
+  `state_uf` VARCHAR(2),
   `ibge_code` VARCHAR(7),
+  `lot_count` INT DEFAULT 0,
   `created_at` DATETIME,
   `updated_at` DATETIME,
   FOREIGN KEY (`state_id`) REFERENCES `states`(`id`)
@@ -113,32 +122,23 @@ CREATE TABLE IF NOT EXISTS `cities` (
 CREATE TABLE IF NOT EXISTS `subcategories` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(100) NOT NULL,
-  `slug` VARCHAR(100),
+  `slug` VARCHAR(100) UNIQUE,
   `parent_category_id` INT NOT NULL,
-  `description` VARCHAR(500),
+  `description` TEXT,
+  `item_count` INT DEFAULT 0,
   `display_order` INT DEFAULT 0,
   `icon_url` VARCHAR(255),
   `icon_media_id` VARCHAR(100),
-  `data_ai_hint_icon` VARCHAR(50),
-  FOREIGN KEY (`parent_category_id`) REFERENCES `lot_categories`(`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `courts` (
-  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-  `name` VARCHAR(150) NOT NULL,
-  `slug` VARCHAR(150),
-  `state_uf` VARCHAR(2) NOT NULL,
-  `website` VARCHAR(255),
-  `created_at` DATETIME,
-  `updated_at` DATETIME
+  `data_ai_hint_icon` VARCHAR(100),
+  FOREIGN KEY (`parent_category_id`) REFERENCES `lot_categories`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `judicial_districts` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(150) NOT NULL,
   `slug` VARCHAR(150),
-  `court_id` INT,
-  `state_id` INT,
+  `court_id` INT NOT NULL,
+  `state_id` INT NOT NULL,
   `zip_code` VARCHAR(10),
   `created_at` DATETIME,
   `updated_at` DATETIME,
@@ -146,10 +146,7 @@ CREATE TABLE IF NOT EXISTS `judicial_districts` (
   FOREIGN KEY (`state_id`) REFERENCES `states`(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- NÍVEL 3: Dependem dos Níveis 1 e 2
--- ============================================================================
-
+-- Nível 3: Segunda dependência
 CREATE TABLE IF NOT EXISTS `judicial_branches` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `name` VARCHAR(150) NOT NULL,
@@ -157,7 +154,7 @@ CREATE TABLE IF NOT EXISTS `judicial_branches` (
   `district_id` INT NOT NULL,
   `contact_name` VARCHAR(150),
   `phone` VARCHAR(20),
-  `email` VARCHAR(100),
+  `email` VARCHAR(255),
   `created_at` DATETIME,
   `updated_at` DATETIME,
   FOREIGN KEY (`district_id`) REFERENCES `judicial_districts`(`id`)
@@ -166,54 +163,59 @@ CREATE TABLE IF NOT EXISTS `judicial_branches` (
 CREATE TABLE IF NOT EXISTS `users` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `uid` VARCHAR(100) NOT NULL UNIQUE,
-  `email` VARCHAR(150) NOT NULL UNIQUE,
-  `password` VARCHAR(255) NOT NULL,
-  `full_name` VARCHAR(150) NOT NULL,
-  `cpf` VARCHAR(20),
+  `email` VARCHAR(255) NOT NULL UNIQUE,
+  `password` VARCHAR(255),
+  `full_name` VARCHAR(150),
+  `cpf` VARCHAR(20) UNIQUE,
   `cell_phone` VARCHAR(20),
-  `razao_social` VARCHAR(200),
-  `cnpj` VARCHAR(20),
+  `razao_social` VARCHAR(255),
+  `cnpj` VARCHAR(20) UNIQUE,
   `date_of_birth` DATE,
   `zip_code` VARCHAR(10),
-  `street` VARCHAR(200),
+  `street` VARCHAR(255),
   `number` VARCHAR(20),
   `complement` VARCHAR(100),
   `neighborhood` VARCHAR(100),
   `city` VARCHAR(100),
-  `state` VARCHAR(50),
+  `state` VARCHAR(100),
   `avatar_url` VARCHAR(255),
+  `data_ai_hint` VARCHAR(100),
   `role_id` INT,
   `seller_id` INT,
-  `habilitation_status` VARCHAR(50) DEFAULT 'PENDING_DOCUMENTS',
-  `account_type` VARCHAR(50) DEFAULT 'PHYSICAL',
+  `habilitation_status` VARCHAR(50),
+  `account_type` VARCHAR(50),
   `badges` JSON,
-  `opt_in_marketing` BOOLEAN DEFAULT FALSE,
+  `opt_in_marketing` BOOLEAN,
   `created_at` DATETIME,
   `updated_at` DATETIME,
-  FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`)
+  FOREIGN KEY (`role_id`) REFERENCES `roles`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- NÍVEL 4: Dependem dos Níveis 1, 2 e 3
--- ============================================================================
 
+-- Nível 4: Terceira dependência
 CREATE TABLE IF NOT EXISTS `sellers` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `public_id` VARCHAR(100) UNIQUE,
   `slug` VARCHAR(150) UNIQUE,
   `name` VARCHAR(150) NOT NULL,
   `contact_name` VARCHAR(150),
-  `email` VARCHAR(150),
+  `email` VARCHAR(255),
   `phone` VARCHAR(20),
-  `address` VARCHAR(200),
+  `address` VARCHAR(255),
   `city` VARCHAR(100),
-  `state` VARCHAR(50),
+  `state` VARCHAR(100),
   `zip_code` VARCHAR(10),
   `website` VARCHAR(255),
   `logo_url` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(50),
+  `logo_media_id` VARCHAR(100),
+  `data_ai_hint_logo` VARCHAR(100),
   `description` TEXT,
   `user_id` INT,
+  `member_since` DATETIME,
+  `rating` DECIMAL(3, 2),
+  `active_lots_count` INT,
+  `total_sales_value` DECIMAL(15, 2),
+  `auctions_facilitated_count` INT,
   `is_judicial` BOOLEAN DEFAULT FALSE,
   `judicial_branch_id` INT,
   `created_at` DATETIME,
@@ -229,36 +231,41 @@ CREATE TABLE IF NOT EXISTS `auctioneers` (
   `name` VARCHAR(150) NOT NULL,
   `registration_number` VARCHAR(50),
   `contact_name` VARCHAR(150),
-  `email` VARCHAR(150),
+  `email` VARCHAR(255),
   `phone` VARCHAR(20),
-  `address` VARCHAR(200),
+  `address` VARCHAR(255),
   `city` VARCHAR(100),
-  `state` VARCHAR(50),
+  `state` VARCHAR(100),
   `zip_code` VARCHAR(10),
   `website` VARCHAR(255),
   `logo_url` VARCHAR(255),
-  `data_ai_hint_logo` VARCHAR(50),
+  `logo_media_id` VARCHAR(100),
+  `data_ai_hint_logo` VARCHAR(100),
   `description` TEXT,
   `user_id` INT,
+  `member_since` DATETIME,
+  `rating` DECIMAL(3, 2),
+  `auctions_conducted_count` INT,
+  `total_value_sold` DECIMAL(15, 2),
   `created_at` DATETIME,
   `updated_at` DATETIME,
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `media_items` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `file_name` VARCHAR(255) NOT NULL,
-  `storage_path` VARCHAR(255) NOT NULL,
-  `title` VARCHAR(200),
-  `alt_text` VARCHAR(200),
+  `storage_path` VARCHAR(512) NOT NULL,
+  `title` VARCHAR(255),
+  `alt_text` VARCHAR(255),
   `caption` VARCHAR(500),
   `description` TEXT,
-  `mime_type` VARCHAR(50),
+  `mime_type` VARCHAR(100),
   `size_bytes` INT,
-  `url_original` VARCHAR(255),
-  `url_thumbnail` VARCHAR(255),
-  `url_medium` VARCHAR(255),
-  `url_large` VARCHAR(255),
+  `url_original` VARCHAR(512),
+  `url_thumbnail` VARCHAR(512),
+  `url_medium` VARCHAR(512),
+  `url_large` VARCHAR(512),
   `linked_lot_ids` JSON,
   `data_ai_hint` VARCHAR(100),
   `uploaded_by` INT,
@@ -266,11 +273,7 @@ CREATE TABLE IF NOT EXISTS `media_items` (
   FOREIGN KEY (`uploaded_by`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- ============================================================================
--- NÍVEL 5: Dependem dos Níveis 1-4
--- ============================================================================
-
+-- Nível 5: Quarta dependência
 CREATE TABLE IF NOT EXISTS `judicial_processes` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `public_id` VARCHAR(100) UNIQUE,
@@ -289,7 +292,7 @@ CREATE TABLE IF NOT EXISTS `judicial_processes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `judicial_parties` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `process_id` INT NOT NULL,
   `name` VARCHAR(255) NOT NULL,
   `document_number` VARCHAR(50),
@@ -329,17 +332,30 @@ CREATE TABLE IF NOT EXISTS `bens` (
 CREATE TABLE IF NOT EXISTS `auctions` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `public_id` VARCHAR(100) UNIQUE,
-  `title` VARCHAR(200) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
+  `slug` VARCHAR(255) UNIQUE,
   `description` TEXT,
-  `status` VARCHAR(50) DEFAULT 'RASCUNHO',
+  `status` VARCHAR(50),
   `auction_date` DATETIME,
   `end_date` DATETIME,
   `category_id` INT,
   `auctioneer_id` INT,
   `seller_id` INT,
-  `map_address` VARCHAR(300),
+  `visits` INT DEFAULT 0,
+  `is_favorite` BOOLEAN DEFAULT FALSE,
   `image_url` VARCHAR(255),
+  `image_media_id` VARCHAR(100),
+  `data_ai_hint` VARCHAR(100),
   `documents_url` VARCHAR(255),
+  `evaluation_report_url` VARCHAR(255),
+  `auction_certificate_url` VARCHAR(255),
+  `city` VARCHAR(100),
+  `state` VARCHAR(2),
+  `initial_offer` DECIMAL(15, 2),
+  `created_at` DATETIME,
+  `updated_at` DATETIME,
+  `auction_type` VARCHAR(50),
+  `auction_stages` JSON,
   `automatic_bidding_enabled` BOOLEAN DEFAULT FALSE,
   `allow_installment_bids` BOOLEAN DEFAULT FALSE,
   `soft_close_enabled` BOOLEAN DEFAULT FALSE,
@@ -349,18 +365,15 @@ CREATE TABLE IF NOT EXISTS `auctions` (
   `total_habilitated_users` INT,
   `is_featured_on_marketplace` BOOLEAN DEFAULT FALSE,
   `marketplace_announcement_title` VARCHAR(150),
-  `auction_stages` JSON,
-  `created_at` DATETIME,
-  `updated_at` DATETIME,
-  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`),
-  FOREIGN KEY (`auctioneer_id`) REFERENCES `auctioneers`(`id`),
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`)
+  FOREIGN KEY (`auctioneer_id`) REFERENCES `auctioneers`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `user_documents` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT NOT NULL,
-  `document_type_id` VARCHAR(100) NOT NULL,
+  `document_type_id` INT NOT NULL,
   `status` VARCHAR(50) NOT NULL,
   `file_url` VARCHAR(255) NOT NULL,
   `file_name` VARCHAR(255),
@@ -374,81 +387,102 @@ CREATE TABLE IF NOT EXISTS `user_documents` (
 CREATE TABLE IF NOT EXISTS `direct_sale_offers` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `public_id` VARCHAR(100) UNIQUE,
-  `title` VARCHAR(200) NOT NULL,
+  `title` VARCHAR(255) NOT NULL,
   `description` TEXT,
-  `offer_type` VARCHAR(50) NOT NULL,
+  `offer_type` VARCHAR(50),
   `price` DECIMAL(15, 2),
   `minimum_offer_price` DECIMAL(15, 2),
-  `status` VARCHAR(50) NOT NULL,
-  `category_id` INT,
+  `status` VARCHAR(50),
+  `category` VARCHAR(100),
   `seller_id` INT,
-  `location_city_id` INT,
-  `location_state_id` INT,
+  `seller_name` VARCHAR(150),
+  `seller_logo_url` VARCHAR(255),
+  `data_ai_hint_seller_logo` VARCHAR(100),
+  `location_city` VARCHAR(100),
+  `location_state` VARCHAR(100),
   `image_url` VARCHAR(255),
+  `image_media_id` VARCHAR(100),
+  `data_ai_hint` VARCHAR(100),
   `gallery_image_urls` JSON,
+  `media_item_ids` JSON,
+  `items_included` JSON,
+  `views` INT,
   `expires_at` DATETIME,
   `created_at` DATETIME,
   `updated_at` DATETIME,
-  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`),
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`)
+  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- NÍVEL 6: Dependem dos Níveis 1-5
--- ============================================================================
-
+-- Nível 6: Quinta dependência
 CREATE TABLE IF NOT EXISTS `lots` (
   `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `public_id` VARCHAR(100) UNIQUE,
   `auction_id` INT NOT NULL,
   `number` VARCHAR(20),
   `title` VARCHAR(200) NOT NULL,
+  `slug` VARCHAR(200),
   `description` TEXT,
   `price` DECIMAL(15, 2) NOT NULL,
   `initial_price` DECIMAL(15, 2),
   `second_initial_price` DECIMAL(15, 2),
   `bid_increment_step` DECIMAL(15, 2),
-  `status` VARCHAR(50) NOT NULL DEFAULT 'EM_BREVE',
-  `views` INT DEFAULT 0,
-  `bids_count` INT DEFAULT 0,
+  `status` VARCHAR(50) NOT NULL,
+  `bids_count` INT,
+  `views` INT,
   `is_featured` BOOLEAN DEFAULT FALSE,
+  `is_favorite` BOOLEAN DEFAULT FALSE,
   `is_exclusive` BOOLEAN DEFAULT FALSE,
-  `discount_percentage` INT,
+  `discount_percentage` DECIMAL(5, 2),
   `additional_triggers` JSON,
   `image_url` VARCHAR(255),
+  `image_media_id` VARCHAR(100),
   `gallery_image_urls` JSON,
+  `media_item_ids` JSON,
   `category_id` INT,
   `subcategory_id` INT,
   `seller_id` INT,
+  `auctioneer_id` INT,
   `city_id` INT,
   `state_id` INT,
+  `latitude` DECIMAL(10, 8),
+  `longitude` DECIMAL(11, 8),
+  `map_address` VARCHAR(255),
+  `map_embed_url` TEXT,
+  `map_static_image_url` VARCHAR(255),
   `end_date` DATETIME,
+  `lot_specific_auction_date` DATETIME,
+  `second_auction_date` DATETIME,
+  `condition` VARCHAR(100),
+  `data_ai_hint` VARCHAR(100),
   `winner_id` INT,
+  `winning_bid_term_url` VARCHAR(255),
+  `reserve_price` DECIMAL(15, 2),
+  `evaluation_value` DECIMAL(15, 2),
+  `debt_amount` DECIMAL(15, 2),
+  `itbi_value` DECIMAL(15, 2),
   `created_at` DATETIME,
   `updated_at` DATETIME,
   FOREIGN KEY (`auction_id`) REFERENCES `auctions`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`),
-  FOREIGN KEY (`subcategory_id`) REFERENCES `subcategories`(`id`),
-  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`),
-  FOREIGN KEY (`city_id`) REFERENCES `cities`(`id`),
-  FOREIGN KEY (`state_id`) REFERENCES `states`(`id`),
-  FOREIGN KEY (`winner_id`) REFERENCES `users`(`id`)
+  FOREIGN KEY (`category_id`) REFERENCES `lot_categories`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`subcategory_id`) REFERENCES `subcategories`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`seller_id`) REFERENCES `sellers`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`auctioneer_id`) REFERENCES `auctioneers`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`city_id`) REFERENCES `cities`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`state_id`) REFERENCES `states`(`id`) ON DELETE SET NULL,
+  FOREIGN KEY (`winner_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ============================================================================
--- NÍVEL 7: Dependem dos Níveis 1-6
--- ============================================================================
-
+-- Nível 7: Sexta dependência
 CREATE TABLE IF NOT EXISTS `lot_bens` (
-  `lot_id` INT NOT NULL,
-  `bem_id` INT NOT NULL,
-  PRIMARY KEY (`lot_id`, `bem_id`),
-  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`bem_id`) REFERENCES `bens`(`id`) ON DELETE CASCADE
+    `lot_id` INT NOT NULL,
+    `bem_id` INT NOT NULL,
+    PRIMARY KEY (`lot_id`, `bem_id`),
+    FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+    FOREIGN KEY (`bem_id`) REFERENCES `bens`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `bids` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `lot_id` INT NOT NULL,
   `auction_id` INT NOT NULL,
   `bidder_id` INT NOT NULL,
@@ -461,66 +495,66 @@ CREATE TABLE IF NOT EXISTS `bids` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `user_wins` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `lot_id` INT NOT NULL,
   `user_id` INT NOT NULL,
-  `winning_bid_amount` DECIMAL(15, 2),
-  `win_date` DATETIME,
+  `winning_bid_amount` DECIMAL(15, 2) NOT NULL,
+  `win_date` DATETIME NOT NULL,
   `payment_status` VARCHAR(50),
   `invoice_url` VARCHAR(255),
-  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`),
-  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `user_lot_max_bids` (
-  `id` VARCHAR(100) NOT NULL PRIMARY KEY,
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `user_id` INT NOT NULL,
   `lot_id` INT NOT NULL,
   `max_amount` DECIMAL(15, 2) NOT NULL,
-  `is_active` BOOLEAN,
+  `is_active` BOOLEAN DEFAULT TRUE,
   `created_at` DATETIME,
-  UNIQUE (`user_id`, `lot_id`),
   FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE
+  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  UNIQUE (`user_id`, `lot_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `lot_reviews` (
-    `id` VARCHAR(100) NOT NULL PRIMARY KEY,
-    `lot_id` INT NOT NULL,
-    `auction_id` INT NOT NULL,
-    `user_id` INT NOT NULL,
-    `user_display_name` VARCHAR(150),
-    `rating` INT NOT NULL,
-    `comment` TEXT,
-    `created_at` DATETIME,
-    FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `lot_id` INT NOT NULL,
+  `auction_id` INT,
+  `user_id` INT NOT NULL,
+  `user_display_name` VARCHAR(150),
+  `rating` INT NOT NULL,
+  `comment` TEXT,
+  `created_at` DATETIME,
+  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `lot_questions` (
-    `id` VARCHAR(100) NOT NULL PRIMARY KEY,
-    `lot_id` INT NOT NULL,
-    `auction_id` INT NOT NULL,
-    `user_id` INT NOT NULL,
-    `user_display_name` VARCHAR(150),
-    `question_text` TEXT NOT NULL,
-    `is_public` BOOLEAN DEFAULT TRUE,
-    `answer_text` TEXT,
-    `answered_by_user_id` INT,
-    `answered_by_user_display_name` VARCHAR(150),
-    `answered_at` DATETIME,
-    `created_at` DATETIME,
-    FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
-    FOREIGN KEY (`answered_by_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `lot_id` INT NOT NULL,
+  `auction_id` INT,
+  `user_id` INT NOT NULL,
+  `user_display_name` VARCHAR(150),
+  `question_text` TEXT NOT NULL,
+  `answer_text` TEXT,
+  `answered_by_user_id` INT,
+  `answered_by_user_display_name` VARCHAR(150),
+  `is_public` BOOLEAN DEFAULT TRUE,
+  `created_at` DATETIME,
+  `answered_at` DATETIME,
+  FOREIGN KEY (`lot_id`) REFERENCES `lots`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  FOREIGN KEY (`answered_by_user_id`) REFERENCES `users`(`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `notifications` (
-    `id` VARCHAR(100) NOT NULL PRIMARY KEY,
-    `user_id` INT NOT NULL,
-    `message` VARCHAR(255) NOT NULL,
-    `link` VARCHAR(255),
-    `is_read` BOOLEAN DEFAULT FALSE,
-    `created_at` DATETIME,
-    FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
+  `id` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `user_id` INT NOT NULL,
+  `message` TEXT NOT NULL,
+  `link` VARCHAR(255),
+  `is_read` BOOLEAN DEFAULT FALSE,
+  `created_at` DATETIME,
+  FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
