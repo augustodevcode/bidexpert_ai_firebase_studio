@@ -44,11 +44,11 @@ export default function SetupPage() {
         <ol className="flex items-center w-full mb-8">
             {STEPS.map((step, index) => (
                  <li key={step.id} className="flex w-full items-center">
-                    <div className="flex items-center text-sm">
-                        <span className={`flex items-center justify-center w-8 h-8 rounded-full shrink-0 ${index <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
-                            <step.icon className="w-4 h-4"/>
+                    <div className="flex flex-col items-center gap-2">
+                        <span className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 ${index <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
+                            <step.icon className="w-5 h-5"/>
                         </span>
-                        <span className={`ml-2 font-medium hidden md:block ${index <= currentStep ? 'text-primary' : 'text-muted-foreground'}`}>{step.title}</span>
+                        <span className={`text-xs font-medium text-center ${index <= currentStep ? 'text-primary' : 'text-muted-foreground'}`}>{step.title}</span>
                     </div>
                     {index < STEPS.length - 1 && <div className="flex-1 w-full h-px bg-border mx-4"></div>}
                 </li>
