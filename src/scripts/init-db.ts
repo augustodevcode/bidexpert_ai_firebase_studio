@@ -12,7 +12,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env'), override: false });
 
 async function executeSchema(pool: Pool) {
     console.log("\n--- [DB INIT - DDL] Executing MySQL Schema ---");
-    const schemaPath = path.join(process.cwd(), 'schema.mysql.sql');
+    const schemaPath = path.join(process.cwd(), 'src', 'schema.mysql.sql');
     if (!fs.existsSync(schemaPath)) {
         console.warn(`[DB INIT - DDL] WARNING: Schema file not found at ${schemaPath}. Skipping table creation.`);
         return;

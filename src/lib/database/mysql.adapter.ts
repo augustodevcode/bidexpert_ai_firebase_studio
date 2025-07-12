@@ -333,16 +333,17 @@ export class MySqlAdapter implements DatabaseAdapter {
         const settings = await this.executeQueryForSingle('SELECT * FROM `platform_settings` WHERE id = ?', ['global']);
         if (!settings) return null;
         
-        try {
-            const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
-            for (const field of fieldsToParse) {
-                if (settings[field] && typeof settings[field] === 'string') {
+        const fieldsToParse = ['themes', 'homepageSections', 'mentalTriggerSettings', 'sectionBadgeVisibility', 'mapSettings', 'variableIncrementTable', 'biddingSettings', 'platformPublicIdMasks'];
+        for (const field of fieldsToParse) {
+            // Only parse if it's a string. If the driver already parsed it, it will be an object.
+            if (settings[field] && typeof settings[field] === 'string') {
+                try {
                     settings[field] = JSON.parse(settings[field]);
+                } catch(e: any) {
+                    console.error(`Error parsing PlatformSettings field "${field}": ${e.message}`);
+                    settings[field] = null; // Set to null on error to avoid breaking the app.
                 }
             }
-        } catch(e: any) {
-            console.error(`Error parsing PlatformSettings JSON from DB: ${e.message}`);
-            return null; // Retorna null se houver erro no parse para evitar que a aplicação quebre
         }
         return settings;
     }
