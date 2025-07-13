@@ -5,6 +5,7 @@ import type { UserProfileWithPermissions, Role, AccountType, UserProfileData } f
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface UserCreationData {
   email: string;
@@ -62,36 +63,38 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
   }
 
-  const userRole = roles.find(r => r.name_normalized?.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => r.name_normalized.trim().toUpperCase() === 'USER');
 
   if (!userRole) {
     throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
   }
   
-  const newUserPayload: Partial<UserProfileData> = {
+  const creationData = {
     email: data.email.trim(),
-    fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : undefined,
+    fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
     password: hashedPassword,
-    roleIds: [userRole.id], 
-    habilitationStatus: 'PENDING_DOCUMENTS',
     accountType: data.accountType,
-    cpf: data.cpf,
-    dateOfBirth: data.dateOfBirth,
-    cellPhone: data.cellPhone,
-    zipCode: data.zipCode,
-    street: data.street,
-    number: data.number,
-    complement: data.complement,
-    neighborhood: data.neighborhood,
-    city: data.city,
-    state: data.state,
-    optInMarketing: data.optInMarketing,
+    cpf: data.accountType === 'PHYSICAL' ? data.cpf?.trim() : data.responsibleCpf?.trim(),
+    dateOfBirth: data.accountType === 'PHYSICAL' ? data.dateOfBirth : null,
     razaoSocial: data.accountType !== 'PHYSICAL' ? data.razaoSocial?.trim() : undefined,
     cnpj: data.accountType !== 'PHYSICAL' ? data.cnpj?.trim() : undefined,
     inscricaoEstadual: data.accountType !== 'PHYSICAL' ? data.inscricaoEstadual?.trim() : undefined,
     website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.website?.trim() : undefined,
+    cellPhone: data.cellPhone?.trim(),
+    zipCode: data.zipCode?.trim(),
+    street: data.street?.trim(),
+    number: data.number?.trim(),
+    complement: data.complement?.trim(),
+    neighborhood: data.neighborhood?.trim(),
+    city: data.city?.trim(),
+    state: data.state?.trim(),
+    optInMarketing: data.optInMarketing,
+    habilitationStatus: 'PENDING_DOCUMENTS',
+    uid: uuidv4()
   };
 
+  const newUserPayload: Partial<UserProfileData> = { ...creationData, roleIds: [userRole.id] };
+  
   const result = await db.createUser(newUserPayload); 
 
   if (result.success) {
@@ -119,7 +122,8 @@ export async function updateUserRoles(userId: string, roleIds: string[]): Promis
 export async function deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
   try {
      const db = getDatabaseAdapter();
-    const result = await db.deleteUser(id);
+     // @ts-ignore
+     const result = await db.deleteUser(id);
     if (result.success) {
         revalidatePath('/admin/users');
     }

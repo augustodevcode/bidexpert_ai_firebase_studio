@@ -1,4 +1,4 @@
-
+// src/app/admin/users/user-role-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -103,13 +103,15 @@ export default function UserRoleForm({
                             <FormItem key={role.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 bg-background">
                               <FormControl>
                                 <Checkbox
-                                  checked={field.value?.includes(role.id)}
+                                  checked={field.value?.includes(String(role.id))}
                                   onCheckedChange={(checked) => {
+                                    const stringId = String(role.id);
+                                    const currentValues = field.value?.map(String) || [];
                                     return checked
-                                      ? field.onChange([...(field.value || []), role.id])
+                                      ? field.onChange([...currentValues, stringId])
                                       : field.onChange(
-                                          (field.value || []).filter(
-                                            (value) => value !== role.id
+                                          currentValues.filter(
+                                            (value) => value !== stringId
                                           )
                                         )
                                   }}

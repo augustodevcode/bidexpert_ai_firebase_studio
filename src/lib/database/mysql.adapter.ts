@@ -1,4 +1,3 @@
-
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -6,11 +5,36 @@ import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 function toSnakeCase(str: string): string {
-    if (str === 'id' || str === 'uid') return str;
-    // This regex converts camelCase to snake_case, e.g., fullName -> full_name
+    const map: { [key: string]: string } = {
+        'publicId': 'publicId',
+        'auctionId': 'auctionId',
+        'categoryId': 'categoryId',
+        'auctioneerId': 'auctioneerId',
+        'sellerId': 'sellerId',
+        'imageMediaId': 'imageMediaId',
+        'judicialProcessId': 'judicialProcessId',
+        'subcategoryId': 'subcategoryId',
+        'cityId': 'cityId',
+        'stateId': 'stateId',
+        'winnerId': 'winnerId',
+        'lotId': 'lotId',
+        'bidderId': 'bidderId',
+        'documentTypeId': 'documentTypeId',
+        'userId': 'user_id',
+        'courtId': 'courtId',
+        'districtId': 'districtId',
+        'branchId': 'branchId',
+        'parentCategoryId': 'parent_category_id',
+        'fullName': 'fullName',
+        'razaoSocial': 'razaoSocial',
+        'nameNormalized': 'name_normalized',
+    };
+
+    if (map[str]) {
+        return map[str];
+    }
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
-
 
 function toCamelCase(str: string): string {
     return str.replace(/_([a-z])/g, g => g[1].toUpperCase());
@@ -69,7 +93,7 @@ export class MySqlAdapter implements DatabaseAdapter {
             this.pool = null;
         }
     }
-    
+
     private async getConnection() {
         if (this.connectionError) {
             throw new Error(this.connectionError);
@@ -137,10 +161,11 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     private async genericUpdate(tableName: string, id: number | string, data: Record<string, any>): Promise<{ success: boolean; message: string; }> {
-        const updates = { ...data, updated_at: new Date() };
+        const updates = { ...data, updatedAt: new Date() };
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
         
+        // Remove 'id' from updates if it exists to avoid trying to update the primary key
         if ('id' in updates) delete updates.id;
         
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
@@ -164,11 +189,14 @@ export class MySqlAdapter implements DatabaseAdapter {
         return this.executeMutation(sql, values);
     }
 
+
+    // --- ENTITY IMPLEMENTATIONS ---
+
     async getLots(auctionId?: number): Promise<Lot[]> {
         let sql = 'SELECT * FROM `lots`';
         const params = [];
         if (auctionId) {
-            sql += ' WHERE `auction_id` = ?';
+            sql += ' WHERE `auctionId` = ?';
             params.push(auctionId);
         }
         return this.executeQuery(sql, params);
@@ -190,7 +218,7 @@ export class MySqlAdapter implements DatabaseAdapter {
       const result = await this.genericCreate('lots', data);
       if (result.success && result.insertId && bens) {
           for (const bem of bens) {
-              await this.executeMutation('INSERT INTO `lot_bens` (`lot_id`, `bem_id`) VALUES (?, ?)', [result.insertId, bem.id]);
+              await this.executeMutation('INSERT INTO `lot_bens` (`lotId`, `bemId`) VALUES (?, ?)', [result.insertId, bem.id]);
           }
       }
       return { ...result, lotId: result.insertId };
@@ -205,15 +233,15 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getBens(filter?: { judicialProcessId?: number; sellerId?: number; }): Promise<Bem[]> {
-        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.category_id = cat.id LEFT JOIN `subcategories` sub ON b.subcategory_id = sub.id';
+        let sql = 'SELECT b.*, cat.name as category_name, sub.name as subcategory_name FROM `bens` b LEFT JOIN `lot_categories` cat ON b.categoryId = cat.id LEFT JOIN `subcategories` sub ON b.subcategoryId = sub.id';
         const params = [];
         const whereClauses = [];
         if (filter?.judicialProcessId) {
-            whereClauses.push('b.`judicial_process_id` = ?');
+            whereClauses.push('b.`judicialProcessId` = ?');
             params.push(filter.judicialProcessId);
         }
         if (filter?.sellerId) {
-            whereClauses.push('b.`seller_id` = ?');
+            whereClauses.push('b.`sellerId` = ?');
             params.push(filter.sellerId);
         }
         if (whereClauses.length > 0) {
@@ -246,7 +274,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async getAuctions(): Promise<Auction[]> {
-        const auctions = await this.executeQuery('SELECT * FROM `auctions` ORDER BY `auction_date` DESC');
+        const auctions = await this.executeQuery('SELECT * FROM `auctions` ORDER BY `auctionDate` DESC');
         for (const auction of auctions) {
             auction.lots = await this.getLots(auction.id);
             auction.totalLots = auction.lots.length;
@@ -255,7 +283,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async getAuction(id: number | string): Promise<Auction | null> {
-        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `public_id` = ?', [id, id]);
+        const auction = await this.executeQueryForSingle('SELECT * FROM `auctions` WHERE `id` = ? OR `publicId` = ?', [id, id]);
         if (auction) {
             auction.lots = await this.getLots(auction.id);
             auction.totalLots = auction.lots.length;
@@ -281,7 +309,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     async getCities(stateId?: number): Promise<CityInfo[]> {
         let sql = 'SELECT * FROM `cities`';
         if (stateId) {
-            sql += ' WHERE `state_id` = ? ORDER BY `name`';
+            sql += ' WHERE `stateId` = ? ORDER BY `name`';
             return this.executeQuery(sql, [stateId]);
         }
         return this.executeQuery(sql + ' ORDER BY `name`');
@@ -293,7 +321,7 @@ export class MySqlAdapter implements DatabaseAdapter {
         if (parentCategoryId === undefined) {
           return this.executeQuery('SELECT * FROM `subcategories` ORDER BY `display_order`');
         }
-        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parent_category_id` = ? ORDER BY `display_order`', [parentCategoryId]);
+        return this.executeQuery('SELECT * FROM `subcategories` WHERE `parentCategoryId` = ? ORDER BY `display_order`', [parentCategoryId]);
     }
     async getSubcategory(id: number): Promise<Subcategory | null> {
         return this.executeQueryForSingle('SELECT * FROM `subcategories` WHERE `id` = ?', [id]);
@@ -308,12 +336,10 @@ export class MySqlAdapter implements DatabaseAdapter {
                 u.*, 
                 GROUP_CONCAT(r.id) as role_ids,
                 GROUP_CONCAT(r.name) as role_names,
-                GROUP_CONCAT(r.permissions) as permissions_json,
-                s.id as seller_id_from_join
+                GROUP_CONCAT(r.permissions) as permissions_json
             FROM \`users\` u
-            LEFT JOIN \`user_roles\` ur ON u.id = ur.user_id
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
-            LEFT JOIN \`sellers\` s ON u.id = s.user_id
             GROUP BY u.id
         `;
         const users = await this.executeQuery(sql);
@@ -322,10 +348,7 @@ export class MySqlAdapter implements DatabaseAdapter {
                 try { return JSON.parse(p); } catch { return []; }
             }) : [];
             u.permissions = [...new Set(allPerms)];
-            u.sellerId = u.sellerId || u.sellerIdFromJoin;
-            u.roleNames = u.roleNames ? u.roleNames.split(',') : [];
             delete u.permissionsJson; // Clean up
-            delete u.sellerIdFromJoin; // Clean up
             return u;
         });
     }
@@ -336,53 +359,28 @@ export class MySqlAdapter implements DatabaseAdapter {
                 u.*, 
                 GROUP_CONCAT(r.id) as role_ids,
                 GROUP_CONCAT(r.name) as role_names,
-                GROUP_CONCAT(r.permissions) as permissions_json,
-                s.id as seller_id_from_join
+                GROUP_CONCAT(r.permissions) as permissions_json
             FROM \`users\` u
-            LEFT JOIN \`user_roles\` ur ON u.id = ur.user_id
+            LEFT JOIN \`user_roles\` ur ON u.uid = ur.user_id
             LEFT JOIN \`roles\` r ON ur.role_id = r.id
-            LEFT JOIN \`sellers\` s ON u.id = s.user_id
-            WHERE u.id = ? OR u.uid = ?
+            WHERE u.uid = ?
             GROUP BY u.id
         `;
-        const user = await this.executeQueryForSingle(sql, [userId, userId]);
-        if (user) {
-            if (user.permissionsJson) {
-                const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
-                    try { return JSON.parse(p); } catch { return []; }
-                });
-                user.permissions = [...new Set(allPerms)];
-                delete user.permissionsJson;
-            }
-             if (user.roleNames && typeof user.roleNames === 'string') {
-                user.roleNames = user.roleNames.split(',');
-            } else if (!user.roleNames) {
-                user.roleNames = [];
-            }
-             user.sellerId = user.sellerId || user.sellerIdFromJoin;
-             delete user.sellerIdFromJoin;
+        const user = await this.executeQueryForSingle(sql, [userId]);
+        if (user && user.permissionsJson) {
+            const allPerms = user.permissionsJson.split(',').flatMap((p: string) => {
+                try { return JSON.parse(p); } catch { return []; }
+            });
+            user.permissions = [...new Set(allPerms)];
+            delete user.permissionsJson;
         }
         return user;
     }
     
-    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> {
-      const { roleIds, ...userData } = data;
-      const result = await this.genericCreate('users', userData);
-      
-      if (result.success && result.insertId && roleIds && roleIds.length > 0) {
-        // Link roles
-        for (const roleId of roleIds) {
-          await this.executeMutation('INSERT INTO `user_roles` (user_id, role_id) VALUES (?, ?)', [result.insertId, roleId]);
-        }
-      }
-      return { ...result, userId: result.insertId?.toString() };
-    }
-    
     async getRoles(): Promise<Role[]> { 
-        console.log('[MySqlAdapter.getRoles] Fetching roles from database...');
+        console.log("[MySqlAdapter.getRoles] Fetching roles from database...");
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
-        console.log('[MySqlAdapter.getRoles] Raw roles from DB:', JSON.stringify(roles, null, 2));
-        return roles.map(r => {
+        const processedRoles = roles.map(r => {
             if (r.permissions && typeof r.permissions === 'string') {
                  try { r.permissions = JSON.parse(r.permissions); } catch(e) { r.permissions = []; }
             } else if (!r.permissions) {
@@ -390,10 +388,12 @@ export class MySqlAdapter implements DatabaseAdapter {
             }
             return r;
         });
+        console.log("[MySqlAdapter.getRoles] Raw roles from DB:", JSON.stringify(processedRoles, null, 2));
+        return processedRoles;
     }
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
-        const dataToInsert = { ...role, slug: slugify(role.name), name_normalized: role.name.toUpperCase().trim() };
+        const dataToInsert = { ...role, slug: slugify(role.name), nameNormalized: role.name.toUpperCase() };
         const snakeCaseData = convertObjectToSnakeCase(dataToInsert);
         const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
         const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
@@ -482,7 +482,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getSeller(id: number | string): Promise<SellerProfileInfo | null> {
-        return this.executeQueryForSingle('SELECT * FROM `sellers` WHERE id = ? OR public_id = ?', [id, id]);
+        return this.executeQueryForSingle('SELECT * FROM `sellers` WHERE id = ? OR publicId = ?', [id, id]);
     }
     
     async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: number; }> {
@@ -499,16 +499,16 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
     
     async getAuctioneer(id: number | string): Promise<AuctioneerProfileInfo | null> {
-        return this.executeQueryForSingle('SELECT * FROM `auctioneers` WHERE id = ? OR public_id = ?', [id, id]);
+        return this.executeQueryForSingle('SELECT * FROM `auctioneers` WHERE id = ? OR publicId = ?', [id, id]);
     }
 
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }> {
         const id = uuidv4();
-        const sql = 'INSERT INTO `user_documents` (id, user_id, document_type_id, file_url, file_name, status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
+        const sql = 'INSERT INTO `user_documents` (id, user_id, documentTypeId, file_url, file_name, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)';
         const result = await this.executeMutation(sql, [id, userId, documentTypeId, fileUrl, fileName, 'PENDING_ANALYSIS', new Date(), new Date()]);
         
         if (result.success) {
-            await this.executeMutation('UPDATE `users` SET habilitation_status = ? WHERE uid = ? AND habilitation_status = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
+            await this.executeMutation('UPDATE `users` SET habilitationStatus = ? WHERE uid = ? AND habilitationStatus = ?', ['PENDING_ANALYSIS', userId, 'PENDING_DOCUMENTS']);
         }
         
         return result;
@@ -601,6 +601,15 @@ export class MySqlAdapter implements DatabaseAdapter {
 
     async deleteSubcategory(id: number): Promise<{ success: boolean; message: string; }> {
        return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
+    }
+
+    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string }> {
+        const snakeData = convertObjectToSnakeCase(data);
+        const fields = Object.keys(snakeData).map(k => `\`${k}\``).join(', ');
+        const placeholders = Object.keys(snakeData).map(() => '?').join(', ');
+        const sql = `INSERT IGNORE INTO \`users\` (${fields}) VALUES (${placeholders})`;
+        const result = await this.executeMutation(sql, Object.values(snakeData));
+        return { success: result.success, message: result.message, userId: data.uid };
     }
 
     async _notImplemented(method: string): Promise<any> {
