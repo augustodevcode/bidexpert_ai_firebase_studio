@@ -38,7 +38,7 @@ export const registrationFormSchema = z.object({
   inscricaoEstadual: z.string().optional(),
 
   // Consignor fields
-  websiteComitente: z.string().url().or(z.literal('')).optional(),
+  website: z.string().url().or(z.literal('')).optional(),
   
   // Fields for PJ responsible person
   responsibleName: z.string().optional(),

@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
@@ -317,7 +316,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   password?: string;
-  fullName: string | null;
+  name: string | null;
   cpf?: string | null;
   cellPhone?: string | null;
   razaoSocial?: string | null;
@@ -1027,5 +1026,3 @@ export interface BemFormData {
   latitude?: number | null;
   longitude?: string | null;
 }
-
-    

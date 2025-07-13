@@ -62,7 +62,7 @@ export default function RegisterPage() {
       razaoSocial: '',
       cnpj: '',
       inscricaoEstadual: '',
-      websiteComitente: '',
+      website: '',
       responsibleName: '',
       responsibleCpf: '',
     },
@@ -122,7 +122,7 @@ export default function RegisterPage() {
       razaoSocial: data.accountType !== 'PHYSICAL' ? data.razaoSocial?.trim() : undefined,
       cnpj: data.accountType !== 'PHYSICAL' ? data.cnpj?.trim() : undefined,
       inscricaoEstadual: data.accountType !== 'PHYSICAL' ? data.inscricaoEstadual?.trim() : undefined,
-      website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.websiteComitente?.trim() : undefined,
+      website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.website?.trim() : undefined,
       cellPhone: data.cellPhone.trim(),
       zipCode: data.zipCode?.trim(),
       street: data.street?.trim(),
@@ -224,7 +224,7 @@ export default function RegisterPage() {
                     <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ*</FormLabel><FormControl><Input placeholder="00.000.000/0001-00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                   </div>
                   <FormField control={form.control} name="inscricaoEstadual" render={({ field }) => (<FormItem><FormLabel>Inscrição Estadual (Opcional)</FormLabel><FormControl><Input placeholder="Número da Inscrição Estadual" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                  {accountType === 'DIRECT_SALE_CONSIGNOR' && (<FormField control={form.control} name="websiteComitente" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="www.suaempresa.com.br" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />)}
+                  {accountType === 'DIRECT_SALE_CONSIGNOR' && (<FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="www.suaempresa.com.br" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />)}
                   <Separator />
                   <h3 className="text-md font-semibold text-muted-foreground">Responsável Legal</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

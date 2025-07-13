@@ -1,11 +1,10 @@
-
 // src/app/admin/users/actions.ts
 'use server';
 
 import type { UserProfileWithPermissions, Role, AccountType, UserProfileData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/get-adapter';
 
 export interface UserCreationData {
   email: string;
@@ -63,30 +62,37 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
   }
 
-  // Normalize the search to be case-insensitive and trim whitespace
-  const userRole = roles.find(r => {
-    // console.log('[createUser Action] Checking role:', r); // Keep or remove based on need
-    // console.log('[createUser Action] r.nameNormalized:', r?.nameNormalized); // Keep or remove based on need
-    // console.log('[createUser Action] Trimmed and upper:', r?.nameNormalized?.trim().toUpperCase()); // Keep or remove based on need
-    const match = r && r.nameNormalized && r.nameNormalized.trim().toUpperCase() === 'USER';
-    // console.log('[createUser Action] Match result:', match); // Keep or remove based on need
-    return match;
-  });
-
+  const userRole = roles.find(r => r.name_normalized?.trim().toUpperCase() === 'USER');
 
   if (!userRole) {
     throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
   }
   
   const newUserPayload: Partial<UserProfileData> = {
-    ...data,
+    email: data.email.trim(),
+    name: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
     password: hashedPassword,
-    roleIds: [userRole.id], // Use roleIds and set as an array
+    roleIds: [userRole.id], 
     habilitationStatus: 'PENDING_DOCUMENTS',
+    accountType: data.accountType,
+    cpf: data.cpf,
+    dateOfBirth: data.dateOfBirth,
+    cellPhone: data.cellPhone,
+    zipCode: data.zipCode,
+    street: data.street,
+    number: data.number,
+    complement: data.complement,
+    neighborhood: data.neighborhood,
+    city: data.city,
+    state: data.state,
+    optInMarketing: data.optInMarketing,
+    razaoSocial: data.razaoSocial,
+    cnpj: data.cnpj,
+    inscricaoEstadual: data.inscricaoEstadual,
+    website: data.website,
   };
 
   // The adapter's createUser will handle this
-  // @ts-ignore
   const result = await db.createUser(newUserPayload); 
 
   if (result.success) {
@@ -99,7 +105,6 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   try {
     const db = getDatabaseAdapter();
-    // @ts-ignore
     const result = await db.updateUserRoles(userId, roleIds);
     if (result.success) {
         revalidatePath('/admin/users');
