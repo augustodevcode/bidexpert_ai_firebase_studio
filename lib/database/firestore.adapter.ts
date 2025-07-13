@@ -341,53 +341,40 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('auctioneers', id, data, AuctioneerProfileInfoSchema.partial()); }
     async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('auctioneers', id); }
+    
+    async getCourts(): Promise<Court[]> { 
+        const snapshot = await this.db.collection('courts').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<Court>(doc));
+    }
     async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('courts', id, data); }
     
+    async getJudicialDistricts(): Promise<JudicialDistrict[]> {
+        const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
+    }
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { 
         const result = await this.genericCreate('judicial_districts', data);
         return { ...result, districtId: result.id };
+    }
+
+    async getJudicialBranches(): Promise<JudicialBranch[]> { 
+        const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
     }
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
         const result = await this.genericCreate('judicial_branches', data);
         return { ...result, branchId: result.id };
     }
-    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { 
-        const result = await this.genericCreate('judicial_processes', data);
-        return { ...result, processId: result.id };
-    }
-    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { 
-        const result = await this.genericCreate('bens', data);
-        return { ...result, bemId: result.id };
-    }
-    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('bens', id, data); }
-    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
-        const docRef = this.db.collection('user_documents').doc();
-        const data = { id: docRef.id, userId, documentTypeId, fileUrl, fileName, status: 'PENDING_ANALYSIS', createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
-        await docRef.set(data);
-        return { success: true, message: "Documento salvo com sucesso." };
-    }
-    async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this.genericDelete('bens', id); }
     
-    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { 
-        const snapshot = await this.db.collection('direct_sales').get();
-        return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
-    }
-    async getCourts(): Promise<Court[]> { 
-        const snapshot = await this.db.collection('courts').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<Court>(doc));
-    }
-    async getJudicialDistricts(): Promise<JudicialDistrict[]> {
-        const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
-    }
-    async getJudicialBranches(): Promise<JudicialBranch[]> { 
-        const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
-    }
     async getJudicialProcesses(): Promise<JudicialProcess[]> {
         const snapshot = await this.db.collection('judicial_processes').get();
         return snapshot.docs.map(doc => this.toJSON<JudicialProcess>(doc));
     }
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { 
+        const result = await this.genericCreate('judicial_processes', data);
+        return { ...result, processId: result.id };
+    }
+
     async getBem(id: string): Promise<Bem | null> { 
         const doc = await this.db.collection('bens').doc(id).get();
         return doc.exists ? this.toJSON<Bem>(doc) : null;
@@ -407,6 +394,24 @@ export class FirestoreAdapter implements DatabaseAdapter {
       if (ids.length === 0) return [];
       const snapshot = await this.db.collection('bens').where(firestore.FieldPath.documentId(), 'in', ids).get();
       return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+    }
+     async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { 
+        const result = await this.genericCreate('bens', data);
+        return { ...result, bemId: result.id };
+    }
+    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('bens', id, data); }
+    async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this.genericDelete('bens', id); }
+
+    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { 
+        const snapshot = await this.db.collection('direct_sales').get();
+        return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
+    }
+
+    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
+        const docRef = this.db.collection('user_documents').doc();
+        const data = { id: docRef.id, userId, documentTypeId, fileUrl, fileName, status: 'PENDING_ANALYSIS', createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+        await docRef.set(data);
+        return { success: true, message: "Documento salvo com sucesso." };
     }
 
     async getDocumentTemplates(): Promise<DocumentTemplate[]> {
