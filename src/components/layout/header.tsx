@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -258,7 +259,6 @@ export default function Header() {
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
     { label: 'Histórico', isMegaMenu: true, contentKey: 'history', icon: History, href: '/dashboard/history' },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-    { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
   const firstNavItem: NavItem = { label: 'Categorias de Oportunidades', isMegaMenu: true, contentKey: 'categories', href: '/search?type=lots&tab=categories', icon: Tag, megaMenuAlign: 'start' };
@@ -333,7 +333,6 @@ export default function Header() {
         megaMenuAlign: 'end'
     },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
-    { href: '/contact', label: 'Fale Conosco', icon: Phone },
   ];
 
   const HeaderSkeleton = () => (
