@@ -6,8 +6,9 @@ import { getCourts } from '@/app/admin/courts/actions';
 import { notFound } from 'next/navigation';
 import type { JudicialDistrictFormData } from '../../judicial-district-form-schema';
 
-export default async function EditJudicialDistrictPage({ params }: { params: { districtId: string } }) {
-  const districtId = params.districtId;
+// A correção principal é desestruturar `districtId` diretamente aqui.
+export default async function EditJudicialDistrictPage({ params: { districtId } }: { params: { districtId: string } }) {
+  
   const [district, states, courts] = await Promise.all([
     getJudicialDistrict(districtId),
     getStates(),

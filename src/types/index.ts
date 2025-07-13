@@ -367,6 +367,7 @@ export interface UserProfileWithPermissions extends UserProfileData {
 }
 
 export interface Role {
+  [x: string]: any;
   id: string;
   name: string;
   name_normalized: string;
