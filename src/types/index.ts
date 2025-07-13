@@ -317,7 +317,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   password?: string;
-  name: string | null;
+  fullName: string | null;
   cpf?: string | null;
   cellPhone?: string | null;
   razaoSocial?: string | null;
@@ -783,6 +783,15 @@ export interface Bem {
   updatedAt: string | Date;
 }
 
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  subject?: string;
+  message: string;
+  createdAt: string | Date;
+}
+
 export interface CnjProcessSource {
   numeroProcesso: string;
   formato: { nome: string; };
@@ -854,6 +863,12 @@ export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid'
 export interface StateFormData {
   name: string;
   uf: string;
+}
+
+export interface CityFormData {
+  name: string;
+  stateId: string;
+  ibgeCode?: string;
 }
 
 export interface SubcategoryFormData {
@@ -1010,21 +1025,4 @@ export interface DatabaseAdapter {
     close?(): Promise<void>;
 }
 
-export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'lotCount'>;
-
-export interface BemFormData {
-  title: string;
-  description?: string | null;
-  status: 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
-  categoryId: string;
-  subcategoryId?: string | null;
-  judicialProcessId?: string | null;
-  sellerId?: string | null;
-  evaluationValue?: number | null;
-  imageUrl?: string | null;
-  locationCity?: string;
-  locationState?: string;
-  address?: string;
-  latitude?: number | null;
-  longitude?: string | null;
-}
+export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;

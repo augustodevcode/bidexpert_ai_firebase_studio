@@ -1,13 +1,14 @@
-
+// src/app/admin/cities/[cityId]/edit/page.tsx
 import CityForm from '../../city-form';
-import { getCity, updateCity, type CityFormData } from '../../actions';
-import { getStates } from '@/app/admin/states/actions'; // Importar getStates
+import { getCity, updateCity } from '../../actions';
+import type { CityFormData } from '@/types'; // Import from types
+import { getStates } from '@/app/admin/states/actions'; 
 import { notFound } from 'next/navigation';
 
 export default async function EditCityPage({ params }: { params: { cityId: string } }) {
   const cityId = params.cityId;
   const city = await getCity(cityId);
-  const states = await getStates(); // Buscar todos os estados
+  const states = await getStates();
 
   if (!city) {
     notFound();
@@ -21,7 +22,7 @@ export default async function EditCityPage({ params }: { params: { cityId: strin
   return (
     <CityForm
       initialData={city}
-      states={states} // Passar os estados para o formulário
+      states={states}
       onSubmitAction={handleUpdateCity}
       formTitle="Editar Cidade"
       formDescription="Modifique os detalhes da cidade existente."
@@ -29,4 +30,3 @@ export default async function EditCityPage({ params }: { params: { cityId: strin
     />
   );
 }
-    

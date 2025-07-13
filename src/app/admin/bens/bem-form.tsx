@@ -1,4 +1,3 @@
-
 // src/components/admin/bens/bem-form.tsx
 'use client';
 
@@ -22,7 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { bemFormSchema, type BemFormData } from './bem-form-schema';
 import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo, ProcessPartyType } from '@/types';
-import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Car, Building, Tractor, PawPrint, ChevronDown, Trash2, ImagePlus, Diamond, Utensils, Gem, Forest, Anchor, Paintbrush, Hammer, Tv as TvIcon } from 'lucide-react';
+import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Car, Building, Tractor, PawPrint, ChevronDown, Trash2, ImagePlus, Diamond, Utensils, Gem, Anchor, Paintbrush, Hammer, Tv as TvIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -93,28 +92,66 @@ export default function BemForm({
   const form = useForm<BemFormData>({
     resolver: zodResolver(bemFormSchema),
     defaultValues: {
-      ...initialData,
+      title: initialData?.title || '',
+      description: initialData?.description || '',
       status: initialData?.status || 'DISPONIVEL',
       categoryId: initialData?.categoryId || '',
+      subcategoryId: initialData?.subcategoryId || null,
+      judicialProcessId: initialData?.judicialProcessId || null,
+      sellerId: initialData?.sellerId || null,
       evaluationValue: initialData?.evaluationValue || undefined,
+      imageUrl: initialData?.imageUrl || '',
+      imageMediaId: initialData?.imageMediaId || null,
+      galleryImageUrls: initialData?.galleryImageUrls || [],
+      mediaItemIds: initialData?.mediaItemIds || [],
+      dataAiHint: initialData?.dataAiHint || '',
+      locationCity: initialData?.locationCity || '',
+      locationState: initialData?.locationState || '',
+      address: initialData?.address || '',
+      latitude: initialData?.latitude || undefined,
+      longitude: initialData?.longitude || undefined,
+      plate: initialData?.plate || '',
+      make: initialData?.make || '',
+      model: initialData?.model || '',
+      version: initialData?.version || '',
       year: initialData?.year || undefined,
       modelYear: initialData?.modelYear || undefined,
       mileage: initialData?.mileage || undefined,
+      color: initialData?.color || '',
+      fuelType: initialData?.fuelType || '',
+      transmissionType: initialData?.transmissionType || '',
+      bodyType: initialData?.bodyType || '',
+      vin: initialData?.vin || '',
+      renavam: initialData?.renavam || '',
+      enginePower: initialData?.enginePower || '',
+      numberOfDoors: initialData?.numberOfDoors || undefined,
+      vehicleOptions: initialData?.vehicleOptions || '',
+      detranStatus: initialData?.detranStatus || '',
+      debts: initialData?.debts || '',
+      runningCondition: initialData?.runningCondition || '',
+      bodyCondition: initialData?.bodyCondition || '',
+      tiresCondition: initialData?.tiresCondition || '',
+      hasKey: initialData?.hasKey ?? false,
+      propertyRegistrationNumber: initialData?.propertyRegistrationNumber || '',
+      iptuNumber: initialData?.iptuNumber || '',
+      isOccupied: initialData?.isOccupied ?? false,
       totalArea: initialData?.totalArea || undefined,
       builtArea: initialData?.builtArea || undefined,
       bedrooms: initialData?.bedrooms || undefined,
       suites: initialData?.suites || undefined,
       bathrooms: initialData?.bathrooms || undefined,
       parkingSpaces: initialData?.parkingSpaces || undefined,
-      hoursUsed: initialData?.hoursUsed || undefined,
-      hasKey: initialData?.hasKey ?? false,
-      isOccupied: initialData?.isOccupied ?? false,
+      constructionType: initialData?.constructionType || '',
+      finishes: initialData?.finishes || '',
+      infrastructure: initialData?.infrastructure || '',
+      condoDetails: initialData?.condoDetails || '',
+      improvements: initialData?.improvements || '',
+      topography: initialData?.topography || '',
+      liensAndEncumbrances: initialData?.liensAndEncumbrances || '',
+      propertyDebts: initialData?.propertyDebts || '',
+      unregisteredRecords: initialData?.unregisteredRecords || '',
       hasHabiteSe: initialData?.hasHabiteSe ?? false,
-      isPregnant: initialData?.isPregnant ?? false,
-      hasInvoice: initialData?.hasInvoice ?? false,
-      hasWarranty: initialData?.hasWarranty ?? false,
-      galleryImageUrls: initialData?.galleryImageUrls || [],
-      mediaItemIds: initialData?.mediaItemIds || [],
+      zoningRestrictions: initialData?.zoningRestrictions || '',
       amenities: initialData?.amenities?.map((a: any) => (typeof a === 'string' ? { value: a } : a)) || [],
     },
   });
@@ -288,18 +325,7 @@ export default function BemForm({
                               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-3"><FormField name="totalArea" control={form.control} render={({ field }) => (<FormItem><FormLabel>Área Total (m²)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="builtArea" control={form.control} render={({ field }) => (<FormItem><FormLabel>Área Constr. (m²)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="bedrooms" control={form.control} render={({ field }) => (<FormItem><FormLabel>Quartos</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /><FormField name="suites" control={form.control} render={({ field }) => (<FormItem><FormLabel>Suítes</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} /></div>
                               <div className="grid md:grid-cols-2 gap-4"><FormField name="isOccupied" control={form.control} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Imóvel Ocupado?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} /><FormField name="hasHabiteSe" control={form.control} render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm"><div className="space-y-0.5"><FormLabel>Possui Habite-se?</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} /></div>
                               <FormField name="liensAndEncumbrances" control={form.control} render={({ field }) => (<FormItem><FormLabel>Ônus e Gravames</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3}/></FormControl></FormItem>)} />
-                              <div>
-                                <Label>Comodidades</Label>
-                                <div className="space-y-2">
-                                  {amenityFields.map((field, index) => (
-                                    <div key={field.id} className="flex items-center gap-2">
-                                      <FormField control={form.control} name={`amenities.${index}.value`} render={({ field }) => (<FormControl><Input {...field} /></FormControl>)} />
-                                      <Button type="button" variant="ghost" size="icon" onClick={() => removeAmenity(index)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                                    </div>
-                                  ))}
-                                  <Button type="button" variant="outline" size="sm" onClick={() => appendAmenity({ value: '' })}>Adicionar Comodidade</Button>
-                                </div>
-                              </div>
+                              
                             </AccordionContent>
                            </AccordionItem>
                         </Accordion>
