@@ -62,6 +62,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
                     if (!dataToSet.slug && (dataToSet.name || dataToSet.title)) {
                         dataToSet.slug = slugify(dataToSet.name || dataToSet.title);
                     }
+                    // Use set with merge:true to create or update, preventing duplicate errors
+                    // and saving on writes if the document already exists.
                     batch.set(docRef, dataToSet, { merge: true });
                 }
                 await batch.commit();
@@ -258,9 +260,9 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
-        const { id, ...rest } = role as any;
-        const docRef = this.db.collection('roles').doc(id);
-        await docRef.set(rest);
+        const docId = `role-${slugify(role.name)}`;
+        const docRef = this.db.collection('roles').doc(docId);
+        await docRef.set({ ...role, id: docId, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
         return { success: true, message: 'Role criada.' };
     }
 
