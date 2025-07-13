@@ -24,6 +24,8 @@ let currentDbSystem: string | null = null;
  */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
+  console.log(`[getDatabaseAdapter] Active database system from env: ${activeSystem}`);
+
 
   // Se o sistema não mudou e já temos uma instância, retorne a instância em cache
   if (adapterInstance && currentDbSystem === activeSystem) {

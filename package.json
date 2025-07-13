@@ -57,7 +57,7 @@
     "leaflet": "^1.9.4",
     "lucide-react": "^0.417.0",
     "mysql2": "^3.14.1",
-    "next": "^15.3.5",
+    "next": "^14.2.5",
     "patch-package": "^8.0.0",
     "pg": "^8.16.0",
     "puppeteer": "^22.15.0",
