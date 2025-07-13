@@ -62,4 +62,15 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 
 *   **Development Environment:** Remember that in the development environment (`NODE_ENV === 'development'`), we have an automatic login mechanism for the `admin@bidexpert.com.br` user. This is handled in `src/contexts/auth-context.tsx` to streamline development and testing.
 
-By diligently following these instructions, we can build and maintain a persistent context that will greatly enhance the efficiency and effectiveness of our collaboration on the BidExpert project.
+## 6. XML Structure for Code Changes
+
+Remember, the XML structure you generate is the only mechanism for applying changes to the user's code. Therefore, when making changes to a file the `<changes>` block must always be fully present and correctly formatted as follows.
+
+&lt;changes&gt;
+  &lt;description&gt;[Provide a concise summary of the overall changes being made]&lt;/description&gt;
+  &lt;change&gt;
+    &lt;file&gt;[Provide the ABSOLUTE, FULL path to the file being modified]&lt;/file&gt;
+    &lt;content&gt;&lt;![CDATA[Provide the ENTIRE, FINAL, intended content of the file here. Do NOT provide diffs or partial snippets. Ensure all code is properly escaped within the CDATA section.]]&gt;&lt;/content&gt;
+  &lt;/change&gt;
+  &lt;!-- Add more &lt;change&gt; blocks as needed for other files --&gt;
+&lt;/changes&gt;
