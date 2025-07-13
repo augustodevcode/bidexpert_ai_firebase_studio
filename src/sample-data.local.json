@@ -101,7 +101,6 @@
       {"name": "Natal", "stateUf": "RN", "ibgeCode": "2408102"}, {"name": "Mossoró", "stateUf": "RN", "ibgeCode": "2408003"},
       {"name": "Porto Velho", "stateUf": "RO", "ibgeCode": "1100205"}, {"name": "Ji-Paraná", "stateUf": "RO", "ibgeCode": "1100122"},
       {"name": "Boa Vista", "stateUf": "RR", "ibgeCode": "1400100"}, {"name": "Rorainópolis", "stateUf": "RR", "ibgeCode": "1400472"},
-      {"name": "Porto Alegre", "stateUf": "RS", "ibgeCode": "4314902"}, {"name": "Caxias do Sul", "stateUf": "RS", "ibgeCode": "4305108"},
       {"name": "Florianópolis", "stateUf": "SC", "ibgeCode": "4205407"}, {"name": "Joinville", "stateUf": "SC", "ibgeCode": "4209102"},
       {"name": "Aracaju", "stateUf": "SE", "ibgeCode": "2800308"}, {"name": "Nossa Senhora do Socorro", "stateUf": "SE", "ibgeCode": "2804607"},
       {"name": "São Paulo", "stateUf": "SP", "ibgeCode": "3550308"}, {"name": "Guarulhos", "stateUf": "SP", "ibgeCode": "3518800"},
@@ -228,6 +227,20 @@
       ],
       "createdAt": "2025-03-24T04:56:12.389Z",
       "updatedAt": "2025-06-17T04:56:12.389Z"
+    },
+    {
+      "id": "role-auction-analyst",
+      "name": "AUCTION_ANALYST",
+      "name_normalized": "AUCTION_ANALYST",
+      "description": "Analista com permissões para visualizar leilões e relatórios.",
+      "permissions": [
+        "auctions:read",
+        "lots:read",
+        "view_reports",
+        "consignor_dashboard:view"
+      ],
+      "createdAt": "2025-07-13T00:00:00Z",
+      "updatedAt": "2025-07-13T00:00:00Z"
     }
   ],
   "sampleUserWins": [

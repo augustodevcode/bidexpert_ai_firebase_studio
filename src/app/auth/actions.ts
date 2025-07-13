@@ -3,7 +3,7 @@
 
 import { redirect } from 'next/navigation';
 import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileWithPermissions } from '@/types';
+import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database';
@@ -27,8 +27,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   
   try {
     const db = getDatabaseAdapter();
-    const users = await db.getUsersWithRoles();
-    const user = users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const user = await db.getUserProfileData(email);
 
     if (!user || !user.password) {
       console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
@@ -42,13 +41,8 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
     if (!isPasswordValid) {
-      // DEVELOPMENT ONLY: Bypass password check for admin user
-      if (user.email.toLowerCase() === 'admin@bidexpert.com.br' && process.env.NODE_ENV === 'development') {
-        console.log('[Login Action] Bypass de senha para o usuário admin ativado.');
-      } else {
         console.log(`[Login Action] Senha inválida para o usuário: ${email}`);
         return { success: false, message: 'Credenciais inválidas.' };
-      }
     }
     
     await createSession(user as UserProfileWithPermissions);
@@ -90,7 +84,7 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
 }
 
 /**
- * DEVELOPMENT ONLY: Automatically logs in the admin user if no session exists.
+ * DEVELOPMENT ONLY: Creates a virtual admin user or fetches from DB and creates a session.
  * @returns The admin user profile if successful, otherwise null.
  */
 export async function loginAdminForDevelopment(): Promise<UserProfileWithPermissions | null> {
@@ -100,15 +94,39 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
 
     console.log('[Dev Action] Tentando login automático do admin...');
     const db = getDatabaseAdapter();
-    const users = await db.getUsersWithRoles();
-    const adminUser = users.find(u => u.email.toLowerCase() === 'admin@bidexpert.com.br');
-
-    if (adminUser) {
-        await createSession(adminUser as UserProfileWithPermissions);
-        console.log('[Dev Action] Sessão de admin criada para desenvolvimento.');
-        return adminUser as UserProfileWithPermissions;
-    }
     
-    console.warn('[Dev Action] Usuário admin não encontrado para login automático.');
-    return null;
+    try {
+        const allRoles = await db.getRoles();
+        const adminRole = allRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
+        const consignorRole = allRoles.find(r => r.name_normalized === 'CONSIGNOR');
+        const analystRole = allRoles.find(r => r.name_normalized === 'AUCTION_ANALYST');
+        const userRole = allRoles.find(r => r.name_normalized === 'USER');
+        
+        const allSellers = await db.getSellers();
+        const firstSeller = allSellers[0];
+
+        // Construct a virtual superuser profile
+        const virtualAdminProfile: UserProfileWithPermissions = {
+            id: 'admin-bidexpert-platform-001',
+            uid: 'admin-bidexpert-platform-001',
+            email: 'admin@bidexpert.com.br',
+            fullName: 'Admin de Desenvolvimento',
+            habilitationStatus: 'HABILITADO',
+            accountType: 'PHYSICAL',
+            sellerId: firstSeller?.id || 'seller-banco-bradesco-s-a', // Assign a default sellerId
+            roleIds: [adminRole?.id, consignorRole?.id, analystRole?.id, userRole?.id].filter((id): id is string => !!id),
+            roleNames: [adminRole?.name, consignorRole?.name, analystRole?.name, userRole?.name].filter((name): name is string => !!name),
+            permissions: ['manage_all'], // Overwrite permissions with manage_all for full access
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        };
+
+        await createSession(virtualAdminProfile);
+        console.log('[Dev Action] Sessão de superusuário virtual criada para desenvolvimento.');
+        return virtualAdminProfile;
+
+    } catch (error) {
+        console.error("[Dev Action] Erro ao criar usuário admin virtual:", error);
+        return null;
+    }
 }
