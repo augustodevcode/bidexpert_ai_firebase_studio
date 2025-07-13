@@ -5,7 +5,7 @@ import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { notFound } from 'next/navigation';
-import type { BemFormData } from '@/app/admin/bens/bem-form-schema';
+import type { BemFormData } from '@/types';
 
 export default async function EditBemPage({ params }: { params: { bemId: string } }) {
   const bemId = params.bemId;

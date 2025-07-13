@@ -1,7 +1,7 @@
 
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized, type ServerTimestamp } from '@/lib/firebase/admin';
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, SubcategoryFormData, UserCreationData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import admin, { firestore } from 'firebase-admin';
 
@@ -135,19 +135,20 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const doc = await this.db.collection('users').doc(userId).get();
+        const docRef = this.db.collection('users').doc(userId);
+        const doc = await docRef.get();
         return doc.exists ? this.toJSON<UserProfileData>(doc) : null;
     }
     
-    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> {
-      const { uid, ...restData } = data;
-      const docRef = this.db.collection('users').doc(uid); // Use uid from auth as document ID
-      await docRef.set({
-        ...restData,
-        createdAt: AdminFieldValue.serverTimestamp(),
-        updatedAt: AdminFieldValue.serverTimestamp(),
-      });
-      return { success: true, message: 'Usuário criado com sucesso!', userId: uid };
+    async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
+        const { uid, ...restData } = data;
+        const docRef = this.db.collection('users').doc(uid); // Use uid from auth as document ID
+        await docRef.set({
+            ...restData,
+            createdAt: AdminFieldValue.serverTimestamp(),
+            updatedAt: AdminFieldValue.serverTimestamp(),
+        });
+        return { success: true, message: 'Usuário criado com sucesso!', userId: uid };
     }
     
     async getRoles(): Promise<Role[]> {
@@ -155,9 +156,9 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return snapshot.docs.map(doc => this.toJSON<Role>(doc));
     }
 
-    async updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('users').doc(userId).update({ roleId: roleId || null });
-        return { success: true, message: "Perfil do usuário atualizado." };
+    async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> {
+        await this.db.collection('users').doc(userId).update({ roleIds: roleIds || [] });
+        return { success: true, message: "Perfis do usuário atualizados." };
     }
     
     async getMediaItems(): Promise<MediaItem[]> {
@@ -184,6 +185,16 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
     }
 
+    async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
+        await this.db.collection('settings').doc('global').set({
+            ...data,
+            id: 'global',
+            updatedAt: AdminFieldValue.serverTimestamp()
+        }, { merge: true });
+        return { success: true, message: "Configurações criadas com sucesso." };
+    }
+
+
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
         await this.db.collection('settings').doc('global').set({
             ...data,
@@ -191,6 +202,54 @@ export class FirestoreAdapter implements DatabaseAdapter {
         }, { merge: true });
         return { success: true, message: "Configurações atualizadas com sucesso." };
     }
-}
 
-    
+    // --- MÉTODOS NÃO IMPLEMENTADOS (Placeholder) ---
+    async getStates(): Promise<StateInfo[]> { return Promise.resolve([]); }
+    async getCities(stateId?: string): Promise<CityInfo[]> { return Promise.resolve([]); }
+    async getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]> { return Promise.resolve([]); }
+    async getSubcategory(id: string): Promise<Subcategory | null> { return Promise.resolve(null); }
+    async getSeller(id: string): Promise<SellerProfileInfo | null> { return Promise.resolve(null); }
+    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return Promise.resolve(null); }
+    async getCourts(): Promise<Court[]> { return Promise.resolve([]); }
+    async getJudicialDistricts(): Promise<JudicialDistrict[]> { return Promise.resolve([]); }
+    async getJudicialBranches(): Promise<JudicialBranch[]> { return Promise.resolve([]); }
+    async getJudicialProcesses(): Promise<JudicialProcess[]> { return Promise.resolve([]); }
+    async getBem(id: string): Promise<Bem | null> { return Promise.resolve(null); }
+    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; }): Promise<Bem[]> { return Promise.resolve([]); }
+    async getBensByIds(ids: string[]): Promise<Bem[]> { return Promise.resolve([]); }
+
+    // Placeholder para os novos métodos de create/update/delete que foram adicionados à interface
+    async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createRole'); }
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createLotCategory'); }
+    async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { return this._notImplemented('createSubcategory'); }
+    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSubcategory'); }
+    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSubcategory'); }
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
+    async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateState'); }
+    async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteState'); }
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
+    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCity'); }
+    async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteCity'); }
+    async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
+    async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSeller'); }
+    async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSeller'); }
+    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { return this._notImplemented('createAuctioneer'); }
+    async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuctioneer'); }
+    async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuctioneer'); }
+    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { return this._notImplemented('createCourt'); }
+    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCourt'); }
+    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { return this._notImplemented('createJudicialDistrict'); }
+    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { return this._notImplemented('createJudicialBranch'); }
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return this._notImplemented('createJudicialProcess'); }
+    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { return this._notImplemented('createBem'); }
+    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
+    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
+    async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteBem'); }
+
+
+    async _notImplemented(method: string): Promise<any> {
+        const message = `[FirestoreAdapter] Method ${method} is not implemented.`;
+        console.warn(message);
+        return Promise.resolve({ success: false, message });
+    }
+}

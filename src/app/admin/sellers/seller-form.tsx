@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
 import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
-import { Loader2, Save, Users, Image as ImageIcon, Scale } from 'lucide-react';
+import { Loader2, Save, Users, Image as ImageIcon, Scale, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -34,6 +34,9 @@ interface SellerFormProps {
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
+  isViewMode?: boolean;
+  onUpdateSuccess?: () => void;
+  onCancelEdit?: () => void;
   /** If provided, this will be the redirect path instead of the admin page. */
   successRedirectPath?: string;
 }
@@ -45,6 +48,9 @@ export default function SellerForm({
   formTitle,
   formDescription,
   submitButtonText,
+  isViewMode = false,
+  onUpdateSuccess,
+  onCancelEdit,
   successRedirectPath
 }: SellerFormProps) {
   const { toast } = useToast();
@@ -96,8 +102,12 @@ export default function SellerForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push(successRedirectPath || '/admin/sellers');
-        router.refresh();
+        if (onUpdateSuccess) {
+            onUpdateSuccess();
+        } else {
+            router.push(successRedirectPath || '/admin/sellers');
+            router.refresh();
+        }
       } else {
         toast({
           title: 'Erro',
@@ -117,6 +127,15 @@ export default function SellerForm({
     }
   }
 
+  const handleCancelClick = () => {
+    if (onCancelEdit) {
+      onCancelEdit();
+    } else {
+      router.back();
+    }
+  };
+
+
   return (
     <>
     <Card className="max-w-3xl mx-auto shadow-lg">
@@ -125,8 +144,9 @@ export default function SellerForm({
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
+        <fieldset disabled={isViewMode} className="group">
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 bg-secondary/30 p-6">
+          <CardContent className="space-y-6 bg-secondary/30 p-6 group-disabled:bg-muted/10">
             <FormField
               control={form.control}
               name="name"
@@ -318,7 +338,7 @@ export default function SellerForm({
                     name="logoUrl"
                     render={({ field }) => (
                         <FormControl>
-                            <Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
+                            <Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
                         </FormControl>
                     )}
                     />
@@ -355,16 +375,19 @@ export default function SellerForm({
               )}
             />
           </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push(successRedirectPath || '/admin/sellers')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
+          {!isViewMode && (
+            <CardFooter className="flex justify-end gap-2 p-6 border-t">
+              <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting}>
+                <XCircle className="mr-2 h-4 w-4"/> Cancelar
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {submitButtonText}
+              </Button>
+            </CardFooter>
+          )}
         </form>
+        </fieldset>
       </Form>
     </Card>
      <ChooseMediaDialog

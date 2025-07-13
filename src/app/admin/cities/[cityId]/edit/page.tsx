@@ -1,14 +1,15 @@
 // src/app/admin/cities/[cityId]/edit/page.tsx
 import CityForm from '../../city-form';
-import { getCity, updateCity } from '../../actions';
-import type { CityFormData } from '@/types'; // Import from types
+import { getCity, updateCity, type CityFormData } from '../../actions';
 import { getStates } from '@/app/admin/states/actions'; 
 import { notFound } from 'next/navigation';
 
 export default async function EditCityPage({ params }: { params: { cityId: string } }) {
   const cityId = params.cityId;
-  const city = await getCity(cityId);
-  const states = await getStates();
+  const [city, states] = await Promise.all([
+    getCity(cityId),
+    getStates()
+  ]);
 
   if (!city) {
     notFound();

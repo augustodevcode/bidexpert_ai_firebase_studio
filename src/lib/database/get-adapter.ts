@@ -23,7 +23,7 @@ let currentDbSystem: string | null = null;
  * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados correto.
  */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
-  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
 
   // Se o sistema não mudou e já temos uma instância, retorne a instância em cache
   if (adapterInstance && currentDbSystem === activeSystem) {

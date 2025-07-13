@@ -1,4 +1,5 @@
 // src/types/index.ts
+import { UserCreationData } from "@/app/admin/users/actions";
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
 export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
@@ -368,7 +369,6 @@ export interface UserProfileWithPermissions extends UserProfileData {
 }
 
 export interface Role {
-  [x: string]: any;
   id: string;
   name: string;
   name_normalized: string;
@@ -376,6 +376,7 @@ export interface Role {
   permissions: string[];
   createdAt: string | Date;
   updatedAt: string | Date;
+  slug?: string;
 }
 
 
@@ -856,97 +857,16 @@ export interface ConsignorDashboardStats {
 
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleIds' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
 
+export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
+
+export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').cityFormSchema>;
+
+export type AuctionFormData = z.infer<typeof import('@/app/admin/auctions/auction-form-schema').auctionFormSchema>;
+
 
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
 // ============================================================================
-export interface StateFormData {
-  name: string;
-  uf: string;
-}
-
-export interface CityFormData {
-  name: string;
-  stateId: string;
-  ibgeCode?: string;
-}
-
-export interface SubcategoryFormData {
-  name: string;
-  parentCategoryId: string;
-  description?: string | null;
-  displayOrder?: number;
-  iconUrl?: string | null;
-  iconMediaId?: string | null;
-  dataAiHintIcon?: string | null;
-}
-
-export interface SellerFormData {
-  name: string;
-  contactName?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zipCode?: string | null;
-  website?: string | null;
-  logoUrl?: string | null;
-  dataAiHintLogo?: string | null;
-  description?: string | null;
-  isJudicial: boolean;
-  judicialBranchId?: string | null;
-}
-
-export interface AuctioneerFormData {
-  name: string;
-  registrationNumber?: string | null;
-  contactName?: string | null;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
-  city?: string | null;
-  state?: string | null;
-  zipCode?: string | null;
-  website?: string | null;
-  logoUrl?: string | null;
-  dataAiHintLogo?: string | null;
-  description?: string | null;
-  userId?: string | null;
-}
-
-export interface CourtFormData {
-    name: string;
-    stateUf: string;
-    website: string;
-}
-
-export interface JudicialDistrictFormData {
-  name: string;
-  courtId: string;
-  stateId: string;
-  zipCode?: string | null;
-}
-
-export interface JudicialBranchFormData {
-  name: string;
-  districtId: string;
-  contactName?: string | null;
-  phone?: string | null;
-  email?: string | null;
-}
-
-export interface JudicialProcessFormData {
-  processNumber: string;
-  isElectronic: boolean;
-  courtId: string;
-  districtId: string;
-  branchId: string;
-  sellerId?: string | null;
-  parties: ProcessParty[];
-}
-
-
 export interface DatabaseAdapter {
     getLots(auctionId?: string): Promise<Lot[]>;
     getLot(id: string): Promise<Lot | null>;
@@ -966,8 +886,8 @@ export interface DatabaseAdapter {
     getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]>;
     getSubcategory(id: string): Promise<Subcategory | null>;
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
-    createSubcategory(data: Partial<Subcategory>): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
-    updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string }>;
+    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
+    updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }>;
     deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
     
     getStates(): Promise<StateInfo[]>;
@@ -999,15 +919,17 @@ export interface DatabaseAdapter {
     getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]>;
     getBensByIds(ids: string[]): Promise<Bem[]>;
     createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
+    updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }>;
     createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
     createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
     createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
     createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
     updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
+    deleteBem(id: string): Promise<{ success: boolean, message: string }>;
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
-    createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }>;
+    createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
     updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }>;
@@ -1021,8 +943,7 @@ export interface DatabaseAdapter {
     
     getDocumentTemplates(): Promise<DocumentTemplateType[]>;
     getDocumentTemplate(id: string): Promise<DocumentTemplateType | null>;
+    saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }>;
 
     close?(): Promise<void>;
 }
-
-export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;

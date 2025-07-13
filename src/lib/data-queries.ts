@@ -50,12 +50,7 @@ export async function fetchLotsByIds(ids: string[]): Promise<Lot[]> {
 export async function fetchBensByIds(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
   const db = getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getBensByIds) {
-      // @ts-ignore
-      return db.getBensByIds(ids);
-  }
-  return [];
+  return db.getBensByIds(ids);
 }
 
 export async function fetchAuctionsByIds(ids: string[]): Promise<Auction[]> {
@@ -82,12 +77,7 @@ export async function fetchCategories(): Promise<LotCategory[]> {
 
 export async function fetchSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
     const db = getDatabaseAdapter();
-    // @ts-ignore
-    if(db.getSubcategoriesByParentIdAction) {
-        // @ts-ignore
-        return db.getSubcategoriesByParentIdAction(parentCategoryId);
-    }
-    return [];
+    return db.getSubcategoriesByParent(parentCategoryId);
 }
 
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
