@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized, type ServerTimestamp } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings } from '@/types';
@@ -138,6 +139,17 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return doc.exists ? this.toJSON<UserProfileData>(doc) : null;
     }
     
+    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> {
+      const { uid, ...restData } = data;
+      const docRef = this.db.collection('users').doc(uid); // Use uid from auth as document ID
+      await docRef.set({
+        ...restData,
+        createdAt: AdminFieldValue.serverTimestamp(),
+        updatedAt: AdminFieldValue.serverTimestamp(),
+      });
+      return { success: true, message: 'Usuário criado com sucesso!', userId: uid };
+    }
+    
     async getRoles(): Promise<Role[]> {
         const snapshot = await this.db.collection('roles').get();
         return snapshot.docs.map(doc => this.toJSON<Role>(doc));
@@ -180,3 +192,5 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { success: true, message: "Configurações atualizadas com sucesso." };
     }
 }
+
+    

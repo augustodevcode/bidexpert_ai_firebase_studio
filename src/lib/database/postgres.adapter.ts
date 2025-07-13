@@ -1,3 +1,4 @@
+
 // src/lib/database/postgres.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import { Pool, type QueryResult } from 'pg';
@@ -122,23 +123,10 @@ export class PostgresAdapter implements DatabaseAdapter {
         const result = await this.executeMutation(sql, [id, name, name_normalized, description, JSON.stringify(permissions)]);
         return { success: result.success, message: result.message };
     }
-
-    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
-        const newId = uuidv4();
-        const slug = slugify(data.name);
-        const sql = `INSERT INTO "State" (id, name, uf, slug) VALUES ($1, $2, $3, $4) ON CONFLICT (uf) DO NOTHING RETURNING id`;
-        const result = await this.executeMutation(sql, [newId, data.name, data.uf, slug]);
-        return { success: result.success, message: result.message, stateId: result.rows[0]?.id };
-    }
-
-    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-        const newId = uuidv4();
-        const slug = slugify(data.name);
-        const sql = `INSERT INTO "City" (id, name, slug, "stateId", "stateUf", "ibgeCode") VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT ("ibgeCode") DO NOTHING RETURNING id`;
-        const result = await this.executeMutation(sql, [newId, data.name, slug, data.stateId, data.stateUf, data.ibgeCode]);
-        return { success: result.success, message: result.message, cityId: result.rows[0]?.id };
-    }
-
+    
+    createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> { return this._notImplemented('createUser'); }
+    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
+    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
     createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
     createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { return this._notImplemented('createAuctioneer'); }
     createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { return this._notImplemented('createCourt'); }
@@ -194,7 +182,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
     deleteAuction(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuction'); }
     updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuction'); }
-    updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRole'); }
+    updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRoles'); }
     updatePlatformSettings(data: any): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
     updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSeller'); }
     deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSeller'); }
@@ -209,16 +197,9 @@ export class PostgresAdapter implements DatabaseAdapter {
     updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCourt'); }
     updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
     saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
-    
-    async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
-      const { id, ...settingsData } = data;
-      const columns = Object.keys(settingsData).map(key => `"${key}"`).join(', ');
-      const values = Object.values(settingsData);
-      const placeholders = values.map((_, i) => `$${i + 2}`).join(', '); // Start from $2
-      const sql = `INSERT INTO "PlatformSettings" (id, ${columns}) VALUES ($1, ${placeholders}) ON CONFLICT (id) DO NOTHING`;
-      const result = await this.executeMutation(sql, [id, ...values]);
-      return { success: result.success, message: result.message };
-    }
+    createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createPlatformSettings'); }
 
     async _notImplemented(method: string): Promise<any> { if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null); const message = `[PostgresAdapter] Método ${method} não implementado.`; console.warn(message); return Promise.resolve(method.endsWith('s') ? [] : null); }
 }
+
+    

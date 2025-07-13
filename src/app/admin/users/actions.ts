@@ -64,7 +64,14 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   }
 
   // Normalize the search to be case-insensitive and trim whitespace
-  const userRole = roles.find(r => r.name_normalized?.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => {
+    // console.log('[createUser Action] Checking role:', r); // Keep or remove based on need
+    // console.log('[createUser Action] r.nameNormalized:', r?.nameNormalized); // Keep or remove based on need
+    // console.log('[createUser Action] Trimmed and upper:', r?.nameNormalized?.trim().toUpperCase()); // Keep or remove based on need
+    const match = r && r.nameNormalized && r.nameNormalized.trim().toUpperCase() === 'USER';
+    // console.log('[createUser Action] Match result:', match); // Keep or remove based on need
+    return match;
+  });
 
 
   if (!userRole) {

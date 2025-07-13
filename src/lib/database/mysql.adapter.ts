@@ -1,3 +1,4 @@
+
 // src/lib/database/mysql.adapter.ts
 import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
@@ -366,6 +367,19 @@ export class MySqlAdapter implements DatabaseAdapter {
         return user;
     }
     
+    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> {
+      const { roleIds, ...userData } = data;
+      const result = await this.genericCreate('users', userData);
+      
+      if (result.success && result.insertId && roleIds && roleIds.length > 0) {
+        // Link roles
+        for (const roleId of roleIds) {
+          await this.executeMutation('INSERT INTO `user_roles` (user_id, role_id) VALUES (?, ?)', [result.insertId, roleId]);
+        }
+      }
+      return { ...result, userId: result.insertId?.toString() };
+    }
+    
     async getRoles(): Promise<Role[]> { 
         console.log('[MySqlAdapter.getRoles] Fetching roles from database...');
         const roles = await this.executeQuery('SELECT * FROM `roles` ORDER BY `name`'); 
@@ -598,3 +612,5 @@ export class MySqlAdapter implements DatabaseAdapter {
         return Promise.resolve(method.endsWith('s') ? [] : null);
     }
 }
+
+    

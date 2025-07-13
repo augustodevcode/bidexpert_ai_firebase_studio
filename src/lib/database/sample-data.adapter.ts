@@ -1,3 +1,4 @@
+
 // src/lib/database/sample-data.adapter.ts
 import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, PlatformSettings, Subcategory, Court, CourtFormData } from '@/types';
 import { 
@@ -213,21 +214,23 @@ export class SampleDataAdapter implements DatabaseAdapter {
         return Promise.resolve(JSON.parse(JSON.stringify(subcategories)));
     }
      
-     async getUsersWithRoles(): Promise<UserProfileData[]> {
+    async getUsersWithRoles(): Promise<UserProfileData[]> {
         const usersWithRoles = this.data.users.map((user: any) => {
-            const role = this.data.roles.find((r: Role) => r.id === user.roleId);
+            const roleIds = Array.isArray(user.roleIds) ? user.roleIds : [user.roleId].filter(Boolean);
+            const roles = this.data.roles.filter((r: Role) => roleIds.includes(r.id));
             return {
                 ...user,
-                roleName: role?.name || 'USER',
-                permissions: role?.permissions || ['view_auctions', 'place_bids']
+                roleIds,
+                roleNames: roles.map(r => r.name),
+                permissions: Array.from(new Set(roles.flatMap(r => r.permissions)))
             };
         });
         return Promise.resolve(JSON.parse(JSON.stringify(usersWithRoles)));
-     }
+    }
      
      async getUserProfileData(userId: string): Promise<any | null> {
          const users = await this.getUsersWithRoles();
-         const user = users.find(u => u.uid === userId);
+         const user = users.find(u => u.uid === userId || u.id === userId);
          return Promise.resolve(user || null);
      }
 
@@ -263,6 +266,12 @@ export class SampleDataAdapter implements DatabaseAdapter {
         this.data.courts.push(newCourt);
         return Promise.resolve({ success: true, message: 'Tribunal criado com sucesso!', courtId: newCourt.id });
     }
+    
+    async createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }> {
+      const newUser = { ...data, id: `user-${this.data.users.length + 1}`, uid: data.uid || `uid-${Math.random()}`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+      this.data.users.push(newUser);
+      return { success: true, message: 'Usuário criado com sucesso!', userId: newUser.id };
+    }
 
      async _notImplemented(method: string): Promise<any> {
          console.warn(`[SampleDataAdapter] Method ${method} is not fully implemented and returns a default value.`);
@@ -274,7 +283,14 @@ export class SampleDataAdapter implements DatabaseAdapter {
         const lots = this.data.lots.filter(lot => ids.includes(lot.id) || (lot.publicId && ids.includes(lot.publicId)));
         return Promise.resolve(JSON.parse(JSON.stringify(lots)));
      }
-     updateUserRole(userId: string, roleId: string | null): Promise<{ success: boolean, message: string }> { return this._notImplemented('updateUserRole'); }
+     updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean, message: string }> {
+        const userIndex = this.data.users.findIndex(u => u.uid === userId || u.id === userId);
+        if (userIndex > -1) {
+            this.data.users[userIndex].roleIds = roleIds;
+            return Promise.resolve({ success: true, message: "Perfis atualizados." });
+        }
+        return Promise.resolve({ success: false, message: "Usuário não encontrado." });
+     }
      getSellers(): Promise<any[]> { return Promise.resolve(JSON.parse(JSON.stringify(this.data.sellers))); }
      
      async getPlatformSettings(): Promise<any | null> { 
@@ -294,3 +310,5 @@ export class SampleDataAdapter implements DatabaseAdapter {
          return Promise.resolve({ success: true, message: "Settings updated in sample data."});
      }
 }
+
+    

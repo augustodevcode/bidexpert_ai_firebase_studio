@@ -18,7 +18,7 @@ export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECT
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO';
 export const paymentStatusValues: [PaymentStatus, ...PaymentStatus[]] = [
   'PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO'
-];
+]; // Keep this comment
 
 export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
@@ -317,7 +317,7 @@ export interface UserProfileData {
   uid: string;
   email: string;
   password?: string;
-  fullName: string;
+  fullName: string | null;
   cpf?: string | null;
   cellPhone?: string | null;
   razaoSocial?: string | null;
@@ -991,6 +991,7 @@ export interface DatabaseAdapter {
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userId: string): Promise<UserProfileData | null>;
+    createUser(data: Partial<UserProfileData>): Promise<{ success: boolean; message: string; userId?: string; }>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
     updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }>;
@@ -1002,8 +1003,8 @@ export interface DatabaseAdapter {
     createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
     
-    getDocumentTemplates(): Promise<DocumentTemplate[]>;
-    getDocumentTemplate(id: string): Promise<DocumentTemplate | null>;
+    getDocumentTemplates(): Promise<DocumentTemplateType[]>;
+    getDocumentTemplate(id: string): Promise<DocumentTemplateType | null>;
 
     close?(): Promise<void>;
 }
@@ -1026,3 +1027,5 @@ export interface BemFormData {
   latitude?: number | null;
   longitude?: string | null;
 }
+
+    
