@@ -81,22 +81,25 @@ export async function fetchSubcategoriesByParent(parentCategoryId: string): Prom
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
   const db = getDatabaseAdapter();
   const allAuctions = await db.getAuctions();
-  // In a real DB, this would be a query. For now, we filter.
-  // @ts-ignore
-  const seller = await db.getSeller(sellerSlugOrPublicId).catch(() => null);
+  const allSellers = await db.getSellers();
+
+  const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId || s.id === sellerSlugOrPublicId);
+  
   if (seller) {
       return allAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
   }
-  return allAuctions.filter(a => a.seller === sellerSlugOrPublicId);
+  return [];
 }
 
 export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
   const db = getDatabaseAdapter();
   const allAuctions = await db.getAuctions();
-  // @ts-ignore
-  const auctioneer = await db.getAuctioneer(auctioneerSlug).catch(() => null);
+  const allAuctioneers = await db.getAuctioneers();
+  
+  const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.publicId === auctioneerSlug || a.id === auctioneerSlug);
+
    if (auctioneer) {
       return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
   }
-  return allAuctions.filter(a => a.auctioneer === auctioneerSlug);
+  return [];
 }
