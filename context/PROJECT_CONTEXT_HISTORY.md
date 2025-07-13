@@ -21,7 +21,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
 *   Backend/API: NextJS API Routes / Server Actions
 *   AI: Genkit (for AI flows)
-*   Database: MySQL with Prisma ORM
+*   Database: Firestore
 
 **Style Guidelines (from PRD):**
 *   Icons: Clean, line-based (`lucide-react`).
@@ -37,12 +37,13 @@ This document summarizes the BidExpert project, including its purpose, core feat
 
 ### Key Features & Functionalities Implemented/Worked On:
 
-1.  **Database & ORM Setup:**
-    *   Initially a multi-adapter system (Firestore, MySQL, PostgreSQL), now centralized on **MySQL** with **Prisma ORM**.
-    *   Implemented a robust seeding mechanism (`db:init` for essentials, `db:seed` for demo data).
+1.  **Database & Data Layer:**
+    *   **Strategic Migration to Firestore:** The entire data layer was migrated from a complex multi-adapter system (previously focused on MySQL) to **Firestore**. This decision was made to resolve persistent data layer bugs, simplify the architecture, and leverage the native Firebase ecosystem.
+    *   **Robust Firestore Adapter:** The `FirestoreAdapter` (`src/lib/database/firestore.adapter.ts`) has been fully implemented to handle all necessary CRUD operations, replacing the previous MySQL and PostgreSQL adapters.
+    *   **Optimized Seeding Mechanism:** The database seeding process was split into two parts: `db:init` for essential data required for app startup (roles, settings), and `db:seed` for a full set of demonstration data. This resolves Firestore quota issues on initial startup.
 
 2.  **Admin Panel Foundation:**
-    *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities.
+    *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities, now powered by the Firestore adapter.
     *   Comprehensive management panels for auctions, lots, users, roles, sellers, auctioneers, categories, judicial entities, media, and more.
 
 3.  **Auction Creation Wizard (`/admin/wizard`):**
@@ -68,33 +69,20 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   Static pages like "About", "Contact", "FAQ", "Terms", and "Privacy".
 
 7.  **AI & Document Generation:**
-    *   Initial Genkit flows for AI-powered suggestions created.
+    *   Initial Genkit flows for AI-powered suggestions created (currently unused pending package resolution).
     *   Document generation structure using Puppeteer and Handlebars templates is in place for creating PDFs.
 
 ### Errors Encountered & Resolved (Summary):
-*   **Prisma Schema Validation & Query Engine:** Resolved numerous schema validation errors and runtime query engine issues.
-*   **Next.js & Server Errors:**
-    *   Fixed `package.json` script errors causing server startup failures.
-    *   Corrected `TypeError: db.createUser is not a function` by properly defining and implementing the function across the database adapter interface.
-    *   Resolved `Unknown column 'full_name' in 'group statement'` by correcting the SQL `GROUP BY` clause in the MySQL adapter.
-    *   Addressed various TypeScript type mismatch errors between form data, actions, and database schemas.
+*   **Dependency Conflicts (Next.js vs. Genkit):** Resolved a series of `ERESOLVE` and `ETARGET` npm errors by removing Genkit dependencies temporarily to stabilize the Next.js environment.
+*   **Firestore Quota Errors (`RESOURCE_EXHAUSTED`):** Fixed fatal startup errors caused by the database seeding script making too many individual writes. The solution was to split the seeding into an essential `init` script and a manual `seed` script, and to use batched writes.
+*   **Incomplete Firestore Adapter:** Addressed multiple `Method not implemented` errors by fully implementing all required CRUD operations in the `FirestoreAdapter`, making the admin panel functional after the database migration.
+*   **Data-Fetching Mismatches:** Corrected 404 errors on the homepage by updating the primary data-fetching functions (`src/lib/data-queries.ts`) to use the Firestore adapter instead of the obsolete Prisma client.
+*   **Obsolete Database File Errors:** Resolved server startup failures (`Cannot find module`) by removing obsolete adapter files (`mysql.adapter.ts`, `postgres.adapter.ts`) that were causing incorrect module resolution.
 
 ### Key Decisions & Patterns:
-*   **Single Source of Truth:** Centralized on a single database system (MySQL) managed via Prisma ORM, deprecating the multi-adapter pattern for simplicity and stability.
-*   **Server Actions as Primary API**: All data mutations and many queries are handled through Server Actions for clear, secure server-client interaction.
-*   **Context Persistence System:** This system was established to maintain project context across development sessions. A `DATABASE_SCHEMA.md` file was added to this system to document the definitive database structure.
-
-### Current Session (This interaction):
-*   **Context Persistence System Update:** Added the full MySQL database schema to a new file, `context/DATABASE_SCHEMA.md`, to serve as a permanent reference.
-
-### Key Decisions & Patterns:
-*   **Migration to Firestore:** Made the strategic decision to migrate the entire data layer from a multi-adapter system (focused on MySQL) to **Firestore**. This resolves persistent data layer bugs, simplifies the architecture, and leverages the native Firebase ecosystem.
+*   **Migration to Firestore:** The most significant decision was to migrate the entire data layer from MySQL/Prisma to **Firestore**. This resolved persistent data layer bugs, simplified the architecture, and leveraged the native Firebase ecosystem.
 *   **Single Source of Truth (Adapter):** The `FirestoreAdapter` is now the single point of entry for all database interactions.
 *   **Server Actions as Primary API**: All data mutations and many queries are handled through Server Actions for clear, secure server-client interaction.
 *   **Context Persistence System:** This system was established to maintain project context. The `DATABASE_SCHEMA.md` file has been updated to reflect the new Firestore collection structure.
-
-### Current Session (This interaction):
-*   **Migration to Firestore:** Executed the full migration from MySQL to Firestore, including refactoring the database adapter, all data actions, and related type definitions.
-*   **Context Persistence System Update:** Updated `context/DATABASE_SCHEMA.md` to reflect the new Firestore data model, replacing the previous MySQL schema.
 
 This summary will be updated as we progress.
