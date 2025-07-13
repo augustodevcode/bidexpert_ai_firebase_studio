@@ -1,14 +1,14 @@
 // src/app/admin/judicial-districts/[districtId]/edit/page.tsx
 import JudicialDistrictForm from '../../judicial-district-form';
-import { getJudicialDistrict, updateJudicialDistrict } from '../../actions';
+import { getJudicialDistrict, updateJudicialDistrict, type JudicialDistrictFormData } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCourts } from '@/app/admin/courts/actions';
 import { notFound } from 'next/navigation';
-import type { JudicialDistrictFormData } from '../../judicial-district-form-schema';
 
-// A correção principal é desestruturar `districtId` diretamente aqui.
-export default async function EditJudicialDistrictPage({ params: { districtId } }: { params: { districtId: string } }) {
-  
+// A correção principal é na assinatura da função para alinhar com o Next.js
+export default async function EditJudicialDistrictPage({ params }: { params: { districtId: string } }) {
+  const { districtId } = params; // Desestruturar aqui é a forma mais segura
+
   const [district, states, courts] = await Promise.all([
     getJudicialDistrict(districtId),
     getStates(),
