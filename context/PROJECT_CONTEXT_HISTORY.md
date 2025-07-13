@@ -87,4 +87,14 @@ This document summarizes the BidExpert project, including its purpose, core feat
 ### Current Session (This interaction):
 *   **Context Persistence System Update:** Added the full MySQL database schema to a new file, `context/DATABASE_SCHEMA.md`, to serve as a permanent reference.
 
+### Key Decisions & Patterns:
+*   **Migration to Firestore:** Made the strategic decision to migrate the entire data layer from a multi-adapter system (focused on MySQL) to **Firestore**. This resolves persistent data layer bugs, simplifies the architecture, and leverages the native Firebase ecosystem.
+*   **Single Source of Truth (Adapter):** The `FirestoreAdapter` is now the single point of entry for all database interactions.
+*   **Server Actions as Primary API**: All data mutations and many queries are handled through Server Actions for clear, secure server-client interaction.
+*   **Context Persistence System:** This system was established to maintain project context. The `DATABASE_SCHEMA.md` file has been updated to reflect the new Firestore collection structure.
+
+### Current Session (This interaction):
+*   **Migration to Firestore:** Executed the full migration from MySQL to Firestore, including refactoring the database adapter, all data actions, and related type definitions.
+*   **Context Persistence System Update:** Updated `context/DATABASE_SCHEMA.md` to reflect the new Firestore data model, replacing the previous MySQL schema.
+
 This summary will be updated as we progress.

@@ -226,6 +226,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         const doc = await this.db.collection('settings').doc('global').get();
+        console.log('[FirestoreAdapter] Platform settings document exists:', doc.exists);
         return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
     }
 
