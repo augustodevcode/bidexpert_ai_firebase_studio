@@ -16,7 +16,7 @@ function initializeAdminApp(): App {
     return getApp();
   }
 
-  const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
+  const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json';
   const manualPath = path.join(process.cwd(), serviceAccountKeyFileName);
 
   if (!fs.existsSync(manualPath)) {

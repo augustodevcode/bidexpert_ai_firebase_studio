@@ -1,1 +1,12 @@
-# This file is intentionally left empty to avoid conflicts with the root dataconnect.yaml.
+specVersion: "v1"
+serviceId: "studio"
+location: "us-central1"
+schema:
+  source: "./schema"
+  datasource:
+    postgresql:
+      database: "fdcdb"
+      cloudSql:
+        instanceId: "studio-fdc"
+      # schemaValidation: "COMPATIBLE"
+connectorDirs: ["./connector"]
