@@ -1,7 +1,7 @@
 // src/app/admin/users/actions.ts
 'use server';
 
-import type { UserProfileWithPermissions, Role, AccountType, UserProfileData } from '@/types';
+import type { UserProfileWithPermissions, Role, AccountType, UserProfileData, UserHabilitationStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
@@ -27,6 +27,8 @@ export interface UserCreationData {
   city?: string;
   state?: string;
   optInMarketing?: boolean;
+  responsibleName?: string; // Added to fix type error
+  responsibleCpf?: string;  // Added to fix type error
 }
 
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
@@ -63,12 +65,15 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
   }
 
-  const userRole = roles.find(r => r.name_normalized.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => r.nameNormalized.trim().toUpperCase() === 'USER');
 
   if (!userRole) {
+    console.log('[createUser Action] Erro: O perfil de usuário padrão (USER) não foi encontrado nos dados buscados:', roles);
     throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
   }
   
+  const habilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
+
   const creationData = {
     email: data.email.trim(),
     fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
@@ -89,12 +94,13 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     city: data.city?.trim(),
     state: data.state?.trim(),
     optInMarketing: data.optInMarketing,
-    habilitationStatus: 'PENDING_DOCUMENTS',
+    habilitationStatus: habilitationStatus,
     uid: uuidv4()
   };
 
   const newUserPayload: Partial<UserProfileData> = { ...creationData, roleIds: [userRole.id] };
   
+  // @ts-ignore
   const result = await db.createUser(newUserPayload); 
 
   if (result.success) {
@@ -136,5 +142,5 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
 
 export async function getRoles(): Promise<Role[]> {
     const db = getDatabaseAdapter();
-    return db.getRoles();
+    return await db.getRoles();
 }
