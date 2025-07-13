@@ -18,66 +18,49 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
-async function ensureJoinTablesExist(db: any) {
-  // Check if it's a MySQL adapter to execute a specific query
-  if (db.constructor.name === 'MySqlAdapter') {
-    console.log('[DB SEED] Ensuring join tables exist for MySQL...');
-    const mysqlDb = db as MySqlAdapter;
-    const createRolesTableSql = `
-        CREATE TABLE IF NOT EXISTS \`user_roles\` (
-            \`user_id\` VARCHAR(255) NOT NULL,
-            \`role_id\` VARCHAR(255) NOT NULL,
-            PRIMARY KEY (\`user_id\`, \`role_id\`),
-            FOREIGN KEY (\`user_id\`) REFERENCES \`users\`(\`uid\`) ON DELETE CASCADE,
-            FOREIGN KEY (\`role_id\`) REFERENCES \`roles\`(\`id\`) ON DELETE CASCADE
-        );
-    `;
-    await mysqlDb.executeMutation(createRolesTableSql);
-    console.log('[DB SEED] ✅ SUCCESS: `user_roles` table ensured.');
-  }
-}
-
-
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
     const db = getDatabaseAdapter();
 
-    // Ensure join tables like user_roles are created before seeding data that depends on them.
-    await ensureJoinTablesExist(db);
-
     try {
         console.log('[DB SEED] Seeding Sellers...');
         for (const seller of sampleSellers) {
+            // @ts-ignore
             await db.createSeller(seller);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
 
         console.log('[DB SEED] Seeding Auctioneers...');
         for (const auctioneer of sampleAuctioneers) {
+            // @ts-ignore
             await db.createAuctioneer(auctioneer);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
         
         console.log('[DB SEED] Seeding Judicial Districts...');
         for (const district of sampleJudicialDistricts) {
+             // @ts-ignore
              await db.createJudicialDistrict(district);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialDistricts.length} judicial districts processed.`);
         
         console.log('[DB SEED] Seeding Judicial Branches...');
         for (const branch of sampleJudicialBranches) {
+            // @ts-ignore
             await db.createJudicialBranch(branch);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialBranches.length} judicial branches processed.`);
         
         console.log('[DB SEED] Seeding Judicial Processes...');
         for (const process of sampleJudicialProcesses) {
+            // @ts-ignore
             await db.createJudicialProcess(process);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialProcesses.length} judicial processes processed.`);
 
         console.log('[DB SEED] Seeding Bens...');
         for (const bem of sampleBens) {
+            // @ts-ignore
             await db.createBem(bem);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleBens.length} bens processed.`);
@@ -134,9 +117,15 @@ async function seedFullData() {
             const usersToCreate = sampleUsers.filter(u => !existingUsers.some(eu => eu.email === u.email));
             for (const user of usersToCreate) {
                 const { password, ...userData } = user;
-                const hashedPassword = await bcrypt.hash(password, 10);
-                const fullUserData = { ...userData, password: hashedPassword, uid: uuidv4() };
+                const hashedPassword = await bcrypt.hash(password || 'password123', 10);
+                const fullUserData = { ...userData, password: hashedPassword, uid: userData.uid || uuidv4() };
                 await userAdapter.createUser(fullUserData);
+
+                // Link roles
+                if (user.roleId) {
+                    const roleIdsToLink = Array.isArray(user.roleId) ? user.roleId : [user.roleId];
+                    await userAdapter.updateUserRoles(fullUserData.uid, roleIdsToLink);
+                }
             }
             console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
         } else {
