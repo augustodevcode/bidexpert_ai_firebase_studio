@@ -10,61 +10,55 @@ import * as path from 'path';
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
 let adminApp: App | undefined;
-let initError: Error | null = null;
 
-function _initializeAdminApp(): App {
-    if (getApps().length > 0) {
-        console.log('[Admin SDK] App already initialized. Getting default app.');
-        return getApp();
-    }
+function initializeAdminApp(): App {
+  if (getApps().length > 0) {
+    return getApp();
+  }
 
-    const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
-    const manualPath = path.join(process.cwd(), serviceAccountKeyFileName);
+  const serviceAccountKeyFileName = 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json';
+  const manualPath = path.join(process.cwd(), serviceAccountKeyFileName);
 
-    if (!fs.existsSync(manualPath)) {
-        throw new Error(`Service account key file not found at: ${manualPath}`);
-    }
+  if (!fs.existsSync(manualPath)) {
+    console.error(`[Admin SDK Error] Service account key file not found at path: ${manualPath}`);
+    throw new Error(`Arquivo de chave de serviço não encontrado: ${serviceAccountKeyFileName}. Verifique se o arquivo está na raiz do projeto.`);
+  }
 
+  try {
     const serviceAccount = JSON.parse(fs.readFileSync(manualPath, 'utf8'));
     const app = initializeApp({
         credential: cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
-    console.log('[Admin SDK] Firebase Admin SDK initialized on-demand.');
+    console.log('[Admin SDK] Firebase Admin SDK inicializado com sucesso.');
     return app;
+  } catch (error: any) {
+    console.error('[Admin SDK Error] Falha ao inicializar o Firebase Admin:', error);
+    throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
+  }
 }
 
 export function ensureAdminInitialized(): {
-  app?: App;
-  db?: Firestore;
-  storage?: Storage;
-  error?: Error | null;
+  app: App;
+  db: Firestore;
+  storage: Storage;
+  error?: null;
   alreadyInitialized: boolean;
 } {
-    if (initError) {
-        return { error: initError, alreadyInitialized: getApps().length > 0 };
-    }
-
-    if (!adminApp) {
-        try {
-            adminApp = _initializeAdminApp();
-        } catch (error: any) {
-            initError = error; 
-            console.error(`[Admin SDK] Caching initialization error: ${initError.message}`);
-            return { error: initError, alreadyInitialized: getApps().length > 0 };
-        }
-    }
-    
-    if (!adminApp) {
-      const finalError = new Error("Firebase Admin App is not available after initialization attempt.");
-      return { error: finalError, alreadyInitialized: false };
-    }
-
-    return {
-        app: adminApp,
-        db: getFirestore(adminApp),
-        storage: getStorage(adminApp),
-        error: null,
-        alreadyInitialized: true,
-    };
+  const alreadyInitialized = getApps().length > 0;
+  
+  if (!adminApp) {
+    adminApp = initializeAdminApp();
+  }
+  
+  return {
+    app: adminApp,
+    db: getFirestore(adminApp),
+    storage: getStorage(adminApp),
+    alreadyInitialized,
+  };
 }
+
+// Para manter a compatibilidade com o código legado que pode estar usando a exportação nomeada `db`
+const { db } = ensureAdminInitialized();
+export { db };
