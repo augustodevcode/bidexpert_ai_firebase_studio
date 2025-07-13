@@ -1,7 +1,5 @@
-
-import type {NextConfig} from 'next';
-
-const config: NextConfig = {
+/** @type {import('next').NextConfig} */
+const config = {
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
@@ -27,4 +25,4 @@ const config: NextConfig = {
   },
 };
 
-export default config;
+module.exports = config;
