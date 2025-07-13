@@ -7,8 +7,10 @@ import { v4 as uuidv4 } from 'uuid';
 
 function toSnakeCase(str: string): string {
     if (str === 'id' || str === 'uid') return str;
+    // This regex converts camelCase to snake_case, e.g., fullName -> full_name
     return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
 }
+
 
 function toCamelCase(str: string): string {
     return str.replace(/_([a-z])/g, g => g[1].toUpperCase());
@@ -139,7 +141,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         if (updates.name && !updates.slug) updates.slug = slugify(updates.name);
         if (updates.title && !updates.slug) updates.slug = slugify(updates.title);
         
-        // Remove 'id' from updates if it exists to avoid trying to update the primary key
         if ('id' in updates) delete updates.id;
         
         const snakeCaseUpdates = convertObjectToSnakeCase(updates);
@@ -162,9 +163,6 @@ export class MySqlAdapter implements DatabaseAdapter {
         const sql = `INSERT IGNORE INTO \`platform_settings\` (${fields}) VALUES (${placeholders})`;
         return this.executeMutation(sql, values);
     }
-
-
-    // --- ENTITY IMPLEMENTATIONS ---
 
     async getLots(auctionId?: number): Promise<Lot[]> {
         let sql = 'SELECT * FROM `lots`';
@@ -395,7 +393,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     }
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
-        const dataToInsert = { ...role, slug: slugify(role.name) };
+        const dataToInsert = { ...role, slug: slugify(role.name), name_normalized: role.name.toUpperCase().trim() };
         const snakeCaseData = convertObjectToSnakeCase(dataToInsert);
         const fields = Object.keys(snakeCaseData).map(k => `\`${k}\``).join(', ');
         const placeholders = Object.keys(snakeCaseData).map(() => '?').join(', ');
@@ -612,5 +610,3 @@ export class MySqlAdapter implements DatabaseAdapter {
         return Promise.resolve(method.endsWith('s') ? [] : null);
     }
 }
-
-    

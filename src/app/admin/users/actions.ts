@@ -70,7 +70,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   
   const newUserPayload: Partial<UserProfileData> = {
     email: data.email.trim(),
-    name: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
+    fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : undefined,
     password: hashedPassword,
     roleIds: [userRole.id], 
     habilitationStatus: 'PENDING_DOCUMENTS',
@@ -86,13 +86,12 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     city: data.city,
     state: data.state,
     optInMarketing: data.optInMarketing,
-    razaoSocial: data.razaoSocial,
-    cnpj: data.cnpj,
-    inscricaoEstadual: data.inscricaoEstadual,
-    website: data.website,
+    razaoSocial: data.accountType !== 'PHYSICAL' ? data.razaoSocial?.trim() : undefined,
+    cnpj: data.accountType !== 'PHYSICAL' ? data.cnpj?.trim() : undefined,
+    inscricaoEstadual: data.accountType !== 'PHYSICAL' ? data.inscricaoEstadual?.trim() : undefined,
+    website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.website?.trim() : undefined,
   };
 
-  // The adapter's createUser will handle this
   const result = await db.createUser(newUserPayload); 
 
   if (result.success) {
@@ -120,7 +119,6 @@ export async function updateUserRoles(userId: string, roleIds: string[]): Promis
 export async function deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
   try {
      const db = getDatabaseAdapter();
-     // @ts-ignore
     const result = await db.deleteUser(id);
     if (result.success) {
         revalidatePath('/admin/users');
