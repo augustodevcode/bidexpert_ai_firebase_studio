@@ -1,7 +1,6 @@
-
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized, type ServerTimestamp } from '@/lib/firebase/admin';
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, SubcategoryFormData, UserCreationData } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, SubcategoryFormData, UserCreationData, DirectSaleOffer } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import admin, { firestore } from 'firebase-admin';
 
@@ -22,16 +21,49 @@ export class FirestoreAdapter implements DatabaseAdapter {
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
         const data = doc.data();
         if (!data) {
-            throw new Error("Document data is undefined.");
+            // This case should ideally not happen if doc.exists is true.
+            throw new Error("Document data is undefined for an existing document.");
         }
-        // Converte Timestamps para strings ISO
+        // Convert all Timestamps to ISO strings for client-side compatibility
         Object.keys(data).forEach(key => {
             if (data[key] instanceof firestore.Timestamp) {
-                data[key] = data[key].toDate().toISOString();
+                data[key] = (data[key] as firestore.Timestamp).toDate().toISOString();
+            } else if (Array.isArray(data[key])) {
+                data[key] = data[key].map(item => 
+                    item instanceof firestore.Timestamp ? item.toDate().toISOString() : item
+                );
             }
         });
         return { id: doc.id, ...data } as T;
     }
+
+    private async genericCreate<T>(collectionName: string, data: Partial<T>): Promise<{ success: boolean; message: string; id?: string }> {
+        const docRef = this.db.collection(collectionName).doc();
+        const dataToSet = {
+            ...data,
+            id: docRef.id,
+            publicId: `${collectionName.slice(0, 4).toUpperCase()}-${docRef.id.substring(0, 8)}`,
+            createdAt: AdminFieldValue.serverTimestamp(),
+            updatedAt: AdminFieldValue.serverTimestamp(),
+        };
+        await docRef.set(dataToSet);
+        return { success: true, message: "Registro criado com sucesso!", id: docRef.id };
+    }
+
+    private async genericUpdate<T>(collectionName: string, id: string, data: Partial<T>): Promise<{ success: boolean; message: string }> {
+        const dataToUpdate = {
+            ...data,
+            updatedAt: AdminFieldValue.serverTimestamp(),
+        };
+        await this.db.collection(collectionName).doc(id).update(dataToUpdate);
+        return { success: true, message: "Registro atualizado com sucesso." };
+    }
+    
+    private async genericDelete(collectionName: string, id: string): Promise<{ success: boolean; message: string; }> {
+        await this.db.collection(collectionName).doc(id).delete();
+        return { success: true, message: 'Registro excluído com sucesso.' };
+    }
+
 
     async getLots(auctionId?: string): Promise<Lot[]> {
         let query: FirebaseFirestore.Query = this.db.collection('lots');
@@ -48,26 +80,16 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }> {
-       const docRef = this.db.collection('lots').doc(); // Auto-generate ID
-       await docRef.set({
-           ...lotData,
-           createdAt: AdminFieldValue.serverTimestamp(),
-           updatedAt: AdminFieldValue.serverTimestamp(),
-       });
-       return { success: true, message: "Lote criado com sucesso!", lotId: docRef.id };
+       const result = await this.genericCreate('lots', lotData);
+       return { ...result, lotId: result.id };
     }
     
      async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('lots').doc(id).update({
-            ...updates,
-            updatedAt: AdminFieldValue.serverTimestamp()
-        });
-        return { success: true, message: "Lote atualizado com sucesso." };
+        return this.genericUpdate('lots', id, updates);
     }
 
     async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('lots').doc(id).delete();
-        return { success: true, message: "Lote excluído com sucesso." };
+        return this.genericDelete('lots', id);
     }
 
     async getAuctions(): Promise<Auction[]> {
@@ -86,26 +108,17 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
-        const docRef = this.db.collection('auctions').doc(); // Auto-generate ID
-        await docRef.set({
-            ...auctionData,
-            createdAt: AdminFieldValue.serverTimestamp(),
-            updatedAt: AdminFieldValue.serverTimestamp(),
-        });
-        return { success: true, message: "Leilão criado com sucesso!", auctionId: docRef.id };
+        const result = await this.genericCreate('auctions', auctionData);
+        return { ...result, auctionId: result.id };
     }
 
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('auctions').doc(id).update({
-            ...updates,
-            updatedAt: AdminFieldValue.serverTimestamp()
-        });
-        return { success: true, message: "Leilão atualizado com sucesso." };
+        return this.genericUpdate('auctions', id, updates);
     }
 
     async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('auctions').doc(id).delete();
-        return { success: true, message: "Leilão excluído com sucesso." };
+        // In a real app, you might want to delete all associated lots in a transaction/batch.
+        return this.genericDelete('auctions', id);
     }
     
     async getLotsByIds(ids: string[]): Promise<Lot[]> {
@@ -115,7 +128,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async getLotCategories(): Promise<LotCategory[]> {
-        const snapshot = await this.db.collection('categories').orderBy('name').get();
+        const snapshot = await this.db.collection('lot_categories').orderBy('name').get();
         return snapshot.docs.map(doc => this.toJSON<LotCategory>(doc));
     }
     
@@ -134,10 +147,18 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return snapshot.docs.map(doc => this.toJSON<UserProfileData>(doc));
     }
     
-    async getUserProfileData(userId: string): Promise<UserProfileData | null> {
-        const docRef = this.db.collection('users').doc(userId);
-        const doc = await docRef.get();
-        return doc.exists ? this.toJSON<UserProfileData>(doc) : null;
+    async getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null> {
+        let snapshot: FirebaseFirestore.QuerySnapshot;
+        if (userIdOrEmail.includes('@')) {
+            snapshot = await this.db.collection('users').where('email', '==', userIdOrEmail).limit(1).get();
+        } else {
+            const doc = await this.db.collection('users').doc(userIdOrEmail).get();
+            if (doc.exists) return this.toJSON<UserProfileData>(doc);
+            return null;
+        }
+
+        if (snapshot.empty) return null;
+        return this.toJSON<UserProfileData>(snapshot.docs[0]);
     }
     
     async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
@@ -203,12 +224,20 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { success: true, message: "Configurações atualizadas com sucesso." };
     }
 
-    // --- MÉTODOS NÃO IMPLEMENTADOS (Placeholder) ---
+    async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+        const result = await this.genericCreate('sellers', data);
+        return { ...result, sellerId: result.id };
+    }
+
+    // --- MÉTODOS AINDA NÃO IMPLEMENTADOS COMPLETAMENTE ---
     async getStates(): Promise<StateInfo[]> { return Promise.resolve([]); }
     async getCities(stateId?: string): Promise<CityInfo[]> { return Promise.resolve([]); }
     async getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]> { return Promise.resolve([]); }
     async getSubcategory(id: string): Promise<Subcategory | null> { return Promise.resolve(null); }
-    async getSeller(id: string): Promise<SellerProfileInfo | null> { return Promise.resolve(null); }
+    async getSeller(id: string): Promise<SellerProfileInfo | null> {
+        const doc = await this.db.collection('sellers').doc(id).get();
+        return doc.exists ? this.toJSON<SellerProfileInfo>(doc) : null;
+    }
     async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return Promise.resolve(null); }
     async getCourts(): Promise<Court[]> { return Promise.resolve([]); }
     async getJudicialDistricts(): Promise<JudicialDistrict[]> { return Promise.resolve([]); }
@@ -230,9 +259,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
     async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCity'); }
     async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteCity'); }
-    async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> { return this._notImplemented('createSeller'); }
-    async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSeller'); }
-    async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSeller'); }
+    async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('sellers', id, data); }
+    async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('sellers', id); }
     async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { return this._notImplemented('createAuctioneer'); }
     async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuctioneer'); }
     async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuctioneer'); }
@@ -245,10 +273,11 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
     async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteBem'); }
+    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { return Promise.resolve([]); }
 
 
     async _notImplemented(method: string): Promise<any> {
-        const message = `[FirestoreAdapter] Method ${method} is not implemented.`;
+        const message = `[FirestoreAdapter] O método ${method} não foi implementado.`;
         console.warn(message);
         return Promise.resolve({ success: false, message });
     }

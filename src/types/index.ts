@@ -386,7 +386,7 @@ export interface UserBid {
   amount: number;
   date: string | Date;
   lot: Lot;
-  bidStatus: 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO';
+  bidStatus: 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_VENDIDO' | 'ENCERRADO' | 'CANCELADO';
   userBidAmount: number;
 }
 
@@ -928,7 +928,7 @@ export interface DatabaseAdapter {
     deleteBem(id: string): Promise<{ success: boolean, message: string }>;
 
     getUsersWithRoles(): Promise<UserProfileData[]>;
-    getUserProfileData(userId: string): Promise<UserProfileData | null>;
+    getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null>;
     createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
@@ -941,9 +941,11 @@ export interface DatabaseAdapter {
     createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
     
-    getDocumentTemplates(): Promise<DocumentTemplateType[]>;
-    getDocumentTemplate(id: string): Promise<DocumentTemplateType | null>;
-    saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }>;
+    // Optional methods that may not be on all adapters
+    getDirectSaleOffers?(): Promise<DirectSaleOffer[]>;
+    getDocumentTemplates?(): Promise<DocumentTemplateType[]>;
+    getDocumentTemplate?(id: string): Promise<DocumentTemplateType | null>;
+    saveUserDocument?(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }>;
 
     close?(): Promise<void>;
 }
