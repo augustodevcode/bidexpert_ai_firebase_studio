@@ -1,7 +1,7 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import type { Lot, Bem } from '@/types';
+import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { fetchLots, fetchLot, fetchBensByIds, fetchLotsByIds } from '@/lib/data-queries';
 import { getDatabaseAdapter } from '@/lib/database';
@@ -26,7 +26,7 @@ export async function createLot(data: Partial<Lot>): Promise<{ success: boolean,
   return result;
 }
 
-export async function updateLot(id: string, data: Partial<Lot>): Promise<{ success: boolean, message: string }> {
+export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
   const db = getDatabaseAdapter();
   const lot = await db.getLot(id);
   const result = await db.updateLot(id, data);

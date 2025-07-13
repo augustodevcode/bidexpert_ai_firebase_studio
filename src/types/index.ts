@@ -858,11 +858,19 @@ export interface ConsignorDashboardStats {
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleIds' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
 
 export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
-
-export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').cityFormSchema>;
-
+export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;
 export type AuctionFormData = z.infer<typeof import('@/app/admin/auctions/auction-form-schema').auctionFormSchema>;
-
+export type SellerFormData = z.infer<typeof import('@/app/admin/sellers/seller-form-schema').sellerFormSchema>;
+export type AuctioneerFormData = z.infer<typeof import('@/app/admin/auctioneers/auctioneer-form-schema').auctioneerFormSchema>;
+export type JudicialProcessFormData = z.infer<typeof import('@/app/admin/judicial-processes/judicial-process-form-schema').judicialProcessFormSchema>;
+export type JudicialBranchFormData = z.infer<typeof import('@/app/admin/judicial-branches/judicial-branch-form-schema').judicialBranchFormSchema>;
+export type JudicialDistrictFormData = z.infer<typeof import('@/app/admin/judicial-districts/judicial-district-form-schema').judicialDistrictFormSchema>;
+export type CourtFormData = z.infer<typeof import('@/app/admin/courts/court-form-schema').courtFormSchema>;
+export type StateFormData = z.infer<typeof import('@/app/admin/states/state-form-schema').stateFormSchema>;
+export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').cityFormSchema>;
+export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategories/subcategory-form-schema').subcategoryFormSchema>;
+export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').roleFormSchema>;
+export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
 
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
@@ -871,7 +879,7 @@ export interface DatabaseAdapter {
     getLots(auctionId?: string): Promise<Lot[]>;
     getLot(id: string): Promise<Lot | null>;
     createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }>;
-    updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }>;
+    updateLot(id: string, updates: Partial<LotFormData>): Promise<{ success: boolean; message: string; }>;
     deleteLot(id: string): Promise<{ success: boolean; message: string; }>;
     
     getAuctions(): Promise<Auction[]>;

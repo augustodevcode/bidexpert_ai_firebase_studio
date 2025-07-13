@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Auction, AuctionFormData } from '@/types';
+import type { Auction } from '@/types';
 import { getDatabaseAdapter } from '@/lib/database';
 import { fetchAuctions, fetchAuction, fetchAuctionsByIds, fetchAuctionsBySellerSlug, fetchAuctionsByAuctioneerSlug } from '@/lib/data-queries';
 
@@ -14,7 +14,7 @@ export async function getAuction(id: string): Promise<Auction | null> {
     return fetchAuction(id);
 }
 
-export async function createAuction(data: AuctionFormData): Promise<{ success: boolean, message: string, auctionId?: string }> {
+export async function createAuction(data: Partial<Auction>): Promise<{ success: boolean, message: string, auctionId?: string }> {
     const db = getDatabaseAdapter();
     const result = await db.createAuction(data);
     if (result.success) {
@@ -23,7 +23,7 @@ export async function createAuction(data: AuctionFormData): Promise<{ success: b
     return result;
 }
 
-export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
+export async function updateAuction(id: string, data: Partial<Auction>): Promise<{ success: boolean, message: string }> {
     const db = getDatabaseAdapter();
     const result = await db.updateAuction(id, data);
     if (result.success) {
@@ -35,9 +35,9 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
     const db = getDatabaseAdapter();
-    const lotCount = (await db.getLots(id)).length;
-    if (lotCount > 0) {
-        return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
+    const lots = await db.getLots(id);
+    if (lots.length > 0) {
+        return { success: false, message: `Não é possível excluir. O leilão possui ${lots.length} lote(s) associado(s).` };
     }
     const result = await db.deleteAuction(id);
     if (result.success) {
