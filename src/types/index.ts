@@ -386,7 +386,7 @@ export interface UserBid {
   amount: number;
   date: string | Date;
   lot: Lot;
-  bidStatus: 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_VENDIDO' | 'ENCERRADO' | 'CANCELADO';
+  bidStatus: 'GANHANDO' | 'PERDENDO' | 'ARREMATADO' | 'NAO_ARREMATADO' | 'ENCERRADO' | 'CANCELADO';
   userBidAmount: number;
 }
 
@@ -951,8 +951,8 @@ export interface DatabaseAdapter {
     
     // Optional methods that may not be on all adapters
     getDirectSaleOffers?(): Promise<DirectSaleOffer[]>;
-    getDocumentTemplates?(): Promise<DocumentTemplateType[]>;
-    getDocumentTemplate?(id: string): Promise<DocumentTemplateType | null>;
+    getDocumentTemplates?(): Promise<DocumentTemplate[]>;
+    getDocumentTemplate?(id: string): Promise<DocumentTemplate | null>;
     saveUserDocument?(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }>;
 
     close?(): Promise<void>;

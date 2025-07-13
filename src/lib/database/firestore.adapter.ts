@@ -36,6 +36,43 @@ export class FirestoreAdapter implements DatabaseAdapter {
         });
         return { id: doc.id, ...data } as T;
     }
+    
+    async batchWrite(collectionName: string, items: any[]): Promise<{ success: boolean; message: string; }> {
+        if (!items || items.length === 0) {
+            return { success: true, message: 'Nenhum item para adicionar.' };
+        }
+
+        const batchSize = 499; // Firestore batch limit is 500
+        const batches = [];
+        for (let i = 0; i < items.length; i += batchSize) {
+            batches.push(items.slice(i, i + batchSize));
+        }
+
+        try {
+            for (const batchItems of batches) {
+                const batch = this.db.batch();
+                for (const item of batchItems) {
+                    const docRef = item.id ? this.db.collection(collectionName).doc(item.id) : this.db.collection(collectionName).doc();
+                    const dataToSet = {
+                        ...item,
+                        id: docRef.id,
+                        createdAt: AdminFieldValue.serverTimestamp(),
+                        updatedAt: AdminFieldValue.serverTimestamp(),
+                    };
+                    if (!dataToSet.slug && (dataToSet.name || dataToSet.title)) {
+                        dataToSet.slug = slugify(dataToSet.name || dataToSet.title);
+                    }
+                    batch.set(docRef, dataToSet, { merge: true });
+                }
+                await batch.commit();
+            }
+            return { success: true, message: `${items.length} itens em ${collectionName} adicionados/atualizados com sucesso.` };
+        } catch (error: any) {
+            console.error(`[FirestoreAdapter] Erro na escrita em lote para ${collectionName}:`, error);
+            return { success: false, message: `Falha na escrita em lote: ${error.message}` };
+        }
+    }
+
 
     private async genericCreate<T extends { id?: string; publicId?: string; createdAt?: any; updatedAt?: any; name?: string; title?: string; slug?: string; }>(collectionName: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, schema?: Zod.Schema<any>): Promise<{ success: boolean; message: string; id?: string }> {
         const docRef = this.db.collection(collectionName).doc();
@@ -436,5 +473,3 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
 }
-
-    

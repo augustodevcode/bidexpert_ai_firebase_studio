@@ -1,16 +1,36 @@
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
+import type { DatabaseAdapter } from '@/types';
+
+
+async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: string, data: any[], existingItems: any[], uniqueKey: string) {
+    console.log(`[DB INIT - DML] Seeding ${collectionName}...`);
+    const itemsToCreate = data.filter(item => !existingItems.some(existing => existing[uniqueKey] === item[uniqueKey]));
+    
+    // @ts-ignore - Assuming batchWrite exists on the adapter
+    if (db.batchWrite && itemsToCreate.length > 0) {
+        // @ts-ignore
+        await db.batchWrite(collectionName, itemsToCreate);
+    } else if (itemsToCreate.length > 0) {
+        console.warn(`[DB INIT - DML] batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
+        for (const item of itemsToCreate) {
+             // @ts-ignore
+            await db[`create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`](item);
+        }
+    }
+    console.log(`[DB INIT - DML] ✅ SUCCESS: ${itemsToCreate.length} new items processed for ${collectionName}.`);
+}
+
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
     const db = getDatabaseAdapter(); 
     
     try {
-        // Platform Settings
+        // Platform Settings (Single Document)
         console.log('[DB INIT - DML] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
-        
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
@@ -18,62 +38,13 @@ async function seedEssentialData() {
             console.log("[DB INIT - DML] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Roles
-        console.log("[DB INIT - DML] Seeding roles...");
-        const existingRoles = await db.getRoles();
-        const rolesToCreate = sampleRoles.filter(role => !existingRoles.some(er => er.name_normalized === role.name_normalized));
-        for (const role of rolesToCreate) {
-            await db.createRole(role);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${rolesToCreate.length} new roles inserted.`);
-
-        // Categories
-        console.log("[DB INIT - DML] Seeding categories...");
-        const existingCategories = await db.getLotCategories();
-        const categoriesToCreate = sampleLotCategories.filter(cat => !existingCategories.some(ec => ec.slug === cat.slug));
-        for (const category of categoriesToCreate) {
-            await db.createLotCategory(category);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${categoriesToCreate.length} new categories inserted.`);
-        
-        // Subcategories
-        console.log("[DB INIT - DML] Seeding subcategories...");
-        // @ts-ignore
-        const allSubcategories = await db.getSubcategoriesByParent ? await db.getSubcategoriesByParent() : [];
-        const subcategoriesToCreate = sampleSubcategories.filter(sub => !allSubcategories.some(es => es.slug === sub.slug && es.parentCategoryId === sub.parentCategoryId));
-        for (const subcategory of subcategoriesToCreate) {
-            await db.createSubcategory(subcategory);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${subcategoriesToCreate.length} new subcategories inserted.`);
-        
-        // States
-        console.log("[DB INIT - DML] Seeding states...");
-        const existingStates = await db.getStates();
-        const statesToCreate = sampleStates.filter(state => !existingStates.some(es => es.uf === state.uf));
-        for (const state of statesToCreate) {
-             await db.createState(state);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${statesToCreate.length} new states inserted.`);
-        
-        // Cities
-        console.log("[DB INIT - DML] Seeding cities...");
-        const existingCities = await db.getCities();
-        const citiesToCreate = sampleCities.filter(city => !existingCities.some(ec => ec.slug === city.slug && ec.stateId === city.stateId));
-        for (const city of citiesToCreate) {
-             await db.createCity(city);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${citiesToCreate.length} new cities inserted.`);
-
-        // Courts
-        console.log("[DB INIT - DML] Seeding courts...");
-        const existingCourts = await db.getCourts();
-        const courtsToCreate = sampleCourts.filter(court => !existingCourts.some(ec => ec.slug === court.slug));
-        for (const court of courtsToCreate) {
-            // @ts-ignore
-            await db.createCourt(court);
-        }
-        console.log(`[DB INIT - DML] ✅ SUCCESS: ${courtsToCreate.length} new courts inserted.`);
-
+        // Batch-writable collections
+        await seedCollectionInBatches(db, 'roles', sampleRoles, await db.getRoles(), 'name_normalized');
+        await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, await db.getLotCategories(), 'slug');
+        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, await db.getSubcategoriesByParent(), 'slug');
+        await seedCollectionInBatches(db, 'states', sampleStates, await db.getStates(), 'uf');
+        await seedCollectionInBatches(db, 'cities', sampleCities, await db.getCities(), 'slug');
+        await seedCollectionInBatches(db, 'courts', sampleCourts, await db.getCourts(), 'slug');
 
     } catch (error: any) {
         console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
@@ -85,7 +56,7 @@ async function seedEssentialData() {
 
 async function initializeDatabase() {
   console.log('🚀 [DB INIT] Starting database initialization script...');
-  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
   console.log(`[DB INIT] Active database system using Adapter pattern: ${activeSystem}`);
 
   await seedEssentialData();
