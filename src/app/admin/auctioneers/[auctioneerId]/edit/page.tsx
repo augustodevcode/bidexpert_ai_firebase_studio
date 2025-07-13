@@ -93,11 +93,6 @@ export default function EditAuctioneerPage() {
   }, [fetchPageData]);
   
 
-  async function handleUpdateAuctioneer(data: Partial<AuctioneerFormData>) {
-    'use server';
-    return updateAuctioneer(auctioneerId, data);
-  }
-
   if (isLoading || !auctioneer) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -114,7 +109,7 @@ export default function EditAuctioneerPage() {
         </div>
       <AuctioneerForm
         initialData={auctioneer}
-        onSubmitAction={handleUpdateAuctioneer}
+        onSubmitAction={(data) => updateAuctioneer(auctioneerId, data)}
         formTitle={isViewMode ? "Visualizar Leiloeiro" : "Editar Leiloeiro"}
         formDescription={isViewMode ? "Consulte as informações abaixo." : "Modifique os detalhes do leiloeiro existente."}
         submitButtonText="Salvar Alterações"

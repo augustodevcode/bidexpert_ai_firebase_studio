@@ -105,11 +105,6 @@ export default function EditSellerPage() {
   }, [fetchPageData]);
   
 
-  async function handleUpdateSeller(data: Partial<SellerFormData>) {
-    'use server';
-    return updateSeller(sellerId, data);
-  }
-  
   if (isLoading || !seller) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -128,7 +123,7 @@ export default function EditSellerPage() {
         <SellerForm
           initialData={seller}
           judicialBranches={judicialBranches}
-          onSubmitAction={handleUpdateSeller}
+          onSubmitAction={(data) => updateSeller(sellerId, data)}
           formTitle={isViewMode ? "Visualizar Comitente" : "Editar Comitente"}
           formDescription={isViewMode ? "Consulte as informações abaixo." : "Modifique os detalhes do comitente existente."}
           submitButtonText="Salvar Alterações"

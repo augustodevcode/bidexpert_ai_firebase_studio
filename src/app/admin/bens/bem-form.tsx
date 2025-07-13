@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { bemFormSchema, type BemFormData } from './bem-form-schema';
-import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo } from '@/types';
+import type { Bem, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo, ProcessPartyType } from '@/types';
 import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Car, Building, Tractor, PawPrint, ChevronDown, Trash2, ImagePlus, Diamond, Utensils, Gem, Forest, Anchor, Paintbrush, Hammer, Tv as TvIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
@@ -67,7 +67,7 @@ const categoryIcons: Record<string, React.ReactNode> = {
     'joias-e-acessorios': <Diamond className="h-4 w-4"/>,
     'alimentos': <Utensils className="h-4 w-4"/>,
     'metais-e-pedras-preciosas': <Gem className="h-4 w-4"/>,
-    'bens-florestais-e-ambientais': <Forest className="h-4 w-4"/>,
+    'bens-florestais-e-ambientais': <Package className="h-4 w-4"/>,
 };
 
 export default function BemForm({

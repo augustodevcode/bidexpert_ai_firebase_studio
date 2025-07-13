@@ -6,6 +6,7 @@ export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
 ];
 
 export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'CANCELADO';
+
 export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
   'RASCUNHO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'
 ];

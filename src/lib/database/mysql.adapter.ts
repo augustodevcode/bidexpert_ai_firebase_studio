@@ -32,7 +32,7 @@ function toSnakeCase(str: string): string {
         'contactName': 'contactName',
         'registrationNumber': 'registrationNumber',
         'zipCode': 'zipCode',
-        'logoUrl': 'logoUrl',
+ 'logoUrl': 'logo_url',
         'logoMediaId': 'logoMediaId',
         'dataAiHintLogo': 'dataAiHintLogo',
         'memberSince': 'memberSince',

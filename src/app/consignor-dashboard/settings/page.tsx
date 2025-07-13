@@ -3,7 +3,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { getSeller, updateSeller } from '@/app/admin/sellers/actions';
+import { getSeller } from '@/app/admin/sellers/actions';
+import { updateConsignorProfile } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@/types';
 import { Loader2 } from 'lucide-react';
@@ -70,19 +71,6 @@ export default function ConsignorSettingsPage() {
     }
   }, [authLoading, userProfileWithPermissions, fetchData]);
 
-  /**
-   * Handles the form submission by calling the updateSeller server action.
-   * This function is wrapped in a server action-compatible format.
-   * @param {Partial<SellerFormData>} data The updated data from the form.
-   */
-  async function handleUpdateMyProfile(data: Partial<SellerFormData>) {
-    'use server';
-    if (!sellerId) {
-        return { success: false, message: "ID do comitente não encontrado. Não é possível salvar." };
-    }
-    return updateSeller(sellerId, data);
-  }
-
   // Display a loading state while authentication or data fetching is in progress
   if (isLoading || authLoading) {
     return (
@@ -106,7 +94,7 @@ export default function ConsignorSettingsPage() {
     <SellerForm
       initialData={sellerProfile}
       judicialBranches={judicialBranches}
-      onSubmitAction={handleUpdateMyProfile}
+      onSubmitAction={(data) => updateConsignorProfile(sellerId as string, data)}
       formTitle="Minhas Configurações de Comitente"
       formDescription="Atualize os detalhes do seu perfil público de vendedor."
       submitButtonText="Salvar Alterações"
