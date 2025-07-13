@@ -8,32 +8,27 @@ To get started, take a look at `src/app/page.tsx`.
 
 ## Database Setup
 
-This project uses a database adapter system and is configured to use **MySQL** by default.
+This project uses a database adapter system and is configured to use **Firestore** by default.
 
 ### 1. Environment Setup
 
 - Create a `.env` file in the root of your project.
-- Add your database connection string to this file:
-    ```env
-    # Example for MySQL
-    DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
-    ```
-- Ensure the `NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM` is set to `MYSQL` in your `.env` file if you are not using the default.
+- Ensure your Firebase project credentials are set up correctly in `bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json`.
 
-### 2. Database Initialization (For SQL Databases)
+### 2. Database Initialization & Seeding
 
-When using a fresh SQL database (MySQL or PostgreSQL), you need to create the necessary tables and populate essential data.
+When using a fresh Firestore database, you need to create the necessary collections and populate essential data.
 
-- **`npm run db:init`**: This script populates **essential data** only (Roles, Platform Settings). It should be run once after setting up a new database schema. It's safe to run multiple times.
+- **`npm run dev`**: The first time you run the development server, it will automatically execute `db:init`, which populates **essential data only** (Roles, Platform Settings). This is required for the application to start correctly.
 
-- **`npm run db:seed`**: This script populates the database with a **full set of sample data**. Use this to get a fully populated environment for development and demonstration. It will check if data already exists to prevent duplication.
+- **`npm run db:seed`**: After the server has started once, run this script manually in your terminal to populate the database with a **full set of sample data** (auctions, lots, users, etc.). Use this to get a fully populated environment for development and demonstration. It will check if data already exists to prevent duplication.
 
 ```bash
-# First, ensure your database schema is created (e.g., using a SQL script or a tool like DBeaver).
-# Then, run the initialization script for essential data.
-npm run db:init
+# First, run the development server. This will initialize the database.
+npm run dev
 
-# After initialization, populate with sample data.
+# (In a new terminal, while the server is running)
+# Then, populate with sample data.
 npm run db:seed
 ```
 
