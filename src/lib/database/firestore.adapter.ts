@@ -1,9 +1,9 @@
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, SubcategoryFormData, UserCreationData, DirectSaleOffer } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { firestore } from 'firebase-admin';
-import { AuctionSchema, LotSchema, UserProfileDataSchema } from '@/lib/zod-schemas';
+import { AuctionSchema, LotSchema, UserProfileDataSchema, SellerProfileInfoSchema } from '@/lib/zod-schemas';
 
 const AdminFieldValue = firestore.FieldValue;
 
@@ -36,7 +36,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { id: doc.id, ...data } as T;
     }
 
-    private async genericCreate<T extends { id: string }>(collectionName: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, schema: Zod.Schema<T>): Promise<{ success: boolean; message: string; id?: string }> {
+    private async genericCreate<T extends { id?: string; publicId?: string; createdAt?: any; updatedAt?: any }>(collectionName: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, schema?: Zod.Schema<any>): Promise<{ success: boolean; message: string; id?: string }> {
         const docRef = this.db.collection(collectionName).doc();
         const dataToSet: Partial<T> = {
             ...data,
@@ -47,8 +47,9 @@ export class FirestoreAdapter implements DatabaseAdapter {
         };
 
         try {
-            // Validate data before setting
-            schema.parse(dataToSet);
+            if (schema) {
+                schema.parse(dataToSet);
+            }
             await docRef.set(dataToSet);
             return { success: true, message: "Registro criado com sucesso!", id: docRef.id };
         } catch (error: any) {
@@ -57,14 +58,15 @@ export class FirestoreAdapter implements DatabaseAdapter {
         }
     }
 
-    private async genericUpdate<T>(collectionName: string, id: string, data: Partial<T>, schema: Zod.Schema<Partial<T>>): Promise<{ success: boolean; message: string }> {
+    private async genericUpdate<T>(collectionName: string, id: string, data: Partial<T>, schema?: Zod.Schema<Partial<T>>): Promise<{ success: boolean; message: string }> {
         const dataToUpdate = {
             ...data,
             updatedAt: AdminFieldValue.serverTimestamp(),
         };
         try {
-            // Validate partial data before updating
-            schema.parse(dataToUpdate);
+            if (schema) {
+                schema.parse(dataToUpdate);
+            }
             await this.db.collection(collectionName).doc(id).update(dataToUpdate);
             return { success: true, message: "Registro atualizado com sucesso." };
         } catch (error: any) {
@@ -142,6 +144,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
         const snapshot = await this.db.collection('lot_categories').orderBy('name').get();
         return snapshot.docs.map(doc => this.toJSON<LotCategory>(doc));
     }
+
+    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        const docRef = this.db.collection('lot_categories').doc(data.id || data.slug!);
+        await docRef.set({ ...data, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
+        return { success: true, message: 'Categoria criada.' };
+    }
     
     async getSellers(): Promise<SellerProfileInfo[]> {
         const snapshot = await this.db.collection('sellers').orderBy('name').get();
@@ -200,6 +208,13 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return snapshot.docs.map(doc => this.toJSON<Role>(doc));
     }
 
+    async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
+        const { id, ...rest } = role as any;
+        const docRef = this.db.collection('roles').doc(id);
+        await docRef.set({ ...rest, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
+        return { success: true, message: 'Role criada.' };
+    }
+
     async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> {
         await this.db.collection('users').doc(userId).update({ roleIds: roleIds || [] });
         return { success: true, message: "Perfis do usuário atualizados." };
@@ -226,7 +241,6 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         const doc = await this.db.collection('settings').doc('global').get();
-        console.log('[FirestoreAdapter] Platform settings document exists:', doc.exists);
         return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
     }
 
@@ -248,8 +262,28 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-        const result = await this.genericCreate('sellers', data, SellerProfileInfoSchema);
+        const result = await this.genericCreate('sellers', data);
         return { ...result, sellerId: result.id };
+    }
+    
+    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
+        const result = await this.genericCreate('courts', data);
+        return { ...result, courtId: result.id };
+    }
+
+    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> {
+        const result = await this.genericCreate('states', data);
+        return { ...result, stateId: result.id };
+    }
+
+    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
+        const result = await this.genericCreate('cities', data);
+        return { ...result, cityId: result.id };
+    }
+
+    async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
+        const result = await this.genericCreate('subcategories', data);
+        return { ...result, subcategoryId: result.id };
     }
 
     async _notImplemented(method: string): Promise<any> {
@@ -259,46 +293,57 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     // MÉTODOS AINDA NÃO IMPLEMENTADOS COMPLETAMENTE
-    async getStates(): Promise<StateInfo[]> { return Promise.resolve([]); }
-    async getCities(stateId?: string): Promise<CityInfo[]> { return Promise.resolve([]); }
-    async getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]> { return Promise.resolve([]); }
-    async getSubcategory(id: string): Promise<Subcategory | null> { return Promise.resolve(null); }
-    async getSeller(id: string): Promise<SellerProfileInfo | null> {
-        const doc = await this.db.collection('sellers').doc(id).get();
-        return doc.exists ? this.toJSON<SellerProfileInfo>(doc) : null;
+    async getStates(): Promise<StateInfo[]> {
+        const snapshot = await this.db.collection('states').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<StateInfo>(doc));
     }
-    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return Promise.resolve(null); }
-    async getCourts(): Promise<Court[]> { return Promise.resolve([]); }
-    async getJudicialDistricts(): Promise<JudicialDistrict[]> { return Promise.resolve([]); }
-    async getJudicialBranches(): Promise<JudicialBranch[]> { return Promise.resolve([]); }
-    async getJudicialProcesses(): Promise<JudicialProcess[]> { return Promise.resolve([]); }
-    async getBem(id: string): Promise<Bem | null> { return Promise.resolve(null); }
-    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; } | undefined): Promise<Bem[]> { return Promise.resolve([]); }
-    async getBensByIds(ids: string[]): Promise<Bem[]> { return Promise.resolve([]); }
-    async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createRole'); }
-    async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createLotCategory'); }
-    async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> { return this._notImplemented('createSubcategory'); }
+    async getCities(stateId?: string): Promise<CityInfo[]> {
+        let query: FirebaseFirestore.Query = this.db.collection('cities');
+        if (stateId) {
+            query = query.where('stateId', '==', stateId);
+        }
+        const snapshot = await query.orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
+    }
+    async getSubcategoriesByParent(parentCategoryId?: string | undefined): Promise<Subcategory[]> { 
+        if (!parentCategoryId) return [];
+        const snapshot = await this.db.collection('subcategories').where('parentCategoryId', '==', parentCategoryId).orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
+    }
+    async getSubcategory(id: string): Promise<Subcategory | null> { return this._notImplemented('getSubcategory'); }
     async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSubcategory'); }
     async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSubcategory'); }
-    async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }> { return this._notImplemented('createState'); }
     async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateState'); }
     async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteState'); }
-    async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> { return this._notImplemented('createCity'); }
     async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCity'); }
     async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteCity'); }
     async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('sellers', id, data, SellerProfileInfoSchema.partial()); }
     async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('sellers', id); }
-    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> { return this._notImplemented('createAuctioneer'); }
+    async getSeller(id: string): Promise<SellerProfileInfo | null> {
+        const doc = await this.db.collection('sellers').doc(id).get();
+        return doc.exists ? this.toJSON<SellerProfileInfo>(doc) : null;
+    }
+    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return this._notImplemented('getAuctioneer'); }
+    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string | undefined; }> { return this._notImplemented('createAuctioneer'); }
     async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuctioneer'); }
     async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuctioneer'); }
-    async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> { return this._notImplemented('createCourt'); }
     async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCourt'); }
-    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> { return this._notImplemented('createJudicialDistrict'); }
-    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> { return this._notImplemented('createJudicialBranch'); }
-    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> { return this._notImplemented('createJudicialProcess'); }
-    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> { return this._notImplemented('createBem'); }
+    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { return this._notImplemented('createJudicialDistrict'); }
+    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { return this._notImplemented('createJudicialBranch'); }
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { return this._notImplemented('createJudicialProcess'); }
+    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { return this._notImplemented('createBem'); }
     async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
     async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteBem'); }
     async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { return Promise.resolve([]); }
+    async getCourts(): Promise<Court[]> { 
+        const snapshot = await this.db.collection('courts').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<Court>(doc));
+    }
+    async getJudicialDistricts(): Promise<JudicialDistrict[]> { return Promise.resolve([]); }
+    async getJudicialBranches(): Promise<JudicialBranch[]> { return Promise.resolve([]); }
+    async getJudicialProcesses(): Promise<JudicialProcess[]> { return Promise.resolve([]); }
+    async getBem(id: string): Promise<Bem | null> { return this._notImplemented('getBem'); }
+    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; } | undefined): Promise<Bem[]> { return Promise.resolve([]); }
+    async getBensByIds(ids: string[]): Promise<Bem[]> { return this._notImplemented('getBensByIds'); }
 }

@@ -1,9 +1,10 @@
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { firestore } from 'firebase-admin';
-import { AuctionSchema, LotSchema, UserProfileDataSchema, SellerProfileInfoSchema } from '@/lib/zod-schemas';
+import { AuctionSchema, LotSchema, UserProfileDataSchema, SellerProfileInfoSchema, AuctioneerProfileInfoSchema } from '@/lib/zod-schemas';
+import { v4 as uuidv4 } from 'uuid';
 
 const AdminFieldValue = firestore.FieldValue;
 
@@ -36,7 +37,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { id: doc.id, ...data } as T;
     }
 
-    private async genericCreate<T extends { id?: string; publicId?: string; createdAt?: any; updatedAt?: any }>(collectionName: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, schema?: Zod.Schema<any>): Promise<{ success: boolean; message: string; id?: string }> {
+    private async genericCreate<T extends { id?: string; publicId?: string; createdAt?: any; updatedAt?: any; name?: string; title?: string; slug?: string; }>(collectionName: string, data: Partial<Omit<T, 'id' | 'createdAt' | 'updatedAt'>>, schema?: Zod.Schema<any>): Promise<{ success: boolean; message: string; id?: string }> {
         const docRef = this.db.collection(collectionName).doc();
         const dataToSet: Partial<T> = {
             ...data,
@@ -45,6 +46,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
             createdAt: AdminFieldValue.serverTimestamp(),
             updatedAt: AdminFieldValue.serverTimestamp(),
         };
+
+        if (dataToSet.name && !dataToSet.slug) {
+            dataToSet.slug = slugify(dataToSet.name);
+        } else if (dataToSet.title && !dataToSet.slug) {
+            dataToSet.slug = slugify(dataToSet.title);
+        }
 
         try {
             if (schema) {
@@ -76,8 +83,13 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     private async genericDelete(collectionName: string, id: string): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection(collectionName).doc(id).delete();
-        return { success: true, message: 'Registro excluído com sucesso.' };
+        try {
+            await this.db.collection(collectionName).doc(id).delete();
+            return { success: true, message: 'Registro excluído com sucesso.' };
+        } catch (error: any) {
+             console.error(`[FirestoreAdapter] Deletion Error in ${collectionName}:`, error);
+             return { success: false, message: `Falha na exclusão: ${error.message}` };
+        }
     }
 
     async getLots(auctionId?: string): Promise<Lot[]> {
@@ -146,9 +158,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
-        const { id, ...restData } = data;
-        const docRef = this.db.collection('lot_categories').doc(id!);
-        await docRef.set({ ...restData, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
+        const docRef = this.db.collection('lot_categories').doc(data.id || data.slug!);
+        await docRef.set({ ...data, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
         return { success: true, message: 'Categoria criada.' };
     }
     
@@ -211,7 +222,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
         const { id, ...rest } = role as any;
-        await this.db.collection('roles').doc(id).set(rest);
+        const docRef = this.db.collection('roles').doc(id);
+        await docRef.set(rest);
         return { success: true, message: 'Role criada.' };
     }
 
@@ -262,7 +274,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-        const result = await this.genericCreate('sellers', data, SellerProfileInfoSchema);
+        const result = await this.genericCreate('sellers', data);
         return { ...result, sellerId: result.id };
     }
     
@@ -286,13 +298,6 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { ...result, subcategoryId: result.id };
     }
 
-    async _notImplemented(method: string): Promise<any> {
-        const message = `[FirestoreAdapter] O método ${method} não foi implementado.`;
-        console.warn(message);
-        return Promise.resolve({ success: false, message });
-    }
-    
-    // MÉTODOS AINDA NÃO IMPLEMENTADOS COMPLETAMENTE
     async getStates(): Promise<StateInfo[]> {
         const snapshot = await this.db.collection('states').orderBy('name').get();
         return snapshot.docs.map(doc => this.toJSON<StateInfo>(doc));
@@ -310,40 +315,119 @@ export class FirestoreAdapter implements DatabaseAdapter {
         const snapshot = await this.db.collection('subcategories').where('parentCategoryId', '==', parentCategoryId).orderBy('name').get();
         return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
     }
-    async getSubcategory(id: string): Promise<Subcategory | null> { return this._notImplemented('getSubcategory'); }
-    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateSubcategory'); }
-    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteSubcategory'); }
-    async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateState'); }
-    async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteState'); }
-    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCity'); }
-    async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteCity'); }
+    async getSubcategory(id: string): Promise<Subcategory | null> { 
+        const doc = await this.db.collection('subcategories').doc(id).get();
+        return doc.exists ? this.toJSON<Subcategory>(doc) : null;
+    }
+    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('subcategories', id, data); }
+    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('subcategories', id); }
+    async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('states', id, data); }
+    async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('states', id); }
+    async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('cities', id, data); }
+    async deleteCity(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('cities', id); }
     async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('sellers', id, data, SellerProfileInfoSchema.partial()); }
     async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('sellers', id); }
     async getSeller(id: string): Promise<SellerProfileInfo | null> {
         const doc = await this.db.collection('sellers').doc(id).get();
         return doc.exists ? this.toJSON<SellerProfileInfo>(doc) : null;
     }
-    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { return this._notImplemented('getAuctioneer'); }
-    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string | undefined; }> { return this._notImplemented('createAuctioneer'); }
-    async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuctioneer'); }
-    async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteAuctioneer'); }
-    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateCourt'); }
-    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { return this._notImplemented('createJudicialDistrict'); }
-    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { return this._notImplemented('createJudicialBranch'); }
-    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { return this._notImplemented('createJudicialProcess'); }
-    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { return this._notImplemented('createBem'); }
-    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateBem'); }
-    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveUserDocument'); }
-    async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteBem'); }
-    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { return Promise.resolve([]); }
+    async getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> { 
+        const doc = await this.db.collection('auctioneers').doc(id).get();
+        return doc.exists ? this.toJSON<AuctioneerProfileInfo>(doc) : null;
+    }
+    async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string | undefined; }> { 
+        const result = await this.genericCreate('auctioneers', data);
+        return { ...result, auctioneerId: result.id };
+    }
+    async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('auctioneers', id, data, AuctioneerProfileInfoSchema.partial()); }
+    async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('auctioneers', id); }
+    async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('courts', id, data); }
+    
+    async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { 
+        const result = await this.genericCreate('judicial_districts', data);
+        return { ...result, districtId: result.id };
+    }
+    async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
+        const result = await this.genericCreate('judicial_branches', data);
+        return { ...result, branchId: result.id };
+    }
+    async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { 
+        const result = await this.genericCreate('judicial_processes', data);
+        return { ...result, processId: result.id };
+    }
+    async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { 
+        const result = await this.genericCreate('bens', data);
+        return { ...result, bemId: result.id };
+    }
+    async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('bens', id, data); }
+    async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
+        const docRef = this.db.collection('user_documents').doc();
+        const data = { id: docRef.id, userId, documentTypeId, fileUrl, fileName, status: 'PENDING_ANALYSIS', createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
+        await docRef.set(data);
+        return { success: true, message: "Documento salvo com sucesso." };
+    }
+    async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this.genericDelete('bens', id); }
+    
+    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { 
+        const snapshot = await this.db.collection('direct_sales').get();
+        return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
+    }
     async getCourts(): Promise<Court[]> { 
         const snapshot = await this.db.collection('courts').orderBy('name').get();
         return snapshot.docs.map(doc => this.toJSON<Court>(doc));
     }
-    async getJudicialDistricts(): Promise<JudicialDistrict[]> { return Promise.resolve([]); }
-    async getJudicialBranches(): Promise<JudicialBranch[]> { return Promise.resolve([]); }
-    async getJudicialProcesses(): Promise<JudicialProcess[]> { return Promise.resolve([]); }
-    async getBem(id: string): Promise<Bem | null> { return this._notImplemented('getBem'); }
-    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; } | undefined): Promise<Bem[]> { return Promise.resolve([]); }
-    async getBensByIds(ids: string[]): Promise<Bem[]> { return this._notImplemented('getBensByIds'); }
+    async getJudicialDistricts(): Promise<JudicialDistrict[]> {
+        const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
+    }
+    async getJudicialBranches(): Promise<JudicialBranch[]> { 
+        const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
+    }
+    async getJudicialProcesses(): Promise<JudicialProcess[]> {
+        const snapshot = await this.db.collection('judicial_processes').get();
+        return snapshot.docs.map(doc => this.toJSON<JudicialProcess>(doc));
+    }
+    async getBem(id: string): Promise<Bem | null> { 
+        const doc = await this.db.collection('bens').doc(id).get();
+        return doc.exists ? this.toJSON<Bem>(doc) : null;
+    }
+    async getBens(filter?: { judicialProcessId?: string; sellerId?: string; } | undefined): Promise<Bem[]> { 
+        let query: FirebaseFirestore.Query = this.db.collection('bens');
+        if (filter?.judicialProcessId) {
+            query = query.where('judicialProcessId', '==', filter.judicialProcessId);
+        }
+        if (filter?.sellerId) {
+            query = query.where('sellerId', '==', filter.sellerId);
+        }
+        const snapshot = await query.get();
+        return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+    }
+    async getBensByIds(ids: string[]): Promise<Bem[]> { 
+      if (ids.length === 0) return [];
+      const snapshot = await this.db.collection('bens').where(firestore.FieldPath.documentId(), 'in', ids).get();
+      return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+    }
+
+    async getDocumentTemplates(): Promise<DocumentTemplate[]> {
+        const snapshot = await this.db.collection('document_templates').orderBy('name').get();
+        return snapshot.docs.map(doc => this.toJSON<DocumentTemplate>(doc));
+    }
+
+    async getContactMessages(): Promise<ContactMessage[]> {
+        const snapshot = await this.db.collection('contactMessages').orderBy('createdAt', 'desc').get();
+        return snapshot.docs.map(doc => this.toJSON<ContactMessage>(doc));
+    }
+
+     async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string }> {
+        const docRef = this.db.collection('contactMessages').doc();
+        await docRef.set({
+            ...message,
+            id: docRef.id,
+            isRead: false,
+            createdAt: AdminFieldValue.serverTimestamp(),
+        });
+        return { success: true, message: 'Mensagem enviada com sucesso!' };
+    }
+
 }
