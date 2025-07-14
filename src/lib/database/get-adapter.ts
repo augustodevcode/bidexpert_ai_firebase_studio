@@ -14,27 +14,31 @@ let adapterInstance: DatabaseAdapter | null = null;
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
   
-    // Avoid creating new instances if one that matches the current system already exists.
+  console.log(`[getDatabaseAdapter] LOG: Variable NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM is '${dbSystem}'.`);
+
+  // Avoid creating new instances if one that matches the current system already exists.
   if (adapterInstance) {
     if (dbSystem === 'MYSQL' && adapterInstance instanceof MySqlAdapter) {
+      console.log(`[getDatabaseAdapter] LOG: Reusing existing MySqlAdapter instance.`);
       return adapterInstance;
     }
     if (dbSystem === 'FIRESTORE' && adapterInstance instanceof FirestoreAdapter) {
+      console.log(`[getDatabaseAdapter] LOG: Reusing existing FirestoreAdapter instance.`);
       return adapterInstance;
     }
   }
 
-  console.log(`[getDatabaseAdapter] Initializing new adapter for: ${dbSystem}`);
+  console.log(`[getDatabaseAdapter] LOG: Initializing new adapter for: ${dbSystem}`);
 
   switch (dbSystem) {
     case 'MYSQL':
       adapterInstance = new MySqlAdapter();
-      console.log('[getDatabaseAdapter] Usando adaptador: MySqlAdapter');
+      console.log('[getDatabaseAdapter] LOG: Using adapter: MySqlAdapter');
       return adapterInstance;
     case 'FIRESTORE':
     default:
       adapterInstance = new FirestoreAdapter();
-      console.log('[getDatabaseAdapter] Usando adaptador: FirestoreAdapter');
+      console.log('[getDatabaseAdapter] LOG: Using adapter: FirestoreAdapter');
       return adapterInstance;
   }
 };

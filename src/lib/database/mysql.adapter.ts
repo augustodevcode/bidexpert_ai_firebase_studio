@@ -30,17 +30,18 @@ export class MySqlAdapter implements DatabaseAdapter {
     private connectionError: string | null = null;
 
     constructor() {
+        console.log('[MySqlAdapter] LOG: Constructor called.');
         if (!process.env.DATABASE_URL) {
             this.connectionError = "A variável de ambiente DATABASE_URL não está definida.";
-            console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
+            console.error(`[MySqlAdapter] FATAL: ${this.connectionError}`);
             return;
         }
         try {
             this.pool = mysql.createPool(process.env.DATABASE_URL);
-            console.log('[MySqlAdapter] Pool de conexões MySQL inicializado.');
+            console.log('[MySqlAdapter] LOG: Pool de conexões MySQL inicializado com sucesso.');
         } catch (error: any) {
             this.connectionError = `Falha ao criar o pool de conexões MySQL: ${error.message}`;
-            console.warn(`[MySqlAdapter] AVISO: ${this.connectionError}`);
+            console.error(`[MySqlAdapter] FATAL: ${this.connectionError}`);
             this.pool = null;
         }
     }
@@ -48,7 +49,10 @@ export class MySqlAdapter implements DatabaseAdapter {
     private async getConnection() {
         if (this.connectionError) throw new Error(this.connectionError);
         if (!this.pool) throw new Error("Pool de conexões MySQL não está disponível.");
-        return this.pool.getConnection();
+        console.log("[MySqlAdapter] LOG: Getting connection from pool...");
+        const conn = await this.pool.getConnection();
+        console.log("[MySqlAdapter] LOG: Connection acquired.");
+        return conn;
     }
     
     // =================================================================
@@ -56,6 +60,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     // =================================================================
 
     async getLots(auctionId?: string): Promise<Lot[]> { 
+      console.log(`[MySqlAdapter] LOG: getLots called. auctionId: ${auctionId}`);
       const conn = await this.getConnection();
       try {
         let sql = 'SELECT * FROM lots';
@@ -65,19 +70,27 @@ export class MySqlAdapter implements DatabaseAdapter {
             params.push(auctionId);
         }
         const [rows] = await conn.execute(sql, params);
+        console.log(`[MySqlAdapter] LOG: getLots found ${ (rows as any[]).length} rows.`);
         return (rows as any[]).map(row => convertObjectKeys<Lot>(row, snakeToCamel));
       } finally {
+        console.log("[MySqlAdapter] LOG: Releasing connection for getLots.");
         conn.release();
       }
     }
 
     async getLot(id: string): Promise<Lot | null> {
+        console.log(`[MySqlAdapter] LOG: getLot called. id: ${id}`);
         const conn = await this.getConnection();
         try {
             const [rows] = await conn.execute('SELECT * FROM lots WHERE id = ? OR publicId = ?', [id, id]);
-            if ((rows as any[]).length === 0) return null;
+            if ((rows as any[]).length === 0) {
+                 console.log(`[MySqlAdapter] LOG: getLot found no rows.`);
+                 return null;
+            }
+            console.log(`[MySqlAdapter] LOG: getLot found a row.`);
             return convertObjectKeys<Lot>((rows as any[])[0], snakeToCamel);
         } finally {
+            console.log("[MySqlAdapter] LOG: Releasing connection for getLot.");
             conn.release();
         }
     }
@@ -86,7 +99,7 @@ export class MySqlAdapter implements DatabaseAdapter {
     
     async _notImplemented(method: string): Promise<any> {
         if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
-        const message = `[MySqlAdapter] Método ${method} não implementado.`;
+        const message = `[MySqlAdapter] LOG: Método ${method} não implementado.`;
         console.warn(message);
         // Retorna uma Promise resolvida com um valor padrão para evitar que a aplicação quebre
         // onde o método é chamado. Retorna array vazio para listas, null para objetos.
@@ -147,6 +160,8 @@ export class MySqlAdapter implements DatabaseAdapter {
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}> { return this._notImplemented('createRole'); }
     async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateUserRoles'); }
     async getMediaItems(): Promise<MediaItem[]> { return this._notImplemented('getMediaItems'); }
+    async createMediaItem(item: Partial<Omit<MediaItem, "id">>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
+    async getPlatformSettings(): Promise<PlatformSettings | null> { return this._notImplemented('getPlatformSettings'); }
     async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createPlatformSettings'); }
     async getDirectSaleOffers?(): Promise<DirectSaleOffer[]> { return this._notImplemented('getDirectSaleOffers'); }
     async getDocumentTemplates?(): Promise<DocumentTemplate[]> { return this._notImplemented('getDocumentTemplates'); }

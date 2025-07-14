@@ -12,12 +12,15 @@ export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
 
     constructor() {
+        console.log('[FirestoreAdapter] LOG: Constructor called.');
         const { db, error } = ensureAdminInitialized();
         if (error || !db) {
-            throw new Error(`Firestore não pôde ser inicializado: ${error?.message}`);
+            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message}`;
+            console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
+            throw new Error(errorMessage);
         }
         this.db = db;
-        console.log('[FirestoreAdapter] Inicializado com sucesso.');
+        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -291,7 +294,13 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getPlatformSettings(): Promise<PlatformSettings | null> {
+        console.log("[FirestoreAdapter] LOG: Getting platform settings from Firestore.");
         const doc = await this.db.collection('settings').doc('global').get();
+        if (doc.exists) {
+            console.log("[FirestoreAdapter] LOG: Platform settings document found.");
+        } else {
+            console.warn("[FirestoreAdapter] LOG: Platform settings document NOT found.");
+        }
         return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
     }
 

@@ -21,12 +21,16 @@ import { getCategoryAssets } from '@/lib/sample-data-helpers';
  * @returns {Promise<JSX.Element>} The rendered homepage component.
  */
 export default async function HomePage() {
+  console.log("[HomePage] LOG: Rendering started.");
   try {
     const platformSettings = await fetchPlatformSettings();
     
     // Fetch data using server actions
     const allAuctions = await fetchAuctions();
     const allLots = await fetchLots();
+
+    console.log(`[HomePage] LOG: Data fetched. Auctions: ${allAuctions.length}, Lots: ${allLots.length}`);
+
 
     // Filter for featured auctions and lots
     const featuredAuctions = allAuctions
