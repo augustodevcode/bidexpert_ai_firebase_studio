@@ -1,7 +1,7 @@
 
 // src/lib/database/sample-data.adapter.ts
 import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, LotCategory, Subcategory, Bem, JudicialProcess, Court, JudicialBranch, JudicialDistrict, MediaItem, PlatformSettings, ContactMessage, DocumentType, UserDocument, BidInfo, UserLotMaxBid, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, UserCreationData, AdminReportData, ConsignorDashboardStats } from '@/types';
-import { getSampleData } from '@/lib/sample-data-helpers';
+import { getSampleData } from '@/lib/sample-data'; // Corrigido o caminho da importação
 import { v4 as uuidv4 } from 'uuid';
 import { format } from 'date-fns';
 
@@ -46,6 +46,11 @@ export class SampleDataAdapter implements DatabaseAdapter {
 
     async getAuction(id: string): Promise<Auction | null> {
         const auction = this.data.auctions.find(a => a.id === id || a.publicId === id);
+        if (auction) {
+             const lotsForAuction = this.data.lots.filter(l => l.auctionId === auction.id);
+             auction.lots = lotsForAuction;
+             auction.totalLots = lotsForAuction.length;
+        }
         return Promise.resolve(auction ? this.deepCopy(auction) : null);
     }
     
@@ -102,7 +107,20 @@ export class SampleDataAdapter implements DatabaseAdapter {
       this.data.lots[index] = { ...this.data.lots[index], ...updates };
       return { success: true, message: "Lote atualizado com sucesso." };
     }
-    async deleteLot(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteLot'); }
+    async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
+        const initialLength = this.data.lots.length;
+        const lotToDelete = this.data.lots.find(l => l.id === id || l.publicId === id);
+        if (lotToDelete) {
+             this.data.lots = this.data.lots.filter(l => l.id !== id && l.publicId !== id);
+             const auction = this.data.auctions.find(a => a.id === lotToDelete.auctionId);
+             if (auction) {
+                auction.totalLots = (auction.totalLots || 1) - 1;
+             }
+        }
+        return this.data.lots.length < initialLength 
+            ? Promise.resolve({ success: true, message: "Lote excluído com sucesso." })
+            : Promise.resolve({ success: false, message: "Lote não encontrado." });
+    }
     async createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }> { return this._notImplemented('createAuction'); }
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateAuction'); }
     async deleteAuction(id: string): Promise<{ success: boolean, message: string }> { return this._notImplemented('deleteAuction'); }
