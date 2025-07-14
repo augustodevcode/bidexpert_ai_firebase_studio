@@ -16,10 +16,20 @@ async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: stri
     } else if (itemsToCreate.length > 0) {
         console.warn(`[DB INIT] LOG: batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
         const createMethodName = `create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`;
-        const createMethod = (db as any)[createMethodName];
-        if (createMethod) {
+        // @ts-ignore
+        const createMethod = db[createMethodName as keyof DatabaseAdapter];
+        
+        if (typeof createMethod === 'function') {
             for (const item of itemsToCreate) {
-                await createMethod.call(db, item);
+                try {
+                    // @ts-ignore
+                    const result = await createMethod.call(db, item);
+                    if (!result.success) {
+                        console.error(`[DB INIT] ❌ ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}: ${result.message}`);
+                    }
+                } catch(e: any) {
+                    console.error(`[DB INIT] ❌ CRITICAL ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}:`, e.message);
+                }
             }
         } else {
              console.warn(`[DB INIT] 🟡 WARNING: create method '${createMethodName}' not found on adapter.`);
