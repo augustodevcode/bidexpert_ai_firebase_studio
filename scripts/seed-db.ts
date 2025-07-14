@@ -12,101 +12,125 @@ import {
   sampleDirectSaleOffers,
   sampleBids,
   sampleUserWins,
-  sampleUsers,
-  sampleRoles,
-  sampleLotCategories,
-  sampleSubcategories,
-  sampleStates,
-  sampleCities,
-  sampleCourts,
-  sampleContactMessages,
-  sampleDocumentTypes,
-  sampleNotifications
+  sampleUsers
 } from '@/lib/sample-data';
-import type { DatabaseAdapter } from '@/types';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-
-/**
- * Helper function to seed a collection in batches to avoid Firestore quota limits.
- */
-async function seedCollectionInBatches(
-    db: DatabaseAdapter, 
-    collectionName: string, 
-    data: any[], 
-    uniqueKey: string,
-    checkMethod: () => Promise<any[]>
-) {
-    console.log(`[DB SEED] Seeding ${collectionName}...`);
-    
-    const existingItems = await checkMethod();
-    if (existingItems.length >= data.length) {
-        console.log(`[DB SEED] 🟡 INFO: Collection ${collectionName} seems to be already seeded (${existingItems.length} items). Skipping.`);
-        return;
-    }
-    
-    // Filter out items that already exist based on a unique key
-    const existingKeys = new Set(existingItems.map(item => item[uniqueKey]));
-    const itemsToCreate = data.filter(item => !existingKeys.has(item[uniqueKey]));
-
-    if (itemsToCreate.length === 0) {
-        console.log(`[DB SEED] ✅ SUCCESS: No new items to add to ${collectionName}.`);
-        return;
-    }
-
-    // @ts-ignore - Assuming batchWrite exists on the adapter
-    if (db.batchWrite) {
-        // @ts-ignore
-        await db.batchWrite(collectionName, itemsToCreate);
-        console.log(`[DB SEED] ✅ SUCCESS: ${itemsToCreate.length} new items processed for ${collectionName}.`);
-    } else {
-        console.warn(`[DB SEED] 🟡 WARNING: batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
-        for (const item of itemsToCreate) {
-             // @ts-ignore
-            await db[`create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`](item);
-        }
-    }
-}
-
+import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
     const db = getDatabaseAdapter();
 
     try {
-        await seedCollectionInBatches(db, 'states', sampleStates, 'uf', () => db.getStates());
-        await seedCollectionInBatches(db, 'cities', sampleCities, 'slug', () => db.getCities());
-        await seedCollectionInBatches(db, 'courts', sampleCourts, 'slug', () => db.getCourts());
-        await seedCollectionInBatches(db, 'judicial_districts', sampleJudicialDistricts, 'slug', () => db.getJudicialDistricts());
-        await seedCollectionInBatches(db, 'judicial_branches', sampleJudicialBranches, 'slug', () => db.getJudicialBranches());
-        await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, 'slug', () => db.getLotCategories());
-        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, 'slug', () => db.getSubcategoriesByParent());
-        await seedCollectionInBatches(db, 'sellers', sampleSellers, 'slug', () => db.getSellers());
-        await seedCollectionInBatches(db, 'auctioneers', sampleAuctioneers, 'slug', () => db.getAuctioneers());
-        await seedCollectionInBatches(db, 'judicial_processes', sampleJudicialProcesses, 'processNumber', () => db.getJudicialProcesses());
-        await seedCollectionInBatches(db, 'bens', sampleBens, 'publicId', () => db.getBens());
-        await seedCollectionInBatches(db, 'auctions', sampleAuctions, 'publicId', () => db.getAuctions());
-        await seedCollectionInBatches(db, 'lots', sampleLots, 'publicId', () => db.getLots());
-        
-        // Seeding users with password hashing
-        console.log('[DB SEED] Seeding Users with Hashed Passwords...');
-        const existingUsers = await db.getUsersWithRoles();
-        const usersToCreate = sampleUsers.filter(u => !existingUsers.some(eu => eu.email === u.email));
-        for (const user of usersToCreate) {
-            const { password, ...userData } = user;
-            const hashedPassword = await bcrypt.hash(password || 'password123', 10);
-            const fullUserData = { ...userData, password: hashedPassword, uid: userData.uid || uuidv4() };
-            const createResult = await db.createUser(fullUserData);
-            // Link roles after user creation
-            if (createResult.success && user.roleId && createResult.userId) {
-                const roleIdsToLink = Array.isArray(user.roleId) ? user.roleId : [user.roleId];
-                await db.updateUserRoles(createResult.userId, roleIdsToLink);
-            }
+        console.log('[DB SEED] Seeding Sellers...');
+        for (const seller of sampleSellers) {
+            // @ts-ignore
+            await db.createSeller(seller);
         }
-        console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
 
-        // Single-item collections or collections without a simple unique key can be seeded individually if needed
-        // For example, bids, wins, notifications etc. For now, we focus on the main entities.
+        console.log('[DB SEED] Seeding Auctioneers...');
+        for (const auctioneer of sampleAuctioneers) {
+            // @ts-ignore
+            await db.createAuctioneer(auctioneer);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
+        
+        console.log('[DB SEED] Seeding Judicial Districts...');
+        for (const district of sampleJudicialDistricts) {
+             // @ts-ignore
+             await db.createJudicialDistrict(district);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialDistricts.length} judicial districts processed.`);
+        
+        console.log('[DB SEED] Seeding Judicial Branches...');
+        for (const branch of sampleJudicialBranches) {
+            // @ts-ignore
+            await db.createJudicialBranch(branch);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialBranches.length} judicial branches processed.`);
+        
+        console.log('[DB SEED] Seeding Judicial Processes...');
+        for (const process of sampleJudicialProcesses) {
+            // @ts-ignore
+            await db.createJudicialProcess(process);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialProcesses.length} judicial processes processed.`);
+
+        console.log('[DB SEED] Seeding Bens...');
+        for (const bem of sampleBens) {
+            // @ts-ignore
+            await db.createBem(bem);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleBens.length} bens processed.`);
+        
+        console.log('[DB SEED] Seeding Auctions...');
+        for (const auction of sampleAuctions) {
+            await db.createAuction(auction);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctions.length} auctions processed.`);
+
+        console.log('[DB SEED] Seeding Lots...');
+        for (const lot of sampleLots) {
+            await db.createLot(lot);
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleLots.length} lots processed.`);
+        
+        console.log('[DB SEED] Seeding Direct Sale Offers...');
+        const offerAdapter = db as any;
+        if (offerAdapter.createDirectSaleOffer) {
+            for (const offer of sampleDirectSaleOffers) {
+                await offerAdapter.createDirectSaleOffer(offer);
+            }
+            console.log(`[DB SEED] ✅ SUCCESS: ${sampleDirectSaleOffers.length} direct sale offers processed.`);
+        } else {
+            console.log(`[DB SEED] 🟡 INFO: createDirectSaleOffer not implemented on this adapter.`);
+        }
+
+        console.log('[DB SEED] Seeding Bids...');
+        const bidAdapter = db as any;
+        if (bidAdapter.createBid) {
+            for (const bid of sampleBids) {
+                await bidAdapter.createBid(bid);
+            }
+            console.log(`[DB SEED] ✅ SUCCESS: ${sampleBids.length} bids processed.`);
+        } else {
+             console.log(`[DB SEED] 🟡 INFO: createBid not implemented on this adapter.`);
+        }
+        
+        console.log('[DB SEED] Seeding User Wins...');
+        const winAdapter = db as any;
+        if (winAdapter.createUserWin) {
+            for (const win of sampleUserWins) {
+                await winAdapter.createUserWin(win);
+            }
+            console.log(`[DB SEED] ✅ SUCCESS: ${sampleUserWins.length} wins processed.`);
+        } else {
+             console.log(`[DB SEED] 🟡 INFO: createUserWin not implemented on this adapter.`);
+        }
+
+        console.log('[DB SEED] Seeding Users with Hashed Passwords...');
+        const userAdapter = db as any;
+        if (userAdapter.createUser) {
+            const existingUsers = await db.getUsersWithRoles();
+            const usersToCreate = sampleUsers.filter(u => !existingUsers.some(eu => eu.email === u.email));
+            for (const user of usersToCreate) {
+                const { password, ...userData } = user;
+                const hashedPassword = await bcrypt.hash(password || 'password123', 10);
+                const fullUserData = { ...userData, password: hashedPassword, uid: userData.uid || uuidv4() };
+                await userAdapter.createUser(fullUserData);
+
+                // Link roles
+                if (user.roleId) {
+                    const roleIdsToLink = Array.isArray(user.roleId) ? user.roleId : [user.roleId];
+                    await userAdapter.updateUserRoles(fullUserData.uid, roleIdsToLink);
+                }
+            }
+            console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
+        } else {
+             console.log(`[DB SEED] 🟡 INFO: createUser not implemented on this adapter.`);
+        }
 
     } catch (error: any) {
         console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);

@@ -18,4 +18,7 @@ export default function DevDbIndicator() {
 
   return (
     <p className="text-xs text-muted-foreground mt-2">
-      Active DB System: <span className
+      Active DB System: <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span> (Dev Only)
+    </p>
+  );
+}

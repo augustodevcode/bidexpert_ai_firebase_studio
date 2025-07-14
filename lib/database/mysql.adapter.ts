@@ -1,5 +1,5 @@
 // src/lib/database/mysql.adapter.ts
-import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData } from '@/types';
+import type { DatabaseAdapter, Auction, Lot, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, JudicialProcess, Court, JudicialDistrict, JudicialBranch, Bem, DirectSaleOffer, DocumentTemplate, ContactMessage, UserDocument, UserWin, BidInfo, UserHabilitationStatus, Subcategory, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, CityFormData, StateFormData, UserCreationData } from '@/types';
 import mysql, { type Pool, type RowDataPacket, type ResultSetHeader } from 'mysql2/promise';
 import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
@@ -572,6 +572,11 @@ export class MySqlAdapter implements DatabaseAdapter {
     async deleteSubcategory(id: number): Promise<{ success: boolean; message: string; }> {
        return this.executeMutation('DELETE FROM `subcategories` WHERE id = ?', [id]);
     }
+    
+    async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
+      const result = await this.genericCreate('users', data);
+      return {...result, userId: data.uid};
+    }
 
     async _notImplemented(method: string): Promise<any> {
         if (this.connectionError) return Promise.resolve(method.endsWith('s') ? [] : null);
@@ -579,4 +584,11 @@ export class MySqlAdapter implements DatabaseAdapter {
         console.warn(message);
         return Promise.resolve(method.endsWith('s') ? [] : null);
     }
+    
+    async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { return this._notImplemented('getDirectSaleOffers'); }
+    async getDocumentTemplates(): Promise<DocumentTemplate[]> { return this._notImplemented('getDocumentTemplates'); }
+    async getContactMessages(): Promise<ContactMessage[]> { return this._notImplemented('getContactMessages'); }
+    async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt'>): Promise<{ success: boolean, message: string }> { return this._notImplemented('saveContactMessage'); }
+    async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updateState'); }
+    async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteState'); }
 }

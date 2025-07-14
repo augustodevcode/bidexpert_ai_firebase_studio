@@ -1,72 +1,68 @@
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
 import type { DatabaseAdapter } from '@/types';
 
-/**
- * Seeds a specific collection if it doesn't already have data.
- * This is used for essential data required for the app to start.
- */
-async function seedEssentialCollection(
-  db: DatabaseAdapter, 
-  collectionName: string, 
-  data: any[], 
-  checkMethod: () => Promise<any[]>,
-  createMethodName: string
-) {
-    console.log(`[DB INIT - DML] Seeding ${collectionName}...`);
-    const existingItems = await checkMethod();
-    if (existingItems.length > 0) {
-        console.log(`[DB INIT - DML] 🟡 INFO: Collection ${collectionName} already has data.`);
-        return;
-    }
 
-    const createMethod = (db as any)[createMethodName];
-    if (!createMethod) {
-        console.warn(`[DB INIT - DML] 🟡 WARNING: create method '${createMethodName}' not found on adapter.`);
-        return;
+async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: string, data: any[], existingItems: any[], uniqueKey: string) {
+    console.log(`[DB INIT] Seeding ${collectionName}...`);
+    const itemsToCreate = data.filter(item => !existingItems.some(existing => existing[uniqueKey] === item[uniqueKey]));
+    
+    // @ts-ignore - Assuming batchWrite exists on the adapter
+    if (db.batchWrite && itemsToCreate.length > 0) {
+        // @ts-ignore
+        await db.batchWrite(collectionName, itemsToCreate);
+    } else if (itemsToCreate.length > 0) {
+        console.warn(`[DB INIT] batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
+        const createMethodName = `create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`;
+        const createMethod = (db as any)[createMethodName];
+        if (createMethod) {
+            for (const item of itemsToCreate) {
+                await createMethod.call(db, item);
+            }
+        } else {
+             console.warn(`[DB INIT] 🟡 WARNING: create method '${createMethodName}' not found on adapter.`);
+        }
     }
-
-    for (const item of data) {
-        await createMethod.call(db, item);
-    }
-    console.log(`[DB INIT - DML] ✅ SUCCESS: ${data.length} items inserted into ${collectionName}.`);
+    console.log(`[DB INIT] ✅ SUCCESS: ${itemsToCreate.length} new items processed for ${collectionName}.`);
 }
 
-/**
- * Seeds only the absolute minimum data required for the application to boot.
- * This prevents quota issues on first start and separates essential config from demo data.
- */
+
 async function seedEssentialData() {
-    console.log('\n--- [DB INIT - DML] Seeding Essential Data ---');
+    console.log('\n--- [DB INIT] Seeding Essential Data ---');
     const db = getDatabaseAdapter(); 
     
     try {
-        // Platform Settings (Single Document - Critical for startup)
-        console.log('[DB INIT - DML] Seeding platform settings...');
+        // Platform Settings (Single Document)
+        console.log('[DB INIT] Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings || Object.keys(settings).length === 0 || !settings.id) {
             await db.createPlatformSettings(samplePlatformSettings);
-            console.log("[DB INIT - DML] ✅ SUCCESS: Platform settings created.");
+            console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
-            console.log("[DB INIT - DML] 🟡 INFO: Platform settings already exist.");
+            console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Roles (Essential for auth)
-        await seedEssentialCollection(db, 'roles', sampleRoles, () => db.getRoles(), 'createRole');
+        // Batch-writable collections
+        await seedCollectionInBatches(db, 'roles', sampleRoles, await db.getRoles(), 'name_normalized');
+        await seedCollectionInBatches(db, 'lotCategories', sampleLotCategories, await db.getLotCategories(), 'slug');
+        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, await db.getSubcategoriesByParent(), 'slug');
+        await seedCollectionInBatches(db, 'states', sampleStates, await db.getStates(), 'uf');
+        await seedCollectionInBatches(db, 'cities', sampleCities, await db.getCities(), 'slug');
+        await seedCollectionInBatches(db, 'courts', sampleCourts, await db.getCourts(), 'slug');
 
     } catch (error: any) {
-        console.error(`[DB INIT - DML] ❌ ERROR seeding essential data: ${error.message}`);
+        console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
     }
     
-    console.log('--- [DB INIT - DML] Essential Data seeding finished ---');
+    console.log('--- [DB INIT] Essential Data seeding finished ---');
 }
 
 
 async function initializeDatabase() {
   console.log('🚀 [DB INIT] Starting database initialization script...');
   const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
-  console.log(`[DB INIT] Active database system using Adapter pattern: ${activeSystem}`);
+  console.log(`[DB INIT] Active database system is configured to: ${activeSystem}`);
 
   await seedEssentialData();
   

@@ -52,6 +52,7 @@
     "jose": "^5.6.3",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.417.0",
+    "mysql2": "^3.10.3",
     "next": "^14.2.30",
     "patch-package": "^8.0.0",
     "puppeteer": "^22.15.0",

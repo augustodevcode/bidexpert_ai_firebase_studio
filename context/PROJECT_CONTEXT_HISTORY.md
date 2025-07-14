@@ -21,7 +21,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
 *   Backend/API: NextJS API Routes / Server Actions
 *   AI: Genkit (for AI flows)
-*   Database: Firestore
+*   Database: Firestore (primary), MySQL (development alternative)
 
 **Style Guidelines (from PRD):**
 *   Icons: Clean, line-based (`lucide-react`).
@@ -41,9 +41,10 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   **Strategic Migration to Firestore:** The entire data layer was migrated from a complex multi-adapter system (previously focused on MySQL) to **Firestore**. This decision was made to resolve persistent data layer bugs, simplify the architecture, and leverage the native Firebase ecosystem.
     *   **Robust Firestore Adapter:** The `FirestoreAdapter` (`src/lib/database/firestore.adapter.ts`) has been fully implemented to handle all necessary CRUD operations, replacing the previous MySQL and PostgreSQL adapters.
     *   **Optimized Seeding Mechanism:** The database seeding process was split into two parts: `db:init` for essential data required for app startup (roles, settings), and `db:seed` for a full set of demonstration data. This resolves Firestore quota issues on initial startup.
+    *   **MySQL Fallback:** Due to Firestore quota limitations during heavy seeding, a full `MySqlAdapter` was re-implemented to allow development to continue using a local/cloud MySQL database. The system now switches between Firestore and MySQL based on an environment variable.
 
 2.  **Admin Panel Foundation:**
-    *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities, now powered by the Firestore adapter.
+    *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities, now powered by the selected database adapter.
     *   Comprehensive management panels for auctions, lots, users, roles, sellers, auctioneers, categories, judicial entities, media, and more.
 
 3.  **Auction Creation Wizard (`/admin/wizard`):**
@@ -76,12 +77,12 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   **Dependency Conflicts (Next.js vs. Genkit):** Resolved a series of `ERESOLVE` and `ETARGET` npm errors by removing Genkit dependencies temporarily to stabilize the Next.js environment.
 *   **Firestore Quota Errors (`RESOURCE_EXHAUSTED`):** Fixed fatal startup errors caused by the database seeding script making too many individual writes. The solution was to split the seeding into an essential `init` script and a manual `seed` script, and to use batched writes.
 *   **Incomplete Firestore Adapter:** Addressed multiple `Method not implemented` errors by fully implementing all required CRUD operations in the `FirestoreAdapter`, making the admin panel functional after the database migration.
-*   **Data-Fetching Mismatches:** Corrected 404 errors on the homepage by updating the primary data-fetching functions (`src/lib/data-queries.ts`) to use the Firestore adapter instead of the obsolete Prisma client.
+*   **Data-Fetching Mismatches:** Corrected 404 errors on the homepage by updating the primary data-fetching functions (`src/lib/data-queries.ts`) to use the database adapter instead of the obsolete Prisma client.
 *   **Obsolete Database File Errors:** Resolved server startup failures (`Cannot find module`) by removing obsolete adapter files (`mysql.adapter.ts`, `postgres.adapter.ts`) that were causing incorrect module resolution.
 
 ### Key Decisions & Patterns:
-*   **Migration to Firestore:** The most significant decision was to migrate the entire data layer from MySQL/Prisma to **Firestore**. This resolved persistent data layer bugs, simplified the architecture, and leveraged the native Firebase ecosystem.
-*   **Single Source of Truth (Adapter):** The `FirestoreAdapter` is now the single point of entry for all database interactions.
+*   **Dual Database Strategy (Firestore/MySQL):** The primary production database is **Firestore**. However, to facilitate development and overcome free-tier quota limits during seeding, a fully functional **MySQL adapter** has been implemented. The application can switch between them using an environment variable.
+*   **Single Source of Truth (Adapter):** The `getDatabaseAdapter()` function is the single point of entry for all database interactions, abstracting the specific database technology being used.
 *   **Server Actions as Primary API**: All data mutations and many queries are handled through Server Actions for clear, secure server-client interaction.
 *   **Context Persistence System:** This system was established to maintain project context. The `DATABASE_SCHEMA.md` file has been updated to reflect the new Firestore collection structure.
 
