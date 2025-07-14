@@ -26,6 +26,7 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
       console.log(`[getDatabaseAdapter] LOG: Reusing existing FirestoreAdapter instance.`);
       return adapterInstance;
     }
+     console.log(`[getDatabaseAdapter] WARNING: DB System changed. Creating a new adapter instance for ${dbSystem}.`);
   }
 
   console.log(`[getDatabaseAdapter] LOG: Initializing new adapter for: ${dbSystem}`);
