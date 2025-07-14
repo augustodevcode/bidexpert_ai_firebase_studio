@@ -4,7 +4,7 @@
 import { getDatabaseAdapter } from '@/lib/database/index';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
-    SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
+    SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory, DirectSaleOffer
 } from '@/types';
 import { samplePlatformSettings } from './sample-data';
 
@@ -26,12 +26,6 @@ export async function fetchAuctions(): Promise<Auction[]> {
   console.log('[data-queries] LOG: fetchAuctions called.');
   const db = getDatabaseAdapter();
   const auctions = await db.getAuctions();
-  // Firestore adapter doesn't join, so we manually fetch and attach lots
-  for (const auction of auctions) {
-      const lots = await db.getLots(auction.id);
-      auction.lots = lots;
-      auction.totalLots = lots.length;
-  }
   console.log(`[data-queries] LOG: fetchAuctions returned ${auctions.length} items.`);
   return auctions;
 }
@@ -40,11 +34,6 @@ export async function fetchAuction(id: string): Promise<Auction | null> {
     console.log(`[data-queries] LOG: fetchAuction called for id: ${id}.`);
     const db = getDatabaseAdapter();
     const auction = await db.getAuction(id);
-    if (auction) {
-        const lots = await db.getLots(auction.id);
-        auction.lots = lots;
-        auction.totalLots = lots.length;
-    }
     console.log(`[data-queries] LOG: fetchAuction returned ${auction ? 'one item' : 'null'}.`);
     return auction;
 }
@@ -54,15 +43,6 @@ export async function fetchLots(auctionId?: string): Promise<Lot[]> {
   console.log(`[data-queries] LOG: fetchLots called for auctionId: ${auctionId || 'all'}.`);
   const db = getDatabaseAdapter();
   const lots = await db.getLots(auctionId);
-  // Manually attach auction name if needed
-  if (!auctionId) { // If fetching all lots, we need to get their respective auctions
-      const auctionIds = Array.from(new Set(lots.map(l => l.auctionId)));
-      const auctions = await Promise.all(auctionIds.map(id => db.getAuction(id)));
-      const auctionMap = new Map(auctions.filter(a => a).map(a => [a!.id, a!.title]));
-      lots.forEach(lot => {
-          lot.auctionName = auctionMap.get(lot.auctionId);
-      });
-  }
   console.log(`[data-queries] LOG: fetchLots returned ${lots.length} items.`);
   return lots;
 }
@@ -71,10 +51,6 @@ export async function fetchLot(id: string): Promise<Lot | null> {
   console.log(`[data-queries] LOG: fetchLot called for id: ${id}.`);
   const db = getDatabaseAdapter();
   const lot = await db.getLot(id);
-  if (lot) {
-      const auction = await db.getAuction(lot.auctionId);
-      lot.auctionName = auction?.title;
-  }
   console.log(`[data-queries] LOG: fetchLot returned ${lot ? 'one item' : 'null'}.`);
   return lot;
 }

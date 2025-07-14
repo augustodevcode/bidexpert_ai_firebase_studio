@@ -170,8 +170,15 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async getAuctions(): Promise<Auction[]> {
         console.log('[FirestoreAdapter] LOG: getAuctions called.');
         const snapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
-        console.log(`[FirestoreAdapter] LOG: getAuctions found ${snapshot.docs.length} documents.`);
-        return snapshot.docs.map(doc => this.toJSON<Auction>(doc));
+        const auctions = snapshot.docs.map(doc => this.toJSON<Auction>(doc));
+        // Firestore adapter doesn't join, so we manually fetch and attach lots
+        for (const auction of auctions) {
+            const lots = await this.getLots(auction.id);
+            auction.lots = lots;
+            auction.totalLots = lots.length;
+        }
+        console.log(`[FirestoreAdapter] LOG: getAuctions found ${auctions.length} documents.`);
+        return auctions;
     }
     
     async getAuction(id: string): Promise<Auction | null> {
