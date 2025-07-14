@@ -8,6 +8,8 @@ import type {
 } from '@/types';
 import { samplePlatformSettings } from './sample-data';
 
+console.log('[data-queries] LOG: File loaded.');
+
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   console.log('[data-queries] LOG: fetchPlatformSettings called.');
   const db = getDatabaseAdapter();
@@ -23,42 +25,67 @@ export async function fetchPlatformSettings(): Promise<PlatformSettings> {
 export async function fetchAuctions(): Promise<Auction[]> {
   console.log('[data-queries] LOG: fetchAuctions called.');
   const db = getDatabaseAdapter();
-  const results = await db.getAuctions();
-  console.log(`[data-queries] LOG: fetchAuctions returned ${results.length} items.`);
-  return results;
+  const auctions = await db.getAuctions();
+  // Firestore adapter doesn't join, so we manually fetch and attach lots
+  for (const auction of auctions) {
+      const lots = await db.getLots(auction.id);
+      auction.lots = lots;
+      auction.totalLots = lots.length;
+  }
+  console.log(`[data-queries] LOG: fetchAuctions returned ${auctions.length} items.`);
+  return auctions;
 }
 
 export async function fetchAuction(id: string): Promise<Auction | null> {
     console.log(`[data-queries] LOG: fetchAuction called for id: ${id}.`);
     const db = getDatabaseAdapter();
-    const result = await db.getAuction(id);
-    console.log(`[data-queries] LOG: fetchAuction returned ${result ? 'one item' : 'null'}.`);
-    return result;
+    const auction = await db.getAuction(id);
+    if (auction) {
+        const lots = await db.getLots(auction.id);
+        auction.lots = lots;
+        auction.totalLots = lots.length;
+    }
+    console.log(`[data-queries] LOG: fetchAuction returned ${auction ? 'one item' : 'null'}.`);
+    return auction;
 }
+
 
 export async function fetchLots(auctionId?: string): Promise<Lot[]> {
   console.log(`[data-queries] LOG: fetchLots called for auctionId: ${auctionId || 'all'}.`);
   const db = getDatabaseAdapter();
-  const results = await db.getLots(auctionId);
-  console.log(`[data-queries] LOG: fetchLots returned ${results.length} items.`);
-  return results;
+  const lots = await db.getLots(auctionId);
+  // Manually attach auction name if needed
+  if (!auctionId) { // If fetching all lots, we need to get their respective auctions
+      const auctionIds = Array.from(new Set(lots.map(l => l.auctionId)));
+      const auctions = await Promise.all(auctionIds.map(id => db.getAuction(id)));
+      const auctionMap = new Map(auctions.filter(a => a).map(a => [a!.id, a!.title]));
+      lots.forEach(lot => {
+          lot.auctionName = auctionMap.get(lot.auctionId);
+      });
+  }
+  console.log(`[data-queries] LOG: fetchLots returned ${lots.length} items.`);
+  return lots;
 }
 
 export async function fetchLot(id: string): Promise<Lot | null> {
   console.log(`[data-queries] LOG: fetchLot called for id: ${id}.`);
   const db = getDatabaseAdapter();
-  const result = await db.getLot(id);
-  console.log(`[data-queries] LOG: fetchLot returned ${result ? 'one item' : 'null'}.`);
-  return result;
+  const lot = await db.getLot(id);
+  if (lot) {
+      const auction = await db.getAuction(lot.auctionId);
+      lot.auctionName = auction?.title;
+  }
+  console.log(`[data-queries] LOG: fetchLot returned ${lot ? 'one item' : 'null'}.`);
+  return lot;
 }
 
 export async function fetchLotsByIds(ids: string[]): Promise<Lot[]> {
   if (ids.length === 0) return [];
   console.log(`[data-queries] LOG: fetchLotsByIds called for ${ids.length} IDs.`);
   const db = getDatabaseAdapter();
-  const results = await db.getLotsByIds(ids);
-  console.log(`[data-queries] LOG: fetchLotsByIds returned ${results.length} items.`);
-  return results;
+  const lots = await db.getLotsByIds(ids);
+  console.log(`[data-queries] LOG: fetchLotsByIds returned ${lots.length} items.`);
+  return lots;
 }
 
 export async function fetchBensByIds(ids: string[]): Promise<Bem[]> {
@@ -146,4 +173,10 @@ export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Pro
   }
   console.log(`[data-queries] LOG: fetchAuctionsByAuctioneerSlug did not find auctioneer, returning 0 auctions.`);
   return [];
+}
+
+export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
+    const db = getDatabaseAdapter();
+    // @ts-ignore
+    return db.getDirectSaleOffers() || [];
 }

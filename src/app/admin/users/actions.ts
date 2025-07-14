@@ -95,14 +95,12 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     state: data.state?.trim(),
     optInMarketing: data.optInMarketing,
     habilitationStatus: habilitationStatus,
-    uid: uuidv4()
+    uid: uuidv4(),
+    roleIds: [userRole.id]
   };
 
   // @ts-ignore
-  const newUserPayload: Partial<UserProfileData> = { ...creationData, roleId: userRole.id };
-  
-  // @ts-ignore
-  const result = await db.createUser(newUserPayload); 
+  const result = await db.createUser(creationData); 
 
   if (result.success) {
     revalidatePath('/admin/users');
