@@ -14,10 +14,12 @@ let adapterInstance: DatabaseAdapter | null = null;
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
   
+    // Avoid creating new instances if one that matches the current system already exists.
   if (adapterInstance) {
-    // Se a instância já existe e o sistema não mudou, retorne-a.
-    // Esta verificação é um pouco simplista, mas ajuda a evitar recriações desnecessárias.
-    if ((dbSystem === 'MYSQL' && adapterInstance instanceof MySqlAdapter) || (dbSystem === 'FIRESTORE' && adapterInstance instanceof FirestoreAdapter)) {
+    if (dbSystem === 'MYSQL' && adapterInstance instanceof MySqlAdapter) {
+      return adapterInstance;
+    }
+    if (dbSystem === 'FIRESTORE' && adapterInstance instanceof FirestoreAdapter) {
       return adapterInstance;
     }
   }
