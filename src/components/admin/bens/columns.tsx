@@ -58,7 +58,7 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
         const status = row.getValue("status") as Bem['status'];
         return <Badge variant={getStatusVariant(status)}>{status}</Badge>
     },
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
   },
   {
     accessorKey: "categoryName",
@@ -68,6 +68,15 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
   {
     accessorKey: "judicialProcessNumber",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Processo Judicial" />,
+  },
+  {
+    accessorKey: "evaluationValue",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Avaliação (R$)" />,
+    cell: ({ row }) => {
+      const value = row.getValue("evaluationValue") as number | null;
+      if (value === null || value === undefined) return 'N/A';
+      return <div className="text-right font-medium">{value.toLocaleString('pt-BR')}</div>
+    }
   },
   {
     id: "actions",

@@ -1,4 +1,3 @@
-
 // src/app/admin/bens/page.tsx
 'use client';
 
