@@ -41,3 +41,4 @@ npm run db:seed
 ```
 
 Your selected database is now ready to use with the application.
+

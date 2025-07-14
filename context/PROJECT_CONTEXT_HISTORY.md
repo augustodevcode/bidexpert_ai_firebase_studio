@@ -38,10 +38,10 @@ This document summarizes the BidExpert project, including its purpose, core feat
 ### Key Features & Functionalities Implemented/Worked On:
 
 1.  **Database & Data Layer:**
-    *   **Strategic Migration to Firestore:** The entire data layer was migrated from a complex multi-adapter system (previously focused on MySQL) to **Firestore**. This decision was made to resolve persistent data layer bugs, simplify the architecture, and leverage the native Firebase ecosystem.
+    *   **Dual Database Strategy (Firestore/MySQL):** Implemented a flexible data layer that can switch between a primary Firestore database and a secondary MySQL database for development. This was done to overcome Firestore's free-tier write limits during heavy data seeding. The switch is controlled by the `NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM` environment variable.
     *   **Robust Firestore Adapter:** The `FirestoreAdapter` (`src/lib/database/firestore.adapter.ts`) has been fully implemented to handle all necessary CRUD operations, replacing the previous MySQL and PostgreSQL adapters.
-    *   **Optimized Seeding Mechanism:** The database seeding process was split into two parts: `db:init` for essential data required for app startup (roles, settings), and `db:seed` for a full set of demonstration data. This resolves Firestore quota issues on initial startup.
-    *   **MySQL Fallback:** Due to Firestore quota limitations during heavy seeding, a full `MySqlAdapter` was re-implemented to allow development to continue using a local/cloud MySQL database. The system now switches between Firestore and MySQL based on an environment variable.
+    *   **Full MySQL Adapter:** A complete `MySqlAdapter` was implemented using the `mysql2` driver to provide a fully functional alternative for local development, mirroring the interface of the `FirestoreAdapter`.
+    *   **Optimized Seeding Mechanism:** The database seeding process was split into two parts: `db:init` for essential data required for app startup (roles, settings), and `db:seed` for a full set of demonstration data. This resolves Firestore quota issues on initial startup and works with both database systems.
 
 2.  **Admin Panel Foundation:**
     *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities, now powered by the selected database adapter.
@@ -74,11 +74,11 @@ This document summarizes the BidExpert project, including its purpose, core feat
     *   Document generation structure using Puppeteer and Handlebars templates is in place for creating PDFs.
 
 ### Errors Encountered & Resolved (Summary):
-*   **Dependency Conflicts (Next.js vs. Genkit):** Resolved a series of `ERESOLVE` and `ETARGET` npm errors by removing Genkit dependencies temporarily to stabilize the Next.js environment.
 *   **Firestore Quota Errors (`RESOURCE_EXHAUSTED`):** Fixed fatal startup errors caused by the database seeding script making too many individual writes. The solution was to split the seeding into an essential `init` script and a manual `seed` script, and to use batched writes.
 *   **Incomplete Firestore Adapter:** Addressed multiple `Method not implemented` errors by fully implementing all required CRUD operations in the `FirestoreAdapter`, making the admin panel functional after the database migration.
 *   **Data-Fetching Mismatches:** Corrected 404 errors on the homepage by updating the primary data-fetching functions (`src/lib/data-queries.ts`) to use the database adapter instead of the obsolete Prisma client.
 *   **Obsolete Database File Errors:** Resolved server startup failures (`Cannot find module`) by removing obsolete adapter files (`mysql.adapter.ts`, `postgres.adapter.ts`) that were causing incorrect module resolution.
+*   **Missing `mysql2` Dependency**: Fixed a `MODULE_NOT_FOUND` error by adding the `mysql2` package to `package.json` after re-introducing the MySQL adapter.
 
 ### Key Decisions & Patterns:
 *   **Dual Database Strategy (Firestore/MySQL):** The primary production database is **Firestore**. However, to facilitate development and overcome free-tier quota limits during seeding, a fully functional **MySQL adapter** has been implemented. The application can switch between them using an environment variable.
