@@ -2,6 +2,7 @@
 // THIS FILE SHOULD NOT CONTAIN 'use server' or 'use client' and can be used in scripts.
 import { FirestoreAdapter } from './firestore.adapter';
 import { MySqlAdapter } from './mysql.adapter';
+import { SampleDataAdapter } from './sample-data.adapter';
 import type { DatabaseAdapter } from '@/types';
 
 let adapterInstance: DatabaseAdapter | null = null;
@@ -12,12 +13,16 @@ let adapterInstance: DatabaseAdapter | null = null;
  * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados.
  */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
-  const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
+  const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
   
   console.log(`[getDatabaseAdapter] LOG: Variable NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM is '${dbSystem}'.`);
 
   // Avoid creating new instances if one that matches the current system already exists.
   if (adapterInstance) {
+    if (dbSystem === 'SAMPLE_DATA' && adapterInstance instanceof SampleDataAdapter) {
+      console.log(`[getDatabaseAdapter] LOG: Reusing existing SampleDataAdapter instance.`);
+      return adapterInstance;
+    }
     if (dbSystem === 'MYSQL' && adapterInstance instanceof MySqlAdapter) {
       console.log(`[getDatabaseAdapter] LOG: Reusing existing MySqlAdapter instance.`);
       return adapterInstance;
@@ -37,9 +42,13 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
       console.log('[getDatabaseAdapter] LOG: Using adapter: MySqlAdapter');
       return adapterInstance;
     case 'FIRESTORE':
-    default:
       adapterInstance = new FirestoreAdapter();
       console.log('[getDatabaseAdapter] LOG: Using adapter: FirestoreAdapter');
+      return adapterInstance;
+    case 'SAMPLE_DATA':
+    default:
+      adapterInstance = new SampleDataAdapter();
+      console.log('[getDatabaseAdapter] LOG: Using adapter: SampleDataAdapter');
       return adapterInstance;
   }
 };
