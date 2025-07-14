@@ -23,14 +23,20 @@ import { getCategoryAssets } from '@/lib/sample-data-helpers';
 export default async function HomePage() {
   console.log("[HomePage] LOG: Rendering started.");
   try {
+    console.log("[HomePage] LOG: Calling fetchPlatformSettings()...");
     const platformSettings = await fetchPlatformSettings();
-    
+    console.log("[HomePage] LOG: fetchPlatformSettings() finished.");
+
     // Fetch data using server actions
+    console.log("[HomePage] LOG: Calling fetchAuctions()...");
     const allAuctions = await fetchAuctions();
+    console.log("[HomePage] LOG: fetchAuctions() finished.");
+
+    console.log("[HomePage] LOG: Calling fetchLots()...");
     const allLots = await fetchLots();
+    console.log("[HomePage] LOG: fetchLots() finished.");
 
     console.log(`[HomePage] LOG: Data fetched. Auctions: ${allAuctions.length}, Lots: ${allLots.length}`);
-
 
     // Filter for featured auctions and lots
     const featuredAuctions = allAuctions
