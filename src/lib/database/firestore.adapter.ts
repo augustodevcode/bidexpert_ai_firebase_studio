@@ -241,23 +241,57 @@ export class FirestoreAdapter implements DatabaseAdapter {
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
         console.log('[FirestoreAdapter] LOG: getUsersWithRoles called.');
-        const snapshot = await this.db.collection('users').get();
-        return snapshot.docs.map(doc => this.toJSON<UserProfileData>(doc));
+        const usersSnapshot = await this.db.collection('users').get();
+        if (usersSnapshot.empty) {
+            return [];
+        }
+
+        const rolesSnapshot = await this.db.collection('roles').get();
+        const rolesMap = new Map(rolesSnapshot.docs.map(doc => [doc.id, this.toJSON<Role>(doc)]));
+
+        const usersWithRoles = usersSnapshot.docs.map(userDoc => {
+            const userData = this.toJSON<UserProfileData>(userDoc);
+            const userRoleIds = userData.roleIds || [];
+            userData.roleNames = userRoleIds
+                .map(roleId => rolesMap.get(roleId)?.name)
+                .filter((name): name is string => !!name);
+            userData.permissions = Array.from(new Set(userRoleIds.flatMap(roleId => rolesMap.get(roleId)?.permissions || [])));
+            return userData;
+        });
+
+        return usersWithRoles;
     }
     
     async getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null> {
         console.log(`[FirestoreAdapter] LOG: getUserProfileData called for: ${userIdOrEmail}`);
         let snapshot: FirebaseFirestore.QuerySnapshot;
+        let userDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+        
         if (userIdOrEmail.includes('@')) {
             snapshot = await this.db.collection('users').where('email', '==', userIdOrEmail).limit(1).get();
+             if (!snapshot.empty) {
+                userDoc = snapshot.docs[0];
+             }
         } else {
-            const doc = await this.db.collection('users').doc(userIdOrEmail).get();
-            if (doc.exists) return this.toJSON<UserProfileData>(doc);
-            return null;
+            userDoc = await this.db.collection('users').doc(userIdOrEmail).get();
         }
 
-        if (snapshot.empty) return null;
-        return this.toJSON<UserProfileData>(snapshot.docs[0]);
+        if (!userDoc || !userDoc.exists) return null;
+
+        const userData = this.toJSON<UserProfileData>(userDoc);
+        
+        // Enrich with roles and permissions
+        if (userData.roleIds && userData.roleIds.length > 0) {
+            const rolesSnapshot = await this.db.collection('roles').where(firestore.FieldPath.documentId(), 'in', userData.roleIds).get();
+            const roles = rolesSnapshot.docs.map(doc => this.toJSON<Role>(doc));
+            userData.roleNames = roles.map(r => r.name);
+            userData.permissions = Array.from(new Set(roles.flatMap(r => r.permissions || [])));
+        } else {
+            userData.roleNames = [];
+            userData.permissions = [];
+        }
+
+        return userData;
     }
     
     async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {

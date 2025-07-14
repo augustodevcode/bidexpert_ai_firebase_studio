@@ -334,6 +334,7 @@ export interface UserProfileData {
   avatarUrl?: string | null;
   dataAiHint?: string | null;
   roleIds: string[]; 
+  roleNames?: string[];
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
@@ -791,6 +792,7 @@ export interface ContactMessage {
   subject?: string;
   message: string;
   createdAt: string | Date;
+  isRead: boolean;
 }
 
 export interface CnjProcessSource {
@@ -949,6 +951,8 @@ export interface DatabaseAdapter {
     createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
     
+    saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }>;
+
     // Optional methods that may not be on all adapters
     getDirectSaleOffers?(): Promise<DirectSaleOffer[]>;
     getDocumentTemplates?(): Promise<DocumentTemplate[]>;

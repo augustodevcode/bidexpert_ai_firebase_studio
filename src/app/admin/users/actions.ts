@@ -34,6 +34,8 @@ export interface UserCreationData {
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
   const db = getDatabaseAdapter();
   const users = await db.getUsersWithRoles();
+  // Casting here assumes the adapter correctly returns the enriched data.
+  // The FirestoreAdapter has been updated to do so.
   return users as UserProfileWithPermissions[];
 }
 
