@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Auction } from '@/types';
+import type { Auction, AuctionFormData } from '@/types';
 import { getDatabaseAdapter } from '@/lib/database';
 import { fetchAuctions, fetchAuction, fetchAuctionsByIds, fetchAuctionsBySellerSlug, fetchAuctionsByAuctioneerSlug } from '@/lib/data-queries';
 
@@ -14,7 +14,7 @@ export async function getAuction(id: string): Promise<Auction | null> {
     return fetchAuction(id);
 }
 
-export async function createAuction(data: Partial<Auction>): Promise<{ success: boolean, message: string, auctionId?: string }> {
+export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
     const db = getDatabaseAdapter();
     const result = await db.createAuction(data);
     if (result.success) {
@@ -23,7 +23,7 @@ export async function createAuction(data: Partial<Auction>): Promise<{ success: 
     return result;
 }
 
-export async function updateAuction(id: string, data: Partial<Auction>): Promise<{ success: boolean, message: string }> {
+export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
     const db = getDatabaseAdapter();
     const result = await db.updateAuction(id, data);
     if (result.success) {

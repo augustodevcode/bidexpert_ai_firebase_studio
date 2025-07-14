@@ -14,7 +14,7 @@ export async function getLot(id: string): Promise<Lot | null> {
   return fetchLot(id);
 }
 
-export async function createLot(data: Partial<Lot>): Promise<{ success: boolean, message: string, lotId?: string }> {
+export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
   const db = getDatabaseAdapter();
   const result = await db.createLot(data);
   if (result.success) {

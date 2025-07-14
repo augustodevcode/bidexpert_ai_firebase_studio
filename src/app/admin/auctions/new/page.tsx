@@ -12,7 +12,7 @@ export default async function NewAuctionPage() {
       getSellers()
   ]);
 
-  async function handleCreateAuction(data: AuctionFormData) {
+  async function handleCreateAuction(data: Partial<AuctionFormData>) {
     'use server';
     return createAuction(data);
   }

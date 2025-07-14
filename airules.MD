@@ -15,3 +15,4 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 - If a data migration is needed (e.g., populating a new field for existing documents), the AI should, if possible, create a one-time server action or an admin panel utility that can be triggered from within the application to perform this migration.
 - The goal is to ensure a seamless "it just works" experience for the developer after the AI implements a change.
 - Always use prefetch is applicable.
+- Após cada atualização nos arquivos que precise reiniciar o app, limpe a saída Output do terminal. Veja o log do servidor "Previews" e proceda com um Auto Repair. Se não tiver informações suficientes, entã adicione mais logs, tanto de console quanto de servidor. 
