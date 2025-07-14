@@ -1,3 +1,4 @@
+
 // src/lib/database/get-adapter.ts
 // THIS FILE SHOULD NOT CONTAIN 'use server' or 'use client' and can be used in scripts.
 import { FirestoreAdapter } from './firestore.adapter';
@@ -6,6 +7,7 @@ import { SampleDataAdapter } from './sample-data.adapter';
 import type { DatabaseAdapter } from '@/types';
 
 let adapterInstance: DatabaseAdapter | null = null;
+let currentDbSystem: string | null = null;
 
 /**
  * Retorna uma instância singleton do adaptador de banco de dados apropriado
@@ -15,40 +17,27 @@ let adapterInstance: DatabaseAdapter | null = null;
 export const getDatabaseAdapter = (): DatabaseAdapter => {
   const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
   
-  console.log(`[getDatabaseAdapter] LOG: Variable NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM is '${dbSystem}'.`);
-
-  // Avoid creating new instances if one that matches the current system already exists.
-  if (adapterInstance) {
-    if (dbSystem === 'SAMPLE_DATA' && adapterInstance instanceof SampleDataAdapter) {
-      console.log(`[getDatabaseAdapter] LOG: Reusing existing SampleDataAdapter instance.`);
-      return adapterInstance;
+  // Se o sistema mudou ou se não há instância, cria uma nova.
+  if (dbSystem !== currentDbSystem || !adapterInstance) {
+    console.log(`[getDatabaseAdapter] LOG: DB System changed or no instance. Initializing new adapter for: ${dbSystem}`);
+    currentDbSystem = dbSystem; // Update the current system
+    
+    switch (dbSystem) {
+      case 'MYSQL':
+        adapterInstance = new MySqlAdapter();
+        break;
+      case 'FIRESTORE':
+        adapterInstance = new FirestoreAdapter();
+        break;
+      case 'SAMPLE_DATA':
+      default:
+        adapterInstance = new SampleDataAdapter();
+        break;
     }
-    if (dbSystem === 'MYSQL' && adapterInstance instanceof MySqlAdapter) {
-      console.log(`[getDatabaseAdapter] LOG: Reusing existing MySqlAdapter instance.`);
-      return adapterInstance;
-    }
-    if (dbSystem === 'FIRESTORE' && adapterInstance instanceof FirestoreAdapter) {
-      console.log(`[getDatabaseAdapter] LOG: Reusing existing FirestoreAdapter instance.`);
-      return adapterInstance;
-    }
-     console.log(`[getDatabaseAdapter] WARNING: DB System changed. Creating a new adapter instance for ${dbSystem}.`);
+     console.log(`[getDatabaseAdapter] LOG: New adapter instance created for ${dbSystem}.`);
+  } else {
+    console.log(`[getDatabaseAdapter] LOG: Reusing existing adapter instance for ${dbSystem}.`);
   }
 
-  console.log(`[getDatabaseAdapter] LOG: Initializing new adapter for: ${dbSystem}`);
-
-  switch (dbSystem) {
-    case 'MYSQL':
-      adapterInstance = new MySqlAdapter();
-      console.log('[getDatabaseAdapter] LOG: Using adapter: MySqlAdapter');
-      return adapterInstance;
-    case 'FIRESTORE':
-      adapterInstance = new FirestoreAdapter();
-      console.log('[getDatabaseAdapter] LOG: Using adapter: FirestoreAdapter');
-      return adapterInstance;
-    case 'SAMPLE_DATA':
-    default:
-      adapterInstance = new SampleDataAdapter();
-      console.log('[getDatabaseAdapter] LOG: Using adapter: SampleDataAdapter');
-      return adapterInstance;
-  }
+  return adapterInstance;
 };
