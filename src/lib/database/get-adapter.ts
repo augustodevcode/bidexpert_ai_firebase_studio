@@ -15,7 +15,7 @@ let currentDbSystem: string | null = null;
  * @returns {DatabaseAdapter} Uma instância do adaptador de banco de dados.
  */
 export const getDatabaseAdapter = (): DatabaseAdapter => {
-  const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
+  const dbSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
   
   // Se o sistema mudou ou se não há instância, cria uma nova.
   if (dbSystem !== currentDbSystem || !adapterInstance) {
@@ -27,11 +27,8 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
         adapterInstance = new MySqlAdapter();
         break;
       case 'FIRESTORE':
-        adapterInstance = new FirestoreAdapter();
-        break;
-      case 'SAMPLE_DATA':
       default:
-        adapterInstance = new SampleDataAdapter();
+        adapterInstance = new FirestoreAdapter();
         break;
     }
      console.log(`[getDatabaseAdapter] LOG: New adapter instance created for ${dbSystem}.`);

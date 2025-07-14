@@ -1,4 +1,7 @@
 /** @type {import('next').NextConfig} */
+
+console.log("[next.config.js] LOG: Reading Next.js configuration.");
+
 const config = {
   /* config options here */
   typescript: {

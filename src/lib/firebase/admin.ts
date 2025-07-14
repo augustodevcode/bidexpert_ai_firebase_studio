@@ -5,12 +5,16 @@ import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
 
+console.log("[firebase/admin.ts] LOG: File loaded.");
+
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
 let adminApp: App | undefined;
 
 function initializeAdminApp(): App {
+  console.log("[firebase/admin.ts] LOG: initializeAdminApp() called.");
   if (getApps().length > 0) {
+    console.log("[firebase/admin.ts] LOG: Found existing Firebase Admin app.");
     return getApp();
   }
 
@@ -18,14 +22,14 @@ function initializeAdminApp(): App {
     // Rely on Application Default Credentials.
     // This is the standard way for server-side environments like App Hosting.
     // It automatically finds the credentials from the environment.
-    console.log('[Admin SDK] Initializing with Application Default Credentials...');
+    console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
     const app = initializeApp({
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
-    console.log('[Admin SDK] Firebase Admin SDK initialized successfully via ADC.');
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
     return app;
   } catch (error: any) {
-    console.error('[Admin SDK Error] Failed to initialize Firebase Admin SDK:', error);
+    console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
     throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
   }
 }
@@ -37,6 +41,7 @@ export function ensureAdminInitialized(): {
   error?: null;
   alreadyInitialized: boolean;
 } {
+  console.log("[firebase/admin.ts] LOG: ensureAdminInitialized() called.");
   const alreadyInitialized = getApps().length > 0;
   
   if (!adminApp) {

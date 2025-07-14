@@ -5,6 +5,8 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
 
+console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
+
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
   description: 'Seu parceiro especialista em leilões online.',
@@ -15,6 +17,7 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  console.log('[layout.tsx] LOG: RootLayout default function executed.');
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>

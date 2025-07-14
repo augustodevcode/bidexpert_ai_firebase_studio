@@ -1,4 +1,3 @@
-
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
@@ -509,7 +508,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return snapshot.docs.map(doc => this.toJSON<ContactMessage>(doc));
     }
 
-     async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string }> {
+     async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }> {
         const docRef = this.db.collection('contactMessages').doc();
         await docRef.set({
             ...message,

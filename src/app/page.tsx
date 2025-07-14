@@ -1,4 +1,3 @@
-
 /**
  * @fileoverview The main home page of the BidExpert application.
  * This server component fetches initial data for display, such as featured lots and auctions,
@@ -13,6 +12,8 @@ import Link from 'next/link';
 import { Landmark, Scale, FileText as FileTextIcon, Tags, CalendarX, CheckSquare, Star, Gavel as TomadaPrecosIcon } from 'lucide-react';
 import { fetchAuctions, fetchLots, fetchPlatformSettings } from '@/lib/data-queries';
 import { getCategoryAssets } from '@/lib/sample-data-helpers';
+
+console.log("[HomePage] LOG: page.tsx file is being processed by Next.js.");
 
 /**
  * The main server component for the homepage.
