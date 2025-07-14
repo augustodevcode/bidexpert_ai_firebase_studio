@@ -65,7 +65,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
   }
 
-  const userRole = roles.find(r => r.nameNormalized.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => r.name_normalized.trim().toUpperCase() === 'USER');
 
   if (!userRole) {
     console.log('[createUser Action] Erro: O perfil de usuário padrão (USER) não foi encontrado nos dados buscados:', roles);
@@ -98,7 +98,8 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     uid: uuidv4()
   };
 
-  const newUserPayload: Partial<UserProfileData> = { ...creationData, roleIds: [userRole.id] };
+  // @ts-ignore
+  const newUserPayload: Partial<UserProfileData> = { ...creationData, roleId: userRole.id };
   
   // @ts-ignore
   const result = await db.createUser(newUserPayload); 

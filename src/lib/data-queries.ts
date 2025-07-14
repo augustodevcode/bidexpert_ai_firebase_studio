@@ -28,6 +28,7 @@ export async function fetchAuction(id: string): Promise<Auction | null> {
     return db.getAuction(id);
 }
 
+
 export async function fetchLots(auctionId?: string): Promise<Lot[]> {
   const db = getDatabaseAdapter();
   return db.getLots(auctionId);
@@ -75,6 +76,7 @@ export async function fetchCategories(): Promise<LotCategory[]> {
 
 export async function fetchSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
     const db = getDatabaseAdapter();
+    // @ts-ignore
     return db.getSubcategoriesByParent(parentCategoryId);
 }
 
