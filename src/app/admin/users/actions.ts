@@ -4,7 +4,7 @@
 import type { UserProfileWithPermissions, Role, AccountType, UserProfileData, UserHabilitationStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface UserCreationData {

@@ -1,7 +1,7 @@
 // src/lib/data-queries.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import type { 
     Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
