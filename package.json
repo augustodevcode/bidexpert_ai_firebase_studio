@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "private": "true",
   "scripts": {
-    "dev": "tsx scripts/init-db.ts && next dev --port 9002 --hostname 0.0.0.0",
+    "dev": "dotenv -e .env -- tsx scripts/init-db.ts && next dev --port 9002 --hostname 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:init": "tsx scripts/init-db.ts",
-    "db:seed": "tsx scripts/seed-db.ts"
+    "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
+    "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
