@@ -1,4 +1,3 @@
-
 // src/lib/database/sample-data.adapter.ts
 import type { DatabaseAdapter, UserWin, DirectSaleOffer, Lot, UserProfileData, Role, Auction, StateInfo, CityInfo, CityFormData, StateFormData, LotCategory, Subcategory, Bem, JudicialProcess, Court, JudicialBranch, JudicialDistrict, MediaItem, PlatformSettings, ContactMessage, DocumentType, UserDocument, BidInfo, UserLotMaxBid, SubcategoryFormData, SellerFormData, AuctioneerFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, BemFormData, UserCreationData, AdminReportData, ConsignorDashboardStats } from '@/types';
 import { getSampleData } from '@/lib/sample-data'; // Corrigido o caminho da importação
