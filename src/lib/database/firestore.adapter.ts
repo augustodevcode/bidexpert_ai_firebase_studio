@@ -168,16 +168,31 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getAuctions(): Promise<Auction[]> {
-        console.log('[FirestoreAdapter] LOG: getAuctions called.');
-        const snapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
-        const auctions = snapshot.docs.map(doc => this.toJSON<Auction>(doc));
-        // Firestore adapter doesn't join, so we manually fetch and attach lots
-        for (const auction of auctions) {
-            const lots = await this.getLots(auction.id);
-            auction.lots = lots;
-            auction.totalLots = lots.length;
+        console.log('[FirestoreAdapter] LOG: getAuctions optimized called.');
+        const [auctionsSnapshot, lotsSnapshot] = await Promise.all([
+            this.db.collection('auctions').orderBy('auctionDate', 'desc').get(),
+            this.db.collection('lots').orderBy('number', 'asc').get()
+        ]);
+        
+        const allLots = lotsSnapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        const lotsByAuctionId = new Map<string, Lot[]>();
+
+        for (const lot of allLots) {
+            if (!lotsByAuctionId.has(lot.auctionId)) {
+                lotsByAuctionId.set(lot.auctionId, []);
+            }
+            lotsByAuctionId.get(lot.auctionId)!.push(lot);
         }
-        console.log(`[FirestoreAdapter] LOG: getAuctions found ${auctions.length} documents.`);
+
+        const auctions = auctionsSnapshot.docs.map(doc => {
+            const auction = this.toJSON<Auction>(doc);
+            const relatedLots = lotsByAuctionId.get(auction.id) || [];
+            auction.lots = relatedLots;
+            auction.totalLots = relatedLots.length;
+            return auction;
+        });
+
+        console.log(`[FirestoreAdapter] LOG: getAuctions found ${auctions.length} documents and assembled them.`);
         return auctions;
     }
     

@@ -24,6 +24,8 @@ import TwoColumnMegaMenu from './two-column-mega-menu';
 import type { RecentlyViewedLotInfo as HistoryListItemType } from '@/types'; // Renomeado para evitar conflito
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
 import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
+import Image from 'next/image';
+
 
 // Renomeado para não conflitar com o nome do componente
 export const HistoryListItem = forwardRef<
@@ -338,4 +340,3 @@ export default function MainNav({
     </NavigationMenu>
   );
 }
-
