@@ -14,16 +14,6 @@
           "order": "ASCENDING"
         }
       ]
-    },
-    {
-      "collectionGroup": "lots",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "number",
-          "order": "ASCENDING"
-        }
-      ]
     }
   ],
   "fieldOverrides": []

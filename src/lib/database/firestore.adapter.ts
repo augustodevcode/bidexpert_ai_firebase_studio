@@ -138,9 +138,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
         console.log(`[FirestoreAdapter] LOG: getLots called for auctionId: ${auctionId || 'all'}`);
         let query: FirebaseFirestore.Query = this.db.collection('lots');
         if (auctionId) {
-            query = query.where('auctionId', '==', auctionId);
+            query = query.where('auctionId', '==', auctionId).orderBy('number', 'asc');
+        } else {
+            // Default sort for all lots if no specific auction is requested
+            query = query.orderBy('createdAt', 'desc');
         }
-        const snapshot = await query.orderBy('number', 'asc').get();
+        const snapshot = await query.get();
         console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
         return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
     }
