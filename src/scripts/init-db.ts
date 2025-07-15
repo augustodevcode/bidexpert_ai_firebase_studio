@@ -1,3 +1,4 @@
+
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
 import { 
@@ -13,19 +14,18 @@ import type { DatabaseAdapter, StateInfo, CityInfo, Court, JudicialDistrict, Jud
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
-async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], uniqueKey: string, parentPath?: string) {
+async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[]) {
     if (!data || data.length === 0) {
         console.log(`[DB INIT] 🟡 INFO: No data provided for ${collectionName}. Skipping.`);
         return;
     }
 
     console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
-    // The batchWrite now handles everything, no need to pre-check existing items.
-    // It uses set with merge, which is idempotent.
     // @ts-ignore
-    await db.batchWrite(collectionName, data, parentPath);
+    await db.batchWrite(collectionName, data);
     console.log(`[DB INIT] ✅ SUCCESS: ${data.length} items processed for ${collectionName}.`);
 }
+
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
@@ -42,27 +42,29 @@ async function seedEssentialData() {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Top-level collections
-        await seedCollection(db, 'roles', sampleRoles, 'id');
-        await seedCollection(db, 'lotCategories', sampleLotCategories, 'id');
-        await seedCollection(db, 'lotSubcategories', sampleSubcategories, 'id');
+        // Top-level collections that don't depend on others
+        await seedCollection(db, 'roles', sampleRoles);
+        await seedCollection(db, 'lotCategories', sampleLotCategories);
+        await seedCollection(db, 'lotSubcategories', sampleSubcategories);
         
-        // Hierarchical data
-        for (const stateData of sampleStatesWithCities) {
-            const { cities, ...state } = stateData;
-            await seedCollection(db, 'states', [state], 'id');
-            await seedCollection(db, 'cities', cities, 'id', `states/${state.id}`);
-        }
+        // Hierarchical data seeding
+        const statesData = sampleStatesWithCities.map(({ cities, ...state }) => state);
+        await seedCollection(db, 'states', statesData);
 
-        for (const courtData of sampleCourtsWithRelations) {
-            const { districts, ...court } = courtData;
-            await seedCollection(db, 'courts', [court], 'id');
-            for (const districtData of districts) {
-                const { branches, ...district } = districtData;
-                await seedCollection(db, 'judicialDistricts', [district], 'id', `courts/${court.id}`);
-                await seedCollection(db, 'judicialBranches', branches, 'id', `courts/${court.id}/judicialDistricts/${district.id}`);
-            }
-        }
+        const citiesData = sampleStatesWithCities.flatMap(s => s.cities.map(c => ({...c, stateId: s.id})));
+        await seedCollection(db, 'cities', citiesData);
+
+        const courtsData = sampleCourtsWithRelations.map(({ districts, ...court }) => court);
+        await seedCollection(db, 'courts', courtsData);
+
+        const judicialDistrictsData = sampleCourtsWithRelations.flatMap(c => c.districts.map(d => ({...d, courtId: c.id})));
+        await seedCollection(db, 'judicialDistricts', judicialDistrictsData);
+        
+        const judicialBranchesData = sampleCourtsWithRelations.flatMap(c => 
+            c.districts.flatMap(d => d.branches.map(b => ({...b, districtId: d.id})))
+        );
+        await seedCollection(db, 'judicialBranches', judicialBranchesData);
+        
         
         // Seed initial admin user if it doesn't exist
         const adminEmail = 'admin@bidexpert.com.br';
@@ -76,7 +78,7 @@ async function seedEssentialData() {
                 await db.createUser({
                     ...userData,
                     password: hashedPassword,
-                    roleIds: [adminRole.id], // ensure roleId is an array
+                    roleIds: [adminRole.id],
                 });
                 console.log('[DB INIT] ✅ SUCCESS: Admin user created.');
             } else {
@@ -89,6 +91,8 @@ async function seedEssentialData() {
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
+        const zodError = (error.name === 'ZodError') ? error.issues : null;
+        console.error("Zod Issues (if any):", JSON.stringify(zodError, null, 2));
         throw error; 
     }
     
