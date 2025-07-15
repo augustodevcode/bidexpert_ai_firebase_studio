@@ -1,43 +1,126 @@
 
 {
+  "sampleLotCategories": [
+    { "id": "cat-imoveis", "name": "Imóveis", "slug": "imoveis", "description": "Casas, apartamentos, terrenos, salas comerciais, galpões, fazendas, sítios e chácaras.", "iconName": "Building", "hasSubcategories": true, "dataAiHintIcon": "predio casa" },
+    { "id": "cat-veiculos", "name": "Veículos", "slug": "veiculos", "description": "Carros, motos, caminhões, ônibus, utilitários e outros veículos terrestres.", "iconName": "Car", "hasSubcategories": true },
+    { "id": "cat-maquinas-e-equipamentos", "name": "Máquinas e Equipamentos", "slug": "maquinas-e-equipamentos", "description": "Máquinas pesadas, agrícolas, industriais, equipamentos de construção e diversos.", "iconName": "Tractor", "hasSubcategories": true },
+    { "id": "cat-eletronicos-e-tecnologia", "name": "Eletrônicos e Tecnologia", "slug": "eletronicos-e-tecnologia", "description": "Celulares, computadores, televisores e componentes.", "iconName": "Smartphone", "hasSubcategories": true },
+    { "id": "cat-casa-e-decoracao", "name": "Casa e Decoração", "slug": "casa-e-decoracao", "description": "Móveis, eletrodomésticos, utensílios e itens de decoração.", "iconName": "Home", "hasSubcategories": true },
+    { "id": "cat-arte-e-antiguidades", "name": "Arte e Antiguidades", "slug": "arte-e-antiguidades", "description": "Obras de arte, antiguidades e itens colecionáveis.", "iconName": "Paintbrush", "hasSubcategories": true },
+    { "id": "cat-joias-e-acessorios", "name": "Joias e Acessórios", "slug": "joias-e-acessorios", "description": "Joias, relógios de luxo e bolsas de grife.", "iconName": "Diamond", "hasSubcategories": true },
+    { "id": "cat-semoventes", "name": "Semoventes", "slug": "semoventes", "description": "Animais como bovinos, equinos, ovinos e caprinos.", "iconName": "PawPrint", "hasSubcategories": true },
+    { "id": "cat-materiais-e-sucatas", "name": "Materiais e Sucatas", "slug": "materiais-e-sucatas", "description": "Materiais de construção e sucatas metálicas.", "iconName": "Wrench", "hasSubcategories": true },
+    { "id": "cat-industrial-geral", "name": "Industrial Geral", "slug": "industrial-geral", "description": "Estoques, matéria-prima e mobiliário corporativo.", "iconName": "Factory", "hasSubcategories": true },
+    { "id": "cat-embarcacoes", "name": "Embarcações", "slug": "embarcacoes", "description": "Lanchas, barcos, veleiros e jet skis.", "iconName": "Anchor", "hasSubcategories": true },
+    { "id": "cat-bens-diversos", "name": "Bens Diversos", "slug": "bens-diversos", "description": "Itens que não se encaixam nas outras categorias.", "iconName": "Hammer", "hasSubcategories": true }
+  ],
+  "sampleSubcategories": [
+    {"id": "sub-imoveis-apartamentos", "name": "Apartamentos", "parentCategoryId": "cat-imoveis", "slug": "apartamentos", "displayOrder": 1},
+    {"id": "sub-imoveis-casas", "name": "Casas", "parentCategoryId": "cat-imoveis", "slug": "casas", "displayOrder": 2},
+    {"id": "sub-imoveis-terrenos", "name": "Terrenos e Lotes", "parentCategoryId": "cat-imoveis", "slug": "terrenos-e-lotes", "displayOrder": 3},
+    {"id": "sub-imoveis-comercial", "name": "Salas e Lojas Comerciais", "parentCategoryId": "cat-imoveis", "slug": "salas-e-lojas-comerciais", "displayOrder": 4},
+    {"id": "sub-imoveis-industrial", "name": "Galpões e Prédios Industriais", "parentCategoryId": "cat-imoveis", "slug": "galpoes-e-predios-industriais", "displayOrder": 5},
+    {"id": "sub-imoveis-rurais", "name": "Imóveis Rurais", "parentCategoryId": "cat-imoveis", "slug": "imoveis-rurais", "displayOrder": 6},
+    {"id": "sub-veiculos-carros", "name": "Carros", "parentCategoryId": "cat-veiculos", "slug": "carros", "displayOrder": 1},
+    {"id": "sub-veiculos-motos", "name": "Motos", "parentCategoryId": "cat-veiculos", "slug": "motos", "displayOrder": 2},
+    {"id": "sub-veiculos-caminhoes", "name": "Caminhões e Ônibus", "parentCategoryId": "cat-veiculos", "slug": "caminhoes-e-onibus", "displayOrder": 3},
+    {"id": "sub-veiculos-pesados", "name": "Veículos Pesados", "parentCategoryId": "cat-veiculos", "slug": "veiculos-pesados", "displayOrder": 4},
+    {"id": "sub-veiculos-aeronaves", "name": "Aeronaves", "parentCategoryId": "cat-veiculos", "slug": "aeronaves", "displayOrder": 5},
+    {"id": "sub-maquinas-agricolas", "name": "Máquinas Agrícolas", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "maquinas-agricolas", "displayOrder": 1},
+    {"id": "sub-maquinas-industriais", "name": "Máquinas Industriais", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "maquinas-industriais", "displayOrder": 2},
+    {"id": "sub-maquinas-construcao", "name": "Equipamentos de Construção", "parentCategoryId": "cat-maquinas-e-equipamentos", "slug": "equipamentos-de-construcao", "displayOrder": 3},
+    {"id": "sub-eletronicos-celulares", "name": "Celulares e Tablets", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "celulares-e-tablets", "displayOrder": 1},
+    {"id": "sub-eletronicos-computadores", "name": "Computadores e Notebooks", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "computadores-e-notebooks", "displayOrder": 2},
+    {"id": "sub-eletronicos-audio-video", "name": "Televisores e Áudio", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "televisores-e-audio", "displayOrder": 3},
+    {"id": "sub-eletronicos-componentes", "name": "Componentes e Peças", "parentCategoryId": "cat-eletronicos-e-tecnologia", "slug": "componentes-e-pecas", "displayOrder": 4},
+    {"id": "sub-casa-moveis", "name": "Móveis Residenciais", "parentCategoryId": "cat-casa-e-decoracao", "slug": "moveis-residenciais", "displayOrder": 1},
+    {"id": "sub-casa-eletrodomesticos", "name": "Eletrodomésticos", "parentCategoryId": "cat-casa-e-decoracao", "slug": "eletrodomesticos", "displayOrder": 2},
+    {"id": "sub-casa-utensilios", "name": "Utensílios de Cozinha", "parentCategoryId": "cat-casa-e-decoracao", "slug": "utensilios-de-cozinha", "displayOrder": 3},
+    {"id": "sub-casa-decoracao", "name": "Decoração e Iluminação", "parentCategoryId": "cat-casa-e-decoracao", "slug": "decoracao-e-iluminacao", "displayOrder": 4},
+    {"id": "sub-arte-obras", "name": "Obras de Arte", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "obras-de-arte", "displayOrder": 1},
+    {"id": "sub-arte-antiguidades", "name": "Antiguidades", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "antiguidades", "displayOrder": 2},
+    {"id": "sub-arte-colecionaveis", "name": "Itens Colecionáveis", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "itens-colecionaveis", "displayOrder": 3},
+    {"id": "sub-arte-numismatica", "name": "Numismática", "parentCategoryId": "cat-arte-e-antiguidades", "slug": "numismatica", "displayOrder": 4},
+    {"id": "sub-joias-joias", "name": "Joias", "parentCategoryId": "cat-joias-e-acessorios", "slug": "joias", "displayOrder": 1},
+    {"id": "sub-joias-relogios", "name": "Relógios de Luxo", "parentCategoryId": "cat-joias-e-acessorios", "slug": "relogios-de-luxo", "displayOrder": 2},
+    {"id": "sub-joias-bolsas", "name": "Bolsas de Grife", "parentCategoryId": "cat-joias-e-acessorios", "slug": "bolsas-de-grife", "displayOrder": 3},
+    {"id": "sub-semoventes-bovinos", "name": "Bovinos", "parentCategoryId": "cat-semoventes", "slug": "bovinos", "displayOrder": 1},
+    {"id": "sub-semoventes-equinos", "name": "Equinos", "parentCategoryId": "cat-semoventes", "slug": "equinos", "displayOrder": 2},
+    {"id": "sub-semoventes-ovinos-caprinos", "name": "Ovinos e Caprinos", "parentCategoryId": "cat-semoventes", "slug": "ovinos-e-caprinos", "displayOrder": 3},
+    {"id": "sub-materiais-construcao", "name": "Materiais de Construção", "parentCategoryId": "cat-materiais-e-sucatas", "slug": "materiais-de-construcao", "displayOrder": 1},
+    {"id": "sub-materiais-sucatas", "name": "Sucatas Metálicas", "parentCategoryId": "cat-materiais-e-sucatas", "slug": "sucatas-metalicas", "displayOrder": 2},
+    {"id": "sub-industrial-estoques", "name": "Estoques Industriais", "parentCategoryId": "cat-industrial-geral", "slug": "estoques-industriais", "displayOrder": 1},
+    {"id": "sub-industrial-materia-prima", "name": "Matéria-prima", "parentCategoryId": "cat-industrial-geral", "slug": "materia-prima", "displayOrder": 2},
+    {"id": "sub-industrial-mobiliario", "name": "Mobiliário Corporativo", "parentCategoryId": "cat-industrial-geral", "slug": "mobiliario-corporativo", "displayOrder": 3},
+    {"id": "sub-embarcacoes-lanchas", "name": "Lanchas e Iates", "parentCategoryId": "cat-embarcacoes", "slug": "lanchas-e-iates", "displayOrder": 1},
+    {"id": "sub-embarcacoes-jetskis", "name": "Jet Skis", "parentCategoryId": "cat-embarcacoes", "slug": "jet-skis", "displayOrder": 2},
+    {"id": "sub-embarcacoes-veleiros", "name": "Veleiros", "parentCategoryId": "cat-embarcacoes", "slug": "veleiros", "displayOrder": 3},
+    {"id": "sub-embarcacoes-barcos-pesca", "name": "Barcos de Pesca", "parentCategoryId": "cat-embarcacoes", "slug": "barcos-de-pesca", "displayOrder": 4}
+  ],
+  "sampleStatesWithCities": [
+    { "name": "São Paulo", "uf": "SP", "id": "state-sp", "cities": [
+        {"name": "São Paulo", "uf": "SP", "ibgeCode": "3550308", "id": "city-sp-sao-paulo"},
+        {"name": "Guarulhos", "uf": "SP", "ibgeCode": "3518800", "id": "city-sp-guarulhos"}
+    ]},
+    { "name": "Rio de Janeiro", "uf": "RJ", "id": "state-rj", "cities": [
+        {"name": "Rio de Janeiro", "uf": "RJ", "ibgeCode": "3304557", "id": "city-rj-rio-de-janeiro"}
+    ]}
+  ],
+  "sampleCourtsWithRelations": [
+    { "id": "court-tjsp", "name": "Tribunal de Justiça de São Paulo (TJSP)", "stateUf": "SP", "slug": "tribunal-de-justica-de-sao-paulo-tjsp",
+      "districts": [
+        {"id":"jd-sao-paulo","name":"Comarca de São Paulo", "stateUf": "SP", "slug":"comarca-de-sao-paulo", "branches": [
+            {"id":"branch-sp-1civel", "name":"1ª Vara Cível", "slug":"1a-vara-civel-sp"},
+            {"id":"branch-sp-2civel", "name":"2ª Vara Cível", "slug":"2a-vara-civel-sp"}
+        ]}
+      ]
+    },
+     { "id": "court-tjrj", "name": "Tribunal de Justiça do Rio de Janeiro (TJRJ)", "stateUf": "RJ", "slug": "tribunal-de-justica-do-rio-de-janeiro-tjrj",
+      "districts": [
+        {"id":"jd-rio-de-janeiro","name":"Comarca do Rio de Janeiro", "stateUf": "RJ", "slug":"comarca-do-rio-de-janeiro", "branches": [
+           {"id":"branch-rj-1empresarial", "name":"1ª Vara Empresarial", "slug":"1a-vara-empresarial-rj"}
+        ]}
+      ]
+    }
+  ],
+   "sampleJudicialDistricts": [
+    {"id":"jd-rio-branco","name":"Comarca de Rio Branco","courtId":"court-tjac","stateId":"state-ac","slug":"comarca-de-rio-branco"},
+    {"id":"jd-maceio","name":"Comarca de Maceió","courtId":"court-tjal","stateId":"state-al","slug":"comarca-de-maceio"}
+  ],
+  "sampleJudicialBranches": [
+    {"id":"branch-sp-1civel", "name":"1ª Vara Cível", "districtId":"jd-sao-paulo", "slug":"1a-vara-civel-sp"},
+    {"id":"branch-rj-1empresarial", "name":"1ª Vara Empresarial", "districtId":"jd-rio-de-janeiro", "slug":"1a-vara-empresarial-rj"}
+  ],
   "sampleUsers": [
     {
-      "uid": "admin-bidexpert-platform-001",
+      "uid": "jdbCtYtSceMeC5SuLh06JoohwYY2",
       "email": "admin@bidexpert.com.br",
       "password": "@dmin2025",
       "fullName": "Administrador BidExpert",
-      "roleId": "role-admin",
+      "roleIds": ["role-admin"],
       "habilitationStatus": "HABILITADO",
-      "accountType": "PHYSICAL",
-      "createdAt": "2024-01-01T10:00:00Z",
-      "updatedAt": "2024-01-01T10:00:00Z"
+      "accountType": "PHYSICAL"
     },
     {
-      "uid": "user-test-002",
+      "uid": "13BJaX1uBcT1LCG2Pyt8i5Tg...",
       "email": "comprador@email.com",
       "password": "senha123",
       "fullName": "Comprador de Teste",
-      "roleId": "role-user",
+      "roleIds": ["role-user"],
       "habilitationStatus": "HABILITADO",
       "accountType": "PHYSICAL",
-      "createdAt": "2024-01-02T10:00:00Z",
-      "updatedAt": "2024-01-02T10:00:00Z",
-      "badges": [
-        "PRIMEIRO_ARREMATE"
-      ]
+      "badges": ["PRIMEIRO_ARREMATE"]
     },
     {
       "uid": "consignor-example-003",
       "email": "comitente@email.com",
       "password": "senha123",
       "fullName": "Comitente Exemplo",
-      "roleId": "role-consignor",
+      "roleIds": ["role-consignor"],
       "sellerId": "seller-banco-bradesco-s-a",
       "habilitationStatus": "HABILITADO",
       "accountType": "LEGAL",
-      "razaoSocial": "Comitente Exemplo Vendas Ltda",
-      "createdAt": "2024-01-03T10:00:00Z",
-      "updatedAt": "2024-01-03T10:00:00Z"
+      "razaoSocial": "Comitente Exemplo Vendas Ltda"
     }
   ],
   "sampleRoles": [
@@ -46,39 +129,21 @@
       "name": "ADMINISTRATOR",
       "name_normalized": "ADMINISTRATOR",
       "description": "Acesso total à plataforma.",
-      "permissions": [
-        "manage_all"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-21T04:56:12.389Z"
+      "permissions": ["manage_all"]
     },
     {
       "id": "role-user",
       "name": "USER",
       "name_normalized": "USER",
       "description": "Usuário padrão com acesso básico.",
-      "permissions": [
-        "view_auctions",
-        "place_bids",
-        "view_lots"
-      ],
-      "createdAt": "2025-03-14T04:56:12.389Z",
-      "updatedAt": "2025-06-12T04:56:12.389Z"
+      "permissions": ["view_auctions", "place_bids", "view_lots"]
     },
     {
       "id": "role-consignor",
       "name": "CONSIGNOR",
       "name_normalized": "CONSIGNOR",
       "description": "Comitente com permissões para gerenciar seus itens.",
-      "permissions": [
-        "auctions:manage_own",
-        "lots:manage_own",
-        "view_reports",
-        "media:upload",
-        "consignor_dashboard:view"
-      ],
-      "createdAt": "2025-03-24T04:56:12.389Z",
-      "updatedAt": "2025-06-17T04:56:12.389Z"
+      "permissions": ["auctions:manage_own", "lots:manage_own", "view_reports", "media:upload", "consignor_dashboard:view"]
     }
   ],
   "sampleUserWins": [

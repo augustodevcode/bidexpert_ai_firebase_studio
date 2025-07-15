@@ -1,3 +1,4 @@
+
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
 import { 

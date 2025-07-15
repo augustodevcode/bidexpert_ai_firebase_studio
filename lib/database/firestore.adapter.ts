@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -359,16 +360,17 @@ export class FirestoreAdapter implements DatabaseAdapter {
         if (!uid) return { success: false, message: "UID is required to create a user."};
         const docRef = this.db.collection('users').doc(uid);
         
-        const dataToSet: UserProfileData = { 
+        const dataToSet: Omit<UserProfileData, 'createdAt' | 'updatedAt'> & { createdAt?: any, updatedAt?: any } = { 
             ...(restData as Omit<UserProfileData, 'id' | 'createdAt' | 'updatedAt'>), 
             id: uid, 
             uid: uid, 
             createdAt: AdminFieldValue.serverTimestamp(), 
             updatedAt: AdminFieldValue.serverTimestamp()
         };
-
+        
         try {
-            UserProfileDataSchema.parse(dataToSet);
+            // Validate against a partial schema because createdAt/updatedAt are server values
+            UserProfileDataSchema.partial({ createdAt: true, updatedAt: true }).parse(dataToSet);
             await docRef.set(dataToSet);
             return { success: true, message: 'Usuário criado com sucesso!', userId: uid };
         } catch (error: any) {
@@ -470,7 +472,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
-        const result = await this.genericCreate(`states/${data.stateId}/cities`, data);
+        const result = await this.genericCreate('cities', data);
         return { ...result, cityId: result.id };
     }
 
@@ -557,7 +559,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
-        const result = await this.genericCreate(`courts/${data.courtId}/judicialDistricts/${data.districtId}/judicialBranches`, data);
+        const result = await this.genericCreate(`judicialDistricts/${data.districtId}/judicialBranches`, data);
         return { ...result, branchId: result.id };
     }
     
