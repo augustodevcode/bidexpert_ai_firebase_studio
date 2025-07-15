@@ -393,13 +393,23 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async getPlatformSettings(): Promise<PlatformSettings | null> {
         console.log("[FirestoreAdapter] LOG: Getting platform settings from Firestore.");
-        const doc = await this.db.collection('settings').doc('global').get();
-        if (doc.exists) {
-            console.log("[FirestoreAdapter] LOG: Platform settings document found.");
-        } else {
-            console.warn("[FirestoreAdapter] LOG: Platform settings document NOT found.");
+        try {
+            const doc = await this.db.collection('settings').doc('global').get();
+            if (doc.exists) {
+                console.log("[FirestoreAdapter] LOG: Platform settings document found.");
+                return this.toJSON<PlatformSettings>(doc);
+            } else {
+                console.warn("[FirestoreAdapter] LOG: Platform settings document NOT found.");
+                return null;
+            }
+        } catch (error: any) {
+            if (error.code === 5) { // 5 = NOT_FOUND
+                console.warn("[FirestoreAdapter] WARN: Collection 'settings' not found. Returning null.");
+                return null;
+            }
+            console.error("[FirestoreAdapter] FATAL: Error fetching platform settings:", error);
+            throw error;
         }
-        return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
     }
 
     async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
@@ -593,5 +603,3 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
 }
-
-    
