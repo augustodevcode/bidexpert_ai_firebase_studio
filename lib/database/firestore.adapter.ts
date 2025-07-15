@@ -138,13 +138,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
         console.log(`[FirestoreAdapter] LOG: getLots called for auctionId: ${auctionId || 'all'}`);
         let query: FirebaseFirestore.Query = this.db.collection('lots');
         
-        if (auctionId) {
-            query = query.where('auctionId', '==', auctionId).orderBy('number', 'asc');
-        } else {
-            query = query.orderBy('createdAt', 'desc');
-        }
-        
         try {
+            if (auctionId) {
+                query = query.where('auctionId', '==', auctionId).orderBy('number', 'asc');
+            } else {
+                query = query.orderBy('createdAt', 'desc');
+            }
             const snapshot = await query.get();
             console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
             return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
@@ -473,7 +472,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
-        const result = await this.genericCreate('subcategories', data);
+        const result = await this.genericCreate('lot_subcategories', data);
         return { ...result, subcategoryId: result.id };
     }
 
@@ -492,18 +491,21 @@ export class FirestoreAdapter implements DatabaseAdapter {
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getSubcategoriesByParent(parentCategoryId?: string | undefined): Promise<Subcategory[]> { 
-        if (!parentCategoryId) return [];
+        let query: FirebaseFirestore.Query = this.db.collection('lot_subcategories');
+        if (parentCategoryId) {
+          query = query.where('parentCategoryId', '==', parentCategoryId);
+        }
         try {
-            const snapshot = await this.db.collection('subcategories').where('parentCategoryId', '==', parentCategoryId).orderBy('name').get();
+            const snapshot = await query.orderBy('name').get();
             return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getSubcategory(id: string): Promise<Subcategory | null> { 
-        const doc = await this.db.collection('subcategories').doc(id).get();
+        const doc = await this.db.collection('lot_subcategories').doc(id).get();
         return doc.exists ? this.toJSON<Subcategory>(doc) : null;
     }
-    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('subcategories', id, data); }
-    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('subcategories', id); }
+    async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('lot_subcategories', id, data); }
+    async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('lot_subcategories', id); }
     async updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('states', id, data); }
     async deleteState(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('states', id); }
     async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('cities', id, data); }

@@ -1,5 +1,3 @@
-
-
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
@@ -67,7 +65,7 @@ async function seedEssentialData() {
 
         await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
         await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, existingCategories, 'slug');
-        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, existingSubcategories, 'slug');
+        await seedCollectionInBatches(db, 'lot_subcategories', sampleSubcategories, existingSubcategories, 'slug');
         await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
         await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
         await seedCollectionInBatches(db, 'courts', sampleCourts, existingCourts, 'slug');
