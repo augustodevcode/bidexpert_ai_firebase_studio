@@ -1,43 +1,31 @@
 // src/scripts/init-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
-import type { DatabaseAdapter } from '@/types';
+import { getDatabaseAdapter } from '@/lib/database/index';
+import { 
+    samplePlatformSettings,
+    sampleRoles,
+    sampleLotCategories,
+    sampleSubcategories,
+    sampleStatesWithCities,
+    sampleCourtsWithRelations,
+    sampleUsers,
+} from '@/lib/sample-data';
+import type { DatabaseAdapter, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch } from '@/types';
+import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
-
-async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: string, data: any[], existingItems: any[], uniqueKey: string) {
-    console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
-    const itemsToCreate = data.filter(item => !existingItems.some(existing => existing[uniqueKey] === item[uniqueKey]));
-    
-    // @ts-ignore - Assuming batchWrite exists on the adapter
-    if (db.batchWrite && itemsToCreate.length > 0) {
-        console.log(`[DB INIT] LOG: Using batchWrite for ${itemsToCreate.length} items.`);
-        // @ts-ignore
-        await db.batchWrite(collectionName, itemsToCreate);
-    } else if (itemsToCreate.length > 0) {
-        console.warn(`[DB INIT] LOG: batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
-        const createMethodName = `create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`;
-        // @ts-ignore
-        const createMethod = db[createMethodName as keyof DatabaseAdapter];
-        
-        if (typeof createMethod === 'function') {
-            for (const item of itemsToCreate) {
-                try {
-                    // @ts-ignore
-                    const result = await createMethod.call(db, item);
-                    if (!result.success) {
-                        console.error(`[DB INIT] ❌ ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}: ${result.message}`);
-                    }
-                } catch(e: any) {
-                    console.error(`[DB INIT] ❌ CRITICAL ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}:`, e.message);
-                }
-            }
-        } else {
-             console.warn(`[DB INIT] 🟡 WARNING: create method '${createMethodName}' not found on adapter.`);
-        }
+async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], uniqueKey: string) {
+    if (!data || data.length === 0) {
+        console.log(`[DB INIT] 🟡 INFO: No data provided for ${collectionName}. Skipping.`);
+        return;
     }
-    console.log(`[DB INIT] ✅ SUCCESS: ${itemsToCreate.length} new items processed for ${collectionName}.`);
-}
 
+    console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
+    // The batchWrite now handles everything, no need to pre-check existing items.
+    // It uses set with merge, which is idempotent.
+    // @ts-ignore
+    await db.batchWrite(collectionName, data);
+    console.log(`[DB INIT] ✅ SUCCESS: ${data.length} items processed for ${collectionName}.`);
+}
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
@@ -47,32 +35,53 @@ async function seedEssentialData() {
         // Platform Settings (Single Document)
         console.log('[DB INIT] LOG: Seeding platform settings...');
         const settings = await db.getPlatformSettings();
-        if (!settings || Object.keys(settings).length === 0 || !settings.id) {
+        if (!settings) {
+            // @ts-ignore
             await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Batch-writable collections
-        console.log("[DB INIT] LOG: Fetching existing data for essential collections.");
-        const existingRoles = await db.getRoles();
-        const existingCategories = await db.getLotCategories();
-        const existingSubcategories = await db.getSubcategoriesByParent();
-        const existingStates = await db.getStates();
-        const existingCities = await db.getCities();
-        const existingCourts = await db.getCourts();
+        // Top-level collections
+        await seedCollection(db, 'roles', sampleRoles, 'id');
+        await seedCollection(db, 'lotCategories', sampleLotCategories, 'id');
+        await seedCollection(db, 'lotSubcategories', sampleSubcategories, 'id');
+        
+        const statesData = sampleStatesWithCities.map(({ cities, ...state }) => state);
+        await seedCollection(db, 'states', statesData, 'id');
+        
+        const courtsData = sampleCourtsWithRelations.map(({ districts, ...court }) => court);
+        await seedCollection(db, 'courts', courtsData, 'id');
 
-        await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
-        await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, existingCategories, 'slug');
-        await seedCollectionInBatches(db, 'lot_subcategories', sampleSubcategories, existingSubcategories, 'slug');
-        await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
-        await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
-        await seedCollectionInBatches(db, 'courts', sampleCourts, existingCourts, 'slug');
+        
+        // Seed initial admin user if it doesn't exist
+        const adminEmail = 'admin@bidexpert.com.br';
+        let adminUser = await db.getUserProfileData(adminEmail);
+        if (!adminUser) {
+            console.log(`[DB INIT] Admin user not found. Creating...`);
+            const adminRole = sampleRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
+            const userData = sampleUsers.find(u => u.email === adminEmail);
+            if (userData && adminRole) {
+                const hashedPassword = await bcrypt.hash(userData.password, 10);
+                // @ts-ignore
+                await db.createUser({
+                    ...userData,
+                    password: hashedPassword,
+                    roleIds: [adminRole.id], // ensure roleId is an array
+                });
+                console.log('[DB INIT] ✅ SUCCESS: Admin user created.');
+            } else {
+                 console.error('[DB INIT] ❌ ERROR: Admin user data or Admin role not found in sample data.');
+            }
+        } else {
+             console.log('[DB INIT] 🟡 INFO: Admin user already exists.');
+        }
+
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
-        throw error; // Throw error to stop the process if essential data fails
+        throw error; 
     }
     
     console.log('--- [DB INIT] LOG: Essential Data seeding finished ---');
