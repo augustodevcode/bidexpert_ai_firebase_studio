@@ -1,0 +1,19 @@
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+
+<div class="border rounded-lg shadow-md overflow-hidden bg-white hover:shadow-xl transition-shadow">
+    <NavLink href="@($"/auctions/{Auction?.PublicId ?? Auction?.Id}")">
+        <img src="@(Auction?.ImageUrl ?? "https://placehold.co/600x400.png")" alt="Imagem @Auction?.Title" class="w-full h-48 object-cover"/>
+    </NavLink>
+    <div class="p-4">
+        <h3 class="text-lg font-semibold mb-2 truncate">
+            <NavLink href="@($"/auctions/{Auction?.PublicId ?? Auction?.Id}")">@Auction?.Title</NavLink>
+        </h3>
+        <NavLink href="@($"/auctions/{Auction?.PublicId ?? Auction?.Id}")" class="w-full block text-center bg-orange-500 text-white py-2 px-4 rounded hover:bg-orange-600">
+            Ver Detalhes
+        </NavLink>
+    </div>
+</div>
+
+@code {
+    [Parameter] public AuctionDto? Auction { get; set; }
+}

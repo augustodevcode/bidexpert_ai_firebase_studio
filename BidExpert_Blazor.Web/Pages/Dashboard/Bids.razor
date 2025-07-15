@@ -1,0 +1,73 @@
+@page "/dashboard/bids"
+@layout DashboardLayout
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.Web.Services.HttpClients.Interfaces
+@inject IUserClientApiService UserApiService
+
+<PageTitle>Meus Lances - Painel BidExpert</PageTitle>
+
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Meus Lances</h1>
+
+@if (bids == null)
+{
+    <p>Carregando seus lances...</p>
+}
+else if (!bids.Any())
+{
+    <p>Você ainda não fez nenhum lance.</p>
+}
+else
+{
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lote</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seu Lance</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lance Atual</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data do Lance</th>
+                </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach (var bid in bids)
+                {
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <NavLink href="@($"/lots/{bid.LotId}")">@bid.LotTitle</NavLink>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">@bid.UserBidAmount.ToString("C")</td>
+                        <td class="px-6 py-4 whitespace-nowrap">@bid.CurrentLotPrice.ToString("C")</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full @GetStatusColorClass(bid.BidStatus)">
+                                @bid.BidStatus.ToString()
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">@bid.BidDate?.ToString("g")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<UserBidDto>? bids;
+
+    protected override async Task OnInitializedAsync()
+    {
+        bids = await UserApiService.GetMyActiveBidsAsync();
+    }
+
+    private string GetStatusColorClass(BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserBidStatus status)
+    {
+        return status switch
+        {
+            BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserBidStatus.GANHANDO => "bg-green-100 text-green-800",
+            BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserBidStatus.PERDENDO => "bg-red-100 text-red-800",
+            BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserBidStatus.SUPERADO => "bg-yellow-100 text-yellow-800",
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+}

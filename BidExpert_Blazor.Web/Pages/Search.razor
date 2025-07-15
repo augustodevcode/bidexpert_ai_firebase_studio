@@ -1,0 +1,83 @@
+@page "/search"
+@attribute [Layout(typeof(MainLayout))]
+@inject NavigationManager NavigationManager
+@inject Services.HttpClients.Interfaces.IAuctionClientApiService AuctionService
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+
+<PageTitle>Busca - BidExpert</PageTitle>
+
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-6">Busca de Leilões</h1>
+    <div class="mb-8 p-4 border rounded-lg bg-white">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <input type="text" @bind="searchTerm" placeholder="Buscar por termo..." class="md:col-span-2 border p-2 rounded" />
+            <button @onclick="ApplySearch" class="w-full bg-orange-500 text-white font-bold py-2 px-4 rounded">Buscar</button>
+        </div>
+    </div>
+
+    @if (isLoading) { <p>Carregando...</p> }
+    else if (pagedResult != null && pagedResult.Items.Any())
+    {
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            @foreach (var auction in pagedResult.Items)
+            {
+                <AuctionCard Auction="auction" />
+            }
+        </div>
+        <div class="mt-8 flex justify-between items-center">
+            <button @onclick="() => ChangePage(currentPage - 1)" disabled="@(currentPage <= 1)" class="px-4 py-2 border rounded disabled:opacity-50">Anterior</button>
+            <span>Página @currentPage de @totalPages</span>
+            <button @onclick="() => ChangePage(currentPage + 1)" disabled="@(currentPage >= totalPages)" class="px-4 py-2 border rounded disabled:opacity-50">Próxima</button>
+        </div>
+    }
+    else { <p>Nenhum leilão encontrado.</p> }
+</div>
+
+@code {
+    [SupplyParameterFromQuery] public string? SearchTerm { get; set; }
+    [SupplyParameterFromQuery] public int Page { get; set; } = 1;
+
+    private string? searchTerm;
+    private int currentPage = 1;
+    private int totalPages = 1;
+    private PagedResultDto<AuctionDto>? pagedResult;
+    private bool isLoading = false;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        searchTerm = SearchTerm ?? string.Empty;
+        currentPage = Page > 0 ? Page : 1;
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+        var queryParams = new AuctionClientQueryParameters {
+            PageNumber = currentPage,
+            PageSize = 12,
+            SearchTerm = searchTerm
+        };
+        pagedResult = await AuctionService.GetAuctionsAsync(queryParams);
+        if (pagedResult != null)
+        {
+            totalPages = pagedResult.TotalPages;
+        }
+        isLoading = false;
+    }
+
+    private void ApplySearch()
+    {
+        NavigationManager.NavigateTo($"/search?term={searchTerm}");
+    }
+
+    private void ChangePage(int newPage)
+    {
+        if (newPage > 0 && newPage <= totalPages)
+        {
+            var query = new Dictionary<string, object?> { ["page"] = newPage };
+            if(!string.IsNullOrEmpty(searchTerm)) query["term"] = searchTerm;
+            NavigationManager.NavigateTo(QueryHelpers.AddQueryString(NavigationManager.Uri, query!));
+        }
+    }
+}

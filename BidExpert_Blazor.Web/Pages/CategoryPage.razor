@@ -1,0 +1,41 @@
+@page "/category/{CategorySlug}"
+@attribute [Layout(typeof(MainLayout))]
+@inject NavigationManager NavigationManager
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+
+<PageTitle>Categoria: @(category?.Name ?? "...")</PageTitle>
+
+@if (isLoading) { <p>Carregando...</p> }
+else if (category != null)
+{
+    <div class="container mx-auto px-4 py-8">
+        <h1 class="text-3xl font-bold mb-6">@category.Name</h1>
+        @if (lots != null && lots.Any())
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach (var lot in lots)
+                {
+                    <LotCard Lot="lot" />
+                }
+            </div>
+        }
+        else { <p>Nenhum lote nesta categoria.</p> }
+    </div>
+}
+else { <p>Categoria não encontrada.</p> }
+
+@code {
+    [Parameter] public string CategorySlug { get; set; } = "";
+    private LotCategoryDto? category;
+    private List<LotDto>? lots;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        await Task.Delay(300); // Simulação
+        category = new LotCategoryDto { Id = "cat1", Name = "Imóveis", Slug = "imoveis" };
+        lots = new List<LotDto> { new LotDto { Id = "L1", Title = "Lote de Imóvel 1", Price = 100000 } };
+        isLoading = false;
+    }
+}

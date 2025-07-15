@@ -1,0 +1,67 @@
+@page "/"
+@attribute [Layout(typeof(MainLayout))]
+@inject NavigationManager NavigationManager
+@inject Services.HttpClients.Interfaces.IAuctionClientApiService AuctionService
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+
+<PageTitle>Página Inicial - BidExpert</PageTitle>
+
+<div class="space-y-12">
+    <section class="text-center py-16 bg-orange-500 text-white">
+        <h1 class="text-4xl font-bold mb-4">Bem-vindo ao BidExpert!</h1>
+        <p class="text-xl mb-8">Sua plataforma definitiva para leilões online.</p>
+        <button @onclick='() => NavigationManager.NavigateTo("/search?type=auctions")'
+            class="bg-white text-orange-600 font-semibold py-3 px-8 rounded-lg shadow-md hover:bg-gray-100">
+            Ver Leilões
+        </button>
+    </section>
+
+    <section>
+        <h2 class="text-2xl font-bold text-center mb-6">Leilões em Destaque</h2>
+        @if (featuredAuctions == null)
+        {
+            <p class="text-center">Carregando leilões...</p>
+        }
+        else if (!featuredAuctions.Any())
+        {
+            <p class="text-center">Nenhum leilão em destaque no momento.</p>
+        }
+        else
+        {
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                @foreach (var auction in featuredAuctions)
+                {
+                    <AuctionCard Auction="auction" />
+                }
+            </div>
+        }
+    </section>
+</div>
+
+@code {
+    private List<AuctionDto>? featuredAuctions;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // O endpoint GetActiveAuctions ainda não está implementado no backend,
+        // então esta chamada falhará ou retornará null.
+        // O ideal seria ter um endpoint específico para "destaques".
+        // Por enquanto, vamos simular o retorno, mas o código de chamada está aqui.
+        var result = await AuctionService.GetActiveAuctionsAsync(1, 4, null, null);
+        if (result != null && result.Items.Any())
+        {
+            featuredAuctions = result.Items;
+        }
+        else
+        {
+            // Mock data como fallback, já que o backend não está pronto
+            featuredAuctions = new List<AuctionDto>
+            {
+                new AuctionDto { Id = "1", PublicId = "AUC-1", Title = "Leilão de Veículos Usados", Description = "Grande variedade de carros e motos.", TotalLots = 15, ImageUrl = "https://placehold.co/600x400/7B1FA2/FFFFFF?text=Leilao+Veiculos" },
+                new AuctionDto { Id = "2", PublicId = "AUC-2", Title = "Leilão de Imóveis Residenciais", Description = "Casas e apartamentos em ótimas localizações.", TotalLots = 8, ImageUrl = "https://placehold.co/600x400/C2185B/FFFFFF?text=Leilao+Imoveis" },
+                new AuctionDto { Id = "3", PublicId = "AUC-3", Title = "Leilão de Eletrônicos", Description = "Smartphones, notebooks e TVs.", TotalLots = 32, ImageUrl = "https://placehold.co/600x400/00796B/FFFFFF?text=Leilao+Eletronicos" },
+                new AuctionDto { Id = "4", PublicId = "AUC-4", Title = "Leilão de Arte e Antiguidades", Description = "Peças raras e colecionáveis.", TotalLots = 50, ImageUrl = "https://placehold.co/600x400/5D4037/FFFFFF?text=Leilao+Arte" }
+            };
+        }
+    }
+}

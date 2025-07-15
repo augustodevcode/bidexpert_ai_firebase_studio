@@ -1,0 +1,44 @@
+@using BlazorLeaflet
+@using System.Drawing
+@inject NavigationManager NavigationManager
+
+<div style="height: 500px; width: 100%;">
+    <LeafletMap Map="_map" />
+</div>
+
+@code {
+    [Parameter] public List<MapMarker> Markers { get; set; } = new List<MapMarker>();
+    [Parameter] public MapOptions MapOptions { get; set; } = new MapOptions();
+
+    private Map _map = new Map(new MapOptions());
+    private Circle _circle = new Circle();
+
+    protected override void OnInitialized()
+    {
+        _map = new Map(MapOptions);
+        _map.OnInitialized += () =>
+        {
+            _map.AddLayer(new TileLayer
+            {
+                UrlTemplate = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                Attribution = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+            });
+
+            foreach (var marker in Markers)
+            {
+                var leafletMarker = new Marker(marker.Position) { Tooltip = marker.Title };
+                leafletMarker.OnMouseOver += (e) => leafletMarker.OpenTooltip();
+                leafletMarker.OnMouseOut += (e) => leafletMarker.CloseTooltip();
+                leafletMarker.OnClick += (e) => NavigationManager.NavigateTo(marker.Link);
+                _map.AddLayer(leafletMarker);
+            }
+        };
+    }
+
+    public class MapMarker
+    {
+        public LatLng Position { get; set; } = new LatLng();
+        public string Title { get; set; } = string.Empty;
+        public string Link { get; set; } = string.Empty;
+    }
+}

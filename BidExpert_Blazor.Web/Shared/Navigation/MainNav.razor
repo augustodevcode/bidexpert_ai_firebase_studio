@@ -1,0 +1,18 @@
+@inject NavigationManager NavigationManager
+
+<nav class="flex space-x-1 items-center">
+    <NavLink href="/" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100" Match="NavLinkMatch.All">Início</NavLink>
+    <NavLink href="/search?type=auctions" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100">Leilões</NavLink>
+    <div class="relative group">
+        <button class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center">
+            <span>Categorias</span>
+        </button>
+        <div class="absolute left-0 mt-0 w-auto min-w-[200px] bg-white border rounded-md shadow-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50 p-4">
+            <MegaMenuCategories />
+        </div>
+    </div>
+</nav>
+
+@code {
+    // A lógica para carregar categorias e outros itens de menu estaria aqui ou nos componentes de mega menu.
+}

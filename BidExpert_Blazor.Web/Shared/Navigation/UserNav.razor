@@ -1,0 +1,37 @@
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <div class="relative">
+            <button @onclick="ToggleDropdown" class="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-200">
+                <img class="h-8 w-8 rounded-full" src="@(context.User.FindFirst("picture")?.Value ?? "/images/avatar-placeholder.png")" alt="Avatar" />
+                <span>@context.User.Identity?.Name</span>
+            </button>
+
+            @if (isDropdownOpen)
+            {
+                <div class="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border">
+                    <NavLink class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="dashboard/overview">Painel</NavLink>
+                    <NavLink class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" href="profile">Meu Perfil</NavLink>
+                    <button @onclick="HandleLogout" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Sair</button>
+                </div>
+            }
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="flex items-center space-x-2">
+            <NavLink href="auth/login" class="px-3 py-2 text-sm font-medium text-gray-700 hover:text-orange-500">Login</NavLink>
+            <NavLink href="auth/register" class="px-3 py-2 text-sm font-medium text-white bg-orange-500 hover:bg-orange-600 rounded-md">Registrar</NavLink>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private bool isDropdownOpen = false;
+    private void ToggleDropdown() => isDropdownOpen = !isDropdownOpen;
+    private void HandleLogout()
+    {
+        isDropdownOpen = false;
+        NavigationManager.NavigateTo("auth/logout", forceLoad: true);
+    }
+}

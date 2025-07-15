@@ -1,0 +1,62 @@
+@page "/admin/users"
+@attribute [Layout(typeof(DashboardLayout))]
+@attribute [Authorize(Roles = "Admin")]
+@inject IAdminClientApiService AdminService // Um novo serviço de cliente para endpoints de admin
+
+<PageTitle>Gerenciamento de Usuários</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Gerenciamento de Usuários</MudText>
+
+<MudDataGrid T="UserProfileDataDto" ServerData="new Func<GridState<UserProfileDataDto>, Task<GridData<UserProfileDataDto>>>(ServerReload)"
+             Dense="true" Striped="true" Hover="true" Bordered="true">
+    <Columns>
+        <PropertyColumn Property="x => x.FullName" Title="Nome" Sortable="true" />
+        <PropertyColumn Property="x => x.Email" Title="Email" Sortable="true" />
+        <PropertyColumn Property="x => x.HabilitationStatus" Title="Status" Sortable="true" />
+        <PropertyColumn Property="x => x.CreatedAt" Title="Data de Criação" Format="g" Sortable="true" />
+        <TemplateColumn Title="Ações" Sortable="false">
+            <CellTemplate>
+                <MudIconButton Icon="@Icons.Material.Filled.Edit" Size="Size.Small" OnClick="@(() => EditUser(context.Item.Uid))" />
+                <MudIconButton Icon="@Icons.Material.Filled.Security" Size="Size.Small" OnClick="@(() => ChangeStatus(context.Item.Uid))" />
+            </CellTemplate>
+        </TemplateColumn>
+    </Columns>
+    <PagerContent>
+        <MudDataGridPager T="UserProfileDataDto" />
+    </PagerContent>
+</MudDataGrid>
+
+@code {
+    private async Task<GridData<UserProfileDataDto>> ServerReload(GridState<UserProfileDataDto> state)
+    {
+        // var result = await AdminService.GetUsersAsync(
+        //     state.Page,
+        //     state.PageSize,
+        //     state.SortDefinitions.FirstOrDefault()?.SortBy,
+        //     state.SortDefinitions.FirstOrDefault()?.Descending == false,
+        //     state.FilterDefinitions.FirstOrDefault()?.Value?.ToString()
+        // );
+
+        // Mock
+        await Task.Delay(100);
+        var mockUsers = new List<UserProfileDataDto> {
+            new UserProfileDataDto { Uid = "1", FullName = "Admin User", Email = "admin@example.com", HabilitationStatus = BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserHabilitationStatus.Habilitado, CreatedAt = DateTimeOffset.Now.AddDays(-10) },
+            new UserProfileDataDto { Uid = "2", FullName = "Test User 1", Email = "test1@example.com", HabilitationStatus = BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserHabilitationStatus.PendingDocuments, CreatedAt = DateTimeOffset.Now.AddDays(-5) }
+        };
+
+        return new GridData<UserProfileDataDto>() {
+            Items = mockUsers,
+            TotalItems = 2
+        };
+    }
+
+    private void EditUser(string userId)
+    {
+        // Navegar para página de edição
+    }
+
+    private void ChangeStatus(string userId)
+    {
+        // Abrir diálogo para mudar status
+    }
+}

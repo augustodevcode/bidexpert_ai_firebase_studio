@@ -1,0 +1,29 @@
+@page "/dashboard/overview"
+@layout DashboardLayout
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos.Enums
+
+<PageTitle>Visão Geral - Painel</PageTitle>
+
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Visão Geral</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-2">Lances Ativos</h2>
+        <p class="text-3xl font-bold text-orange-600">@activeBidsCount</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-2">Arremates</h2>
+        <p class="text-3xl font-bold text-green-600">@winsCount</p>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h2 class="text-lg font-semibold mb-2">Status</h2>
+        <p class="text-xl font-bold">@habilitationStatus.ToString()</p>
+    </div>
+</div>
+
+@code {
+    private int activeBidsCount = 5;
+    private int winsCount = 2;
+    private UserHabilitationStatus habilitationStatus = UserHabilitationStatus.Habilitado;
+}

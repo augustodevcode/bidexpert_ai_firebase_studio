@@ -1,0 +1,66 @@
+@page "/lots/{LotId}"
+@attribute [Layout(typeof(MainLayout))]
+@inject NavigationManager NavigationManager
+@inject Services.HttpClients.Interfaces.IAuctionClientApiService AuctionService
+@inject Services.HttpClients.Interfaces.IUserClientApiService UserApiService
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.ServiceDefaults.Dtos.Enums
+@using System.Globalization
+
+<PageTitle>Lote: @(lot?.Title ?? "...")</PageTitle>
+
+@if (isLoading) { <p>Carregando...</p> }
+else if (lot != null)
+{
+    <div class="container mx-auto px-4 py-8">
+        <div class="lg:grid lg:grid-cols-3 lg:gap-8">
+            <div class="lg:col-span-2">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <img src="@(lot.ImageUrl ?? "https://placehold.co/800x600.png")" alt="Imagem do Lote" class="w-full h-96 object-cover mb-4"/>
+                    <h1 class="text-2xl font-bold mb-2 text-orange-600">@lot.Title</h1>
+                    <p>@lot.Description</p>
+                </div>
+            </div>
+            <div class="mt-8 lg:mt-0">
+                <div class="bg-white shadow-lg rounded-lg p-6">
+                    <div class="flex justify-between items-start">
+                        <p class="text-3xl font-bold">@lot.Price.ToString("C", new CultureInfo("pt-BR"))</p>
+                        <button @onclick="ToggleFavorite" class="p-2 rounded-full text-gray-500 hover:text-red-500">
+                             <svg class="w-7 h-7 @(isFavorite ? "text-red-500" : "")" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"></path></svg>
+                        </button>
+                    </div>
+                    @if(lot.Status == LotStatus.OpenForBids)
+                    {
+                        <div class="mt-4">
+                            <input type="number" class="border p-2 w-full mb-2" placeholder="Seu lance" />
+                            <button class="w-full bg-orange-500 text-white py-2 rounded">Dar Lance</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else { <p>Lote não encontrado.</p> }
+
+@code {
+    [Parameter] public string LotId { get; set; } = "";
+    private LotDto? lot;
+    private bool isLoading = true;
+    private bool isFavorite;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        lot = await AuctionService.GetLotDetailsAsync(LotId);
+        // isFavorite = lot?.IsFavorite ?? false; // Simulação
+        isLoading = false;
+    }
+
+    private async Task ToggleFavorite()
+    {
+        if (lot == null) return;
+        isFavorite = !isFavorite;
+        await UserApiService.ToggleFavoriteStatusAsync(lot.Id);
+    }
+}

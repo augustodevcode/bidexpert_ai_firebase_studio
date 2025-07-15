@@ -1,0 +1,86 @@
+@page "/profile"
+@layout DashboardLayout
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.Web.Services.HttpClients.Interfaces
+@using BidExpert_Blazor.ApiService.Application.Commands.Users
+@inject IUserClientApiService UserProfileService
+
+<PageTitle>Meu Perfil - BidExpert</PageTitle>
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Meu Perfil</h1>
+
+@if (userProfile == null)
+{
+    <p>Carregando perfil...</p>
+}
+else
+{
+    <EditForm Model="profileUpdateModel" OnValidSubmit="HandleUpdateProfile">
+        <DataAnnotationsValidator />
+        <div class="bg-white shadow rounded-lg p-6 space-y-4">
+            <ValidationSummary />
+            @if(updateSuccess) { <p class="text-green-500">Perfil atualizado com sucesso!</p> }
+            @if(!string.IsNullOrEmpty(errorMessage)) { <p class="text-red-500">@errorMessage</p> }
+
+            <div>
+                <label class="block text-sm font-medium">Nome Completo</label>
+                <InputText @bind-Value="profileUpdateModel.FullName" class="mt-1 block w-full border border-gray-300 rounded-md p-2" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium">Email</label>
+                <InputText Value="@userProfile.Email" disabled class="mt-1 block w-full border bg-gray-100 rounded-md p-2" />
+            </div>
+            <button type="submit" disabled="@isSubmitting" class="px-4 py-2 bg-orange-600 text-white rounded-md disabled:bg-orange-300">
+                @(isSubmitting ? "Salvando..." : "Salvar Alterações")
+            </button>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private UserProfileDataDto? userProfile;
+    private UpdateUserProfileCommand profileUpdateModel = new("", null, null, null, null, null, null, null, null, null, null, null);
+    private bool isSubmitting = false;
+    private bool updateSuccess = false;
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userProfile = await UserProfileService.GetMyProfileAsync();
+        if (userProfile != null)
+        {
+            profileUpdateModel = new UpdateUserProfileCommand(
+                userProfile.FullName,
+                userProfile.Cpf,
+                userProfile.CellPhone,
+                userProfile.DateOfBirth,
+                userProfile.AvatarUrl,
+                userProfile.Street,
+                userProfile.City,
+                userProfile.State,
+                userProfile.ZipCode,
+                userProfile.Complement,
+                userProfile.Neighborhood,
+                userProfile.Number
+            );
+        }
+    }
+
+    private async Task HandleUpdateProfile()
+    {
+        isSubmitting = true;
+        updateSuccess = false;
+        errorMessage = null;
+
+        var result = await UserProfileService.UpdateMyProfileAsync(profileUpdateModel);
+        if (result)
+        {
+            updateSuccess = true;
+        }
+        else
+        {
+            errorMessage = "Falha ao atualizar o perfil.";
+        }
+        isSubmitting = false;
+    }
+}

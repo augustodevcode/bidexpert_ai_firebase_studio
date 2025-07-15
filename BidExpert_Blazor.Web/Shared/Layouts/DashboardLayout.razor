@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+@attribute [Authorize]
+
+<div class="flex">
+    <nav class="w-64 bg-gray-800 text-white min-h-screen p-4 space-y-2">
+        <h2 class="text-xl font-semibold mb-4">Meu Painel</h2>
+        <NavLink href="dashboard/overview" class="block py-2 px-3 rounded hover:bg-gray-700" Match="NavLinkMatch.All">Visão Geral</NavLink>
+        <NavLink href="profile" class="block py-2 px-3 rounded hover:bg-gray-700">Meu Perfil</NavLink>
+        <NavLink href="dashboard/bids" class="block py-2 px-3 rounded hover:bg-gray-700">Meus Lances</NavLink>
+        <NavLink href="dashboard/wins" class="block py-2 px-3 rounded hover:bg-gray-700">Meus Arremates</NavLink>
+        <NavLink href="dashboard/favorites" class="block py-2 px-3 rounded hover:bg-gray-700">Favoritos</NavLink>
+        <NavLink href="dashboard/documents" class="block py-2 px-3 rounded hover:bg-gray-700">Documentos</NavLink>
+        <NavLink href="dashboard/history" class="block py-2 px-3 rounded hover:bg-gray-700">Histórico</NavLink>
+        <NavLink href="dashboard/notifications" class="block py-2 px-3 rounded hover:bg-gray-700">Notificações</NavLink>
+    </nav>
+    <main class="flex-grow p-6 bg-gray-100">
+        @Body
+    </main>
+</div>

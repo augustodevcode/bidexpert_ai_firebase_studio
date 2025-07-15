@@ -1,0 +1,121 @@
+@page "/dashboard/documents"
+@layout DashboardLayout
+@attribute [Authorize]
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.Web.Services.HttpClients.Interfaces
+@inject IUserClientApiService UserApiService
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Meus Documentos - Painel BidExpert</PageTitle>
+
+<h1 class="text-2xl font-semibold text-gray-800 mb-6">Gerenciamento de Documentos</h1>
+
+<div class="bg-white p-6 rounded-lg shadow space-y-6">
+    <h2 class="text-xl font-semibold">Documentos Necessários</h2>
+    @if (docTypes == null) { <p>Carregando...</p> }
+    else
+    {
+        <div class="space-y-4">
+            @foreach (var docType in docTypes)
+            {
+                var userDoc = userDocuments?.FirstOrDefault(d => d.DocumentTypeId == docType.Id);
+                <div class="p-4 border rounded-md flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold">@docType.Name</p>
+                        <p class="text-sm text-gray-500">@docType.Description</p>
+                    </div>
+                    <div>
+                        @if (userDoc != null)
+                        {
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full @GetStatusClass(userDoc.Status)">@userDoc.Status.ToString()</span>
+                        }
+                        else
+                        {
+                            <span>Pendente</span>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <hr/>
+
+    <h2 class="text-xl font-semibold">Enviar Novo Documento</h2>
+    <EditForm Model="uploadModel" OnValidSubmit="HandleUpload">
+        <DataAnnotationsValidator />
+        <div class="space-y-4">
+            <div>
+                <label>Tipo de Documento</label>
+                <InputSelect @bind-Value="uploadModel.DocumentTypeId" class="w-full border p-2 rounded">
+                    <option value="">Selecione...</option>
+                    @if (docTypes != null)
+                    {
+                        @foreach (var docType in docTypes) { <option value="@docType.Id">@docType.Name</option> }
+                    }
+                </InputSelect>
+            </div>
+            <div>
+                <label>Arquivo</label>
+                <InputFile OnChange="LoadFile" class="w-full" />
+            </div>
+            <button type="submit" disabled="@isUploading" class="px-4 py-2 bg-orange-500 text-white rounded disabled:bg-orange-300">
+                @(isUploading ? "Enviando..." : "Enviar")
+            </button>
+            @if(uploadMessage != null) { <p>@uploadMessage</p> }
+        </div>
+    </EditForm>
+</div>
+
+@code {
+    private List<DocumentTypeDto>? docTypes;
+    private List<UserDocumentDto>? userDocuments;
+    private UploadModel uploadModel = new();
+    private IBrowserFile? selectedFile;
+    private bool isUploading = false;
+    private string? uploadMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        docTypes = await UserApiService.GetDocumentTypesAsync();
+        userDocuments = await UserApiService.GetMyDocumentsAsync();
+    }
+
+    private void LoadFile(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+    }
+
+    private async Task HandleUpload()
+    {
+        if (selectedFile == null || string.IsNullOrEmpty(uploadModel.DocumentTypeId))
+        {
+            uploadMessage = "Por favor, selecione um tipo de documento e um arquivo.";
+            return;
+        }
+        isUploading = true;
+        var result = await UserApiService.UploadDocumentAsync(uploadModel.DocumentTypeId, selectedFile);
+        if (result != null)
+        {
+            uploadMessage = "Upload realizado com sucesso! Aguardando análise.";
+            userDocuments = await UserApiService.GetMyDocumentsAsync(); // Recarregar
+        }
+        else
+        {
+            uploadMessage = "Falha no upload.";
+        }
+        isUploading = false;
+    }
+
+    private string GetStatusClass(BidExpert_Blazor.ServiceDefaults.Dtos.Enums.UserDocumentStatus status)
+    {
+        return status switch {
+            _ => "bg-gray-100 text-gray-800"
+        };
+    }
+
+    public class UploadModel
+    {
+        public string? DocumentTypeId { get; set; }
+    }
+}

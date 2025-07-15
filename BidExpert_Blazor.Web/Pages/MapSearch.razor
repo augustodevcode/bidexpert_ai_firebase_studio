@@ -1,0 +1,55 @@
+@page "/map-search"
+@attribute [Layout(typeof(MainLayout))]
+@inject Services.HttpClients.Interfaces.IAuctionClientApiService AuctionService
+@using BidExpert_Blazor.Web.Components
+@using BlazorLeaflet
+@using System.Drawing
+
+<PageTitle>Busca por Mapa - BidExpert</PageTitle>
+
+<h1 class="text-3xl font-bold mb-6">Busca por Mapa</h1>
+
+@if (mapMarkers == null)
+{
+    <p>Carregando dados do mapa...</p>
+}
+else
+{
+    <MapView Markers="mapMarkers" MapOptions="mapOptions" />
+}
+
+@code {
+    private List<MapView.MapMarker>? mapMarkers;
+    private MapOptions mapOptions = new MapOptions()
+    {
+        Center = new LatLng(-15.783333, -47.866667), // Brasília
+        Zoom = 4
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Usar o serviço para buscar todos os lotes/leilões que têm coordenadas
+        // var result = await AuctionService.GetActiveAuctionsAsync(1, 1000, null, null); // Buscar um grande número para simular "todos"
+        // if (result != null && result.Items.Any())
+        // {
+        //     mapMarkers = result.Items
+        //         .Where(a => a.Lots != null && a.Lots.Any(l => l.Latitude.HasValue && l.Longitude.HasValue))
+        //         .SelectMany(a => a.Lots)
+        //         .Select(l => new MapView.MapMarker
+        //         {
+        //             Position = new LatLng(l.Latitude!.Value, l.Longitude!.Value),
+        //             Title = l.Title,
+        //             Link = $"/lots/{l.PublicId ?? l.Id}"
+        //         }).ToList();
+        // }
+
+        // Mock data
+        await Task.Delay(100);
+        mapMarkers = new List<MapView.MapMarker>
+        {
+            new MapView.MapMarker { Position = new LatLng(-23.5505, -46.6333), Title = "Lote em São Paulo", Link = "/lots/1" },
+            new MapView.MapMarker { Position = new LatLng(-22.9068, -43.1729), Title = "Lote no Rio de Janeiro", Link = "/lots/2" },
+            new MapView.MapMarker { Position = new LatLng(-12.9714, -38.5014), Title = "Lote em Salvador", Link = "/lots/3" }
+        };
+    }
+}

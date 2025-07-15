@@ -1,0 +1,71 @@
+@page "/auth/login"
+@layout EmptyLayout
+@inject NavigationManager NavigationManager
+@inject BidExpert_Blazor.Web.Services.HttpClients.Interfaces.IAuthClientApiService AuthService
+// @inject CustomAuthenticationStateProvider MyAuthenticationStateProvider // Simulação
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Login - BidExpert</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4">
+    <div class="max-w-md w-full space-y-8 bg-white p-10 rounded-xl shadow-lg">
+        <div><h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">Acesse sua conta</h2></div>
+
+        <EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+            <DataAnnotationsValidator />
+
+            @if (!string.IsNullOrWhiteSpace(errorMessage))
+            {
+                <div class="bg-red-50 text-red-700 p-3 rounded-md text-sm"><ValidationSummary /> @errorMessage</div>
+            }
+
+            <div class="rounded-md shadow-sm -space-y-px">
+                <div><InputText @bind-Value="loginModel.Email" type="email" required class="appearance-none rounded-none relative block w-full px-3 py-2 border" placeholder="Email" /></div>
+                <div><InputText @bind-Value="loginModel.Password" type="password" required class="appearance-none rounded-none relative block w-full px-3 py-2 border" placeholder="Senha" /></div>
+            </div>
+
+            <div>
+                <button type="submit" disabled="@isSubmitting" class="w-full flex justify-center py-2 px-4 border mt-6 text-sm font-medium rounded-md text-white bg-orange-600 hover:bg-orange-700 disabled:bg-orange-300">
+                    @if(isSubmitting) { <span>Carregando...</span> } else { <span>Entrar</span> }
+                </button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private LoginModel loginModel = new LoginModel();
+    private string? errorMessage;
+    private bool isSubmitting = false;
+
+    [SupplyParameterFromQuery] public string? ReturnUrl { get; set; }
+
+    private async Task HandleLogin()
+    {
+        isSubmitting = true;
+        errorMessage = null;
+
+        var result = await AuthService.LoginAsync(new LoginRequestDto(loginModel.Email, loginModel.Password));
+
+        if (result.Succeeded && !string.IsNullOrEmpty(result.Token))
+        {
+            // Em um app real, o token seria armazenado (ex: localStorage) e o AuthStateProvider notificado
+            // await MyAuthenticationStateProvider.MarkUserAsAuthenticated(result.Token);
+            Console.WriteLine("Login successful. Token: " + result.Token);
+            NavigationManager.NavigateTo(ReturnUrl ?? "/");
+        }
+        else
+        {
+            errorMessage = result.Message ?? result.Errors?.FirstOrDefault() ?? "Falha no login.";
+        }
+        isSubmitting = false;
+    }
+
+    public class LoginModel
+    {
+        [Required(ErrorMessage = "Email é obrigatório")][EmailAddress(ErrorMessage = "Email inválido")]
+        public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Senha é obrigatória")]
+        public string Password { get; set; } = "";
+    }
+}

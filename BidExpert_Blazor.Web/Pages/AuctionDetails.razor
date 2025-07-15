@@ -1,0 +1,55 @@
+@page "/auctions/{AuctionId}"
+@attribute [Layout(typeof(MainLayout))]
+@inject NavigationManager NavigationManager
+@inject Services.HttpClients.Interfaces.IAuctionClientApiService AuctionService
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+@using BidExpert_Blazor.ServiceDefaults.Dtos.Enums
+
+<PageTitle>Leilão: @(auction?.Title ?? "Carregando...")</PageTitle>
+
+@if (isLoading)
+{
+    <div class="text-center py-10">
+        <p class="text-lg text-gray-500">Carregando detalhes do leilão...</p>
+    </div>
+}
+else if (auction != null)
+{
+    <div class="container mx-auto px-4 py-8">
+        <div class="bg-white shadow-lg rounded-lg p-6">
+            <h1 class="text-3xl font-bold mb-2 text-orange-600">@auction.Title</h1>
+            <p class="text-gray-600 mb-4">@auction.Description</p>
+            <h2 class="text-xl font-semibold mb-3">Lotes (@auction.TotalLots)</h2>
+            @if (auction.Lots != null && auction.Lots.Any())
+            {
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach (var lot in auction.Lots)
+                    {
+                        <LotCard Lot="lot" />
+                    }
+                </div>
+            }
+            else { <p>Nenhum lote neste leilão.</p> }
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center py-10">
+        <h1 class="text-2xl font-semibold text-red-600 mb-4">Leilão Não Encontrado</h1>
+        <p class="text-gray-600">O leilão que você está procurando não foi encontrado.</p>
+    </div>
+}
+
+@code {
+    [Parameter] public string AuctionId { get; set; } = "";
+    private AuctionDto? auction;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        isLoading = true;
+        auction = await AuctionService.GetAuctionDetailsAsync(AuctionId);
+        isLoading = false;
+    }
+}

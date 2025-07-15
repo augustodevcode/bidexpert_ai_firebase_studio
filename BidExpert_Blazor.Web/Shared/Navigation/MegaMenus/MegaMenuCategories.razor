@@ -1,0 +1,42 @@
+@using BidExpert_Blazor.ServiceDefaults.Dtos
+
+@if (Categories == null || !Categories.Any())
+{
+    <div class="p-4 text-sm text-gray-500">Carregando categorias...</div>
+}
+else
+{
+    <div class="grid grid-cols-[260px_1fr] md:w-[700px] gap-0 p-0">
+        <div class="bg-white border-r p-3">
+            <h4 class="px-3 py-2 text-md font-semibold text-gray-800 mb-1">Categorias</h4>
+            <ul class="space-y-0.5">
+                @foreach (var category in Categories)
+                {
+                    <li @onmouseenter="() => HoveredCategory = category">
+                        <NavLink href="@($"/category/{category.Slug}")" class="block p-3 text-sm hover:bg-orange-50">@category.Name</NavLink>
+                    </li>
+                }
+            </ul>
+        </div>
+        <div class="p-6 bg-gray-50/50">
+            @if (HoveredCategory != null)
+            {
+                <h3 class="text-xl font-bold text-orange-600 mb-1">@HoveredCategory.Name</h3>
+                <p class="text-xs text-gray-500 mb-3">@HoveredCategory.Description</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public List<LotCategoryDto> Categories { get; set; } = new();
+    private LotCategoryDto? HoveredCategory;
+
+    protected override void OnParametersSet()
+    {
+        if (HoveredCategory == null && Categories.Any())
+        {
+            HoveredCategory = Categories.First();
+        }
+    }
+}

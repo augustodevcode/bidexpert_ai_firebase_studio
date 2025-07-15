@@ -1,0 +1,22 @@
+@inject NavigationManager NavigationManager
+
+<header class="sticky top-0 z-50 w-full shadow-md bg-white">
+    <div class="container mx-auto px-4 flex h-20 items-center justify-between">
+        <div class="flex items-center">
+            <NavLink href="/" class="mr-4">
+                <span class="font-bold text-xl sm:text-3xl text-orange-600">BidExpert</span>
+            </NavLink>
+        </div>
+        <div class="hidden md:flex flex-1 justify-center items-center px-4">
+            <input type="search" placeholder="Buscar..." class="h-10 px-3 rounded-md border border-gray-300 w-full max-w-xl" />
+        </div>
+        <div class="flex items-center space-x-1">
+            <UserNav />
+        </div>
+    </div>
+    <div class="border-b bg-white text-gray-700 hidden md:block">
+        <div class="container mx-auto px-4 flex h-12 items-center justify-center">
+            <MainNav />
+        </div>
+    </div>
+</header>
