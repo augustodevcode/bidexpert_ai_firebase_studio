@@ -1,7 +1,7 @@
 
 -- MySQL Schema for BidExpert
 -- Version 2.0 - With all tables and correct creation order
--- All column names converted to camelCase
+-- Naming Convention: All table and column names MUST use camelCase.
 
 -- =================================================================
 -- 1. TABLES WITH NO FOREIGN KEY DEPENDENCIES (BASE TABLES)

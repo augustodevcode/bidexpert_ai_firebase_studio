@@ -2,6 +2,8 @@
 
 This document outlines the collections and the data structure for the BidExpert project using Firestore.
 
+**Naming Convention**: All collection names and field names MUST follow the **camelCase** convention (e.g., `judicialProcesses`, `auctionDate`).
+
 ## Collections
 
 -   `auctions`: Stores all auction events.
@@ -11,18 +13,18 @@ This document outlines the collections and the data structure for the BidExpert 
 -   `roles`: Defines user roles and their associated permissions.
 -   `sellers`: Profiles for consignors/sellers.
 -   `auctioneers`: Profiles for auctioneers.
--   `lot_categories`: Main categories for lots (e.g., Vehicles, Real Estate).
+-   `lotCategories`: Main categories for lots (e.g., Vehicles, Real Estate).
 -   `subcategories`: Sub-categories nested under main categories.
 -   `bids`: A log of all bids placed on lots.
 -   `userWins`: Records of lots won by users.
 -   `notifications`: User-specific notifications.
 -   `contactMessages`: Messages sent through the public contact form.
--   `user_documents`: Uploaded documents for user habilitation.
+-   `userDocuments`: Uploaded documents for user habilitation.
 -   `mediaItems`: The central media library for all uploaded images and files.
 -   `settings`: Global platform settings, stored in a single document named `global`.
--   `judicial_processes`: Stores details of judicial processes linked to auctions/bens.
--   `judicial_districts`: (Comarcas)
--   `judicial_branches`: (Varas)
+-   `judicialProcesses`: Stores details of judicial processes linked to auctions/bens.
+-   `judicialDistricts`: (Comarcas)
+-   `judicialBranches`: (Varas)
 -   `courts`: (Tribunais)
 -   `states`: List of Brazilian states.
 -   `cities`: List of Brazilian cities, linked to states.
@@ -31,7 +33,7 @@ This document outlines the collections and the data structure for the BidExpert 
 
 ## Data Structures (Fields)
 
-All documents will have an `id` (the Firestore Document ID) and often a `createdAt` and `updatedAt` timestamp. Fields will follow **camelCase** naming convention.
+All documents will have an `id` (the Firestore Document ID) and often a `createdAt` and `updatedAt` timestamp. All fields MUST follow **camelCase** naming convention.
 
 ### `auctions` document
 - `title` (string)
@@ -52,7 +54,7 @@ All documents will have an `id` (the Firestore Document ID) and often a `created
 - `price` (number, current bid price)
 - `initialPrice` (number)
 - `status` (string: e.g., 'ABERTO_PARA_LANCES', 'VENDIDO')
-- `categoryId` (string, ref to `lot_categories`)
+- `categoryId` (string, ref to `lotCategories`)
 - `bemIds` (array of strings, refs to `bens`)
 - `...and other lot-specific fields`
 

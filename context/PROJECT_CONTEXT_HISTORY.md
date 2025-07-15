@@ -24,6 +24,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Database: Firestore (primary), MySQL (development alternative)
 
 **Style Guidelines (from PRD):**
+*   **Naming Convention**: All database fields, collection names, and object properties in the code MUST use **camelCase** (e.g., `auctionDate`, `totalLots`).
 *   Icons: Clean, line-based (`lucide-react`).
 *   Animations: Subtle transitions and hover effects.
 *   Color Scheme (Theme in `globals.css` should reflect this):
