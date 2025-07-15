@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
@@ -137,15 +138,28 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async getLots(auctionId?: string): Promise<Lot[]> {
         console.log(`[FirestoreAdapter] LOG: getLots called for auctionId: ${auctionId || 'all'}`);
         let query: FirebaseFirestore.Query = this.db.collection('lots');
+        
         if (auctionId) {
             query = query.where('auctionId', '==', auctionId).orderBy('number', 'asc');
         } else {
-            // Default sort for all lots if no specific auction is requested
             query = query.orderBy('createdAt', 'desc');
         }
-        const snapshot = await query.get();
-        console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
-        return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        
+        try {
+            const snapshot = await query.get();
+            console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
+            return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        } catch (error: any) {
+            // Error code 5 is NOT_FOUND, which happens if the collection does not exist (is empty).
+            // In this case, we can safely return an empty array.
+            if (error.code === 5) {
+                console.warn(`[FirestoreAdapter] WARN: Collection 'lots' not found or empty. Returning empty array. This is normal if the DB is not seeded.`);
+                return [];
+            }
+            // For other errors, we should still throw them to be handled by the caller.
+            console.error(`[FirestoreAdapter] FATAL: Error fetching lots:`, error);
+            throw error;
+        }
     }
 
     async getLot(id: string): Promise<Lot | null> {
@@ -579,3 +593,5 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
 }
+
+    
