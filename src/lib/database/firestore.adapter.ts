@@ -150,13 +150,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
             console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
             return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
         } catch (error: any) {
-            // Error code 5 is NOT_FOUND, which happens if the collection does not exist (is empty).
-            // In this case, we can safely return an empty array.
-            if (error.code === 5) {
+            if (error.code === 5) { // NOT_FOUND
                 console.warn(`[FirestoreAdapter] WARN: Collection 'lots' not found or empty. Returning empty array. This is normal if the DB is not seeded.`);
                 return [];
             }
-            // For other errors, we should still throw them to be handled by the caller.
             console.error(`[FirestoreAdapter] FATAL: Error fetching lots:`, error);
             throw error;
         }
@@ -186,10 +183,30 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async getAuctions(): Promise<Auction[]> {
         console.log('[FirestoreAdapter] LOG: getAuctions optimized called.');
-        const [auctionsSnapshot, lotsSnapshot] = await Promise.all([
-            this.db.collection('auctions').orderBy('auctionDate', 'desc').get(),
-            this.db.collection('lots').orderBy('number', 'asc').get()
-        ]);
+        let auctionsSnapshot: FirebaseFirestore.QuerySnapshot;
+        let lotsSnapshot: FirebaseFirestore.QuerySnapshot;
+
+        try {
+            auctionsSnapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
+        } catch (error: any) {
+            if (error.code === 5) { // NOT_FOUND
+                console.warn(`[FirestoreAdapter] WARN: Collection 'auctions' not found. Returning empty array.`);
+                return [];
+            }
+            throw error;
+        }
+
+        try {
+            // No orderBy('number') here as it's not useful globally and requires an index.
+            lotsSnapshot = await this.db.collection('lots').get();
+        } catch (error: any) {
+            if (error.code === 5) { // NOT_FOUND
+                console.warn(`[FirestoreAdapter] WARN: Collection 'lots' not found during auction assembly. Treating as empty.`);
+                lotsSnapshot = { docs: [], empty: true } as any; // Mock an empty snapshot
+            } else {
+                throw error;
+            }
+        }
         
         const allLots = lotsSnapshot.docs.map(doc => this.toJSON<Lot>(doc));
         const lotsByAuctionId = new Map<string, Lot[]>();
@@ -204,7 +221,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
         const auctions = auctionsSnapshot.docs.map(doc => {
             const auction = this.toJSON<Auction>(doc);
             const relatedLots = lotsByAuctionId.get(auction.id) || [];
-            auction.lots = relatedLots;
+            // Sort lots by number here, after they've been grouped.
+            auction.lots = relatedLots.sort((a,b) => (parseInt(a.number || '0') || 0) - (parseInt(b.number || '0') || 0));
             auction.totalLots = relatedLots.length;
             return auction;
         });
