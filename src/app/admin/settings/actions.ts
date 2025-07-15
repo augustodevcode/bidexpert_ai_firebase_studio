@@ -16,7 +16,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-    const db = await getDatabaseAdapter();
+    const db = getDatabaseAdapter();
     const result = await db.updatePlatformSettings(data);
     if (result.success) {
       // Revalidate all relevant paths that might use these settings
@@ -26,7 +26,7 @@ export async function updatePlatformSettings(data: Partial<PlatformSettings>): P
 }
 
 export async function resetSampleDataAction(): Promise<{ success: boolean; message: string; }> {
-    const db = await getDatabaseAdapter();
+    const db = getDatabaseAdapter();
     // @ts-ignore
     if (typeof db.resetSampleData !== 'function') {
         return { success: false, message: 'Ação não suportada pelo adaptador de banco de dados atual.' };
@@ -58,7 +58,7 @@ export async function runFullSeedAction(): Promise<{ success: boolean; message: 
 
 
 export async function dropAllTablesAction(): Promise<{ success: boolean; message: string; }> {
-    const db = await getDatabaseAdapter();
+    const db = getDatabaseAdapter();
     // @ts-ignore
     if (typeof db.dropAllTables !== 'function') {
         return { success: false, message: 'Ação não suportada pelo adaptador de banco de dados atual.' };

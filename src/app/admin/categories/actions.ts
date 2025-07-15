@@ -11,7 +11,8 @@ export async function getLotCategories(): Promise<LotCategory[]> {
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-    const categories = await getLotCategories();
+    const db = getDatabaseAdapter();
+    const categories = await db.getLotCategories();
     return categories.find(c => c.id === id) || null;
 }
 
