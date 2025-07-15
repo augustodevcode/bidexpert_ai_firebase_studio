@@ -1,14 +1,11 @@
 // src/lib/database/index.ts
 /**
  * @fileoverview Este é o principal ponto de entrada para a lógica de banco de dados do lado do servidor.
- * Ele garante que qualquer módulo que o importe seja executado apenas no servidor.
  */
-import 'server-only';
 import { FirestoreAdapter } from './firestore.adapter';
 import type { DatabaseAdapter } from '@/types';
 
 let adapterInstance: DatabaseAdapter | null = null;
-let currentDbSystem: string | null = null;
 
 /**
  * Retorna uma instância singleton do adaptador de banco de dados Firestore.
