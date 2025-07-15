@@ -36,8 +36,8 @@ export const AuctionSchema = z.object({
   auctionType: z.enum(['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT']).optional(),
   auctionStages: z.array(AuctionStageSchema).optional(),
   biddingSettings: BiddingSettingsSchema.optional(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: z.union([z.date(), z.string()]).optional(),
+  updatedAt: z.union([z.date(), z.string()]).optional(),
   // Add other fields as needed, matching the types/index.ts Auction interface
 });
 export type AuctionZod = z.infer<typeof AuctionSchema>;
@@ -60,8 +60,8 @@ export const LotSchema = z.object({
     imageMediaId: z.string().optional().nullable(),
     categoryId: z.string().optional(),
     bemIds: z.array(z.string()).optional(),
-    createdAt: z.union([z.date(), z.string()]),
-    updatedAt: z.union([z.date(), z.string()]),
+    createdAt: z.union([z.date(), z.string()]).optional(),
+    updatedAt: z.union([z.date(), z.string()]).optional(),
      // Add other fields as needed
 });
 export type LotZod = z.infer<typeof LotSchema>;
@@ -76,8 +76,8 @@ export const UserProfileDataSchema = z.object({
     habilitationStatus: z.enum(userHabilitationStatusValues),
     accountType: z.enum(accountTypeValues),
     roleIds: z.array(z.string()),
-    createdAt: z.union([z.date(), z.string()]),
-    updatedAt: z.union([z.date(), z.string()]),
+    createdAt: z.union([z.date(), z.string()]).optional(),
+    updatedAt: z.union([z.date(), z.string()]).optional(),
     // Add other fields from UserProfileData interface
 });
 export type UserProfileDataZod = z.infer<typeof UserProfileDataSchema>;
@@ -89,8 +89,8 @@ export const SellerProfileInfoSchema = z.object({
   slug: z.string(),
   name: z.string(),
   isJudicial: z.boolean().default(false),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: z.union([z.date(), z.string()]).optional(),
+  updatedAt: z.union([z.date(), z.string()]).optional(),
   // Add other fields
 });
 export type SellerProfileInfoZod = z.infer<typeof SellerProfileInfoSchema>;
@@ -102,8 +102,8 @@ export const AuctioneerProfileInfoSchema = z.object({
   publicId: z.string(),
   slug: z.string(),
   name: z.string(),
-  createdAt: z.union([z.date(), z.string()]),
-  updatedAt: z.union([z.date(), z.string()]),
+  createdAt: z.union([z.date(), z.string()]).optional(),
+  updatedAt: z.union([z.date(), z.string()]).optional(),
   // Add other fields
 });
 export type AuctioneerProfileInfoZod = z.infer<typeof AuctioneerProfileInfoSchema>;
