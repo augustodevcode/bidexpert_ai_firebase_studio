@@ -10,9 +10,8 @@ import {
     sampleCourtsWithRelations,
     sampleUsers,
 } from '@/lib/sample-data';
-import type { DatabaseAdapter, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch } from '@/types';
+import type { DatabaseAdapter } from '@/types';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
 async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], parentDocPath?: string) {
     if (!data || data.length === 0) {
@@ -59,16 +58,18 @@ async function seedEssentialData() {
         for (const courtData of sampleCourtsWithRelations) {
             const { districts, ...court } = courtData;
             await seedCollection(db, 'courts', [court]);
-            if (districts && districts.length > 0) {
-                const districtsToSeed = districts.map(({branches, ...d}) => ({...d, courtId: court.id}));
-                await seedCollection(db, 'judicialDistricts', districtsToSeed, `courts/${court.id}`);
 
-                for (const district of districts) {
-                    if (district.branches && district.branches.length > 0) {
-                         const branchesToSeed = district.branches.map(b => ({...b, districtId: district.id}));
-                         await seedCollection(db, 'judicialBranches', branchesToSeed, `courts/${court.id}/judicialDistricts/${district.id}`);
+            if (districts && districts.length > 0) {
+                 for (const districtData of districts) {
+                    const { branches, ...district } = districtData;
+                    const districtWithCourtId = { ...district, courtId: court.id };
+                    await seedCollection(db, 'judicialDistricts', [districtWithCourtId]);
+
+                    if (branches && branches.length > 0) {
+                        const branchesWithDistrictId = branches.map(b => ({...b, districtId: district.id}));
+                        await seedCollection(db, 'judicialBranches', branchesWithDistrictId);
                     }
-                }
+                 }
             }
         }
         
@@ -113,7 +114,8 @@ async function initializeDatabase() {
 
   await seedEssentialData();
   
-  console.log("✅ [DB INIT] LOG: Initialization script finished.");
+  console.log("\n✅ [DB INIT] LOG: Initialization script finished successfully.");
+  console.log("💡 [DB INIT] NEXT STEP: To populate with demo data (auctions, lots, etc.), run 'npm run db:seed' in a separate terminal.\n");
 }
 
 initializeDatabase().catch(error => {
