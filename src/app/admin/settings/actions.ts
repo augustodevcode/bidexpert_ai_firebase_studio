@@ -4,7 +4,7 @@
 import { getDatabaseAdapter } from '@/lib/database/index';
 import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { fetchPlatformSettings as fetchSettingsQuery } from '@/lib/data-queries';
+import { getPlatformSettings as fetchSettingsQuery } from '@/lib/data-queries';
 import { exec } from 'child_process';
 import util from 'util';
 
