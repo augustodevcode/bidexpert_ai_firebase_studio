@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Auto-login for admin in development if no session exists
       if (!user && process.env.NODE_ENV === 'development') {
-        console.log("Nenhuma sessão ativa em DEV, tentando auto-login do admin.");
+        console.log("[AuthContext] DEV MODE: No active session. Attempting virtual admin auto-login.");
         user = await loginAdminForDevelopment();
       }
 

@@ -1,3 +1,4 @@
+
 // src/lib/firebase/admin.ts
 import admin from 'firebase-admin';
 import type { App } from 'firebase-admin/app';
@@ -6,7 +7,7 @@ import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
 import { getAuth, type Auth } from 'firebase-admin/auth';
 
-console.log("[firebase/admin.ts] LOG: File loaded.");
+console.log("[firebase/admin.ts] LOG: Module loaded.");
 
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
@@ -17,24 +18,20 @@ interface FirebaseAdminInstances {
   auth: Auth;
 }
 
-let instances: FirebaseAdminInstances | undefined;
-
+/**
+ * Initializes the Firebase Admin SDK and returns the instances.
+ * This function ensures that initialization happens only once.
+ */
 function initializeAdminSDK(): FirebaseAdminInstances {
   if (getApps().length > 0) {
-      const app = getApp();
-      if (instances) {
-        console.log("[firebase/admin.ts] LOG: Returning existing Firebase Admin instances.");
-        return instances;
-      }
-      const db = getFirestore(app);
-      db.settings({ ignoreUndefinedProperties: true });
-      instances = {
-          app,
-          db,
-          storage: getStorage(app),
-          auth: getAuth(app),
-      };
-      return instances;
+    console.log("[Admin SDK] LOG: Using existing Firebase Admin app.");
+    const app = getApp();
+    return {
+      app,
+      db: getFirestore(app),
+      storage: getStorage(app),
+      auth: getAuth(app),
+    };
   }
 
   try {
@@ -43,23 +40,23 @@ function initializeAdminSDK(): FirebaseAdminInstances {
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
     const db = getFirestore(app);
-    // This setting is crucial for the emulator to work correctly with composite indexes.
+    // This setting is crucial and must only be called once.
     db.settings({ ignoreUndefinedProperties: true });
     
     console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
-    instances = {
+    
+    return {
         app,
         db,
         storage: getStorage(app),
         auth: getAuth(app),
     };
-    return instances;
   } catch (error: any) {
     console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
     throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
   }
 }
 
-// Initialize and export the singletons. All other files will import these.
+// Initialize and export the singletons immediately when the module is first imported.
 const { app, db, storage, auth } = initializeAdminSDK();
 export { app, db, storage, auth };

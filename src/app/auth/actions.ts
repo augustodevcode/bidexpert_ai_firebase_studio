@@ -100,23 +100,26 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const allRoles = await db.getRoles();
         const adminRole = allRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
         const consignorRole = allRoles.find(r => r.nameNormalized === 'CONSIGNOR');
-        const analystRole = allRoles.find(r => r.nameNormalized === 'AUCTION_ANALYST');
+        // Adicionando um perfil genérico de usuário também para testes
         const userRole = allRoles.find(r => r.nameNormalized === 'USER');
         
         const allSellers = await db.getSellers();
-        const firstSeller = allSellers[0];
+        const firstSeller = allSellers.length > 0 ? allSellers[0] : null;
+
+        const roleIds = [adminRole?.id, consignorRole?.id, userRole?.id].filter((id): id is string => !!id);
+        const roleNames = [adminRole?.name, consignorRole?.name, userRole?.name].filter((name): name is string => !!name);
 
         // Construct a virtual superuser profile
         const virtualAdminProfile: UserProfileWithPermissions = {
             id: 'admin-bidexpert-platform-001',
-            uid: 'admin-bidexpert-platform-001',
+            uid: 'jdbCtYtSceMeC5SuLh06JoohwYY2',
             email: 'admin@bidexpert.com.br',
             fullName: 'Admin de Desenvolvimento',
             habilitationStatus: 'HABILITADO',
             accountType: 'PHYSICAL',
-            sellerId: firstSeller?.id || 'seller-banco-bradesco-s-a', // Assign a default sellerId
-            roleIds: [adminRole?.id, consignorRole?.id, analystRole?.id, userRole?.id].filter((id): id is string => !!id),
-            roleNames: [adminRole?.name, consignorRole?.name, analystRole?.name, userRole?.name].filter((name): name is string => !!name),
+            sellerId: firstSeller?.id, // Link to a real seller from sample data if available
+            roleIds: roleIds,
+            roleNames: roleNames,
             permissions: ['manage_all'], // Overwrite permissions with manage_all for full access
             createdAt: new Date(),
             updatedAt: new Date(),
