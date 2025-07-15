@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -33,7 +34,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+const SidebarFilters = dynamic(() => import('../../components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
@@ -519,7 +520,7 @@ export default function SearchPage() {
       </form>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block sticky top-24 h-fit">
+        <aside className="hidden md:block">
              <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}

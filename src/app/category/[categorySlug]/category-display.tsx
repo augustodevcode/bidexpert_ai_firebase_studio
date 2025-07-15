@@ -26,7 +26,7 @@ import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getCategoryAssets } from '@/lib/sample-data-helpers';
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+const SidebarFilters = dynamic(() => import('../../../components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });

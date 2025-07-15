@@ -29,7 +29,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+const SidebarFilters = dynamic(() => import('../../../components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
