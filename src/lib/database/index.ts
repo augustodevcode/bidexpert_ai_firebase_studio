@@ -4,8 +4,10 @@
  */
 import { FirestoreAdapter } from './firestore.adapter';
 import type { DatabaseAdapter } from '@/types';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
 
 let adapterInstance: DatabaseAdapter | null = null;
+const { db } = ensureAdminInitialized(); // Garante a inicialização única e centralizada.
 
 /**
  * Retorna uma instância singleton do adaptador de banco de dados Firestore.
@@ -19,10 +21,10 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
       console.warn(`[getDatabaseAdapter] WARNING: Environment is set to use '${dbSystem}', but the application has been locked to 'FIRESTORE' for stability. Using FirestoreAdapter.`);
   }
 
-  // Sempre retorna uma nova instância do FirestoreAdapter para garantir a inicialização correta em diferentes contextos (scripts, server actions).
-  // O SDK Admin do Firebase gerencia o singleton da conexão subjacente.
-  console.log(`[getDatabaseAdapter] LOG: Initializing new FirestoreAdapter instance.`);
-  adapterInstance = new FirestoreAdapter();
+  if (!adapterInstance) {
+    console.log(`[getDatabaseAdapter] LOG: Creating new FirestoreAdapter instance.`);
+    adapterInstance = new FirestoreAdapter(db);
+  }
   
   return adapterInstance;
 };

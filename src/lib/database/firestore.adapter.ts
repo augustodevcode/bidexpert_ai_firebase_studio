@@ -1,5 +1,4 @@
 // src/lib/database/firestore.adapter.ts
-import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { firestore } from 'firebase-admin';
@@ -11,16 +10,15 @@ const AdminFieldValue = firestore.FieldValue;
 export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
 
-    constructor() {
+    constructor(dbInstance: FirebaseFirestore.Firestore) {
         console.log('[FirestoreAdapter] LOG: Constructor called.');
-        const { db, error } = ensureAdminInitialized();
-        if (error || !db) {
-            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message}`;
+        if (!dbInstance) {
+            const errorMessage = `Instância do Firestore não foi fornecida ao construtor do FirestoreAdapter.`;
             console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
             throw new Error(errorMessage);
         }
-        this.db = db;
-        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
+        this.db = dbInstance;
+        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso com a instância do DB fornecida.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -541,7 +539,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { 
-        const result = await this.genericCreate('judicialDistricts', data);
+        const result = await this.genericCreate(`courts/${data.courtId}/judicialDistricts`, data);
         return { ...result, districtId: result.id };
     }
 
@@ -553,7 +551,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
-        const result = await this.genericCreate('judicialBranches', data);
+        const result = await this.genericCreate(`judicialDistricts/${data.districtId}/judicialBranches`, data);
         return { ...result, branchId: result.id };
     }
     

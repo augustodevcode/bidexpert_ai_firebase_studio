@@ -9,19 +9,15 @@ console.log("[firebase/admin.ts] LOG: File loaded.");
 
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
-let adminApp: App | undefined;
-
 function initializeAdminApp(): App {
   console.log("[firebase/admin.ts] LOG: initializeAdminApp() called.");
+  
   if (getApps().length > 0) {
-    console.log("[firebase/admin.ts] LOG: Found existing Firebase Admin app.");
+    console.log("[firebase/admin.ts] LOG: Found existing Firebase Admin app. Returning it.");
     return getApp();
   }
 
   try {
-    // Rely on Application Default Credentials.
-    // This is the standard way for server-side environments like App Hosting.
-    // It automatically finds the credentials from the environment.
     console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
     const app = initializeApp({
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
@@ -34,28 +30,25 @@ function initializeAdminApp(): App {
   }
 }
 
+let adminAppInstance: App | undefined;
+
 export function ensureAdminInitialized(): {
   app: App;
   db: Firestore;
   storage: Storage;
-  error?: null;
-  alreadyInitialized: boolean;
 } {
-  console.log("[firebase/admin.ts] LOG: ensureAdminInitialized() called.");
-  const alreadyInitialized = getApps().length > 0;
-  
-  if (!adminApp) {
-    adminApp = initializeAdminApp();
+  if (!adminAppInstance) {
+    adminAppInstance = initializeAdminApp();
   }
   
   return {
-    app: adminApp,
-    db: getFirestore(adminApp),
-    storage: getStorage(adminApp),
-    alreadyInitialized,
+    app: adminAppInstance,
+    db: getFirestore(adminAppInstance),
+    storage: getStorage(adminAppInstance),
   };
 }
 
-// For compatibility with legacy code that might be using this named export.
+// For compatibility with any legacy code that might still be importing this named export.
+// This ensures it's initialized through the central function.
 const { db } = ensureAdminInitialized();
 export { db };
