@@ -4,7 +4,6 @@
 import { getDatabaseAdapter } from '@/lib/database/index';
 import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { getPlatformSettings as fetchSettingsQuery } from '@/lib/data-queries';
 import { exec } from 'child_process';
 import util from 'util';
 
@@ -12,7 +11,8 @@ const execPromise = util.promisify(exec);
 
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
-  return fetchSettingsQuery();
+  const db = getDatabaseAdapter();
+  return db.getPlatformSettings();
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {

@@ -3,11 +3,11 @@
 
 import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { fetchAuctions, fetchAuctioneers } from '@/lib/data-queries';
 import { getDatabaseAdapter } from '@/lib/database';
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  return fetchAuctioneers();
+  const db = getDatabaseAdapter();
+  return db.getAuctioneers();
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
@@ -23,21 +23,17 @@ export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo |
 
 export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
     const db = getDatabaseAdapter();
-    // @ts-ignore
-    if (db.getAuctioneerBySlug) {
-      // @ts-ignore
-      return db.getAuctioneerBySlug(slugOrId);
-    }
     const auctioneers = await db.getAuctioneers();
     return auctioneers.find(a => a.slug === slugOrId || a.id === slugOrId || a.publicId === slugOrId) || null;
 }
 
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const allAuctions = await fetchAuctions();
+    const db = getDatabaseAdapter();
+    const allAuctions = await db.getAuctions();
     const auctioneer = await getAuctioneerBySlug(auctioneerSlug);
     if (!auctioneer) return [];
-    return allAuctions.filter(a => a.auctioneer === auctioneer.name || a.auctioneerId === auctioneer.id);
+    return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {

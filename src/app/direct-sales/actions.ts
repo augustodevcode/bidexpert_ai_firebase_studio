@@ -5,9 +5,9 @@ import { getDatabaseAdapter } from '@/lib/database';
 import type { DirectSaleOffer } from '@/types';
 
 export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    const db = await getDatabaseAdapter();
+    const db = getDatabaseAdapter();
     // @ts-ignore
-    return db.getDirectSaleOffers() || [];
+    return (db.getDirectSaleOffers && await db.getDirectSaleOffers()) || [];
 }
 
 export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {

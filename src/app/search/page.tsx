@@ -26,8 +26,9 @@ import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 
 // Server Actions
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots, getCategories } from '@/lib/data-queries';
-import { getDirectSaleOffers } from '@/app/direct-sales/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
+import { getDirectSaleOffers } from './actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 
@@ -144,7 +145,7 @@ export default function SearchPage() {
             const auctions = await getAuctions();
             setAllAuctions(auctions);
             auctions.forEach(item => {
-                if (item.city && item.state) locations.add(`${item.city} - ${item.state}`);
+                if ('city' in item && 'state' in item && item.city && item.state) locations.add(`${item.city} - ${item.state}`);
             });
             break;
           case 'lots':
@@ -517,7 +518,7 @@ export default function SearchPage() {
         </div>
       </form>
       
-      <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
+      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
              <SidebarFilters
                 categories={allCategoriesForFilter}

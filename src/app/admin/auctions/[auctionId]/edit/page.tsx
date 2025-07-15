@@ -4,8 +4,7 @@
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
-import { getCategories } from '@/lib/data-queries';
-import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
+import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import { getDocumentTemplates, getDocumentTemplate as getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, DocumentTemplate } from '@/types';
@@ -38,6 +37,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
@@ -87,51 +87,6 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
-}
-
-function FinalizeLotButton({ lot, onFinalized }: { lot: Lot; onFinalized: () => void }) {
-  const [isLoading, setIsLoading] = useState(false);
-  const { toast } = useToast();
-
-  const handleFinalize = async () => {
-      setIsLoading(true);
-      const result = await finalizeLot(lot.id);
-      if (result.success) {
-          toast({ title: "Sucesso!", description: result.message });
-          onFinalized();
-      } else {
-          toast({ title: "Erro ao Finalizar Lote", description: result.message, variant: "destructive" });
-      }
-      setIsLoading(false);
-  };
-
-  const canFinalize = lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'ENCERRADO';
-
-  return (
-      <AlertDialog>
-          <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon" className="text-green-600 hover:text-green-700 h-7 w-7" disabled={!canFinalize || isLoading}>
-                  {isLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle className="h-3.5 w-3.5" />}
-                  <span className="sr-only">Finalizar Lote</span>
-              </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-              <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Finalização do Lote?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                      Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido") e notificar o vencedor. Esta ação não pode ser desfeita.
-                  </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleFinalize} disabled={isLoading} className="bg-green-600 hover:bg-green-700">
-                      {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Finalizar Agora
-                  </AlertDialogAction>
-              </AlertDialogFooter>
-          </AlertDialogContent>
-      </AlertDialog>
   );
 }
 
@@ -373,7 +328,7 @@ export default function EditAuctionPage() {
     try {
         const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings] = await Promise.all([
             getAuction(auctionId),
-            getCategories(),
+            getLotCategories(),
             getLots(auctionId),
             getAuctioneers(),
             getSellers(),
@@ -384,8 +339,8 @@ export default function EditAuctionPage() {
             notFound();
             return;
         }
-        setPlatformSettings(settings);
-        setLotItemsPerPage(settings.searchItemsPerPage || 12);
+        setPlatformSettings(settings as PlatformSettings);
+        setLotItemsPerPage((settings as PlatformSettings)?.searchItemsPerPage || 12);
         setAuction(fetchedAuction);
         setCategories(fetchedCategories);
         setLotsInAuction(fetchedLots);
@@ -494,7 +449,6 @@ export default function EditAuctionPage() {
         </div>
       </CardContent>
       <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
-        <FinalizeLotButton lot={lot} onFinalized={fetchPageData} />
         <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
           <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
             <Eye className="h-3.5 w-3.5" />
@@ -537,7 +491,6 @@ export default function EditAuctionPage() {
             </p>
         </CardContent>
       <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
-        <FinalizeLotButton lot={lot} onFinalized={fetchPageData} />
         <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
           <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
             <Eye className="h-3.5 w-3.5" />

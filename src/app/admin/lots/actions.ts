@@ -3,15 +3,16 @@
 
 import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { fetchLots, fetchLot, fetchBensByIds, fetchLotsByIds } from '@/lib/data-queries';
 import { getDatabaseAdapter } from '@/lib/database';
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
-  return fetchLots(auctionId);
+  const db = getDatabaseAdapter();
+  return db.getLots(auctionId);
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
-  return fetchLot(id);
+  const db = getDatabaseAdapter();
+  return db.getLot(id);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
@@ -60,11 +61,13 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 
 // These functions are helpers and might need to be adjusted based on adapter capabilities
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  return fetchBensByIds(ids);
+  const db = getDatabaseAdapter();
+  return db.getBensByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  return fetchLotsByIds(ids);
+  const db = getDatabaseAdapter();
+  return db.getLotsByIds(ids);
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {

@@ -2,12 +2,12 @@
 'use server';
 
 import { getDatabaseAdapter } from '@/lib/database';
-import { getCategories } from '@/lib/data-queries';
 import type { LotCategory } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  return getCategories();
+  const db = getDatabaseAdapter();
+  return db.getLotCategories();
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {

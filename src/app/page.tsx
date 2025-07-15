@@ -7,9 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-
-// Server-side data fetching functions
-import { getAuctions, getLots, getCategories } from '@/lib/data-queries';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 
 // Components
 import FeaturedItems from '@/components/featured-items';
