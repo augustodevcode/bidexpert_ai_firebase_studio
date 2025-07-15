@@ -9,8 +9,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 // Server-side data fetching functions
-import { getAuctions, getLots } from '@/lib/data-queries';
-import { getLotCategories } from './admin/categories/actions';
+import { getAuctions, getLots, getCategories } from '@/lib/data-queries';
 
 // Components
 import FeaturedItems from '@/components/featured-items';
@@ -45,7 +44,7 @@ async function FeaturedLots() {
 }
 
 async function FeaturedCategories() {
-    const categories = await getLotCategories();
+    const categories = await getCategories();
     // Example logic: feature categories with the most items, or a manually curated list
     const featured = categories.sort((a,b) => (b.itemCount || 0) - (a.itemCount || 0) ).slice(0, 3);
     

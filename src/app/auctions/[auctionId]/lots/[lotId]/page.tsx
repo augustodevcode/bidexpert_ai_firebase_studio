@@ -6,9 +6,10 @@ import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
 import { getLot, getLots, getBensByIdsAction } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { getCategories } from '@/lib/data-queries';
+import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { notFound } from 'next/navigation';
+import { getSampleData } from '@/lib/sample-data-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,9 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   previousLotId?: string,
   nextLotId?: string,
   totalLotsInAuction?: number,
+  allCategories: LotCategory[],
+  allSellers: SellerProfileInfo[],
+  auctioneer: AuctioneerProfileInfo | null
 }> {
   console.log(`[getLotPageData] Buscando leilão: ${currentAuctionId}, lote: ${currentLotId}`);
 
@@ -28,21 +32,27 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     platformSettings,
     auctionFromDb,
     lotFromDb,
+    allCategories,
+    allSellers,
+    allAuctioneers
   ] = await Promise.all([
     getPlatformSettings(),
     getAuction(currentAuctionId),
     getLot(currentLotId),
+    getCategories(),
+    getSellers(),
+    getAuctioneers()
   ]);
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
-    return { lot: lotFromDb, auction: auctionFromDb, platformSettings };
+    return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }
 
   // Verify that the lot actually belongs to the auction requested in the URL.
   if (lotFromDb.auctionId !== auctionFromDb.id) {
     console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
-    return { lot: null, auction: auctionFromDb, platformSettings };
+    return { lot: null, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }
   
   // Enrich lot with its assets
@@ -61,9 +71,11 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   let sellerName = lotFromDb.sellerName || auctionFromDb.seller;
   const sellerIdToFetch = lotFromDb.sellerId || auctionFromDb.sellerId;
   if (!sellerName && sellerIdToFetch) {
-    const seller = await getSellerBySlug(sellerIdToFetch);
+    const seller = allSellers.find(s => s.id === sellerIdToFetch || s.publicId === sellerIdToFetch);
     sellerName = seller?.name;
   }
+
+  const auctioneer = allAuctioneers.find(a => a.id === auctionFromDb.auctioneerId) || null;
   
   return { 
     lot: lotFromDb, 
@@ -74,6 +86,9 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     previousLotId, 
     nextLotId, 
     totalLotsInAuction,
+    allCategories,
+    allSellers,
+    auctioneer,
   };
 }
 
@@ -87,6 +102,9 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     previousLotId, 
     nextLotId, 
     totalLotsInAuction,
+    allCategories,
+    allSellers,
+    auctioneer,
   } = await getLotPageData(params.auctionId, params.lotId);
 
   if (!lot || !auction) {
@@ -116,6 +134,9 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
         previousLotId={previousLotId}
         nextLotId={nextLotId}
         totalLotsInAuction={totalLotsInAuction}
+        allCategories={allCategories}
+        allSellers={allSellers}
+        auctioneer={auctioneer}
       />
     </div>
   );

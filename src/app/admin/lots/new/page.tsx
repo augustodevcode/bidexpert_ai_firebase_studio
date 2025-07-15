@@ -1,8 +1,7 @@
 // src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
-import { getLotCategories } from '@/app/admin/categories/actions';
-import { getAuctions } from '@/app/admin/auctions/actions';
+import { getCategories, getAuctions } from '@/lib/data-queries';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { getBens } from '@/app/admin/bens/actions';
@@ -45,7 +44,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
   const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
   
   const [categories, auctions, states, allCities, bens] = await Promise.all([
-    getLotCategories(),
+    getCategories(),
     getAuctions(),
     getStates(),
     getCities(),

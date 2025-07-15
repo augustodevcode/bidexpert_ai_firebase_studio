@@ -26,9 +26,8 @@ import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 
 // Server Actions
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
+import { getLots, getCategories } from '@/lib/data-queries';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
-import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 
@@ -114,7 +113,7 @@ export default function SearchPage() {
       setIsFilterDataLoading(true);
       try {
         const [categories, sellers, settings] = await Promise.all([
-          getLotCategories(),
+          getCategories(),
           getSellers(),
           getPlatformSettings()
         ]);

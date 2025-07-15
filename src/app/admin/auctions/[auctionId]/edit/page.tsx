@@ -4,7 +4,7 @@
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
-import { getLotCategories } from '@/app/admin/categories/actions';
+import { getCategories } from '@/lib/data-queries';
 import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
 import { getDocumentTemplates, getDocumentTemplate as getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
@@ -373,7 +373,7 @@ export default function EditAuctionPage() {
     try {
         const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings] = await Promise.all([
             getAuction(auctionId),
-            getLotCategories(),
+            getCategories(),
             getLots(auctionId),
             getAuctioneers(),
             getSellers(),

@@ -39,6 +39,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 interface AuctionFormProps {
   initialData?: Auction | null;
+  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[]; 
   sellers: SellerProfileInfo[];    
   onSubmitAction: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
@@ -73,6 +74,7 @@ const auctionTypeOptions = [
 
 export default function AuctionForm({
   initialData,
+  categories,
   auctioneers, 
   sellers,    
   onSubmitAction,

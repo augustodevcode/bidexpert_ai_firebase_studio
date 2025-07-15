@@ -1,6 +1,6 @@
 
 import CategoryDisplay from './category-display'; 
-import { sampleLotCategories } from '@/lib/sample-data';
+import { getLotCategories } from '@/app/admin/categories/actions';
 
 // This page component is a Server Component
 export default function CategoryPage({ params }: { params: { categorySlug: string } }) {
@@ -11,12 +11,12 @@ export default function CategoryPage({ params }: { params: { categorySlug: strin
 
 export async function generateStaticParams() {
   try {
-    // Using sample data for static params generation
-    return sampleLotCategories.map(category => ({
+    const categories = await getLotCategories();
+    return categories.map(category => ({
       categorySlug: category.slug,
     }));
   } catch (error) {
-    console.error("Failed to generate static params for categories using sample data:", error);
+    console.error("Failed to generate static params for categories:", error);
     return []; 
   }
 }
