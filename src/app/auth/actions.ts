@@ -7,6 +7,7 @@ import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database';
+import { auth } from '@/lib/firebase/admin';
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -97,10 +98,10 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
     
     try {
         const allRoles = await db.getRoles();
-        const adminRole = allRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
-        const consignorRole = allRoles.find(r => r.name_normalized === 'CONSIGNOR');
-        const analystRole = allRoles.find(r => r.name_normalized === 'AUCTION_ANALYST');
-        const userRole = allRoles.find(r => r.name_normalized === 'USER');
+        const adminRole = allRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
+        const consignorRole = allRoles.find(r => r.nameNormalized === 'CONSIGNOR');
+        const analystRole = allRoles.find(r => r.nameNormalized === 'AUCTION_ANALYST');
+        const userRole = allRoles.find(r => r.nameNormalized === 'USER');
         
         const allSellers = await db.getSellers();
         const firstSeller = allSellers[0];

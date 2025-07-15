@@ -4,17 +4,37 @@ import type { App } from 'firebase-admin/app';
 import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
+import { getAuth, type Auth } from 'firebase-admin/auth';
 
 console.log("[firebase/admin.ts] LOG: File loaded.");
 
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
-function initializeAdminApp(): App {
-  console.log("[firebase/admin.ts] LOG: initializeAdminApp() called.");
-  
+interface FirebaseAdminInstances {
+  app: App;
+  db: Firestore;
+  storage: Storage;
+  auth: Auth;
+}
+
+let instances: FirebaseAdminInstances | undefined;
+
+function initializeAdminSDK(): FirebaseAdminInstances {
   if (getApps().length > 0) {
-    console.log("[firebase/admin.ts] LOG: Found existing Firebase Admin app. Returning it.");
-    return getApp();
+      const app = getApp();
+      if (instances) {
+        console.log("[firebase/admin.ts] LOG: Returning existing Firebase Admin instances.");
+        return instances;
+      }
+      const db = getFirestore(app);
+      db.settings({ ignoreUndefinedProperties: true });
+      instances = {
+          app,
+          db,
+          storage: getStorage(app),
+          auth: getAuth(app),
+      };
+      return instances;
   }
 
   try {
@@ -22,33 +42,24 @@ function initializeAdminApp(): App {
     const app = initializeApp({
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
-    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
-    return app;
+    const db = getFirestore(app);
+    // This setting is crucial for the emulator to work correctly with composite indexes.
+    db.settings({ ignoreUndefinedProperties: true });
+    
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
+    instances = {
+        app,
+        db,
+        storage: getStorage(app),
+        auth: getAuth(app),
+    };
+    return instances;
   } catch (error: any) {
     console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
     throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
   }
 }
 
-let adminAppInstance: App | undefined;
-
-export function ensureAdminInitialized(): {
-  app: App;
-  db: Firestore;
-  storage: Storage;
-} {
-  if (!adminAppInstance) {
-    adminAppInstance = initializeAdminApp();
-  }
-  
-  return {
-    app: adminAppInstance,
-    db: getFirestore(adminAppInstance),
-    storage: getStorage(adminAppInstance),
-  };
-}
-
-// For compatibility with any legacy code that might still be importing this named export.
-// This ensures it's initialized through the central function.
-const { db } = ensureAdminInitialized();
-export { db };
+// Initialize and export the singletons. All other files will import these.
+const { app, db, storage, auth } = initializeAdminSDK();
+export { app, db, storage, auth };
