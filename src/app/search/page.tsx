@@ -29,12 +29,12 @@ import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getDirectSaleOffers } from './actions';
+import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 
-const SidebarFilters = dynamic(() => import('../../components/sidebar-filters'), {
+const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
@@ -520,7 +520,7 @@ export default function SearchPage() {
       </form>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block">
+        <div className="hidden md:block">
              <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
@@ -530,7 +530,7 @@ export default function SearchPage() {
                 initialFilters={activeFilters as ActiveFilters}
                 filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
             />
-        </aside>
+        </div>
         
         <main className="min-w-0 space-y-6 md:ml-4">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
