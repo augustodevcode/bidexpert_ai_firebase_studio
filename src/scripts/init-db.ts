@@ -1,5 +1,5 @@
 // src/scripts/init-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { getDatabaseAdapter } from '@/lib/database';
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities, sampleJudicialDistricts, sampleJudicialBranches } from '@/lib/sample-data';
 import type { DatabaseAdapter } from '@/types';
 
@@ -56,16 +56,18 @@ async function seedEssentialData() {
 
         // Batch-writable collections
         console.log("[DB INIT] LOG: Fetching existing data for essential collections.");
-        const existingRoles = await db.getRoles();
-        const existingCategories = await db.getLotCategories();
-        const existingStates = await db.getStates();
-        const existingCourts = await db.getCourts();
-        const existingSubcategories = await db.getSubcategoriesByParent();
-        const existingCities = await db.getCities();
-        const existingDistricts = await db.getJudicialDistricts();
-        const existingBranches = await db.getJudicialBranches();
-
-        await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
+        const [existingRoles, existingCategories, existingStates, existingCourts, existingSubcategories, existingCities, existingDistricts, existingBranches] = await Promise.all([
+            db.getRoles(),
+            db.getLotCategories(),
+            db.getStates(),
+            db.getCourts(),
+            db.getSubcategoriesByParent(),
+            db.getCities(),
+            db.getJudicialDistricts(),
+            db.getJudicialBranches()
+        ]);
+        
+        await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'nameNormalized');
         await seedCollectionInBatches(db, 'lotCategories', sampleLotCategories, existingCategories, 'slug');
         await seedCollectionInBatches(db, 'lotSubcategories', sampleSubcategories, existingSubcategories, 'slug');
         await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
