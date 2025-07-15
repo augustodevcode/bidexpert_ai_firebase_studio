@@ -128,7 +128,7 @@
     {"id": "court-tjpe", "name": "Tribunal de Justiça de Pernambuco (TJPE)", "stateUf": "PE", "website": "https://www.tjpe.jus.br", "slug": "tribunal-de-justica-de-pernambuco-tjpe"},
     {"id": "court-tjpi", "name": "Tribunal de Justiça do Piauí (TJPI)", "stateUf": "PI", "website": "https://www.tjpi.jus.br", "slug": "tribunal-de-justica-do-piaui-tjpi"},
     {"id": "court-tjrj", "name": "Tribunal de Justiça do Rio de Janeiro (TJRJ)", "stateUf": "RJ", "website": "https://www.tjrj.jus.br", "slug": "tribunal-de-justica-do-rio-de-janeiro-tjrj"},
-    {"id": "court-tjrj", "name": "Tribunal de Justiça do Rio Grande do Norte (TJRN)", "stateUf": "RN", "website": "https://www.tjrn.jus.br", "slug": "tribunal-de-justica-do-rio-grande-do-norte-tjrn"},
+    {"id": "court-tjrn", "name": "Tribunal de Justiça do Rio Grande do Norte (TJRN)", "stateUf": "RN", "website": "https://www.tjrn.jus.br", "slug": "tribunal-de-justica-do-rio-grande-do-norte-tjrn"},
     {"id": "court-tjrs", "name": "Tribunal de Justiça do Rio Grande do Sul (TJRS)", "stateUf": "RS", "website": "https://www.tjrs.jus.br", "slug": "tribunal-de-justica-do-rio-grande-do-sul-tjrs"},
     {"id": "court-tjro", "name": "Tribunal de Justiça de Rondônia (TJRO)", "stateUf": "RO", "website": "https://www.tjro.jus.br", "slug": "tribunal-de-justica-de-rondonia-tjro"},
     {"id": "court-tjrr", "name": "Tribunal de Justiça de Roraima (TJRR)", "stateUf": "RR", "website": "https://www.tjrr.jus.br", "slug": "tribunal-de-justica-de-roraima-tjrr"},
@@ -216,7 +216,7 @@
     {
       "id": "role-admin",
       "name": "ADMINISTRATOR",
-      "name_normalized": "ADMINISTRATOR",
+      "nameNormalized": "ADMINISTRATOR",
       "description": "Acesso total à plataforma.",
       "permissions": [
         "manage_all"
@@ -227,7 +227,7 @@
     {
       "id": "role-user",
       "name": "USER",
-      "name_normalized": "USER",
+      "nameNormalized": "USER",
       "description": "Usuário padrão com acesso básico.",
       "permissions": [
         "view_auctions",
@@ -240,7 +240,7 @@
     {
       "id": "role-consignor",
       "name": "CONSIGNOR",
-      "name_normalized": "CONSIGNOR",
+      "nameNormalized": "CONSIGNOR",
       "description": "Comitente com permissões para gerenciar seus itens.",
       "permissions": [
         "auctions:manage_own",

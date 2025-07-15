@@ -60,18 +60,19 @@ async function seedEssentialData() {
         const existingCategories = await db.getLotCategories();
         const existingStates = await db.getStates();
         const existingCourts = await db.getCourts();
-        
+        const existingSubcategories = await db.getSubcategoriesByParent();
+        const existingCities = await db.getCities();
+        const existingDistricts = await db.getJudicialDistricts();
+        const existingBranches = await db.getJudicialBranches();
+
         await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
-        await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, existingCategories, 'slug');
+        await seedCollectionInBatches(db, 'lotCategories', sampleLotCategories, existingCategories, 'slug');
+        await seedCollectionInBatches(db, 'lotSubcategories', sampleSubcategories, existingSubcategories, 'slug');
         await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
+        await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
         await seedCollectionInBatches(db, 'courts', sampleCourts, existingCourts, 'slug');
-        
-        // These are nested and should be seeded in seed-db.ts, not here, to avoid NOT_FOUND errors
-        // on a completely fresh database where parent documents don't exist yet.
-        // await seedCollectionInBatches(db, 'lot_subcategories', sampleSubcategories, existingSubcategories, 'slug');
-        // await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
-        // await seedCollectionInBatches(db, 'judicial_districts', sampleJudicialDistricts, existingDistricts, 'slug');
-        // await seedCollectionInBatches(db, 'judicial_branches', sampleJudicialBranches, existingBranches, 'slug');
+        await seedCollectionInBatches(db, 'judicialDistricts', sampleJudicialDistricts, existingDistricts, 'slug');
+        await seedCollectionInBatches(db, 'judicialBranches', sampleJudicialBranches, existingBranches, 'slug');
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
