@@ -46,7 +46,7 @@ var fs = require("fs"); // Import the 'fs' module
 // to your service account key JSON file.
 // KEEP THIS FILE SECURE AND OUT OF VERSION CONTROL (git).
 // Consider using environment variables for the path in production environments.
-var serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json'; // <--- REPLACE THIS
+var serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json'; // <--- CAMINHO CORRIGIDO
 // ============================================================================
 try {
     // Initialize the Firebase Admin SDK if it hasn't been initialized yet

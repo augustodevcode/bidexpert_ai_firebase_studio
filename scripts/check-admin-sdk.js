@@ -9,7 +9,7 @@ var fs = require("fs"); // Adicionado para ler a chave JSON
 // SUBSTITUA pelo caminho real para o arquivo JSON da sua chave.
 // Recomenda-se usar variáveis de ambiente para o caminho em ambientes de produção.
 // Exemplo de caminho relativo: path.resolve(__dirname, '../seu-nome-chave.json')
-var serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json'; // <--- AJUSTE O CAMINHO AQUI
+var serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json'; // <--- CAMINHO CORRIGIDO
 // ============================================================================
 console.log('--- Verificação do Firebase Admin SDK ---');
 try {
