@@ -1,8 +1,7 @@
 // src/lib/firebase.ts
-
 import { initializeApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth } from "firebase/auth";
-import { getFirestore, type Firestore } from "firebase/firestore";
+import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
+import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -17,25 +16,23 @@ const firebaseConfig = {
 
 let app: FirebaseApp;
 
-const isFirebaseConfigured =
-  firebaseConfig.apiKey &&
-  firebaseConfig.authDomain &&
-  firebaseConfig.projectId &&
-  firebaseConfig.apiKey !== 'YOUR_API_KEY_HERE';
-
-if (isFirebaseConfigured && getApps().length === 0) {
+// Initialize Firebase
+if (getApps().length === 0) {
   app = initializeApp(firebaseConfig);
-} else if (getApps().length > 0) {
-  app = getApps()[0];
 } else {
-  console.warn("Firebase configuration is missing or incomplete. Some Firebase services might not be available.");
-  app = {} as FirebaseApp; 
+  app = getApps()[0];
 }
 
-// NOTE: We are no longer using Firebase Auth for user management.
-// This is kept here temporarily for any other Firebase services that might be used
-// on the client-side, but it's not the primary auth system.
-const auth: Auth = isFirebaseConfigured ? getAuth(app) : {} as Auth;
-const db: Firestore = isFirebaseConfigured ? getFirestore(app) : {} as Firestore;
+const auth: Auth = getAuth(app);
+const db: Firestore = getFirestore(app);
+
+// Connect to emulators in development
+if (typeof window !== 'undefined' && window.location.hostname === "localhost") {
+    console.log("Connecting to Firebase Emulators...");
+    // Point to the emulators running on localhost.
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connectFirestoreEmulator(db, "127.0.0.1", 8080);
+    // Note: DataConnect emulator connection is handled separately if needed on client
+}
 
 export { app, auth, db };
