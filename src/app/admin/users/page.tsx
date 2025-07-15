@@ -1,4 +1,3 @@
-
 // src/app/admin/users/page.tsx
 'use client';
 
@@ -6,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsersWithRoles } from './actions';
+import { getUsersWithRoles, deleteUser } from './actions';
 import type { UserProfileData, Role } from '@/types';
 import { PlusCircle, Users as UsersIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -63,8 +62,13 @@ export default function AdminUsersPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      // Deletion logic would go here, for now it's a placeholder
-      toast({ title: "Ação Desativada", description: "A exclusão de usuários não está implementada nesta demonstração." });
+      const result = await deleteUser(id);
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        setRefetchTrigger(c => c + 1);
+      } else {
+        toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+      }
     },
     [toast]
   );

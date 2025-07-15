@@ -1,4 +1,3 @@
-
 // src/lib/database/firestore.adapter.ts
 import { db as dbAdmin, ensureAdminInitialized } from '@/lib/firebase/admin';
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
@@ -66,8 +65,6 @@ export class FirestoreAdapter implements DatabaseAdapter {
                     if (!dataToSet.slug && (dataToSet.name || dataToSet.title)) {
                         dataToSet.slug = slugify(dataToSet.name || dataToSet.title);
                     }
-                    // Use set with merge:true to create or update, preventing duplicate errors
-                    // and saving on writes if the document already exists.
                     batch.set(docRef, dataToSet, { merge: true });
                 }
                 await batch.commit();
@@ -485,9 +482,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     async getCities(stateId?: string): Promise<CityInfo[]> {
         try {
-            let query: FirebaseFirestore.Query = this.db.collection('cities');
-            if (stateId) query = query.where('stateId', '==', stateId);
-            const snapshot = await query.orderBy('name').get();
+            const query = this.db.collectionGroup('cities').orderBy('name');
+            const snapshot = await query.get();
             return snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
@@ -538,7 +534,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
     
     async getJudicialDistricts(): Promise<JudicialDistrict[]> {
         try {
-            const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
+            const query = this.db.collectionGroup('judicial_districts').orderBy('name');
+            const snapshot = await query.get();
             return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
@@ -549,7 +546,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
 
     async getJudicialBranches(): Promise<JudicialBranch[]> { 
         try {
-            const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
+            const query = this.db.collectionGroup('judicial_branches').orderBy('name');
+            const snapshot = await query.get();
             return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }

@@ -1,19 +1,7 @@
-
+// src/components/dev-db-indicator.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDatabaseAdapter } from '@/lib/database';
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift();
-  }
-}
 
 export default function DevDbIndicator() {
   const [dbSystem, setDbSystem] = useState('');
@@ -21,6 +9,17 @@ export default function DevDbIndicator() {
   useEffect(() => {
     // This component now relies solely on the client-side readable cookie.
     // The server-side logic is now robust enough to handle its own context.
+    function getCookie(name: string): string | undefined {
+        if (typeof document === 'undefined') {
+            return undefined;
+        }
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) {
+            return parts.pop()?.split(';').shift();
+        }
+    }
+    
     const dbFromCookie = getCookie('dev-config-db');
     // We fall back to the public env var, which is also available on the client.
     const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
