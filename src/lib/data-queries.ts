@@ -13,6 +13,8 @@ console.log('[data-queries] LOG: File loaded.');
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   console.log('[data-queries] LOG: fetchPlatformSettings called.');
   const db = getDatabaseAdapter();
+  // No special includes are needed for Firestore as it fetches the whole document.
+  // The structure is inherently nested.
   const settings = await db.getPlatformSettings();
   if (!settings) {
     console.warn("[data-queries] WARN: Platform settings not found in the database. Falling back to sample data. This is expected on first init.");
