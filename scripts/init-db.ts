@@ -13,19 +13,18 @@ import type { DatabaseAdapter, StateInfo, CityInfo, Court, JudicialDistrict, Jud
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
-async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], uniqueKey: string) {
+async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], parentDocPath?: string) {
     if (!data || data.length === 0) {
         console.log(`[DB INIT] 🟡 INFO: No data provided for ${collectionName}. Skipping.`);
         return;
     }
 
-    console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
-    // The batchWrite now handles everything, no need to pre-check existing items.
-    // It uses set with merge, which is idempotent.
+    console.log(`[DB INIT] LOG: Seeding ${collectionName} ${parentDocPath ? `under ${parentDocPath}` : ''}...`);
     // @ts-ignore
-    await db.batchWrite(collectionName, data);
+    await db.batchWrite(collectionName, data, parentDocPath);
     console.log(`[DB INIT] ✅ SUCCESS: ${data.length} items processed for ${collectionName}.`);
 }
+
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
@@ -36,24 +35,41 @@ async function seedEssentialData() {
         console.log('[DB INIT] LOG: Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings) {
-            // @ts-ignore
             await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Top-level collections
-        await seedCollection(db, 'roles', sampleRoles, 'id');
-        await seedCollection(db, 'lotCategories', sampleLotCategories, 'id');
-        await seedCollection(db, 'lotSubcategories', sampleSubcategories, 'id');
+        // Top-level collections that don't depend on others
+        await seedCollection(db, 'roles', sampleRoles);
+        await seedCollection(db, 'lotCategories', sampleLotCategories);
+        await seedCollection(db, 'lotSubcategories', sampleSubcategories);
         
-        const statesData = sampleStatesWithCities.map(({ cities, ...state }) => state);
-        await seedCollection(db, 'states', statesData, 'id');
+        // Seed hierarchical data
+        for (const stateData of sampleStatesWithCities) {
+            const { cities, ...state } = stateData;
+            await seedCollection(db, 'states', [state]);
+            if (cities && cities.length > 0) {
+                await seedCollection(db, 'cities', cities, `states/${state.id}`);
+            }
+        }
         
-        const courtsData = sampleCourtsWithRelations.map(({ districts, ...court }) => court);
-        await seedCollection(db, 'courts', courtsData, 'id');
+        for (const courtData of sampleCourtsWithRelations) {
+            const { districts, ...court } = courtData;
+            await seedCollection(db, 'courts', [court]);
+            if (districts && districts.length > 0) {
+                const districtsToSeed = districts.map(({branches, ...d}) => ({...d, courtId: court.id}));
+                await seedCollection(db, 'judicialDistricts', districtsToSeed, `courts/${court.id}`);
 
+                for (const district of districts) {
+                    if (district.branches && district.branches.length > 0) {
+                         const branchesToSeed = district.branches.map(b => ({...b, districtId: district.id}));
+                         await seedCollection(db, 'judicialBranches', branchesToSeed, `courts/${court.id}/judicialDistricts/${district.id}`);
+                    }
+                }
+            }
+        }
         
         // Seed initial admin user if it doesn't exist
         const adminEmail = 'admin@bidexpert.com.br';
@@ -64,11 +80,10 @@ async function seedEssentialData() {
             const userData = sampleUsers.find(u => u.email === adminEmail);
             if (userData && adminRole) {
                 const hashedPassword = await bcrypt.hash(userData.password, 10);
-                // @ts-ignore
                 await db.createUser({
                     ...userData,
                     password: hashedPassword,
-                    roleIds: [adminRole.id], // ensure roleId is an array
+                    roleIds: [adminRole.id],
                 });
                 console.log('[DB INIT] ✅ SUCCESS: Admin user created.');
             } else {
@@ -81,6 +96,8 @@ async function seedEssentialData() {
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
+        const zodError = (error.name === 'ZodError') ? error.issues : null;
+        console.error("Zod Issues (if any):", JSON.stringify(zodError, null, 2));
         throw error; 
     }
     
