@@ -10,19 +10,18 @@ import {
     sampleCourtsWithRelations,
     sampleUsers,
 } from '@/lib/sample-data';
-import type { DatabaseAdapter, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch } from '@/types';
+import type { DatabaseAdapter } from '@/types';
 import bcrypt from 'bcrypt';
-import { v4 as uuidv4 } from 'uuid';
 
-async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[]) {
+async function seedCollection(db: DatabaseAdapter, collectionName: string, data: any[], parentDocPath?: string) {
     if (!data || data.length === 0) {
         console.log(`[DB INIT] 🟡 INFO: No data provided for ${collectionName}. Skipping.`);
         return;
     }
 
-    console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
+    console.log(`[DB INIT] LOG: Seeding ${collectionName} ${parentDocPath ? `under ${parentDocPath}` : ''}...`);
     // @ts-ignore
-    await db.batchWrite(collectionName, data);
+    await db.batchWrite(collectionName, data, parentDocPath);
     console.log(`[DB INIT] ✅ SUCCESS: ${data.length} items processed for ${collectionName}.`);
 }
 
@@ -47,31 +46,39 @@ async function seedEssentialData() {
         await seedCollection(db, 'lotCategories', sampleLotCategories);
         await seedCollection(db, 'lotSubcategories', sampleSubcategories);
         
-        // Hierarchical data seeding
-        const statesData = sampleStatesWithCities.map(({ cities, ...state }) => state);
-        await seedCollection(db, 'states', statesData);
-
-        const citiesData = sampleStatesWithCities.flatMap(s => s.cities.map(c => ({...c, stateId: s.id})));
-        await seedCollection(db, 'cities', citiesData);
-
-        const courtsData = sampleCourtsWithRelations.map(({ districts, ...court }) => court);
-        await seedCollection(db, 'courts', courtsData);
-
-        const judicialDistrictsData = sampleCourtsWithRelations.flatMap(c => c.districts.map(d => ({...d, courtId: c.id})));
-        await seedCollection(db, 'judicialDistricts', judicialDistrictsData);
+        // Seed hierarchical data
+        for (const stateData of sampleStatesWithCities) {
+            const { cities, ...state } = stateData;
+            await seedCollection(db, 'states', [state]);
+            if (cities && cities.length > 0) {
+                await seedCollection(db, 'cities', cities, `states/${state.id}`);
+            }
+        }
         
-        const judicialBranchesData = sampleCourtsWithRelations.flatMap(c => 
-            c.districts.flatMap(d => d.branches.map(b => ({...b, districtId: d.id})))
-        );
-        await seedCollection(db, 'judicialBranches', judicialBranchesData);
-        
+        for (const courtData of sampleCourtsWithRelations) {
+            const { districts, ...court } = courtData;
+            await seedCollection(db, 'courts', [court]);
+
+            if (districts && districts.length > 0) {
+                 for (const districtData of districts) {
+                    const { branches, ...district } = districtData;
+                    const districtWithCourtId = { ...district, courtId: court.id };
+                    await seedCollection(db, 'judicialDistricts', [districtWithCourtId], `courts/${court.id}`);
+
+                    if (branches && branches.length > 0) {
+                        const branchesWithDistrictId = branches.map(b => ({...b, districtId: district.id}));
+                        await seedCollection(db, 'judicialBranches', branchesWithDistrictId, `courts/${court.id}/judicialDistricts/${district.id}`);
+                    }
+                 }
+            }
+        }
         
         // Seed initial admin user if it doesn't exist
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await db.getUserProfileData(adminEmail);
         if (!adminUser) {
             console.log(`[DB INIT] Admin user not found. Creating...`);
-            const adminRole = sampleRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
+            const adminRole = sampleRoles.find(r => r.nameNormalized === 'administrator');
             const userData = sampleUsers.find(u => u.email === adminEmail);
             if (userData && adminRole) {
                 const hashedPassword = await bcrypt.hash(userData.password, 10);

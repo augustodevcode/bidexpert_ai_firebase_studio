@@ -7,13 +7,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getSubcategoriesByParentIdAction, deleteSubcategoryAction } from './actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import type { Subcategory, LotCategory } from '@/types';
-import { Layers, PlusCircle } from 'lucide-react';
+import { Layers, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
 import Link from 'next/link';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+
 
 export default function AdminSubcategoriesPage() {
   const [allParentCategories, setAllParentCategories] = useState<LotCategory[]>([]);
@@ -81,7 +83,41 @@ export default function AdminSubcategoriesPage() {
     }
   };
   
-  const columns = useMemo(() => createColumns(), []);
+  const columns: ColumnDef<Subcategory>[] = useMemo(() => [
+    {
+        accessorKey: "name",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Nome da Subcategoria" />,
+        cell: ({ row }) => (
+          <Link href={`/admin/subcategories/${row.original.id}/edit`} className="font-medium hover:text-primary">
+            {row.getValue("name")}
+          </Link>
+        ),
+    },
+    {
+        accessorKey: "description",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Descrição" />,
+        cell: ({ row }) => <p className="text-sm text-muted-foreground truncate max-w-xs">{row.getValue("description")}</p>
+    },
+    {
+        accessorKey: "displayOrder",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Ordem" />,
+    },
+    {
+        id: 'actions',
+        cell: ({ row }) => (
+            <div className="flex gap-1 justify-end">
+                <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+                    <Link href={`/admin/subcategories/${row.original.id}/edit`}>
+                        <Pencil className="h-4 w-4"/>
+                    </Link>
+                </Button>
+                 <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => handleDelete(row.original.id)}>
+                    <Trash2 className="h-4 w-4"/>
+                </Button>
+            </div>
+        )
+    }
+  ], [handleDelete]);
 
   return (
     <div className="space-y-6">

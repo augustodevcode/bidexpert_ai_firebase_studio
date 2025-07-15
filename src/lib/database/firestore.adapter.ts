@@ -1,3 +1,4 @@
+
 // src/lib/database/firestore.adapter.ts
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -18,7 +19,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
             throw new Error(errorMessage);
         }
         this.db = dbInstance;
-        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso com a instância do DB fornecida.');
+        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -362,7 +363,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         const dataToSet = { ...restData, id: uid, uid: uid, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
 
         try {
-            UserProfileDataSchema.partial().parse(dataToSet);
+            // No Zod parsing here to avoid server timestamp issues during initial creation
             await docRef.set(dataToSet);
             return { success: true, message: 'Usuário criado com sucesso!', userId: uid };
         } catch (error: any) {
