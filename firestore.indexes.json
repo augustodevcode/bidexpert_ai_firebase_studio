@@ -5,14 +5,29 @@
       "collectionGroup": "lots",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "auctionId",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "number",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "auctionId", "order": "ASCENDING" },
+        { "fieldPath": "number", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "cities",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "judicialDistricts",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "judicialBranches",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     }
   ],
