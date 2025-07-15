@@ -24,8 +24,6 @@ import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/contexts/auth-context';
-import { db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
 import { updateUserProfile } from './actions';
 import type { UserProfileData, EditableUserProfileData } from '@/types';
 import { cn } from '@/lib/utils';
@@ -71,11 +69,11 @@ const propertyRegimeOptions = ["Comunhão Parcial de Bens", "Comunhão Universal
 
 
 export default function EditProfilePage() {
-  const { user, userProfileWithPermissions, loading: authLoading } = useAuth();
+  const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFetchingData, setIsFetchingData] = useState(true); // Start true to show loader initially
+  const [isFetchingData, setIsFetchingData] = useState(true);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const form = useForm<ProfileFormValues>({
@@ -108,76 +106,70 @@ export default function EditProfilePage() {
     },
   });
 
-  useEffect(() => {
-    const fetchProfileData = async (uid: string) => {
-      setIsFetchingData(true);
-      setFetchError(null);
-      console.log('Attempting to fetch profile for UID:', uid);
-      try {
-        const data = await getUserProfileDataAction(uid);
-        if (data) {
-          form.reset({
-            fullName: data.fullName || '',
-            cpf: data.cpf || '',
-            rgNumber: data.rgNumber || '',
-            rgIssuer: data.rgIssuer || '',
-            rgIssueDate: data.rgIssueDate ? new Date(data.rgIssueDate as string) : null,
-            rgState: data.rgState || '',
-            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth as string) : null,
-            cellPhone: data.cellPhone || '',
-            homePhone: data.homePhone || '',
-            gender: data.gender || '',
-            profession: data.profession || '',
-            nationality: data.nationality || '',
-            maritalStatus: data.maritalStatus || '',
-            propertyRegime: data.propertyRegime || '',
-            spouseName: data.spouseName || '',
-            spouseCpf: data.spouseCpf || '',
-            zipCode: data.zipCode || '',
-            street: data.street || '',
-            number: data.number || '',
-            complement: data.complement || '',
-            neighborhood: data.neighborhood || '',
-            city: data.city || '',
-            state: data.state || '',
-            optInMarketing: data.optInMarketing || false,
-          });
-        } else {
-          console.error('Profile not found in DB for UID:', uid);
-          setFetchError("Perfil não encontrado no banco de dados.");
-          toast({ title: "Erro", description: "Perfil não encontrado no banco de dados.", variant: "destructive" });
-        }
-      } catch (e: any) {
-        console.error("Error fetching user profile for edit:", e);
-        setFetchError("Erro ao buscar dados do perfil para edição.");
-        toast({ title: "Erro", description: `Não foi possível carregar os dados do perfil: ${e.message}`, variant: "destructive" });
-      } finally {
-        setIsFetchingData(false);
+  const fetchProfileData = useCallback(async (uid: string) => {
+    setIsFetchingData(true);
+    setFetchError(null);
+    try {
+      const data = await getUserProfileDataAction(uid);
+      if (data) {
+        form.reset({
+          fullName: data.fullName || '',
+          cpf: data.cpf || '',
+          rgNumber: data.rgNumber || '',
+          rgIssuer: data.rgIssuer || '',
+          rgIssueDate: data.rgIssueDate ? new Date(data.rgIssueDate as string) : null,
+          rgState: data.rgState || '',
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth as string) : null,
+          cellPhone: data.cellPhone || '',
+          homePhone: data.homePhone || '',
+          gender: data.gender || '',
+          profession: data.profession || '',
+          nationality: data.nationality || '',
+          maritalStatus: data.maritalStatus || '',
+          propertyRegime: data.propertyRegime || '',
+          spouseName: data.spouseName || '',
+          spouseCpf: data.spouseCpf || '',
+          zipCode: data.zipCode || '',
+          street: data.street || '',
+          number: data.number || '',
+          complement: data.complement || '',
+          neighborhood: data.neighborhood || '',
+          city: data.city || '',
+          state: data.state || '',
+          optInMarketing: data.optInMarketing || false,
+        });
+      } else {
+        setFetchError("Perfil não encontrado no banco de dados.");
+        toast({ title: "Erro", description: "Perfil não encontrado no banco de dados.", variant: "destructive" });
       }
-    };
+    } catch (e: any) {
+      setFetchError("Erro ao buscar dados do perfil para edição.");
+      toast({ title: "Erro", description: `Não foi possível carregar os dados do perfil: ${e.message}`, variant: "destructive" });
+    } finally {
+      setIsFetchingData(false);
+    }
+  }, [form, toast]);
 
+
+  useEffect(() => {
     if (authLoading) {
-      setIsFetchingData(true); // Keep showing loader if auth is still loading
+      setIsFetchingData(true);
       return;
     }
     
-    const userId = user?.uid || userProfileWithPermissions?.uid;
-
+    const userId = userProfileWithPermissions?.uid;
     if (!userId) {
       toast({ title: "Acesso Negado", description: "Você precisa estar logado para editar o perfil.", variant: "destructive" });
       router.push('/auth/login?redirect=/profile/edit');
       setIsFetchingData(false);
       return;
     }
-
-    if (userId) {
-      fetchProfileData(userId);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, userProfileWithPermissions, authLoading, router, form.reset, toast]);
+    
+    fetchProfileData(userId);
+  }, [userProfileWithPermissions, authLoading, router, toast, fetchProfileData]);
 
   async function onSubmit(data: ProfileFormValues) {
-    const userId = user?.uid || userProfileWithPermissions?.uid;
+    const userId = userProfileWithPermissions?.uid;
     if (!userId) {
       toast({ title: "Erro", description: "Usuário não autenticado.", variant: "destructive" });
       return;
@@ -210,15 +202,15 @@ export default function EditProfilePage() {
     );
   }
 
-  if (fetchError && !form.formState.isDirty) { // Show error only if form hasn't been touched yet
-    const userId = user?.uid || userProfileWithPermissions?.uid;
+  if (fetchError) {
+    const userId = userProfileWithPermissions?.uid;
     return (
       <div className="text-center py-12">
         <h2 className="text-xl font-semibold text-destructive">{fetchError}</h2>
         <Button asChild className="mt-4">
           <Link href="/profile">Voltar ao Perfil</Link>
         </Button>
-         <Button variant="outline" onClick={() => userId && (form.reset(), useEffect(() => { /* re-trigger fetch */ }, [user, authLoading]))} className="mt-4 ml-2">
+         <Button variant="outline" onClick={() => userId && fetchProfileData(userId)} className="mt-4 ml-2">
           Tentar Novamente
         </Button>
       </div>

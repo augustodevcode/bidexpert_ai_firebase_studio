@@ -1,5 +1,6 @@
+
 // src/lib/database/firestore.adapter.ts
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate, EditableUserProfileData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { firestore } from 'firebase-admin';
 import { AuctionSchema, LotSchema, UserProfileDataSchema, SellerProfileInfoSchema, AuctioneerProfileInfoSchema } from '@/lib/zod-schemas';
@@ -368,6 +369,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
         await this.db.collection('users').doc(userId).update({ roleIds: roleIds || [] });
         return { success: true, message: "Perfis do usuário atualizados." };
     }
+
+    async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
+        return this.genericUpdate('users', userId, data);
+    }
     
     async getMediaItems(): Promise<MediaItem[]> {
         try {
@@ -442,9 +447,17 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     async getCities(stateId?: string): Promise<CityInfo[]> {
         try {
-            const query = this.db.collectionGroup('cities').orderBy('name');
-            const snapshot = await query.get();
-            return snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
+            let query = this.db.collectionGroup('cities');
+            if(stateId) {
+                // This would require an index, but for now we filter client-side
+                // query = query.where('stateId', '==', stateId);
+            }
+            const snapshot = await query.orderBy('name').get();
+            let cities = snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
+            if (stateId) {
+                cities = cities.filter(c => c.stateId === stateId);
+            }
+            return cities;
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getSubcategoriesByParent(parentCategoryId?: string | undefined): Promise<Subcategory[]> { 

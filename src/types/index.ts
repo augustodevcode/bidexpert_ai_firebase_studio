@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 
@@ -940,6 +941,7 @@ export interface DatabaseAdapter {
     getUsersWithRoles(): Promise<UserProfileData[]>;
     getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null>;
     createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }>;
+    updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
     updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }>;
