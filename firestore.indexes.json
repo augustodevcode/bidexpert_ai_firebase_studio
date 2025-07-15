@@ -13,30 +13,29 @@
       "collectionGroup": "judicialDistricts",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "judicialBranches",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     },
     {
       "collectionGroup": "cities",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        }
+        { "fieldPath": "name", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "lotSubcategories",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "parentCategoryId", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" }
       ]
     }
   ],
