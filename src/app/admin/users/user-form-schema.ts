@@ -1,4 +1,4 @@
-
+// src/app/admin/users/user-form-schema.ts
 import * as z from 'zod';
 
 export const userFormSchema = z.object({
@@ -13,7 +13,7 @@ export const userFormSchema = z.object({
   password: z.string().min(6, {
     message: "A senha deve ter pelo menos 6 caracteres.",
   }).optional().or(z.literal('')),
-  roleId: z.string().optional().nullable(),
+  roleIds: z.array(z.string()).optional(), // Changed to array
   cpf: z.string().optional(), 
   cellPhone: z.string().optional(), 
   dateOfBirth: z.date().optional().nullable(), 
@@ -22,7 +22,7 @@ export const userFormSchema = z.object({
   razaoSocial: z.string().optional(),
   cnpj: z.string().optional(),
   inscricaoEstadual: z.string().optional(),
-  websiteComitente: z.string().url({ message: "URL do website inválida."}).optional().or(z.literal('')),
+  website: z.string().url({ message: "URL do website inválida."}).optional().or(z.literal('')),
   // Campos de endereço (comuns)
   zipCode: z.string().optional(),
   street: z.string().optional(),
@@ -35,5 +35,3 @@ export const userFormSchema = z.object({
 });
 
 export type UserFormValues = z.infer<typeof userFormSchema>;
-
-    

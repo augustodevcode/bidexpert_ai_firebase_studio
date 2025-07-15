@@ -40,12 +40,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { id: doc.id, ...data } as T;
     }
     
-    async batchWrite(collectionName: string, items: any[]): Promise<{ success: boolean; message: string; }> {
+    async batchWrite(collectionName: string, items: any[], parentDocPath?: string): Promise<{ success: boolean; message: string; }> {
         if (!items || items.length === 0) {
             return { success: true, message: 'Nenhum item para adicionar.' };
         }
 
-        const batchSize = 499; // Firestore batch limit is 500
+        const batchSize = 499; 
         const batches = [];
         for (let i = 0; i < items.length; i += batchSize) {
             batches.push(items.slice(i, i + batchSize));
@@ -55,7 +55,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
             for (const batchItems of batches) {
                 const batch = this.db.batch();
                 for (const item of batchItems) {
-                    const docRef = item.id ? this.db.collection(collectionName).doc(item.id) : this.db.collection(collectionName).doc();
+                    const collectionRef = parentDocPath ? this.db.doc(parentDocPath).collection(collectionName) : this.db.collection(collectionName);
+                    const docRef = item.id ? collectionRef.doc(item.id) : collectionRef.doc();
                     const dataToSet = {
                         ...item,
                         id: docRef.id,
@@ -65,8 +66,6 @@ export class FirestoreAdapter implements DatabaseAdapter {
                     if (!dataToSet.slug && (dataToSet.name || dataToSet.title)) {
                         dataToSet.slug = slugify(dataToSet.name || dataToSet.title);
                     }
-                    // Use set with merge:true to create or update, preventing duplicate errors
-                    // and saving on writes if the document already exists.
                     batch.set(docRef, dataToSet, { merge: true });
                 }
                 await batch.commit();

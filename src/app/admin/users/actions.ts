@@ -29,6 +29,8 @@ export interface UserCreationData {
   optInMarketing?: boolean;
   responsibleName?: string; // Added to fix type error
   responsibleCpf?: string;  // Added to fix type error
+  roleIds?: string[];
+  uid?: string;
 }
 
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
@@ -67,7 +69,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
   }
 
-  const userRole = roles.find(r => r.name_normalized.trim().toUpperCase() === 'USER');
+  const userRole = roles.find(r => r.nameNormalized === 'USER');
 
   if (!userRole) {
     console.log('[createUser Action] Erro: O perfil de usuário padrão (USER) não foi encontrado nos dados buscados:', roles);
@@ -98,7 +100,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     optInMarketing: data.optInMarketing,
     habilitationStatus: habilitationStatus,
     uid: uuidv4(),
-    roleIds: [userRole.id]
+    roleIds: data.roleIds || [userRole.id]
   };
 
   // @ts-ignore

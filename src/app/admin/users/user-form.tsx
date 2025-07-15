@@ -1,4 +1,4 @@
-
+// src/app/admin/users/user-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -22,20 +22,19 @@ import { userFormSchema, type UserFormValues } from './user-form-schema';
 import type { UserProfileData, Role } from '@/types';
 import { Loader2, Save, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { createUser } from './actions';
 
 interface UserFormProps {
-  initialData?: UserProfileData | null; // Para edição, não usado aqui
+  initialData?: UserProfileData | null;
   roles: Role[];
-  onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
   formTitle: string;
   formDescription: string;
   submitButtonText: string;
 }
 
 export default function UserForm({
-  initialData, // Não será usado para o formulário de "Novo Usuário" por enquanto
+  initialData,
   roles,
-  onSubmitAction,
   formTitle,
   formDescription,
   submitButtonText,
@@ -50,16 +49,15 @@ export default function UserForm({
       fullName: initialData?.fullName || '',
       email: initialData?.email || '',
       password: '', // Senha sempre vazia no formulário de admin
-      roleId: initialData?.roleId || null,
+      roleIds: initialData?.roleIds || [],
     },
   });
 
   async function onSubmit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
-      // A action `createUser` não usará a senha do formulário diretamente para criar no Firebase Auth
-      // Isso é apenas para a criação do perfil no Firestore.
-      const result = await onSubmitAction(values);
+      // The action now handles the full user creation logic
+      const result = await createUser(values);
       if (result.success) {
         toast({
           title: 'Sucesso!',
@@ -128,12 +126,12 @@ export default function UserForm({
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha (Opcional)</FormLabel>
+                  <FormLabel>Senha</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="Defina uma senha inicial" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Se deixado em branco, o usuário pode precisar redefinir a senha no primeiro login ou um email será enviado.
+                    A senha deve ter pelo menos 6 caracteres.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -141,13 +139,13 @@ export default function UserForm({
             />
             <FormField
               control={form.control}
-              name="roleId"
+              name="roleIds"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Perfil do Usuário</FormLabel>
+                  <FormLabel>Perfil Principal do Usuário</FormLabel>
                   <Select 
-                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} 
-                    value={field.value || undefined}
+                    onValueChange={(value) => field.onChange(value ? [value] : [])} 
+                    value={field.value?.[0] || undefined}
                   >
                     <FormControl>
                       <SelectTrigger>
@@ -155,7 +153,6 @@ export default function UserForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="---NONE---">Nenhum Perfil</SelectItem>
                       {roles.map((role) => (
                         <SelectItem key={role.id} value={role.id}>
                           {role.name}
@@ -163,6 +160,7 @@ export default function UserForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormDescription>Para múltiplos perfis, edite o usuário após a criação.</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

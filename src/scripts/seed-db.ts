@@ -1,10 +1,8 @@
 // scripts/seed-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { getDatabaseAdapter } from '@/lib/database/index';
 import { 
   sampleSellers, 
   sampleAuctioneers, 
-  sampleJudicialDistricts, 
-  sampleJudicialBranches,
   sampleJudicialProcesses,
   sampleAuctions,
   sampleLots,
@@ -35,20 +33,6 @@ async function seedFullData() {
             await db.createAuctioneer(auctioneer);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
-        
-        console.log('[DB SEED] Seeding Judicial Districts...');
-        for (const district of sampleJudicialDistricts) {
-             // @ts-ignore
-             await db.createJudicialDistrict(district);
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialDistricts.length} judicial districts processed.`);
-        
-        console.log('[DB SEED] Seeding Judicial Branches...');
-        for (const branch of sampleJudicialBranches) {
-            // @ts-ignore
-            await db.createJudicialBranch(branch);
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialBranches.length} judicial branches processed.`);
         
         console.log('[DB SEED] Seeding Judicial Processes...');
         for (const process of sampleJudicialProcesses) {
@@ -121,9 +105,8 @@ async function seedFullData() {
                 await userAdapter.createUser(fullUserData);
 
                 // Link roles
-                if (user.roleId) {
-                    const roleIdsToLink = Array.isArray(user.roleId) ? user.roleId : [user.roleId];
-                    await userAdapter.updateUserRoles(fullUserData.uid, roleIdsToLink);
+                if (user.roleIds) {
+                    await userAdapter.updateUserRoles(fullUserData.uid, user.roleIds);
                 }
             }
             console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
