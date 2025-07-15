@@ -9,7 +9,7 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 // Server-side data fetching functions
-import { getAuctions, getLots, getDirectSaleOffers, getPlatformSettings } from '@/lib/data-queries';
+import { getAuctions, getLots } from '@/lib/data-queries';
 import { getLotCategories } from './admin/categories/actions';
 
 // Components
