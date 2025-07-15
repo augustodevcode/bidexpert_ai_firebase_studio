@@ -1,8 +1,7 @@
 
-
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
+import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities, sampleJudicialDistricts, sampleJudicialBranches } from '@/lib/sample-data';
 import type { DatabaseAdapter } from '@/types';
 
 
@@ -12,7 +11,7 @@ async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: stri
     
     // @ts-ignore - Assuming batchWrite exists on the adapter
     if (db.batchWrite && itemsToCreate.length > 0) {
-        console.log(`[DB INIT] LOG: Using batchWrite for ${itemsToCreate.length} items.`);
+        console.log(`[DB INIT] LOG: Using batchWrite for ${itemsToCreate.length} items in collection ${collectionName}.`);
         // @ts-ignore
         await db.batchWrite(collectionName, itemsToCreate);
     } else if (itemsToCreate.length > 0) {
@@ -64,13 +63,17 @@ async function seedEssentialData() {
         const existingStates = await db.getStates();
         const existingCities = await db.getCities();
         const existingCourts = await db.getCourts();
+        const existingDistricts = await db.getJudicialDistricts();
+        const existingBranches = await db.getJudicialBranches();
 
         await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
         await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, existingCategories, 'slug');
-        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, existingSubcategories, 'slug');
+        await seedCollectionInBatches(db, 'lot_subcategories', sampleSubcategories, existingSubcategories, 'slug');
         await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
         await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
         await seedCollectionInBatches(db, 'courts', sampleCourts, existingCourts, 'slug');
+        await seedCollectionInBatches(db, 'judicial_districts', sampleJudicialDistricts, existingDistricts, 'slug');
+        await seedCollectionInBatches(db, 'judicial_branches', sampleJudicialBranches, existingBranches, 'slug');
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
