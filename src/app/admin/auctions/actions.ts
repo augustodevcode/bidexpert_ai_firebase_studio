@@ -64,6 +64,7 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 }
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    if (ids.length === 0) return [];
     const db = getDatabaseAdapter();
     const auctions = await Promise.all(ids.map(id => db.getAuction(id)));
     return auctions.filter((a): a is Auction => a !== null);
@@ -73,7 +74,7 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
     const db = getDatabaseAdapter();
     const allAuctions = await db.getAuctions();
     const allSellers = await db.getSellers();
-    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
+    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId || s.id === sellerSlugOrPublicId);
     if (!seller) return [];
     return allAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
 }
@@ -82,7 +83,7 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promi
     const db = getDatabaseAdapter();
     const allAuctions = await db.getAuctions();
     const allAuctioneers = await db.getAuctioneers();
-    const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.publicId === auctioneerSlug);
+    const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.publicId === auctioneerSlug || a.id === auctioneerSlug);
     if (!auctioneer) return [];
     return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
 }
