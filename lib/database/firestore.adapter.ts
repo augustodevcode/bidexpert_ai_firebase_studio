@@ -12,12 +12,15 @@ export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
 
     constructor() {
+        console.log('[FirestoreAdapter] LOG: Constructor called.');
         const { db, error } = ensureAdminInitialized();
         if (error || !db) {
-            throw new Error(`Firestore não pôde ser inicializado: ${error?.message}`);
+            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message}`;
+            console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
+            throw new Error(errorMessage);
         }
         this.db = db;
-        console.log('[FirestoreAdapter] Inicializado com sucesso.');
+        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -62,6 +65,8 @@ export class FirestoreAdapter implements DatabaseAdapter {
                     if (!dataToSet.slug && (dataToSet.name || dataToSet.title)) {
                         dataToSet.slug = slugify(dataToSet.name || dataToSet.title);
                     }
+                    // Use set with merge:true to create or update, preventing duplicate errors
+                    // and saving on writes if the document already exists.
                     batch.set(docRef, dataToSet, { merge: true });
                 }
                 await batch.commit();
@@ -130,38 +135,101 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getLots(auctionId?: string): Promise<Lot[]> {
+        console.log(`[FirestoreAdapter] LOG: getLots called for auctionId: ${auctionId || 'all'}`);
         let query: FirebaseFirestore.Query = this.db.collection('lots');
+        
         if (auctionId) {
-            query = query.where('auctionId', '==', auctionId);
+            query = query.where('auctionId', '==', auctionId).orderBy('number', 'asc');
+        } else {
+            query = query.orderBy('createdAt', 'desc');
         }
-        const snapshot = await query.orderBy('number', 'asc').get();
-        return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        
+        try {
+            const snapshot = await query.get();
+            console.log(`[FirestoreAdapter] LOG: getLots found ${snapshot.docs.length} documents.`);
+            return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        } catch (error: any) {
+            if (error.code === 5) { // NOT_FOUND
+                console.warn(`[FirestoreAdapter] WARN: Collection 'lots' not found or empty. Returning empty array. This is normal if the DB is not seeded.`);
+                return [];
+            }
+            console.error(`[FirestoreAdapter] FATAL: Error fetching lots:`, error);
+            throw error;
+        }
     }
 
     async getLot(id: string): Promise<Lot | null> {
+        console.log(`[FirestoreAdapter] LOG: getLot called for id: ${id}`);
         const doc = await this.db.collection('lots').doc(id).get();
         return doc.exists ? this.toJSON<Lot>(doc) : null;
     }
     
     async createLot(lotData: Partial<Omit<Lot, "id" | "createdAt" | "updatedAt">>): Promise<{ success: boolean; message: string; lotId?: string; }> {
+       console.log('[FirestoreAdapter] LOG: createLot called.');
        const result = await this.genericCreate('lots', lotData, LotSchema);
        return { ...result, lotId: result.id };
     }
     
     async updateLot(id: string, updates: Partial<Lot>): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: updateLot called for id: ${id}`);
         return this.genericUpdate('lots', id, updates, LotSchema.partial());
     }
 
     async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: deleteLot called for id: ${id}`);
         return this.genericDelete('lots', id);
     }
 
     async getAuctions(): Promise<Auction[]> {
-        const snapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
-        return snapshot.docs.map(doc => this.toJSON<Auction>(doc));
+        console.log('[FirestoreAdapter] LOG: getAuctions optimized called.');
+        let auctionsSnapshot: FirebaseFirestore.QuerySnapshot;
+        let lotsSnapshot: FirebaseFirestore.QuerySnapshot;
+
+        try {
+            auctionsSnapshot = await this.db.collection('auctions').orderBy('auctionDate', 'desc').get();
+        } catch (error: any) {
+            if (error.code === 5) { // NOT_FOUND
+                console.warn(`[FirestoreAdapter] WARN: Collection 'auctions' not found. Returning empty array.`);
+                return [];
+            }
+            throw error;
+        }
+
+        try {
+            lotsSnapshot = await this.db.collection('lots').get();
+        } catch (error: any) {
+            if (error.code === 5) {
+                console.warn(`[FirestoreAdapter] WARN: Collection 'lots' not found during auction assembly. Treating as empty.`);
+                lotsSnapshot = { docs: [], empty: true } as any; 
+            } else {
+                throw error;
+            }
+        }
+        
+        const allLots = lotsSnapshot.docs.map(doc => this.toJSON<Lot>(doc));
+        const lotsByAuctionId = new Map<string, Lot[]>();
+
+        for (const lot of allLots) {
+            if (!lotsByAuctionId.has(lot.auctionId)) {
+                lotsByAuctionId.set(lot.auctionId, []);
+            }
+            lotsByAuctionId.get(lot.auctionId)!.push(lot);
+        }
+
+        const auctions = auctionsSnapshot.docs.map(doc => {
+            const auction = this.toJSON<Auction>(doc);
+            const relatedLots = lotsByAuctionId.get(auction.id) || [];
+            auction.lots = relatedLots.sort((a,b) => (parseInt(a.number || '0') || 0) - (parseInt(b.number || '0') || 0));
+            auction.totalLots = relatedLots.length;
+            return auction;
+        });
+
+        console.log(`[FirestoreAdapter] LOG: getAuctions found ${auctions.length} documents and assembled them.`);
+        return auctions;
     }
     
     async getAuction(id: string): Promise<Auction | null> {
+        console.log(`[FirestoreAdapter] LOG: getAuction called for id: ${id}`);
         const doc = await this.db.collection('auctions').doc(id).get();
         if (!doc.exists) return null;
         const auction = this.toJSON<Auction>(doc);
@@ -171,76 +239,131 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async createAuction(auctionData: Partial<Omit<Auction, 'id' | 'createdAt' | 'updatedAt'>>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+        console.log('[FirestoreAdapter] LOG: createAuction called.');
         const result = await this.genericCreate('auctions', auctionData, AuctionSchema);
         return { ...result, auctionId: result.id };
     }
 
     async updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: updateAuction called for id: ${id}`);
         return this.genericUpdate('auctions', id, updates, AuctionSchema.partial());
     }
 
     async deleteAuction(id: string): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: deleteAuction called for id: ${id}`);
         return this.genericDelete('auctions', id);
     }
     
     async getLotsByIds(ids: string[]): Promise<Lot[]> {
+      console.log(`[FirestoreAdapter] LOG: getLotsByIds called for ${ids.length} IDs.`);
       if (ids.length === 0) return [];
       const snapshot = await this.db.collection('lots').where(firestore.FieldPath.documentId(), 'in', ids).get();
       return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
     }
     
     async getLotCategories(): Promise<LotCategory[]> {
-        const snapshot = await this.db.collection('lot_categories').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<LotCategory>(doc));
+        console.log('[FirestoreAdapter] LOG: getLotCategories called.');
+        try {
+            const snapshot = await this.db.collection('lot_categories').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<LotCategory>(doc));
+        } catch (error: any) {
+            if (error.code === 5) {
+                console.warn("[FirestoreAdapter] WARN: Collection 'lot_categories' not found. Returning empty array.");
+                return [];
+            }
+            throw error;
+        }
     }
 
     async createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean; message: string; }> {
+        console.log('[FirestoreAdapter] LOG: createLotCategory called.');
         const docRef = this.db.collection('lot_categories').doc(data.id || data.slug!);
         await docRef.set({ ...data, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
         return { success: true, message: 'Categoria criada.' };
     }
     
     async getSellers(): Promise<SellerProfileInfo[]> {
-        const snapshot = await this.db.collection('sellers').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<SellerProfileInfo>(doc));
+        console.log('[FirestoreAdapter] LOG: getSellers called.');
+        try {
+            const snapshot = await this.db.collection('sellers').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<SellerProfileInfo>(doc));
+        } catch (error: any) {
+            if (error.code === 5) { return []; }
+            throw error;
+        }
     }
     
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-        const snapshot = await this.db.collection('auctioneers').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<AuctioneerProfileInfo>(doc));
+        console.log('[FirestoreAdapter] LOG: getAuctioneers called.');
+        try {
+            const snapshot = await this.db.collection('auctioneers').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<AuctioneerProfileInfo>(doc));
+        } catch (error: any) {
+            if (error.code === 5) { return []; }
+            throw error;
+        }
     }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
-        const snapshot = await this.db.collection('users').get();
-        return snapshot.docs.map(doc => this.toJSON<UserProfileData>(doc));
+        console.log('[FirestoreAdapter] LOG: getUsersWithRoles called.');
+        try {
+            const usersSnapshot = await this.db.collection('users').get();
+            if (usersSnapshot.empty) return [];
+
+            const rolesSnapshot = await this.db.collection('roles').get();
+            const rolesMap = new Map(rolesSnapshot.docs.map(doc => [doc.id, this.toJSON<Role>(doc)]));
+
+            return usersSnapshot.docs.map(userDoc => {
+                const userData = this.toJSON<UserProfileData>(userDoc);
+                const userRoleIds = userData.roleIds || [];
+                userData.roleNames = userRoleIds.map(roleId => rolesMap.get(roleId)?.name).filter((name): name is string => !!name);
+                userData.permissions = Array.from(new Set(userRoleIds.flatMap(roleId => rolesMap.get(roleId)?.permissions || [])));
+                return userData;
+            });
+        } catch (error: any) {
+             if (error.code === 5) { return []; }
+            throw error;
+        }
     }
     
     async getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null> {
-        let snapshot: FirebaseFirestore.QuerySnapshot;
-        if (userIdOrEmail.includes('@')) {
-            snapshot = await this.db.collection('users').where('email', '==', userIdOrEmail).limit(1).get();
-        } else {
-            const doc = await this.db.collection('users').doc(userIdOrEmail).get();
-            if (doc.exists) return this.toJSON<UserProfileData>(doc);
-            return null;
-        }
+        console.log(`[FirestoreAdapter] LOG: getUserProfileData called for: ${userIdOrEmail}`);
+        let userDoc: FirebaseFirestore.DocumentSnapshot | null = null;
+        try {
+            if (userIdOrEmail.includes('@')) {
+                const snapshot = await this.db.collection('users').where('email', '==', userIdOrEmail).limit(1).get();
+                if (!snapshot.empty) userDoc = snapshot.docs[0];
+            } else {
+                userDoc = await this.db.collection('users').doc(userIdOrEmail).get();
+            }
 
-        if (snapshot.empty) return null;
-        return this.toJSON<UserProfileData>(snapshot.docs[0]);
+            if (!userDoc || !userDoc.exists) return null;
+
+            const userData = this.toJSON<UserProfileData>(userDoc);
+            
+            if (userData.roleIds && userData.roleIds.length > 0) {
+                const rolesSnapshot = await this.db.collection('roles').where(firestore.FieldPath.documentId(), 'in', userData.roleIds).get();
+                const roles = rolesSnapshot.docs.map(doc => this.toJSON<Role>(doc));
+                userData.roleNames = roles.map(r => r.name);
+                userData.permissions = Array.from(new Set(roles.flatMap(r => r.permissions || [])));
+            } else {
+                userData.roleNames = [];
+                userData.permissions = [];
+            }
+            return userData;
+        } catch (error: any) {
+            if (error.code === 5) { return null; }
+            throw error;
+        }
     }
     
     async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
+        console.log(`[FirestoreAdapter] LOG: createUser called for email: ${data.email}`);
         const { uid, ...restData } = data;
         if (!uid) return { success: false, message: "UID is required to create a user."};
         const docRef = this.db.collection('users').doc(uid);
         
-        const dataToSet = {
-            ...restData,
-            id: uid, // Use uid as both id and uid in Firestore doc
-            uid: uid,
-            createdAt: AdminFieldValue.serverTimestamp(),
-            updatedAt: AdminFieldValue.serverTimestamp(),
-        };
+        const dataToSet = { ...restData, id: uid, uid: uid, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() };
 
         try {
             UserProfileDataSchema.partial().parse(dataToSet);
@@ -253,11 +376,18 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async getRoles(): Promise<Role[]> {
-        const snapshot = await this.db.collection('roles').get();
-        return snapshot.docs.map(doc => this.toJSON<Role>(doc));
+        console.log('[FirestoreAdapter] LOG: getRoles called.');
+        try {
+            const snapshot = await this.db.collection('roles').get();
+            return snapshot.docs.map(doc => this.toJSON<Role>(doc));
+        } catch (error: any) {
+            if (error.code === 5) { return []; }
+            throw error;
+        }
     }
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: createRole called for role: ${role.name}`);
         const docId = `role-${slugify(role.name)}`;
         const docRef = this.db.collection('roles').doc(docId);
         await docRef.set({ ...role, id: docId, createdAt: AdminFieldValue.serverTimestamp(), updatedAt: AdminFieldValue.serverTimestamp() });
@@ -265,48 +395,60 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }> {
+        console.log(`[FirestoreAdapter] LOG: updateUserRoles called for user: ${userId}`);
         await this.db.collection('users').doc(userId).update({ roleIds: roleIds || [] });
         return { success: true, message: "Perfis do usuário atualizados." };
     }
     
     async getMediaItems(): Promise<MediaItem[]> {
-        const snapshot = await this.db.collection('mediaItems').orderBy('uploadedAt', 'desc').get();
-        return snapshot.docs.map(doc => this.toJSON<MediaItem>(doc));
+        console.log('[FirestoreAdapter] LOG: getMediaItems called.');
+        try {
+            const snapshot = await this.db.collection('mediaItems').orderBy('uploadedAt', 'desc').get();
+            return snapshot.docs.map(doc => this.toJSON<MediaItem>(doc));
+        } catch (error: any) {
+             if (error.code === 5) { return []; }
+            throw error;
+        }
     }
     
     async createMediaItem(itemData: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> {
+       console.log(`[FirestoreAdapter] LOG: createMediaItem called by user: ${userId}`);
        const docRef = this.db.collection('mediaItems').doc();
-       const newItem = {
-           ...itemData,
-           id: docRef.id,
-           urlOriginal: url,
-           urlThumbnail: url, // Placeholder
-           uploadedAt: AdminFieldValue.serverTimestamp(),
-           uploadedBy: userId,
-       };
+       const newItem = { ...itemData, id: docRef.id, urlOriginal: url, urlThumbnail: url, uploadedAt: AdminFieldValue.serverTimestamp(), uploadedBy: userId };
        await docRef.set(newItem);
        return { success: true, message: "Mídia enviada com sucesso", item: newItem as MediaItem };
     }
 
     async getPlatformSettings(): Promise<PlatformSettings | null> {
-        const doc = await this.db.collection('settings').doc('global').get();
-        return doc.exists ? this.toJSON<PlatformSettings>(doc) : null;
+        console.log("[FirestoreAdapter] LOG: Getting platform settings from Firestore.");
+        try {
+            const doc = await this.db.collection('settings').doc('global').get();
+            if (doc.exists) {
+                console.log("[FirestoreAdapter] LOG: Platform settings document found.");
+                return this.toJSON<PlatformSettings>(doc);
+            } else {
+                console.warn("[FirestoreAdapter] LOG: Platform settings document NOT found.");
+                return null;
+            }
+        } catch (error: any) {
+            if (error.code === 5) {
+                console.warn("[FirestoreAdapter] WARN: Collection 'settings' not found. Returning null.");
+                return null;
+            }
+            console.error("[FirestoreAdapter] FATAL: Error fetching platform settings:", error);
+            throw error;
+        }
     }
 
     async createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('settings').doc('global').set({
-            ...data,
-            id: 'global',
-            updatedAt: AdminFieldValue.serverTimestamp()
-        }, { merge: true });
+        console.log("[FirestoreAdapter] LOG: createPlatformSettings called.");
+        await this.db.collection('settings').doc('global').set({ ...data, id: 'global', updatedAt: AdminFieldValue.serverTimestamp() }, { merge: true });
         return { success: true, message: "Configurações criadas com sucesso." };
     }
 
     async updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-        await this.db.collection('settings').doc('global').set({
-            ...data,
-            updatedAt: AdminFieldValue.serverTimestamp()
-        }, { merge: true });
+        console.log("[FirestoreAdapter] LOG: updatePlatformSettings called.");
+        await this.db.collection('settings').doc('global').set({ ...data, updatedAt: AdminFieldValue.serverTimestamp() }, { merge: true });
         return { success: true, message: "Configurações atualizadas com sucesso." };
     }
 
@@ -336,21 +478,25 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getStates(): Promise<StateInfo[]> {
-        const snapshot = await this.db.collection('states').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<StateInfo>(doc));
+        try {
+            const snapshot = await this.db.collection('states').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<StateInfo>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getCities(stateId?: string): Promise<CityInfo[]> {
-        let query: FirebaseFirestore.Query = this.db.collection('cities');
-        if (stateId) {
-            query = query.where('stateId', '==', stateId);
-        }
-        const snapshot = await query.orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
+        try {
+            let query: FirebaseFirestore.Query = this.db.collection('cities');
+            if (stateId) query = query.where('stateId', '==', stateId);
+            const snapshot = await query.orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<CityInfo>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getSubcategoriesByParent(parentCategoryId?: string | undefined): Promise<Subcategory[]> { 
         if (!parentCategoryId) return [];
-        const snapshot = await this.db.collection('subcategories').where('parentCategoryId', '==', parentCategoryId).orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
+        try {
+            const snapshot = await this.db.collection('subcategories').where('parentCategoryId', '==', parentCategoryId).orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getSubcategory(id: string): Promise<Subcategory | null> { 
         const doc = await this.db.collection('subcategories').doc(id).get();
@@ -380,14 +526,18 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> { return this.genericDelete('auctioneers', id); }
     
     async getCourts(): Promise<Court[]> { 
-        const snapshot = await this.db.collection('courts').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<Court>(doc));
+        try {
+            const snapshot = await this.db.collection('courts').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<Court>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('courts', id, data); }
     
     async getJudicialDistricts(): Promise<JudicialDistrict[]> {
-        const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
+        try {
+            const snapshot = await this.db.collection('judicial_districts').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { 
         const result = await this.genericCreate('judicial_districts', data);
@@ -395,8 +545,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getJudicialBranches(): Promise<JudicialBranch[]> { 
-        const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
+        try {
+            const snapshot = await this.db.collection('judicial_branches').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
         const result = await this.genericCreate('judicial_branches', data);
@@ -404,8 +556,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async getJudicialProcesses(): Promise<JudicialProcess[]> {
-        const snapshot = await this.db.collection('judicial_processes').get();
-        return snapshot.docs.map(doc => this.toJSON<JudicialProcess>(doc));
+        try {
+            const snapshot = await this.db.collection('judicial_processes').get();
+            return snapshot.docs.map(doc => this.toJSON<JudicialProcess>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string | undefined; }> { 
         const result = await this.genericCreate('judicial_processes', data);
@@ -417,20 +571,24 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return doc.exists ? this.toJSON<Bem>(doc) : null;
     }
     async getBens(filter?: { judicialProcessId?: string; sellerId?: string; } | undefined): Promise<Bem[]> { 
-        let query: FirebaseFirestore.Query = this.db.collection('bens');
-        if (filter?.judicialProcessId) {
-            query = query.where('judicialProcessId', '==', filter.judicialProcessId);
-        }
-        if (filter?.sellerId) {
-            query = query.where('sellerId', '==', filter.sellerId);
-        }
-        const snapshot = await query.get();
-        return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+        try {
+            let query: FirebaseFirestore.Query = this.db.collection('bens');
+            if (filter?.judicialProcessId) {
+                query = query.where('judicialProcessId', '==', filter.judicialProcessId);
+            }
+            if (filter?.sellerId) {
+                query = query.where('sellerId', '==', filter.sellerId);
+            }
+            const snapshot = await query.get();
+            return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async getBensByIds(ids: string[]): Promise<Bem[]> { 
       if (ids.length === 0) return [];
-      const snapshot = await this.db.collection('bens').where(firestore.FieldPath.documentId(), 'in', ids).get();
-      return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+       try {
+            const snapshot = await this.db.collection('bens').where(firestore.FieldPath.documentId(), 'in', ids).get();
+            return snapshot.docs.map(doc => this.toJSON<Bem>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
      async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string | undefined; }> { 
         const result = await this.genericCreate('bens', data);
@@ -440,8 +598,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async deleteBem(id: string): Promise<{ success: boolean, message: string }> { return this.genericDelete('bens', id); }
 
     async getDirectSaleOffers(): Promise<DirectSaleOffer[]> { 
-        const snapshot = await this.db.collection('direct_sales').get();
-        return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
+        try {
+            const snapshot = await this.db.collection('direct_sales').get();
+            return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
 
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
@@ -452,16 +612,20 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getDocumentTemplates(): Promise<DocumentTemplate[]> {
-        const snapshot = await this.db.collection('document_templates').orderBy('name').get();
-        return snapshot.docs.map(doc => this.toJSON<DocumentTemplate>(doc));
+        try {
+            const snapshot = await this.db.collection('document_templates').orderBy('name').get();
+            return snapshot.docs.map(doc => this.toJSON<DocumentTemplate>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
 
     async getContactMessages(): Promise<ContactMessage[]> {
-        const snapshot = await this.db.collection('contactMessages').orderBy('createdAt', 'desc').get();
-        return snapshot.docs.map(doc => this.toJSON<ContactMessage>(doc));
+        try {
+            const snapshot = await this.db.collection('contactMessages').orderBy('createdAt', 'desc').get();
+            return snapshot.docs.map(doc => this.toJSON<ContactMessage>(doc));
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
 
-     async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt'>): Promise<{ success: boolean; message: string }> {
+     async saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }> {
         const docRef = this.db.collection('contactMessages').doc();
         await docRef.set({
             ...message,
@@ -471,5 +635,4 @@ export class FirestoreAdapter implements DatabaseAdapter {
         });
         return { success: true, message: 'Mensagem enviada com sucesso!' };
     }
-
 }

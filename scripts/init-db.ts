@@ -1,4 +1,5 @@
 
+
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/get-adapter';
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
@@ -42,13 +43,7 @@ async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: stri
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
-    let db;
-    try {
-        db = getDatabaseAdapter(); 
-    } catch (e: any) {
-        console.error(`[DB INIT] ❌ FATAL: Could not initialize database adapter. Error: ${e.message}`);
-        return; // Exit if adapter fails
-    }
+    const db = getDatabaseAdapter(); 
     
     try {
         // Platform Settings (Single Document)
@@ -71,7 +66,7 @@ async function seedEssentialData() {
         const existingCourts = await db.getCourts();
 
         await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
-        await seedCollectionInBatches(db, 'lotCategories', sampleLotCategories, existingCategories, 'slug');
+        await seedCollectionInBatches(db, 'lot_categories', sampleLotCategories, existingCategories, 'slug');
         await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, existingSubcategories, 'slug');
         await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
         await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
@@ -79,8 +74,7 @@ async function seedEssentialData() {
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
-        // Do not re-throw, just log the error.
-        // throw error; // Commented out to prevent script from crashing
+        throw error; // Throw error to stop the process if essential data fails
     }
     
     console.log('--- [DB INIT] LOG: Essential Data seeding finished ---');
@@ -98,7 +92,6 @@ async function initializeDatabase() {
 }
 
 initializeDatabase().catch(error => {
-    // This top-level catch is for unexpected errors in the script itself.
-    console.error("[DB INIT] ❌ FATAL SCRIPT ERROR during database initialization:", error);
-    process.exit(1); // Exit with failure code for fatal script errors.
+    console.error("[DB INIT] ❌ FATAL ERROR during database initialization:", error);
+    process.exit(1);
 });
