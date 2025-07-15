@@ -15,6 +15,9 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+
 
 // Initialize Firebase
 if (getApps().length === 0) {
@@ -23,16 +26,16 @@ if (getApps().length === 0) {
   app = getApps()[0];
 }
 
-const auth: Auth = getAuth(app);
-const db: Firestore = getFirestore(app);
+auth = getAuth(app);
+db = getFirestore(app);
 
 // Connect to emulators in development
 if (typeof window !== 'undefined' && window.location.hostname === "localhost") {
     console.log("Connecting to Firebase Emulators...");
-    // Point to the emulators running on localhost.
+    // Point to the emulators running on localhost as defined in firebase.json
     connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
     connectFirestoreEmulator(db, "127.0.0.1", 8080);
-    // Note: DataConnect emulator connection is handled separately if needed on client
+    // DataConnect emulator connection is handled by the generated SDK and does not need to be specified here.
 }
 
 export { app, auth, db };
