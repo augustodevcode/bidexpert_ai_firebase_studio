@@ -3,9 +3,9 @@
 
 import type { UserProfileWithPermissions, Role, AccountType, UserProfileData, UserHabilitationStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
-import bcrypt from 'bcrypt';
 import { getDatabaseAdapter } from '@/lib/database/index';
-import { v4 as uuidv4 } from 'uuid';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
+import admin from 'firebase-admin';
 
 export interface UserCreationData {
   email: string;
@@ -41,9 +41,9 @@ export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]>
   return users as UserProfileWithPermissions[];
 }
 
-export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
+export async function getUserProfileData(userIdOrEmail: string): Promise<UserProfileWithPermissions | null> {
   const db = getDatabaseAdapter();
-  const user = await db.getUserProfileData(userId);
+  const user = await db.getUserProfileData(userIdOrEmail);
   return user as UserProfileWithPermissions | null;
 }
 
@@ -52,66 +52,78 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
     return { success: false, message: "Email e senha são obrigatórios." };
   }
   
+  const { app } = ensureAdminInitialized();
+  const auth = admin.auth(app);
   const db = getDatabaseAdapter();
-  const allUsers = await db.getUsersWithRoles();
-  const existingUser = allUsers.find(u => u.email.toLowerCase() === data.email.toLowerCase());
 
-  if (existingUser) {
-    return { success: false, message: "Este email já está em uso." };
+  try {
+    // 1. Create user in Firebase Auth
+    const userRecord = await auth.createUser({
+      email: data.email.trim(),
+      password: data.password,
+      displayName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
+      emailVerified: false, // User needs to verify their email
+    });
+
+    // 2. Prepare data for Firestore document
+    const roles = await db.getRoles();
+    const userRole = roles.find(r => r.nameNormalized === 'USER');
+
+    if (!userRole) {
+      throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
+    }
+    
+    const habilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
+    const uid = userRecord.uid;
+
+    const firestoreData: Omit<UserProfileData, 'id' | 'createdAt' | 'updatedAt' | 'password'> = {
+      uid: uid,
+      email: data.email.trim(),
+      fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
+      accountType: data.accountType as AccountType,
+      cpf: data.accountType === 'PHYSICAL' ? data.cpf?.trim() : data.responsibleCpf?.trim(),
+      dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth as string) : null,
+      razaoSocial: data.accountType !== 'PHYSICAL' ? data.razaoSocial?.trim() : undefined,
+      cnpj: data.accountType !== 'PHYSICAL' ? data.cnpj?.trim() : undefined,
+      inscricaoEstadual: data.accountType !== 'PHYSICAL' ? data.inscricaoEstadual?.trim() : undefined,
+      website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.website?.trim() : undefined,
+      cellPhone: data.cellPhone?.trim(),
+      zipCode: data.zipCode?.trim(),
+      street: data.street?.trim(),
+      number: data.number?.trim(),
+      complement: data.complement?.trim(),
+      neighborhood: data.neighborhood?.trim(),
+      city: data.city?.trim(),
+      state: data.state?.trim(),
+      optInMarketing: data.optInMarketing,
+      habilitationStatus: habilitationStatus,
+      roleIds: data.roleIds || [userRole.id]
+    };
+    
+    // 3. Create user document in Firestore
+    // @ts-ignore The create_user method in the adapter will handle the rest
+    const result = await db.createUser(firestoreData); 
+
+    if (result.success) {
+      revalidatePath('/admin/users');
+      // Optionally send verification email
+      // await auth.generateEmailVerificationLink(data.email);
+    }
+    
+    return result;
+
+  } catch (error: any) {
+    console.error("Error creating user:", error);
+    let message = 'Ocorreu um erro ao criar o usuário.';
+    if (error.code === 'auth/email-already-exists') {
+      message = 'Este email já está em uso por outra conta.';
+    } else if (error.code === 'auth/invalid-password') {
+      message = 'A senha fornecida não é válida. Deve ter pelo menos 6 caracteres.';
+    }
+    return { success: false, message };
   }
-
-  const hashedPassword = await bcrypt.hash(data.password, 10);
-  
-  const roles = await db.getRoles();
-  console.log('[createUser Action] Roles fetched for new user:', JSON.stringify(roles, null, 2));
-
-  if (!roles || roles.length === 0) {
-    throw new Error("Nenhum perfil (role) foi encontrado no banco de dados. Execute o script de inicialização.");
-  }
-
-  const userRole = roles.find(r => r.nameNormalized === 'USER');
-
-  if (!userRole) {
-    console.log('[createUser Action] Erro: O perfil de usuário padrão (USER) não foi encontrado nos dados buscados:', roles);
-    throw new Error("O perfil de usuário padrão (USER) não foi encontrado no banco de dados.");
-  }
-  
-  const habilitationStatus: UserHabilitationStatus = 'PENDING_DOCUMENTS';
-
-  const creationData = {
-    email: data.email.trim(),
-    fullName: data.accountType === 'PHYSICAL' ? data.fullName?.trim() : data.razaoSocial?.trim(),
-    password: hashedPassword,
-    accountType: data.accountType,
-    cpf: data.accountType === 'PHYSICAL' ? data.cpf?.trim() : data.responsibleCpf?.trim(),
-    dateOfBirth: data.accountType === 'PHYSICAL' ? data.dateOfBirth : null,
-    razaoSocial: data.accountType !== 'PHYSICAL' ? data.razaoSocial?.trim() : undefined,
-    cnpj: data.accountType !== 'PHYSICAL' ? data.cnpj?.trim() : undefined,
-    inscricaoEstadual: data.accountType !== 'PHYSICAL' ? data.inscricaoEstadual?.trim() : undefined,
-    website: data.accountType === 'DIRECT_SALE_CONSIGNOR' ? data.website?.trim() : undefined,
-    cellPhone: data.cellPhone?.trim(),
-    zipCode: data.zipCode?.trim(),
-    street: data.street?.trim(),
-    number: data.number?.trim(),
-    complement: data.complement?.trim(),
-    neighborhood: data.neighborhood?.trim(),
-    city: data.city?.trim(),
-    state: data.state?.trim(),
-    optInMarketing: data.optInMarketing,
-    habilitationStatus: habilitationStatus,
-    uid: uuidv4(),
-    roleIds: data.roleIds || [userRole.id]
-  };
-
-  // @ts-ignore
-  const result = await db.createUser(creationData); 
-
-  if (result.success) {
-    revalidatePath('/admin/users');
-  }
-  
-  return result;
 }
+
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   try {
