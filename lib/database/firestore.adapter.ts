@@ -19,7 +19,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
             throw new Error(errorMessage);
         }
         this.db = dbInstance;
-        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso com a instância do DB fornecida.');
+        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -497,10 +497,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async getSubcategoriesByParent(parentCategoryId?: string | undefined): Promise<Subcategory[]> { 
         let query: FirebaseFirestore.Query = this.db.collection('lotSubcategories');
         if (parentCategoryId) {
-          query = query.where('parentCategoryId', '==', parentCategoryId);
+          query = query.where('parentCategoryId', '==', parentCategoryId).orderBy('name');
+        } else {
+          query = query.orderBy('parentCategoryId').orderBy('name');
         }
         try {
-            const snapshot = await query.orderBy('name').get();
+            const snapshot = await query.get();
             return snapshot.docs.map(doc => this.toJSON<Subcategory>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }

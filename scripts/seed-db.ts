@@ -1,3 +1,4 @@
+
 // scripts/seed-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
 import { 
@@ -16,51 +17,51 @@ import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 
 async function seedFullData() {
-    console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
+    console.log('\n--- [DB SEED] LOG: Seeding Full Demo Data ---');
     const db = getDatabaseAdapter();
 
     try {
-        console.log('[DB SEED] Seeding Sellers...');
+        console.log('[DB SEED] LOG: Seeding Sellers...');
         for (const seller of sampleSellers) {
             // @ts-ignore
             await db.createSeller(seller);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
 
-        console.log('[DB SEED] Seeding Auctioneers...');
+        console.log('[DB SEED] LOG: Seeding Auctioneers...');
         for (const auctioneer of sampleAuctioneers) {
             // @ts-ignore
             await db.createAuctioneer(auctioneer);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
         
-        console.log('[DB SEED] Seeding Judicial Processes...');
+        console.log('[DB SEED] LOG: Seeding Judicial Processes...');
         for (const process of sampleJudicialProcesses) {
             // @ts-ignore
             await db.createJudicialProcess(process);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialProcesses.length} judicial processes processed.`);
 
-        console.log('[DB SEED] Seeding Bens...');
+        console.log('[DB SEED] LOG: Seeding Bens...');
         for (const bem of sampleBens) {
             // @ts-ignore
             await db.createBem(bem);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleBens.length} bens processed.`);
         
-        console.log('[DB SEED] Seeding Auctions...');
+        console.log('[DB SEED] LOG: Seeding Auctions...');
         for (const auction of sampleAuctions) {
             await db.createAuction(auction);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctions.length} auctions processed.`);
 
-        console.log('[DB SEED] Seeding Lots...');
+        console.log('[DB SEED] LOG: Seeding Lots...');
         for (const lot of sampleLots) {
             await db.createLot(lot);
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleLots.length} lots processed.`);
         
-        console.log('[DB SEED] Seeding Direct Sale Offers...');
+        console.log('[DB SEED] LOG: Seeding Direct Sale Offers...');
         const offerAdapter = db as any;
         if (offerAdapter.createDirectSaleOffer) {
             for (const offer of sampleDirectSaleOffers) {
@@ -71,7 +72,7 @@ async function seedFullData() {
             console.log(`[DB SEED] 🟡 INFO: createDirectSaleOffer not implemented on this adapter.`);
         }
 
-        console.log('[DB SEED] Seeding Bids...');
+        console.log('[DB SEED] LOG: Seeding Bids...');
         const bidAdapter = db as any;
         if (bidAdapter.createBid) {
             for (const bid of sampleBids) {
@@ -82,7 +83,7 @@ async function seedFullData() {
              console.log(`[DB SEED] 🟡 INFO: createBid not implemented on this adapter.`);
         }
         
-        console.log('[DB SEED] Seeding User Wins...');
+        console.log('[DB SEED] LOG: Seeding User Wins...');
         const winAdapter = db as any;
         if (winAdapter.createUserWin) {
             for (const win of sampleUserWins) {
@@ -93,7 +94,7 @@ async function seedFullData() {
              console.log(`[DB SEED] 🟡 INFO: createUserWin not implemented on this adapter.`);
         }
 
-        console.log('[DB SEED] Seeding Users with Hashed Passwords...');
+        console.log('[DB SEED] LOG: Seeding Additional Users with Hashed Passwords...');
         const userAdapter = db as any;
         if (userAdapter.createUser) {
             const existingUsers = await db.getUsersWithRoles();
@@ -118,7 +119,7 @@ async function seedFullData() {
         console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);
     }
     
-    console.log('--- [DB SEED] Full Demo Data seeding finished ---');
+    console.log('--- [DB SEED] LOG: Full Demo Data seeding finished ---');
 }
 
 seedFullData().catch(error => {

@@ -44,9 +44,9 @@ async function seedEssentialData() {
         // Top-level collections that don't depend on others
         await seedCollection(db, 'roles', sampleRoles);
         await seedCollection(db, 'lotCategories', sampleLotCategories);
-        await seedCollection(db, 'lotSubcategories', sampleSubcategories);
         
         // Seed hierarchical data
+        console.log('[DB INIT] LOG: Seeding States and Cities...');
         for (const stateData of sampleStatesWithCities) {
             const { cities, ...state } = stateData;
             await seedCollection(db, 'states', [state]);
@@ -54,7 +54,9 @@ async function seedEssentialData() {
                 await seedCollection(db, 'cities', cities, `states/${state.id}`);
             }
         }
-        
+        console.log('[DB INIT] ✅ SUCCESS: States and Cities seeded.');
+
+        console.log('[DB INIT] LOG: Seeding Courts, Districts, and Branches...');
         for (const courtData of sampleCourtsWithRelations) {
             const { districts, ...court } = courtData;
             await seedCollection(db, 'courts', [court]);
@@ -63,21 +65,23 @@ async function seedEssentialData() {
                  for (const districtData of districts) {
                     const { branches, ...district } = districtData;
                     const districtWithCourtId = { ...district, courtId: court.id };
-                    await seedCollection(db, 'judicialDistricts', [districtWithCourtId]);
+                    await seedCollection(db, 'judicialDistricts', [districtWithCourtId], `courts/${court.id}`);
 
                     if (branches && branches.length > 0) {
                         const branchesWithDistrictId = branches.map(b => ({...b, districtId: district.id}));
-                        await seedCollection(db, 'judicialBranches', branchesWithDistrictId);
+                        await seedCollection(db, 'judicialBranches', branchesWithDistrictId, `courts/${court.id}/judicialDistricts/${district.id}`);
                     }
                  }
             }
         }
+        console.log('[DB INIT] ✅ SUCCESS: Courts, Districts, and Branches seeded.');
         
         // Seed initial admin user if it doesn't exist
+        console.log('[DB INIT] LOG: Checking for admin user...');
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await db.getUserProfileData(adminEmail);
         if (!adminUser) {
-            console.log(`[DB INIT] Admin user not found. Creating...`);
+            console.log(`[DB INIT] LOG: Admin user not found. Creating...`);
             const adminRole = sampleRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
             const userData = sampleUsers.find(u => u.email === adminEmail);
             if (userData && adminRole) {
