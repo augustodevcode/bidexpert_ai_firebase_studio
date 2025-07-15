@@ -16,7 +16,6 @@ import {
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
