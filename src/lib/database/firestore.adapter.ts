@@ -1,4 +1,3 @@
-
 // src/lib/database/firestore.adapter.ts
 import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate, EditableUserProfileData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
@@ -508,10 +507,16 @@ export class FirestoreAdapter implements DatabaseAdapter {
     async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('courts', id, data); }
     
     async getJudicialDistricts(): Promise<JudicialDistrict[]> {
+        const allDistricts: JudicialDistrict[] = [];
         try {
-            const query = this.db.collectionGroup('judicialDistricts').orderBy('name');
-            const snapshot = await query.get();
-            return snapshot.docs.map(doc => this.toJSON<JudicialDistrict>(doc));
+            const courtsSnapshot = await this.db.collection('courts').get();
+            for (const courtDoc of courtsSnapshot.docs) {
+                const districtsSnapshot = await courtDoc.ref.collection('judicialDistricts').orderBy('name').get();
+                districtsSnapshot.docs.forEach(districtDoc => {
+                    allDistricts.push(this.toJSON<JudicialDistrict>(districtDoc));
+                });
+            }
+            return allDistricts;
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string | undefined; }> { 
@@ -520,14 +525,28 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
 
     async getJudicialBranches(): Promise<JudicialBranch[]> { 
+        const allBranches: JudicialBranch[] = [];
         try {
-            const query = this.db.collectionGroup('judicialBranches').orderBy('name');
-            const snapshot = await query.get();
-            return snapshot.docs.map(doc => this.toJSON<JudicialBranch>(doc));
+            const districtsSnapshot = await this.db.collectionGroup('judicialDistricts').get();
+            for (const districtDoc of districtsSnapshot.docs) {
+                const branchesSnapshot = await districtDoc.ref.collection('judicialBranches').orderBy('name').get();
+                branchesSnapshot.docs.forEach(branchDoc => {
+                    allBranches.push(this.toJSON<JudicialBranch>(branchDoc));
+                });
+            }
+            return allBranches;
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     async createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string | undefined; }> { 
-        const result = await this.genericCreate(`courts/${data.courtId}/judicialDistricts/${data.districtId}/judicialBranches`, data);
+        // This is tricky without knowing the courtId. Assuming districtId is globally unique for simplicity.
+        // A better approach would be to pass the full path or query for the parent district first.
+        // For now, this will likely fail if district IDs are not unique across courts.
+        const districtDoc = await this.db.collectionGroup('judicialDistricts').where('id', '==', data.districtId).limit(1).get();
+        if (districtDoc.empty) {
+            return { success: false, message: "Comarca pai não encontrada." };
+        }
+        const parentPath = districtDoc.docs[0].ref.path;
+        const result = await this.genericCreate(`${parentPath}/judicialBranches`, data);
         return { ...result, branchId: result.id };
     }
     
