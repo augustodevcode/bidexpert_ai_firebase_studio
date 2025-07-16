@@ -6,39 +6,47 @@ To get started, take a look at `src/app/page.tsx`.
 
 ---
 
-## Database Setup
+## 🚀 Quick Start: Database Setup
 
-This project uses a flexible data layer that can work with **Firestore** or **MySQL**.
+This project uses a flexible data layer that can work with **Firestore** or **MySQL**. Follow these steps to get your database ready.
 
-### 1. Environment Setup
+### 1. Configure your Environment
 
-- For **Firestore**: Ensure your Firebase project credentials are set up correctly in `bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json`. Set the following in your `.env` file:
-  ```
-  NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=FIRESTORE
-  ```
+First, create a `.env` file in the root of your project by copying the example:
+```bash
+cp .env.example .env
+```
 
-- For **MySQL**: Set up your database and provide the connection string in your `.env` file:
-  ```
-  NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
-  DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
-  ```
+Now, edit the `.env` file to select your database system.
 
-### 2. Database Initialization & Seeding
+-   **For Firestore (Recommended):**
+    ```
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=FIRESTORE
+    ```
+    Ensure your Firebase project credentials are set up correctly. This is typically handled automatically in the Firebase Studio environment.
 
-When using a fresh database, you need to create the necessary collections/tables and populate essential data.
+-   **For MySQL (Local Development):**
+    ```
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
+    DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
+    ```
+    Replace the placeholder values with your actual MySQL connection string.
 
-- **`npm run dev`**: The first time you run the development server, it will automatically execute an initialization script (`init-db.ts`). This script populates **essential data only** (like Roles, Categories, States, etc.). This step is required for the application to start correctly.
+### 2. Run the Development Server
 
-- **`npm run db:seed`**: After the server has started at least once, you can run this script manually in your terminal to populate the database with a **full set of sample data** (auctions, lots, users, etc.). Use this to get a fully populated environment for development and demonstration. The script checks for existing data to prevent duplication.
+The first time you start the server, it will automatically initialize the database with **essential data only** (like user roles, settings, and categories). This is required for the app to start correctly.
 
 ```bash
-# First, run the development server. This will initialize the database with essential data.
 npm run dev
+```
 
+### 3. Seed Full Demo Data (Important!)
+
+After the server has started successfully, you must run the seeding script in a **new, separate terminal** to populate the database with a full set of sample data (auctions, lots, users, etc.).
+
+```bash
 # (In a new terminal, while the server is running)
-# Then, populate with the full sample data set.
 npm run db:seed
 ```
 
-Your selected database is now ready to use with the application.
-
+This two-step process is designed to prevent hitting Firestore's free-tier limits on initial setup. Your selected database is now fully populated and ready to use with the application.
