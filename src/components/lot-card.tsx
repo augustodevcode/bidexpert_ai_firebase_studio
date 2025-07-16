@@ -1,362 +1,261 @@
-
+// src/components/lot-card.tsx
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
+import type { Lot, Auction, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, AuctionStage as AuctionStageType, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
-import { format, isPast, differenceInDays, differenceInHours, differenceInMinutes, differenceInSeconds } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Eye, Clock, Gavel, Tag, Percent, Zap, TrendingUp, Crown, Heart, ListChecks } from 'lucide-react';
+import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AuctionPreviewModal from './auction-preview-modal';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EntityEditMenu from './entity-edit-menu'; // Import the new component
+import { useToast } from '@/hooks/use-toast';
+import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
+import LotPreviewModal from './lot-preview-modal';
+import EntityEditMenu from './entity-edit-menu';
 
-interface AuctionStageItemProps {
-  stage: AuctionStageType;
-  auctionId: string; 
-  index: number; 
+interface TimeRemainingBadgeProps {
+  endDate: Date | null;
+  status: Lot['status'];
+  showUrgencyTimer?: boolean;
+  urgencyThresholdDays?: number;
+  urgencyThresholdHours?: number;
 }
 
-// Optimized AuctionStageItem component
-const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
-  const [clientTimeData, setClientTimeData] = React.useState<{ formattedDate: string; isPast: boolean } | null>(null);
+const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
+  endDate,
+  status,
+  showUrgencyTimer = true,
+  urgencyThresholdDays = 1,
+  urgencyThresholdHours = 0
+}) => {
+  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [isUrgent, setIsUrgent] = useState(false);
 
   React.useEffect(() => {
-    const now = new Date();
-    let stageEndDateObj: Date | null = null;
-    let isValidDate = false;
+    if (!endDate) {
+      setTimeRemaining(getAuctionStatusText(status));
+      setIsUrgent(false);
+      return;
+    }
 
-    if (stage.endDate) { 
-        stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate as string);
-        if (stageEndDateObj && !isNaN(stageEndDateObj.getTime())) {
-            isValidDate = true;
+    const calculate = () => {
+      const now = new Date();
+      if (isPast(endDate) || status !== 'ABERTO_PARA_LANCES') {
+        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(endDate) ? 'ENCERRADO' : status));
+        setIsUrgent(false);
+        return;
+      }
+      
+      const totalSecondsLeft = differenceInSeconds(endDate, now);
+      if(totalSecondsLeft <= 0) {
+          setTimeRemaining('Encerrado');
+          setIsUrgent(false);
+          return;
+      }
+      
+      const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
+      const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
+      setIsUrgent(currentlyUrgent && showUrgencyTimer);
+
+      if (currentlyUrgent && showUrgencyTimer) {
+        const hours = Math.floor(totalSecondsLeft / 3600);
+        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+        const seconds = totalSecondsLeft % 60;
+        if(hours > 0) {
+           setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+        } else {
+           setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
         }
-    }
-
-    if (isValidDate && stageEndDateObj) {
-        setClientTimeData({
-            formattedDate: format(stageEndDateObj, "dd/MM/yyyy", { locale: ptBR }), // Format without time
-            isPast: stageEndDateObj < now,
-        });
-    } else {
-        console.warn(`AuctionStageItem: Invalid or missing endDate for auction stage. Auction ID: ${auctionId}, Stage Name: "${stage.name}". Received endDate:`, stage.endDate);
-        setClientTimeData({
-            formattedDate: "Data Indisponível",
-            isPast: false, 
-        });
-    }
-  }, [stage.endDate, stage.name, auctionId]); 
-
-
-  if (!clientTimeData) {
-    return (
-      <div key={`${auctionId}-stage-loading-${index}`} className="flex justify-between items-center text-xs py-1 text-muted-foreground animate-pulse">
-        <div className="flex items-center">
-            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-            <span className="font-medium text-foreground/80">{stage.name}:</span>
-        </div>
-        <span className="font-semibold">Calculando...</span>
-      </div>
-    );
-  }
-
-  const { formattedDate, isPast: isStagePast } = clientTimeData;
+      } else {
+        const days = Math.floor(totalSecondsLeft / (3600 * 24));
+        setTimeRemaining(`${days}d restante(s)`);
+      }
+    };
+    
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
 
   return (
-    <div
-      key={`${auctionId}-stage-${index}`}
-      className={`flex justify-between items-center text-xs py-1 ${isStagePast ? 'text-muted-foreground/70 line-through' : 'text-muted-foreground'}`}
-    >
-      <div className="flex items-center">
-        <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-        <span className="font-medium text-foreground/80">{stage.name}:</span>
-      </div>
-      <span className="font-semibold text-foreground">{formattedDate}</span>
-    </div>
+    <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium">
+      <Clock className="h-3 w-3 mr-1" />
+      {timeRemaining}
+    </Badge>
   );
 };
 
 
-interface AuctionCardProps {
-  auction: Auction;
+interface LotCardProps {
+  lot: Lot;
+  auction?: Auction | null;
+  badgeVisibilityConfig?: BadgeVisibilitySettings;
+  platformSettings: PlatformSettings;
   onUpdate?: () => void;
 }
 
-export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(auction.isFavorite || false);
+export default function LotCard({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
+  const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
-  const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
+  const [lotDetailUrl, setLotDetailUrl] = React.useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+  const { toast } = useToast();
 
-  const soldLotsCount = React.useMemo(() => {
-    if (!auction.lots || auction.lots.length === 0) return 0;
-    return auction.lots.filter(lot => lot.status === 'VENDIDO').length;
-  }, [auction.lots]);
+  const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
+  const sectionBadges = badgeVisibilityConfig || platformSettings?.sectionBadgeVisibility?.searchGrid || {
+      showStatusBadge: true,
+      showDiscountBadge: true,
+      showUrgencyTimer: true,
+      showPopularityBadge: true,
+      showHotBidBadge: true,
+      showExclusiveBadge: true,
+  };
+  const showCountdownOnThisCard = platformSettings?.showCountdownOnCards !== false;
 
-  const mentalTriggers = React.useMemo(() => {
-    const triggers: string[] = [];
-    const now = new Date();
-
-    if (auction.endDate) {
-        const endDate = new Date(auction.endDate as string);
-        if (!isPast(endDate)) {
-            const daysDiff = differenceInDays(endDate, now);
-            if (daysDiff === 0) triggers.push('ENCERRA HOJE');
-            else if (daysDiff === 1) triggers.push('ENCERRA AMANHÃ');
-        }
-    }
-    
-    if ((auction.totalHabilitatedUsers || 0) > 100) { // Example threshold
-        triggers.push('ALTA DEMANDA');
-    }
-    
-    if (auction.isFeaturedOnMarketplace) {
-        triggers.push('DESTAQUE');
-    }
-
-    if (auction.additionalTriggers) {
-        triggers.push(...auction.additionalTriggers);
-    }
-    
-    return Array.from(new Set(triggers));
-  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
-
+  const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
 
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
-      setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
+      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+      setIsFavorite(isLotFavoriteInStorage(lot.id));
     }
-  }, [auction.id, auction.publicId]);
-
+  }, [lot.id, lot.auctionId, lot.publicId]);
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault(); 
+    e.preventDefault();
     e.stopPropagation();
-    setIsFavorite(!isFavorite);
+    const newFavoriteState = !isFavorite;
+    setIsFavorite(newFavoriteState);
+    if (newFavoriteState) {
+      addFavoriteLotIdToStorage(lot.id);
+    } else {
+      removeFavoriteLotIdFromStorage(lot.id);
+    }
+     window.dispatchEvent(new CustomEvent('favorites-updated'));
+    toast({
+      title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
+      description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
+    });
   };
 
-  const openPreviewModal = (e: React.MouseEvent) => {
+  const handlePreviewOpen = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsPreviewModalOpen(true);
   };
   
-  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
-    const encodedUrl = encodeURIComponent(url);
-    const encodedTitle = encodeURIComponent(title);
-    switch(platform) {
-      case 'x':
-        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-      case 'facebook':
-        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      case 'whatsapp':
-        return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
-      case 'email':
-        return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+  const discountPercentage = React.useMemo(() => {
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
+      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
     }
-  }
-  
-  const mainImageUrl = auction.imageUrl || auction.auctioneerLogoUrl || 'https://placehold.co/600x400.png';
-  const mainImageAlt = auction.title || 'Imagem do Leilão';
-  const mainImageDataAiHint = auction.dataAiHint || 'auction image';
+    return lot.discountPercentage || 0;
+  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
 
-  const getAuctionTypeDisplay = (type?: Auction['auctionType']) => {
-    if (!type) return null;
-    switch(type) {
-      case 'JUDICIAL': return { label: 'Judicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
-      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
-      case 'PARTICULAR': return { label: 'Particular', icon: <AuctionTypeIcon className="h-3 w-3"/> };
-      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3 w-3"/> };
-      default: return null;
-    }
-  };
+  const mentalTriggers = React.useMemo(() => {
+    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const settings = mentalTriggersGlobalSettings;
 
-  const auctionTypeDisplay = getAuctionTypeDisplay(auction.auctionType);
-  
-  const getStatusDisplay = () => {
-    if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
-      if (soldLotsCount > 0) {
-        return { text: `Vendido (${soldLotsCount}/${auction.totalLots})`, className: 'bg-green-600 text-white' };
-      }
-      return { text: 'Finalizado (Sem Venda)', className: 'bg-gray-500 text-white' };
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+      triggers.push('MAIS VISITADO');
     }
-    if (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO') {
-      return { text: getAuctionStatusText(auction.status), className: 'bg-green-600 text-white' };
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+      triggers.push('LANCE QUENTE');
     }
-    if (auction.status === 'EM_BREVE') {
-      return { text: getAuctionStatusText(auction.status), className: 'bg-blue-500 text-white' };
+    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
+        triggers.push('EXCLUSIVO');
     }
-    return { text: getAuctionStatusText(auction.status), className: 'bg-gray-500 text-white' };
-  };
+    return Array.from(new Set(triggers));
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
 
-  const statusDisplay = getStatusDisplay();
 
   return (
-    <TooltipProvider>
-      <>
-        <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
-          <div className="relative">
-            <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
-              <div className="aspect-[16/10] relative bg-muted">
-                <Image
-                  src={mainImageUrl}
-                  alt={mainImageAlt}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="object-cover"
-                  data-ai-hint={mainImageDataAiHint}
-                />
-              </div>
-            </Link>
-             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
-                <Badge className={`text-xs px-2 py-1 ${statusDisplay.className}`}>
-                    {statusDisplay.text}
-                </Badge>
-            </div>
-             <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-                {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                        {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
-                        {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-0.5" />}
-                        {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-0.5" />}
-                        {trigger}
-                    </Badge>
-                ))}
-            </div>
-            <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
-                    <Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={openPreviewModal} aria-label="Pré-visualizar">
-                    <Eye className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Pré-visualizar</p></TooltipContent>
-              </Tooltip>
-              <DropdownMenu>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" aria-label="Compartilhar">
-                        <Share2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                  </TooltipTrigger>
-                  <TooltipContent><p>Compartilhar</p></TooltipContent>
-                </Tooltip>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <X className="h-3.5 w-3.5" /> X (Twitter)
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('facebook', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <Facebook className="h-3.5 w-3.5" /> Facebook
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('whatsapp', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
-                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
-                    </a>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <a href={getSocialLink('email', auctionFullUrl, auction.title)} className="flex items-center gap-2 text-xs">
-                      <Mail className="h-3.5 w-3.5" /> Email
-                    </a>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <EntityEditMenu
-                entityType="auction"
-                entityId={auction.id}
-                publicId={auction.publicId}
-                currentTitle={auction.title}
-                isFeatured={auction.isFeaturedOnMarketplace || false}
-                onUpdate={onUpdate}
+    <>
+      <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+        <div className="relative">
+          <Link href={lotDetailUrl} className="block">
+            <div className="aspect-[16/10] relative bg-muted">
+              <Image
+                src={lot.imageUrl || 'https://placehold.co/600x400.png'}
+                alt={lot.title}
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                className="object-cover"
+                data-ai-hint={lot.dataAiHint || 'imagem lote'}
               />
             </div>
+          </Link>
+          <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
+              {sectionBadges.showStatusBadge !== false && (
+                  <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
+                      {getAuctionStatusText(lot.status)}
+                  </Badge>
+              )}
+          </div>
+           <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+              {mentalTriggers.map(trigger => (
+                <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                  {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
+                  {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
+                  {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
+                  {trigger}
+                </Badge>
+              ))}
+          </div>
+          <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
+              <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button>
+              <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button>
+              <EntityEditMenu entityType="lot" entityId={lot.id} publicId={lot.publicId} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} />
+          </div>
+        </div>
+
+        <CardContent className="p-3 flex-grow">
+          <div className="flex justify-between items-center text-xs text-muted-foreground">
+             <div className="flex items-center gap-1 truncate">
+               <Tag className="h-3 w-3" />
+               <span className="truncate" title={lot.type}>{lot.type}</span>
+            </div>
+            {lot.cityName && (
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                <span>{lot.cityName}</span>
+              </div>
+            )}
           </div>
 
-          <CardContent className="p-4 flex-grow">
-            <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
-              <span>ID: {auction.publicId || auction.id}</span>
-              {auctionTypeDisplay && (
-                <div className="flex items-center gap-1">
-                    {auctionTypeDisplay.icon}
-                    <span>{auctionTypeDisplay.label}</span>
-                </div>
+          <Link href={lotDetailUrl}>
+            <h3 className="text-sm font-semibold hover:text-primary transition-colors mt-1.5 mb-1 leading-tight min-h-[2.2em] line-clamp-2">
+              {lot.title}
+            </h3>
+          </Link>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1">
+                <Gavel className="h-3 w-3" />
+                <span>{lot.bidsCount || 0} Lances</span>
+              </div>
+               {showCountdownOnThisCard && (
+                    <TimeRemainingBadge endDate={effectiveEndDate} status={lot.status} showUrgencyTimer={sectionBadges.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours} />
                 )}
-            </div>
-            <Link href={`/auctions/${auction.publicId || auction.id}`}>
-              <h3 className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
-                {auction.title}
-              </h3>
+          </div>
+        </CardContent>
+
+        <CardFooter className="p-3 border-t flex-col items-start space-y-1">
+          <div className="w-full">
+            <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
+            <p className={`text-xl font-bold ${isPast(effectiveEndDate || 0) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+              R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+          </div>
+          <Button asChild className="w-full mt-2" size="sm">
+            <Link href={lotDetailUrl}>
+              <Eye className="mr-2 h-4 w-4" /> Ver Detalhes
             </Link>
-            
-            { (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') ? (
-              <div className="text-xs text-muted-foreground mb-2 flex items-center">
-                <CheckSquare className="h-3 w-3 mr-1.5 flex-shrink-0 text-green-600" />
-                <span>{soldLotsCount > 0 ? `${soldLotsCount} de ${auction.totalLots} lotes vendidos.` : 'Nenhum lote vendido.'}</span>
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground mb-2 flex items-center">
-                 <ListChecks className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                 <span>{auction.totalLots || 0} Lotes no total</span>
-              </div>
-            )}
-            
-            {auction.auctionStages && auction.auctionStages.length > 0 ? (
-              <div className="space-y-1 mb-3">
-                {auction.auctionStages.map((stage, index) => (
-                  <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
-                ))}
-              </div>
-            ) : null}
-
-
-          </CardContent>
-          <CardFooter className="p-4 border-t flex-col items-start space-y-2">
-            {auction.initialOffer && (
-              <div className="w-full">
-                <p className="text-xs text-muted-foreground">
-                  {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
-                </p>
-                <p className="text-2xl font-bold text-primary">
-                  R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </p>
-              </div>
-            )}
-            <Button asChild className="w-full mt-2">
-              <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots})</Link>
-            </Button>
-          </CardFooter>
-        </Card>
-        {isPreviewModalOpen && (
-          <AuctionPreviewModal
-            auction={auction}
-            isOpen={isPreviewModalOpen}
-            onClose={() => setIsPreviewModalOpen(false)}
-          />
-        )}
-      </>
-    </TooltipProvider>
+          </Button>
+        </CardFooter>
+      </Card>
+      <LotPreviewModal lot={lot} auction={auction} platformSettings={platformSettings} isOpen={isPreviewModalOpen} onClose={() => setIsPreviewModalOpen(false)} />
+    </>
   );
 }

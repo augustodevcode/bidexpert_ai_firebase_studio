@@ -19,7 +19,7 @@ export default async function FeaturedItems({ items, type, title, viewAllLink }:
   // Fetch settings and all auctions to pass down to LotCard
   const [platformSettings, allAuctions] = await Promise.all([
     getPlatformSettings(),
-    type === 'lot' ? getAuctions() : Promise.resolve([]), // Only fetch auctions if we're displaying lots
+    getAuctions(),
   ]);
 
   if (!platformSettings) {
