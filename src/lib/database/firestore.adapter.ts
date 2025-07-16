@@ -524,6 +524,28 @@ export class FirestoreAdapter implements DatabaseAdapter {
         return { ...result, districtId: result.id };
     }
 
+    async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
+        const collectionGroup = this.db.collectionGroup('judicialDistricts');
+        const snapshot = await collectionGroup.where('id', '==', id).limit(1).get();
+
+        if (snapshot.empty) {
+            return { success: false, message: 'Comarca não encontrada para atualização.' };
+        }
+        const docRef = snapshot.docs[0].ref;
+        return this.genericUpdate(docRef.parent.path, id, data);
+    }
+    
+    async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
+        const collectionGroup = this.db.collectionGroup('judicialDistricts');
+        const snapshot = await collectionGroup.where('id', '==', id).limit(1).get();
+
+        if (snapshot.empty) {
+            return { success: false, message: 'Comarca não encontrada para exclusão.' };
+        }
+        await snapshot.docs[0].ref.delete();
+        return { success: true, message: 'Comarca excluída com sucesso.' };
+    }
+
     async getJudicialBranches(): Promise<JudicialBranch[]> { 
         const allBranches: JudicialBranch[] = [];
         try {
