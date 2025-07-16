@@ -6,7 +6,8 @@
       "email": "admin@bidexpert.com.br",
       "password": "@dmin2025",
       "fullName": "Administrador BidExpert",
-      "roleIds": ["role-admin"],
+      "roleIds": ["role-admin", "role-consignor", "role-user"],
+      "sellerId": "seller-banco-bradesco-s-a",
       "habilitationStatus": "HABILITADO",
       "accountType": "PHYSICAL",
       "createdAt": "2024-01-01T10:00:00Z",
@@ -112,5 +113,27 @@
         ]}
       ]
     }
+  ],
+  "sampleSellers": [
+    {"id": "seller-banco-bradesco-s-a", "name": "Banco Bradesco S.A.", "slug": "banco-bradesco-s-a", "isJudicial": false, "contactName": "Departamento de Ativos"},
+    {"id": "seller-1-vara-civel-sp", "name": "1ª Vara Cível de São Paulo", "slug": "1-vara-civel-de-sao-paulo", "isJudicial": true, "judicialBranchId": "branch-sp-1civel"}
+  ],
+  "sampleAuctioneers": [
+    {"id": "leiloeiro-joao-silva", "name": "João Silva Leiloeiro Oficial", "slug": "joao-silva-leiloeiro-oficial", "registrationNumber": "JUCESP 123"}
+  ],
+  "sampleJudicialProcesses": [
+    {"id": "proc-0710-2023", "processNumber": "0710.123.456-2023", "courtId": "court-tjsp", "districtId": "jd-sao-paulo", "branchId": "branch-sp-1civel", "sellerId": "seller-1-vara-civel-sp"}
+  ],
+  "sampleBens": [
+    {"id": "bem-apt-higienopolis", "title": "Apartamento em Higienópolis, São Paulo", "description": "Amplo apartamento com 3 quartos...", "status": "DISPONIVEL", "categoryId": "cat-imoveis", "judicialProcessId": "proc-0710-2023", "evaluationValue": 950000},
+    {"id": "bem-toyota-corolla", "title": "Toyota Corolla XEi 2.0 2022", "description": "Veículo em ótimo estado...", "status": "DISPONIVEL", "categoryId": "cat-veiculos", "sellerId": "seller-banco-bradesco-s-a", "evaluationValue": 120000}
+  ],
+  "sampleAuctions": [
+    {"id": "leilao-judicial-tjsp-01", "title": "Leilão Judicial do TJSP - Imóveis", "auctionType": "JUDICIAL", "auctioneerId": "leiloeiro-joao-silva", "sellerId": "seller-1-vara-civel-sp", "status": "ABERTO_PARA_LANCES", "auctionDate": "2025-07-20T14:00:00Z", "endDate": "2025-08-05T14:00:00Z", "initialOffer": 950000},
+    {"id": "leilao-veiculos-bradesco", "title": "Grande Leilão de Veículos - Banco Bradesco", "auctionType": "EXTRAJUDICIAL", "auctioneerId": "leiloeiro-joao-silva", "sellerId": "seller-banco-bradesco-s-a", "status": "ABERTO_PARA_LANCES", "auctionDate": "2025-07-18T10:00:00Z", "endDate": "2025-07-28T17:00:00Z", "initialOffer": 120000}
+  ],
+  "sampleLots": [
+    {"id": "lote-apt-001", "auctionId": "leilao-judicial-tjsp-01", "number": "001", "title": "Apartamento 250m² em Higienópolis", "price": 950000, "status": "ABERTO_PARA_LANCES", "bemIds": ["bem-apt-higienopolis"], "categoryId": "cat-imoveis"},
+    {"id": "lote-car-001", "auctionId": "leilao-veiculos-bradesco", "number": "001", "title": "Toyota Corolla XEi 2.0 2022 Branco", "price": 120000, "status": "ABERTO_PARA_LANCES", "bemIds": ["bem-toyota-corolla"], "categoryId": "cat-veiculos"}
   ]
 }
