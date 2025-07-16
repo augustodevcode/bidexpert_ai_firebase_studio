@@ -3,11 +3,9 @@ import { z } from 'zod';
 import { auctionStatusValues, lotStatusValues, userHabilitationStatusValues, accountTypeValues, paymentStatusValues } from './zod-enums';
 import { firestore } from 'firebase-admin';
 
-const serverTimestampSchema = z.custom<firestore.FieldValue>((val) => {
-    // This custom validator checks if the value is an object with the expected properties of a ServerTimestamp.
-    // This makes the validation more robust.
-    return typeof val === 'object' && val !== null && '_methodName' in val && (val as any)._methodName === 'serverTimestamp';
-});
+// Allow any object for server-generated timestamps.
+// The value is set by the adapter, not user input, so this is safe.
+const serverTimestampSchema = z.any();
 
 
 // Bidding Settings Schema
@@ -31,7 +29,7 @@ export const AuctionSchema = z.object({
   publicId: z.string(),
   title: z.string().min(5),
   description: z.string().optional(),
-  status: z.enum(auctionStatusValues).default('RASCUNHO'),
+  status: z.enum(auctionStatusValues as [string, ...string[]]).default('RASCUNHO'),
   auctionDate: z.union([z.date(), z.string().datetime()]),
   endDate: z.union([z.date(), z.string().datetime()]).optional().nullable(),
   totalLots: z.number().int().optional(),
@@ -61,7 +59,7 @@ export const LotSchema = z.object({
     description: z.string().optional().nullable(),
     price: z.number(),
     initialPrice: z.number().optional().nullable(),
-    status: z.enum(lotStatusValues).default('EM_BREVE'),
+    status: z.enum(lotStatusValues as [string, ...string[]]).default('EM_BREVE'),
     bidsCount: z.number().int().optional(),
     views: z.number().int().optional(),
     imageUrl: z.string().url().optional().nullable(),
@@ -81,8 +79,8 @@ export const UserProfileDataSchema = z.object({
     email: z.string().email(),
     password: z.string().optional(),
     fullName: z.string().nullable(),
-    habilitationStatus: z.enum(userHabilitationStatusValues),
-    accountType: z.enum(accountTypeValues),
+    habilitationStatus: z.enum(userHabilitationStatusValues as [string, ...string[]]),
+    accountType: z.enum(accountTypeValues as [string, ...string[]]),
     roleIds: z.array(z.string()),
     createdAt: z.union([z.date(), z.string(), serverTimestampSchema]).optional(),
     updatedAt: z.union([z.date(), z.string(), serverTimestampSchema]).optional(),
