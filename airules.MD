@@ -21,3 +21,14 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** All database fields, collection names, and object properties in the code MUST use **camelCase** naming convention (e.g., `auctionDate`, `totalLots`, `judicialProcessId`). **snake_case** (e.g., `auction_date`) is strictly forbidden.
 
 **Rationale:** This ensures consistency across the entire codebase, from the database schema (Firestore and MySQL) to the TypeScript types, reducing confusion and potential errors.
+
+## 3. Firebase SDK for Database Interaction
+
+**Rule:** The AI prototyper MUST use the provided Firebase SDK tools (e.g., `firestore_list_collections`, `firestore_get_documents`, `firestore_query_collection`) as the primary method for diagnosing database issues, verifying data, and understanding the current state of the database schema.
+
+**Rationale:** Relying on code context alone can be misleading, especially during initial setup, debugging, or after manual data changes. Direct interaction with the live database via the SDK ensures that any proposed changes or analysis are based on the actual state of the data, not just assumptions derived from code.
+
+**Implementation:**
+- Before concluding that data is missing or a schema is incorrect, use `firestore_list_collections` or `firestore_get_documents` to verify the state directly.
+- When debugging data-related errors reported by the user, use the SDK tools to inspect the relevant documents or collections.
+- Base schema modifications, data migrations, and new feature implementations on the verified, live structure of the Firestore database.

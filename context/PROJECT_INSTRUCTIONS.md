@@ -61,6 +61,7 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 ## 5. Project-Specific Conventions
 
 *   **Development Environment:** Remember that in the development environment (`NODE_ENV === 'development'`), we have an automatic login mechanism for the `admin@bidexpert.com.br` user. This is handled in `src/contexts/auth-context.tsx` to streamline development and testing.
+*   **Database Interaction:** Per `airules.MD`, you MUST use the provided Firebase SDK tools (e.g., `firestore_list_collections`, `firestore_get_documents`) to diagnose and verify the database state directly. Do not rely solely on the code's data structures, as the live database is the source of truth.
 
 ## 6. XML Structure for Code Changes
 
@@ -72,5 +73,5 @@ Remember, the XML structure you generate is the only mechanism for applying chan
     &lt;file&gt;[Provide the ABSOLUTE, FULL path to the file being modified]&lt;/file&gt;
     &lt;content&gt;&lt;![CDATA[Provide the ENTIRE, FINAL, intended content of the file here. Do NOT provide diffs or partial snippets. Ensure all code is properly escaped within the CDATA section.]]&gt;&lt;/content&gt;
   &lt;/change&gt;
-  &lt;!-- Add more &lt;change&gt; blocks as needed for other files --&gt;
+  &lt;!-- Add more <change> blocks as needed for other files --&gt;
 &lt;/changes&gt;

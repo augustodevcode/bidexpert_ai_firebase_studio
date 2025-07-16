@@ -9,6 +9,22 @@
         { "fieldPath": "number", "order": "ASCENDING" }
       ]
     },
+ {
+      "collectionGroup": "auctions",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "status", "order": "ASCENDING" },
+ { "fieldPath": "auctioneerId", "order": "ASCENDING" }
+ ]
+ },
+ {
+      "collectionGroup": "directSaleOffers",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "status", "order": "ASCENDING" },
+ { "fieldPath": "sellerId", "order": "ASCENDING" }
+ ]
+ },
     {
       "collectionGroup": "judicialDistricts",
       "queryScope": "COLLECTION_GROUP",
@@ -37,6 +53,41 @@
         { "fieldPath": "parentCategoryId", "order": "ASCENDING" },
         { "fieldPath": "name", "order": "ASCENDING" }
       ]
+ },
+ {
+      "collectionGroup": "mediaItems",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "uploadedBy", "order": "ASCENDING" }
+ ]
+ },
+ {
+      "collectionGroup": "judicialProcesses",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "sellerId", "order": "ASCENDING" }
+ ]
+ },
+ {
+      "collectionGroup": "judicialProcesses",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "courtId", "order": "ASCENDING" }
+ ]
+ },
+ {
+      "collectionGroup": "bems",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "judicialProcessId", "order": "ASCENDING" }
+ ]
+ },
+ {
+      "collectionGroup": "bems",
+ "queryScope": "COLLECTION",
+ "fields": [
+ { "fieldPath": "sellerId", "order": "ASCENDING" }
+ ]
     }
   ],
   "fieldOverrides": []
