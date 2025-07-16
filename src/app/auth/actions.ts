@@ -98,18 +98,14 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
     
     try {
         const allRoles = await db.getRoles();
-        const adminRole = allRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
-        const consignorRole = allRoles.find(r => r.nameNormalized === 'CONSIGNOR');
-        // Adicionando um perfil genérico de usuário também para testes
-        const userRole = allRoles.find(r => r.nameNormalized === 'USER');
+        const adminRole = allRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
+        const consignorRole = allRoles.find(r => r.name_normalized === 'CONSIGNOR');
+        const userRole = allRoles.find(r => r.name_normalized === 'USER');
         
-        const allSellers = await db.getSellers();
-        const firstSeller = allSellers.length > 0 ? allSellers[0] : null;
-
         const roleIds = [adminRole?.id, consignorRole?.id, userRole?.id].filter((id): id is string => !!id);
         const roleNames = [adminRole?.name, consignorRole?.name, userRole?.name].filter((name): name is string => !!name);
 
-        // Construct a virtual superuser profile
+        // Construct a virtual superuser profile without database dependencies
         const virtualAdminProfile: UserProfileWithPermissions = {
             id: 'admin-bidexpert-platform-001',
             uid: 'jdbCtYtSceMeC5SuLh06JoohwYY2',
@@ -117,7 +113,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
             fullName: 'Admin de Desenvolvimento',
             habilitationStatus: 'HABILITADO',
             accountType: 'PHYSICAL',
-            sellerId: firstSeller?.id, // Link to a real seller from sample data if available
+            sellerId: null, // Avoid dependency on sellers collection before seeding
             roleIds: roleIds,
             roleNames: roleNames,
             permissions: ['manage_all'], // Overwrite permissions with manage_all for full access
