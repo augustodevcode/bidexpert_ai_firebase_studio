@@ -1,7 +1,16 @@
 
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
-import { auth } from '@/lib/firebase/admin'; // Correctly import the auth instance
+import { auth } from '@/lib/firebase/admin';
+import { 
+    samplePlatformSettings,
+    sampleRoles,
+    sampleLotCategories,
+    sampleSubcategories,
+    sampleStatesWithCities,
+    sampleCourtsWithRelations,
+    sampleUsers,
+} from '@/lib/sample-data';
 import type { DatabaseAdapter, UserCreationData } from '@/types';
 import bcrypt from 'bcrypt';
 
@@ -21,45 +30,26 @@ async function seedCollection(db: DatabaseAdapter, collectionName: string, data:
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
     const db = getDatabaseAdapter(); 
-    // const { auth } was removed; auth is now imported directly.
     
     try {
         // Platform Settings (Single Document)
         console.log('[DB INIT] LOG: Seeding platform settings...');
         const settings = await db.getPlatformSettings();
         if (!settings) {
-            await db.createPlatformSettings({
-                id: 'global',
-                siteTitle: 'BidExpert',
-                siteTagline: 'Leilões Online Especializados',
-                galleryImageBasePath: '/uploads/media/',
-                storageProvider: 'local',
-                themes: [],
-                homepageSections: [],
-                searchPaginationType: 'loadMore',
-                searchItemsPerPage: 12,
-                searchLoadMoreCount: 12,
-                showCountdownOnLotDetail: true,
-                showCountdownOnCards: true,
-                showRelatedLotsOnLotDetail: true,
-                relatedLotsCount: 5,
-                updatedAt: new Date(),
-            });
+            await db.createPlatformSettings(samplePlatformSettings);
             console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
         // Top-level collections that don't depend on others
-        await seedCollection(db, 'roles', (await import('@/lib/sample-data')).sampleRoles);
+        await seedCollection(db, 'roles', sampleRoles);
         console.log('[DB INIT] ✅ SUCCESS: Roles seeded.');
-        await seedCollection(db, 'lotCategories', (await import('@/lib/sample-data')).sampleLotCategories);
+        await seedCollection(db, 'lotCategories', sampleLotCategories);
         console.log('[DB INIT] ✅ SUCCESS: Lot Categories seeded.');
-        await seedCollection(db, 'lotSubcategories', (await import('@/lib/sample-data')).sampleSubcategories);
+        await seedCollection(db, 'lotSubcategories', sampleSubcategories);
         console.log('[DB INIT] ✅ SUCCESS: Lot Subcategories seeded.');
         
-        const { sampleStatesWithCities, sampleCourtsWithRelations, sampleUsers } = await import('@/lib/sample-data');
-
         // Seed hierarchical data for states and cities
         console.log('[DB INIT] LOG: Seeding States and Cities...');
         for (const stateData of sampleStatesWithCities) {
@@ -125,8 +115,7 @@ async function seedEssentialData() {
         const firestoreUser = await db.getUserProfileData(adminAuthRecord.uid);
         if (!firestoreUser) {
             console.log(`[DB INIT] LOG: Admin user document not found in Firestore. Creating...`);
-            const roles = await db.getRoles();
-            const adminRole = roles.find(r => r.nameNormalized === 'ADMINISTRATOR');
+            const adminRole = sampleRoles.find(r => r.nameNormalized === 'ADMINISTRATOR');
             const userData = sampleUsers.find(u => u.email === adminEmail);
             if (userData && adminRole) {
                 const hashedPassword = await bcrypt.hash(userData.password, 10);

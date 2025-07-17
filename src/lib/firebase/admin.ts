@@ -50,7 +50,8 @@ function initializeAdminSDK(): FirebaseAdminInstances {
         console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via local key.');
         return { app, db, storage: getStorage(app), auth: getAuth(app) };
     } else {
-        console.log('[Admin SDK] LOG: No local key found. Initializing with Application Default Credentials...');
+        console.warn('[Admin SDK] WARNING: Service account key not found at path. Falling back to ADC.', serviceAccountPath);
+        console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
         const app = initializeApp({
             storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
         });
