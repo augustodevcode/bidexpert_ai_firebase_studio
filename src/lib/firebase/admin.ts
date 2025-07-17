@@ -19,18 +19,16 @@ interface FirebaseAdminInstances {
   auth: Auth;
 }
 
-// Singleton instance holder
-let instances: FirebaseAdminInstances | null = null;
-
 /**
  * Initializes the Firebase Admin SDK using an explicit service account key
  * and ensures it only happens once.
  * This is the definitive, robust method to prevent authentication errors.
  */
 function initializeAdminSDK(): FirebaseAdminInstances {
-  if (getApps().length) {
+  // Check if the specific app instance has already been initialized.
+  if (getApps().some(app => app.name === 'bidexpert-admin-app')) {
     console.log("[Admin SDK] LOG: Using existing Firebase Admin app.");
-    const app = getApp();
+    const app = getApp('bidexpert-admin-app');
     return {
       app,
       db: getFirestore(app),
@@ -41,7 +39,7 @@ function initializeAdminSDK(): FirebaseAdminInstances {
   
   console.log('[Admin SDK] LOG: Attempting to initialize new Firebase Admin app...');
   
-  // Hardcode the path to the service account key to ensure it's always found.
+  // This path is now relative to the project root, which is more reliable.
   const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
 
   if (!fs.existsSync(serviceAccountPath)) {
@@ -58,9 +56,10 @@ function initializeAdminSDK(): FirebaseAdminInstances {
     const app = initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-    }, 'bidexpert-admin-app'); // Give the app a unique name
+    }, 'bidexpert-admin-app'); // Give the app a unique name to prevent re-initialization issues
 
     const db = getFirestore(app);
+    // This setting is crucial for the emulator to work correctly with composite indexes.
     db.settings({ ignoreUndefinedProperties: true });
     
     console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
@@ -78,6 +77,5 @@ function initializeAdminSDK(): FirebaseAdminInstances {
 }
 
 // Immediately initialize and export the singletons.
-// This pattern ensures initialization happens only once when the module is first imported.
 const { app, db, storage, auth } = initializeAdminSDK();
 export { app, db, storage, auth };
