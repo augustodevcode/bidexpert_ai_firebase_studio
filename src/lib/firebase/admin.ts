@@ -19,12 +19,16 @@ interface FirebaseAdminInstances {
   auth: Auth;
 }
 
+// Singleton instance holder
+let instances: FirebaseAdminInstances | null = null;
+
 /**
- * Initializes the Firebase Admin SDK and returns the instances.
- * This function ensures that initialization happens only once.
+ * Initializes the Firebase Admin SDK using an explicit service account key
+ * and ensures it only happens once.
+ * This is the definitive, robust method to prevent authentication errors.
  */
 function initializeAdminSDK(): FirebaseAdminInstances {
-  if (getApps().length > 0) {
+  if (getApps().length) {
     console.log("[Admin SDK] LOG: Using existing Firebase Admin app.");
     const app = getApp();
     return {
@@ -35,37 +39,45 @@ function initializeAdminSDK(): FirebaseAdminInstances {
     };
   }
   
+  console.log('[Admin SDK] LOG: Attempting to initialize new Firebase Admin app...');
+  
+  // Hardcode the path to the service account key to ensure it's always found.
   const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
 
+  if (!fs.existsSync(serviceAccountPath)) {
+    const errorMessage = `FATAL: Service account key not found at ${serviceAccountPath}. The application cannot start without it.`;
+    console.error(`[Admin SDK Error] ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
+
   try {
-    if (fs.existsSync(serviceAccountPath)) {
-        console.log('[Admin SDK] LOG: Initializing with local service account key...');
-        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-        const app = initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-        });
-        const db = getFirestore(app);
-        db.settings({ ignoreUndefinedProperties: true });
-        console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via local key.');
-        return { app, db, storage: getStorage(app), auth: getAuth(app) };
-    } else {
-        console.warn('[Admin SDK] WARNING: Service account key not found at path. Falling back to ADC.', serviceAccountPath);
-        console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
-        const app = initializeApp({
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-        });
-        const db = getFirestore(app);
-        db.settings({ ignoreUndefinedProperties: true });
-        console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
-        return { app, db, storage: getStorage(app), auth: getAuth(app) };
-    }
+    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+    
+    console.log('[Admin SDK] LOG: Initializing with explicit service account credentials...');
+    
+    const app = initializeApp({
+      credential: admin.credential.cert(serviceAccount),
+      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+    }, 'bidexpert-admin-app'); // Give the app a unique name
+
+    const db = getFirestore(app);
+    db.settings({ ignoreUndefinedProperties: true });
+    
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
+
+    return {
+      app,
+      db,
+      storage: getStorage(app),
+      auth: getAuth(app),
+    };
   } catch (error: any) {
-    console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
-    throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
+    console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK with service account key:', error);
+    throw new Error(`Could not initialize Admin SDK: ${error.message}`);
   }
 }
 
-// Initialize and export the singletons immediately when the module is first imported.
+// Immediately initialize and export the singletons.
+// This pattern ensures initialization happens only once when the module is first imported.
 const { app, db, storage, auth } = initializeAdminSDK();
 export { app, db, storage, auth };
