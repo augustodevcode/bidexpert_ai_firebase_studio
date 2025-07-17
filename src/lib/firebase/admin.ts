@@ -10,45 +10,45 @@ console.log("[firebase/admin.ts] LOG: File loaded.");
 
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
-let adminAppInstance: App | undefined;
+let app: App;
+let auth: Auth;
+let db: Firestore;
+let storage: Storage;
+
+if (getApps().length === 0) {
+  console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
+  app = initializeApp({
+    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+  });
+  console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
+  db = getFirestore(app);
+  // This setting is crucial for the emulator to work correctly with composite indexes.
+  db.settings({ ignoreUndefinedProperties: true });
+} else {
+  console.log('[Admin SDK] LOG: Using existing Firebase Admin app.');
+  app = getApp();
+  db = getFirestore(app);
+}
+
+auth = getAuth(app);
+storage = getStorage(app);
 
 /**
  * Ensures the Firebase Admin SDK is initialized and returns the singletons
- * for app, db, storage, and auth. This prevents multiple initializations.
+ * for app, db, storage, and auth. This function now primarily acts as an accessor
+ * to the already initialized services.
  */
 export function ensureAdminInitialized(): {
   app: App;
   db: Firestore;
   storage: Storage;
   auth: Auth;
-  error?: undefined;
 } {
-  if (!adminAppInstance) {
-      if (getApps().length === 0) {
-        console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
-        initializeApp({
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-        });
-        console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
-      } else {
-        console.log('[Admin SDK] LOG: Using existing Firebase Admin app.');
-      }
-      adminAppInstance = getApp();
-  }
-  
-  const db = getFirestore(adminAppInstance);
-  // This setting is crucial for the emulator to work correctly with composite indexes.
-  db.settings({ ignoreUndefinedProperties: true });
-
-  return {
-    app: adminAppInstance,
-    db: db,
-    storage: getStorage(adminAppInstance),
-    auth: getAuth(adminAppInstance),
-  };
+  // The services are already initialized at the module level.
+  // This function just returns them.
+  return { app, db, storage, auth };
 }
 
-// For compatibility with any legacy code that might still be importing these named exports.
-// This ensures they're initialized through the central function.
-const { db, auth } = ensureAdminInitialized();
-export { db, auth };
+
+// Export the initialized singletons for use throughout the application
+export { app, db, auth, storage };
