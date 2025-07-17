@@ -1,7 +1,7 @@
 
 // src/scripts/init-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
-import { auth } from '@/lib/firebase/admin';
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
 import { 
     samplePlatformSettings,
     sampleRoles,
@@ -29,6 +29,7 @@ async function seedCollection(db: DatabaseAdapter, collectionName: string, data:
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
+    const { auth } = ensureAdminInitialized(); // Get auth instance
     const db = getDatabaseAdapter(); 
     
     try {

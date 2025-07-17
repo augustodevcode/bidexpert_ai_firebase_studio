@@ -4,7 +4,7 @@
  */
 import { FirestoreAdapter } from './firestore.adapter';
 import type { DatabaseAdapter } from '@/types';
-import { db } from '@/lib/firebase/admin'; // Import the initialized db instance
+import { ensureAdminInitialized } from '@/lib/firebase/admin';
 
 /**
  * Retorna uma instância do adaptador de banco de dados Firestore.
@@ -19,6 +19,7 @@ export const getDatabaseAdapter = (): DatabaseAdapter => {
   if (dbSystem !== 'FIRESTORE') {
       console.warn(`[getDatabaseAdapter] WARNING: Environment is set to use '${dbSystem}', but the application has been locked to 'FIRESTORE' for stability. Using FirestoreAdapter.`);
   }
-
+  
+  const { db } = ensureAdminInitialized();
   return new FirestoreAdapter(db);
 };
