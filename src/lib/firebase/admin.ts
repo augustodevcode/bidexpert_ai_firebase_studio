@@ -5,8 +5,6 @@ import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
 import { getAuth, type Auth } from 'firebase-admin/auth';
-import * as path from 'path';
-import * as fs from 'fs';
 
 console.log("[firebase/admin.ts] LOG: Module loaded.");
 
@@ -20,15 +18,18 @@ interface FirebaseAdminInstances {
 }
 
 /**
- * Initializes the Firebase Admin SDK using an explicit service account key
- * and ensures it only happens once.
- * This is the definitive, robust method to prevent authentication errors.
+ * Initializes the Firebase Admin SDK using Application Default Credentials (ADC)
+ * and ensures it only happens once. This is the standard and robust method
+ * for Google Cloud environments like Firebase Studio.
  */
 function initializeAdminSDK(): FirebaseAdminInstances {
+  const appName = 'bidexpert-admin-app';
+  
   // Check if the specific app instance has already been initialized.
-  if (getApps().some(app => app.name === 'bidexpert-admin-app')) {
-    console.log("[Admin SDK] LOG: Using existing Firebase Admin app.");
-    const app = getApp('bidexpert-admin-app');
+  const existingApp = getApps().find(app => app.name === appName);
+  if (existingApp) {
+    console.log(`[Admin SDK] LOG: Using existing Firebase Admin app "${appName}".`);
+    const app = getApp(appName);
     return {
       app,
       db: getFirestore(app),
@@ -37,32 +38,20 @@ function initializeAdminSDK(): FirebaseAdminInstances {
     };
   }
   
-  console.log('[Admin SDK] LOG: Attempting to initialize new Firebase Admin app...');
+  console.log('[Admin SDK] LOG: Attempting to initialize new Firebase Admin app with Application Default Credentials...');
   
-  // This path is now relative to the project root, which is more reliable.
-  const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
-
-  if (!fs.existsSync(serviceAccountPath)) {
-    const errorMessage = `FATAL: Service account key not found at ${serviceAccountPath}. The application cannot start without it.`;
-    console.error(`[Admin SDK Error] ${errorMessage}`);
-    throw new Error(errorMessage);
-  }
-
   try {
-    const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-    
-    console.log('[Admin SDK] LOG: Initializing with explicit service account credentials...');
-    
     const app = initializeApp({
-      credential: admin.credential.cert(serviceAccount),
-      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-    }, 'bidexpert-admin-app'); // Give the app a unique name to prevent re-initialization issues
+        // By not providing a `credential` object, the SDK automatically
+        // uses Application Default Credentials from the environment.
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+    }, appName); // Give the app a unique name
 
     const db = getFirestore(app);
     // This setting is crucial for the emulator to work correctly with composite indexes.
     db.settings({ ignoreUndefinedProperties: true });
     
-    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
 
     return {
       app,
@@ -71,7 +60,7 @@ function initializeAdminSDK(): FirebaseAdminInstances {
       auth: getAuth(app),
     };
   } catch (error: any) {
-    console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK with service account key:', error);
+    console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK with Application Default Credentials:', error);
     throw new Error(`Could not initialize Admin SDK: ${error.message}`);
   }
 }
