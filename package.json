@@ -9,8 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
-    "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts"
+    "db:init": "tsx scripts/init-db.ts",
+    "db:seed": "echo \"Para popular o banco com dados de demonstração, use o comando: npm run db:seed:demo\"",
+    "db:seed:demo": "tsx scripts/seed-db.ts"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
