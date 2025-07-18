@@ -28,10 +28,10 @@ export function ensureAdminInitialized(): {
   if (getApps().length === 0) {
     console.log('[Admin SDK] LOG: Initializing new Firebase Admin app...');
     
-    // Explicitly set the emulator host if in a dev/scripting environment.
-    // This is the key to fixing the authentication issue for local scripts.
-    if (process.env.NODE_ENV === 'development' || process.env.npm_config_user_agent?.includes('tsx')) {
-      console.log('[Admin SDK] DEV/Script environment detected. Setting Firestore emulator host.');
+    // This is the key change: Detect if we're running a script via tsx.
+    // If so, force the use of the Firestore emulator. This fixes the UNAUTHENTICATED error.
+    if (process.env.npm_config_user_agent?.includes('tsx')) {
+      console.log('[Admin SDK] SCRIPT environment detected. Setting FIRESTORE_EMULATOR_HOST.');
       process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
     }
 
@@ -45,8 +45,7 @@ export function ensureAdminInitialized(): {
     } catch (e: any) {
         console.warn(`[Admin SDK] WARN: ADC initialization failed: ${e.message}. Falling back to local key file.`);
         
-        // Fallback to local service account key file if ADC fails.
-        const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
+        const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json');
         
         if (!fs.existsSync(serviceAccountPath)) {
             console.error(`[Admin SDK] FATAL: Service account key not found at ${serviceAccountPath}. ADC failed and no fallback is available.`);
@@ -58,7 +57,7 @@ export function ensureAdminInitialized(): {
         app = initializeApp({
           credential: admin.credential.cert(serviceAccount),
           storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-        }, `bidexpert-admin-app-${Date.now()}`); // Unique name to prevent re-initialization errors
+        }, `bidexpert-admin-app-${Date.now()}`); 
         console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via local service account file.');
     }
     
@@ -67,7 +66,13 @@ export function ensureAdminInitialized(): {
     storage = getStorage(app);
     
     // This setting is crucial for the emulator to work correctly with composite indexes.
-    db.settings({ ignoreUndefinedProperties: true });
+    try {
+      db.settings({ ignoreUndefinedProperties: true });
+    } catch(error: any) {
+        if (!error.message.includes('settings() has already been called')) {
+            throw error;
+        }
+    }
     
   } else {
     // If already initialized, just get the existing instances.
@@ -81,7 +86,12 @@ export function ensureAdminInitialized(): {
 }
 
 // Immediately initialize on module load to ensure singletons are ready.
-ensureAdminInitialized();
+const services = ensureAdminInitialized();
 
 // Export the initialized singletons for use throughout the application
+app = services.app;
+db = services.db;
+auth = services.auth;
+storage = services.storage;
+
 export { app, db, auth, storage };
