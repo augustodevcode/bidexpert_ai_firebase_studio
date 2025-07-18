@@ -4,9 +4,9 @@ import AuctionDetailsClient from './auction-details-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/lib/data-queries';
+import { getLots } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCategories } from '@/lib/data-queries';
+import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 
@@ -30,7 +30,7 @@ async function getAuctionPageData(id: string): Promise<{
     ] = await Promise.all([
     getPlatformSettings(),
     getAuction(id),
-    getCategories(),
+    getLotCategories(),
     getSellers(),
     getAuctioneers()
   ]);
