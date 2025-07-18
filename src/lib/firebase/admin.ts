@@ -5,6 +5,8 @@ import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
 import { getAuth, type Auth } from 'firebase-admin/auth';
+import fs from 'fs';
+import path from 'path';
 
 console.log("[firebase/admin.ts] LOG: File loaded.");
 
@@ -15,40 +17,71 @@ let auth: Auth;
 let db: Firestore;
 let storage: Storage;
 
-if (getApps().length === 0) {
-  console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
-  app = initializeApp({
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-  });
-  console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
-  db = getFirestore(app);
-  // This setting is crucial for the emulator to work correctly with composite indexes.
-  db.settings({ ignoreUndefinedProperties: true });
-} else {
-  console.log('[Admin SDK] LOG: Using existing Firebase Admin app.');
-  app = getApp();
-  db = getFirestore(app);
-}
-
-auth = getAuth(app);
-storage = getStorage(app);
-
-/**
- * Ensures the Firebase Admin SDK is initialized and returns the singletons
- * for app, db, storage, and auth. This function now primarily acts as an accessor
- * to the already initialized services.
- */
+// This function ensures the Admin SDK is initialized, and returns the services.
+// It's designed to be a singleton pattern, initializing only once.
 export function ensureAdminInitialized(): {
   app: App;
   db: Firestore;
   storage: Storage;
   auth: Auth;
 } {
-  // The services are already initialized at the module level.
-  // This function just returns them.
+  if (getApps().length === 0) {
+    console.log('[Admin SDK] LOG: Initializing new Firebase Admin app...');
+    
+    // Explicitly set the emulator host if in a dev/scripting environment.
+    // This is the key to fixing the authentication issue for local scripts.
+    if (process.env.NODE_ENV === 'development' || process.env.npm_config_user_agent?.includes('tsx')) {
+      console.log('[Admin SDK] DEV/Script environment detected. Setting Firestore emulator host.');
+      process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
+    }
+
+    // Try to initialize using Application Default Credentials, which is standard for Firebase environments.
+    try {
+      console.log('[Admin SDK] LOG: Attempting to initialize with Application Default Credentials...');
+      app = initializeApp({
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+      });
+      console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
+    } catch (e: any) {
+        console.warn(`[Admin SDK] WARN: ADC initialization failed: ${e.message}. Falling back to local key file.`);
+        
+        // Fallback to local service account key file if ADC fails.
+        const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
+        
+        if (!fs.existsSync(serviceAccountPath)) {
+            console.error(`[Admin SDK] FATAL: Service account key not found at ${serviceAccountPath}. ADC failed and no fallback is available.`);
+            throw new Error(`Service account key is missing and Application Default Credentials failed.`);
+        }
+
+        const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+        
+        app = initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+        }, `bidexpert-admin-app-${Date.now()}`); // Unique name to prevent re-initialization errors
+        console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via local service account file.');
+    }
+    
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+    
+    // This setting is crucial for the emulator to work correctly with composite indexes.
+    db.settings({ ignoreUndefinedProperties: true });
+    
+  } else {
+    // If already initialized, just get the existing instances.
+    app = getApp();
+    db = getFirestore(app);
+    auth = getAuth(app);
+    storage = getStorage(app);
+  }
+
   return { app, db, storage, auth };
 }
 
+// Immediately initialize on module load to ensure singletons are ready.
+ensureAdminInitialized();
 
 // Export the initialized singletons for use throughout the application
 export { app, db, auth, storage };
