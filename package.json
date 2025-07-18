@@ -9,8 +9,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:init": "GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json dotenv -e .env -- tsx scripts/init-db.ts",
-    "db:seed": "GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json dotenv -e .env -- tsx scripts/seed-db.ts"
+    "db:init": "GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json dotenv -e .env -- tsx scripts/init-db.ts",
+    "db:seed": "GOOGLE_APPLICATION_CREDENTIALS=./bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json dotenv -e .env -- tsx scripts/seed-db.ts"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
