@@ -26,16 +26,8 @@ export function ensureAdminInitialized(): {
   if (getApps().length === 0) {
     console.log('[Admin SDK] LOG: Initializing new Firebase Admin app...');
     
-    // This is the key change: Detect if we're running a script via tsx.
-    // If so, force the use of the Firestore and Auth emulators. This fixes the UNAUTHENTICATED error.
-    if (process.env.npm_config_user_agent?.includes('tsx')) {
-      console.log('[Admin SDK] SCRIPT environment detected. Forcing EMULATOR usage.');
-      process.env.FIRESTORE_EMULATOR_HOST = "127.0.0.1:8080";
-      process.env.FIREBASE_AUTH_EMULATOR_HOST = "127.0.0.1:9099";
-    }
-
     // Initialize using Application Default Credentials, which is standard for Firebase environments.
-    // The emulator environment variables, if set, will be automatically picked up.
+    // The emulator environment variables, if set via the npm script, will be automatically picked up.
     app = initializeApp({
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
@@ -45,11 +37,9 @@ export function ensureAdminInitialized(): {
     auth = getAuth(app);
     storage = getStorage(app);
     
-    // This setting is crucial for the emulator to work correctly.
     try {
       db.settings({ ignoreUndefinedProperties: true });
     } catch(error: any) {
-        // It's safe to ignore if settings have already been called.
         if (!error.message.includes('settings() has already been called')) {
             throw error;
         }

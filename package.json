@@ -9,9 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "db:init": "tsx scripts/init-db.ts",
+    "db:init": "FIRESTORE_EMULATOR_HOST=\"127.0.0.1:8080\" FIREBASE_AUTH_EMULATOR_HOST=\"127.0.0.1:9099\" tsx scripts/init-db.ts",
     "db:seed": "echo \"Para popular o banco com dados de demonstração, use o comando: npm run db:seed:demo\"",
-    "db:seed:demo": "tsx scripts/seed-db.ts"
+    "db:seed:demo": "FIRESTORE_EMULATOR_HOST=\"127.0.0.1:8080\" FIREBASE_AUTH_EMULATOR_HOST=\"127.0.0.1:9099\" tsx scripts/seed-db.ts"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
