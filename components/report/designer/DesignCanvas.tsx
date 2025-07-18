@@ -3,7 +3,9 @@ import React from 'react';
 import { useDrop, useDrag } from 'react-dnd';
 import { Report, ReportElement, TextElement, TableElement, ChartElement } from './types/report';
 import { v4 as uuidv4 } from 'uuid';
+
 interface DesignCanvasProps {
+
   report: Report;
   onSelectElement: (id: string | null) => void;
   onUpdateElement: (id: string, updates: Partial<ReportElement>) => void;
@@ -14,27 +16,28 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ report, onSelectElement, on
         accept: ['text', 'table', 'chart'], // Accept elements from toolbar
         drop: (item: any, monitor) => {
             const clientOffset = monitor.getClientOffset();
+            const canvasRect = (document.querySelector('.design-canvas') as HTMLElement)?.getBoundingClientRect();
+
             if (clientOffset) {
-                const canvasRect = (document.querySelector('.design-canvas') as HTMLElement)?.getBoundingClientRect();
                 if (canvasRect) {
                     const x = clientOffset.x - canvasRect.left;
                     const y = clientOffset.y - canvasRect.top;
 
                     const newElement: any = {
-                        id: uuidv4(),
+                        id: uuidv4(), // Generate a unique ID for the new element
                         type: item.type,
                         x,
                         y,
                         width: 150, // Default size
                         height: 100,
                         ...(item.type === 'text' && { content: 'New Text' }),
-                        ...(item.type === 'table' && { dataSourceId: '', columns: [], filters: [] }),
+                        ...(item.type === 'table' && { dataSourceId: '', columns: [] }),
                         ...(item.type === 'chart' && { dataSourceId: '', chartType: 'bar' }),
-
                     };
-                    onUpdateElement(newElement.id, newElement); // Add the new element
+                    // We call onUpdateElement to add the new element to the report state
+                    onUpdateElement(newElement.id, newElement);
                 }
-            }
+             }
             return undefined;
         },
     }));
@@ -45,8 +48,8 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ report, onSelectElement, on
       left: element.x,
       width: element.width,
       height: element.height,
-      border: '1px dashed blue', // Indicate selectable element
-      padding: '4px',
+      border: '1px dashed blue',
+      padding: '4px', // Added padding for better visualization
       cursor: 'move', // Indicate draggable
       overflow: 'hidden', // Prevent content overflowing during drag
     };
@@ -58,13 +61,11 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ report, onSelectElement, on
     const [{ isDragging }, drag] = useDrag(() => ({
       type: element.type,
       item: { id: element.id, type: element.type, x: element.x, y: element.y },
-      // We don't need to define a `drop` function here as the canvas `useDrop` handles the position update
       collect: (monitor) => ({
         isDragging: !!monitor.isDragging(),
       }),
         end: (item, monitor) => {
             const dropResult = monitor.getDropResult() as { x: number; y: number } | null;
-            if (item && dropResult) {
                 // Update position based on drop result from canvas
                 onUpdateElement(item.id as string, { x: dropResult.x, y: dropResult.y });
             }
@@ -103,15 +104,6 @@ const DesignCanvas: React.FC<DesignCanvasProps> = ({ report, onSelectElement, on
       }
   };
 
-          case 'chart':
-              const chartElement = element as ChartElement;
-              return (<div ref={drag} key={element.id} style={draggableStyle} onClick={handleClick}>
-                  Chart: {chartElement.chartType}
-              </div>);
-          default:
-              return null;
-      }
-  };
 
   return (
     <div
