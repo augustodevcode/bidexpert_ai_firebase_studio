@@ -1,7 +1,7 @@
 // src/components/lot-card.tsx
 'use client';
 
-import * as React from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import type { Lot, Auction, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [isUrgent, setIsUrgent] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!endDate) {
       setTimeRemaining(getAuctionStatusText(status));
       setIsUrgent(false);
@@ -99,9 +99,9 @@ interface LotCardProps {
 }
 
 export default function LotCard({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
-  const [lotDetailUrl, setLotDetailUrl] = React.useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const { toast } = useToast();
 
   const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
@@ -115,9 +115,9 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
   };
   const showCountdownOnThisCard = platformSettings?.showCountdownOnCards !== false;
 
-  const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const effectiveEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
       setIsFavorite(isLotFavoriteInStorage(lot.id));
@@ -147,14 +147,14 @@ export default function LotCard({ lot, auction, badgeVisibilityConfig, platformS
     setIsPreviewModalOpen(true);
   };
   
-  const discountPercentage = React.useMemo(() => {
+  const discountPercentage = useMemo(() => {
     if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
       return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
     }
     return lot.discountPercentage || 0;
   }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
 
-  const mentalTriggers = React.useMemo(() => {
+  const mentalTriggers = useMemo(() => {
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
 
