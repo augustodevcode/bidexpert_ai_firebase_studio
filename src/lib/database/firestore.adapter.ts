@@ -1,5 +1,5 @@
 // src/lib/database/firestore.adapter.ts
-import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate, EditableUserProfileData } from '@/types';
+import type { DatabaseAdapter, Lot, Auction, UserProfileData, Role, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, MediaItem, PlatformSettings, StateInfo, CityInfo, Court, JudicialDistrict, JudicialBranch, JudicialProcess, Bem, Subcategory, BemFormData, CourtFormData, JudicialDistrictFormData, JudicialBranchFormData, JudicialProcessFormData, SellerFormData, AuctioneerFormData, CityFormData, StateFormData, UserCreationData, DirectSaleOffer, SubcategoryFormData, UserDocument, ContactMessage, DocumentTemplate, EditableUserProfileData, UserLotMaxBid, BidInfo, Review, LotQuestion } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import { firestore } from 'firebase-admin';
 import { AuctionSchema, LotSchema, UserProfileDataSchema, SellerProfileInfoSchema, AuctioneerProfileInfoSchema } from '@/lib/zod-schemas';
@@ -11,14 +11,12 @@ export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
 
     constructor(dbInstance: FirebaseFirestore.Firestore) {
-        console.log('[FirestoreAdapter] LOG: Constructor called.');
         if (!dbInstance) {
             const errorMessage = `Instância do Firestore não foi fornecida ao construtor do FirestoreAdapter.`;
             console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
             throw new Error(errorMessage);
         }
         this.db = dbInstance;
-        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {
@@ -39,7 +37,6 @@ export class FirestoreAdapter implements DatabaseAdapter {
     }
     
     async batchWrite(collectionName: string, items: any[], parentDocPath?: string): Promise<{ success: boolean; message: string; }> {
-        console.log(`[DB LOG] batchWrite called for ${collectionName}. Parent: ${parentDocPath || 'root'}. Items: ${items.length}`);
         if (!items || items.length === 0) {
             return { success: true, message: 'Nenhum item para adicionar.' };
         }
@@ -620,6 +617,27 @@ export class FirestoreAdapter implements DatabaseAdapter {
             return snapshot.docs.map(doc => this.toJSON<DirectSaleOffer>(doc));
         } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
+    
+    async getDocumentTypes(): Promise<DocumentType[]> {
+        const docTypes: DocumentType[] = [
+            { id: 'doc_cpf', name: 'CPF', description: 'Cópia do Cadastro de Pessoas Físicas', isRequired: true, appliesTo: 'PHYSICAL' },
+            { id: 'doc_rg', name: 'RG ou CNH (Frente e Verso)', description: 'Documento de identidade com foto', isRequired: true, appliesTo: 'PHYSICAL,LEGAL' },
+            { id: 'doc_residencia', name: 'Comprovante de Residência', description: 'Conta de água, luz ou telefone recente', isRequired: true, appliesTo: 'PHYSICAL' },
+            { id: 'doc_casamento', name: 'Certidão de Casamento', description: 'Se aplicável, para comprovação de estado civil', isRequired: false, appliesTo: 'PHYSICAL' },
+            { id: 'doc_contrato_social', name: 'Contrato Social', description: 'Última versão consolidada do contrato social', isRequired: true, appliesTo: 'LEGAL' },
+            { id: 'doc_cartao_cnpj', name: 'Cartão CNPJ', description: 'Comprovante de inscrição no CNPJ', isRequired: true, appliesTo: 'LEGAL' },
+        ];
+        return Promise.resolve(docTypes);
+    }
+    
+    async getUserDocuments(userId: string): Promise<UserDocument[]> {
+        try {
+            const snapshot = await this.db.collection('userDocuments').where('userId', '==', userId).get();
+            return snapshot.docs.map(doc => this.toJSON<UserDocument>(doc));
+        } catch(e) {
+            return [];
+        }
+    }
 
     async saveUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean; message: string; }> {
         const docRef = this.db.collection('userDocuments').doc();
@@ -652,4 +670,17 @@ export class FirestoreAdapter implements DatabaseAdapter {
         });
         return { success: true, message: 'Mensagem enviada com sucesso!' };
     }
+    
+    // Add other missing methods with basic implementations or logging
+    async approveDocument(documentId: string): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('userDocuments', documentId, { status: 'APPROVED' }); }
+    async rejectDocument(documentId: string, reason: string): Promise<{ success: boolean; message: string; }> { return this.genericUpdate('userDocuments', documentId, { status: 'REJECTED', rejectionReason: reason }); }
+    async getBidsForLot(lotId: string): Promise<BidInfo[]> { return []; }
+    async createBid(bidData: any): Promise<{success: boolean, message: string, bid?: BidInfo}> { return {success: false, message: 'Not Implemented'}; }
+    async upsertUserLotMaxBid(data: any): Promise<{success: boolean, message: string}> { return {success: false, message: 'Not Implemented'}; }
+    async getActiveUserLotMaxBid(userId: string, lotId: string): Promise<UserLotMaxBid | null> { return null; }
+    async createReview(reviewData: any): Promise<{success: boolean, message: string, reviewId?: string}> { return {success: false, message: 'Not Implemented'}; }
+    async getReviewsForLot(lotId: string): Promise<Review[]> { return []; }
+    async createQuestion(questionData: any): Promise<{success: boolean, message: string, questionId?: string}> { return {success: false, message: 'Not Implemented'}; }
+    async answerQuestion(questionId: string, answerData: any): Promise<{success: boolean, message: string}> { return {success: false, message: 'Not Implemented'}; }
+    async getQuestionsForLot(lotId: string): Promise<LotQuestion[]> { return []; }
 }

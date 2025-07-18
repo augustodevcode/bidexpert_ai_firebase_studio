@@ -4,6 +4,8 @@ import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/index';
 import { revalidatePath } from 'next/cache';
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
 
 // This is a dedicated route for user document uploads.
 // It ensures that files are stored in a user-specific directory and updates the database.
@@ -41,10 +43,21 @@ export async function POST(request: NextRequest) {
     }
 
     // In a real app with cloud storage, this is where you'd upload the file to a bucket.
-    // For local dev with this adapter, we just simulate a public URL.
+    // For local dev, we save it to the public directory.
+    const relativeUploadDir = path.join('public', 'uploads', 'documents', userId);
+    const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
+
+    if (!existsSync(absoluteUploadDir)) {
+        await mkdir(absoluteUploadDir, { recursive: true });
+    }
+    
     const sanitizedDocType = docType.replace(/[^a-zA-Z0-9-_]/g, '_');
     const uniqueFilename = `${sanitizedDocType}-${uuidv4()}${path.extname(file.name)}`;
+    const absoluteFilePath = path.join(absoluteUploadDir, uniqueFilename);
     const publicUrl = `/uploads/documents/${userId}/${uniqueFilename}`;
+    
+    await writeFile(absoluteFilePath, Buffer.from(await file.arrayBuffer()));
+
 
     // Now, save the document record in the database
     const db = await getDatabaseAdapter();
