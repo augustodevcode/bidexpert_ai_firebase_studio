@@ -1,3 +1,4 @@
+
 // scripts/seed-db.ts
 import { getDatabaseAdapter } from '@/lib/database/index';
 import { 
@@ -117,6 +118,18 @@ async function seedFullData() {
              console.log(`[DB SEED] 🟡 INFO: createUser not implemented on this adapter.`);
         }
 
+        // Final step: Mark setup as complete
+        console.log('[DB SEED] LOG: Marking setup as complete...');
+        // @ts-ignore
+        if (db.updateSystemInfo) {
+            // @ts-ignore
+            await db.updateSystemInfo('global', { isSetupComplete: true });
+        } else {
+            await db.updatePlatformSettings({ isSetupComplete: true });
+        }
+        console.log('[DB SEED] ✅ SUCCESS: Setup marked as complete.');
+
+
     } catch (error: any) {
         console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);
         console.error("Stack Trace:", error.stack);
@@ -126,6 +139,4 @@ async function seedFullData() {
 }
 
 seedFullData().catch(error => {
-    console.error("[DB SEED] ❌ FATAL ERROR during seeding:", error);
-    process.exit(1);
-});
+    console.error("[DB SEED] 

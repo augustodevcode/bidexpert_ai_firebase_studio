@@ -1,14 +1,17 @@
 // src/app/setup/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Rocket, Database, Settings, Palette, CheckCircle } from 'lucide-react';
+import { Rocket, Database, Settings, CheckCircle, RefreshCw, Loader2 } from 'lucide-react';
 import WelcomeStep from '@/components/setup/welcome-step';
 import SeedingStep from '@/components/setup/seeding-step';
 import SettingsStep from '@/components/setup/settings-step';
 import FinishStep from '@/components/setup/finish-step';
+import { getSetupStatus, resetSetupStatus } from './actions';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
@@ -19,6 +22,33 @@ const STEPS = [
 
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Check setup status on mount
+    getSetupStatus().then(isComplete => {
+      if (isComplete) {
+        toast({
+          title: "Configuração já realizada",
+          description: "Redirecionando para o painel de administração.",
+        });
+        localStorage.setItem('bidexpert_setup_complete', 'true');
+        router.replace('/admin/dashboard');
+      } else {
+        localStorage.removeItem('bidexpert_setup_complete');
+        setIsLoading(false);
+      }
+    });
+  }, [router, toast]);
+  
+  const handleReset = async () => {
+    setIsLoading(true);
+    await resetSetupStatus();
+    localStorage.removeItem('bidexpert_setup_complete');
+    window.location.reload();
+  }
 
   const goToNextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
   const goToPrevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
@@ -38,9 +68,23 @@ export default function SetupPage() {
     }
   };
 
+  if (isLoading) {
+      return (
+        <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+           <Loader2 className="h-10 w-10 animate-spin text-primary" />
+           <p className="ml-3 text-muted-foreground">Verificando estado da configuração...</p>
+        </div>
+      )
+  }
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <div className="w-full max-w-4xl">
+        <div className="flex justify-end mb-2">
+            <Button onClick={handleReset} variant="ghost" size="sm">
+                <RefreshCw className="mr-2 h-3.5 w-3.5" /> Forçar Reinício do Setup
+            </Button>
+        </div>
         <ol className="flex items-center w-full mb-8">
             {STEPS.map((step, index) => (
                  <li key={step.id} className="flex w-full items-center">
@@ -55,10 +99,4 @@ export default function SetupPage() {
             ))}
         </ol>
         
-        <Card className="shadow-2xl">
-          {renderCurrentStep()}
-        </Card>
-      </div>
-    </div>
-  );
-}
+        <Card className="shadow-
