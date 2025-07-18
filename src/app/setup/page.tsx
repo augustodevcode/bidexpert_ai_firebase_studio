@@ -48,7 +48,7 @@ export default function SetupPage() {
     await resetSetupStatus();
     localStorage.removeItem('bidexpert_setup_complete');
     window.location.reload();
-  }
+  };
 
   const goToNextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
   const goToPrevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
@@ -74,7 +74,7 @@ export default function SetupPage() {
            <Loader2 className="h-10 w-10 animate-spin text-primary" />
            <p className="ml-3 text-muted-foreground">Verificando estado da configuração...</p>
         </div>
-      )
+      );
   }
 
   return (
@@ -87,7 +87,7 @@ export default function SetupPage() {
         </div>
         <ol className="flex items-center w-full mb-8">
             {STEPS.map((step, index) => (
-                 <li key={step.id} className="flex w-full items-center">
+                 <li key={step.id} className="relative flex-1">
                     <div className="flex flex-col items-center gap-2">
                         <span className={`flex items-center justify-center w-10 h-10 rounded-full shrink-0 ${index <= currentStep ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>
                             <step.icon className="w-5 h-5"/>
@@ -99,4 +99,10 @@ export default function SetupPage() {
             ))}
         </ol>
         
-        <Card className="shadow-
+        <Card className="shadow-lg">
+          {renderCurrentStep()}
+        </Card>
+      </div>
+    </div>
+  );
+}
