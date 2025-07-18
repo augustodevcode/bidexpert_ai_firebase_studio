@@ -39,7 +39,7 @@ export function ensureAdminInitialized(): {
     app = initializeApp({
       storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
-    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully.');
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
     
     db = getFirestore(app);
     auth = getAuth(app);
