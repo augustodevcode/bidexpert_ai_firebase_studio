@@ -5,11 +5,12 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { Report, ReportElement } from './types/report';
+import * as XLSX from 'sheetjs'; // Import SheetJS
 import Toolbar from './Toolbar';
 import DesignCanvas from './DesignCanvas';
 import PropertiesPanel from './PropertiesPanel';
 import PreviewPanel from './PreviewPanel';
-import { DataProvider } from './contexts/DataContext';
+import { DataProvider, useData } from './contexts/DataContext'; // Import useData
 
 // Helper for managing reports in localStorage
 const reportsStorageKey = 'bidReportDesignerReports';
@@ -44,6 +45,7 @@ const BidReportDesigner: React.FC = () => {
   const [viewMode, setViewMode] = useState<'design' | 'preview'>('design');
 
     const previewRef = useRef<HTMLDivElement>(null); // Ref for preview panel
+    const { getDataSource } = useData(); // Use the useData hook
 
     // Action Handlers
     const handleNewReport = useCallback(() => {
@@ -132,7 +134,7 @@ const BidReportDesigner: React.FC = () => {
         pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
         pdf.save(`${report.name || 'report'}.pdf`);
 
-         // Switch back to original view mode if we changed it
+         // Switch back to original view mode if we changed it - this part needs to be more robust
     }, [report, viewMode]);
   const handleUpdateElement = (id: string, updates: Partial<ReportElement>) => {
     setReport(prevReport => ({
@@ -151,6 +153,75 @@ const BidReportDesigner: React.FC = () => {
     return report.elements.find(el => el.id === selectedElement) || null;
   };
 
+
+    const handleExportXlsx = useCallback(() => {
+        // Find all table elements in the report
+        const tableElements = report.elements.filter(el => el.type === 'table') as any[]; // Use any for now, will refine types later
+
+        if (tableElements.length === 0) {
+            alert('No table elements found in the report to export.');
+            return;
+        }
+
+        const workbook = XLSX.utils.book_new();
+
+        tableElements.forEach(tableElement => {
+            const dataSource = getDataSource(tableElement.dataSourceId);
+            if (dataSource && dataSource.data && tableElement.columns.length > 0) {
+                // Prepare data for the sheet
+                const sheetData = [tableElement.columns.map((col: any) => col.label)]; // Header row
+                dataSource.data.forEach((rowData: any) => {
+                    const row = tableElement.columns.map((col: any) => rowData[col.field] || '');
+                    sheetData.push(row);
+                });
+
+                // Create a worksheet and append to workbook
+                const worksheet = XLSX.utils.aoa_to_sheet(sheetData);
+                XLSX.utils.book_append_sheet(workbook, worksheet, tableElement.id.substring(0, 31)); // Use element id as sheet name, truncated
+            }
+        });
+
+         if (workbook.SheetNames.length > 0) {
+             XLSX.writeFile(workbook, `${report.name || 'report'}.xlsx`);
+         } else {
+             alert('No data found in table elements to export to XLSX.');
+         }
+
+    }, [report, getDataSource]);
+
+
+    const handleExportCsv = useCallback(() => {
+         // Find all table elements in the report
+         const tableElements = report.elements.filter(el => el.type === 'table') as any[]; // Use any for now
+
+         if (tableElements.length === 0) {
+             alert('No table elements found in the report to export.');
+             return;
+         }
+
+        tableElements.forEach(tableElement => {
+             const dataSource = getDataSource(tableElement.dataSourceId);
+             if (dataSource && dataSource.data && tableElement.columns.length > 0) {
+                 // Prepare CSV data
+                 const header = tableElement.columns.map((col: any) => col.label).join(',');
+                 const rows = dataSource.data.map((rowData: any) =>
+                     tableElement.columns.map((col: any) => `"${String(rowData[col.field] || '').replace(/"/g, '""')}"`).join(',') // Handle commas and quotes
+                 );
+
+                 const csvContent = [header, ...rows].join('\n');
+
+                 // Create a blob and download
+                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+                 const link = document.createElement('a');
+                 link.href = URL.createObjectURL(blob);
+                 link.setAttribute('download', `${report.name || 'report'}-${tableElement.id}.csv`);
+                 document.body.appendChild(link);
+                 link.click();
+                 document.body.removeChild(link);
+             }
+        });
+    }, [report, getDataSource]);
+
   return (
     <DndProvider backend={HTML5Backend}>
       <DataProvider>
@@ -164,6 +235,8 @@ const BidReportDesigner: React.FC = () => {
               onSaveReport={handleSaveReport}
               onSaveAsReport={handleSaveAsReport}            
               onExportPdf={handleExportPdf} // Pass the export handler
+              onExportXlsx={handleExportXlsx} // Pass XLSX handler
+              onExportCsv={handleExportCsv} // Pass CSV handler
           />
           <div className="designer-area" style={{ display: 'flex' }}>
             <div className="canvas-panel" style={{ flex: 1, border: '1px solid #ccc', marginRight: '8px' }}>

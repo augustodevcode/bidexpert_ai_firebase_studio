@@ -10,9 +10,9 @@ interface ToolbarProps {
   onOpenReport: () => void;
   onSaveReport: () => void;
   onSaveAsReport: () => void;
-  onExportPdf: () => void; // Add new prop for PDF export
-  onExportCsv: () => void;
-  onExportXlsx: () => void;
+ onExportXlsx: () => void;
+ onExportCsv: () => void;
+ onExportPdf: () => void;
 }
 
 interface DraggableElementTypeProps {
@@ -54,9 +54,9 @@ const Toolbar: React.FC<ToolbarProps> = ({
   onOpenReport,
   onSaveReport,
   onSaveAsReport,
-  onExportPdf,
-  onExportCsv,
   onExportXlsx,
+  onExportCsv,
+  onExportPdf,
 }) => {
   return (
     <div className="toolbar" style={{ marginBottom: '8px', padding: '8px', border: '1px solid #ccc' }}>
@@ -71,9 +71,11 @@ const Toolbar: React.FC<ToolbarProps> = ({
       <button onClick={() => onViewChange('preview')}>Preview View</button>
 
       {/* Export Actions */}
-      <button onClick={onExportPdf}>Export as PDF</button>
-      <button onClick={onExportCsv}>Export as CSV</button>
-      <button onClick={onExportXlsx}>Export as XLSX</button>
+      <span style={{ marginLeft: '16px', marginRight: '4px' }}>Export:</span>
+ <button onClick={onExportXlsx}>XLSX</button>
+ <button onClick={onExportCsv}>CSV</button>
+ <button onClick={onExportPdf}>PDF</button>
+
 
       {/* Draggable Elements */}
       <span style={{ marginLeft: '16px', marginRight: '4px' }}>Add Elements:</span> {/* Added spacing */}
