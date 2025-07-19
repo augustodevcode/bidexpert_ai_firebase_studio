@@ -143,11 +143,9 @@ export class FirestoreAdapter implements DatabaseAdapter {
             const snapshot = await query.get();
             return snapshot.docs.map(doc => this.toJSON<Lot>(doc));
         } catch (error: any) {
-            if (error.code === 5) {
-                return [];
-            }
-            console.error(`[FirestoreAdapter] FATAL: Error fetching lots:`, error);
-            throw error;
+            console.error(`[FirestoreAdapter] Error fetching lots. AuctionId: ${auctionId}. Error:`, error);
+            // Return empty array to prevent crashing the server, instead of re-throwing.
+            return [];
         }
     }
 
