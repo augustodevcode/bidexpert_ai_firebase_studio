@@ -1,7 +1,9 @@
 // components/report/designer/BidReportDesigner.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Report, ReportElement } from './types/report';
 import Toolbar from './Toolbar';
 import DesignCanvas from './DesignCanvas';
@@ -40,6 +42,8 @@ const BidReportDesigner: React.FC = () => {
   });
   const [selectedElement, setSelectedElement] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'design' | 'preview'>('design');
+
+    const previewRef = useRef<HTMLDivElement>(null); // Ref for preview panel
 
     // Action Handlers
     const handleNewReport = useCallback(() => {
@@ -103,7 +107,33 @@ const BidReportDesigner: React.FC = () => {
         }
     }, [report]);
 
+    const handleExportPdf = useCallback(async () => {
+        if (viewMode !== 'preview' || !previewRef.current) {
+            alert('Please switch to Preview mode before exporting.');
+            return;
+        }
 
+        // Temporarily switch to preview mode if not already
+        const originalViewMode = viewMode;
+        if (originalViewMode !== 'preview') {
+             setViewMode('preview');
+             // Wait for the view to render in preview mode - this might need a more robust solution
+             await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+
+        const canvas = await html2canvas(previewRef.current);
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'portrait',
+            unit: 'px',
+            format: [canvas.width, canvas.height], // Use canvas dimensions
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save(`${report.name || 'report'}.pdf`);
+
+         // Switch back to original view mode if we changed it
+    }, [report, viewMode]);
   const handleUpdateElement = (id: string, updates: Partial<ReportElement>) => {
     setReport(prevReport => ({
       ...prevReport,
@@ -132,7 +162,8 @@ const BidReportDesigner: React.FC = () => {
               onNewReport={handleNewReport}
               onOpenReport={handleOpenReport}
               onSaveReport={handleSaveReport}
-              onSaveAsReport={handleSaveAsReport}
+              onSaveAsReport={handleSaveAsReport}            
+              onExportPdf={handleExportPdf} // Pass the export handler
           />
           <div className="designer-area" style={{ display: 'flex' }}>
             <div className="canvas-panel" style={{ flex: 1, border: '1px solid #ccc', marginRight: '8px' }}>
@@ -143,7 +174,9 @@ const BidReportDesigner: React.FC = () => {
                   onUpdateElement={handleUpdateElement}
                 />
               ) : (
-                <PreviewPanel report={report} />
+                <div ref={previewRef} style={{ width: '100%', height: '100%' }}> {/* Attach ref to a container */}
+                    <PreviewPanel report={report} />
+                </div>
               )}
             </div>
             <div className="properties-panel" style={{ width: '300px', border: '1px solid #ccc', padding: '8px' }}>
