@@ -97,36 +97,20 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
     const db = getDatabaseAdapter();
     
     try {
-        const allRoles = await db.getRoles();
-        const adminRole = allRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
-        const consignorRole = allRoles.find(r => r.name_normalized === 'CONSIGNOR');
-        const userRole = allRoles.find(r => r.name_normalized === 'USER');
-        
-        const roleIds = [adminRole?.id, consignorRole?.id, userRole?.id].filter((id): id is string => !!id);
-        const roleNames = [adminRole?.name, consignorRole?.name, userRole?.name].filter((name): name is string => !!name);
+        const adminEmail = 'admin@bidexpert.com.br';
+        let adminProfile = await db.getUserProfileData(adminEmail);
 
-        // Construct a virtual superuser profile without database dependencies
-        const virtualAdminProfile: UserProfileWithPermissions = {
-            id: 'admin-bidexpert-platform-001',
-            uid: 'jdbCtYtSceMeC5SuLh06JoohwYY2',
-            email: 'admin@bidexpert.com.br',
-            fullName: 'Admin de Desenvolvimento',
-            habilitationStatus: 'HABILITADO',
-            accountType: 'PHYSICAL',
-            sellerId: null, // Avoid dependency on sellers collection before seeding
-            roleIds: roleIds,
-            roleNames: roleNames,
-            permissions: ['manage_all'], // Overwrite permissions with manage_all for full access
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
+        if (!adminProfile) {
+            console.warn("[Dev Action] Usuário admin não encontrado no banco de dados. O script db:init pode não ter sido executado corretamente. Acesso pode ser limitado.");
+            return null; 
+        }
 
-        await createSession(virtualAdminProfile);
-        console.log('[Dev Action] Sessão de superusuário virtual criada para desenvolvimento.');
-        return virtualAdminProfile;
+        await createSession(adminProfile as UserProfileWithPermissions);
+        console.log('[Dev Action] Sessão de desenvolvimento criada para o admin do banco de dados.');
+        return adminProfile as UserProfileWithPermissions;
 
     } catch (error) {
-        console.error("[Dev Action] Erro ao criar usuário admin virtual:", error);
+        console.error("[Dev Action] Erro ao tentar logar com o usuário admin:", error);
         return null;
     }
 }

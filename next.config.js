@@ -30,6 +30,12 @@ const config = {
       },
     ],
   },
+  // Adicionado para resolver o aviso de Cross-Origin
+  experimental: {
+    allowedDevOrigins: [
+      "https://6000-firebase-studio-1748711833657.cluster-ve345ymguzcd6qqzuko2qbxtfe.cloudworkstations.dev"
+    ],
+  },
 };
 
 console.log("[next.config.js] LOG: Strict build checks (ignoreBuildErrors, ignoreDuringBuilds) are set to 'false'.");

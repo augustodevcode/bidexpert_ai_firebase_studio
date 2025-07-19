@@ -121,10 +121,8 @@ async function seedFullData() {
         // Final step: Mark setup as complete
         console.log('[DB SEED] LOG: Marking setup as complete...');
         // @ts-ignore
-        if (db.updateSystemInfo) {
+        if (db.updatePlatformSettings) {
             // @ts-ignore
-            await db.updateSystemInfo('global', { isSetupComplete: true });
-        } else {
             await db.updatePlatformSettings({ isSetupComplete: true });
         }
         console.log('[DB SEED] ✅ SUCCESS: Setup marked as complete.');
@@ -139,4 +137,6 @@ async function seedFullData() {
 }
 
 seedFullData().catch(error => {
-    console.error("[DB SEED] 
+    console.error("[DB SEED] ❌ FATAL ERROR during seeding:", error);
+    process.exit(1);
+});
