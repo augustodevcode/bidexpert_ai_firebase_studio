@@ -109,7 +109,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const virtualAdminProfile: UserProfileWithPermissions = {
             id: 'admin-bidexpert-platform-001',
             uid: 'admin-bidexpert-platform-001',
-            email: 'admin@bidexpert.com',
+            email: 'admin@bidexpert.com.br',
             fullName: 'Admin de Desenvolvimento',
             habilitationStatus: 'HABILITADO',
             accountType: 'PHYSICAL',
