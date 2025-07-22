@@ -28,3 +28,9 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, and contextually relevant name. This name should reflect the element's purpose or content. For example, a button to submit a login form should be `<Button data-ai-id="login-submit-button">`, and a container for a user's profile card should be `<div data-ai-id="user-profile-card">`.
 
 **Rationale:** This convention is essential for the AI to reliably identify and manipulate specific UI elements, ensuring that future requests to "change the color of the login button" are executed precisely and without ambiguity. It also aids in end-to-end testing and debugging.
+
+## 4. Development Environment Information
+
+**Rule:** During development (`NODE_ENV === 'development'`), the application footer must display key environment information. This includes the currently active database system (e.g., Firestore, MySQL), the logged-in user's email, and the active Firebase Project ID.
+
+**Rationale:** This provides immediate, persistent context about the development environment, preventing confusion and aiding in debugging database or user-specific issues.

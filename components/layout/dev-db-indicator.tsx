@@ -2,7 +2,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { getDatabaseAdapter } from '@/lib/database';
+import { useAuth } from '@/contexts/auth-context';
+import { Badge } from '../ui/badge';
 
 function getCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -16,24 +17,36 @@ function getCookie(name: string): string | undefined {
 }
 
 export default function DevDbIndicator() {
+  const { userProfileWithPermissions } = useAuth();
   const [dbSystem, setDbSystem] = useState('');
+  const [projectId, setProjectId] = useState('');
 
   useEffect(() => {
-    // This component now relies solely on the client-side readable cookie.
-    // The server-side logic is now robust enough to handle its own context.
     const dbFromCookie = getCookie('dev-config-db');
-    // We fall back to the public env var, which is also available on the client.
     const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
     setDbSystem(dbFromCookie || dbFromEnv);
+    setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A');
   }, []);
 
-  if (process.env.NODE_ENV !== 'development' || !dbSystem) {
+  if (process.env.NODE_ENV !== 'development') {
     return null;
   }
 
   return (
-    <p className="text-xs text-muted-foreground mt-2">
-      Active DB System: <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span> (Dev Only)
-    </p>
+    <div className="mt-4 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1 text-center border">
+        <p className="font-semibold text-foreground">Dev Info</p>
+        <p>
+            <Badge variant="secondary" className="mr-1.5">DB System</Badge>
+            <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span>
+        </p>
+         <p>
+            <Badge variant="secondary" className="mr-1.5">Project</Badge>
+            <span className="font-semibold text-primary">{projectId}</span>
+        </p>
+        <p>
+            <Badge variant="secondary" className="mr-1.5">User</Badge>
+            <span className="font-semibold text-primary truncate">{userProfileWithPermissions?.email || 'N/A'}</span>
+        </p>
+    </div>
   );
 }

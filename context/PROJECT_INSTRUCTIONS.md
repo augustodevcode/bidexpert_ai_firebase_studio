@@ -60,7 +60,8 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 
 ## 5. Project-Specific Conventions
 
-*   **Development Environment:** Remember that in the development environment (`NODE_ENV === 'development'`), we have an automatic login mechanism for the `admin@bidexpert.com.br` user. This is handled in `src/contexts/auth-context.tsx` to streamline development and testing.
+*   **Development Environment:** In the development environment (`NODE_ENV === 'development'`), an automatic login mechanism exists for a virtual `admin@bidexpert.com.br` user to streamline development.
+*   **Footer Debug Info:** During development, the footer will display the active database system, the logged-in user's email, and the Firebase project ID for easy reference.
 
 ## 6. XML Structure for Code Changes
 
