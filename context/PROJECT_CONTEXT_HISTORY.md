@@ -17,11 +17,15 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   Static Content Delivery: Efficient serving of marketing/informational pages.
 *   AI-Powered Auction Guidance: Recommendations for listing details, optimal opening values, and similar listing suggestions.
 
-**Technology Stack:**
-*   Frontend: NextJS, React, ShadCN UI components, Tailwind CSS
-*   Backend/API: NextJS API Routes / Server Actions
-*   AI: Genkit (for AI flows)
-*   Database: Firestore (primary), MySQL (development alternative)
+**Technology Stack & Architecture:**
+*   **Architecture**: MVC (Model-View-Controller) with a Service Layer.
+    *   **Model**: Prisma ORM (`prisma/schema.prisma`).
+    *   **View**: Next.js, React, ShadCN UI components, Tailwind CSS.
+    *   **Controller**: Next.js Server Actions.
+    *   **Service Layer**: Contains business logic (`src/services`).
+    *   **Repository Layer**: Handles data access via Prisma (`src/repositories`).
+*   **AI**: Genkit (for AI flows).
+*   **Database**: Designed for PostgreSQL and MySQL via Prisma, with a Firestore adapter for specific development environments.
 
 **Style Guidelines (from PRD):**
 *   Icons: Clean, line-based (`lucide-react`).
@@ -37,53 +41,31 @@ This document summarizes the BidExpert project, including its purpose, core feat
 
 ### Key Features & Functionalities Implemented/Worked On:
 
-1.  **Database & Data Layer:**
-    *   **Dual Database Strategy (Firestore/MySQL):** Implemented a flexible data layer that can switch between a primary Firestore database and a secondary MySQL database for development. This was done to overcome Firestore's free-tier write limits during heavy data seeding. The switch is controlled by the `NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM` environment variable.
-    *   **Robust Firestore Adapter:** The `FirestoreAdapter` (`src/lib/database/firestore.adapter.ts`) has been fully implemented to handle all necessary CRUD operations, replacing the previous MySQL and PostgreSQL adapters.
-    *   **Full MySQL Adapter:** A complete `MySqlAdapter` was implemented using the `mysql2` driver to provide a fully functional alternative for local development, mirroring the interface of the `FirestoreAdapter`.
-    *   **Optimized Seeding Mechanism:** The database seeding process was split into two parts: `db:init` for essential data required for app startup (roles, settings), and `db:seed` for a full set of demonstration data. This resolves Firestore quota issues on initial startup and works with both database systems.
+1.  **Architectural Refactoring (MVC + Services):** The entire application was refactored to a layered MVC (Model-View-Controller) architecture with a dedicated Service Layer. This major undertaking replaced the direct-to-adapter data access with a more robust pattern: `Controller (Action) -> Service -> Repository -> Prisma ORM`. This enhances scalability, maintainability, and testability.
 
-2.  **Admin Panel Foundation:**
-    *   Full CRUD (Create, Read, Update, Delete) functionality for all major entities, now powered by the selected database adapter.
-    *   Comprehensive management panels for auctions, lots, users, roles, sellers, auctioneers, categories, judicial entities, media, and more.
+2.  **Prisma ORM Integration:** The project was migrated to use Prisma as the primary ORM for data access, replacing the previous multi-adapter system. A comprehensive `schema.prisma` was created to support PostgreSQL, MySQL, and serve as a reference for Firestore.
 
-3.  **Auction Creation Wizard (`/admin/wizard`):**
-    *   A multi-step guided flow for creating complex auctions.
-    *   Features dynamic steps based on auction type (e.g., Judicial vs. Extrajudicial).
-    *   Includes a real-time flowchart visualization (`ReactFlow`) of the creation process.
-    *   Allows for on-the-fly creation of related entities like `JudicialProcess` and `Bem`.
+3.  **Full Admin Panel:** Comprehensive CRUD (Create, Read, Update, Delete) functionality for all major entities, including auctions, lots, users, roles, sellers, auctioneers, categories, judicial entities, media, and more.
 
-4.  **Consignor Dashboard (`/consignor-dashboard`):**
-    *   A dedicated dashboard for users with a "consignor" role, with all sections now functional and displaying real data.
+4.  **Auction Creation Wizard (`/admin/wizard`):** A multi-step guided flow for creating complex auctions, featuring a real-time flowchart visualization (`ReactFlow`) and on-the-fly entity creation.
 
-5.  **User Authentication & Authorization:**
-    *   Robust login/logout system using Next.js Server Actions and encrypted session cookies (`jose`).
-    *   `AuthContext` provides user profile and permission data across the client-side, including an auto-login feature for the admin user in development environments.
-    *   Permission-based access control (`hasPermission` helpers) protects admin and consignor routes.
-    *   Detailed user registration form (`/auth/register`) with document upload capabilities.
-    *   Support for multiple user profiles (roles) per user.
+5.  **Consignor Dashboard (`/consignor-dashboard`):** A dedicated, fully functional dashboard for "consignor" users to manage their auctions, lots, and view financial data.
 
-6.  **Public-Facing Pages:**
-    *   Homepage with Hero Carousel and dynamic featured content.
-    *   Advanced Search page with multi-tab navigation and filtering.
-    *   Detail pages for Auctions, Lots, Sellers, and Auctioneers.
-    *   Static pages like "About", "Contact", "FAQ", "Terms", and "Privacy".
+6.  **User Authentication & Authorization:** Robust login/logout system using Next.js Server Actions and encrypted session cookies (`jose`), with permission-based access control (`hasPermission` helpers).
 
-7.  **AI & Document Generation:**
-    *   Initial Genkit flows for AI-powered suggestions created (currently unused pending package resolution).
-    *   Document generation structure using Puppeteer and Handlebars templates is in place for creating PDFs.
+7.  **Public-Facing Pages:** Dynamic pages for the Homepage, Advanced Search, and detailed views for Auctions, Lots, Sellers, and Auctioneers, along with standard static pages.
+
+8.  **Advanced Features:**
+    *   **Consulta CEP:** Implemented automatic address lookup from CEP in seller and auctioneer forms.
+    *   **Document Data Extraction:** Added functionality for users to upload documents and use Genkit AI to extract and pre-fill judicial process information.
 
 ### Errors Encountered & Resolved (Summary):
-*   **Firestore Quota Errors (`RESOURCE_EXHAUSTED`):** Fixed fatal startup errors caused by the database seeding script making too many individual writes. The solution was to split the seeding into an essential `init` script and a manual `seed` script, and to use batched writes.
-*   **Incomplete Firestore Adapter:** Addressed multiple `Method not implemented` errors by fully implementing all required CRUD operations in the `FirestoreAdapter`, making the admin panel functional after the database migration.
-*   **Data-Fetching Mismatches:** Corrected 404 errors on the homepage by updating the primary data-fetching functions (`src/lib/data-queries.ts`) to use the database adapter instead of the obsolete Prisma client.
-*   **Obsolete Database File Errors:** Resolved server startup failures (`Cannot find module`) by removing obsolete adapter files (`mysql.adapter.ts`, `postgres.adapter.ts`) that were causing incorrect module resolution.
-*   **Missing `mysql2` Dependency**: Fixed a `MODULE_NOT_FOUND` error by adding the `mysql2` package to `package.json` after re-introducing the MySQL adapter.
+*   **Prisma Initialization Errors:** Resolved `P1012` schema validation errors by correcting the `dev` script in `package.json` to not require a `DATABASE_URL` when a Firestore environment is intended, and by removing the incorrect `prisma db push` command from the startup sequence.
+*   **Obsolete Adapter Errors:** Fixed multiple `Method not implemented` and `MODULE_NOT_FOUND` errors by completing the full migration to Prisma and removing all legacy database adapter files and references.
 
 ### Key Decisions & Patterns:
-*   **Dual Database Strategy (Firestore/MySQL):** The primary production database is **Firestore**. However, to facilitate development and overcome free-tier quota limits during seeding, a fully functional **MySQL adapter** has been implemented. The application can switch between them using an environment variable.
-*   **Single Source of Truth (Adapter):** The `getDatabaseAdapter()` function is the single point of entry for all database interactions, abstracting the specific database technology being used.
-*   **Server Actions as Primary API**: All data mutations and many queries are handled through Server Actions for clear, secure server-client interaction.
-*   **Context Persistence System:** This system was established to maintain project context. The `DATABASE_SCHEMA.md` file has been updated to reflect the new Firestore collection structure.
+*   **MVC + Service Layer Architecture:** The entire application now adheres to a strict separation of concerns, where `Server Actions` act as controllers, `Services` hold business logic, and `Repositories` handle data access via Prisma. This is the mandated architecture for all new development.
+*   **Prisma as Single Source of Truth for Data Access:** All database interactions are now funneled through the Prisma Client, providing type safety and simplifying queries across different SQL databases.
+*   **Server Actions as Primary API**: All data mutations and queries are handled through Server Actions for clear, secure server-client interaction.
 
 This summary will be updated as we progress.
