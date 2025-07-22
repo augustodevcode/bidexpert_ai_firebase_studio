@@ -23,12 +23,13 @@
 - **Refatoração do Formulário de Lotes:** O formulário de lotes agora exibe os "Bens" disponíveis para loteamento de forma contextual ao leilão.
 - **Geração de Documentos (Estrutura):** A plataforma agora tem a estrutura (modelos, permissões, UI) pronta para a futura implementação da geração de PDFs.
 - **Suporte a Múltiplos Perfis de Usuário:** Refatorado o sistema de autenticação e o modelo de dados para permitir que um único usuário possa ter múltiplos perfis (roles) ao mesmo tempo.
+- **Conversão Completa para Arquitetura MVC+S:** Todas as entidades principais (`Auctions`, `Lots`, `Bens`, `Users`, `Roles`, `Sellers`, `Auctioneers`, `Categories`, `Judicial`, etc.) foram refatoradas para o padrão Controller -> Service -> Repository.
 
 ## DOING
-- **Geração de Documentos (PDF):** Implementar a lógica de servidor para pegar os templates customizados, preenchê-los com dados do sistema e gerar um arquivo PDF para download. Isso pode envolver uma biblioteca como `puppeteer` ou `pdf-lib`.
+- **Consulta CEP:** Implementar uma funcionalidade de consulta de CEP nos formulários de endereço (ex: cadastro de usuário, comitente, leiloeiro) para preencher automaticamente os campos de logradouro, bairro, cidade e estado.
 
 ## NEXT
-- **Consulta CEP:** Implementar uma funcionalidade de consulta de CEP nos formulários de endereço (ex: cadastro de usuário, comitente, leiloeiro) para preencher automaticamente os campos de logradouro, bairro, cidade e estado.
+- **Geração de Documentos (PDF):** Implementar a lógica de servidor para pegar os templates customizados, preenchê-los com dados do sistema e gerar um arquivo PDF para download. Isso pode envolver uma biblioteca como `puppeteer` ou `pdf-lib`.
 - **Extração de Dados de Documentos:** Implementar funcionalidade de upload (PDF, DOCX, imagens, etc.) para extrair dados de processos judiciais ou contratos. Os dados extraídos (com ou sem auxílio de IA) devem preencher um formulário em uma tela de validação, onde um administrador ou analista poderá aprovar ou editar as informações antes de serem salvas no banco de dados.
 - **Melhorar o Assistente de Configuração (SaaS):** Transformar o setup inicial em um assistente de configuração para novos clientes (SaaS). O fluxo deve permitir que o cliente configure seu próprio usuário administrador e personalize a plataforma. Incluir um tour guiado pelas funcionalidades principais após a configuração inicial. O uso do wizard de leilões se tornará opcional.
 - **Item 1.1 (Avançado):** Implementar atualização em tempo real para volume de ofertas e lances via WebSockets para uma experiência de leilão ainda mais dinâmica.
