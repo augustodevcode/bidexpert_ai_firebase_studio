@@ -8,15 +8,21 @@ To get started, take a look at `src/app/page.tsx`.
 
 ## Architectural Overview
 
-This application follows a robust **MVC (Model-View-Controller) with a Service Layer** architecture to ensure scalability and maintainability.
+This application follows a robust **MVC (Model-View-Controller) with a Service Layer** architecture to ensure scalability and maintainability. This layered approach ensures a clear separation of concerns, making the codebase easier to understand, test, and extend.
 
--   **Model:** Managed by **Prisma ORM**, with the schema defined in `prisma/schema.prisma`.
--   **Views:** Implemented using **Next.js with React Server Components**.
--   **Controllers:** Handled by **Next.js Server Actions** (`/actions.ts` files), which orchestrate calls to the service layer.
--   **Services:** Contain the core business logic, decoupled from both the database and the controllers.
+-   **Model:** Managed by **Prisma ORM**, with the schema defined in `prisma/schema.prisma`. This defines the shape of our data.
+-   **Views:** Implemented using **Next.js with React Server Components** (`.tsx` files). This is the UI the user interacts with.
+-   **Controllers:** Handled by **Next.js Server Actions** (`/actions.ts` files). These orchestrate calls to the service layer in response to user interactions.
+-   **Services:** Contain the core business logic (`/services/*.ts` files), decoupled from both the database and the controllers.
 -   **Repositories:** Encapsulate all database queries using the Prisma Client, providing a clean data access layer.
 
-This layered approach ensures a clear separation of concerns, making the codebase easier to understand, test, and extend.
+### The Role of the Adapter Pattern
+
+You will notice files like `firestore.adapter.ts`. This is a deliberate use of the **Adapter Design Pattern**.
+
+-   **The Goal:** To allow our application's services and controllers to work with any database (Firestore, MySQL, PostgreSQL) without changing their own code.
+-   **How it Works:** We define a standard interface (`DatabaseAdapter` in `src/types/index.ts`). This interface is the "contract" that our application expects. Each adapter (e.g., `FirestoreAdapter`) implements this contract, "translating" the standard calls (like `getLots()`) into the specific syntax required by that particular database.
+-   **The Benefit:** This makes the system incredibly flexible. We can switch the underlying database just by changing an environment variable, without rewriting our business logic.
 
 ---
 
@@ -59,3 +65,4 @@ npm run db:seed
 ```
 
 Your selected database is now ready to use with the application.
+
