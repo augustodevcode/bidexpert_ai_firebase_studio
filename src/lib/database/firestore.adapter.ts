@@ -12,15 +12,10 @@ export class FirestoreAdapter implements DatabaseAdapter {
     private db: FirebaseFirestore.Firestore;
 
     constructor() {
-        console.log('[FirestoreAdapter] LOG: Constructor called.');
-        const { db, error } = ensureAdminInitialized();
-        if (error || !db) {
-            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message || 'instância de DB nula'}`;
-            console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
-            throw new Error(errorMessage);
-        }
+        console.log('[FirestoreAdapter] LOG: Constructor called. Ensuring Admin SDK is initialized.');
+        const { db } = ensureAdminInitialized();
         this.db = db;
-        console.log('[FirestoreAdapter] LOG: Inicializado com sucesso.');
+        console.log('[FirestoreAdapter] LOG: Initialized successfully with Firestore instance.');
     }
     
     private toJSON<T>(doc: FirebaseFirestore.DocumentSnapshot): T {

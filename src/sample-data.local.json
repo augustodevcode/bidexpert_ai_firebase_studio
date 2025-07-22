@@ -151,7 +151,7 @@
   "sampleUsers": [
     {
       "uid": "admin-bidexpert-platform-001",
-      "email": "admin@bidexpert.com",
+      "email": "admin@bidexpert.com.br",
       "password": "Admin@123",
       "fullName": "Administrador BidExpert",
       "roleId": "role-admin",
