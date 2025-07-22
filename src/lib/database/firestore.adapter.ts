@@ -15,7 +15,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         console.log('[FirestoreAdapter] LOG: Constructor called.');
         const { db, error } = ensureAdminInitialized();
         if (error || !db) {
-            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message}`;
+            const errorMessage = `Firestore não pôde ser inicializado: ${error?.message || 'instância de DB nula'}`;
             console.error(`[FirestoreAdapter] FATAL: ${errorMessage}`);
             throw new Error(errorMessage);
         }
@@ -287,10 +287,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         try {
             const snapshot = await this.db.collection('sellers').orderBy('name').get();
             return snapshot.docs.map(doc => this.toJSON<SellerProfileInfo>(doc));
-        } catch (error: any) {
-            if (error.code === 5) { return []; }
-            throw error;
-        }
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     
     async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
@@ -298,10 +295,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         try {
             const snapshot = await this.db.collection('auctioneers').orderBy('name').get();
             return snapshot.docs.map(doc => this.toJSON<AuctioneerProfileInfo>(doc));
-        } catch (error: any) {
-            if (error.code === 5) { return []; }
-            throw error;
-        }
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
     
     async getUsersWithRoles(): Promise<UserProfileData[]> {
@@ -380,10 +374,7 @@ export class FirestoreAdapter implements DatabaseAdapter {
         try {
             const snapshot = await this.db.collection('roles').get();
             return snapshot.docs.map(doc => this.toJSON<Role>(doc));
-        } catch (error: any) {
-            if (error.code === 5) { return []; }
-            throw error;
-        }
+        } catch (error: any) { if (error.code === 5) { return []; } throw error; }
     }
 
     async createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> {

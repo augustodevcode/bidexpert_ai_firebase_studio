@@ -4,17 +4,18 @@ import type { App } from 'firebase-admin/app';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
+// Importa o JSON diretamente. O bundler do Next.js cuidará disso.
 import serviceAccount from '../../../bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json'; 
-
-console.log("[firebase/admin.ts] LOG: File loaded.");
 
 export type { Timestamp as ServerTimestamp } from 'firebase-admin/firestore';
 
+// Armazena a instância inicializada para evitar múltiplas inicializações.
+let adminApp: App | null = null;
+
 /**
- * Ensures the Firebase Admin app is initialized and returns the app, db, and storage instances.
- * This function uses a singleton pattern to avoid re-initializing the app on every call,
- * which is a common source of errors in serverless environments.
- * @returns An object containing the Firebase Admin app, Firestore, and Storage instances.
+ * Garante que o Firebase Admin app esteja inicializado e retorna as instâncias necessárias.
+ * Utiliza o padrão Singleton para evitar re-inicializações em ambientes serverless.
+ * @returns Um objeto contendo a app, db e storage do Firebase Admin.
  */
 export function ensureAdminInitialized(): {
   app: App;
@@ -22,19 +23,28 @@ export function ensureAdminInitialized(): {
   storage: Storage;
   error?: null;
 } {
-  const existingApps = getApps();
-  const app = existingApps.length > 0 ? existingApps[0] : initializeApp({
-    credential: admin.credential.cert(serviceAccount as any),
-    storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
-  });
+  if (!adminApp) {
+    const existingApps = getApps();
+    if (existingApps.length > 0) {
+      console.log("[firebase/admin.ts] LOG: Usando app Firebase Admin existente.");
+      adminApp = existingApps[0];
+    } else {
+      console.log("[firebase/admin.ts] LOG: Inicializando novo app Firebase Admin.");
+      adminApp = initializeApp({
+        // Força a tipagem do serviceAccount para o tipo esperado pelo credential.cert
+        credential: admin.credential.cert(serviceAccount as admin.ServiceAccount),
+        storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
+      });
+    }
+  }
 
   return {
-    app,
-    db: getFirestore(app),
-    storage: getStorage(app),
+    app: adminApp,
+    db: getFirestore(adminApp),
+    storage: getStorage(adminApp),
   };
 }
 
-// For compatibility with legacy code that might be using this named export.
+// Para compatibilidade com código legado que possa usar 'db' diretamente.
 const { db } = ensureAdminInitialized();
 export { db };
