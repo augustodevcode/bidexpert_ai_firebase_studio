@@ -20,9 +20,8 @@ function initializeAdminApp(): App {
   }
 
   try {
-    // Determine the correct service account file to use
-    // Using a specific file path is more reliable than ADC in some dev environments
-    const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
+    // Corrected to use the exact and absolute path provided by the user.
+    const serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json';
     
     console.log(`[Admin SDK] LOG: Attempting to initialize with service account file: ${serviceAccountPath}`);
     
