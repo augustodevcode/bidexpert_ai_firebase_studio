@@ -4,6 +4,7 @@ import type { App } from 'firebase-admin/app';
 import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
+import path from 'path';
 
 console.log("[firebase/admin.ts] LOG: File loaded.");
 
@@ -19,17 +20,27 @@ function initializeAdminApp(): App {
   }
 
   try {
-    // Rely on Application Default Credentials.
-    // This is the standard way for server-side environments like App Hosting.
-    // It automatically finds the credentials from the environment.
-    console.log('[Admin SDK] LOG: Initializing with Application Default Credentials...');
+    // Determine the correct service account file to use
+    // Using a specific file path is more reliable than ADC in some dev environments
+    const serviceAccountPath = path.resolve(process.cwd(), 'bidexpert-630df-firebase-adminsdk-fbsvc-a827189ca4.json');
+    
+    console.log(`[Admin SDK] LOG: Attempting to initialize with service account file: ${serviceAccountPath}`);
+    
+    const serviceAccount = require(serviceAccountPath);
+
     const app = initializeApp({
+        credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
-    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via ADC.');
+    console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via service account file.');
     return app;
+
   } catch (error: any) {
     console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
+    // Provide a more helpful error message if the file is not found
+    if (error.code === 'MODULE_NOT_FOUND') {
+      throw new Error("Erro ao inicializar o Admin SDK: Arquivo de credenciais não encontrado. Verifique o caminho em /src/lib/firebase/admin.ts");
+    }
     throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
   }
 }
@@ -44,7 +55,7 @@ export function ensureAdminInitialized(): {
   console.log("[firebase/admin.ts] LOG: ensureAdminInitialized() called.");
   const alreadyInitialized = getApps().length > 0;
   
-  if (!adminApp) {
+  if (!adminApp || !alreadyInitialized) { // Re-initialize if no apps are present
     adminApp = initializeAdminApp();
   }
   
