@@ -4,7 +4,7 @@ import type { App } from 'firebase-admin/app';
 import { getApp, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore, type Firestore } from 'firebase-admin/firestore';
 import { getStorage, type Storage } from 'firebase-admin/storage';
-import path from 'path';
+import serviceAccount from '../../../bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json'; // Importação direta
 
 console.log("[firebase/admin.ts] LOG: File loaded.");
 
@@ -20,15 +20,11 @@ function initializeAdminApp(): App {
   }
 
   try {
-    // Corrected to use the exact and absolute path provided by the user.
-    const serviceAccountPath = '/home/user/studio/bidexpert-630df-firebase-adminsdk-fbsvc-4c89838d15.json';
+    console.log(`[Admin SDK] LOG: Attempting to initialize with imported service account object.`);
     
-    console.log(`[Admin SDK] LOG: Attempting to initialize with service account file: ${serviceAccountPath}`);
-    
-    const serviceAccount = require(serviceAccountPath);
-
+    // As credenciais agora são um objeto importado diretamente
     const app = initializeApp({
-        credential: admin.credential.cert(serviceAccount),
+        credential: admin.credential.cert(serviceAccount as any),
         storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || 'bidexpert-630df.appspot.com',
     });
     console.log('[Admin SDK] LOG: Firebase Admin SDK initialized successfully via service account file.');
@@ -36,10 +32,6 @@ function initializeAdminApp(): App {
 
   } catch (error: any) {
     console.error('[Admin SDK Error] FATAL: Failed to initialize Firebase Admin SDK:', error);
-    // Provide a more helpful error message if the file is not found
-    if (error.code === 'MODULE_NOT_FOUND') {
-      throw new Error("Erro ao inicializar o Admin SDK: Arquivo de credenciais não encontrado. Verifique o caminho em /src/lib/firebase/admin.ts");
-    }
     throw new Error(`Erro ao inicializar o Admin SDK: ${error.message}`);
   }
 }
