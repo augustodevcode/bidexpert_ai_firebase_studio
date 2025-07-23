@@ -26,7 +26,7 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { consultaCepAction } from '@/lib/actions/cep'; // Corrigido o caminho da importação
+import { consultaCepAction } from '@/lib/actions/cep'; 
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -64,6 +64,7 @@ export default function SellerForm({
     resolver: zodResolver(sellerFormSchema),
     defaultValues: {
       name: initialData?.name || '',
+      publicId: initialData?.publicId || '',
       contactName: initialData?.contactName || '',
       email: initialData?.email || '',
       phone: initialData?.phone || '',
@@ -177,6 +178,22 @@ export default function SellerForm({
                 </FormItem>
               )}
             />
+             {initialData?.publicId && (
+                <FormField
+                control={form.control}
+                name="publicId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>ID Público</FormLabel>
+                    <FormControl>
+                        <Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} />
+                    </FormControl>
+                    <FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+            )}
             <FormField
               control={form.control}
               name="isJudicial"

@@ -6,6 +6,7 @@ export const sellerFormSchema = z.object({
   }).max(150, {
     message: "O nome do comitente não pode exceder 150 caracteres.",
   }),
+  publicId: z.string().optional(),
   slug: z.string().optional(), // Adicionado para consistência
   contactName: z.string().max(150).optional().nullable(),
   email: z.string().email({ message: "Formato de email inválido." }).optional().nullable().or(z.literal('')),
