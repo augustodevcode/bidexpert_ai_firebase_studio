@@ -4,18 +4,20 @@
   "version": "0.1.0",
   "private": "true",
   "scripts": {
-    "dev": "next dev --port 9002 --hostname 0.0.0.0",
-    "build": "next build",
+    "dev": "dotenv -e .env -- next dev --port 9002 --hostname 0.0.0.0",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
-    "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts"
+    "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
+    "postinstall": "dotenv -e .env -- prisma generate"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
     "@hookform/resolvers": "^4.1.3",
     "@opentelemetry/exporter-jaeger": "^1.25.0",
+    "@prisma/client": "5.22.0",
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-avatar": "^1.1.3",
@@ -83,6 +85,7 @@
     "dotenv": "^16.5.0",
     "dotenv-cli": "^8.0.0",
     "postcss": "^8",
+    "prisma": "^5.22.0",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.16.0",
     "typescript": "^5",

@@ -3,49 +3,61 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma'; // Alterado
 
 export async function getAuctions(): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    return db.getAuctions();
+    const auctions = await prisma.auction.findMany({
+        orderBy: { auctionDate: 'desc' },
+        include: { lots: true }
+    });
+    return auctions.map(a => ({...a, totalLots: a.lots.length}));
 }
 
 export async function getAuction(id: string): Promise<Auction | null> {
-    const db = getDatabaseAdapter();
-    return db.getAuction(id);
+    const auction = await prisma.auction.findFirst({
+        where: { OR: [{ id }, { publicId: id }] },
+        include: { lots: true, auctionStages: true }
+    });
+    if (!auction) return null;
+    return {...auction, totalLots: auction.lots.length};
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore - Adapter expects full Auction, but form data is partial.
-    const result = await db.createAuction(data);
-    if (result.success) {
+    try {
+        const result = await prisma.auction.create({
+            // @ts-ignore
+            data: data
+        });
         revalidatePath('/admin/auctions');
+        return { success: true, message: 'Leilão criado com sucesso.', auctionId: result.id };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao criar leilão: ${error.message}` };
     }
-    return result;
 }
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    const result = await db.updateAuction(id, data);
-    if (result.success) {
+    try {
+        await prisma.auction.update({ where: { id }, data: data });
         revalidatePath('/admin/auctions');
         revalidatePath(`/admin/auctions/${id}/edit`);
+        return { success: true, message: 'Leilão atualizado com sucesso.' };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao atualizar leilão: ${error.message}` };
     }
-    return result;
 }
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    const lots = await db.getLots(id);
-    if (lots.length > 0) {
-        return { success: false, message: `Não é possível excluir. O leilão possui ${lots.length} lote(s) associado(s).` };
-    }
-    const result = await db.deleteAuction(id);
-    if (result.success) {
+    try {
+        const lots = await prisma.lot.count({ where: { auctionId: id }});
+        if (lots > 0) {
+            return { success: false, message: `Não é possível excluir. O leilão possui ${lots} lote(s) associado(s).` };
+        }
+        await prisma.auction.delete({ where: { id } });
         revalidatePath('/admin/auctions');
+        return { success: true, message: 'Leilão excluído com sucesso.' };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao excluir leilão: ${error.message}` };
     }
-    return result;
 }
 
 export async function updateAuctionTitle(id: string, newTitle: string): Promise<{ success: boolean; message: string; }> {
@@ -64,25 +76,31 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 }
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    const auctions = await Promise.all(ids.map(id => db.getAuction(id)));
-    return auctions.filter((a): a is Auction => a !== null);
+    if (ids.length === 0) return [];
+    return prisma.auction.findMany({
+        where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
+        include: { lots: true }
+    });
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    const allAuctions = await db.getAuctions();
-    const allSellers = await db.getSellers();
-    const seller = allSellers.find(s => s.slug === sellerSlugOrPublicId || s.publicId === sellerSlugOrPublicId);
-    if (!seller) return [];
-    return allAuctions.filter(a => a.sellerId === seller.id || a.seller === seller.name);
+    return prisma.auction.findMany({
+        where: {
+            seller: {
+                OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
+            }
+        },
+        include: { lots: true }
+    });
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    const allAuctions = await db.getAuctions();
-    const allAuctioneers = await db.getAuctioneers();
-    const auctioneer = allAuctioneers.find(a => a.slug === auctioneerSlug || a.publicId === auctioneerSlug);
-    if (!auctioneer) return [];
-    return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
+     return prisma.auction.findMany({
+        where: {
+            auctioneer: {
+                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
+            }
+        },
+        include: { lots: true }
+    });
 }

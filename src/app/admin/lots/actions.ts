@@ -3,76 +3,99 @@
 
 import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
-  const db = getDatabaseAdapter();
-  return db.getLots(auctionId);
+  const lots = await prisma.lot.findMany({
+    where: auctionId ? { auctionId } : {},
+    include: {
+        bens: true,
+        auction: { select: { title: true } }
+    },
+    orderBy: { number: 'asc' }
+  });
+  // @ts-ignore
+  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
-  const db = getDatabaseAdapter();
-  return db.getLot(id);
+  return prisma.lot.findFirst({
+    where: { OR: [{ id }, { publicId: id }] },
+    include: { bens: true, auction: true }
+  });
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
-  const db = getDatabaseAdapter();
-  // @ts-ignore - Adapter expects full Lot, but form data is partial.
-  const result = await db.createLot(data);
-  if (result.success) {
+  try {
+    const { bemIds, ...lotData } = data;
+    const result = await prisma.lot.create({
+      // @ts-ignore
+      data: {
+        ...lotData,
+        bens: bemIds ? { connect: bemIds.map(id => ({ id })) } : undefined,
+      },
+    });
     revalidatePath('/admin/lots');
     if (data.auctionId) {
       revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
     }
+    return { success: true, message: 'Lote criado com sucesso!', lotId: result.id };
+  } catch (error: any) {
+    return { success: false, message: `Falha ao criar lote: ${error.message}` };
   }
-  return result;
 }
 
 export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
-  const db = getDatabaseAdapter();
-  const lot = await db.getLot(id);
-  const result = await db.updateLot(id, data);
-  if (result.success) {
+  try {
+    const { bemIds, ...lotData } = data;
+    const lot = await prisma.lot.update({
+      where: { id },
+      // @ts-ignore
+      data: {
+        ...lotData,
+        bens: bemIds ? { set: bemIds.map(id => ({ id })) } : undefined,
+      }
+    });
     revalidatePath('/admin/lots');
     revalidatePath(`/admin/lots/${id}/edit`);
     if (lot?.auctionId) {
       revalidatePath(`/admin/auctions/${lot.auctionId}/edit`);
     }
+    return { success: true, message: 'Lote atualizado com sucesso.' };
+  } catch (error: any) {
+    return { success: false, message: `Falha ao atualizar lote: ${error.message}` };
   }
-  return result;
 }
 
 export async function deleteLot(id: string, auctionId?: string): Promise<{ success: boolean, message: string }> {
-  const db = getDatabaseAdapter();
-  const lotToDelete = await db.getLot(id);
-  const finalAuctionId = auctionId || lotToDelete?.auctionId;
+  try {
+    const lotToDelete = await prisma.lot.findFirst({ where: { OR: [{id}, {publicId: id}]}});
+    if (!lotToDelete) throw new Error("Lote não encontrado.");
 
-  // @ts-ignore
-  const result = await db.deleteLot(id);
-  if (result.success) {
+    const finalAuctionId = auctionId || lotToDelete?.auctionId;
+
+    await prisma.lot.delete({ where: { id: lotToDelete.id } });
     revalidatePath('/admin/lots');
     if (finalAuctionId) {
       revalidatePath(`/admin/auctions/${finalAuctionId}/edit`);
     }
+    return { success: true, message: 'Lote excluído com sucesso.' };
+  } catch (error: any) {
+    return { success: false, message: `Falha ao excluir lote: ${error.message}` };
   }
-  return result;
 }
 
-
-// These functions are helpers and might need to be adjusted based on adapter capabilities
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  const db = getDatabaseAdapter();
-  return db.getBensByIds(ids);
+  return prisma.bem.findMany({ where: { id: { in: ids } } });
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  const db = getDatabaseAdapter();
-  return db.getLotsByIds(ids);
+  if (ids.length === 0) return [];
+  return prisma.lot.findMany({ where: { id: { in: ids } } });
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
   console.log(`[Action] Finalizing lot ${lotId} - not implemented for this adapter.`);
-  // This requires significant logic: finding highest bid, creating UserWin, notifications...
   return { success: false, message: "Finalização de lote não implementada." };
 }
 

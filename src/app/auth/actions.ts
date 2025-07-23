@@ -6,7 +6,8 @@ import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -26,8 +27,10 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   }
   
   try {
-    const db = getDatabaseAdapter();
-    const user = await db.getUserProfileData(email);
+    const user = await prisma.user.findUnique({ 
+        where: { email },
+        include: { roles: true }
+    });
 
     if (!user || !user.password) {
       console.log(`[Login Action] Usuário não encontrado ou sem senha definida para o email: ${email}`);
@@ -44,8 +47,14 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
         console.log(`[Login Action] Senha inválida para o usuário: ${email}`);
         return { success: false, message: 'Credenciais inválidas.' };
     }
+
+    const userProfileWithPerms: UserProfileWithPermissions = {
+        ...user,
+        roleNames: user.roles.map(r => r.name),
+        permissions: Array.from(new Set(user.roles.flatMap(r => r.permissions as string[])))
+    };
     
-    await createSession(user as UserProfileWithPermissions);
+    await createSession(userProfileWithPerms);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
     return { success: true, message: 'Login bem-sucedido!' };
@@ -75,12 +84,20 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         return null;
     }
     
-    const db = getDatabaseAdapter();
-    const user = await db.getUserProfileData(session.userId);
+    const user = await prisma.user.findUnique({
+        where: { id: session.userId },
+        include: { roles: true }
+    });
 
     if (!user) return null;
+
+    const userProfileWithPerms: UserProfileWithPermissions = {
+        ...user,
+        roleNames: user.roles.map(r => r.name),
+        permissions: Array.from(new Set(user.roles.flatMap(r => r.permissions as string[])))
+    };
     
-    return user as UserProfileWithPermissions;
+    return userProfileWithPerms;
 }
 
 /**
@@ -93,40 +110,31 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
     }
 
     console.log('[Dev Action] Tentando login automático do admin...');
-    const db = getDatabaseAdapter();
     
     try {
-        const allRoles = await db.getRoles();
-        const adminRole = allRoles.find(r => r.name_normalized === 'ADMINISTRATOR');
-        const consignorRole = allRoles.find(r => r.name_normalized === 'CONSIGNOR');
-        const analystRole = allRoles.find(r => r.name_normalized === 'AUCTION_ANALYST');
-        const userRole = allRoles.find(r => r.name_normalized === 'USER');
+        const adminEmail = 'admin@bidexpert.com.br';
+        let adminUser = await prisma.user.findUnique({
+            where: { email: adminEmail },
+            include: { roles: true }
+        });
         
-        const allSellers = await db.getSellers();
-        const firstSeller = allSellers[0];
+        if (!adminUser) {
+          console.warn('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
+          return null; // Or create it, but for now let's assume it's seeded.
+        }
 
-        // Construct a virtual superuser profile
-        const virtualAdminProfile: UserProfileWithPermissions = {
-            id: 'admin-bidexpert-platform-001',
-            uid: 'admin-bidexpert-platform-001',
-            email: 'admin@bidexpert.com.br',
-            fullName: 'Admin de Desenvolvimento',
-            habilitationStatus: 'HABILITADO',
-            accountType: 'PHYSICAL',
-            sellerId: firstSeller?.id || 'seller-banco-bradesco-s-a', // Assign a default sellerId
-            roleIds: [adminRole?.id, consignorRole?.id, analystRole?.id, userRole?.id].filter((id): id is string => !!id),
-            roleNames: [adminRole?.name, consignorRole?.name, analystRole?.name, userRole?.name].filter((name): name is string => !!name),
-            permissions: ['manage_all'], // Overwrite permissions with manage_all for full access
-            createdAt: new Date(),
-            updatedAt: new Date(),
+        const userProfileWithPerms: UserProfileWithPermissions = {
+            ...adminUser,
+            roleNames: adminUser.roles.map(r => r.name),
+            permissions: Array.from(new Set(adminUser.roles.flatMap(r => r.permissions as string[])))
         };
 
-        await createSession(virtualAdminProfile);
-        console.log('[Dev Action] Sessão de superusuário virtual criada para desenvolvimento.');
-        return virtualAdminProfile;
+        await createSession(userProfileWithPerms);
+        console.log('[Dev Action] Sessão de admin para desenvolvimento criada com sucesso.');
+        return userProfileWithPerms;
 
     } catch (error) {
-        console.error("[Dev Action] Erro ao criar usuário admin virtual:", error);
+        console.error("[Dev Action] Erro ao tentar logar com admin:", error);
         return null;
     }
 }
