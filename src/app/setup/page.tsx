@@ -3,12 +3,12 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Rocket, Database, Settings, Palette, CheckCircle } from 'lucide-react';
+import { Rocket, Database, Settings, CheckCircle } from 'lucide-react';
 import WelcomeStep from '@/components/setup/welcome-step';
 import SeedingStep from '@/components/setup/seeding-step';
 import SettingsStep from '@/components/setup/settings-step';
 import FinishStep from '@/components/setup/finish-step';
+import { verifyInitialData } from './actions';
 
 const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
@@ -20,7 +20,18 @@ const STEPS = [
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(0);
 
-  const goToNextStep = () => setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+  const goToNextStep = async () => {
+    // Adiciona a verificação antes de ir para a próxima etapa a partir do step de seeding
+    if (STEPS[currentStep].id === 'seeding') {
+      const result = await verifyInitialData();
+      if (!result.success) {
+        alert(`Falha na verificação do banco de dados: ${result.message}. Por favor, tente popular os dados novamente ou verifique as configurações do seu banco.`);
+        return;
+      }
+    }
+    setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
+  };
+  
   const goToPrevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
 
   const renderCurrentStep = () => {
