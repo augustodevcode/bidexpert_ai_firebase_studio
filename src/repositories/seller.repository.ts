@@ -12,6 +12,10 @@ export class SellerRepository {
     return prisma.seller.findUnique({ where: { id } });
   }
   
+  async findByName(name: string): Promise<SellerProfileInfo | null> {
+    return prisma.seller.findUnique({ where: { name } });
+  }
+
   async findBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
       return prisma.seller.findFirst({
         where: {

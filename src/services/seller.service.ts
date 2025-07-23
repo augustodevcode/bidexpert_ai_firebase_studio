@@ -18,7 +18,7 @@ export class SellerService {
   async getSellerById(id: string): Promise<SellerProfileInfo | null> {
     return this.sellerRepository.findById(id);
   }
-
+  
   async getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
       return this.sellerRepository.findBySlug(slugOrId);
   }
@@ -31,6 +31,12 @@ export class SellerService {
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }> {
     try {
+      // Check if a seller with the same name already exists
+      const existingSeller = await this.sellerRepository.findByName(data.name);
+      if (existingSeller) {
+        return { success: false, message: 'Já existe um comitente com este nome.' };
+      }
+
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),
@@ -40,9 +46,6 @@ export class SellerService {
       return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
     } catch (error: any) {
       console.error("Error in SellerService.createSeller:", error);
-      if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
-        return { success: false, message: 'Já existe um comitente com este nome.' };
-      }
       return { success: false, message: `Falha ao criar comitente: ${error.message}` };
     }
   }
