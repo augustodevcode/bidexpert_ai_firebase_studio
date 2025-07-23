@@ -31,8 +31,12 @@ export class SellerService {
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }> {
     try {
-      const dataWithSlug = { ...data, slug: slugify(data.name) };
-      const newSeller = await this.sellerRepository.create(dataWithSlug as Prisma.SellerCreateInput);
+      const dataToCreate: Prisma.SellerCreateInput = {
+        ...data,
+        slug: slugify(data.name),
+      };
+      
+      const newSeller = await this.sellerRepository.create(dataToCreate);
       return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
     } catch (error: any) {
       console.error("Error in SellerService.createSeller:", error);
