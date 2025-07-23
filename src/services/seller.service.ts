@@ -2,6 +2,7 @@
 import { SellerRepository } from '@/repositories/seller.repository';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
+import type { Prisma } from '@prisma/client';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -31,7 +32,7 @@ export class SellerService {
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }> {
     try {
       const dataWithSlug = { ...data, slug: slugify(data.name) };
-      const newSeller = await this.sellerRepository.create(dataWithSlug);
+      const newSeller = await this.sellerRepository.create(dataWithSlug as Prisma.SellerCreateInput);
       return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
     } catch (error: any) {
       console.error("Error in SellerService.createSeller:", error);
