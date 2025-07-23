@@ -1,5 +1,6 @@
+
 // scripts/seed-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { prisma } from '@/lib/prisma';
 import { 
   sampleSellers, 
   sampleAuctioneers, 
@@ -12,134 +13,120 @@ import {
   sampleDirectSaleOffers,
   sampleBids,
   sampleUserWins,
-  sampleUsers
+  sampleUsers // Still needed for other users
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
-import type { MySqlAdapter } from '@/lib/database/mysql.adapter';
 
 async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
-    const db = getDatabaseAdapter();
 
     try {
+        // Note: Seeding for essential data (roles, categories, admin user) is now in init-db.ts
+        
         console.log('[DB SEED] Seeding Sellers...');
         for (const seller of sampleSellers) {
-            // @ts-ignore
-            await db.createSeller(seller);
+            await prisma.seller.upsert({ where: { id: seller.id }, update: {}, create: seller as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
 
         console.log('[DB SEED] Seeding Auctioneers...');
         for (const auctioneer of sampleAuctioneers) {
-            // @ts-ignore
-            await db.createAuctioneer(auctioneer);
+            await prisma.auctioneer.upsert({ where: { id: auctioneer.id }, update: {}, create: auctioneer as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
         
         console.log('[DB SEED] Seeding Judicial Districts...');
         for (const district of sampleJudicialDistricts) {
-             // @ts-ignore
-             await db.createJudicialDistrict(district);
+             await prisma.judicialDistrict.upsert({ where: { id: district.id }, update: {}, create: district as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialDistricts.length} judicial districts processed.`);
         
         console.log('[DB SEED] Seeding Judicial Branches...');
         for (const branch of sampleJudicialBranches) {
-            // @ts-ignore
-            await db.createJudicialBranch(branch);
+            await prisma.judicialBranch.upsert({ where: { id: branch.id }, update: {}, create: branch as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialBranches.length} judicial branches processed.`);
         
         console.log('[DB SEED] Seeding Judicial Processes...');
         for (const process of sampleJudicialProcesses) {
-            // @ts-ignore
-            await db.createJudicialProcess(process);
+             await prisma.judicialProcess.upsert({ where: { id: process.id }, update: {}, create: process as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialProcesses.length} judicial processes processed.`);
 
         console.log('[DB SEED] Seeding Bens...');
         for (const bem of sampleBens) {
-            // @ts-ignore
-            await db.createBem(bem);
+            await prisma.bem.upsert({ where: { id: bem.id }, update: {}, create: bem as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleBens.length} bens processed.`);
         
         console.log('[DB SEED] Seeding Auctions...');
         for (const auction of sampleAuctions) {
-            await db.createAuction(auction);
+            await prisma.auction.upsert({ where: { id: auction.id }, update: {}, create: auction as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctions.length} auctions processed.`);
 
         console.log('[DB SEED] Seeding Lots...');
         for (const lot of sampleLots) {
-            await db.createLot(lot);
+            await prisma.lot.upsert({ where: { id: lot.id }, update: {}, create: lot as any });
         }
         console.log(`[DB SEED] ✅ SUCCESS: ${sampleLots.length} lots processed.`);
         
         console.log('[DB SEED] Seeding Direct Sale Offers...');
-        const offerAdapter = db as any;
-        if (offerAdapter.createDirectSaleOffer) {
-            for (const offer of sampleDirectSaleOffers) {
-                await offerAdapter.createDirectSaleOffer(offer);
-            }
-            console.log(`[DB SEED] ✅ SUCCESS: ${sampleDirectSaleOffers.length} direct sale offers processed.`);
-        } else {
-            console.log(`[DB SEED] 🟡 INFO: createDirectSaleOffer not implemented on this adapter.`);
+        for (const offer of sampleDirectSaleOffers) {
+            await prisma.directSaleOffer.upsert({ where: { id: offer.id }, update: {}, create: offer as any });
         }
-
-        console.log('[DB SEED] Seeding Bids...');
-        const bidAdapter = db as any;
-        if (bidAdapter.createBid) {
-            for (const bid of sampleBids) {
-                await bidAdapter.createBid(bid);
-            }
-            console.log(`[DB SEED] ✅ SUCCESS: ${sampleBids.length} bids processed.`);
-        } else {
-             console.log(`[DB SEED] 🟡 INFO: createBid not implemented on this adapter.`);
-        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleDirectSaleOffers.length} direct sale offers processed.`);
         
-        console.log('[DB SEED] Seeding User Wins...');
-        const winAdapter = db as any;
-        if (winAdapter.createUserWin) {
-            for (const win of sampleUserWins) {
-                await winAdapter.createUserWin(win);
-            }
-            console.log(`[DB SEED] ✅ SUCCESS: ${sampleUserWins.length} wins processed.`);
-        } else {
-             console.log(`[DB SEED] 🟡 INFO: createUserWin not implemented on this adapter.`);
+        console.log('[DB SEED] Seeding Bids...');
+        for (const bid of sampleBids) {
+            await prisma.bid.upsert({ where: { id: bid.id }, update: {}, create: bid as any });
         }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleBids.length} bids processed.`);
 
-        console.log('[DB SEED] Seeding Users with Hashed Passwords...');
-        const userAdapter = db as any;
-        if (userAdapter.createUser) {
-            const existingUsers = await db.getUsersWithRoles();
-            const usersToCreate = sampleUsers.filter(u => !existingUsers.some(eu => eu.email === u.email));
-            for (const user of usersToCreate) {
-                const { password, ...userData } = user;
-                const hashedPassword = await bcrypt.hash(password || 'password123', 10);
-                const fullUserData = { ...userData, password: hashedPassword, uid: userData.uid || uuidv4() };
-                await userAdapter.createUser(fullUserData);
+        console.log('[DB SEED] Seeding User Wins...');
+        for (const win of sampleUserWins) {
+            await prisma.userWin.upsert({ where: { id: win.id }, update: {}, create: win as any });
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${sampleUserWins.length} wins processed.`);
 
-                // Link roles
-                if (user.roleId) {
-                    const roleIdsToLink = Array.isArray(user.roleId) ? user.roleId : [user.roleId];
-                    await userAdapter.updateUserRoles(fullUserData.uid, roleIdsToLink);
+        console.log('[DB SEED] Seeding Non-Admin Users with Hashed Passwords...');
+        const otherUsers = sampleUsers.filter(u => u.email !== 'admin@bidexpert.com.br');
+        for (const user of otherUsers) {
+            const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
+            if (!existingUser) {
+                const hashedPassword = await bcrypt.hash(user.password || 'password123', 10);
+                const role = await prisma.role.findFirst({ where: { id: user.roleId }});
+                if (role) {
+                     await prisma.user.create({
+                        data: {
+                            id: user.uid,
+                            uid: user.uid,
+                            email: user.email,
+                            fullName: user.fullName,
+                            password: hashedPassword,
+                            habilitationStatus: 'HABILITADO',
+                            accountType: 'PHYSICAL',
+                            roles: { connect: { id: role.id } },
+                            seller: user.sellerId ? { connect: { id: user.sellerId }} : undefined,
+                        }
+                    });
                 }
             }
-            console.log(`[DB SEED] ✅ SUCCESS: ${usersToCreate.length} new users processed.`);
-        } else {
-             console.log(`[DB SEED] 🟡 INFO: createUser not implemented on this adapter.`);
         }
+        console.log(`[DB SEED] ✅ SUCCESS: ${otherUsers.length} other users processed.`);
 
     } catch (error: any) {
         console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);
+    } finally {
+        await prisma.$disconnect();
     }
     
     console.log('--- [DB SEED] Full Demo Data seeding finished ---');
 }
 
-seedFullData().catch(error => {
+seedFullData().catch(async (error) => {
     console.error("[DB SEED] ❌ FATAL ERROR during seeding:", error);
+    await prisma.$disconnect();
     process.exit(1);
 });

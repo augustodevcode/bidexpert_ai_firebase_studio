@@ -1,7 +1,18 @@
 
 // src/scripts/init-db.ts
 import { prisma } from '@/lib/prisma';
-import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
+import { 
+    samplePlatformSettings, 
+    sampleRoles, 
+    sampleLotCategories, 
+    sampleSubcategories, 
+    sampleCourts, 
+    sampleStates, 
+    sampleCities,
+    sampleUsers // Import sampleUsers
+} from '@/lib/sample-data';
+import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 
 async function seedEssentialData() {
@@ -30,6 +41,38 @@ async function seedEssentialData() {
             console.log(`[DB INIT] ✅ SUCCESS: ${rolesToCreate.length} new roles created.`);
         } else {
             console.log("[DB INIT] 🟡 INFO: Roles already exist.");
+        }
+
+        // Seeding Admin User
+        console.log('[DB INIT] LOG: Seeding admin user...');
+        const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
+        if (adminUser) {
+            const existingAdmin = await prisma.user.findUnique({ where: { email: adminUser.email }});
+            if (!existingAdmin) {
+                const hashedPassword = await bcrypt.hash(adminUser.password || 'Admin@123', 10);
+                const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
+                if (adminRole) {
+                    await prisma.user.create({
+                        data: {
+                            id: adminUser.uid,
+                            uid: adminUser.uid,
+                            email: adminUser.email,
+                            fullName: adminUser.fullName,
+                            password: hashedPassword,
+                            habilitationStatus: 'HABILITADO',
+                            accountType: 'PHYSICAL',
+                            roles: { connect: { id: adminRole.id } }
+                        }
+                    });
+                    console.log("[DB INIT] ✅ SUCCESS: Admin user created.");
+                } else {
+                    console.error("[DB INIT] ❌ ERROR: Administrator role not found. Cannot create admin user.");
+                }
+            } else {
+                 console.log("[DB INIT] 🟡 INFO: Admin user already exists.");
+            }
+        } else {
+            console.warn("[DB INIT] 🟡 WARNING: Admin user definition not found in sample-data.json.");
         }
         
         // Seeding Lot Categories
@@ -72,15 +115,15 @@ async function seedEssentialData() {
 
         // Seeding Cities
         console.log('[DB INIT] LOG: Seeding Cities...');
-        // This is a slow way to do it, but ensures no duplicates on ibgeCode
+        let newCitiesCount = 0;
         for (const city of sampleCities) {
-            await prisma.city.upsert({
-                where: { ibgeCode: city.ibgeCode },
-                update: {},
-                create: city,
-            });
+            const existingCity = await prisma.city.findUnique({ where: { ibgeCode: city.ibgeCode } });
+            if (!existingCity) {
+                await prisma.city.create({ data: city });
+                newCitiesCount++;
+            }
         }
-        console.log(`[DB INIT] ✅ SUCCESS: Processed ${sampleCities.length} cities.`);
+        console.log(`[DB INIT] ✅ SUCCESS: Processed ${sampleCities.length} cities, ${newCitiesCount} new cities created.`);
         
         // Seeding Courts
         console.log('[DB INIT] LOG: Seeding Courts...');
