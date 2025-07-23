@@ -1,4 +1,3 @@
-
 // src/components/setup/admin-user-step.tsx
 'use client';
 

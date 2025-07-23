@@ -28,17 +28,16 @@ async function seedFullData() {
         if (adminUser) {
             const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
             if (adminRole) {
-                const { id, uid, ...userData } = adminUser;
                 await prisma.user.upsert({
-                    where: { email: userData.email },
+                    where: { email: adminUser.email },
                     update: {},
                     create: {
-                        email: userData.email,
-                        fullName: userData.fullName,
-                        password: await bcrypt.hash(userData.password || 'Admin@123', 10),
+                        email: adminUser.email,
+                        fullName: adminUser.fullName,
+                        password: await bcrypt.hash(adminUser.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
-                        roleId: adminRole.id
+                        roles: { connect: [{ id: adminRole.id }] }
                     }
                 });
                 console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
@@ -129,7 +128,7 @@ async function seedFullData() {
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roleId: role.id,
+                            roles: { connect: [{ id: role.id }] },
                             seller: userData.sellerId ? { connect: { id: userData.sellerId }} : undefined,
                         }
                     });

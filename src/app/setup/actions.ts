@@ -69,7 +69,9 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
                 fullName,
                 accountType: 'PHYSICAL',
                 habilitationStatus: 'HABILITADO',
-                roleId: adminRole.id, // Correção aqui
+                roles: {
+                    connect: [{ id: adminRole.id }]
+                }
             }
         });
 

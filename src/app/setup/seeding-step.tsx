@@ -66,7 +66,7 @@ export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
   return (
     <>
       <CardHeader>
-        <CardTitle>População do Banco de Dados</CardTitle>
+        <CardTitle>População Inicial do Banco de Dados</CardTitle>
         <CardDescription>
           Sua plataforma precisa de alguns dados para funcionar. Use os botões abaixo para popular seu banco de dados.
         </CardDescription>

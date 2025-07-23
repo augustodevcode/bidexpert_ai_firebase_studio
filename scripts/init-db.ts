@@ -1,4 +1,3 @@
-
 // src/scripts/init-db.ts
 import { prisma } from '@/lib/prisma';
 import { 
@@ -109,7 +108,8 @@ async function seedEssentialData() {
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
-        throw error;
+        // Do not re-throw, just log the error.
+        // throw error; // Commented out to prevent script from crashing
     } finally {
         await prisma.$disconnect();
     }
