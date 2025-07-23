@@ -47,6 +47,7 @@ test.describe('Seller Service E2E Tests', () => {
         });
 
         assert.ok(createdSellerFromDb, 'Seller should be found in the database');
+        assert.ok(createdSellerFromDb.publicId, 'Seller should have a publicId generated');
         assert.strictEqual(createdSellerFromDb.name, newSellerData.name, 'Seller name should match');
         assert.strictEqual(createdSellerFromDb.email, newSellerData.email, 'Seller email should match');
         assert.strictEqual(createdSellerFromDb.isJudicial, newSellerData.isJudicial, 'Seller isJudicial flag should match');

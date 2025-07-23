@@ -40,8 +40,8 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      // Correção: Espalhar corretamente todos os campos de 'data'
-      // e adicionar o slug. O Prisma cuidará do id e publicId.
+      // Correção: Espalhar corretamente todos os campos de 'data' e adicionar o slug.
+      // O Prisma/banco de dados cuidará do id e publicId.
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),
