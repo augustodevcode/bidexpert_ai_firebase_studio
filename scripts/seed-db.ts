@@ -101,7 +101,6 @@ async function seedFullData() {
                      await prisma.user.create({
                         data: {
                             id: user.uid,
-                            uid: user.uid,
                             email: user.email,
                             fullName: user.fullName,
                             password: hashedPassword,

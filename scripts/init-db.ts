@@ -55,7 +55,6 @@ async function seedEssentialData() {
                     await prisma.user.create({
                         data: {
                             id: adminUser.uid,
-                            uid: adminUser.uid,
                             email: adminUser.email,
                             fullName: adminUser.fullName,
                             password: hashedPassword,
