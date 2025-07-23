@@ -8,13 +8,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { FileText, Mail, Phone, UserCircle, MapPin, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { UserProfileData } from '@/types'; 
+import type { UserProfileWithPermissions } from '@/types'; 
 
 
 export default async function EditUserPage({ params }: { params: { userId: string } }) {
   const userId = params.userId;
   
-  let userProfile: UserProfileData | null = null;
+  let userProfile: UserProfileWithPermissions | null = null;
   try {
     userProfile = await getUserProfileData(userId);
   } catch (error) {

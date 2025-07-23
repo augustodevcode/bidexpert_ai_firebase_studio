@@ -22,7 +22,30 @@ async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
 
     try {
-        // NOTE: Admin user seeding moved to init-db.ts to ensure it always exists.
+        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
+        console.log('[DB SEED] Seeding Admin User...');
+        const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
+        if (adminUser) {
+            const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
+            if (adminRole) {
+                const { id, uid, ...adminData } = adminUser;
+                await prisma.user.upsert({
+                    where: { email: adminData.email },
+                    update: {},
+                    create: {
+                        email: adminData.email,
+                        fullName: adminData.fullName,
+                        password: await bcrypt.hash(adminData.password || 'Admin@123', 10),
+                        habilitationStatus: 'HABILITADO',
+                        accountType: 'PHYSICAL',
+                        roleId: adminRole.id
+                    }
+                });
+                console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
+            } else {
+                 console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
+            }
+        }
         
         console.log('[DB SEED] Seeding Sellers...');
         for (const seller of sampleSellers) {
@@ -95,19 +118,19 @@ async function seedFullData() {
         for (const user of otherUsers) {
             const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
             if (!existingUser) {
-                const hashedPassword = await bcrypt.hash(user.password || 'password123', 10);
-                const role = await prisma.role.findFirst({ where: { id: user.roleId }});
+                const { id, uid, ...userData } = user;
+                const hashedPassword = await bcrypt.hash(userData.password || 'password123', 10);
+                const role = await prisma.role.findFirst({ where: { id: userData.roleId }});
                 if (role) {
                      await prisma.user.create({
                         data: {
-                            // Do not pass ID here, let Prisma generate it
-                            email: user.email,
-                            fullName: user.fullName,
+                            email: userData.email,
+                            fullName: userData.fullName,
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roles: { connect: [{ id: role.id }] },
-                            seller: user.sellerId ? { connect: { id: user.sellerId }} : undefined,
+                            roleId: role.id,
+                            seller: userData.sellerId ? { connect: { id: userData.sellerId }} : undefined,
                         }
                     });
                 }

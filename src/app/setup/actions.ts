@@ -1,3 +1,4 @@
+
 // src/app/setup/actions.ts
 'use server';
 
@@ -62,16 +63,13 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         const hashedPassword = await bcrypt.hash(password, 10);
 
         await prisma.user.create({
-            data: {
-                id: `admin-${new Date().getTime()}`,
+            data: {                
                 email,
                 password: hashedPassword,
                 fullName,
                 accountType: 'PHYSICAL',
                 habilitationStatus: 'HABILITADO',
-                roles: {
-                    connect: [{ id: adminRole.id }]
-                }
+                roleId: adminRole.id, // Correção aqui
             }
         });
 

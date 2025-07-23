@@ -1,3 +1,4 @@
+
 // src/app/admin/users/user-role-form.tsx
 'use client';
 
@@ -14,14 +15,20 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { Checkbox } from '@/components/ui/checkbox';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Import RadioGroup
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { userRoleFormSchema, type UserRoleFormValues } from './user-role-form-schema';
+import * as z from 'zod';
 import type { Role, UserProfileData } from '@/types';
 import { Loader2, Save, UserCog, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+
+// Schema for a single role selection
+const userRoleFormSchema = z.object({
+  roleId: z.string().optional().nullable(), // Can be null if no role is assigned
+});
+
+type UserRoleFormValues = z.infer<typeof userRoleFormSchema>;
 
 interface UserRoleFormProps {
   user: UserProfileData;
@@ -41,14 +48,16 @@ export default function UserRoleForm({
   const form = useForm<UserRoleFormValues>({
     resolver: zodResolver(userRoleFormSchema),
     defaultValues: {
-      roleIds: user?.roleIds || [],
+      roleId: user?.roleId || null,
     },
   });
 
   async function onSubmit(values: UserRoleFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(user.uid, values.roleIds || []);
+      // The action expects an array, so we wrap the single roleId in an array
+      const roleIds = values.roleId ? [values.roleId] : [];
+      const result = await onSubmitAction(user.uid, roleIds);
       if (result.success) {
         toast({
           title: 'Sucesso!',
@@ -79,7 +88,7 @@ export default function UserRoleForm({
     <Card className="max-w-lg mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <UserCog className="h-6 w-6 text-primary" /> Atribuir Perfis para {user.fullName}
+          <UserCog className="h-6 w-6 text-primary" /> Atribuir Perfil para {user.fullName}
         </CardTitle>
         <CardDescription>Email: {user.email}</CardDescription>
       </CardHeader>
@@ -88,49 +97,32 @@ export default function UserRoleForm({
           <CardContent className="p-6 bg-secondary/30">
             <FormField
               control={form.control}
-              name="roleIds"
-              render={() => (
+              name="roleId"
+              render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-semibold">Perfis Disponíveis</FormLabel>
-                   <div className="space-y-2 mt-2">
-                    {roles.map((role) => (
-                      <FormField
-                        key={role.id}
-                        control={form.control}
-                        name="roleIds"
-                        render={({ field }) => {
-                          return (
-                            <FormItem key={role.id} className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-3 bg-background">
-                              <FormControl>
-                                <Checkbox
-                                  checked={field.value?.includes(String(role.id))}
-                                  onCheckedChange={(checked) => {
-                                    const stringId = String(role.id);
-                                    const currentValues = field.value?.map(String) || [];
-                                    return checked
-                                      ? field.onChange([...currentValues, stringId])
-                                      : field.onChange(
-                                          currentValues.filter(
-                                            (value) => value !== stringId
-                                          )
-                                        )
-                                  }}
-                                />
-                              </FormControl>
-                              <div className="space-y-1 leading-none">
-                                <FormLabel className="font-medium flex items-center gap-2 cursor-pointer">
-                                  <Shield className="h-4 w-4 text-muted-foreground"/> {role.name}
-                                </FormLabel>
-                                <FormDescription className="text-xs">
-                                  {role.description}
-                                </FormDescription>
-                              </div>
-                            </FormItem>
-                          )
-                        }}
-                      />
-                    ))}
-                  </div>
+                  <FormLabel className="text-base font-semibold">Perfil de Usuário</FormLabel>
+                   <FormControl>
+                    <RadioGroup
+                      onValueChange={field.onChange}
+                      value={field.value || ""}
+                      className="space-y-2 mt-2"
+                    >
+                      {roles.map((role) => (
+                        <FormItem key={role.id} className="flex items-center space-x-3 space-y-0 rounded-md border p-3 bg-background">
+                            <FormControl>
+                                <RadioGroupItem value={role.id} />
+                            </FormControl>
+                            <FormLabel className="font-medium flex items-center gap-2 cursor-pointer w-full">
+                                <Shield className="h-4 w-4 text-muted-foreground"/> 
+                                <div>
+                                    {role.name}
+                                    <p className="text-xs text-muted-foreground font-normal">{role.description}</p>
+                                </div>
+                            </FormLabel>
+                        </FormItem>
+                      ))}
+                    </RadioGroup>
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -142,7 +134,7 @@ export default function UserRoleForm({
             </Button>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              Salvar Perfis
+              Salvar Perfil
             </Button>
           </CardFooter>
         </form>

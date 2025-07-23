@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 
@@ -248,9 +249,12 @@ export interface Auction {
   auctioneer: string;
   auctioneerId?: string;
   auctioneerLogoUrl?: string; // Denormalized for display
+  auctioneerName?: string; // Denormalized for display
   seller?: string;
   sellerId?: string;
   mapAddress?: string | null;
+  city?: string; // From seller or manual input
+  state?: string; // From seller or manual input
   imageUrl?: string;
   imageMediaId?: string | null;
   dataAiHint?: string;
@@ -333,8 +337,8 @@ export interface UserProfileData {
   state?: string | null;
   avatarUrl?: string | null;
   dataAiHint?: string | null;
-  roleIds: string[]; 
-  roleNames?: string[];
+  roleId: string | null;
+  roleName?: string;
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
@@ -365,7 +369,7 @@ export interface UserProfileData {
 }
 
 export interface UserProfileWithPermissions extends UserProfileData {
-  roleNames: string[];
+  roleNames: string[]; // Corrected to be string[] for multiple roles
   permissions: string[];
 }
 
@@ -857,7 +861,7 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
-export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleIds' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleId' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
 
 export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
 export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;

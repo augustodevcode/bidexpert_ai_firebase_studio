@@ -105,39 +105,10 @@ async function seedEssentialData() {
         } else {
             console.log("[DB INIT] 🟡 INFO: Courts already exist.");
         }
-        
-        // Seeding Admin User
-        console.log('[DB INIT] LOG: Seeding admin user...');
-        const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
-        if (adminUser) {
-            const hashedPassword = await bcrypt.hash(adminUser.password || 'Admin@123', 10);
-            const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
-            if (adminRole) {
-                await prisma.user.upsert({
-                    where: { email: adminUser.email },
-                    update: {}, // No updates needed if user exists
-                    create: {
-                        email: adminUser.email,
-                        fullName: adminUser.fullName,
-                        password: hashedPassword,
-                        habilitationStatus: 'HABILITADO',
-                        accountType: 'PHYSICAL',
-                        roles: {
-                          connect: [{ id: adminRole.id }],
-                        },
-                    },
-                });
-                console.log("[DB INIT] ✅ SUCCESS: Admin user created or already exists.");
-            } else {
-                 console.error("[DB INIT] ❌ ERROR: Administrator role not found. Cannot create admin user.");
-            }
-        } else {
-             console.warn("[DB INIT] 🟡 WARNING: Admin user not found in sample data.");
-        }
 
 
     } catch (error: any) {
-        console.error(`[DB INIT] ❌ ERROR seeding essential data: `, error);
+        console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
         // Do not re-throw, just log the error.
         // throw error; // Commented out to prevent script from crashing
     } finally {
