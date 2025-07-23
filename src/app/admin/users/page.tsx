@@ -1,4 +1,3 @@
-
 // src/app/admin/users/page.tsx
 'use client';
 
@@ -6,8 +5,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getUsersWithRoles } from './actions';
-import type { UserProfileData, Role } from '@/types';
+import { getUsersWithRoles, deleteUser } from './actions';
+import type { UserProfileWithPermissions, Role } from '@/types';
 import { PlusCircle, Users as UsersIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
@@ -17,7 +16,7 @@ import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState<UserProfileData[]>([]);
+  const [users, setUsers] = useState<UserProfileWithPermissions[]>([]);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,8 +62,13 @@ export default function AdminUsersPage() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      // Deletion logic would go here, for now it's a placeholder
-      toast({ title: "Ação Desativada", description: "A exclusão de usuários não está implementada nesta demonstração." });
+      const result = await deleteUser(id);
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        setRefetchTrigger(c => c + 1);
+      } else {
+        toast({ title: "Erro", description: result.message, variant: "destructive" });
+      }
     },
     [toast]
   );

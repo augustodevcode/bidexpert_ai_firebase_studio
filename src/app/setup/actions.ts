@@ -1,4 +1,3 @@
-
 // src/app/setup/actions.ts
 'use server';
 
@@ -62,20 +61,26 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        await prisma.user.create({
+        const newUser = await prisma.user.create({
             data: {                
                 email,
                 password: hashedPassword,
                 fullName,
                 accountType: 'PHYSICAL',
                 habilitationStatus: 'HABILITADO',
-                roles: {
-                    connect: [{ nameNormalized: 'ADMINISTRATOR' }] // ✅ Correct: Connect using the unique 'nameNormalized' field.
-                }
+            }
+        });
+        
+        // Create the entry in the join table
+        await prisma.usersOnRoles.create({
+            data: {
+                userId: newUser.id,
+                roleId: adminRole.id,
+                assignedBy: 'system-setup'
             }
         });
 
-        console.log(`[Setup Action] Usuário admin ${email} criado com sucesso.`);
+        console.log(`[Setup Action] Usuário admin ${email} criado com sucesso e vinculado ao perfil.`);
         return { success: true, message: 'Usuário administrador criado com sucesso!' };
 
     } catch (error: any) {

@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 
@@ -319,7 +318,7 @@ export interface RecentlyViewedLotInfo {
 
 export interface UserProfileData {
   id: string;
-  uid: string;
+  uid?: string;
   email: string;
   password?: string;
   fullName: string | null;
@@ -337,8 +336,6 @@ export interface UserProfileData {
   state?: string | null;
   avatarUrl?: string | null;
   dataAiHint?: string | null;
-  roleId: string | null;
-  roleName?: string;
   sellerId?: string | null;
   habilitationStatus: UserHabilitationStatus;
   accountType: AccountType;
@@ -366,17 +363,21 @@ export interface UserProfileData {
   website?: string | null;
   responsibleName?: string | null;
   responsibleCpf?: string | null;
+
+  // Populated fields from relations
+  roles?: { role: Role }[]; // Explicitly match the join table structure
 }
 
 export interface UserProfileWithPermissions extends UserProfileData {
-  roleNames: string[]; // Corrected to be string[] for multiple roles
+  roleName?: string;
+  roleNames: string[];
   permissions: string[];
 }
 
 export interface Role {
   id: string;
   name: string;
-  name_normalized: string;
+  nameNormalized: string;
   description: string;
   permissions: string[];
   createdAt: string | Date;
@@ -861,7 +862,7 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
-export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'roleId' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleNames' | 'permissions'>>;
+export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'roleNames' | 'permissions'>>;
 
 export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
 export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;
@@ -941,8 +942,8 @@ export interface DatabaseAdapter {
     updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
     deleteBem(id: string): Promise<{ success: boolean, message: string }>;
 
-    getUsersWithRoles(): Promise<UserProfileData[]>;
-    getUserProfileData(userIdOrEmail: string): Promise<UserProfileData | null>;
+    getUsersWithRoles(): Promise<UserProfileWithPermissions[]>;
+    getUserProfileData(userIdOrEmail: string): Promise<UserProfileWithPermissions | null>;
     createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }>;
     getRoles(): Promise<Role[]>;
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;

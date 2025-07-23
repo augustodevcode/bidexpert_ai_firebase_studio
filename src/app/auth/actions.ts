@@ -1,5 +1,3 @@
-
-
 // src/app/auth/actions.ts
 'use server';
 
@@ -9,7 +7,23 @@ import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
 import { prisma } from '@/lib/prisma';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuidv4';
+
+function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
+    if (!user) return null;
+
+    const roles = user.roles?.map((ur: any) => ur.role) || [];
+    const permissions = roles.flatMap((r: any) => r.permissions as string[] || []);
+
+    return {
+        ...user,
+        roleNames: roles.map((r: any) => r.name),
+        permissions,
+        // For compatibility with older components that might expect a single roleName
+        roleName: roles[0]?.name,
+    };
+}
+
 
 /**
  * Realiza o login de um usuário com base no email e senha.
@@ -31,7 +45,13 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   try {
     const user = await prisma.user.findUnique({ 
         where: { email },
-        include: { roles: true }
+        include: { 
+            roles: {
+                include: {
+                    role: true, // Include the actual Role data
+                }
+            }
+        }
     });
 
     if (!user || !user.password) {
@@ -50,12 +70,11 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
         return { success: false, message: 'Credenciais inválidas.' };
     }
 
-    const userProfileWithPerms: UserProfileWithPermissions = {
-        ...user,
-        roleName: user.roles[0]?.name,
-        roleNames: user.roles.map(r => r.name),
-        permissions: user.roles.flatMap(r => r.permissions as string[]) || [],
-    };
+    const userProfileWithPerms = formatUserWithPermissions(user);
+
+    if (!userProfileWithPerms) {
+      return { success: false, message: 'Falha ao formatar o perfil do usuário.' };
+    }
     
     await createSession(userProfileWithPerms);
     
@@ -89,19 +108,16 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     
     const user = await prisma.user.findUnique({
         where: { id: session.userId },
-        include: { roles: true }
+        include: { 
+            roles: {
+                include: {
+                    role: true,
+                }
+            }
+        }
     });
-
-    if (!user) return null;
-
-    const userProfileWithPerms: UserProfileWithPermissions = {
-        ...user,
-        roleName: user.roles[0]?.name,
-        roleNames: user.roles.map(r => r.name),
-        permissions: user.roles.flatMap(r => r.permissions as string[]),
-    };
     
-    return userProfileWithPerms;
+    return formatUserWithPermissions(user);
 }
 
 /**
@@ -119,25 +135,30 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await prisma.user.findUnique({
             where: { email: adminEmail },
-            include: { roles: true }
+            include: { 
+                roles: {
+                    include: {
+                        role: true
+                    }
+                }
+            }
         });
         
         if (!adminUser) {
           throw new Error('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
         }
 
-        const userProfileWithPerms: UserProfileWithPermissions = {
-            ...adminUser,
-            roleName: adminUser.roles[0]?.name,
-            roleNames: adminUser.roles.map(r => r.name),
-            permissions: adminUser.roles.flatMap(r => r.permissions as string[])
-        };
+        const userProfileWithPerms = formatUserWithPermissions(adminUser);
+
+        if (!userProfileWithPerms) {
+             throw new Error('[Dev Action] Failed to format admin user profile with permissions.');
+        }
 
         await createSession(userProfileWithPerms);
         console.log('[Dev Action] Sessão de admin para desenvolvimento criada com sucesso.');
         return userProfileWithPerms;
 
-    } catch (error) {
+    } catch (error: any) {
         console.error("[Dev Action] Erro ao tentar logar com admin:", error);
         return null;
     }

@@ -1,5 +1,3 @@
-
-
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -29,41 +27,54 @@ export interface UserCreationData {
   city?: string;
   state?: string;
   optInMarketing?: boolean;
-  responsibleName?: string; // Added to fix type error
-  responsibleCpf?: string;  // Added to fix type error
+  responsibleName?: string; 
+  responsibleCpf?: string;  
 }
+
+function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
+    if (!user) return null;
+
+    const roles = user.roles?.map((ur: any) => ur.role) || [];
+    const permissions = roles.flatMap((r: any) => r.permissions as string[] || []);
+
+    return {
+        ...user,
+        roleNames: roles.map((r: any) => r.name),
+        permissions,
+        roleName: roles[0]?.name,
+    };
+}
+
 
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
   const users = await prisma.user.findMany({
     include: {
-      roles: true, 
+        roles: {
+            include: {
+                role: true
+            }
+        }
     },
     orderBy: {
       fullName: 'asc'
     }
   });
 
-  return users.map(user => ({
-    ...user,
-    roleName: user.roles[0]?.name,
-    roleNames: user.roles.map(r => r.name),
-    permissions: user.roles.flatMap(r => r.permissions as string[]),
-  }));
+  return users.map(user => formatUserWithPermissions(user)).filter(u => u !== null) as UserProfileWithPermissions[];
 }
 
 export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { roles: true }
+        include: { 
+            roles: {
+                include: {
+                    role: true
+                }
+            }
+        }
     });
-    if (!user) return null;
-
-    return {
-        ...user,
-        roleName: user.roles[0]?.name,
-        roleNames: user.roles.map(r => r.name),
-        permissions: user.roles.flatMap(r => r.permissions as string[]),
-    };
+    return formatUserWithPermissions(user);
 }
 
 
@@ -110,9 +121,18 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
       state: data.state?.trim(),
       optInMarketing: data.optInMarketing,
       habilitationStatus: habilitationStatus,
-      roles: { connect: [{ id: userRole.id }] }
     }
   });
+
+  // Assign the default USER role
+  await prisma.usersOnRoles.create({
+      data: {
+          userId: newUser.id,
+          roleId: userRole.id,
+          assignedBy: 'system-registration'
+      }
+  });
+
 
   revalidatePath('/admin/users');
   return { success: true, message: 'Usuário criado com sucesso!', userId: newUser.id };
@@ -120,22 +140,22 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   try {
-    // Get the current roles to disconnect them
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { roles: { select: { id: true } } }
-    });
+    // Transaction to ensure atomicity
+    await prisma.$transaction(async (tx) => {
+        // 1. Remove all existing roles for the user
+        await tx.usersOnRoles.deleteMany({
+            where: { userId: userId },
+        });
 
-    const rolesToDisconnect = user?.roles.map(r => ({ id: r.id })) || [];
-    const rolesToConnect = roleIds.map(id => ({ id }));
-    
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            roles: {
-                disconnect: rolesToDisconnect,
-                connect: rolesToConnect
-            }
+        // 2. Add the new roles
+        if (roleIds && roleIds.length > 0) {
+            await tx.usersOnRoles.createMany({
+                data: roleIds.map(roleId => ({
+                    userId: userId,
+                    roleId: roleId,
+                    assignedBy: 'admin-panel' // Or get current admin user ID
+                })),
+            });
         }
     });
 
@@ -150,6 +170,7 @@ export async function updateUserRoles(userId: string, roleIds: string[]): Promis
 
 export async function deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
   try {
+     // Prisma will cascade delete from UsersOnRoles due to the schema's onDelete: Cascade
      await prisma.user.delete({ where: { id }});
      revalidatePath('/admin/users');
      return { success: true, message: "Usuário excluído com sucesso." };

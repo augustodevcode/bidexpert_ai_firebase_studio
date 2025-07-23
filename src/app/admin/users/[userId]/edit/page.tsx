@@ -1,4 +1,3 @@
-
 // src/app/admin/users/[userId]/edit/page.tsx
 import UserRoleForm from '../../user-role-form'; 
 import { getUserProfileData, updateUserRoles } from '../../actions'; 
@@ -43,8 +42,8 @@ export default async function EditUserPage({ params }: { params: { userId: strin
     return updateUserRoles(uid, roleIds);
   }
   
-  const formattedDateOfBirth = userProfile.dateOfBirth ? format(new Date(userProfile.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedRgIssueDate = userProfile.rgIssueDate ? format(new Date(userProfile.rgIssueDate), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedDateOfBirth = userProfile.dateOfBirth ? format(new Date(userProfile.dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
+  const formattedRgIssueDate = userProfile.rgIssueDate ? format(new Date(userProfile.rgIssueDate as string), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
 
   return (
     <div className="space-y-6">
