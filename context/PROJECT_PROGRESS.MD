@@ -27,6 +27,7 @@
 
 ## DOING
 - **Consulta CEP:** Implementar uma funcionalidade de consulta de CEP nos formulários de endereço (ex: cadastro de usuário, comitente, leiloeiro) para preencher automaticamente os campos de logradouro, bairro, cidade e estado.
+- **Refatoração da Arquitetura:** Implementar o padrão `Service -> Repository` para todas as entidades do sistema, garantindo consistência e separação de responsabilidades. (Iniciado com a entidade `Seller`).
 
 ## NEXT
 - **Geração de Documentos (PDF):** Implementar a lógica de servidor para pegar os templates customizados, preenchê-los com dados do sistema e gerar um arquivo PDF para download. Isso pode envolver uma biblioteca como `puppeteer` ou `pdf-lib`.

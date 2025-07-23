@@ -1,6 +1,7 @@
 // src/services/seller.service.ts
 import { SellerRepository } from '@/repositories/seller.repository';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
+import { slugify } from '@/lib/sample-data-helpers';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -18,7 +19,7 @@ export class SellerService {
   }
 
   async getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
-    return this.sellerRepository.findBySlug(slugOrId);
+      return this.sellerRepository.findBySlug(slugOrId);
   }
   
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
@@ -28,20 +29,23 @@ export class SellerService {
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }> {
-    // Business logic before creation can go here (e.g., validation)
     try {
-      const newSeller = await this.sellerRepository.create(data);
+      const dataWithSlug = { ...data, slug: slugify(data.name) };
+      const newSeller = await this.sellerRepository.create(dataWithSlug);
       return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
     } catch (error: any) {
       console.error("Error in SellerService.createSeller:", error);
+      if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
+        return { success: false, message: 'Já existe um comitente com este nome.' };
+      }
       return { success: false, message: `Falha ao criar comitente: ${error.message}` };
     }
   }
 
   async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
-     // Business logic before update can go here
     try {
-      await this.sellerRepository.update(id, data);
+      const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
+      await this.sellerRepository.update(id, dataWithSlug);
       return { success: true, message: 'Comitente atualizado com sucesso.' };
     } catch (error: any) {
        console.error(`Error in SellerService.updateSeller for id ${id}:`, error);
@@ -50,13 +54,11 @@ export class SellerService {
   }
   
   async deleteSeller(id: string): Promise<{ success: boolean; message: string }> {
-    // Business logic before deletion can go here
-    // For example, check if the seller has active auctions.
-    // const activeAuctions = await someOtherRepository.findActiveAuctionsBySeller(id);
-    // if (activeAuctions.length > 0) {
-    //   return { success: false, message: 'Não é possível excluir comitente com leilões ativos.' };
-    // }
     try {
+      const lots = await this.sellerRepository.findLotsBySellerId(id);
+      if (lots.length > 0) {
+        return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
+      }
       await this.sellerRepository.delete(id);
       return { success: true, message: 'Comitente excluído com sucesso.' };
     } catch (error: any) {

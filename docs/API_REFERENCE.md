@@ -69,7 +69,7 @@ Gerenciam os lotes individuais dentro dos leilões.
 
 ## 3. Comitentes (`src/app/admin/sellers/actions.ts`)
 
-Gerenciam os perfis dos comitentes/vendedores.
+Gerenciam os perfis dos comitentes/vendedores. Todas as chamadas são intermediadas pela `SellerService`.
 
 - **`getSellers(): Promise<SellerProfileInfo[]>`**
 - **`getSeller(id: string): Promise<SellerProfileInfo | null>`**

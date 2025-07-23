@@ -1,9 +1,8 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
+import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { SellerService } from '@/services/seller.service';
 
 const sellerService = new SellerService();
@@ -23,7 +22,6 @@ export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileIn
 export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
     return sellerService.getLotsBySellerSlug(sellerSlugOrId);
 }
-
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     const result = await sellerService.createSeller(data);

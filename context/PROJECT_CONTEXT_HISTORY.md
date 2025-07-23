@@ -18,14 +18,14 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   AI-Powered Auction Guidance: Recommendations for listing details, optimal opening values, and similar listing suggestions.
 
 **Technology Stack & Architecture:**
-*   **Architecture**: MVC (Model-View-Controller) with a Service Layer.
+*   **Architecture**: MVC (Model-View-Controller) with a Service Layer and Repository Layer.
     *   **Model**: Prisma ORM (`prisma/schema.prisma`).
     *   **View**: Next.js, React, ShadCN UI components, Tailwind CSS.
     *   **Controller**: Next.js Server Actions.
-    *   **Service Layer**: Contains business logic (`src/services`).
-    *   **Repository Layer**: Handles data access via Prisma (`src/repositories`).
+    *   **Service Layer**: Contains business logic (`src/services/*.ts`).
+    *   **Repository Layer**: Handles data access via Prisma Client (`src/repositories/*.ts`).
 *   **AI**: Genkit (for AI flows).
-*   **Database**: Designed for PostgreSQL and MySQL via Prisma, with a Firestore adapter for specific development environments.
+*   **Database**: Designed for PostgreSQL and MySQL via Prisma.
 
 **Style Guidelines (from PRD):**
 *   Icons: Clean, line-based (`lucide-react`).
@@ -62,9 +62,13 @@ This document summarizes the BidExpert project, including its purpose, core feat
 ### Errors Encountered & Resolved (Summary):
 *   **Prisma Initialization Errors:** Resolved `P1012` schema validation errors by correcting the `dev` script in `package.json` to not require a `DATABASE_URL` when a Firestore environment is intended, and by removing the incorrect `prisma db push` command from the startup sequence.
 *   **Obsolete Adapter Errors:** Fixed multiple `Method not implemented` and `MODULE_NOT_FOUND` errors by completing the full migration to Prisma and removing all legacy database adapter files and references.
+*   **Module Not Found (`@prisma/client`):** Resolved by ensuring the `postinstall` script correctly runs `prisma generate` with access to environment variables.
+*   **Data Loss Warning on `db push`:** Resolved by adding the `--accept-data-loss` flag to the `db:push` script, appropriate for a development environment where data can be re-seeded.
+*   **Invalid Directory Structure:** Corrected a critical structural issue where `app` directories were nested or outside the `src` folder, preventing Next.js from building correctly.
+*   **Prisma Relation Errors:** Corrected multiple `PrismaClientValidationError` errors by aligning the `include` and `connect` statements in the code with the actual relations defined in `schema.prisma` (e.g., `roles` instead of `role`, using `nameNormalized` for connections).
 
 ### Key Decisions & Patterns:
-*   **MVC + Service Layer Architecture:** The entire application now adheres to a strict separation of concerns, where `Server Actions` act as controllers, `Services` hold business logic, and `Repositories` handle data access via Prisma. This is the mandated architecture for all new development.
+*   **MVC + Service + Repository Architecture:** The entire application now adheres to a strict separation of concerns. This is the mandated architecture for all new development.
 *   **Prisma as Single Source of Truth for Data Access:** All database interactions are now funneled through the Prisma Client, providing type safety and simplifying queries across different SQL databases.
 *   **Server Actions as Primary API**: All data mutations and queries are handled through Server Actions for clear, secure server-client interaction.
 
