@@ -1,6 +1,7 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
+import { prisma } from '@/lib/prisma';
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { SellerService } from '@/services/seller.service';

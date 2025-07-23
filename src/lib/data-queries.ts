@@ -12,20 +12,7 @@ import type {
 // existing queries are migrated to their respective repositories.
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
-  const settings = await prisma.platformSettings.findUnique({
-    where: { id: 'global' },
-    // Eager load related settings models if they exist.
-    // This is a placeholder; adjust includes based on your final Prisma schema.
-    // include: {
-    //     themes: true,
-    //     platformPublicIdMasks: true,
-    //     mapSettings: true,
-    //     biddingSettings: true,
-    //     mentalTriggerSettings: true,
-    //     sectionBadgeVisibility: true,
-    //     variableIncrementTable: true,
-    // }
-  });
+  const settings = await prisma.platformSettings.findFirst();
   if (!settings) {
     throw new Error("Platform settings could not be loaded.");
   }

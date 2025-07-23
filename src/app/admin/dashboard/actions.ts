@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { AdminDashboardStats } from '@/types';
 
 /**
@@ -14,19 +14,18 @@ import type { AdminDashboardStats } from '@/types';
  */
 export async function getAdminDashboardStatsAction(): Promise<AdminDashboardStats> {
   try {
-    const db = getDatabaseAdapter();
     const [users, auctions, lots, sellers] = await Promise.all([
-      db.getUsersWithRoles(),
-      db.getAuctions(),
-      db.getLots(),
-      db.getSellers(),
+      prisma.user.count(),
+      prisma.auction.count(),
+      prisma.lot.count(),
+      prisma.seller.count(),
     ]);
 
     return {
-      users: users.length,
-      auctions: auctions.length,
-      lots: lots.length,
-      sellers: sellers.length,
+      users,
+      auctions,
+      lots,
+      sellers,
     };
   } catch (error) {
     console.error("[Action - getAdminDashboardStatsAction] Error fetching admin stats:", error);
