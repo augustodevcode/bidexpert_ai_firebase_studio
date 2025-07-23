@@ -1,3 +1,4 @@
+
 // src/repositories/seller.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
@@ -13,7 +14,13 @@ export class SellerRepository {
   }
   
   async findByName(name: string): Promise<SellerProfileInfo | null> {
-    return prisma.seller.findUnique({ where: { name } });
+    try {
+      return await prisma.seller.findUnique({ where: { name } });
+    } catch (error) {
+      // Handles case where findUnique might throw if not found, though it typically returns null.
+      // This makes the method more robust.
+      return null;
+    }
   }
 
   async findBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {

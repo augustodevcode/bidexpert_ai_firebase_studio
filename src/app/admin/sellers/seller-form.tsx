@@ -1,3 +1,4 @@
+
 // src/app/admin/sellers/seller-form.tsx
 'use client';
 
@@ -97,7 +98,7 @@ export default function SellerForm({
   };
   
   const handleCepLookup = async (cep: string) => {
-    if (cep.length < 8) return;
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
     setIsCepLoading(true);
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {

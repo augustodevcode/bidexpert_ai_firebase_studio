@@ -1,3 +1,4 @@
+
 // src/services/seller.service.ts
 import { SellerRepository } from '@/repositories/seller.repository';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
@@ -40,11 +41,24 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      // Correção: Espalhar corretamente todos os campos de 'data' e adicionar o slug.
-      // O Prisma/banco de dados cuidará do id e publicId.
+      // Correto: Monta o objeto de criação apenas com os campos necessários
+      // e deixa o banco de dados cuidar do 'id' e 'publicId'.
       const dataToCreate: Prisma.SellerCreateInput = {
-        ...data,
+        name: data.name,
         slug: slugify(data.name),
+        contactName: data.contactName,
+        email: data.email,
+        phone: data.phone,
+        address: data.address,
+        city: data.city,
+        state: data.state,
+        zipCode: data.zipCode,
+        website: data.website,
+        logoUrl: data.logoUrl,
+        dataAiHintLogo: data.dataAiHintLogo,
+        description: data.description,
+        isJudicial: data.isJudicial,
+        judicialBranchId: data.judicialBranchId,
       };
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
