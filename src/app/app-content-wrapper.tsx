@@ -7,21 +7,20 @@ import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { Loader2 } from 'lucide-react';
 
-// Developer-facing flag to force the setup screen to appear.
-// Change this to 'true' to always see the setup page on startup, regardless of localStorage.
-const FORCE_SETUP = false;
-
 export function AppContentWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (FORCE_SETUP) {
+    // Check the environment variable first. If it's 'true', force the setup.
+    const forceSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'true';
+    if (forceSetup) {
         setIsSetupComplete(false);
         return;
     }
-    // This check only runs on the client-side after hydration
+    
+    // Otherwise, check localStorage. This check only runs on the client-side.
     const setupFlag = localStorage.getItem('bidexpert_setup_complete');
     setIsSetupComplete(setupFlag === 'true');
   }, []);
