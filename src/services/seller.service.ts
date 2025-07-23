@@ -36,6 +36,8 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
+      // O publicId é gerado automaticamente pelo banco de dados (@default(cuid()))
+      // Não devemos enviá-lo no objeto de criação.
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),
