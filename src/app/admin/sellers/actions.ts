@@ -3,62 +3,48 @@
 
 import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { SellerService } from '@/services/seller.service';
+
+const sellerService = new SellerService();
 
 export async function getSellers(): Promise<SellerProfileInfo[]> {
-    return prisma.seller.findMany({ orderBy: { name: 'asc' }});
+    return sellerService.getSellers();
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
-    return prisma.seller.findFirst({ where: { OR: [{ id }, { publicId: id }] }});
+    return sellerService.getSellerById(id);
 }
 
 export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
-    return prisma.seller.findFirst({
-        where: {
-            OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
-        }
-    });
+    return sellerService.getSellerBySlug(slugOrId);
 }
 
 export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
-  const seller = await getSellerBySlug(sellerSlugOrId);
-  if (!seller) return [];
-
-  return prisma.lot.findMany({
-    where: { sellerId: seller.id }
-  });
+    return sellerService.getLotsBySellerSlug(sellerSlugOrId);
 }
 
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    try {
-        const result = await prisma.seller.create({ data });
+    const result = await sellerService.createSeller(data);
+    if (result.success) {
         revalidatePath('/admin/sellers');
-        return { success: true, message: 'Comitente criado com sucesso.', sellerId: result.id };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao criar comitente: ${error.message}` };
     }
+    return result;
 }
 
 export async function updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    try {
-        await prisma.seller.update({ where: { id }, data });
+    const result = await sellerService.updateSeller(id, data);
+    if (result.success) {
         revalidatePath('/admin/sellers');
         revalidatePath(`/admin/sellers/${id}/edit`);
-        return { success: true, message: "Comitente atualizado com sucesso." };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao atualizar comitente: ${error.message}` };
     }
+    return result;
 }
 
 export async function deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    try {
-        // In a real app, check for linked auctions/lots first
-        await prisma.seller.delete({ where: { id } });
+    const result = await sellerService.deleteSeller(id);
+    if (result.success) {
         revalidatePath('/admin/sellers');
-        return { success: true, message: "Comitente excluído com sucesso." };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
     }
+    return result;
 }

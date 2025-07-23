@@ -120,7 +120,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         
         if (!adminUser) {
           console.warn('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
-          return null; // Or create it, but for now let's assume it's seeded.
+          return null;
         }
 
         const userProfileWithPerms: UserProfileWithPermissions = {
