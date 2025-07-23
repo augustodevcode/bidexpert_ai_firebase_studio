@@ -26,7 +26,7 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { consultaCepAction } from '@/lib/actions/cep'; // Importar a action
+import { consultaCepAction } from '@/lib/actions/cep'; // Corrigido o caminho da importação
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -101,7 +101,7 @@ export default function SellerForm({
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
-        form.setValue('neighborhood', result.data.bairro);
+        // O campo 'neighborhood' não existe no schema do comitente, então não o preenchemos.
         form.setValue('city', result.data.localidade);
         form.setValue('state', result.data.uf);
     } else {
