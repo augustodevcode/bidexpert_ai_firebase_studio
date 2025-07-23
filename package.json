@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit",
     "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
     "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
-    "db:push": "dotenv -e .env -- prisma db push",
+    "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
     "postinstall": "dotenv -e .env -- prisma generate"
   },
   "dependencies": {
