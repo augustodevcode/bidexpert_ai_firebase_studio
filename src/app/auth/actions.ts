@@ -29,7 +29,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   try {
     const user = await prisma.user.findUnique({ 
         where: { email },
-        include: { roles: true }
+        include: { role: true }
     });
 
     if (!user || !user.password) {
@@ -50,8 +50,9 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
-        roleNames: user.roles.map(r => r.name),
-        permissions: Array.from(new Set(user.roles.flatMap(r => r.permissions as string[])))
+        roleName: user.role?.name,
+        roleNames: user.role ? [user.role.name] : [],
+        permissions: user.role?.permissions as string[] || []
     };
     
     await createSession(userProfileWithPerms);
@@ -86,15 +87,16 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     
     const user = await prisma.user.findUnique({
         where: { id: session.userId },
-        include: { roles: true }
+        include: { role: true }
     });
 
     if (!user) return null;
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
-        roleNames: user.roles.map(r => r.name),
-        permissions: Array.from(new Set(user.roles.flatMap(r => r.permissions as string[])))
+        roleName: user.role?.name,
+        roleNames: user.role ? [user.role.name] : [],
+        permissions: user.role?.permissions as string[] || []
     };
     
     return userProfileWithPerms;
@@ -115,7 +117,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await prisma.user.findUnique({
             where: { email: adminEmail },
-            include: { roles: true }
+            include: { role: true }
         });
         
         if (!adminUser) {
@@ -125,8 +127,9 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
 
         const userProfileWithPerms: UserProfileWithPermissions = {
             ...adminUser,
-            roleNames: adminUser.roles.map(r => r.name),
-            permissions: Array.from(new Set(adminUser.roles.flatMap(r => r.permissions as string[])))
+            roleName: adminUser.role?.name,
+            roleNames: adminUser.role ? [adminUser.role.name] : [],
+            permissions: adminUser.role?.permissions as string[] || []
         };
 
         await createSession(userProfileWithPerms);

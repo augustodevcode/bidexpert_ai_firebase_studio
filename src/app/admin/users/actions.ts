@@ -5,9 +5,8 @@
 import type { UserProfileWithPermissions, Role, AccountType, UserProfileData, UserHabilitationStatus } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcrypt from 'bcrypt';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma'; // Import prisma directly
 
 export interface UserCreationData {
   email: string;
@@ -45,6 +44,7 @@ export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]>
 
   return users.map(user => ({
     ...user,
+    roleName: user.role?.name,
     roleNames: user.role ? [user.role.name] : [],
     permissions: user.role ? user.role.permissions as string[] : [],
   }));
@@ -59,8 +59,9 @@ export async function getUserProfileData(userId: string): Promise<UserProfileWit
 
     return {
         ...user,
+        roleName: user.role?.name,
         roleNames: user.role ? [user.role.name] : [],
-        permissions: user.role ? user.role.permissions as string[] : [],
+        permissions: user.role?.permissions as string[] || [],
     };
 }
 
