@@ -28,14 +28,14 @@ async function seedFullData() {
         if (adminUser) {
             const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
             if (adminRole) {
-                const { id, uid, ...adminData } = adminUser;
+                const { id, uid, ...userData } = adminUser;
                 await prisma.user.upsert({
-                    where: { email: adminData.email },
+                    where: { email: userData.email },
                     update: {},
                     create: {
-                        email: adminData.email,
-                        fullName: adminData.fullName,
-                        password: await bcrypt.hash(adminData.password || 'Admin@123', 10),
+                        email: userData.email,
+                        fullName: userData.fullName,
+                        password: await bcrypt.hash(userData.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
                         roleId: adminRole.id

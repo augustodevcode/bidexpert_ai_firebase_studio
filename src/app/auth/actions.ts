@@ -1,3 +1,4 @@
+
 // src/app/auth/actions.ts
 'use server';
 
@@ -96,7 +97,7 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         ...user,
         roleName: user.role?.name,
         roleNames: user.role ? [user.role.name] : [],
-        permissions: user.role?.permissions as string[] || []
+        permissions: user.role?.permissions as string[] || [],
     };
     
     return userProfileWithPerms;
@@ -121,8 +122,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         });
         
         if (!adminUser) {
-          console.warn('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
-          return null;
+          throw new Error('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
         }
 
         const userProfileWithPerms: UserProfileWithPermissions = {

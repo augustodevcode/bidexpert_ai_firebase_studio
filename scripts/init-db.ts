@@ -109,8 +109,7 @@ async function seedEssentialData() {
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
-        // Do not re-throw, just log the error.
-        // throw error; // Commented out to prevent script from crashing
+        throw error;
     } finally {
         await prisma.$disconnect();
     }
