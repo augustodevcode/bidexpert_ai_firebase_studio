@@ -12,7 +12,7 @@ export async function verifyInitialData(): Promise<{ success: boolean; message: 
   console.log('[Setup Action] Verificando dados iniciais no banco...');
   try {
     const settingsCount = await prisma.platformSettings.count();
-    const rolesCount = await prisma.roles.count();
+    const rolesCount = await prisma.role.count();
 
     if (settingsCount > 0 && rolesCount > 0) {
       console.log('[Setup Action] Verificação bem-sucedida. Dados encontrados.');
