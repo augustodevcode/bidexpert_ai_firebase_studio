@@ -4,13 +4,14 @@
   "version": "0.1.0",
   "private": "true",
   "scripts": {
-    "dev": "dotenv -e .env -- next dev --port 9002 --hostname 0.0.0.0",
+    "dev": "npm run db:push && dotenv -e .env -- next dev --port 9002 --hostname 0.0.0.0",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
     "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
+    "db:push": "dotenv -e .env -- prisma db push",
     "postinstall": "dotenv -e .env -- prisma generate"
   },
   "dependencies": {
