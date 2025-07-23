@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { Lot } from '@/types';
 
 /**
@@ -19,16 +19,12 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
     return [];
   }
   
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getLotsForConsignor) {
-    // @ts-ignore
-    return db.getLotsForConsignor(sellerId);
-  }
+  const lots = await prisma.lot.findMany({
+    where: { sellerId: sellerId },
+    include: { auction: { select: { title: true } } },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  // Fallback logic
-  const allAuctions = await db.getAuctions();
-  const consignorAuctionIds = new Set(allAuctions.filter(a => a.sellerId === sellerId).map(a => a.id));
-  const allLots = await db.getLots();
-  return allLots.filter(l => consignorAuctionIds.has(l.auctionId));
+  // @ts-ignore
+  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
 }

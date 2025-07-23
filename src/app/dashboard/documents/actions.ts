@@ -6,8 +6,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database/index';
-import type { DocumentType, UserDocument, Bem } from '@/types';
+import { prisma } from '@/lib/prisma';
+import type { DocumentType, UserDocument } from '@/types';
 
 /**
  * Fetches all available document types from the database.
@@ -15,9 +15,7 @@ import type { DocumentType, UserDocument, Bem } from '@/types';
  * @returns {Promise<DocumentType[]>} A promise that resolves to an array of DocumentType objects.
  */
 export async function getDocumentTypes(): Promise<DocumentType[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getDocumentTypes ? db.getDocumentTypes() : [];
+  return prisma.documentType.findMany();
 }
 
 /**
@@ -30,9 +28,11 @@ export async function getUserDocuments(userId: string): Promise<UserDocument[]> 
     console.warn("[Action - getUserDocuments] No userId provided.");
     return [];
   }
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getUserDocuments ? db.getUserDocuments(userId) : [];
+  const documents = await prisma.userDocument.findMany({
+    where: { userId },
+    include: { documentType: true }
+  });
+  return documents as UserDocument[];
 }
 
 /**
@@ -55,19 +55,40 @@ export async function saveUserDocument(
   if (!userId || !documentTypeId || !fileUrl) {
     return { success: false, message: "Dados insuficientes para salvar o documento." };
   }
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.saveUserDocument) {
-    return { success: false, message: "Função não implementada para este adaptador."};
-  }
   try {
-    // @ts-ignore
-    const result = await db.saveUserDocument(userId, documentTypeId, fileUrl, fileName);
+    // Upsert logic: update if it exists, create if not
+    await prisma.userDocument.upsert({
+        where: {
+            userId_documentTypeId: {
+                userId,
+                documentTypeId
+            }
+        },
+        update: {
+            fileUrl,
+            fileName,
+            status: 'PENDING_ANALYSIS',
+            rejectionReason: null
+        },
+        create: {
+            userId,
+            documentTypeId,
+            fileUrl,
+            fileName,
+            status: 'PENDING_ANALYSIS'
+        }
+    });
 
-    if (result.success) {
-        revalidatePath('/dashboard/documents');
-    }
-    return result;
+    // Update user's main habilitation status
+    await prisma.user.update({
+        where: { id: userId },
+        data: { habilitationStatus: 'PENDING_ANALYSIS' }
+    });
+    
+    revalidatePath('/dashboard/documents');
+    revalidatePath(`/admin/habilitations/${userId}`);
+
+    return { success: true, message: "Documento salvo com sucesso." };
   } catch (error: any) {
     console.error("Error saving user document:", error);
     return { success: false, message: `Falha ao salvar documento: ${error.message}`};

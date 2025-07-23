@@ -1,7 +1,7 @@
 // src/app/contact/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 
 /**
@@ -22,20 +22,14 @@ export async function saveContactMessage(formData: FormData): Promise<{ success:
   }
 
   try {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore
-    if (!db.saveContactMessage) {
-        return { success: false, message: "Função não implementada para este adaptador."};
-    }
-    // @ts-ignore
-    const result = await db.saveContactMessage({ name, email, subject, message });
+    await prisma.contactMessage.create({
+      data: { name, email, subject, message }
+    });
 
     // Revalidate the path for the admin page where messages are viewed
-    if (result.success) {
-        revalidatePath('/admin/contact-messages');
-    }
+    revalidatePath('/admin/contact-messages');
     
-    return result;
+    return { success: true, message: 'Sua mensagem foi enviada com sucesso!' };
   } catch (error) {
     console.error("Error saving contact message:", error);
     return { success: false, message: 'Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.' };

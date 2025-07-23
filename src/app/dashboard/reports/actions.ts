@@ -1,7 +1,7 @@
 // src/app/dashboard/reports/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { prisma } from '@/lib/prisma';
 import type { LotCategory } from '@/types';
 
 export interface UserReportData {
@@ -18,18 +18,51 @@ export async function getUserReportDataAction(userId: string): Promise<UserRepor
   if (!userId) {
     throw new Error("User ID is required to generate a report.");
   }
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getUserReportData) {
-    // @ts-ignore
-    return db.getUserReportData(userId);
+  
+  const totalLotsWon = await prisma.lot.count({
+    where: {
+      winnerId: userId,
+      status: 'VENDIDO',
+    }
+  });
+
+  const wonLots = await prisma.lot.findMany({
+    where: {
+      winnerId: userId,
+      status: 'VENDIDO'
+    },
+    select: {
+      price: true,
+      categoryId: true,
+    }
+  });
+
+  const totalAmountSpent = wonLots.reduce((sum, lot) => sum + (lot.price || 0), 0);
+  
+  const totalBidsPlaced = await prisma.bid.count({
+    where: {
+      bidderId: userId,
+    }
+  });
+
+  const spendingByCategoryMap = new Map<string, number>();
+  const categoryIds = [...new Set(wonLots.map(lot => lot.categoryId).filter(Boolean) as string[])];
+  const categories = await prisma.lotCategory.findMany({ where: { id: { in: categoryIds } } });
+  
+  for (const lot of wonLots) {
+    if (lot.categoryId) {
+      const categoryName = categories.find(c => c.id === lot.categoryId)?.name || 'Outros';
+      const currentAmount = spendingByCategoryMap.get(categoryName) || 0;
+      spendingByCategoryMap.set(categoryName, currentAmount + (lot.price || 0));
+    }
   }
 
-  // Fallback if not implemented
+  const spendingByCategory = Array.from(spendingByCategoryMap, ([name, value]) => ({ name, value }));
+  
   return {
-    totalLotsWon: 0,
-    totalAmountSpent: 0,
-    totalBidsPlaced: 0,
-    spendingByCategory: [],
+    totalLotsWon,
+    totalAmountSpent,
+    totalBidsPlaced,
+    spendingByCategory,
   };
 }

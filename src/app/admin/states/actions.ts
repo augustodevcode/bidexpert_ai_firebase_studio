@@ -1,67 +1,79 @@
 // src/app/admin/states/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { StateInfo, StateFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { slugify } from '@/lib/sample-data-helpers';
+
 
 export async function getStates(): Promise<StateInfo[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getStates ? db.getStates() : [];
+  const states = await prisma.state.findMany({
+    include: {
+        _count: {
+            select: { cities: true }
+        }
+    },
+    orderBy: { name: 'asc' }
+  });
+  return states.map(s => ({ ...s, cityCount: s._count.cities }));
 }
 
 export async function getState(id: string): Promise<StateInfo | null> {
-  const states = await getStates();
-  return states.find(s => s.id === id) || null;
+  return prisma.state.findUnique({ where: { id } });
 }
 
 export async function createState(
   data: StateFormData
 ): Promise<{ success: boolean; message: string; stateId?: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.createState) {
-    return { success: false, message: "Criação de estado não implementada." };
-  }
-  // @ts-ignore
-  const result = await db.createState(data);
-  if (result.success) {
+  try {
+    const newState = await prisma.state.create({
+        data: {
+            ...data,
+            slug: slugify(data.name),
+        }
+    });
     revalidatePath('/admin/states');
+    return { success: true, message: "Estado criado com sucesso.", stateId: newState.id };
+  } catch(error: any) {
+    if (error.code === 'P2002') { // Unique constraint violation
+        return { success: false, message: `Já existe um estado com a UF '${data.uf}'.` };
+    }
+    return { success: false, message: `Falha ao criar estado: ${error.message}` };
   }
-  return result;
 }
 
 export async function updateState(
   id: string,
   data: Partial<StateFormData>
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.updateState) {
-    return { success: false, message: "Atualização de estado não implementada." };
-  }
-  // @ts-ignore
-  const result = await db.updateState(id, data);
-  if (result.success) {
+  try {
+     await prisma.state.update({
+        where: { id },
+        data: {
+            ...data,
+            slug: data.name ? slugify(data.name) : undefined,
+        }
+     });
     revalidatePath('/admin/states');
     revalidatePath(`/admin/states/${id}/edit`);
+    return { success: true, message: "Estado atualizado com sucesso." };
+  } catch (error: any) {
+      if (error.code === 'P2002') {
+        return { success: false, message: `Já existe um estado com a UF '${data.uf}'.` };
+    }
+    return { success: false, message: `Falha ao atualizar estado: ${error.message}` };
   }
-  return result;
 }
 
 export async function deleteState(
   id: string
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.deleteState) {
-    return { success: false, message: "Exclusão de estado não implementada." };
-  }
-  // @ts-ignore
-  const result = await db.deleteState(id);
-  if (result.success) {
+  try {
+    await prisma.state.delete({ where: { id } });
     revalidatePath('/admin/states');
+    return { success: true, message: "Estado excluído com sucesso." };
+  } catch (error: any) {
+    return { success: false, message: "Falha ao excluir estado. Verifique se ele não possui cidades vinculadas." };
   }
-  return result;
 }

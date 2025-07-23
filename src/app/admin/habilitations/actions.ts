@@ -2,50 +2,57 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { UserProfileData, UserDocument, UserHabilitationStatus } from '@/types';
 
 /**
  * Fetches users whose documents are pending review.
  */
 export async function getHabilitationRequests(): Promise<UserProfileData[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getHabilitationRequests ? db.getHabilitationRequests() : [];
+  return prisma.user.findMany({
+    where: {
+      habilitationStatus: { in: ['PENDING_ANALYSIS', 'REJECTED_DOCUMENTS'] }
+    },
+    orderBy: { updatedAt: 'desc' }
+  });
 }
 
 /**
  * Fetches all submitted documents for a specific user.
  */
 export async function getUserDocumentsForReview(userId: string): Promise<UserDocument[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getUserDocuments ? db.getUserDocuments(userId) : [];
+  const documents = await prisma.userDocument.findMany({
+    where: { userId },
+    include: { documentType: true }
+  });
+  return documents as UserDocument[];
 }
 
 export async function approveDocument(documentId: string): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.approveDocument) return { success: false, message: "Função não implementada."};
-  // @ts-ignore
-  const result = await db.approveDocument(documentId);
-  if (result.success) {
+  try {
+    await prisma.userDocument.update({
+      where: { id: documentId },
+      data: { status: 'APPROVED', rejectionReason: null }
+    });
     revalidatePath('/admin/habilitations');
+    return { success: true, message: 'Documento aprovado.' };
+  } catch(e) {
+    return { success: false, message: 'Falha ao aprovar documento.' };
   }
-  return result;
 }
 
 export async function rejectDocument(documentId: string, reason: string): Promise<{ success: boolean; message: string }> {
   if (!reason) {
     return { success: false, message: 'O motivo da rejeição é obrigatório.' };
   }
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.rejectDocument) return { success: false, message: "Função não implementada."};
-  // @ts-ignore
-  const result = await db.rejectDocument(documentId, reason);
-  if (result.success) {
+   try {
+    await prisma.userDocument.update({
+      where: { id: documentId },
+      data: { status: 'REJECTED', rejectionReason: reason }
+    });
     revalidatePath('/admin/habilitations');
+    return { success: true, message: 'Documento rejeitado.' };
+  } catch(e) {
+    return { success: false, message: 'Falha ao rejeitar documento.' };
   }
-  return result;
 }

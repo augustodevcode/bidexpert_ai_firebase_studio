@@ -1,51 +1,51 @@
 // src/app/admin/document-templates/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { DocumentTemplate } from '@/types';
-
-// Placeholder for a form data type
-interface DocumentTemplateFormData {
-  name: string;
-  type: string;
-  content: string;
-}
+import type { DocumentTemplateFormData } from './document-template-form-schema';
+import { revalidatePath } from 'next/cache';
 
 export async function getDocumentTemplates(): Promise<DocumentTemplate[]> {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore - Assuming this method exists on the adapter for now
-    if (db.getDocumentTemplates) {
-        // @ts-ignore
-        return db.getDocumentTemplates();
-    }
-    return [];
+    return prisma.documentTemplate.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function getDocumentTemplate(id: string): Promise<DocumentTemplate | null> {
-    const templates = await getDocumentTemplates();
-    return templates.find(t => t.id === id) || null;
+    return prisma.documentTemplate.findUnique({ where: { id } });
 }
 
 export async function getDocumentTemplateAction(id: string): Promise<DocumentTemplate | null> {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore - Assuming this method exists on the adapter for now
-    if (db.getDocumentTemplate) {
-        // @ts-ignore
-        return db.getDocumentTemplate(id);
-    }
-    // Fallback
     return getDocumentTemplate(id);
 }
 
 
 export async function createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
-    return { success: false, message: "Criação de template não implementada." };
+    try {
+        const newTemplate = await prisma.documentTemplate.create({ data });
+        revalidatePath('/admin/document-templates');
+        return { success: true, message: "Template criado com sucesso.", templateId: newTemplate.id };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao criar template: ${error.message}` };
+    }
 }
 
 export async function updateDocumentTemplate(id: string, data: Partial<DocumentTemplateFormData>): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Atualização de template não implementada." };
+    try {
+        await prisma.documentTemplate.update({ where: { id }, data });
+        revalidatePath('/admin/document-templates');
+        revalidatePath(`/admin/document-templates/${id}/edit`);
+        return { success: true, message: "Template atualizado com sucesso." };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao atualizar template: ${error.message}` };
+    }
 }
 
 export async function deleteDocumentTemplate(id: string): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: "Exclusão de template não implementada." };
+    try {
+        await prisma.documentTemplate.delete({ where: { id } });
+        revalidatePath('/admin/document-templates');
+        return { success: true, message: "Template excluído com sucesso." };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao excluir template: ${error.message}` };
+    }
 }

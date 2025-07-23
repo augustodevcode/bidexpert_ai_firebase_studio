@@ -3,7 +3,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 
 /**
@@ -18,12 +18,30 @@ export async function getWinsForUserAction(userId: string): Promise<UserWin[]> {
     return [];
   }
   
-  const db = await getDatabaseAdapter();
-  // @ts-ignore - Assuming this method exists on the adapter
-  if (db.getUserWins) {
-    // @ts-ignore
-    return db.getUserWins(userId);
-  }
+  const wins = await prisma.userWin.findMany({
+    where: { userId },
+    include: {
+        lot: {
+            include: {
+                auction: {
+                    select: {
+                        title: true,
+                    }
+                }
+            }
+        }
+    },
+    orderBy: {
+        winDate: 'desc'
+    }
+  });
 
-  return [];
+  // @ts-ignore
+  return wins.map(win => ({
+      ...win,
+      lot: {
+          ...win.lot,
+          auctionName: win.lot.auction.title
+      }
+  }));
 }

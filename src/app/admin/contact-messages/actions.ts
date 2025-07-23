@@ -1,7 +1,7 @@
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import type { ContactMessage } from '@/types';
 
@@ -10,9 +10,7 @@ import type { ContactMessage } from '@/types';
  * @returns {Promise<ContactMessage[]>} An array of all contact messages.
  */
 export async function getContactMessages(): Promise<ContactMessage[]> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore - Assuming this method exists on the adapter
-  return db.getContactMessages ? db.getContactMessages() : [];
+  return prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' }});
 }
 
 /**
@@ -22,17 +20,16 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
  * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
  */
 export async function toggleMessageReadStatus(id: string, isRead: boolean): Promise<{ success: boolean; message: string }> {
-    const db = await getDatabaseAdapter();
-    // @ts-ignore - Assuming this method exists on the adapter
-    if (!db.toggleMessageReadStatus) {
-        return { success: false, message: "Função não implementada neste adaptador." };
-    }
-    // @ts-ignore
-    const result = await db.toggleMessageReadStatus(id, isRead);
-    if (result.success) {
+    try {
+        await prisma.contactMessage.update({
+            where: { id },
+            data: { isRead }
+        });
         revalidatePath('/admin/contact-messages');
+        return { success: true, message: `Mensagem marcada como ${isRead ? 'lida' : 'não lida'}.`};
+    } catch (error: any) {
+        return { success: false, message: "Falha ao atualizar status da mensagem." };
     }
-    return result;
 }
 
 /**
@@ -41,15 +38,11 @@ export async function toggleMessageReadStatus(id: string, isRead: boolean): Prom
  * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
  */
 export async function deleteContactMessage(id: string): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore - Assuming this method exists on the adapter
-  if (!db.deleteContactMessage) {
-        return { success: false, message: "Função não implementada neste adaptador." };
-  }
-  // @ts-ignore
-  const result = await db.deleteContactMessage(id);
-  if (result.success) {
+  try {
+    await prisma.contactMessage.delete({ where: { id } });
     revalidatePath('/admin/contact-messages');
+    return { success: true, message: "Mensagem excluída." };
+  } catch (error: any) {
+    return { success: false, message: "Falha ao excluir mensagem." };
   }
-  return result;
 }

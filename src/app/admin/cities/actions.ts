@@ -1,45 +1,90 @@
 // src/app/admin/cities/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
-import type { CityInfo, CityFormData, StateInfo } from '@/types';
+import { prisma } from '@/lib/prisma';
+import type { CityInfo, CityFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-
+import { slugify } from '@/lib/sample-data-helpers';
 
 export async function getCities(stateIdFilter?: string): Promise<CityInfo[]> {
-    const db = getDatabaseAdapter();
-    return db.getCities(stateIdFilter);
+    const cities = await prisma.city.findMany({
+        where: stateIdFilter ? { stateId: stateIdFilter } : {},
+        include: {
+            state: {
+                select: { uf: true }
+            }
+        },
+        orderBy: { name: 'asc' }
+    });
+    return cities.map(city => ({ ...city, stateUf: city.state.uf }));
 }
 
 export async function getCity(id: string): Promise<CityInfo | null> {
-    const cities = await getCities();
-    return cities.find(c => c.id === id) || null;
+    const city = await prisma.city.findUnique({
+        where: { id },
+        include: { state: { select: { uf: true }}}
+    });
+    if (!city) return null;
+    return { ...city, stateUf: city.state.uf };
 }
 
 export async function createCity(data: CityFormData): Promise<{ success: boolean, message: string, cityId?: string }> {
-    const db = getDatabaseAdapter();
-    const result = await db.createCity(data);
-    if (result.success) {
-      revalidatePath('/admin/cities');
+    try {
+        const parentState = await prisma.state.findUnique({ where: { id: data.stateId }});
+        if (!parentState) {
+            return { success: false, message: 'Estado pai não encontrado.' };
+        }
+        
+        const newCity = await prisma.city.create({
+            data: {
+                name: data.name,
+                slug: slugify(data.name),
+                stateId: data.stateId,
+                stateUf: parentState.uf,
+                ibgeCode: data.ibgeCode || null,
+            }
+        });
+        revalidatePath('/admin/cities');
+        return { success: true, message: "Cidade criada com sucesso.", cityId: newCity.id };
+    } catch (error: any) {
+        if (error.code === 'P2002') {
+             return { success: false, message: `Uma cidade com o código IBGE '${data.ibgeCode}' já existe.` };
+        }
+        return { success: false, message: `Falha ao criar cidade: ${error.message}` };
     }
-    return result;
 }
 
 export async function updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    const result = await db.updateCity(id, data);
-    if (result.success) {
+     try {
+        const dataToUpdate: any = { ...data };
+        if (data.name) {
+            dataToUpdate.slug = slugify(data.name);
+        }
+        if (data.stateId) {
+             const parentState = await prisma.state.findUnique({ where: { id: data.stateId }});
+             if (parentState) {
+                 dataToUpdate.stateUf = parentState.uf;
+             }
+        }
+        
+        await prisma.city.update({ where: { id }, data: dataToUpdate });
         revalidatePath('/admin/cities');
         revalidatePath(`/admin/cities/${id}/edit`);
+        return { success: true, message: "Cidade atualizada com sucesso." };
+    } catch (error: any) {
+         if (error.code === 'P2002') {
+             return { success: false, message: `Uma cidade com o código IBGE '${data.ibgeCode}' já existe.` };
+        }
+        return { success: false, message: `Falha ao atualizar cidade: ${error.message}` };
     }
-    return result;
 }
 
 export async function deleteCity(id: string): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    const result = await db.deleteCity(id);
-    if (result.success) {
+    try {
+        await prisma.city.delete({ where: { id } });
         revalidatePath('/admin/cities');
+        return { success: true, message: "Cidade excluída com sucesso." };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao excluir cidade: ${error.message}` };
     }
-    return result;
 }

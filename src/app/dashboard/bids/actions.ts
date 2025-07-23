@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { prisma } from '@/lib/prisma';
 import type { UserBid } from '@/types';
 
 /**
@@ -21,14 +21,51 @@ export async function getBidsForUserAction(userId: string): Promise<UserBid[]> {
     return [];
   }
   
-  const db = await getDatabaseAdapter();
-  // This logic is complex and specific to the sample data adapter for now.
-  // A real DB implementation would require a more sophisticated query or stored procedure.
-  // @ts-ignore
-  if (db.getUserBids) {
-    // @ts-ignore
-    return db.getUserBids(userId);
-  }
-  
-  return [];
+  const userBidsRaw = await prisma.bid.findMany({
+    where: { bidderId: userId },
+    orderBy: { timestamp: 'desc' },
+    distinct: ['lotId'], // Get only the latest bid from the user for each lot
+    include: {
+        lot: {
+            include: {
+                auction: {
+                    select: { title: true }
+                }
+            }
+        }
+    }
+  });
+
+  return userBidsRaw.map(bid => {
+    let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
+
+    if (bid.lot.status === 'ABERTO_PARA_LANCES') {
+        if (bid.amount === bid.lot.price) {
+            bidStatus = 'GANHANDO';
+        } else {
+            bidStatus = 'PERDENDO';
+        }
+    } else if (bid.lot.status === 'VENDIDO') {
+        if (bid.lot.winnerId === userId) {
+            bidStatus = 'ARREMATADO';
+        } else {
+            bidStatus = 'NAO_ARREMATADO';
+        }
+    } else if (bid.lot.status === 'ENCERRADO' || bid.lot.status === 'NAO_VENDIDO') {
+        bidStatus = 'ENCERRADO';
+    } else if (bid.lot.status === 'CANCELADO') {
+        bidStatus = 'CANCELADO';
+    }
+
+    return {
+        id: bid.id,
+        user: {} as any, // User data is not needed here
+        amount: bid.amount,
+        date: bid.timestamp,
+        // @ts-ignore
+        lot: { ...bid.lot, auctionName: bid.lot.auction.title },
+        bidStatus: bidStatus,
+        userBidAmount: bid.amount,
+    };
+  });
 }
