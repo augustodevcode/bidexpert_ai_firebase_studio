@@ -19,6 +19,10 @@ export class SellerService {
     return this.sellerRepository.findById(id);
   }
   
+  async findByName(name: string): Promise<SellerProfileInfo | null> {
+    return this.sellerRepository.findByName(name);
+  }
+
   async getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
       return this.sellerRepository.findBySlug(slugOrId);
   }
@@ -31,13 +35,11 @@ export class SellerService {
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
-      const existingSeller = await this.sellerRepository.findByName(data.name);
+      const existingSeller = await this.findByName(data.name);
       if (existingSeller) {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      // O publicId é gerado automaticamente pelo banco de dados (@default(cuid()))
-      // Não devemos enviá-lo no objeto de criação.
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),

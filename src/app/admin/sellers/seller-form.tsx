@@ -26,6 +26,7 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { consultaCepAction } from '@/lib/actions/cep'; // Importar a action
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -57,6 +58,7 @@ export default function SellerForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
 
   const form = useForm<SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
@@ -92,6 +94,21 @@ export default function SellerForm({
     }
     setIsMediaDialogOpen(false);
   };
+  
+  const handleCepLookup = async (cep: string) => {
+    if (cep.length < 8) return;
+    setIsCepLoading(true);
+    const result = await consultaCepAction(cep);
+    if (result.success && result.data) {
+        form.setValue('address', result.data.logradouro);
+        form.setValue('neighborhood', result.data.bairro);
+        form.setValue('city', result.data.localidade);
+        form.setValue('state', result.data.uf);
+    } else {
+        toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+    }
+    setIsCepLoading(false);
+  }
 
   async function onSubmit(values: SellerFormValues) {
     setIsSubmitting(true);
@@ -264,10 +281,38 @@ export default function SellerForm({
             </div>
              <FormField
                 control={form.control}
+                name="zipCode"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>CEP</FormLabel>
+                        <div className="flex gap-2">
+                            <FormControl>
+                                <Input 
+                                    placeholder="00000-000"
+                                    {...field}
+                                    value={field.value ?? ''} 
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        if (e.target.value.replace(/\D/g, '').length === 8) {
+                                            handleCepLookup(e.target.value);
+                                        }
+                                    }}
+                                />
+                            </FormControl>
+                            <Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>
+                                {isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}
+                            </Button>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+              />
+             <FormField
+                control={form.control}
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Endereço (Opcional)</FormLabel>
+                    <FormLabel>Endereço</FormLabel>
                     <FormControl>
                       <Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} />
                     </FormControl>
@@ -281,7 +326,7 @@ export default function SellerForm({
                 name="city"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cidade (Opcional)</FormLabel>
+                    <FormLabel>Cidade</FormLabel>
                     <FormControl>
                       <Input placeholder="São Paulo" {...field} value={field.value ?? ''} />
                     </FormControl>
@@ -294,22 +339,9 @@ export default function SellerForm({
                 name="state"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Estado/UF (Opcional)</FormLabel>
+                    <FormLabel>Estado/UF</FormLabel>
                     <FormControl>
                       <Input placeholder="SP" {...field} value={field.value ?? ''} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="zipCode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>CEP (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="00000-000" {...field} value={field.value ?? ''} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
