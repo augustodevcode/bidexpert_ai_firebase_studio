@@ -1,9 +1,10 @@
+
 // src/app/admin/settings/page.tsx
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getPlatformSettings, resetSampleDataAction, dropAllTablesAction } from './actions';
+import { getPlatformSettings, resetSampleDataAction, dropAllTablesAction, runFullSeedAction } from './actions';
 import SettingsForm from './settings-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
@@ -29,7 +30,6 @@ import { Input } from '@/components/ui/input';
 const settingsSections = [
     { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
     { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Máscaras de ID, assistente de setup, etc.' },
-    { id: 'database', label: 'Fonte de Dados (Dev)', icon: Database, description: 'Altere a fonte de dados para desenvolvimento.' },
     { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
     { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' },
     { id: 'listDisplay', label: 'Listas de Cadastros', icon: Rows, description: 'Opções de exibição para as tabelas do admin.' },
@@ -40,7 +40,7 @@ const settingsSections = [
 
 function DangerZone() {
     const { toast } = useToast();
-    const [isActionLoading, setIsActionLoading] = useState(false);
+    const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
     const [confirmationText, setConfirmationText] = useState('');
     
     const handleResetSetup = () => {
@@ -51,20 +51,25 @@ function DangerZone() {
         }
     };
     
-    const handleAction = async (action: 'reset' | 'drop') => {
-        setIsActionLoading(true);
+    const handleAction = async (action: 'seed' | 'reset' | 'drop') => {
+        setIsActionLoading(action);
+        let result = { success: false, message: 'Ação não reconhecida.' };
         try {
-            const result = action === 'reset' ? await resetSampleDataAction() : await dropAllTablesAction();
+            if (action === 'seed') {
+                toast({ title: 'Populando Dados', description: 'Isso pode levar alguns instantes. Por favor, aguarde.'});
+                result = await runFullSeedAction();
+            }
+            
             if (result.success) {
                 toast({ title: 'Sucesso!', description: result.message });
                 setTimeout(() => window.location.reload(), 1500);
             } else {
-                toast({ title: 'Erro', description: result.message, variant: 'destructive' });
+                toast({ title: 'Erro na Ação', description: result.message, variant: 'destructive' });
             }
         } catch(err: any) {
             toast({ title: 'Erro Crítico', description: err.message, variant: 'destructive' });
         } finally {
-            setIsActionLoading(false);
+            setIsActionLoading(null);
             setConfirmationText('');
         }
     }
@@ -73,80 +78,48 @@ function DangerZone() {
         <Card className="border-destructive mt-6">
             <CardHeader>
                 <CardTitle className="text-md text-destructive">Zona de Perigo</CardTitle>
-                <CardDescription>Ações irreversíveis para o ambiente de desenvolvimento.</CardDescription>
+                <CardDescription>Ações importantes para o ambiente de desenvolvimento.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                  <Alert variant="destructive">
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Reiniciar Assistente de Configuração</AlertTitle>
                     <AlertDescription>
-                        Esta ação forçará o assistente de setup a ser exibido na próxima recarga da página.
+                        Esta ação forçará o assistente de setup a ser exibido na próxima recarga da página para reconfigurar o ambiente.
                     </AlertDescription>
                      <Button variant="outline" size="sm" className="mt-3 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleResetSetup}>
                         <RefreshCw className="mr-2 h-4 w-4" /> Reiniciar Assistente
                     </Button>
                 </Alert>
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Zerar Dados de Exemplo</AlertTitle>
+                <Alert variant="default" className="border-blue-500/50">
+                    <Database className="h-4 w-4" />
+                    <AlertTitle>Popular com Dados de Demonstração</AlertTitle>
                     <AlertDescription>
-                        Esta ação irá limpar todos os dados de todas as tabelas (TRUNCATE), mas manterá a estrutura das tabelas. Útil para começar um novo seed do zero sem alterar o schema.
+                        Preenche o banco de dados com um conjunto completo de dados para testes (leilões, lotes, etc.), ignorando itens que já existem.
                     </AlertDescription>
                      <AlertDialog onOpenChange={() => setConfirmationText('')}>
                       <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" className="mt-3">
-                            <Trash2 className="mr-2 h-4 w-4" /> Zerar Dados
+                        <Button variant="outline" size="sm" className="mt-3">
+                            {isActionLoading === 'seed' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4" />}
+                            Popular Banco de Dados
                         </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Tem certeza absoluta?</AlertDialogTitle>
+                          <AlertDialogTitle>Popular com Dados de Demonstração?</AlertDialogTitle>
                           <AlertDialogDescription>
-                            Esta ação é irreversível e limpará todas as tabelas. Para confirmar, digite <strong>zerar</strong> abaixo.
+                            Esta ação irá adicionar dados de exemplo ao banco de dados, como leilões, lotes e usuários. Nenhum dado existente será apagado. Para confirmar, digite <strong>popular</strong> abaixo.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <div className="space-y-2">
-                            <Label htmlFor="confirm-reset">Confirmação</Label>
-                            <Input id="confirm-reset" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
+                            <Label htmlFor="confirm-seed">Confirmação</Label>
+                            <Input id="confirm-seed" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
                         </div>
                         <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isActionLoading}>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleAction('reset')} disabled={confirmationText !== 'zerar' || isActionLoading} className="bg-destructive hover:bg-destructive/90">
-                            {isActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Confirmar e Zerar Dados
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </Alert>
-                <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Resetar Banco de Dados</AlertTitle>
-                    <AlertDescription>
-                        Esta ação irá apagar permanentemente todas as tabelas (DROP) do seu banco de dados. Você precisará reiniciar a aplicação para recriá-las.
-                    </AlertDescription>
-                     <AlertDialog onOpenChange={() => setConfirmationText('')}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="destructive" size="sm" className="mt-3">
-                            <Trash2 className="mr-2 h-4 w-4" /> Resetar Banco de Dados
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Esta é sua última chance!</AlertDialogTitle>
-                          <AlertDialogDescription>
-                           Ação extremamente destrutiva. Todas as tabelas serão apagadas. Para confirmar, digite <strong>resetar</strong> abaixo.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirm-drop">Confirmação</Label>
-                            <Input id="confirm-drop" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
-                        </div>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isActionLoading}>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleAction('drop')} disabled={confirmationText !== 'resetar' || isActionLoading} className="bg-destructive hover:bg-destructive/90">
-                            {isActionLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Eu entendo, apague tudo.
+                          <AlertDialogCancel disabled={isActionLoading === 'seed'}>Cancelar</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleAction('seed')} disabled={confirmationText !== 'popular' || isActionLoading === 'seed'}>
+                            {isActionLoading === 'seed' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Confirmar e Popular
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>
@@ -219,7 +192,7 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
                     asChild
                 >
                     <Link href={`/admin/settings?section=${section.id}`} scroll={false}>
-                    <section.icon className="mr-2 h-5 w-5" />
+                    {section.icon && <section.icon className="mr-2 h-5 w-5" />}
                     {section.label}
                     </Link>
                 </Button>
