@@ -38,7 +38,7 @@ async function seedFullData() {
                         password: await bcrypt.hash(adminUser.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
-                        roles: { connect: { id: adminRole.id } }
+                        roles: { connect: [{ id: adminRole.id }] }
                     }
                 });
                 console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
@@ -129,7 +129,7 @@ async function seedFullData() {
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roles: { connect: { id: role.id } },
+                            roles: { connect: [{ id: role.id }] },
                             seller: user.sellerId ? { connect: { id: user.sellerId }} : undefined,
                         }
                     });

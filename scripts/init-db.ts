@@ -9,7 +9,7 @@ import {
     sampleCourts, 
     sampleStates, 
     sampleCities,
-    sampleUsers // Import sampleUsers
+    sampleUsers
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -60,7 +60,7 @@ async function seedEssentialData() {
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roles: { connect: { id: adminRole.id } }
+                            roles: { connect: [{ id: adminRole.id }] }
                         }
                     });
                     console.log("[DB INIT] ✅ SUCCESS: Admin user created.");
