@@ -1,4 +1,3 @@
-
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -13,36 +12,47 @@ export function AppContentWrapper({ children }: { children: React.ReactNode }) {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Check the environment variable first. If it's 'true', force the setup.
-    const forceSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'true';
-    if (forceSetup) {
-        setIsSetupComplete(false);
-        return;
+    // This check must only run on the client where localStorage is available.
+    // The initial state on the server should be null to avoid hydration mismatches.
+    if (typeof window !== 'undefined') {
+        const forceSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'true';
+        const bypassSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'false';
+        
+        if (bypassSetup) {
+            setIsSetupComplete(true);
+            return;
+        }
+
+        if (forceSetup) {
+            setIsSetupComplete(false);
+            return;
+        }
+
+        const setupFlag = localStorage.getItem('bidexpert_setup_complete');
+        setIsSetupComplete(setupFlag === 'true');
     }
-    
-    // Otherwise, check localStorage. This check only runs on the client-side.
-    const setupFlag = localStorage.getItem('bidexpert_setup_complete');
-    setIsSetupComplete(setupFlag === 'true');
   }, []);
 
   useEffect(() => {
+    // If setup is not complete and we are not on the setup page, redirect.
     if (isSetupComplete === false && pathname !== '/setup') {
       router.replace('/setup');
     }
   }, [isSetupComplete, pathname, router]);
   
-  // Render a loading state or nothing while checking setup status
+  // While setup status is being determined, show a loader for all pages except setup itself.
   if (isSetupComplete === null && pathname !== '/setup') {
       return (
-        <div className="flex h-screen w-screen items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin"/>
+        <div className="flex h-screen w-screen items-center justify-center bg-background">
+            <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+            <p className="ml-3 text-muted-foreground">Verificando configuração...</p>
         </div>
       );
   }
 
   const isAdminOrConsignor = pathname.startsWith('/admin') || pathname.startsWith('/consignor-dashboard');
 
-  // If on the setup page, render it without the main layout
+  // If we are on the setup page, render it without the main layout
   if (pathname === '/setup') {
     return <>{children}</>;
   }
