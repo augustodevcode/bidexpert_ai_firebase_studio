@@ -45,7 +45,7 @@ export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]>
 
   return users.map(user => ({
     ...user,
-    roleName: user.roles[0]?.name, // Display first role for simplicity
+    roleName: user.roles[0]?.name,
     roleNames: user.roles.map(r => r.name),
     permissions: user.roles.flatMap(r => r.permissions as string[]),
   }));

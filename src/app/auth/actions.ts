@@ -31,7 +31,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   try {
     const user = await prisma.user.findUnique({ 
         where: { email },
-        include: { roles: true } // Corrigido aqui para o plural
+        include: { roles: true }
     });
 
     if (!user || !user.password) {
@@ -52,8 +52,9 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
-        roleNames: user.roles.map(r => r.name), // Extrai nomes dos perfis
-        permissions: user.roles.flatMap(r => r.permissions as string[]) || [], // Agrega permissões
+        roleName: user.roles[0]?.name,
+        roleNames: user.roles.map(r => r.name),
+        permissions: user.roles.flatMap(r => r.permissions as string[]) || [],
     };
     
     await createSession(userProfileWithPerms);
@@ -88,13 +89,14 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     
     const user = await prisma.user.findUnique({
         where: { id: session.userId },
-        include: { roles: true } // Usando 'roles' plural
+        include: { roles: true }
     });
 
     if (!user) return null;
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
+        roleName: user.roles[0]?.name,
         roleNames: user.roles.map(r => r.name),
         permissions: user.roles.flatMap(r => r.permissions as string[]),
     };
@@ -117,7 +119,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await prisma.user.findUnique({
             where: { email: adminEmail },
-            include: { roles: true } // <-- CORREÇÃO PRINCIPAL AQUI
+            include: { roles: true }
         });
         
         if (!adminUser) {
@@ -126,6 +128,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
 
         const userProfileWithPerms: UserProfileWithPermissions = {
             ...adminUser,
+            roleName: adminUser.roles[0]?.name,
             roleNames: adminUser.roles.map(r => r.name),
             permissions: adminUser.roles.flatMap(r => r.permissions as string[])
         };
