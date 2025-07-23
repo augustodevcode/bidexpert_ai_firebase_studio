@@ -22,7 +22,7 @@ async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
 
     try {
-        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
+        // Seeding Admin User
         console.log('[DB SEED] Seeding Admin User...');
         const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
         if (adminUser) {
@@ -38,7 +38,7 @@ async function seedFullData() {
                         password: await bcrypt.hash(adminUser.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
-                        roles: { connect: [{ id: adminRole.id }] }
+                        roles: { connect: [{ nameNormalized: adminRole.nameNormalized }] }
                     }
                 });
                 console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
@@ -129,7 +129,7 @@ async function seedFullData() {
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roles: { connect: [{ id: role.id }] },
+                            roles: { connect: [{ nameNormalized: role.nameNormalized }] },
                             seller: user.sellerId ? { connect: { id: user.sellerId }} : undefined,
                         }
                     });

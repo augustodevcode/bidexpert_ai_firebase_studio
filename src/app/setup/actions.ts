@@ -70,7 +70,7 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
                 accountType: 'PHYSICAL',
                 habilitationStatus: 'HABILITADO',
                 roles: {
-                    connect: [{ nameNormalized: 'ADMINISTRATOR' }] // CORREÇÃO: Usando o campo unique correto
+                    connect: [{ nameNormalized: 'ADMINISTRATOR' }] // ✅ Correct: Connect using the unique 'nameNormalized' field.
                 }
             }
         });
