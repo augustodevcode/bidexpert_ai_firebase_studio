@@ -13,7 +13,7 @@ import {
   sampleDirectSaleOffers,
   sampleBids,
   sampleUserWins,
-  sampleUsers // Still needed for other users
+  sampleUsers
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -22,7 +22,29 @@ async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
 
     try {
-        // Note: Seeding for essential data (roles, categories, admin user) is now in init-db.ts
+        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
+        console.log('[DB SEED] Seeding Admin User...');
+        const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
+        if (adminUser) {
+            const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
+            if (adminRole) {
+                await prisma.user.upsert({
+                    where: { email: adminUser.email },
+                    update: {},
+                    create: {
+                        email: adminUser.email,
+                        fullName: adminUser.fullName,
+                        password: await bcrypt.hash(adminUser.password || 'Admin@123', 10),
+                        habilitationStatus: 'HABILITADO',
+                        accountType: 'PHYSICAL',
+                        roles: { connect: [{ id: adminRole.id }] }
+                    }
+                });
+                console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
+            } else {
+                 console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
+            }
+        }
         
         console.log('[DB SEED] Seeding Sellers...');
         for (const seller of sampleSellers) {
@@ -100,7 +122,6 @@ async function seedFullData() {
                 if (role) {
                      await prisma.user.create({
                         data: {
-                            id: user.uid,
                             email: user.email,
                             fullName: user.fullName,
                             password: hashedPassword,
