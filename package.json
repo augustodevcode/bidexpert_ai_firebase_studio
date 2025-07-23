@@ -12,7 +12,8 @@
     "db:init": "dotenv -e .env -- tsx scripts/init-db.ts",
     "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
     "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
-    "postinstall": "dotenv -e .env -- prisma generate"
+    "postinstall": "dotenv -e .env -- prisma generate",
+    "test": "dotenv -e .env -- tsx test tests/seller.test.ts"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
@@ -94,3 +95,4 @@
   },
   "packageManager": "yarn@4.9.2"
 }
+
