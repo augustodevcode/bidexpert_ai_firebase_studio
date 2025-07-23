@@ -29,9 +29,8 @@ export class SellerService {
       return this.sellerRepository.findLotsBySellerId(seller.id);
   }
 
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string }> {
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
-      // Check if a seller with the same name already exists
       const existingSeller = await this.sellerRepository.findByName(data.name);
       if (existingSeller) {
         return { success: false, message: 'Já existe um comitente com este nome.' };
