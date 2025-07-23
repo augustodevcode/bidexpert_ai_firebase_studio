@@ -1,4 +1,5 @@
 
+
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -35,7 +36,7 @@ export interface UserCreationData {
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
   const users = await prisma.user.findMany({
     include: {
-      role: true, // Include the single role
+      roles: true, 
     },
     orderBy: {
       fullName: 'asc'
@@ -44,24 +45,24 @@ export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]>
 
   return users.map(user => ({
     ...user,
-    roleName: user.role?.name,
-    roleNames: user.role ? [user.role.name] : [],
-    permissions: user.role ? user.role.permissions as string[] : [],
+    roleName: user.roles[0]?.name, // Display first role for simplicity
+    roleNames: user.roles.map(r => r.name),
+    permissions: user.roles.flatMap(r => r.permissions as string[]),
   }));
 }
 
 export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
     const user = await prisma.user.findUnique({
         where: { id: userId },
-        include: { role: true }
+        include: { roles: true }
     });
     if (!user) return null;
 
     return {
         ...user,
-        roleName: user.role?.name,
-        roleNames: user.role ? [user.role.name] : [],
-        permissions: user.role?.permissions as string[] || [],
+        roleName: user.roles[0]?.name,
+        roleNames: user.roles.map(r => r.name),
+        permissions: user.roles.flatMap(r => r.permissions as string[]),
     };
 }
 
@@ -109,7 +110,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
       state: data.state?.trim(),
       optInMarketing: data.optInMarketing,
       habilitationStatus: habilitationStatus,
-      roleId: userRole.id,
+      roles: { connect: [{ id: userRole.id }] }
     }
   });
 
@@ -119,21 +120,31 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   try {
-    // Since a user can only have one role according to the current schema, we take the first one.
-    // In the future, if the schema changes to many-to-many, this logic would need to be updated.
-    const newRoleId = roleIds.length > 0 ? roleIds[0] : null;
+    // Get the current roles to disconnect them
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { roles: { select: { id: true } } }
+    });
 
+    const rolesToDisconnect = user?.roles.map(r => ({ id: r.id })) || [];
+    const rolesToConnect = roleIds.map(id => ({ id }));
+    
     await prisma.user.update({
         where: { id: userId },
-        data: { roleId: newRoleId }
+        data: {
+            roles: {
+                disconnect: rolesToDisconnect,
+                connect: rolesToConnect
+            }
+        }
     });
 
     revalidatePath('/admin/users');
     revalidatePath(`/admin/users/${userId}/edit`);
-    return { success: true, message: "Perfil do usuário atualizado." };
+    return { success: true, message: "Perfis do usuário atualizados." };
   } catch(error: any) {
     console.error("Failed to update user roles:", error);
-    return { success: false, message: `Falha ao atualizar perfil: ${error.message}`};
+    return { success: false, message: `Falha ao atualizar perfis: ${error.message}`};
   }
 }
 

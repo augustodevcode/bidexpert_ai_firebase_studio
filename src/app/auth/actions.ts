@@ -1,4 +1,5 @@
 
+
 // src/app/auth/actions.ts
 'use server';
 
@@ -30,7 +31,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   try {
     const user = await prisma.user.findUnique({ 
         where: { email },
-        include: { role: true }
+        include: { roles: true } // Corrigido aqui para o plural
     });
 
     if (!user || !user.password) {
@@ -51,9 +52,8 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
-        roleName: user.role?.name,
-        roleNames: user.role ? [user.role.name] : [],
-        permissions: user.role?.permissions as string[] || []
+        roleNames: user.roles.map(r => r.name), // Extrai nomes dos perfis
+        permissions: user.roles.flatMap(r => r.permissions as string[]) || [], // Agrega permissões
     };
     
     await createSession(userProfileWithPerms);
@@ -88,16 +88,15 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     
     const user = await prisma.user.findUnique({
         where: { id: session.userId },
-        include: { role: true }
+        include: { roles: true } // Usando 'roles' plural
     });
 
     if (!user) return null;
 
     const userProfileWithPerms: UserProfileWithPermissions = {
         ...user,
-        roleName: user.role?.name,
-        roleNames: user.role ? [user.role.name] : [],
-        permissions: user.role?.permissions as string[] || [],
+        roleNames: user.roles.map(r => r.name),
+        permissions: user.roles.flatMap(r => r.permissions as string[]),
     };
     
     return userProfileWithPerms;
@@ -118,7 +117,7 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
         const adminEmail = 'admin@bidexpert.com.br';
         let adminUser = await prisma.user.findUnique({
             where: { email: adminEmail },
-            include: { role: true }
+            include: { roles: true } // <-- CORREÇÃO PRINCIPAL AQUI
         });
         
         if (!adminUser) {
@@ -127,9 +126,8 @@ export async function loginAdminForDevelopment(): Promise<UserProfileWithPermiss
 
         const userProfileWithPerms: UserProfileWithPermissions = {
             ...adminUser,
-            roleName: adminUser.role?.name,
-            roleNames: adminUser.role ? [adminUser.role.name] : [],
-            permissions: adminUser.role?.permissions as string[] || []
+            roleNames: adminUser.roles.map(r => r.name),
+            permissions: adminUser.roles.flatMap(r => r.permissions as string[])
         };
 
         await createSession(userProfileWithPerms);
