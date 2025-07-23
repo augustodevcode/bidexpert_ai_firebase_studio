@@ -39,6 +39,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     createMediaItem(item: Partial<Omit<MediaItem, "id">>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }> { return this._notImplemented('createMediaItem'); }
     getPlatformSettings(): Promise<PlatformSettings | null> { return this._notImplemented('getPlatformSettings'); }
     updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('updatePlatformSettings'); }
+    createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createPlatformSettings'); }
     getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> { return this._notImplemented('getBens', true); }
     getBem(id: string): Promise<Bem | null> { return this._notImplemented('getBem'); }
     getBensByIds(ids: string[]): Promise<Bem[]> { return this._notImplemented('getBensByIds', true); }
@@ -78,5 +79,5 @@ export class PostgresAdapter implements DatabaseAdapter {
     deleteBem(id: string): Promise<{ success: boolean; message: string; }> { return this._notImplemented('deleteBem'); }
     createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> { return this._notImplemented('createUser'); }
     createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createRole'); }
-    createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }> { return this._notImplemented('createPlatformSettings'); }
+    saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string; }> { return this._notImplemented('saveContactMessage'); }
 }

@@ -52,18 +52,14 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
     *   Make suggestions that are relevant to the project's goals and current state.
     *   Understand the "Item X" references made by the user.
 
-## 4. Maintaining File Integrity
+## 4. Project-Specific Architectural Rules
 
-*   Ensure the markdown formatting remains consistent and readable.
-*   If you are unsure about how to update a file or what to include, please ask for clarification.
-*   When providing file content for these context files, always provide the *entire* intended content within the `<![CDATA[...` block.
+*   **Database Adapter Pattern:** All data access must go through the `getDatabaseAdapter()` function, which dynamically selects the correct database implementation (MySQL, Firestore, etc.) based on the `.env` file. Direct use of Prisma or other drivers is not permitted in the application logic.
+*   **`src/app` Directory Structure:** The application's file-based routing must reside exclusively within the `src/app` directory. There must never be a nested `src/app/app` or a root-level `app` folder.
+*   **Development Environment Footer:** In the development environment (`NODE_ENV === 'development'`), the footer must display the active database system, the logged-in user's email, and the Firebase project ID for easy reference.
+*   **`.env` File Integrity:** The `.env` file is critical and must never be deleted or have its existing content removed. It can be augmented, but not overwritten.
 
-## 5. Project-Specific Conventions
-
-*   **Development Environment:** In the development environment (`NODE_ENV === 'development'`), an automatic login mechanism exists for a virtual `admin@bidexpert.com.br` user to streamline development.
-*   **Footer Debug Info:** During development, the footer will display the active database system, the logged-in user's email, and the Firebase project ID for easy reference.
-
-## 6. XML Structure for Code Changes
+## 5. XML Structure for Code Changes
 
 Remember, the XML structure you generate is the only mechanism for applying changes to the user's code. Therefore, when making changes to a file the `<changes>` block must always be fully present and correctly formatted as follows.
 
