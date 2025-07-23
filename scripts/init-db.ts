@@ -1,86 +1,107 @@
 
 // src/scripts/init-db.ts
-import { getDatabaseAdapter } from '@/lib/database/get-adapter';
+import { prisma } from '@/lib/prisma';
 import { samplePlatformSettings, sampleRoles, sampleLotCategories, sampleSubcategories, sampleCourts, sampleStates, sampleCities } from '@/lib/sample-data';
-import type { DatabaseAdapter } from '@/types';
-
-
-async function seedCollectionInBatches(db: DatabaseAdapter, collectionName: string, data: any[], existingItems: any[], uniqueKey: string) {
-    console.log(`[DB INIT] LOG: Seeding ${collectionName}...`);
-    const itemsToCreate = data.filter(item => !existingItems.some(existing => existing[uniqueKey] === item[uniqueKey]));
-    
-    // @ts-ignore - Assuming batchWrite exists on the adapter
-    if (db.batchWrite && itemsToCreate.length > 0) {
-        console.log(`[DB INIT] LOG: Using batchWrite for ${itemsToCreate.length} items.`);
-        // @ts-ignore
-        await db.batchWrite(collectionName, itemsToCreate);
-    } else if (itemsToCreate.length > 0) {
-        console.warn(`[DB INIT] LOG: batchWrite not found on adapter. Seeding ${collectionName} one by one.`);
-        const createMethodName = `create${collectionName.charAt(0).toUpperCase() + collectionName.slice(1, -1)}`;
-        // @ts-ignore
-        const createMethod = db[createMethodName as keyof DatabaseAdapter];
-        
-        if (typeof createMethod === 'function') {
-            for (const item of itemsToCreate) {
-                try {
-                    // @ts-ignore
-                    const result = await createMethod.call(db, item);
-                    if (!result.success) {
-                        console.error(`[DB INIT] ❌ ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}: ${result.message}`);
-                    }
-                } catch(e: any) {
-                    console.error(`[DB INIT] ❌ CRITICAL ERROR seeding item in ${collectionName} with key ${item[uniqueKey]}:`, e.message);
-                }
-            }
-        } else {
-             console.warn(`[DB INIT] 🟡 WARNING: create method '${createMethodName}' not found on adapter.`);
-        }
-    }
-    console.log(`[DB INIT] ✅ SUCCESS: ${itemsToCreate.length} new items processed for ${collectionName}.`);
-}
 
 
 async function seedEssentialData() {
     console.log('\n--- [DB INIT] LOG: Seeding Essential Data ---');
-    let db;
-    try {
-        db = getDatabaseAdapter(); 
-    } catch (e: any) {
-        console.error(`[DB INIT] ❌ FATAL: Could not initialize database adapter. Error: ${e.message}`);
-        return; // Exit if adapter fails
-    }
     
     try {
         // Platform Settings (Single Document)
         console.log('[DB INIT] LOG: Seeding platform settings...');
-        const settings = await db.getPlatformSettings();
-        if (!settings || Object.keys(settings).length === 0 || !settings.id) {
-            await db.createPlatformSettings(samplePlatformSettings);
+        const settingsCount = await prisma.platformSettings.count();
+        if (settingsCount === 0) {
+            // @ts-ignore
+            await prisma.platformSettings.create({ data: samplePlatformSettings });
             console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
         }
 
-        // Batch-writable collections
-        console.log("[DB INIT] LOG: Fetching existing data for essential collections.");
-        const existingRoles = await db.getRoles();
-        const existingCategories = await db.getLotCategories();
-        const existingSubcategories = await db.getSubcategoriesByParent();
-        const existingStates = await db.getStates();
-        const existingCities = await db.getCities();
-        const existingCourts = await db.getCourts();
+        // Seeding Roles
+        console.log('[DB INIT] LOG: Seeding roles...');
+        const existingRoles = await prisma.role.findMany({ select: { id: true }});
+        const existingRoleIds = new Set(existingRoles.map(r => r.id));
+        const rolesToCreate = sampleRoles.filter(role => !existingRoleIds.has(role.id));
+        if (rolesToCreate.length > 0) {
+            // @ts-ignore
+            await prisma.role.createMany({ data: rolesToCreate, skipDuplicates: true });
+            console.log(`[DB INIT] ✅ SUCCESS: ${rolesToCreate.length} new roles created.`);
+        } else {
+            console.log("[DB INIT] 🟡 INFO: Roles already exist.");
+        }
+        
+        // Seeding Lot Categories
+        console.log('[DB INIT] LOG: Seeding Lot Categories...');
+        const existingCats = await prisma.lotCategory.findMany({ select: { id: true }});
+        const existingCatIds = new Set(existingCats.map(c => c.id));
+        const catsToCreate = sampleLotCategories.filter(cat => !existingCatIds.has(cat.id));
+        if (catsToCreate.length > 0) {
+             // @ts-ignore
+            await prisma.lotCategory.createMany({ data: catsToCreate, skipDuplicates: true });
+            console.log(`[DB INIT] ✅ SUCCESS: ${catsToCreate.length} new categories created.`);
+        } else {
+            console.log("[DB INIT] 🟡 INFO: Categories already exist.");
+        }
+        
+        // Seeding Subcategories
+        console.log('[DB INIT] LOG: Seeding Subcategories...');
+        const existingSubCats = await prisma.subcategory.findMany({ select: { id: true }});
+        const existingSubCatIds = new Set(existingSubCats.map(s => s.id));
+        const subCatsToCreate = sampleSubcategories.filter(sub => !existingSubCatIds.has(sub.id));
+        if (subCatsToCreate.length > 0) {
+            // @ts-ignore
+            await prisma.subcategory.createMany({ data: subCatsToCreate, skipDuplicates: true });
+            console.log(`[DB INIT] ✅ SUCCESS: ${subCatsToCreate.length} new subcategories created.`);
+        } else {
+            console.log("[DB INIT] 🟡 INFO: Subcategories already exist.");
+        }
 
-        await seedCollectionInBatches(db, 'roles', sampleRoles, existingRoles, 'name_normalized');
-        await seedCollectionInBatches(db, 'lotCategories', sampleLotCategories, existingCategories, 'slug');
-        await seedCollectionInBatches(db, 'subcategories', sampleSubcategories, existingSubcategories, 'slug');
-        await seedCollectionInBatches(db, 'states', sampleStates, existingStates, 'uf');
-        await seedCollectionInBatches(db, 'cities', sampleCities, existingCities, 'slug');
-        await seedCollectionInBatches(db, 'courts', sampleCourts, existingCourts, 'slug');
+        // Seeding States
+        console.log('[DB INIT] LOG: Seeding States...');
+        const existingStates = await prisma.state.findMany({ select: { uf: true }});
+        const existingStateUfs = new Set(existingStates.map(s => s.uf));
+        const statesToCreate = sampleStates.filter(state => !existingStateUfs.has(state.uf));
+         if (statesToCreate.length > 0) {
+            await prisma.state.createMany({ data: statesToCreate, skipDuplicates: true });
+            console.log(`[DB INIT] ✅ SUCCESS: ${statesToCreate.length} new states created.`);
+        } else {
+            console.log("[DB INIT] 🟡 INFO: States already exist.");
+        }
+
+        // Seeding Cities
+        console.log('[DB INIT] LOG: Seeding Cities...');
+        // This is a slow way to do it, but ensures no duplicates on ibgeCode
+        for (const city of sampleCities) {
+            await prisma.city.upsert({
+                where: { ibgeCode: city.ibgeCode },
+                update: {},
+                create: city,
+            });
+        }
+        console.log(`[DB INIT] ✅ SUCCESS: Processed ${sampleCities.length} cities.`);
+        
+        // Seeding Courts
+        console.log('[DB INIT] LOG: Seeding Courts...');
+        const existingCourts = await prisma.court.findMany({ select: { id: true }});
+        const existingCourtIds = new Set(existingCourts.map(c => c.id));
+        const courtsToCreate = sampleCourts.filter(court => !existingCourtIds.has(court.id));
+        if (courtsToCreate.length > 0) {
+            // @ts-ignore
+            await prisma.court.createMany({ data: courtsToCreate, skipDuplicates: true });
+            console.log(`[DB INIT] ✅ SUCCESS: ${courtsToCreate.length} new courts created.`);
+        } else {
+            console.log("[DB INIT] 🟡 INFO: Courts already exist.");
+        }
+
 
     } catch (error: any) {
         console.error(`[DB INIT] ❌ ERROR seeding essential data: ${error.message}`);
         // Do not re-throw, just log the error.
         // throw error; // Commented out to prevent script from crashing
+    } finally {
+        await prisma.$disconnect();
     }
     
     console.log('--- [DB INIT] LOG: Essential Data seeding finished ---');
@@ -89,16 +110,12 @@ async function seedEssentialData() {
 
 async function initializeDatabase() {
   console.log('🚀 [DB INIT] LOG: Starting database initialization script...');
-  const activeSystem = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'FIRESTORE';
-  console.log(`[DB INIT] LOG: Active database system is configured to: ${activeSystem}`);
-
   await seedEssentialData();
-  
   console.log("✅ [DB INIT] LOG: Initialization script finished.");
 }
 
-initializeDatabase().catch(error => {
-    // This top-level catch is for unexpected errors in the script itself.
+initializeDatabase().catch(async (error) => {
     console.error("[DB INIT] ❌ FATAL SCRIPT ERROR during database initialization:", error);
-    process.exit(1); // Exit with failure code for fatal script errors.
+    await prisma.$disconnect();
+    process.exit(1);
 });
