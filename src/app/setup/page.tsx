@@ -1,38 +1,55 @@
 // src/app/setup/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Rocket, Database, UserCog, CheckCircle } from 'lucide-react';
 import WelcomeStep from '@/components/setup/welcome-step';
 import SeedingStep from '@/components/setup/seeding-step';
-import AdminUserStep from '@/components/setup/admin-user-step'; // Importado
+import AdminUserStep from '@/components/setup/admin-user-step';
 import FinishStep from '@/components/setup/finish-step';
 import { verifyInitialData } from './actions';
+import { useRouter } from 'next/navigation';
 
 const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
   { id: 'seeding', title: 'Dados Iniciais', icon: Database },
-  { id: 'admin', title: 'Administrador', icon: UserCog }, // Nova Etapa
+  { id: 'admin', title: 'Administrador', icon: UserCog },
   { id: 'finish', title: 'Finalização', icon: CheckCircle },
 ];
 
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+
+  // Adicionado para verificar se o setup já foi concluído ao carregar a página
+  useEffect(() => {
+    console.log('[SetupPage] Verificando se o setup já foi concluído no localStorage.');
+    const setupComplete = localStorage.getItem('bidexpert_setup_complete') === 'true';
+    if (setupComplete) {
+      console.log('[SetupPage] Setup já concluído. Redirecionando para /admin/dashboard.');
+      router.replace('/admin/dashboard');
+    }
+  }, [router]);
 
   const goToNextStep = async () => {
-    // Adiciona a verificação antes de ir para a próxima etapa a partir do step de seeding
+    console.log(`[SetupPage] Tentando avançar do step: ${STEPS[currentStep].id}`);
     if (STEPS[currentStep].id === 'seeding') {
       const result = await verifyInitialData();
       if (!result.success) {
         alert(`Falha na verificação do banco de dados: ${result.message}. Por favor, tente popular os dados novamente ou verifique as configurações do seu banco.`);
+        console.log('[SetupPage] Verificação do DB falhou. Bloqueando avanço.');
         return;
       }
+      console.log('[SetupPage] Verificação do DB passou. Avançando para o próximo step.');
     }
     setCurrentStep(prev => Math.min(prev + 1, STEPS.length - 1));
   };
   
-  const goToPrevStep = () => setCurrentStep(prev => Math.max(prev - 1, 0));
+  const goToPrevStep = () => {
+    console.log(`[SetupPage] Voltando do step: ${STEPS[currentStep].id}`);
+    setCurrentStep(prev => Math.max(prev - 1, 0));
+  };
 
   const renderCurrentStep = () => {
     switch (STEPS[currentStep].id) {
@@ -41,7 +58,7 @@ export default function SetupPage() {
       case 'seeding':
         return <SeedingStep onNext={goToNextStep} onPrev={goToPrevStep} />;
       case 'admin':
-         return <AdminUserStep onNext={goToNextStep} onPrev={goToPrevStep} />; // Renderiza o novo step
+         return <AdminUserStep onNext={goToNextStep} onPrev={goToPrevStep} />;
       case 'finish':
          return <FinishStep />;
       default:

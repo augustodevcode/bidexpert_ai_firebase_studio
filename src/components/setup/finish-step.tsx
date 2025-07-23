@@ -9,8 +9,10 @@ import Link from 'next/link';
 export default function FinishStep() {
   
   const handleFinish = () => {
-      // In a real app, this might set a cookie or database flag
+      console.log("[FinishStep] Botão Finalizar clicado. Definindo localStorage e redirecionando...");
+      // Definir a flag no localStorage para indicar que o setup foi concluído
       localStorage.setItem('bidexpert_setup_complete', 'true');
+      // Redirecionar para o dashboard de admin
       window.location.href = '/admin/dashboard';
   };
     

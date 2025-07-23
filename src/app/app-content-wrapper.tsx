@@ -1,3 +1,4 @@
+// src/app/app-content-wrapper.tsx
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
@@ -12,57 +13,61 @@ export function AppContentWrapper({ children }: { children: React.ReactNode }) {
   const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // This check must only run on the client where localStorage is available.
-    // The initial state on the server should be null to avoid hydration mismatches.
+    // Lógica de verificação que roda SOMENTE no navegador.
     if (typeof window !== 'undefined') {
-        const forceSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'true';
-        const bypassSetup = process.env.NEXT_PUBLIC_FORCE_SETUP === 'false';
-        
-        if (bypassSetup) {
-            setIsSetupComplete(true);
-            return;
-        }
-
-        if (forceSetup) {
-            setIsSetupComplete(false);
-            return;
-        }
-
+        console.log('[AppContentWrapper] Verificando status do setup no cliente...');
         const setupFlag = localStorage.getItem('bidexpert_setup_complete');
-        setIsSetupComplete(setupFlag === 'true');
+        console.log(`[AppContentWrapper] Valor encontrado no localStorage para 'bidexpert_setup_complete': "${setupFlag}"`);
+        
+        const setupComplete = setupFlag === 'true';
+        setIsSetupComplete(setupComplete);
+        console.log(`[AppContentWrapper] Definindo isSetupComplete para: ${setupComplete}`);
     }
   }, []);
 
   useEffect(() => {
-    // If setup is not complete and we are not on the setup page, redirect.
+    // Lógica de redirecionamento
+    console.log(`[AppContentWrapper] Verificando redirecionamento. Pathname: ${pathname}, isSetupComplete: ${isSetupComplete}`);
     if (isSetupComplete === false && pathname !== '/setup') {
+      console.log(`[AppContentWrapper] REDIRECIONANDO para /setup porque isSetupComplete é false e pathname não é /setup.`);
       router.replace('/setup');
     }
   }, [isSetupComplete, pathname, router]);
   
-  // While setup status is being determined, show a loader for all pages except setup itself.
+  // Enquanto o status do setup está sendo determinado (estado inicial `null`), mostramos um loader.
   if (isSetupComplete === null && pathname !== '/setup') {
+      console.log('[AppContentWrapper] Renderizando loader porque isSetupComplete ainda é null.');
       return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin text-primary"/>
-            <p className="ml-3 text-muted-foreground">Verificando configuração...</p>
+            <p className="ml-3 text-muted-foreground">Verificando configuração da aplicação...</p>
         </div>
       );
   }
 
   const isAdminOrConsignor = pathname.startsWith('/admin') || pathname.startsWith('/consignor-dashboard');
 
-  // If we are on the setup page, render it without the main layout
+  // Se estivermos na página de setup, renderizamos apenas o seu conteúdo.
   if (pathname === '/setup') {
+    console.log('[AppContentWrapper] Renderizando a página de setup.');
     return <>{children}</>;
   }
 
-  // If in admin or consignor dashboard, the layout is handled by their specific layout files
+  // Se o setup estiver incompleto, a lógica de redirecionamento acima cuidará disso.
+  // Evitamos renderizar o layout principal para evitar um "flash" de conteúdo.
+  if (isSetupComplete === false) {
+      console.log('[AppContentWrapper] Retornando null para aguardar o redirecionamento do setup.');
+      return null;
+  }
+  
+  // Para as áreas de admin e comitente, seus próprios layouts cuidam da estrutura.
   if (isAdminOrConsignor) {
+    console.log('[AppContentWrapper] Renderizando conteúdo dentro do layout de admin/consignor.');
     return <>{children}</>;
   }
 
-  // Default layout for public-facing pages
+  // Layout padrão para as páginas públicas.
+  console.log('[AppContentWrapper] Renderizando layout público padrão.');
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
