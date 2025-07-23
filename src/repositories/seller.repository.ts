@@ -1,6 +1,7 @@
 // src/repositories/seller.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
+import type { Prisma } from '@prisma/client';
 
 export class SellerRepository {
   async findAll(): Promise<SellerProfileInfo[]> {
@@ -27,8 +28,7 @@ export class SellerRepository {
       });
   }
 
-  async create(data: SellerFormData): Promise<SellerProfileInfo> {
-    // @ts-ignore
+  async create(data: Prisma.SellerCreateInput): Promise<SellerProfileInfo> {
     return prisma.seller.create({ data });
   }
 
