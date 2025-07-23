@@ -3,67 +3,69 @@
 
 import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
+import { SellerService } from '@/services/seller.service';
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  const db = getDatabaseAdapter();
-  return db.getAuctioneers();
+  return prisma.auctioneer.findMany({ orderBy: { name: 'asc' } });
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {
-  const db = getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getAuctioneer) {
-    // @ts-ignore
-    return db.getAuctioneer(id);
-  }
-  const auctioneers = await db.getAuctioneers();
-  return auctioneers.find(a => a.id === id || a.publicId === id) || null;
+  return prisma.auctioneer.findFirst({ where: { OR: [{ id }, { publicId: id }] } });
 }
 
 export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
-    const db = getDatabaseAdapter();
-    const auctioneers = await db.getAuctioneers();
-    return auctioneers.find(a => a.slug === slugOrId || a.id === slugOrId || a.publicId === slugOrId) || null;
+    return prisma.auctioneer.findFirst({
+        where: {
+            OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
+        }
+    });
 }
 
-
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const db = getDatabaseAdapter();
-    const allAuctions = await db.getAuctions();
-    const auctioneer = await getAuctioneerBySlug(auctioneerSlug);
-    if (!auctioneer) return [];
-    return allAuctions.filter(a => a.auctioneerId === auctioneer.id || a.auctioneer === auctioneer.name);
+    // @ts-ignore
+    return prisma.auction.findMany({
+        where: {
+            auctioneer: {
+                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
+            }
+        },
+        include: { lots: true }
+    });
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    const result = await db.createAuctioneer(data);
-    if(result.success) {
-      revalidatePath('/admin/auctioneers');
+    try {
+        const newAuctioneer = await prisma.auctioneer.create({ data: data as any });
+        revalidatePath('/admin/auctioneers');
+        return { success: true, message: "Leiloeiro criado com sucesso.", auctioneerId: newAuctioneer.id };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao criar leiloeiro: ${error.message}` };
     }
-    return result;
 }
 
 export async function updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    const result = await db.updateAuctioneer(id, data);
-    if(result.success) {
-      revalidatePath('/admin/auctioneers');
-      revalidatePath(`/admin/auctioneers/${id}/edit`);
+    try {
+        await prisma.auctioneer.update({ where: { id }, data: data as any });
+        revalidatePath('/admin/auctioneers');
+        revalidatePath(`/admin/auctioneers/${id}/edit`);
+        return { success: true, message: "Leiloeiro atualizado com sucesso." };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao atualizar leiloeiro: ${error.message}` };
     }
-    return result;
 }
 
 export async function deleteAuctioneer(id: string): Promise<{ success: boolean, message: string }> {
-    const db = getDatabaseAdapter();
-    // In a real app, check for linked auctions first
-    // @ts-ignore
-    const result = await db.deleteAuctioneer(id);
-    if (result.success) {
-      revalidatePath('/admin/auctioneers');
+    try {
+        // In a real app, check for linked auctions first
+        const linkedAuctions = await prisma.auction.count({ where: { auctioneerId: id } });
+        if (linkedAuctions > 0) {
+            return { success: false, message: `Não é possível excluir. O leiloeiro está vinculado a ${linkedAuctions} leilão(ões).` };
+        }
+        await prisma.auctioneer.delete({ where: { id } });
+        revalidatePath('/admin/auctioneers');
+        return { success: true, message: 'Leiloeiro excluído com sucesso.' };
+    } catch (error: any) {
+        return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
     }
-    return result;
 }
