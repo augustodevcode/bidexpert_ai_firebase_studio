@@ -22,7 +22,7 @@ async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
 
     try {
-        // Seeding Admin User
+        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
         console.log('[DB SEED] Seeding Admin User...');
         const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
         if (adminUser) {

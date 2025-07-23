@@ -2,6 +2,8 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import bcrypt from 'bcrypt';
+import type { Role } from '@/types';
 
 /**
  * Verifica se os dados essenciais (ex: roles e settings) existem no banco de dados.
@@ -28,4 +30,56 @@ export async function verifyInitialData(): Promise<{ success: boolean; message: 
     console.error('[Setup Action] Erro ao verificar dados iniciais:', error);
     return { success: false, message: `Erro de conexão com o banco de dados: ${error.message}` };
   }
+}
+
+/**
+ * Cria o usuário administrador inicial da plataforma.
+ * @param {FormData} formData - Os dados do formulário de criação do admin.
+ * @returns {Promise<{success: boolean; message: string}>}
+ */
+export async function createAdminUser(formData: FormData): Promise<{ success: boolean; message: string }> {
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const fullName = formData.get('fullName') as string;
+
+    if (!email || !password || !fullName) {
+        return { success: false, message: 'Todos os campos são obrigatórios.' };
+    }
+    
+    console.log('[Setup Action] Criando usuário administrador...');
+    
+    try {
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            return { success: false, message: 'Um usuário com este email já existe.' };
+        }
+
+        const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' }});
+        if (!adminRole) {
+            throw new Error("O perfil 'ADMINISTRATOR' não foi encontrado. Execute o passo anterior (seed) primeiro.");
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await prisma.user.create({
+            data: {
+                id: `admin-${new Date().getTime()}`,
+                email,
+                password: hashedPassword,
+                fullName,
+                accountType: 'PHYSICAL',
+                habilitationStatus: 'HABILITADO',
+                roles: {
+                    connect: [{ id: adminRole.id }]
+                }
+            }
+        });
+
+        console.log(`[Setup Action] Usuário admin ${email} criado com sucesso.`);
+        return { success: true, message: 'Usuário administrador criado com sucesso!' };
+
+    } catch (error: any) {
+        console.error('[Setup Action] Erro ao criar usuário admin:', error);
+        return { success: false, message: `Falha ao criar administrador: ${error.message}` };
+    }
 }

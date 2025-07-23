@@ -1,4 +1,3 @@
-
 // src/scripts/init-db.ts
 import { prisma } from '@/lib/prisma';
 import { 
@@ -9,7 +8,10 @@ import {
     sampleCourts, 
     sampleStates, 
     sampleCities,
+    sampleUsers
 } from '@/lib/sample-data';
+import bcrypt from 'bcrypt';
+import { v4 as uuidv4 } from 'uuid';
 
 
 async function seedEssentialData() {
@@ -39,7 +41,7 @@ async function seedEssentialData() {
         } else {
             console.log("[DB INIT] 🟡 INFO: Roles already exist.");
         }
-        
+
         // Seeding Lot Categories
         console.log('[DB INIT] LOG: Seeding Lot Categories...');
         const existingCats = await prisma.lotCategory.findMany({ select: { id: true }});

@@ -3,17 +3,17 @@
 
 import { useState } from 'react';
 import { Card } from '@/components/ui/card';
-import { Rocket, Database, Settings, CheckCircle } from 'lucide-react';
+import { Rocket, Database, UserCog, CheckCircle } from 'lucide-react';
 import WelcomeStep from '@/components/setup/welcome-step';
 import SeedingStep from '@/components/setup/seeding-step';
-import SettingsStep from '@/components/setup/settings-step';
+import AdminUserStep from '@/components/setup/admin-user-step'; // Importado
 import FinishStep from '@/components/setup/finish-step';
 import { verifyInitialData } from './actions';
 
 const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
   { id: 'seeding', title: 'Dados Iniciais', icon: Database },
-  { id: 'settings', title: 'Configurações', icon: Settings },
+  { id: 'admin', title: 'Administrador', icon: UserCog }, // Nova Etapa
   { id: 'finish', title: 'Finalização', icon: CheckCircle },
 ];
 
@@ -40,8 +40,8 @@ export default function SetupPage() {
         return <WelcomeStep onNext={goToNextStep} />;
       case 'seeding':
         return <SeedingStep onNext={goToNextStep} onPrev={goToPrevStep} />;
-      case 'settings':
-         return <SettingsStep onNext={goToNextStep} onPrev={goToPrevStep} />;
+      case 'admin':
+         return <AdminUserStep onNext={goToNextStep} onPrev={goToPrevStep} />; // Renderiza o novo step
       case 'finish':
          return <FinishStep />;
       default:
