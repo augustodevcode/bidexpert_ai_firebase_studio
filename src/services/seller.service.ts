@@ -35,11 +35,13 @@ export class SellerService {
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
-      const existingSeller = await this.findByName(data.name);
+      const existingSeller = await this.sellerRepository.findByName(data.name);
       if (existingSeller) {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
+      // Correção: Espalhar corretamente todos os campos de 'data'
+      // e adicionar o slug. O Prisma cuidará do id e publicId.
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),
