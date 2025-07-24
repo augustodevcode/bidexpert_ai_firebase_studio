@@ -7,8 +7,8 @@ import type { LotFormData, Auction, Bem, SellerProfileInfo, AuctioneerProfileInf
 
 const lotService = new LotService();
 const testLotTitle = 'Lote de Teste E2E (Notebook Dell)';
-let testAuction: Auction;
-let testBem: Bem;
+let testAuction: any;
+let testBem: any;
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
@@ -28,7 +28,7 @@ test.describe('Lot Service E2E Tests', () => {
         testSeller = await prisma.seller.create({
             data: { name: 'Comitente de Teste para Lotes', publicId: 'seller-pub-id-lot-test', slug: 'comitente-teste-lotes', isJudicial: false }
         });
-        // @ts-ignore
+        
         testAuction = await prisma.auction.create({
             data: { 
                 title: 'Leilão de Teste para Lotes',
@@ -40,7 +40,7 @@ test.describe('Lot Service E2E Tests', () => {
                 auctionDate: new Date(),
             }
         });
-        // @ts-ignore
+        
         testBem = await prisma.bem.create({
             data: {
                 title: 'Bem de Teste para Lote E2E',
@@ -103,6 +103,14 @@ test.describe('Lot Service E2E Tests', () => {
         assert.strictEqual(createdLotFromDb.title, newLotData.title, 'Lot title should match');
         assert.strictEqual(createdLotFromDb.auctionId, testAuction.id, 'Lot auctionId should match');
         assert.strictEqual(createdLotFromDb.bens.length, 1, 'Lot should be linked to 1 bem');
-        assert.strictEqual(createdLotFromDb.bens[0].id, testBem.id, 'The linked bem ID should match');
+        
+        // Assert the join table record
+        const joinRecord = await prisma.lotBens.findFirst({
+            where: {
+                lotId: createdLotFromDb.id,
+                bemId: testBem.id
+            }
+        });
+        assert.ok(joinRecord, 'A record should exist in the LotBens join table');
     });
 });
