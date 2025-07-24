@@ -74,7 +74,7 @@ export class JudicialDistrictService {
       // In a real app, you would check for dependencies like JudicialBranches
       await this.repository.delete(id);
       return { success: true, message: 'Comarca excluída com sucesso.' };
-    } catch (error: any)
+    } catch (error: any) {
       console.error(`Error in JudicialDistrictService.delete for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir comarca: ${error.message}` };
     }
