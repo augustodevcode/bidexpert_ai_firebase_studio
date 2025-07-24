@@ -3,94 +3,68 @@
 
 import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
+import { LotService } from '@/services/lot.service';
+
+const lotService = new LotService();
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
-  const lots = await prisma.lot.findMany({
-    where: auctionId ? { auctionId } : {},
-    include: {
-        bens: true,
-        auction: { select: { title: true } }
-    },
-    orderBy: { number: 'asc' }
-  });
-  // @ts-ignore
-  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
+  return lotService.getLots(auctionId);
 }
 
 export async function getLot(id: string): Promise<Lot | null> {
-  return prisma.lot.findFirst({
-    where: { OR: [{ id }, { publicId: id }] },
-    include: { bens: true, auction: true }
-  });
+  return lotService.getLotById(id);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
-  try {
-    const { bemIds, ...lotData } = data;
-    const result = await prisma.lot.create({
-      // @ts-ignore
-      data: {
-        ...lotData,
-        bens: bemIds ? { connect: bemIds.map(id => ({ id })) } : undefined,
-      },
-    });
+  const result = await lotService.createLot(data);
+  if (result.success) {
     revalidatePath('/admin/lots');
     if (data.auctionId) {
       revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
     }
-    return { success: true, message: 'Lote criado com sucesso!', lotId: result.id };
-  } catch (error: any) {
-    return { success: false, message: `Falha ao criar lote: ${error.message}` };
   }
+  return result;
 }
 
 export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
-  try {
-    const { bemIds, ...lotData } = data;
-    const lot = await prisma.lot.update({
-      where: { id },
-      // @ts-ignore
-      data: {
-        ...lotData,
-        bens: bemIds ? { set: bemIds.map(id => ({ id })) } : undefined,
+  const result = await lotService.updateLot(id, data);
+  if (result.success) {
+      revalidatePath('/admin/lots');
+      revalidatePath(`/admin/lots/${id}/edit`);
+      if (data.auctionId) {
+        revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
       }
-    });
-    revalidatePath('/admin/lots');
-    revalidatePath(`/admin/lots/${id}/edit`);
-    if (lot?.auctionId) {
-      revalidatePath(`/admin/auctions/${lot.auctionId}/edit`);
-    }
-    return { success: true, message: 'Lote atualizado com sucesso.' };
-  } catch (error: any) {
-    return { success: false, message: `Falha ao atualizar lote: ${error.message}` };
   }
+  return result;
 }
 
 export async function deleteLot(id: string, auctionId?: string): Promise<{ success: boolean, message: string }> {
-  try {
-    const lotToDelete = await prisma.lot.findFirst({ where: { OR: [{id}, {publicId: id}]}});
-    if (!lotToDelete) throw new Error("Lote não encontrado.");
+  const lotToDelete = await lotService.getLotById(id);
+  const finalAuctionId = auctionId || lotToDelete?.auctionId;
 
-    const finalAuctionId = auctionId || lotToDelete?.auctionId;
-
-    await prisma.lot.delete({ where: { id: lotToDelete.id } });
+  const result = await lotService.deleteLot(id);
+  
+  if (result.success) {
     revalidatePath('/admin/lots');
     if (finalAuctionId) {
       revalidatePath(`/admin/auctions/${finalAuctionId}/edit`);
     }
-    return { success: true, message: 'Lote excluído com sucesso.' };
-  } catch (error: any) {
-    return { success: false, message: `Falha ao excluir lote: ${error.message}` };
   }
+  return result;
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
+  // This might be better in a BemService, but keeping here for simplicity for now.
+  // It's used by Lot form to get details of bens.
+  const { prisma } = await import('@/lib/prisma');
   return prisma.bem.findMany({ where: { id: { in: ids } } });
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
   if (ids.length === 0) return [];
+  // This is also likely better in the LotService/Repository
+  const { prisma } = await import('@/lib/prisma');
+  // @ts-ignore
   return prisma.lot.findMany({ where: { id: { in: ids } } });
 }
 

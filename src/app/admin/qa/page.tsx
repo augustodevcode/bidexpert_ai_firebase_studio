@@ -13,7 +13,8 @@ import {
     runJudicialBranchEndToEndTest,
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
-    runAuctionEndToEndTest
+    runAuctionEndToEndTest,
+    runLotEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
@@ -84,6 +85,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Leilão',
     description: 'Verifica a criação de um novo leilão e a vinculação com leiloeiro e comitente.',
     action: runAuctionEndToEndTest,
+  },
+  {
+    id: 'lot-creation',
+    title: 'Teste de Cadastro de Lote',
+    description: 'Verifica a criação de um lote, incluindo a relação com um bem.',
+    action: runLotEndToEndTest,
   },
 ];
 
