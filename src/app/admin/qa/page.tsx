@@ -21,8 +21,9 @@ import {
     runUserEndToEndTest,
     runMenuContentTest,
     runModalitiesMenuTest,
+    runMediaLibraryEndToEndTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -152,6 +153,13 @@ const tests: TestConfig[] = [
     action: runLotEndToEndTest,
     type: 'backend',
   },
+  {
+    id: 'media-library',
+    title: 'Biblioteca de Mídia',
+    description: 'Testa a criação, atualização e exclusão de itens na biblioteca de mídia.',
+    action: runMediaLibraryEndToEndTest,
+    type: 'backend',
+  },
 ];
 
 export default function QualityAssurancePage() {
@@ -200,7 +208,7 @@ export default function QualityAssurancePage() {
                         <Card key={test.id} className="bg-secondary/30">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
-                                     {test.type === 'frontend' ? <TestTube className="h-4 w-4 text-primary" /> : <TestTubeDiagonal className="h-4 w-4 text-primary"/>}
+                                     {test.id === 'media-library' ? <Library className="h-4 w-4 text-primary" /> : (test.type === 'frontend' ? <TestTube className="h-4 w-4 text-primary" /> : <TestTubeDiagonal className="h-4 w-4 text-primary"/>)}
                                      {test.title}
                                 </CardTitle>
                                 <CardDescription>{test.description}</CardDescription>

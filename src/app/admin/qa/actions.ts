@@ -116,3 +116,8 @@ export async function runLotEndToEndTest(): Promise<{ success: boolean; output: 
     const command = `dotenv -e .env -- tsx ./tests/lot.test.ts`;
     return runTestScript(command);
 }
+
+export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/media.test.ts`;
+    return runTestScript(command);
+}

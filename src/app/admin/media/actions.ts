@@ -1,13 +1,14 @@
 // src/app/admin/media/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
 import type { MediaItem } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { MediaService } from '@/services/media.service';
+
+const mediaService = new MediaService();
 
 export async function getMediaItems(): Promise<MediaItem[]> {
-  const db = await getDatabaseAdapter();
-  return db.getMediaItems();
+  return mediaService.getMediaItems();
 }
 
 export async function createMediaItem(
@@ -15,8 +16,7 @@ export async function createMediaItem(
   url: string,
   userId: string
 ): Promise<{ success: boolean; message: string; item?: MediaItem }> {
-  const db = await getDatabaseAdapter();
-  const result = await db.createMediaItem(itemData, url, userId);
+  const result = await mediaService.createMediaItem(itemData, url, userId);
   if (result.success) {
     revalidatePath('/admin/media');
   }
@@ -27,13 +27,7 @@ export async function updateMediaItemMetadata(
     id: string,
     metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
 ): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.updateMediaItemMetadata) {
-    return { success: false, message: 'Funcionalidade não implementada.' };
-  }
-  // @ts-ignore
-  const result = await db.updateMediaItemMetadata(id, metadata);
+  const result = await mediaService.updateMediaItemMetadata(id, metadata);
   if (result.success) {
     revalidatePath('/admin/media');
   }
@@ -41,13 +35,7 @@ export async function updateMediaItemMetadata(
 }
 
 export async function deleteMediaItem(id: string): Promise<{ success: boolean; message: string }> {
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (!db.deleteMediaItem) {
-    return { success: false, message: 'Funcionalidade não implementada.' };
-  }
-  // @ts-ignore
-  const result = await db.deleteMediaItem(id);
+  const result = await mediaService.deleteMediaItem(id);
   if (result.success) {
     revalidatePath('/admin/media');
   }
