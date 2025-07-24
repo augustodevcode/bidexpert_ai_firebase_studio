@@ -3,6 +3,7 @@ import { SellerRepository } from '@/repositories/seller.repository';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import type { Prisma } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -40,24 +41,11 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      // Prepara os dados para criação, garantindo que todos os campos do formulário sejam incluídos
-      // e que o slug seja gerado. O publicId e id são omitidos para serem gerados pelo Prisma/DB.
+      // Prepare the data for creation, generating the required fields.
       const dataToCreate: Prisma.SellerCreateInput = {
-        name: data.name,
+        ...data,
         slug: slugify(data.name),
-        contactName: data.contactName,
-        email: data.email,
-        phone: data.phone,
-        address: data.address,
-        city: data.city,
-        state: data.state,
-        zipCode: data.zipCode,
-        website: data.website,
-        logoUrl: data.logoUrl,
-        dataAiHintLogo: data.dataAiHintLogo,
-        description: data.description,
-        isJudicial: data.isJudicial,
-        judicialBranchId: data.judicialBranchId,
+        publicId: `COM-${uuidv4()}`, // Generate the required publicId
       };
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
