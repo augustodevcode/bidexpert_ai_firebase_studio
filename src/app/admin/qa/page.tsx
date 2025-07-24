@@ -13,6 +13,7 @@ import {
     runJudicialBranchEndToEndTest,
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
+    runLotEndToEndTest,
     runRoleEndToEndTest,
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
@@ -142,6 +143,13 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Bem',
     description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
     action: runBemEndToEndTest,
+    type: 'backend',
+  },
+  {
+    id: 'lot-creation',
+    title: 'Teste de Cadastro de Lote',
+    description: 'Verifica a criação de um lote e sua vinculação com bens e um leilão.',
+    action: runLotEndToEndTest,
     type: 'backend',
   },
 ];

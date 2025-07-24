@@ -87,6 +87,11 @@ export async function runBemEndToEndTest(): Promise<{ success: boolean; output: 
     return runTestScript(command);
 }
 
+export async function runLotEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/lot.test.ts`;
+    return runTestScript(command);
+}
+
 export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
     return runTestScript(command);
