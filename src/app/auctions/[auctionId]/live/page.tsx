@@ -1,5 +1,5 @@
-
-'use client'; // This page now needs client-side hooks for searchParams
+// src/app/auctions/[auctionId]/live/page.tsx
+'use client'; 
 
 import type { Auction, Lot } from '@/types';
 import VirtualAuditoriumClient from './virtual-auditorium-client';
@@ -10,15 +10,25 @@ import { useEffect, useState } from 'react';
 import { useParams, useSearchParams } from 'next/navigation';
 import { getAuction } from '@/app/admin/auctions/actions';
 import { getLots as getLotData } from '@/app/admin/lots/actions';
+import { getCurrentUser } from '@/app/auth/actions'; // Import getCurrentUser
+import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions'; // Import checkHabilitation
 
-
-async function fetchAuctionData(auctionId: string, targetLotId?: string | null): Promise<{ auction: Auction | null; currentLot: Lot | undefined; upcomingLots: Lot[] }> {
+async function fetchAuctionData(auctionId: string, targetLotId?: string | null, userId?: string | null): Promise<{ 
+  auction: Auction | null; 
+  currentLot: Lot | undefined; 
+  upcomingLots: Lot[];
+  isHabilitado: boolean;
+}> {
   console.log(`[LiveAuctionPage] fetchAuctionData called for auctionId: ${auctionId}, targetLotId: ${targetLotId}`);
   try {
-    const auction = await getAuction(auctionId);
+    const [auction, isHabilitado] = await Promise.all([
+      getAuction(auctionId),
+      userId ? checkHabilitationForAuctionAction(userId, auctionId) : Promise.resolve(false)
+    ]);
+    
     if (!auction) {
       console.warn(`[LiveAuctionPage] Auction not found for ID: ${auctionId}`);
-      return { auction: null, currentLot: undefined, upcomingLots: [] };
+      return { auction: null, currentLot: undefined, upcomingLots: [], isHabilitado: false };
     }
     console.log(`[LiveAuctionPage] Found auction: ${auction.title} (ID: ${auction.id})`);
 
@@ -27,7 +37,7 @@ async function fetchAuctionData(auctionId: string, targetLotId?: string | null):
     
     if (lotsArray.length === 0) {
       console.warn(`[LiveAuctionPage] Auction ID ${auction.id} has no lots.`);
-      return { auction, currentLot: undefined, upcomingLots: [] };
+      return { auction, currentLot: undefined, upcomingLots: [], isHabilitado };
     }
 
     let currentLot: Lot | undefined;
@@ -75,11 +85,11 @@ async function fetchAuctionData(auctionId: string, targetLotId?: string | null):
 
     // Attach lots to auction object for client component
     auction.lots = lotsArray;
-    return { auction, currentLot, upcomingLots };
+    return { auction, currentLot, upcomingLots, isHabilitado };
 
   } catch (error: any) {
     console.error(`[LiveAuctionPage] Critical error in fetchAuctionData for auctionId ${auctionId}:`, error);
-    return { auction: null, currentLot: undefined, upcomingLots: [] }; 
+    return { auction: null, currentLot: undefined, upcomingLots: [], isHabilitado: false }; 
   }
 }
 
@@ -90,29 +100,35 @@ export default function LiveAuctionPage() {
   const auctionId = typeof params.auctionId === 'string' ? params.auctionId : '';
   const targetLotId = searchParams.get('lotId');
 
-  const [auctionData, setAuctionData] = useState<{ auction: Auction | null; currentLot: Lot | undefined; upcomingLots: Lot[] } | null>(null);
+  const [auctionData, setAuctionData] = useState<{ auction: Auction | null; currentLot: Lot | undefined; upcomingLots: Lot[]; isHabilitado: boolean } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (auctionId) {
+    async function fetchDataForClient() {
+      if (!auctionId) {
+        setError("ID do leilão não fornecido.");
+        setIsLoading(false);
+        return;
+      }
+
       setIsLoading(true);
-      fetchAuctionData(auctionId, targetLotId)
-        .then(data => {
-          setAuctionData(data);
-          if (!data.auction) setError("Leilão não encontrado.");
-          else if (!data.currentLot) setError("Nenhum lote adequado para exibição neste leilão.");
-          else setError(null);
-        })
-        .catch(e => {
-          console.error("Error in LiveAuctionPage useEffect:", e);
-          setError("Erro ao carregar dados do auditório.");
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setError("ID do leilão não fornecido.");
-      setIsLoading(false);
+      try {
+        const user = await getCurrentUser(); // Fetch user on the client
+        const data = await fetchAuctionData(auctionId, targetLotId, user?.uid);
+        
+        setAuctionData(data);
+        if (!data.auction) setError("Leilão não encontrado.");
+        else if (!data.currentLot) setError("Nenhum lote adequado para exibição neste leilão.");
+        else setError(null);
+      } catch (e) {
+        console.error("Error in LiveAuctionPage useEffect:", e);
+        setError("Erro ao carregar dados do auditório.");
+      } finally {
+        setIsLoading(false);
+      }
     }
+    fetchDataForClient();
   }, [auctionId, targetLotId]);
 
   if (isLoading) {
@@ -160,6 +176,7 @@ export default function LiveAuctionPage() {
       auction={auctionData.auction}
       initialCurrentLot={auctionData.currentLot}
       initialUpcomingLots={auctionData.upcomingLots}
+      initialIsHabilitado={auctionData.isHabilitado}
     />
   );
 }

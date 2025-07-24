@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { Auction, Lot, BidInfo } from '@/types';
 import CurrentLotDisplay from '@/components/auction/current-lot-display';
 import BiddingPanel from '@/components/auction/bidding-panel';
@@ -17,17 +16,24 @@ interface VirtualAuditoriumClientProps {
   auction: Auction;
   initialCurrentLot: Lot;
   initialUpcomingLots: Lot[];
+  initialIsHabilitado: boolean;
 }
 
 export default function VirtualAuditoriumClient({
   auction,
   initialCurrentLot,
   initialUpcomingLots,
+  initialIsHabilitado,
 }: VirtualAuditoriumClientProps) {
   const [currentLot, setCurrentLot] = useState<Lot>(initialCurrentLot);
   const [upcomingLots, setUpcomingLots] = useState<Lot[]>(initialUpcomingLots);
+  const [isHabilitadoForThisAuction, setIsHabilitadoForThisAuction] = useState(initialIsHabilitado);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  const handleHabilitacaoSuccess = useCallback(() => {
+    setIsHabilitadoForThisAuction(true);
+  }, []);
 
   const toggleFullScreen = () => {
     if (!document.fullscreenElement) {
@@ -90,7 +96,13 @@ export default function VirtualAuditoriumClient({
               <CurrentLotDisplay lot={currentLot} auctionStatus={auction.status} />
             </div>
             <div className="flex-grow-[1] overflow-hidden">
-              <BiddingPanel currentLot={currentLot} onBidSuccess={handleBidSuccess} />
+              <BiddingPanel 
+                currentLot={currentLot} 
+                auction={auction}
+                onBidSuccess={handleBidSuccess} 
+                isHabilitadoForThisAuction={isHabilitadoForThisAuction}
+                onHabilitacaoSuccess={handleHabilitacaoSuccess}
+              />
             </div>
           </main>
 

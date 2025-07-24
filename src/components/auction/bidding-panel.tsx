@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -26,11 +25,13 @@ interface BiddingPanelProps {
   currentLot: Lot;
   auction: Auction;
   onBidSuccess: (updatedLotData: Partial<Lot>, newBid?: BidInfo) => void;
+  isHabilitadoForThisAuction: boolean;
+  onHabilitacaoSuccess: () => void;
 }
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 
-export default function BiddingPanel({ currentLot, auction, onBidSuccess }: BiddingPanelProps) {
+export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess }: BiddingPanelProps) {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   
@@ -42,9 +43,6 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
   const [bidHistory, setBidHistory] = useState<BidInfo[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
-  
-  const [isHabilitadoForThisAuction, setIsHabilitadoForThisAuction] = useState(false);
-  const [isCheckingHabilitacao, setIsCheckingHabilitacao] = useState(true);
   const [isHabilitando, setIsHabilitando] = useState(false);
 
   const bidIncrement = currentLot?.bidIncrementStep || ((currentLot?.price || 0) > 10000 ? 500 : ((currentLot?.price || 0) > 1000 ? 100 : 50));
@@ -53,22 +51,7 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
   const isDocHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
-
-  const checkHabilitationStatus = useCallback(async () => {
-    if (!userProfileWithPermissions?.uid || !auction?.id) {
-        setIsCheckingHabilitacao(false);
-        return;
-    }
-    setIsCheckingHabilitacao(true);
-    const result = await checkHabilitationForAuctionAction(userProfileWithPermissions.uid, auction.id);
-    setIsHabilitadoForThisAuction(result);
-    setIsCheckingHabilitacao(false);
-  }, [userProfileWithPermissions?.uid, auction?.id]);
-
-  useEffect(() => {
-    checkHabilitationStatus();
-  }, [checkHabilitationStatus]);
-
+  
   const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (isDocHabilitado && isHabilitadoForThisAuction)) && currentLot?.status === 'ABERTO_PARA_LANCES';
 
   const handleHabilitarClick = async () => {
@@ -77,7 +60,7 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
       const result = await habilitateForAuctionAction(userProfileWithPermissions.uid, auction.id);
       if (result.success) {
           toast({ title: "Sucesso!", description: "Você está habilitado para dar lances neste leilão."});
-          checkHabilitationStatus(); // Re-check status
+          onHabilitacaoSuccess();
       } else {
           toast({ title: "Erro", description: result.message, variant: "destructive"});
       }
@@ -106,17 +89,41 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
     fetchBidData();
   }, [fetchBidData]);
 
-  const handlePlaceBid = async () => { /* ... (rest of the function is unchanged) */ };
+  const handlePlaceBid = async () => {
+    if (!canUserBid || !userProfileWithPermissions) return;
+    const bidValue = parseFloat(bidAmountInput) || nextMinimumBid;
+
+    if (bidValue < nextMinimumBid) {
+      toast({ title: 'Valor Inválido', description: `Seu lance deve ser de no mínimo R$ ${nextMinimumBid.toLocaleString('pt-br')}`, variant: 'destructive' });
+      return;
+    }
+
+    setIsPlacingBid(true);
+    const result = await placeBidOnLot(
+      currentLot.publicId || currentLot.id,
+      auction.publicId || auction.id,
+      userProfileWithPermissions.id,
+      userProfileWithPermissions.fullName || 'Usuário Anônimo',
+      bidValue
+    );
+    setIsPlacingBid(false);
+
+    if (result.success) {
+      toast({ title: 'Sucesso!', description: 'Seu lance foi registrado.' });
+      onBidSuccess(result.updatedLot!, result.newBid);
+      setBidAmountInput('');
+      fetchBidData();
+    } else {
+      toast({ title: 'Erro ao dar lance', description: result.message, variant: 'destructive' });
+    }
+  };
+
   const handleSetMaxBid = async () => { /* ... (rest of the function is unchanged) */ };
 
   const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
   const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;
   
   const renderBiddingInterface = () => {
-    if (isCheckingHabilitacao) {
-        return <div className="flex items-center justify-center p-4 text-sm text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Verificando habilitação...</div>
-    }
-
     if (!userProfileWithPermissions) {
         return <div className="text-sm text-center p-3 bg-destructive/10 text-destructive rounded-md"><Info className="h-5 w-5 mx-auto mb-1" /><p className="font-medium">Para dar lances, faça login em sua conta.</p></div>
     }
@@ -148,7 +155,7 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
                 <DollarSign className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input type="number" placeholder={`Próximo lance R$ ${nextMinimumBid.toLocaleString('pt-BR')}`} value={bidAmountInput} onChange={(e) => setBidAmountInput(e.target.value)} className="pl-9 h-11 text-base" min={nextMinimumBid} step={bidIncrement} disabled={isPlacingBid} />
             </div>
-            <Button onClick={handlePlaceBid} disabled={isPlacingBid || !bidAmountInput} className="w-full h-11 text-base">
+            <Button onClick={handlePlaceBid} disabled={isPlacingBid} className="w-full h-11 text-base">
                 {isPlacingBid ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : bidButtonLabel}
             </Button>
             <div className="flex items-center justify-between space-x-2 p-3 border rounded-md bg-muted/20">
@@ -162,7 +169,7 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess }: Bidd
 
   return (
     <>
-      <Card className="flex flex-col shadow-lg rounded-lg">
+      <Card className="flex flex-col shadow-lg rounded-lg h-full">
         <CardHeader className="p-3 md:p-4 border-b">
           <CardTitle className="text-lg md:text-xl font-bold flex items-center">
             <Gavel className="h-5 w-5 mr-2 text-primary" /> Painel de Lances
