@@ -3,7 +3,10 @@
 
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
-import type { UserProfileData, UserDocument, UserHabilitationStatus } from '@/types';
+import type { UserProfileData, UserDocument, UserHabilitationStatus, Role } from '@/types';
+import { RoleRepository } from '@/repositories/role.repository';
+
+const roleRepository = new RoleRepository();
 
 /**
  * Fetches users whose documents are pending review.
@@ -18,23 +21,57 @@ export async function getHabilitationRequests(): Promise<UserProfileData[]> {
 }
 
 /**
- * Updates a user's habilitation status to 'HABILITADO'.
+ * Updates a user's habilitation status to 'HABILITADO' and assigns the BIDDER role.
  * @param {string} userId - The ID of the user to habilitate.
  * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
  */
 export async function habilitateUserAction(userId: string): Promise<{ success: boolean; message: string }> {
   try {
-    await prisma.user.update({
-      where: { id: userId },
-      data: { habilitationStatus: 'HABILITADO' }
-    });
+    const bidderRole = await roleRepository.findByNormalizedName('BIDDER');
+    if (!bidderRole) {
+      throw new Error("O perfil 'BIDDER' não foi encontrado. Popule os dados essenciais.");
+    }
+
+    await prisma.$transaction([
+      prisma.user.update({
+        where: { id: userId },
+        data: { habilitationStatus: 'HABILITADO' }
+      }),
+      prisma.usersOnRoles.upsert({
+        where: { userId_roleId: { userId, roleId: bidderRole.id } },
+        update: {},
+        create: { userId, roleId: bidderRole.id, assignedBy: 'system-habilitation' }
+      })
+    ]);
+
     revalidatePath('/admin/habilitations');
     revalidatePath(`/admin/habilitations/${userId}`);
-    return { success: true, message: "Usuário habilitado com sucesso." };
+    return { success: true, message: "Usuário habilitado com sucesso e perfil de arrematante atribuído." };
   } catch (e: any) {
     console.error(`Failed to habilitate user ${userId}:`, e);
     return { success: false, message: `Erro ao habilitar usuário: ${e.message}`};
   }
+}
+
+/**
+ * Habilitates a user for a specific auction.
+ * @param {string} userId - The ID of the user.
+ * @param {string} auctionId - The ID of the auction.
+ * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
+ */
+export async function habilitateForAuctionAction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {
+    try {
+        await prisma.auctionHabilitation.upsert({
+            where: { userId_auctionId: { userId, auctionId }},
+            update: {},
+            create: { userId, auctionId }
+        });
+        revalidatePath(`/auctions/${auctionId}`);
+        return { success: true, message: 'Você foi habilitado para este leilão com sucesso!' };
+    } catch (e: any) {
+        console.error(`Failed to habilitate user ${userId} for auction ${auctionId}:`, e);
+        return { success: false, message: 'Não foi possível completar sua habilitação para este leilão.' };
+    }
 }
 
 
