@@ -19,38 +19,71 @@ import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
+import { Skeleton } from './ui/skeleton';
 
-const TimeRemainingBadge: React.FC<{endDate: Date | null}> = ({ endDate }) => {
-    const [remaining, setRemaining] = useState('');
+const TimeRemainingBadge: React.FC<{endDate: Date | null, status: Lot['status'], showUrgencyTimer?: boolean, urgencyThresholdDays?: number, urgencyThresholdHours?: number}> = ({ endDate, status, showUrgencyTimer=true, urgencyThresholdDays=1, urgencyThresholdHours=0 }) => {
+    const [remaining, setRemaining] = React.useState('');
+    const [isUrgent, setIsUrgent] = React.useState(false);
 
     React.useEffect(() => {
-        if (!endDate || isPast(endDate)) {
-            setRemaining('Encerrado');
+        if (!endDate) {
+            setRemaining(getAuctionStatusText(status));
+            setIsUrgent(false);
             return;
         }
 
         const interval = setInterval(() => {
-            const totalSeconds = differenceInSeconds(endDate, new Date());
-            if (totalSeconds <= 0) {
+            const end = endDate;
+            if (isPast(end)) {
                 setRemaining('Encerrado');
                 clearInterval(interval);
+                setIsUrgent(false);
                 return;
             }
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
 
-            if (days > 1) setRemaining(`${days}d`);
-            else if (days === 1) setRemaining(`1d ${hours}h`);
-            else if (hours > 0) setRemaining(`${hours}h ${minutes}m`);
-            else if (minutes > 0) setRemaining(`${minutes}m`);
-            else setRemaining('Encerrando');
+            const totalSecondsLeft = differenceInSeconds(end, new Date());
+             if (totalSecondsLeft <= 0) {
+                setRemaining('Encerrado');
+                clearInterval(interval);
+                setIsUrgent(false);
+                return;
+            }
+            
+            const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
+            const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
+            setIsUrgent(currentlyUrgent && showUrgencyTimer);
+            
+            if (currentlyUrgent && showUrgencyTimer) {
+                const hours = Math.floor(totalSecondsLeft / 3600);
+                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+                const seconds = totalSecondsLeft % 60;
+                if (hours > 0) {
+                  setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                } else {
+                  setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                }
+            } else {
+                 const days = Math.floor(totalSecondsLeft / (3600 * 24));
+                const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
+                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+
+                if (days > 0) setRemaining(`${days}d ${hours}h`);
+                else if (hours > 0) setRemaining(`${hours}h ${minutes}m`);
+                else if (minutes > 0) setRemaining(`${minutes}m`);
+                else setRemaining('Encerrando!');
+            }
+
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [endDate]);
-    
-    return <span className="font-semibold">{remaining}</span>;
+    }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
+
+    return (
+        <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium">
+            <Clock className="h-3 w-3 mr-1" />
+            {remaining}
+        </Badge>
+    );
 };
 
 
@@ -62,8 +95,8 @@ interface LotCardProps {
   onUpdate?: () => void;
 }
 
-function LotCardClientContent({ lot, auction, platformSettings, badgeVisibilityConfig, onUpdate }: LotCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(isLotFavoriteInStorage(lot.id));
+function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
+  const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [isViewed, setIsViewed] = React.useState(false);
   const { toast } = useToast();
@@ -106,7 +139,7 @@ function LotCardClientContent({ lot, auction, platformSettings, badgeVisibilityC
     });
   };
 
-  const openPreviewModal = (e: React.MouseEvent) => {
+  const handlePreviewOpen = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsPreviewModalOpen(true);
@@ -126,13 +159,13 @@ function LotCardClientContent({ lot, auction, platformSettings, badgeVisibilityC
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
     
-    if (sectionBadges.showPopularityBadge && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
-    if (sectionBadges.showHotBidBadge && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-     if (sectionBadges.showExclusiveBadge && settings.showExclusiveBadge && lot.isExclusive) {
+     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
     return Array.from(new Set(triggers));
@@ -154,14 +187,14 @@ function LotCardClientContent({ lot, auction, platformSettings, badgeVisibilityC
               />
             </div>
           </Link>
-          <div className="absolute top-2 left-2 z-10">
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
             {sectionBadges.showStatusBadge !== false && (
               <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
                 {getAuctionStatusText(lot.status)}
               </Badge>
             )}
             {isViewed && (
-                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700 ml-1">
+                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
                     <Eye className="h-3 w-3 mr-0.5" /> Visto
                 </Badge>
             )}
@@ -236,12 +269,12 @@ function LotCardClientContent({ lot, auction, platformSettings, badgeVisibilityC
           <div className="w-full flex justify-between items-end">
             <div>
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-              <p className={`text-xl font-bold ${isPast(new Date(effectiveEndDate || 0)) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+              <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                 R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
             {showCountdownOnThisCard && effectiveEndDate && (
-              <TimeRemainingBadge endDate={effectiveEndDate} status={lot.status} showUrgencyTimer={sectionBadges.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} />
+              <TimeRemainingBadge endDate={effectiveEndDate} status={lot.status} showUrgencyTimer={sectionBadges.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours} />
             )}
           </div>
         </CardFooter>
@@ -271,9 +304,9 @@ export default function LotCard(props: LotCardProps) {
         <Card className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
             <div className="aspect-video relative bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
-                <div className="flex justify-between items-center h-4 bg-muted rounded w-full animate-pulse"></div>
-                 <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div>
+                <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div>
                  <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
+                 <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
              </CardContent>
              <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
                 <div className="h-4 bg-muted rounded w-1/4 animate-pulse"></div>
@@ -285,5 +318,3 @@ export default function LotCard(props: LotCardProps) {
 
   return <LotCardClientContent {...props} />;
 }
-
-    
