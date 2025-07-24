@@ -41,8 +41,6 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      // Correto: Monta o objeto de criação apenas com os campos necessários
-      // e deixa o banco de dados cuidar do 'id' e 'publicId'.
       const dataToCreate: Prisma.SellerCreateInput = {
         name: data.name,
         slug: slugify(data.name),
