@@ -32,6 +32,10 @@ async function runTestScript(command: string): Promise<{ success: boolean; outpu
     }
 }
 
+export async function runUserEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/user.test.ts`;
+    return runTestScript(command);
+}
 
 export async function runSellerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/seller.test.ts`;

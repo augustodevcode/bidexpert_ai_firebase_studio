@@ -18,7 +18,8 @@ import {
     runRoleEndToEndTest,
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
-    runCityEndToEndTest
+    runCityEndToEndTest,
+    runUserEndToEndTest // Importado o novo teste
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -37,6 +38,12 @@ interface TestConfig {
 }
 
 const tests: TestConfig[] = [
+  {
+    id: 'user-creation',
+    title: 'Teste de Cadastro de Usuário',
+    description: 'Verifica a criação de um usuário, hash de senha e atribuição de perfil padrão.',
+    action: runUserEndToEndTest,
+  },
   {
     id: 'seller-creation',
     title: 'Teste de Cadastro de Comitente',
