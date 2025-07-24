@@ -21,7 +21,7 @@ test.describe('Seller Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should create a new seller via SellerService and verify it in the database', async () => {
+    test('should create a new seller and verify it in the database', async () => {
         // Arrange: Define the test data for the new seller
         const newSellerData: SellerFormData = {
             name: 'Test Service Seller Inc.',
@@ -48,12 +48,12 @@ test.describe('Seller Service E2E Tests', () => {
             where: { id: result.sellerId },
         });
 
-        // Log a informação para depuração
-        console.log('--- Seller Record Created in DB ---');
+        // Log the created record for debugging purposes
+        console.log('--- Seller Record Found in DB ---');
         console.log(createdSellerFromDb);
-        console.log('-----------------------------------');
+        console.log('---------------------------------');
 
-        assert.ok(createdSellerFromDb, 'Seller should be found in the database');
+        assert.ok(createdSellerFromDb, 'Seller should be found in the database after creation');
         assert.ok(createdSellerFromDb.publicId, 'Seller should have a publicId generated');
         assert.strictEqual(createdSellerFromDb.name, newSellerData.name, 'Seller name should match');
         assert.strictEqual(createdSellerFromDb.email, newSellerData.email, 'Seller email should match');

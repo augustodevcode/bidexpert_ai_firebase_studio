@@ -45,7 +45,7 @@ export class SellerService {
       const dataToCreate: Prisma.SellerCreateInput = {
         ...data,
         slug: slugify(data.name),
-        publicId: `COM-${uuidv4()}`, // Generate the required publicId
+        publicId: `COM-${uuidv4()}`,
       };
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
