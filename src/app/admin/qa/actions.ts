@@ -1,4 +1,9 @@
 // src/app/admin/qa/actions.ts
+/**
+ * @fileoverview Server Actions for the Quality Assurance (QA) panel.
+ * These actions execute predefined test scripts using `node:child_process`
+ * and return the stdout and stderr for display in the UI.
+ */
 'use server';
 
 import { exec } from 'child_process';
@@ -32,6 +37,16 @@ async function runTestScript(command: string): Promise<{ success: boolean; outpu
     }
 }
 
+export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
+    return runTestScript(command);
+}
+
+export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/modalities-menu.test.ts`;
+    return runTestScript(command);
+}
+
 export async function runUserEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/user.test.ts`;
     return runTestScript(command);
@@ -62,6 +77,16 @@ export async function runRoleEndToEndTest(): Promise<{ success: boolean; output:
     return runTestScript(command);
 }
 
+export async function runStateEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/state.test.ts`;
+    return runTestScript(command);
+}
+
+export async function runCityEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/city.test.ts`;
+    return runTestScript(command);
+}
+
 export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/court.test.ts`;
     return runTestScript(command);
@@ -89,15 +114,5 @@ export async function runBemEndToEndTest(): Promise<{ success: boolean; output: 
 
 export async function runLotEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/lot.test.ts`;
-    return runTestScript(command);
-}
-
-export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
-    return runTestScript(command);
-}
-
-export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/modalities-menu.test.ts`;
     return runTestScript(command);
 }

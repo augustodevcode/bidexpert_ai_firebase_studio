@@ -17,10 +17,8 @@ let createdLotId: string | undefined;
 test.describe('Lot Service E2E Tests', () => {
 
     test.before(async () => {
-        testCategory = await prisma.lotCategory.upsert({
-            where: { slug: 'categoria-teste-lotes' },
-            update: {},
-            create: { name: 'Categoria Teste para Lotes', slug: 'categoria-teste-lotes', hasSubcategories: false }
+        testCategory = await prisma.lotCategory.create({
+            data: { name: 'Categoria Teste para Lotes', slug: 'categoria-teste-lotes', hasSubcategories: false }
         });
         testAuctioneer = await prisma.auctioneer.create({
             data: { name: 'Leiloeiro de Teste para Lotes', publicId: 'leiloeiro-pub-id-lot-test', slug: 'leiloeiro-teste-lotes' }
@@ -81,7 +79,7 @@ test.describe('Lot Service E2E Tests', () => {
             auctionId: testAuction.id,
             price: 2000,
             initialPrice: 1500,
-            categoryId: testCategory.id,
+            type: testCategory.id, // 'type' no form é o nosso 'categoryId'
             bemIds: [testBem.id], // Link the bem
         };
 

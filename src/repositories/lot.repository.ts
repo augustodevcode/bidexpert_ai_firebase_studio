@@ -10,7 +10,9 @@ export class LotRepository {
         where: auctionId ? { auctionId } : {},
         include: {
             bens: { include: { bem: true } }, // Include the Bem through LotBens
-            auction: { select: { title: true } }
+            auction: { select: { title: true } },
+            category: { select: { name: true } },
+            subcategory: { select: { name: true } },
         },
         orderBy: { number: 'asc' }
     });

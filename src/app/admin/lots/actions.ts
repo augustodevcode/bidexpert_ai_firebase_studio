@@ -4,8 +4,10 @@
 import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
+import { BemRepository } from '@/repositories/bem.repository'; // Usar repositório diretamente aqui é aceitável por ser uma query simples
 
 const lotService = new LotService();
+const bemRepository = new BemRepository(); // Instanciar para buscar bens
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
   return lotService.getLots(auctionId);
@@ -54,10 +56,7 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  // This might be better in a BemService, but keeping here for simplicity for now.
-  // It's used by Lot form to get details of bens.
-  const { prisma } = await import('@/lib/prisma');
-  return prisma.bem.findMany({ where: { id: { in: ids } } });
+  return bemRepository.findByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
@@ -65,7 +64,7 @@ export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
   // This is also likely better in the LotService/Repository
   const { prisma } = await import('@/lib/prisma');
   // @ts-ignore
-  return prisma.lot.findMany({ where: { id: { in: ids } } });
+  return prisma.lot.findMany({ where: { id: { in: ids } }, include: { auction: true } });
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {

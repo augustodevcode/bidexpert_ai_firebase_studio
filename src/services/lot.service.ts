@@ -17,7 +17,9 @@ export class LotService {
     return lots.map(lot => ({
       ...lot,
       auctionName: lot.auction?.title,
-      bens: lot.bens.map((lb: any) => lb.bem) || [] // Extract bem from LotBens
+      categoryName: lot.category?.name,
+      subcategoryName: lot.subcategory?.name,
+      bens: lot.bens.map((lb: any) => lb.bem) || [], // Extract bem from LotBens
     }));
   }
 
@@ -36,24 +38,25 @@ export class LotService {
       if (!data.auctionId) {
         return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
-      if (!data.categoryId) {
+      if (!data.type) { // Corrigido de categoryId para type para corresponder ao form
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
-      const { bemIds, ...lotData } = data;
+      const { bemIds, categoryId, ...lotData } = data; // Usar 'type' do form como 'categoryId'
 
       const dataToCreate: Prisma.LotCreateInput = {
-        title: lotData.title || 'Lote sem título',
-        number: lotData.number,
-        description: lotData.description,
-        price: lotData.price,
-        initialPrice: lotData.initialPrice,
-        status: lotData.status,
-        publicId: `LOTE-PUB-${uuidv4()}`,
+        ...(lotData as any),
+        price: Number(lotData.price) || 0,
+        initialPrice: Number(lotData.initialPrice) || Number(lotData.price) || 0,
+        publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: data.auctionId } },
-        category: { connect: { id: data.categoryId } },
+        category: { connect: { id: data.type } }, // 'type' do form mapeia para 'categoryId' no BD
       };
+
+      if (lotData.subcategoryId) {
+          dataToCreate.subcategory = { connect: { id: lotData.subcategoryId } };
+      }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
@@ -65,13 +68,14 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { bemIds, ...lotData } = data;
+      const { bemIds, categoryId, ...lotData } = data; // Usar 'type' do form
       const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
+
       if (lotData.title) {
         dataToUpdate.slug = slugify(lotData.title);
       }
-       if (lotData.categoryId) {
-        dataToUpdate.category = { connect: { id: lotData.categoryId } };
+       if (lotData.type) { // 'type' do form mapeia para 'categoryId'
+        dataToUpdate.category = { connect: { id: lotData.type } };
       }
        if (lotData.auctionId) {
         dataToUpdate.auction = { connect: { id: lotData.auctionId } };
