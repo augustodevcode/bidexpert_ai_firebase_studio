@@ -48,6 +48,11 @@ export async function runCategoryEndToEndTest(): Promise<{ success: boolean; out
     return runTestScript(command);
 }
 
+export async function runSubcategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/subcategory.test.ts`;
+    return runTestScript(command);
+}
+
 export async function runRoleEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/role.test.ts`;
     return runTestScript(command);

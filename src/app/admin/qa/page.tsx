@@ -15,7 +15,8 @@ import {
     runBemEndToEndTest,
     runAuctionEndToEndTest,
     runLotEndToEndTest,
-    runRoleEndToEndTest // Import the new test action
+    runRoleEndToEndTest,
+    runSubcategoryEndToEndTest // Import the new test action
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -51,6 +52,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Categoria',
     description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
     action: runCategoryEndToEndTest,
+  },
+   {
+    id: 'subcategory-creation',
+    title: 'Teste de Cadastro de Subcategoria',
+    description: 'Verifica a criação de uma subcategoria e sua vinculação à categoria pai.',
+    action: runSubcategoryEndToEndTest,
   },
    {
     id: 'role-creation',
