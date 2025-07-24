@@ -74,6 +74,32 @@ export async function habilitateForAuctionAction(userId: string, auctionId: stri
     }
 }
 
+/**
+ * Checks if a user is habilitated for a specific auction.
+ * @param {string} userId - The ID of the user.
+ * @param {string} auctionId - The ID of the auction.
+ * @returns {Promise<boolean>} True if the user is habilitated, false otherwise.
+ */
+export async function checkHabilitationForAuctionAction(userId: string, auctionId: string): Promise<boolean> {
+  if (!userId || !auctionId) {
+    return false;
+  }
+  try {
+    const habilitation = await prisma.auctionHabilitation.findUnique({
+      where: {
+        userId_auctionId: {
+          userId,
+          auctionId,
+        },
+      },
+    });
+    return !!habilitation;
+  } catch (error) {
+    console.error(`Error checking habilitation for user ${userId} in auction ${auctionId}:`, error);
+    return false;
+  }
+}
+
 
 /**
  * Fetches all submitted documents for a specific user.
