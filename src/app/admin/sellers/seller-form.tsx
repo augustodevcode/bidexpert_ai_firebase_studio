@@ -389,7 +389,7 @@ export default function SellerForm({
                     name="logoUrl"
                     render={({ field }) => (
                         <FormControl>
-                            <Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
+                            <Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" />
                         </FormControl>
                     )}
                     />
