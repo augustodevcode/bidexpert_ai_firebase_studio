@@ -1,7 +1,7 @@
 // tests/modalities-menu.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
-import puppeteer from 'puppeteer-core';
+import puppeteer from 'puppeteer';
 
 const BASE_URL = 'http://localhost:9002'; 
 
@@ -19,7 +19,6 @@ test.describe('Static Modalities Menu E2E Test', () => {
 
     test.before(async () => {
         browser = await puppeteer.launch({
-            executablePath: '/usr/bin/google-chrome',
             headless: true,
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
