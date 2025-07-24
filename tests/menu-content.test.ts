@@ -1,7 +1,7 @@
 // tests/menu-content.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
-import puppeteer from 'puppeteer';
+import puppeteer from 'puppeteer-core';
 import { prisma } from '../src/lib/prisma';
 import { CategoryService } from '../src/services/category.service';
 import { SellerService } from '../src/services/seller.service';
@@ -36,9 +36,9 @@ test.describe('Dynamic Menu Content E2E Tests', () => {
 
     test.before(async () => {
         browser = await puppeteer.launch({
+            executablePath: '/usr/bin/google-chrome', // Use o Chrome instalado no sistema
             headless: true,
-            product: 'firefox', // Alterado para usar Firefox
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Mantido para segurança
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         page = await browser.newPage();
         await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
