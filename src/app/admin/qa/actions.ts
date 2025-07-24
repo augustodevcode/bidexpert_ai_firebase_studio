@@ -33,42 +33,27 @@ async function runTestScript(command: string): Promise<{ success: boolean; outpu
 }
 
 
-/**
- * Executes the end-to-end test for the seller creation flow.
- * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
- *          An object containing the success status and the output/error from the test execution.
- */
 export async function runSellerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/seller.test.ts`;
     return runTestScript(command);
 }
 
-/**
- * Executes the end-to-end test for the auctioneer creation flow.
- * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
- *          An object containing the success status and the output/error from the test execution.
- */
 export async function runAuctioneerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/auctioneer.test.ts`;
     return runTestScript(command);
 }
 
-/**
- * Executes the end-to-end test for the category creation flow.
- * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
- *          An object containing the success status and the output/error from the test execution.
- */
 export async function runCategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/category.test.ts`;
     return runTestScript(command);
 }
 
-/**
- * Executes the end-to-end test for the court creation flow.
- * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
- *          An object containing the success status and the output/error from the test execution.
- */
 export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/court.test.ts`;
+    return runTestScript(command);
+}
+
+export async function runJudicialDistrictEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/judicial-district.test.ts`;
     return runTestScript(command);
 }

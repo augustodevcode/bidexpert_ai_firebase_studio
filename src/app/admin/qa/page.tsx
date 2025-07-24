@@ -4,7 +4,13 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { runSellerEndToEndTest, runAuctioneerEndToEndTest, runCategoryEndToEndTest, runCourtEndToEndTest } from './actions';
+import { 
+    runSellerEndToEndTest, 
+    runAuctioneerEndToEndTest, 
+    runCategoryEndToEndTest, 
+    runCourtEndToEndTest,
+    runJudicialDistrictEndToEndTest
+} from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
 interface TestResult {
@@ -24,19 +30,19 @@ const tests: TestConfig[] = [
   {
     id: 'seller-creation',
     title: 'Teste de Cadastro de Comitente',
-    description: 'Verifica o fluxo completo de criação de um novo comitente, desde a chamada da action até a verificação no banco de dados.',
+    description: 'Verifica o fluxo completo de criação de um novo comitente.',
     action: runSellerEndToEndTest,
   },
   {
     id: 'auctioneer-creation',
     title: 'Teste de Cadastro de Leiloeiro',
-    description: 'Verifica o fluxo completo de criação de um novo leiloeiro e a integridade dos dados salvos no banco.',
+    description: 'Verifica a criação de um novo leiloeiro e a integridade dos dados.',
     action: runAuctioneerEndToEndTest,
   },
   {
     id: 'category-creation',
     title: 'Teste de Cadastro de Categoria',
-    description: 'Verifica a criação de uma nova categoria de lote e a geração correta do seu slug.',
+    description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
     action: runCategoryEndToEndTest,
   },
   {
@@ -44,6 +50,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Tribunal',
     description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.',
     action: runCourtEndToEndTest,
+  },
+  {
+    id: 'judicial-district-creation',
+    title: 'Teste de Cadastro de Comarca',
+    description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.',
+    action: runJudicialDistrictEndToEndTest,
   },
 ];
 
