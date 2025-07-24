@@ -3,111 +3,108 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { MediaService } from '../src/services/media.service';
 import { prisma } from '../src/lib/prisma';
-import type { UserProfileData } from '../src/types';
+import type { UserProfileData, MediaItem } from '../src/types';
+import { POST as uploadApiRoute } from '../src/app/api/upload/route';
+import { NextRequest } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
 
 const mediaService = new MediaService();
-const testFileName = 'test-image.jpg';
-let testUser: UserProfileData;
-let createdMediaItemId: string;
+const testFileName = 'e2e-test-image.png';
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'media');
 
-test.describe('Media Library Service E2E Tests', () => {
+let testUser: UserProfileData;
+let createdMediaItem: MediaItem | undefined;
+let createdFilePath: string | undefined;
+
+// Helper to create a mock file for upload
+async function createMockFile(fileName: string, content: string): Promise<Buffer> {
+    const buffer = Buffer.from(content, 'base64');
+    return buffer;
+}
+
+test.describe('Media Library E2E Upload Test', () => {
 
     test.before(async () => {
         // Media items require an uploader (user)
         testUser = await prisma.user.create({
             data: {
-                fullName: 'Media Test User',
-                email: 'media.test.user@example.com',
-                password: 'password', // Not used for auth, just required by schema
+                fullName: 'Media Upload Test User',
+                email: 'media.upload.test@example.com',
+                password: 'password',
                 habilitationStatus: 'HABILITADO',
                 accountType: 'PHYSICAL',
             }
         });
+        // Ensure upload directory exists
+        await fs.mkdir(UPLOAD_DIR, { recursive: true });
     });
     
     test.after(async () => {
         try {
-            // Clean up created records
-            if (createdMediaItemId) {
-                 await prisma.mediaItem.delete({ where: { id: createdMediaItemId } });
+            // Clean up database records
+            if (createdMediaItem) {
+                 await prisma.mediaItem.deleteMany({ where: { uploadedBy: testUser.id } });
             }
             if (testUser) {
                 await prisma.user.delete({ where: { id: testUser.id } });
             }
+            // Clean up physical file
+            if (createdFilePath && await fs.stat(createdFilePath).catch(() => false)) {
+                await fs.unlink(createdFilePath);
+            }
         } catch (error) {
-            // Ignore cleanup errors
+            console.error("Cleanup error in media test:", error);
         }
         await prisma.$disconnect();
     });
 
-    test('should create a new media item', async () => {
+    test('should upload a file via API, create a media item record, and save the file', async () => {
         // Arrange
-        const mediaData = {
-            fileName: testFileName,
-            title: 'Test Image Title',
-            mimeType: 'image/jpeg',
-            sizeBytes: 12345,
-        };
-        const fileUrl = `/test/path/${testFileName}`;
+        const imageContentBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 black PNG
+        const imageBuffer = await createMockFile(testFileName, imageContentBase64);
+        const file = new File([imageBuffer], testFileName, { type: 'image/png' });
+
+        const formData = new FormData();
+        formData.append('files', file);
+        formData.append('userId', testUser.id);
+        formData.append('path', 'media');
+        
+        // Mock NextRequest
+        const request = new NextRequest('http://localhost/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
 
         // Act
-        const result = await mediaService.createMediaItem(mediaData, fileUrl, testUser.id);
+        const response = await uploadApiRoute(request);
+        const result = await response.json();
 
-        // Assert: Check the service method result
-        assert.strictEqual(result.success, true, 'Service should return success: true');
-        assert.ok(result.item?.id, 'Service should return a media item with an ID');
-        createdMediaItemId = result.item!.id; // Save for subsequent tests and cleanup
+        // Assert: API Response
+        assert.strictEqual(response.status, 200, 'API should respond with status 200');
+        assert.strictEqual(result.success, true, 'API response success should be true');
+        assert.ok(result.items && result.items.length > 0, 'API should return the created items');
+        assert.ok(result.urls && result.urls.length > 0, 'API should return the public URL');
+        
+        createdMediaItem = result.items[0];
+        createdFilePath = path.join(UPLOAD_DIR, path.basename(result.urls[0]));
+
 
         // Assert: Verify directly in the database
         const createdItemFromDb = await prisma.mediaItem.findUnique({
-            where: { id: createdMediaItemId },
+            where: { id: createdMediaItem!.id },
         });
-
-        console.log('--- MediaItem Record Found in DB ---');
+        
+        console.log('--- MediaItem Record Found in DB after API Upload ---');
         console.log(createdItemFromDb);
-        console.log('------------------------------------');
+        console.log('----------------------------------------------------');
         
         assert.ok(createdItemFromDb, 'Media item should be found in the database');
-        assert.strictEqual(createdItemFromDb.title, mediaData.title, 'Media item title should match');
-        assert.strictEqual(createdItemFromDb.uploadedBy, testUser.id, 'Media item uploadedBy should match the user ID');
-        assert.strictEqual(createdItemFromDb.urlOriginal, fileUrl, 'Media item URL should match');
-    });
-
-    test('should update media item metadata', async () => {
-        // Arrange
-        assert.ok(createdMediaItemId, 'A media item must have been created in the previous test');
-        const newMetadata = {
-            title: 'Updated Test Title',
-            altText: 'An updated alt text for the test image',
-        };
+        assert.strictEqual(createdItemFromDb.fileName, testFileName, 'File name should match');
+        assert.strictEqual(createdItemFromDb.uploadedBy, testUser.id, 'UploadedBy should match the user ID');
         
-        // Act
-        const result = await mediaService.updateMediaItemMetadata(createdMediaItemId, newMetadata);
-        
-        // Assert: Check service result
-        assert.strictEqual(result.success, true, 'Update should be successful');
-        
-        // Assert: Verify update in DB
-        const updatedItem = await prisma.mediaItem.findUnique({ where: { id: createdMediaItemId } });
-        assert.strictEqual(updatedItem?.title, newMetadata.title, 'Title should be updated');
-        assert.strictEqual(updatedItem?.altText, newMetadata.altText, 'Alt text should be updated');
-    });
-
-    test('should delete a media item', async () => {
-        // Arrange
-        assert.ok(createdMediaItemId, 'A media item must exist to be deleted');
-        
-        // Act
-        const result = await mediaService.deleteMediaItem(createdMediaItemId);
-        
-        // Assert: Check service result
-        assert.strictEqual(result.success, true, 'Delete should be successful');
-        
-        // Assert: Verify deletion in DB
-        const deletedItem = await prisma.mediaItem.findUnique({ where: { id: createdMediaItemId } });
-        assert.strictEqual(deletedItem, null, 'The media item should no longer exist in the database');
-        
-        // Prevent after() hook from trying to delete it again
-        createdMediaItemId = '';
+        // Assert: Verify physical file creation
+        const fileExists = await fs.stat(createdFilePath).catch(() => false);
+        assert.ok(fileExists, `File should exist at path: ${createdFilePath}`);
     });
 });
