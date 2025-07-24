@@ -48,12 +48,13 @@ test.describe('Seller Service E2E Tests', () => {
             where: { id: result.sellerId },
         });
 
+        assert.ok(createdSellerFromDb, 'Seller should be found in the database after creation');
+        
         // Log the created record for debugging purposes
         console.log('--- Seller Record Found in DB ---');
         console.log(createdSellerFromDb);
         console.log('---------------------------------');
 
-        assert.ok(createdSellerFromDb, 'Seller should be found in the database after creation');
         assert.ok(createdSellerFromDb.publicId, 'Seller should have a publicId generated');
         assert.strictEqual(createdSellerFromDb.name, newSellerData.name, 'Seller name should match');
         assert.strictEqual(createdSellerFromDb.email, newSellerData.email, 'Seller email should match');
