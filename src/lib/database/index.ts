@@ -1,3 +1,9 @@
 // src/lib/database/index.ts
-// This file is now obsolete and will be deleted.
-// The primary database entry point is now /src/lib/prisma.ts
+/**
+ * @fileoverview Este é o principal ponto de entrada para a lógica de banco de dados do lado do servidor.
+ * Ele garante que qualquer módulo que o importe seja executado apenas no servidor.
+ */
+import 'server-only';
+
+// Re-exporta a função principal de obtenção do adaptador.
+export { getDatabaseAdapter } from './get-adapter';
