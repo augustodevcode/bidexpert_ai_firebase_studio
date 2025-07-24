@@ -11,12 +11,12 @@ interface FeaturedItemsProps {
   type: 'auction' | 'lot';
   title: string;
   viewAllLink: string;
-  platformSettings: PlatformSettings; // Add this prop
+  platformSettings: PlatformSettings;
+  allAuctions?: Auction[]; // Optional: Pass all auctions to LotCard if needed
 }
 
-export default function FeaturedItems({ items, type, title, viewAllLink, platformSettings }: FeaturedItemsProps) {
+export default function FeaturedItems({ items, type, title, viewAllLink, platformSettings, allAuctions = [] }: FeaturedItemsProps) {
   if (!items || items.length === 0) {
-    // Optionally return null or a placeholder if there are no items to display
     return null;
   }
   
@@ -31,11 +31,14 @@ export default function FeaturedItems({ items, type, title, viewAllLink, platfor
         </Button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {items.map((item) => (
-          type === 'auction'
-            ? <AuctionCard key={item.id} auction={item as Auction} />
-            : <LotCard key={item.id} lot={item as Lot} platformSettings={platformSettings} />
-        ))}
+        {items.map((item) => {
+          if (type === 'auction') {
+            return <AuctionCard key={item.id} auction={item as Auction} />;
+          }
+          // For lots, we need to find their parent auction to pass to the card
+          const parentAuction = allAuctions.find(a => a.id === (item as Lot).auctionId);
+          return <LotCard key={item.id} lot={item as Lot} platformSettings={platformSettings} auction={parentAuction} />;
+        })}
       </div>
     </section>
   );
