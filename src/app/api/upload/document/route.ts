@@ -2,10 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { getDatabaseAdapter } from '@/lib/database/index';
-
-// This is a dedicated route for user document uploads.
-// It ensures that files are stored in a user-specific directory and updates the database.
+import { prisma } from '@/lib/prisma'; // Use prisma directly for this specific use case
+import { writeFile, mkdir } from 'fs/promises';
+import { existsSync } from 'fs';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
 const MAX_FILE_SIZE_MB = 5;
@@ -18,16 +17,15 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const userId = formData.get('userId') as string | null;
-    const docType = formData.get('docType') as string | null;
     const documentTypeId = formData.get('documentTypeId') as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'Nenhum arquivo fornecido.' }, { status: 400 });
     }
     if (!userId) {
-      return NextResponse.json({ success: false, message: 'ID do usuário não fornecido.' }, { status: 400 });
+      return NextResponse.json({ success: false, message: 'ID do usuário não fornecido.' }, { status: 401 });
     }
-    if (!docType || !documentTypeId) {
+    if (!documentTypeId) {
         return NextResponse.json({ success: false, message: 'Tipo do documento não fornecido.' }, { status: 400 });
     }
 
@@ -38,28 +36,31 @@ export async function POST(request: NextRequest) {
     if (!ALLOWED_TYPES.includes(file.type)) {
         return NextResponse.json({ success: false, message: `Tipo de arquivo '${file.type}' não permitido.` }, { status: 415 });
     }
-
-    // In a real app with cloud storage, this is where you'd upload the file to a bucket.
-    // For local dev with this adapter, we just simulate a public URL.
-    const sanitizedDocType = docType.replace(/[^a-zA-Z0-9-_]/g, '_');
-    const uniqueFilename = `${sanitizedDocType}-${uuidv4()}${path.extname(file.name)}`;
+    
+    // Save file physically
+    const uploadDir = path.join(process.cwd(), 'public', 'uploads', 'documents', userId);
+    if (!existsSync(uploadDir)) {
+      await mkdir(uploadDir, { recursive: true });
+    }
+    
+    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    const uniqueFilename = `${documentTypeId}-${uuidv4()}${path.extname(file.name)}`;
+    const filePath = path.join(uploadDir, uniqueFilename);
     const publicUrl = `/uploads/documents/${userId}/${uniqueFilename}`;
 
-    // Now, save the document record in the database
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    if (db.saveUserDocument) {
-      // @ts-ignore
-      await db.saveUserDocument(userId, documentTypeId, publicUrl, file.name);
-    } else {
-       console.warn("db.saveUserDocument is not implemented for the current adapter.");
-    }
+    await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
+
+    // Now, save the document record in the database using Prisma directly
+    await prisma.userDocument.upsert({
+        where: { userId_documentTypeId: { userId, documentTypeId }},
+        update: { fileUrl: publicUrl, fileName: file.name, status: 'PENDING_ANALYSIS', rejectionReason: null },
+        create: { userId, documentTypeId, fileUrl: publicUrl, fileName: file.name, status: 'PENDING_ANALYSIS' },
+    });
     
     return NextResponse.json({
       success: true,
       message: 'Documento enviado com sucesso!',
       publicUrl: publicUrl,
-      storagePath: publicUrl // For local, publicUrl and storagePath are the same
     });
 
   } catch (error: any) {

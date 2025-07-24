@@ -1,8 +1,6 @@
-
 // src/app/api/upload/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { ensureAdminInitialized } from '@/lib/firebase/admin';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { MediaService } from '@/services/media.service';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
@@ -36,11 +34,18 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    if (!userId) {
+        return NextResponse.json(
+            { success: false, message: 'Usuário não autenticado. O ID do usuário é obrigatório.'},
+            { status: 401 }
+        );
+    }
+    
+    const mediaService = new MediaService();
     const uploadedItems: Partial<MediaItem>[] = [];
     const uploadErrors: { fileName: string; message: string }[] = [];
     const publicUrls: string[] = [];
 
-    // Define and ensure the upload directory exists
     const relativeUploadDir = path.join('public', 'uploads', uploadPath);
     const absoluteUploadDir = path.join(process.cwd(), relativeUploadDir);
 
@@ -70,23 +75,16 @@ export async function POST(request: NextRequest) {
         publicUrls.push(publicUrl);
 
         if (uploadPath === 'media') {
-            const db = getDatabaseAdapter();
-            const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
+            const itemData: Partial<Omit<MediaItem, 'id'>> = {
                 fileName: file.name,
                 storagePath: publicUrl,
                 title: path.basename(file.name, path.extname(file.name)),
                 altText: path.basename(file.name, path.extname(file.name)),
                 mimeType: file.type,
                 sizeBytes: file.size,
-                urlOriginal: publicUrl,
-                urlThumbnail: publicUrl, 
-                urlMedium: publicUrl,
-                urlLarge: publicUrl,
-                linkedLotIds: [],
                 dataAiHint: 'upload usuario',
-                uploadedBy: userId || 'system-seed',
             };
-            const createResult = await db.createMediaItem(itemData, publicUrl, userId || 'system-seed');
+            const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
             if (createResult.success && createResult.item) {
                 uploadedItems.push(createResult.item);
             } else {

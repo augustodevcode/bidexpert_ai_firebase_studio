@@ -1,4 +1,3 @@
-
 // src/app/admin/media/upload/page.tsx
 'use client';
 
@@ -13,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { MediaItem } from '@/types';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth hook
 
 interface UploadError {
   fileName: string;
@@ -33,6 +33,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 export default function AdvancedMediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
+  const { userProfileWithPermissions } = useAuth(); // Get user from auth context
   
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,10 +109,16 @@ export default function AdvancedMediaUploadPage() {
       return;
     }
 
+    if (!userProfileWithPermissions?.id) {
+        toast({ title: 'Usuário não autenticado', description: 'Por favor, faça login novamente para enviar arquivos.', variant: 'destructive' });
+        return;
+    }
+
     setIsLoading(true);
     setUploadResult(null);
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
+    formData.append('userId', userProfileWithPermissions.id); // Add the logged-in user's ID
 
     try {
         const response = await fetch('/api/upload', {
@@ -125,11 +132,9 @@ export default function AdvancedMediaUploadPage() {
         if (response.ok && result.success) {
             toast({ title: 'Upload Concluído', description: result.message });
             setFiles([]);
-            // Wait a bit before redirecting to allow user to see success message
             setTimeout(() => router.push('/admin/media?refresh=' + new Date().getTime()), 1000);
         } else if (response.ok && !result.success && result.errors) {
             toast({ title: 'Upload Parcial', description: result.message, variant: 'default' });
-            // Remove successfully uploaded files from the list
             const successfulFileNames = new Set((result.items || []).map(item => item.fileName));
             setFiles(currentFiles => currentFiles.filter(f => !successfulFileNames.has(f.name)));
         } else {
