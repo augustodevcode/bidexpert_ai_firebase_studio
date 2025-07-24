@@ -10,7 +10,8 @@ import {
     runCategoryEndToEndTest, 
     runCourtEndToEndTest,
     runJudicialDistrictEndToEndTest,
-    runJudicialBranchEndToEndTest
+    runJudicialBranchEndToEndTest,
+    runJudicialProcessEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
@@ -63,6 +64,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Vara',
     description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.',
     action: runJudicialBranchEndToEndTest,
+  },
+  {
+    id: 'judicial-process-creation',
+    title: 'Teste de Cadastro de Processo',
+    description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.',
+    action: runJudicialProcessEndToEndTest,
   },
 ];
 
