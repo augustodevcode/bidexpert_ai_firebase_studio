@@ -1,10 +1,11 @@
-
 // tests/seller.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
-import { createSeller } from '../src/app/admin/sellers/actions';
+import { SellerService } from '../src/services/seller.service'; // Mudar a importação da action para o service
 import { prisma } from '../src/lib/prisma';
 import type { SellerFormData } from '../src/types';
+
+const sellerService = new SellerService();
 
 test.describe('Seller Service E2E Tests', () => {
     
@@ -12,35 +13,35 @@ test.describe('Seller Service E2E Tests', () => {
     test.after(async () => {
         try {
             await prisma.seller.deleteMany({
-                where: { email: 'test.seller@example.com' }
+                where: { email: 'test.seller.service@example.com' } // Usar um email diferente para o teste de serviço
             });
         } catch (error) {
-            // Ignore errors during cleanup, as the test might have failed before creating the record
+            // Ignore errors during cleanup
         }
         await prisma.$disconnect();
     });
 
-    test('should create a new seller and verify it in the database', async () => {
+    test('should create a new seller via SellerService and verify it in the database', async () => {
         // Arrange: Define the test data for the new seller
         const newSellerData: SellerFormData = {
-            name: 'Test Seller Inc.',
-            contactName: 'John Doe',
-            email: 'test.seller@example.com',
-            phone: '1234567890',
-            address: '123 Test St',
-            city: 'Testville',
+            name: 'Test Service Seller Inc.',
+            contactName: 'Jane Doe',
+            email: 'test.seller.service@example.com',
+            phone: '9876543210',
+            address: '456 Test Ave',
+            city: 'Testburg',
             state: 'TS',
-            zipCode: '12345',
-            website: 'https://testseller.example.com',
+            zipCode: '54321',
+            website: 'https://testserviceseller.example.com',
             isJudicial: false,
         };
 
-        // Act: Call the createSeller server action
-        const result = await createSeller(newSellerData);
+        // Act: Call the SellerService directly
+        const result = await sellerService.createSeller(newSellerData);
 
-        // Assert: Check the result of the action
-        assert.strictEqual(result.success, true, 'createSeller action should return success: true');
-        assert.ok(result.sellerId, 'createSeller action should return a sellerId');
+        // Assert: Check the result of the service method
+        assert.strictEqual(result.success, true, 'SellerService.createSeller should return success: true');
+        assert.ok(result.sellerId, 'SellerService.createSeller should return a sellerId');
 
         // Assert: Verify directly in the database
         const createdSellerFromDb = await prisma.seller.findUnique({
