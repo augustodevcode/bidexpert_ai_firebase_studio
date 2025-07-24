@@ -1,3 +1,4 @@
+// src/app/dashboard/notifications/actions.ts
 /**
  * @fileoverview Server Actions for managing user Notifications.
  * Provides functions to fetch notifications for a user, get the count of unread notifications,
@@ -6,7 +7,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database/index';
+import { prisma } from '@/lib/prisma';
 import type { Notification } from '@/types';
 
 /**
@@ -19,9 +20,10 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
     console.warn("[Action - getNotificationsForUser] No userId provided.");
     return [];
   }
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  return db.getNotificationsForUser ? db.getNotificationsForUser(userId) : [];
+  return prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+  });
 }
 
 /**
@@ -32,8 +34,13 @@ export async function getNotificationsForUser(userId: string): Promise<Notificat
 export async function getUnreadNotificationCountAction(userId: string): Promise<number> {
   if (!userId) return 0;
   try {
-    const notifications = await getNotificationsForUser(userId);
-    return notifications.filter(n => !n.isRead).length;
+    const count = await prisma.notification.count({
+        where: {
+            userId: userId,
+            isRead: false,
+        }
+    });
+    return count;
   } catch (error) {
     console.error(`[Action - getUnreadNotificationCountAction] Error for user ${userId}:`, error);
     return 0;
@@ -50,18 +57,27 @@ export async function markNotificationAsRead(notificationId: string, userId: str
     if (!notificationId || !userId) {
         return { success: false, message: "ID da notificação ou do usuário não fornecido."};
     }
-    const db = await getDatabaseAdapter();
-    // @ts-ignore
-    if (!db.markNotificationAsRead) {
-      return { success: false, message: "Função não implementada para este adaptador." };
-    }
     
-    // @ts-ignore
-    const result = await db.markNotificationAsRead(notificationId, userId);
+    try {
+        await prisma.notification.update({
+            where: {
+                id: notificationId,
+                userId: userId, // Ensure user can only update their own notifications
+            },
+            data: {
+                isRead: true,
+            }
+        });
 
-    if (result.success) {
         revalidatePath('/dashboard/notifications');
-    }
+        return { success: true, message: "Notificação marcada como lida." };
 
-    return result;
+    } catch (error: any) {
+        // Prisma throws an error if the record to update is not found
+        if (error.code === 'P2025') {
+            return { success: false, message: "Notificação não encontrada ou não pertence a este usuário." };
+        }
+        console.error(`[Action - markNotificationAsRead] Error for notification ${notificationId}:`, error);
+        return { success: false, message: "Falha ao marcar notificação como lida." };
+    }
 }
