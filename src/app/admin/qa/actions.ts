@@ -62,3 +62,13 @@ export async function runCategoryEndToEndTest(): Promise<{ success: boolean; out
     const command = `dotenv -e .env -- tsx ./tests/category.test.ts`;
     return runTestScript(command);
 }
+
+/**
+ * Executes the end-to-end test for the court creation flow.
+ * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
+ *          An object containing the success status and the output/error from the test execution.
+ */
+export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/court.test.ts`;
+    return runTestScript(command);
+}

@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { runSellerEndToEndTest, runAuctioneerEndToEndTest, runCategoryEndToEndTest } from './actions';
+import { runSellerEndToEndTest, runAuctioneerEndToEndTest, runCategoryEndToEndTest, runCourtEndToEndTest } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
 interface TestResult {
@@ -38,6 +38,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Categoria',
     description: 'Verifica a criação de uma nova categoria de lote e a geração correta do seu slug.',
     action: runCategoryEndToEndTest,
+  },
+  {
+    id: 'court-creation',
+    title: 'Teste de Cadastro de Tribunal',
+    description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.',
+    action: runCourtEndToEndTest,
   },
 ];
 
