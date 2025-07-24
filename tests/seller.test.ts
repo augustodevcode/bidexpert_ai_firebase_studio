@@ -1,7 +1,7 @@
 // tests/seller.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
-import { SellerService } from '../src/services/seller.service'; // Mudar a importação da action para o service
+import { SellerService } from '../src/services/seller.service';
 import { prisma } from '../src/lib/prisma';
 import type { SellerFormData } from '../src/types';
 
@@ -13,7 +13,7 @@ test.describe('Seller Service E2E Tests', () => {
     test.after(async () => {
         try {
             await prisma.seller.deleteMany({
-                where: { email: 'test.seller.service@example.com' } // Usar um email diferente para o teste de serviço
+                where: { email: 'test.seller.service@example.com' }
             });
         } catch (error) {
             // Ignore errors during cleanup
@@ -47,6 +47,11 @@ test.describe('Seller Service E2E Tests', () => {
         const createdSellerFromDb = await prisma.seller.findUnique({
             where: { id: result.sellerId },
         });
+
+        // Log a informação para depuração
+        console.log('--- Seller Record Created in DB ---');
+        console.log(createdSellerFromDb);
+        console.log('-----------------------------------');
 
         assert.ok(createdSellerFromDb, 'Seller should be found in the database');
         assert.ok(createdSellerFromDb.publicId, 'Seller should have a publicId generated');
