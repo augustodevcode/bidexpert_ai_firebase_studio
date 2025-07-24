@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
 import { getDatabaseAdapter } from '@/lib/database/index';
-import { revalidatePath } from 'next/cache';
 
 // This is a dedicated route for user document uploads.
 // It ensures that files are stored in a user-specific directory and updates the database.
@@ -47,13 +46,11 @@ export async function POST(request: NextRequest) {
     const publicUrl = `/uploads/documents/${userId}/${uniqueFilename}`;
 
     // Now, save the document record in the database
-    const db = await getDatabaseAdapter();
+    const db = getDatabaseAdapter();
     // @ts-ignore
     if (db.saveUserDocument) {
       // @ts-ignore
       await db.saveUserDocument(userId, documentTypeId, publicUrl, file.name);
-      revalidatePath('/dashboard/documents');
-      revalidatePath(`/admin/habilitations/${userId}`);
     } else {
        console.warn("db.saveUserDocument is not implemented for the current adapter.");
     }

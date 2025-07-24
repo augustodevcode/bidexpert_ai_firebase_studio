@@ -6,7 +6,6 @@ import { getDatabaseAdapter } from '@/lib/database/index';
 import type { MediaItem } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { revalidatePath } from 'next/cache';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 
@@ -71,7 +70,7 @@ export async function POST(request: NextRequest) {
         publicUrls.push(publicUrl);
 
         if (uploadPath === 'media') {
-            const db = await getDatabaseAdapter();
+            const db = getDatabaseAdapter();
             const itemData: Omit<MediaItem, 'id' | 'uploadedAt'> = {
                 fileName: file.name,
                 storagePath: publicUrl,
@@ -99,9 +98,6 @@ export async function POST(request: NextRequest) {
     let message = '';
     if (publicUrls.length > 0) {
       message += `${publicUrls.length} arquivo(s) enviado(s) com sucesso. `;
-      if (uploadPath === 'media') {
-        revalidatePath('/admin/media');
-      }
     }
     if (uploadErrors.length > 0) {
       message += `${uploadErrors.length} arquivo(s) falharam.`;
