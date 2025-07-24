@@ -37,14 +37,22 @@ export class JudicialProcessService {
 
   async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     try {
-      const { parties, ...processData } = data;
+      const { parties, courtId, districtId, branchId, sellerId, ...processData } = data;
+      
       const dataToCreate: Prisma.JudicialProcessCreateInput = {
         ...processData,
         publicId: `PROC-${uuidv4()}`,
         parties: {
           create: parties,
         },
+        court: { connect: { id: courtId } },
+        district: { connect: { id: districtId } },
+        branch: { connect: { id: branchId } },
       };
+
+      if (sellerId) {
+        dataToCreate.seller = { connect: { id: sellerId } };
+      }
 
       const newProcess = await this.repository.create(dataToCreate);
       return { success: true, message: 'Processo judicial criado com sucesso.', processId: newProcess.id };
@@ -56,8 +64,16 @@ export class JudicialProcessService {
 
   async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { parties, ...processData } = data;
-      await this.repository.update(id, processData, parties);
+      const { parties, courtId, districtId, branchId, sellerId, ...processData } = data;
+      const dataToUpdate: Partial<Prisma.JudicialProcessUpdateInput> = {...processData};
+
+      if (courtId) dataToUpdate.court = { connect: { id: courtId } };
+      if (districtId) dataToUpdate.district = { connect: { id: districtId } };
+      if (branchId) dataToUpdate.branch = { connect: { id: branchId } };
+      if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+      else if (data.hasOwnProperty('sellerId')) dataToUpdate.seller = { disconnect: true };
+
+      await this.repository.update(id, dataToUpdate, parties);
       return { success: true, message: 'Processo judicial atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialProcessService.update for id ${id}:`, error);

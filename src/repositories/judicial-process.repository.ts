@@ -43,21 +43,28 @@ export class JudicialProcessRepository {
         });
 
         if (parties) {
+            // Delete existing relations for parties
             await tx.judicialParty.deleteMany({ where: { processId: id } });
-            await tx.judicialProcess.update({
-                where: { id },
-                data: {
-                    parties: {
-                        create: parties,
-                    },
-                },
-            });
+            // Create new relations for parties
+            if (parties.length > 0) {
+              await tx.judicialProcess.update({
+                  where: { id },
+                  data: {
+                      parties: {
+                          create: parties,
+                      },
+                  },
+              });
+            }
         }
         return updatedProcess;
     });
   }
 
   async delete(id: string): Promise<void> {
-    await prisma.judicialProcess.delete({ where: { id } });
+     await prisma.$transaction(async (tx) => {
+        await tx.judicialParty.deleteMany({ where: { processId: id }});
+        await tx.judicialProcess.delete({ where: { id } });
+    });
   }
 }
