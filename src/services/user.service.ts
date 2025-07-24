@@ -65,7 +65,14 @@ export class UserService {
           roleIdsToAssign.push(userRole.id);
         }
 
-        const newUser = await this.userRepository.create(data, roleIdsToAssign);
+        const { roleIds, ...userData } = data;
+
+        const dataToCreate: Prisma.UserCreateInput = {
+            ...userData,
+            password: hashedPassword,
+        };
+        
+        const newUser = await this.userRepository.create(dataToCreate, roleIdsToAssign);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);
@@ -78,7 +85,7 @@ export class UserService {
       if (!userId) {
         throw new Error("UserID é obrigatório para atualizar perfis.");
       }
-      // This now calls the additive repository method
+      
       await this.userRepository.updateUserRoles(userId, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
@@ -87,7 +94,7 @@ export class UserService {
     }
   }
 
-  async deleteUser(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
     try {
         await this.userRepository.delete(id);
         return { success: true, message: "Usuário excluído com sucesso." };

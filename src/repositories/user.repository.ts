@@ -51,7 +51,7 @@ export class UserRepository {
   }
 
   async updateUserRoles(userId: string, roleIdsToAdd: string[]) {
-    if (roleIdsToAdd.length === 0) return;
+    if (!userId || roleIdsToAdd.length === 0) return;
     
     // This now adds roles without removing existing ones.
     // `skipDuplicates` prevents errors if the user already has one of the roles.
@@ -59,7 +59,7 @@ export class UserRepository {
       data: roleIdsToAdd.map(roleId => ({
         userId,
         roleId,
-        assignedBy: 'system', // or another appropriate value
+        assignedBy: 'admin-panel', 
       })),
       skipDuplicates: true,
     });

@@ -59,7 +59,6 @@
       "description": "Usuário padrão com acesso básico.",
       "permissions": [
         "view_auctions",
-        "place_bids",
         "view_lots"
       ],
       "createdAt": "2025-03-14T04:56:12.389Z",
@@ -94,6 +93,18 @@
       ],
       "createdAt": "2025-07-13T00:00:00Z",
       "updatedAt": "2025-07-13T00:00:00Z"
+    },
+    {
+      "id": "role-bidder",
+      "name": "BIDDER",
+      "nameNormalized": "BIDDER",
+      "description": "Usuário habilitado para dar lances e arrematar itens.",
+      "permissions": [
+        "place_bids",
+        "view_wins"
+      ],
+      "createdAt": "2025-07-13T00:00:01Z",
+      "updatedAt": "2025-07-13T00:00:01Z"
     }
   ],
   "sampleUserWins": [
