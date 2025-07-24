@@ -17,6 +17,7 @@ export class UserRepository {
   }
 
   async findById(id: string) {
+    if (!id) return null;
     return prisma.user.findUnique({
       where: { id },
       include: {
@@ -30,6 +31,7 @@ export class UserRepository {
   }
 
   async findByEmail(email: string) {
+    if (!email) return null;
     return prisma.user.findUnique({
       where: { email },
     });
@@ -38,7 +40,7 @@ export class UserRepository {
   async create(data: Prisma.UserCreateInput, roleIds: string[]) {
     return prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({ data });
-      if (roleIds.length > 0) {
+      if (roleIds && roleIds.length > 0) {
         await tx.usersOnRoles.createMany({
           data: roleIds.map(roleId => ({
             userId: newUser.id,
@@ -59,12 +61,12 @@ export class UserRepository {
       });
 
       // 2. Add the new roles
-      if (roleIds.length > 0) {
+      if (roleIds && roleIds.length > 0) {
         await tx.usersOnRoles.createMany({
           data: roleIds.map(roleId => ({
-            userId,
+            userId, // This was the bug, it was undefined. Now it's passed correctly.
             roleId,
-            assignedBy: 'admin-panel', // or another source identifier
+            assignedBy: 'admin-panel', 
           })),
         });
       }

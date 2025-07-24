@@ -32,19 +32,21 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
     test.before(async () => {
         console.log('--- Bidding E2E Test: Setting up prerequisite data ---');
         // 1. Create Roles if they don't exist
-        await prisma.role.upsert({ where: { nameNormalized: 'AUCTION_ANALYST' }, update: {}, create: { name: 'AUCTION_ANALYST', nameNormalized: 'AUCTION_ANALYST', description: 'Test Analyst', permissions: ['users:manage_habilitation'] } });
-        await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'USER', nameNormalized: 'USER', description: 'Test User', permissions: ['place_bids'] } });
+        const analystRole = await prisma.role.upsert({ where: { nameNormalized: 'AUCTION_ANALYST' }, update: {}, create: { name: 'AUCTION_ANALYST', nameNormalized: 'AUCTION_ANALYST', description: 'Test Analyst', permissions: ['users:manage_habilitation'] } });
+        const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'USER', nameNormalized: 'USER', description: 'Test User', permissions: ['place_bids'] } });
 
-        // 2. Create Analyst User
-        const analystRole = await prisma.role.findUniqueOrThrow({ where: { nameNormalized: 'AUCTION_ANALYST' } });
-        const analystResult = await userService.createUser({ fullName: `Analyst ${testSuffix}`, email: `analyst${testSuffix}@example.com`, password: 'password123' });
-        await userService.updateUserRoles(analystResult.userId!, [analystRole.id]);
-        analystUser = (await userService.getUserById(analystResult.userId!))!;
+        // 2. Create Analyst User with the correct role
+        const analystResult = await userService.createUser({ fullName: `Analyst ${testSuffix}`, email: `analyst${testSuffix}@example.com`, password: 'password123', roleIds: [analystRole.id] });
+        assert.ok(analystResult.userId, "Analyst user must be created successfully.");
+        analystUser = (await userService.getUserById(analystResult.userId))!;
+        assert.ok(analystUser, "Analyst user profile must be fetched successfully.");
 
-        // 3. Create Bidding Users
+        // 3. Create Bidding Users with the correct role
         for (let i = 1; i <= 5; i++) {
-            const userResult = await userService.createUser({ fullName: `Bidder ${i}${testSuffix}`, email: `bidder${i}${testSuffix}@example.com`, password: 'password123' });
-            const user = (await userService.getUserById(userResult.userId!))!;
+            const userResult = await userService.createUser({ fullName: `Bidder ${i}${testSuffix}`, email: `bidder${i}${testSuffix}@example.com`, password: 'password123', roleIds: [userRole.id] });
+            assert.ok(userResult.userId, `Bidder ${i} must be created successfully.`);
+            const user = (await userService.getUserById(userResult.userId))!;
+            assert.ok(user, `Bidder ${i} profile must be fetched successfully.`);
             biddingUsers.push(user);
         }
 
@@ -55,11 +57,15 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
 
         // 5. Create Auction
         const auctionResult = await auctionService.createAuction({ title: `Auction ${testSuffix}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: testAuctioneer.id, sellerId: testSeller.id, softCloseEnabled: true, softCloseMinutes: 3 });
-        testAuction = (await auctionService.getAuctionById(auctionResult.auctionId!))!;
+        assert.ok(auctionResult.auctionId, "Auction must be created successfully.");
+        testAuction = (await auctionService.getAuctionById(auctionResult.auctionId))!;
+        assert.ok(testAuction, "Auction profile must be fetched successfully.");
         
         // 6. Create Lot
         const lotResult = await lotService.createLot({ title: `Lot ${testSuffix}`, auctionId: testAuction.id, price: 50000, initialPrice: 50000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bidIncrementStep: 1000, endDate: new Date(Date.now() + 5 * 60 * 1000) }); // Ends in 5 mins
-        testLot = (await lotService.getLotById(lotResult.lotId!))!;
+        assert.ok(lotResult.lotId, "Lot must be created successfully.");
+        testLot = (await lotService.getLotById(lotResult.lotId))!;
+        assert.ok(testLot, "Lot profile must be fetched successfully.");
         console.log('--- Bidding E2E Test: Setup complete ---');
     });
 

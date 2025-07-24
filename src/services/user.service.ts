@@ -20,6 +20,8 @@ export class UserService {
     const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
     return {
       ...user,
+      roles, // Pass the full role objects
+      roleIds: roles.map((r: any) => r.id),
       roleNames: roles.map((r: any) => r.name),
       permissions,
       roleName: roles[0]?.name,
@@ -49,20 +51,24 @@ export class UserService {
 
         const hashedPassword = await bcrypt.hash(data.password, 10);
         
-        const userRole = await this.roleRepository.findByNormalizedName('USER');
-        if (!userRole) {
-            throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
+        let roleIdsToAssign = data.roleIds || [];
+        if (roleIdsToAssign.length === 0) {
+          const userRole = await this.roleRepository.findByNormalizedName('USER');
+          if (!userRole) {
+              throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
+          }
+          roleIdsToAssign.push(userRole.id);
         }
 
         const dataToCreate: Prisma.UserCreateInput = {
             email: data.email,
             password: hashedPassword,
             fullName: data.fullName || 'Usuário',
-            habilitationStatus: 'PENDING_DOCUMENTS',
+            habilitationStatus: data.habilitationStatus || 'PENDING_DOCUMENTS',
             accountType: data.accountType || 'PHYSICAL',
         };
 
-        const newUser = await this.userRepository.create(dataToCreate, [userRole.id]);
+        const newUser = await this.userRepository.create(dataToCreate, roleIdsToAssign);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);
@@ -72,6 +78,9 @@ export class UserService {
   
   async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string }> {
     try {
+      if (!userId) {
+        throw new Error("UserID é obrigatório para atualizar perfis.");
+      }
       await this.userRepository.updateUserRoles(userId, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
