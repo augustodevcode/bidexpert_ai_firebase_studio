@@ -14,7 +14,8 @@ import {
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
     runAuctionEndToEndTest,
-    runLotEndToEndTest
+    runLotEndToEndTest,
+    runRoleEndToEndTest // Import the new test action
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -50,6 +51,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Categoria',
     description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
     action: runCategoryEndToEndTest,
+  },
+   {
+    id: 'role-creation',
+    title: 'Teste de Cadastro de Perfil (Role)',
+    description: 'Verifica a criação de um novo perfil de usuário com permissões.',
+    action: runRoleEndToEndTest,
   },
   {
     id: 'court-creation',

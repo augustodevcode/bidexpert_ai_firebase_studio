@@ -1,41 +1,30 @@
 // src/app/admin/roles/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database/index';
-import type { Role } from '@/types';
 import { revalidatePath } from 'next/cache';
+import type { Role, RoleFormData } from '@/types';
+import { RoleService } from '@/services/role.service';
+
+const roleService = new RoleService();
 
 export async function getRoles(): Promise<Role[]> {
-    const db = await getDatabaseAdapter();
-    return db.getRoles();
+    return roleService.getRoles();
 }
 
 export async function getRole(id: string): Promise<Role | null> {
-    const db = await getDatabaseAdapter();
-    const roles = await db.getRoles();
-    return roles.find(r => r.id === id) || null;
+    return roleService.getRoleById(id);
 }
-// Outras actions como create, update, delete precisariam ser implementadas
-// de forma similar, chamando os métodos correspondentes no adaptador.
 
-export async function createRole(data: Partial<Role>): Promise<{ success: boolean; message: string; roleId?: string }> {
-    'use server';
-    const db = await getDatabaseAdapter();
-    // Placeholder implementation - assuming db.createRole exists
-    // @ts-ignore 
-    const result = await db.createRole(data);
+export async function createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }> {
+    const result = await roleService.createRole(data);
     if (result.success) {
-        revalidatePath('/admin/roles');
+      revalidatePath('/admin/roles');
     }
     return result;
 }
 
-export async function updateRole(id: string, data: Partial<Role>): Promise<{ success: boolean; message: string }> {
-    'use server';
-    const db = await getDatabaseAdapter();
-    // Placeholder implementation - assuming db.updateRole exists
-    // @ts-ignore
-    const result = await db.updateRole(id, data);
+export async function updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
+    const result = await roleService.updateRole(id, data);
     if (result.success) {
         revalidatePath('/admin/roles');
         revalidatePath(`/admin/roles/${id}/edit`);
@@ -44,15 +33,9 @@ export async function updateRole(id: string, data: Partial<Role>): Promise<{ suc
 }
 
 export async function deleteRole(id: string): Promise<{ success: boolean; message: string }> {
-    'use server';
-    const db = await getDatabaseAdapter();
-    // Placeholder implementation - assuming db.deleteRole exists
-    // @ts-ignore
-    const result = await db.deleteRole(id);
+    const result = await roleService.deleteRole(id);
      if (result.success) {
         revalidatePath('/admin/roles');
     }
     return result;
 }
-// Outras actions como create, update, delete precisariam ser implementadas
-// de forma similar, chamando os métodos correspondentes no adaptador.
