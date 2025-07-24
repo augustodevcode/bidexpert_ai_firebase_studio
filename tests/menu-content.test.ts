@@ -37,7 +37,8 @@ test.describe('Dynamic Menu Content E2E Tests', () => {
     test.before(async () => {
         browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Importante para ambientes CI/Docker
+            product: 'firefox', // Alterado para usar Firefox
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Mantido para segurança
         });
         page = await browser.newPage();
         await page.goto(BASE_URL, { waitUntil: 'networkidle0' });

@@ -20,7 +20,8 @@ test.describe('Static Modalities Menu E2E Test', () => {
     test.before(async () => {
         browser = await puppeteer.launch({
             headless: true,
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            product: 'firefox', // Alterado para usar Firefox
+            args: ['--no-sandbox', '--disable-setuid-sandbox'] // Mantido para segurança
         });
         page = await browser.newPage();
         await page.goto(BASE_URL, { waitUntil: 'networkidle0' });
