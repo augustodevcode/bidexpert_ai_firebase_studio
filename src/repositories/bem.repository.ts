@@ -4,7 +4,7 @@ import type { Bem, BemFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class BemRepository {
-  async findAll(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]> {
+  async findAll(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<any[]> {
     const whereClause: Prisma.BemWhereInput = {};
     if (filter?.judicialProcessId) {
       whereClause.judicialProcessId = filter.judicialProcessId;
@@ -12,12 +12,19 @@ export class BemRepository {
     if (filter?.sellerId) {
       whereClause.sellerId = filter.sellerId;
     }
-    // @ts-ignore
-    return prisma.bem.findMany({ where: whereClause });
+    return prisma.bem.findMany({ 
+        where: whereClause,
+        include: {
+            category: { select: { name: true } },
+            subcategory: { select: { name: true } },
+            judicialProcess: { select: { processNumber: true } },
+            seller: { select: { name: true } }
+        }
+    });
   }
 
   async findById(id: string): Promise<Bem | null> {
-    return prisma.bem.findUnique({ where: { id } });
+    return prisma.bem.findFirst({ where: { OR: [{ id }, { publicId: id }] } });
   }
 
   async findByIds(ids: string[]): Promise<Bem[]> {

@@ -10,6 +10,7 @@ import Link from 'next/link';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions'; // Import getPlatformSettings
 
 // Components
 import FeaturedItems from '@/components/featured-items';
@@ -74,7 +75,20 @@ async function FeaturedCategories() {
     );
 }
 
-export default function HomePage() {
+export default async function HomePage() {
+  const platformSettings = await getPlatformSettings(); // Fetch settings once in the parent component
+
+  if (!platformSettings) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
+          <p>Carregando configurações da plataforma...</p>
+        </div>
+      </div>
+    );
+  }
+
   const genericLoadingComponent = (
     <div className="flex justify-center items-center h-64">
       <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -86,7 +100,7 @@ export default function HomePage() {
       <HeroCarousel />
       
       <Suspense fallback={genericLoadingComponent}>
-        <FeaturedLots />
+        <FeaturedItems items={[]} type="lot" title="Lotes em Destaque" viewAllLink="/search?type=lots" platformSettings={platformSettings} />
       </Suspense>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
@@ -110,7 +124,7 @@ export default function HomePage() {
       </div>
 
        <Suspense fallback={genericLoadingComponent}>
-            <FeaturedAuctions />
+            <FeaturedItems items={[]} type="auction" title="Leilões em Destaque" viewAllLink="/search?type=auctions" platformSettings={platformSettings} />
         </Suspense>
 
       <Suspense fallback={genericLoadingComponent}>

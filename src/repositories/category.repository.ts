@@ -4,8 +4,15 @@ import type { LotCategory } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class CategoryRepository {
-  async findAll(): Promise<LotCategory[]> {
-    return prisma.lotCategory.findMany({ orderBy: { name: 'asc' } });
+  async findAll(): Promise<any[]> {
+    return prisma.lotCategory.findMany({ 
+        orderBy: { name: 'asc' },
+        include: {
+            _count: {
+                select: { lots: true, bens: true }
+            }
+        }
+    });
   }
 
   async findById(id: string): Promise<LotCategory | null> {

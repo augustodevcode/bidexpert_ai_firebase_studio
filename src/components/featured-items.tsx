@@ -5,21 +5,19 @@ import LotCard from './lot-card';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 interface FeaturedItemsProps {
   items: (Auction | Lot)[];
   type: 'auction' | 'lot';
   title: string;
   viewAllLink: string;
+  platformSettings: PlatformSettings; // Add this prop
 }
 
-export default async function FeaturedItems({ items, type, title, viewAllLink }: FeaturedItemsProps) {
-  const platformSettings = await getPlatformSettings();
-
-  if (!platformSettings) {
-    // Handle case where settings are not available
-    return <div>Erro ao carregar configurações da plataforma.</div>;
+export default function FeaturedItems({ items, type, title, viewAllLink, platformSettings }: FeaturedItemsProps) {
+  if (!items || items.length === 0) {
+    // Optionally return null or a placeholder if there are no items to display
+    return null;
   }
   
   return (

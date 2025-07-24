@@ -1,7 +1,7 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
-import DevDbIndicator from './dev-db-indicator'; // Importado o componente
+import DevDbIndicator from '@/components/layout/dev-db-indicator'; // Corrigido o caminho da importação
 
 export default function Footer() {
   const quickLinks = [

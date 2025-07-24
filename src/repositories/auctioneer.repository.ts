@@ -9,7 +9,7 @@ export class AuctioneerRepository {
   }
 
   async findById(id: string): Promise<AuctioneerProfileInfo | null> {
-    return prisma.auctioneer.findUnique({ where: { id } });
+    return prisma.auctioneer.findFirst({ where: { OR: [{id}, {publicId: id}]} });
   }
 
   async create(data: Prisma.AuctioneerCreateInput): Promise<AuctioneerProfileInfo> {

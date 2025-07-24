@@ -16,6 +16,10 @@ export class AuctionRepository {
       where: { OR: [{ id }, { publicId: id }] },
       include: {
         lots: { include: { bens: true } },
+        auctioneer: true,
+        seller: true,
+        category: true,
+        auctionStages: true,
       },
     });
   }
