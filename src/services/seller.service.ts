@@ -41,6 +41,7 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
+      // Prepara os dados para criação, omitindo campos gerados automaticamente
       const dataToCreate: Prisma.SellerCreateInput = {
         name: data.name,
         slug: slugify(data.name),
@@ -57,6 +58,7 @@ export class SellerService {
         description: data.description,
         isJudicial: data.isJudicial,
         judicialBranchId: data.judicialBranchId,
+        // Não inclua id ou publicId aqui, pois são gerados pelo Prisma/DB
       };
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
@@ -78,7 +80,7 @@ export class SellerService {
     }
   }
   
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       const lots = await this.sellerRepository.findLotsBySellerId(id);
       if (lots.length > 0) {
