@@ -11,7 +11,8 @@ import {
     runCourtEndToEndTest,
     runJudicialDistrictEndToEndTest,
     runJudicialBranchEndToEndTest,
-    runJudicialProcessEndToEndTest
+    runJudicialProcessEndToEndTest,
+    runBemEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
@@ -70,6 +71,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Processo',
     description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.',
     action: runJudicialProcessEndToEndTest,
+  },
+  {
+    id: 'bem-creation',
+    title: 'Teste de Cadastro de Bem',
+    description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
+    action: runBemEndToEndTest,
   },
 ];
 

@@ -18,7 +18,7 @@ async function runTestScript(command: string): Promise<{ success: boolean; outpu
                  console.error(`[QA Action] Test execution has stderr failures for command "${command}":`, stderr);
                  return { success: false, output: stdout, error: stderr };
             }
-             console.log(`[QA Action] Test execution has stderr but no failures for command "${command}":`, stderr);
+             console.log(`[QA Action] Test executed with stderr but no failures for command "${command}":`, stderr);
         }
         
         console.log(`[QA Action] Test executed successfully for command "${command}". stdout:`, stdout);
@@ -65,5 +65,10 @@ export async function runJudicialBranchEndToEndTest(): Promise<{ success: boolea
 
 export async function runJudicialProcessEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/judicial-process.test.ts`;
+    return runTestScript(command);
+}
+
+export async function runBemEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/bem.test.ts`;
     return runTestScript(command);
 }

@@ -1,4 +1,4 @@
-Jul 24, 2025 2:10:44 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
+Jul 24, 2025 3:08:30 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketServer start
 INFO: Started WebSocket server on ws://127.0.0.1:9150
 API endpoint: http://127.0.0.1:8080
 If you are using a library that supports the FIRESTORE_EMULATOR_HOST environment variable, run:
@@ -12,35 +12,33 @@ If you are running a Firestore in Datastore Mode project, run:
 Note: Support for Datastore Mode is in preview. If you encounter any bugs please file at https://github.com/firebase/firebase-tools/issues.
 Dev App Server is now running.
 
-Jul 24, 2025 2:11:02 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:38 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:02 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:03 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:37 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:37 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:38 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:40 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:38 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:40 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:38 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:40 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:38 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:41 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:42 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:42 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:39 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:08:46 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:41 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
-INFO: Connected to new websocket client
-Jul 24, 2025 2:11:42 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
+Jul 24, 2025 3:08:46 AM io.gapi.emulators.netty.HttpVersionRoutingHandler channelRead
 INFO: Detected non-HTTP/2 connection.
-Jul 24, 2025 2:11:43 AM io.grpc.netty.NettyServerTransport notifyTerminated
+Jul 24, 2025 3:08:47 AM io.grpc.netty.NettyServerTransport notifyTerminated
 INFO: Transport failed
 io.netty.handler.codec.http2.Http2Exception: Unexpected HTTP/1.x request: GET / 
 	at io.netty.handler.codec.http2.Http2Exception.connectionError(Http2Exception.java:107)
@@ -67,9 +65,9 @@ io.netty.handler.codec.http2.Http2Exception: Unexpected HTTP/1.x request: GET /
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
-Jul 24, 2025 2:11:43 AM io.grpc.netty.NettyServerTransport notifyTerminated
+Jul 24, 2025 3:08:47 AM io.grpc.netty.NettyServerTransport notifyTerminated
 INFO: Transport failed
-io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missing or corrupt. Hex dump for received bytes: 16030105a8010005a403039fd0bb91d116b34a0b4389e140
+io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missing or corrupt. Hex dump for received bytes: 16030105a8010005a403032e8e7b0423619dfa50b3fb6a46
 	at io.netty.handler.codec.http2.Http2Exception.connectionError(Http2Exception.java:107)
 	at io.netty.handler.codec.http2.Http2ConnectionHandler$PrefaceDecoder.readClientPrefaceString(Http2ConnectionHandler.java:319)
 	at io.netty.handler.codec.http2.Http2ConnectionHandler$PrefaceDecoder.decode(Http2ConnectionHandler.java:245)
@@ -94,7 +92,7 @@ io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missin
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
-Jul 24, 2025 2:11:45 AM io.grpc.netty.NettyServerTransport notifyTerminated
+Jul 24, 2025 3:08:47 AM io.grpc.netty.NettyServerTransport notifyTerminated
 INFO: Transport failed
 io.netty.handler.codec.http2.Http2Exception: Unexpected HTTP/1.x request: GET / 
 	at io.netty.handler.codec.http2.Http2Exception.connectionError(Http2Exception.java:107)
@@ -121,9 +119,9 @@ io.netty.handler.codec.http2.Http2Exception: Unexpected HTTP/1.x request: GET /
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
-Jul 24, 2025 2:11:45 AM io.grpc.netty.NettyServerTransport notifyTerminated
+Jul 24, 2025 3:08:47 AM io.grpc.netty.NettyServerTransport notifyTerminated
 INFO: Transport failed
-io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missing or corrupt. Hex dump for received bytes: 16030105a8010005a4030336bf05de33d270d98ff2c6c45b
+io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missing or corrupt. Hex dump for received bytes: 16030105a8010005a403038b56c5410045b2752bdec1a054
 	at io.netty.handler.codec.http2.Http2Exception.connectionError(Http2Exception.java:107)
 	at io.netty.handler.codec.http2.Http2ConnectionHandler$PrefaceDecoder.readClientPrefaceString(Http2ConnectionHandler.java:319)
 	at io.netty.handler.codec.http2.Http2ConnectionHandler$PrefaceDecoder.decode(Http2ConnectionHandler.java:245)
@@ -148,9 +146,15 @@ io.netty.handler.codec.http2.Http2Exception: HTTP/2 client preface string missin
 	at io.netty.util.concurrent.FastThreadLocalRunnable.run(FastThreadLocalRunnable.java:30)
 	at java.base/java.lang.Thread.run(Thread.java:1583)
 
-Jul 24, 2025 2:11:47 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:09:07 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:11:47 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:09:26 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
-Jul 24, 2025 2:12:02 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+Jul 24, 2025 3:09:26 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+Jul 24, 2025 3:09:27 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+Jul 24, 2025 3:09:30 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
+INFO: Connected to new websocket client
+Jul 24, 2025 3:09:30 AM com.google.cloud.datastore.emulator.firestore.websocket.WebSocketChannelHandler initChannel
 INFO: Connected to new websocket client
