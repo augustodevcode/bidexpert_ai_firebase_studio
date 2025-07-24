@@ -106,3 +106,13 @@ export async function runCityEndToEndTest(): Promise<{ success: boolean; output:
     const command = `dotenv -e .env -- tsx ./tests/city.test.ts`;
     return runTestScript(command);
 }
+
+export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
+    return runTestScript(command);
+}
+
+export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/modalities-menu.test.ts`;
+    return runTestScript(command);
+}

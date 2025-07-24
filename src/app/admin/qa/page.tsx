@@ -19,9 +19,11 @@ import {
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
     runCityEndToEndTest,
-    runUserEndToEndTest
+    runUserEndToEndTest,
+    runMenuContentTest,
+    runModalitiesMenuTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -35,98 +37,128 @@ interface TestConfig {
   title: string;
   description: string;
   action: () => Promise<TestResult>;
+  type: 'backend' | 'frontend';
 }
 
 const tests: TestConfig[] = [
+  {
+    id: 'menu-content',
+    title: 'Teste de Conteúdo dos Menus',
+    description: 'Valida se os itens nos menus suspensos (Categorias, Leiloeiros, etc.) correspondem aos dados no banco.',
+    action: runMenuContentTest,
+    type: 'frontend',
+  },
+  {
+    id: 'modalities-menu',
+    title: 'Teste do Menu de Modalidades',
+    description: 'Verifica se o menu estático de modalidades de leilão contém os itens e links corretos.',
+    action: runModalitiesMenuTest,
+    type: 'frontend',
+  },
   {
     id: 'user-creation',
     title: 'Teste de Cadastro de Usuário',
     description: 'Verifica a criação de um usuário, hash de senha e atribuição de perfil padrão.',
     action: runUserEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'seller-creation',
     title: 'Teste de Cadastro de Comitente',
     description: 'Verifica o fluxo completo de criação de um novo comitente.',
     action: runSellerEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'auctioneer-creation',
     title: 'Teste de Cadastro de Leiloeiro',
     description: 'Verifica a criação de um novo leiloeiro e a integridade dos dados.',
     action: runAuctioneerEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'category-creation',
     title: 'Teste de Cadastro de Categoria',
     description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
     action: runCategoryEndToEndTest,
+    type: 'backend',
   },
    {
     id: 'subcategory-creation',
     title: 'Teste de Cadastro de Subcategoria',
     description: 'Verifica a criação de uma subcategoria e sua vinculação à categoria pai.',
     action: runSubcategoryEndToEndTest,
+    type: 'backend',
   },
    {
     id: 'role-creation',
     title: 'Teste de Cadastro de Perfil (Role)',
     description: 'Verifica a criação de um novo perfil de usuário com permissões.',
     action: runRoleEndToEndTest,
+    type: 'backend',
   },
    {
     id: 'state-creation',
     title: 'Teste de Cadastro de Estado',
     description: 'Verifica a criação de um novo estado e validação de UF duplicada.',
     action: runStateEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'city-creation',
     title: 'Teste de Cadastro de Cidade',
     description: 'Verifica a criação de uma cidade e sua vinculação com um estado.',
     action: runCityEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'court-creation',
     title: 'Teste de Cadastro de Tribunal',
     description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.',
     action: runCourtEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'judicial-district-creation',
     title: 'Teste de Cadastro de Comarca',
     description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.',
     action: runJudicialDistrictEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'judicial-branch-creation',
     title: 'Teste de Cadastro de Vara',
     description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.',
     action: runJudicialBranchEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'judicial-process-creation',
     title: 'Teste de Cadastro de Processo',
     description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.',
     action: runJudicialProcessEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'bem-creation',
     title: 'Teste de Cadastro de Bem',
     description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
     action: runBemEndToEndTest,
+    type: 'backend',
   },
    {
     id: 'auction-creation',
     title: 'Teste de Cadastro de Leilão',
     description: 'Verifica a criação de um novo leilão e a vinculação com leiloeiro e comitente.',
     action: runAuctionEndToEndTest,
+    type: 'backend',
   },
   {
     id: 'lot-creation',
     title: 'Teste de Cadastro de Lote',
     description: 'Verifica a criação de um lote, incluindo a relação com um bem.',
     action: runLotEndToEndTest,
+    type: 'backend',
   },
 ];
 
@@ -175,7 +207,10 @@ export default function QualityAssurancePage() {
                     {tests.map(test => (
                         <Card key={test.id} className="bg-secondary/30">
                             <CardHeader>
-                                <CardTitle className="text-lg">{test.title}</CardTitle>
+                                <CardTitle className="text-lg flex items-center gap-2">
+                                     {test.type === 'frontend' ? <TestTube className="h-4 w-4 text-primary" /> : <TestTubeDiagonal className="h-4 w-4 text-primary"/>}
+                                     {test.title}
+                                </CardTitle>
                                 <CardDescription>{test.description}</CardDescription>
                             </CardHeader>
                             <CardContent>
