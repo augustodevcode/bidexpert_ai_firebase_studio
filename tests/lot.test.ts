@@ -48,7 +48,7 @@ test.describe('Lot Service E2E Tests', () => {
                 status: 'DISPONIVEL',
                 categoryId: testCategory.id,
                 sellerId: testSeller.id,
-                evaluationValue: 1500
+                evaluationValue: 1500.00
             }
         });
     });
