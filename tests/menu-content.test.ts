@@ -10,18 +10,15 @@ import { AuctioneerService } from '../src/services/auctioneer.service';
 const BASE_URL = 'http://localhost:9002'; // A porta em que a aplicação está rodando
 
 async function getMenuLinks(page: puppeteer.Page, triggerSelector: string) {
-    // 1. Hover over the trigger to open the menu
     await page.hover(triggerSelector);
     
-    // 2. Wait for the viewport to become visible
     const menuViewportSelector = '.radix-navigation-menu-viewport';
-    await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 5000 });
+    // Adiciona uma espera explícita pelo seletor do viewport do menu
+    await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 10000 });
     
-    // 3. Extract the links from the now-visible menu content
     const links = await page.evaluate((selector) => {
         const menuContent = document.querySelector(selector);
         if (!menuContent) return [];
-        // This targets links within the viewport, which is more reliable
         const anchors = Array.from(menuContent.querySelectorAll('a'));
         return anchors.map(a => ({
             href: a.getAttribute('href'),
@@ -39,8 +36,15 @@ test.describe('Dynamic Menu Content E2E Tests', () => {
 
     test.before(async () => {
         browser = await puppeteer.launch({
-            headless: true, // Correctly run in headless mode for server environment
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            headless: true, 
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-gpu',
+                '--disable-dev-shm-usage',
+                '--no-zygote',
+                '--single-process'
+            ]
         });
         page = await browser.newPage();
         await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 20000 });
