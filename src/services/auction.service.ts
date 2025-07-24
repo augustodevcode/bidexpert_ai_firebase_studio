@@ -35,11 +35,24 @@ export class AuctionService {
 
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
+      const { auctioneer, seller, categoryId, auctioneerId, sellerId, ...restOfData } = data;
+
+      if (!data.title) throw new Error("O título do leilão é obrigatório.");
+      if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
+      if (!sellerId) throw new Error("O ID do comitente é obrigatório.");
+
       const dataToCreate: Prisma.AuctionCreateInput = {
-        ...(data as any),
+        ...(restOfData as any),
         publicId: `AUC-${uuidv4()}`,
-        slug: slugify(data.title || ''),
+        slug: slugify(data.title),
+        auctioneer: { connect: { id: auctioneerId } },
+        seller: { connect: { id: sellerId } },
       };
+
+      if (categoryId) {
+          dataToCreate.category = { connect: { id: categoryId } };
+      }
+
       const newAuction = await this.auctionRepository.create(dataToCreate);
       return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
     } catch (error: any) {
@@ -50,10 +63,22 @@ export class AuctionService {
 
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const dataToUpdate: Prisma.AuctionUpdateInput = { ...data };
+      const { auctioneer, seller, categoryId, auctioneerId, sellerId, ...restOfData } = data;
+      const dataToUpdate: Prisma.AuctionUpdateInput = { ...restOfData };
+      
       if (data.title) {
         dataToUpdate.slug = slugify(data.title);
       }
+       if (auctioneerId) {
+        dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
+      }
+      if (sellerId) {
+        dataToUpdate.seller = { connect: { id: sellerId } };
+      }
+       if (categoryId) {
+        dataToUpdate.category = { connect: { id: categoryId } };
+      }
+
       await this.auctionRepository.update(id, dataToUpdate);
       return { success: true, message: 'Leilão atualizado com sucesso.' };
     } catch (error: any) {
