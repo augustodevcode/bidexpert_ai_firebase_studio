@@ -19,7 +19,7 @@ import {
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
     runCityEndToEndTest,
-    runUserEndToEndTest // Importado o novo teste
+    runUserEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
