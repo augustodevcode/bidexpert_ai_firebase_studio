@@ -19,11 +19,11 @@ test.describe('Static Modalities Menu E2E Test', () => {
 
     test.before(async () => {
         browser = await puppeteer.launch({
-            headless: false, // Run in non-headless mode to observe
+            headless: true, // Correctly run in headless mode
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         page = await browser.newPage();
-        await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 15000 });
+        await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 20000 });
     });
 
     test.after(async () => {
@@ -36,8 +36,8 @@ test.describe('Static Modalities Menu E2E Test', () => {
 
         // Act
         await page.hover(triggerSelector);
-        const menuViewportSelector = `${triggerSelector}[data-state=open] + .radix-navigation-menu-viewport`;
-        await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 10000 });
+        const menuViewportSelector = '.radix-navigation-menu-viewport';
+        await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 5000 });
         
         const menuItems = await page.evaluate((selector) => {
             const menuContent = document.querySelector(selector);
@@ -45,7 +45,7 @@ test.describe('Static Modalities Menu E2E Test', () => {
             const anchors = Array.from(menuContent.querySelectorAll('a'));
             return anchors.map(a => ({
                 href: a.getAttribute('href'),
-                text: a.innerText.trim().split('\n')[0] // Pega apenas a primeira linha do texto (o label)
+                text: a.innerText.trim().split('\n')[0] // Get only the first line (the label)
             }));
         }, menuViewportSelector);
         

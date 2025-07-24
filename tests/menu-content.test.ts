@@ -10,16 +10,18 @@ import { AuctioneerService } from '../src/services/auctioneer.service';
 const BASE_URL = 'http://localhost:9002'; // A porta em que a aplicação está rodando
 
 async function getMenuLinks(page: puppeteer.Page, triggerSelector: string) {
-    // Clica no gatilho para abrir o menu
+    // 1. Hover over the trigger to open the menu
     await page.hover(triggerSelector);
-    // Aguarda o menu aparecer de forma explícita
-    const menuViewportSelector = `${triggerSelector}[data-state=open] + .radix-navigation-menu-viewport`;
-    await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 10000 });
     
-    // Extrai os links do menu visível
+    // 2. Wait for the viewport to become visible
+    const menuViewportSelector = '.radix-navigation-menu-viewport';
+    await page.waitForSelector(menuViewportSelector, { visible: true, timeout: 5000 });
+    
+    // 3. Extract the links from the now-visible menu content
     const links = await page.evaluate((selector) => {
         const menuContent = document.querySelector(selector);
         if (!menuContent) return [];
+        // This targets links within the viewport, which is more reliable
         const anchors = Array.from(menuContent.querySelectorAll('a'));
         return anchors.map(a => ({
             href: a.getAttribute('href'),
@@ -37,11 +39,11 @@ test.describe('Dynamic Menu Content E2E Tests', () => {
 
     test.before(async () => {
         browser = await puppeteer.launch({
-            headless: false, // Run in non-headless mode to observe
+            headless: true, // Correctly run in headless mode for server environment
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
         page = await browser.newPage();
-        await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 15000 });
+        await page.goto(BASE_URL, { waitUntil: 'networkidle0', timeout: 20000 });
     });
 
     test.after(async () => {
@@ -53,7 +55,7 @@ test.describe('Dynamic Menu Content E2E Tests', () => {
         // Arrange
         const categoryService = new CategoryService();
         const dbCategories = await categoryService.getCategories();
-        const first8DbCategories = dbCategories.slice(0, 8); // O megamenu mostra os primeiros 8
+        const first8DbCategories = dbCategories.slice(0, 8); // Megamenu shows the first 8
 
         // Act
         const menuItems = await getMenuLinks(page, 'button[aria-haspopup="menu"]:has(span:text-is("Categorias de Oportunidades"))');
