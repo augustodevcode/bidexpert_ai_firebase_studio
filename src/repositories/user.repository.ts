@@ -37,24 +37,8 @@ export class UserRepository {
     });
   }
 
-  async create(data: Prisma.UserCreateInput, roleIds: string[]): Promise<User> {
-    return prisma.$transaction(async (tx) => {
-      // Correção: Passar { data: data } para o método create
-      const newUser = await tx.user.create({
-        data: data,
-      });
-
-      if (roleIds && roleIds.length > 0) {
-        await tx.usersOnRoles.createMany({
-          data: roleIds.map(roleId => ({
-            userId: newUser.id,
-            roleId,
-            assignedBy: 'system-initial',
-          })),
-        });
-      }
-      return newUser;
-    });
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return prisma.user.create({ data });
   }
 
   async updateUserRoles(userId: string, roleIds: string[]) {

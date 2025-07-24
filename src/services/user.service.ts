@@ -71,9 +71,15 @@ export class UserService {
             fullName: data.fullName || 'Usuário',
             habilitationStatus: data.habilitationStatus || 'PENDING_DOCUMENTS',
             accountType: data.accountType || 'PHYSICAL',
+            roles: {
+                create: roleIdsToAssign.map(roleId => ({
+                    role: { connect: { id: roleId } },
+                    assignedBy: 'system-signup'
+                }))
+            }
         };
 
-        const newUser = await this.userRepository.create(dataToCreate, roleIdsToAssign);
+        const newUser = await this.userRepository.create(dataToCreate);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);

@@ -5,7 +5,7 @@ import { prisma } from '../src/lib/prisma';
 import { LotService } from '../src/services/lot.service';
 import { AuctionService } from '../src/services/auction.service';
 import { UserService } from '../src/services/user.service';
-import { habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { habilitateUserAction, habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
 import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot } from '../src/types';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -18,6 +18,7 @@ const userService = new UserService();
 const roleRepository = new RoleRepository();
 const testSuffix = '-Bidding-E2E';
 
+let testAnalyst: UserProfileWithPermissions;
 let biddingUsers: UserProfileWithPermissions[] = [];
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
@@ -36,19 +37,27 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         
         // 1. Create Roles if they don't exist
         const userRole = await roleRepository.findByNormalizedName('USER');
+        const analystRole = await roleRepository.findByNormalizedName('AUCTION_ANALYST');
         assert.ok(userRole, "USER role must exist for the test to run. Please seed essential data.");
+        assert.ok(analystRole, "AUCTION_ANALYST role must exist for the test to run. Please seed essential data.");
 
-        // 2. Create Bidding Users
+        // 2. Create Analyst and Bidding Users
+        const analystResult = await userService.createUser({ fullName: `Analyst ${testSuffix}`, email: `analyst${testSuffix}@example.com`, password: 'password123', roleIds: [analystRole!.id] });
+        assert.ok(analystResult.success && analystResult.userId, "Analyst user must be created successfully.");
+        const fetchedAnalyst = await userService.getUserById(analystResult.userId);
+        assert.ok(fetchedAnalyst, "Analyst profile must be fetched successfully.");
+        testAnalyst = fetchedAnalyst;
+
+
         for (let i = 1; i <= 5; i++) {
             const userResult = await userService.createUser({ 
                 fullName: `Bidder ${i}${testSuffix}`, 
                 email: `bidder${i}${testSuffix}@example.com`, 
                 password: 'password123', 
                 roleIds: [userRole!.id],
-                habilitationStatus: 'HABILITADO' // Pre-habilitate document status
             });
             assert.ok(userResult.success && userResult.userId, `Bidder ${i} must be created successfully.`);
-            const user = (await userService.getUserById(userResult.userId));
+            const user = (await userService.getUserById(userResult.userId!));
             assert.ok(user, `Bidder ${i} profile must be fetched successfully.`);
             biddingUsers.push(user);
         }
@@ -78,18 +87,19 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
     test.after(async () => {
         console.log('--- Bidding E2E Test: Cleaning up data ---');
         try {
-            if (testLot) await prisma.bid.deleteMany({ where: { lotId: testLot.id } });
-            if (testLot) await prisma.lot.delete({ where: { id: testLot.id } });
-            if (testAuction) await prisma.auction.delete({ where: { id: testAuction.id } });
+            if (testLot?.id) await prisma.bid.deleteMany({ where: { lotId: testLot.id } });
+            if (testLot?.id) await lotService.deleteLot(testLot.id);
+            if (testAuction?.id) await auctionService.deleteAuction(testAuction.id);
             if (biddingUsers.length > 0) {
                  const idsToDelete = biddingUsers.map(u => u.id).filter(Boolean);
                  if (idsToDelete.length > 0) {
                      await prisma.user.deleteMany({ where: { id: { in: idsToDelete } } });
                  }
             }
-            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
-            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
-            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+            if (testAnalyst?.id) await prisma.user.delete({ where: { id: testAnalyst.id } });
+            if (testSeller?.id) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testAuctioneer?.id) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory?.id) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
             console.error('Cleanup error:', error);
         }
@@ -98,11 +108,14 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
     });
 
     test('should simulate a full auction lifecycle', async () => {
-        // Step 1: Habilitate users for the specific auction
-        console.log('Habilitating users for the auction...');
+        // Step 1: Habilitate users via Analyst
+        console.log('Habilitating users via Analyst...');
         for (const user of biddingUsers) {
-            const habilitationResult = await habilitateForAuctionAction(user.id, testAuction.id);
-            assert.strictEqual(habilitationResult.success, true, `Should habilitate user ${user.fullName} for auction ${testAuction.id}`);
+            const habilitationResult = await habilitateUserAction(user.id);
+            assert.strictEqual(habilitationResult.success, true, `Should habilitate user ${user.fullName}`);
+            // Also enable for specific auction
+            const auctionHabilitationResult = await habilitateForAuctionAction(user.id, testAuction.id);
+            assert.strictEqual(auctionHabilitationResult.success, true, `Should habilitate user ${user.fullName} for auction ${testAuction.id}`);
         }
         console.log('Users habilitated for auction.');
 
