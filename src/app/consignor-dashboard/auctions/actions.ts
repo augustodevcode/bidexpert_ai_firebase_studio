@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { SellerService } from '@/services/seller.service';
 import type { Auction } from '@/types';
 
 /**
@@ -19,14 +19,7 @@ export async function getAuctionsForConsignorAction(sellerId: string): Promise<A
     return [];
   }
   
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getAuctionsForConsignor) {
-    // @ts-ignore
-    return db.getAuctionsForConsignor(sellerId);
-  }
-
-  // Fallback logic
-  const allAuctions = await db.getAuctions();
-  return allAuctions.filter(a => a.sellerId === sellerId);
+  const sellerService = new SellerService();
+  // The service method needs to handle fetching by ID or slug
+  return sellerService.getAuctionsBySellerSlug(sellerId);
 }

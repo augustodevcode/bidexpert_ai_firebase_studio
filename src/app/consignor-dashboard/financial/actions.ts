@@ -29,12 +29,23 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
           }
       },
       include: {
-          lot: true,
+          lot: {
+            include: {
+              auction: { select: { title: true } }
+            }
+          },
       },
       orderBy: {
           winDate: 'desc'
       }
   });
   
-  return wins as UserWin[];
+  // @ts-ignore
+  return wins.map(win => ({
+      ...win,
+      lot: {
+        ...win.lot,
+        auctionName: win.lot.auction?.title
+      }
+  }));
 }

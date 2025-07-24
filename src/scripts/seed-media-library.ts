@@ -3,7 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { promisify } from 'util';
 import dotenv from 'dotenv';
-import { getDatabaseAdapter } from '../lib/database';
+import { MediaService } from '../services/media.service';
 import type { MediaItem } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -23,7 +23,7 @@ async function seedMediaLibrary() {
   console.log(`Buscando arquivos em: ${MEDIA_SOURCE_DIR}`);
 
   try {
-    const db = await getDatabaseAdapter();
+    const mediaService = new MediaService();
 
     if (!fs.existsSync(MEDIA_SOURCE_DIR)) {
       console.warn(`Diretório de mídia não encontrado em ${MEDIA_SOURCE_DIR}. Nenhum arquivo para processar.`);
@@ -47,7 +47,7 @@ async function seedMediaLibrary() {
       const storagePath = publicUrl; // For local storage adapter
       
       // Check if this file already exists in the database by storagePath
-      const mediaItems = await db.getMediaItems();
+      const mediaItems = await mediaService.getMediaItems();
       const existingItem = mediaItems.find(item => item.storagePath === storagePath);
 
       if (existingItem) {
@@ -57,7 +57,7 @@ async function seedMediaLibrary() {
 
       console.log(`Processando novo arquivo: ${fileName}`);
 
-      const mediaItemData: Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'> = {
+      const mediaItemData: Partial<Omit<MediaItem, 'id' | 'uploadedAt' | 'urlOriginal' | 'urlThumbnail' | 'urlMedium' | 'urlLarge' | 'storagePath'>> = {
         fileName: fileName,
         storagePath: storagePath,
         title: path.basename(fileName, path.extname(fileName)).replace(/[-_]/g, ' '),
@@ -66,10 +66,9 @@ async function seedMediaLibrary() {
         sizeBytes: fileStat.size,
         linkedLotIds: [],
         dataAiHint: 'imagem semeada',
-        uploadedBy: 'system-seed',
       };
       
-      const result = await db.createMediaItem(mediaItemData, publicUrl, 'system-seed');
+      const result = await mediaService.createMediaItem(mediaItemData, publicUrl, 'system-seed');
 
       if (result.success) {
         console.log(`  - Sucesso: Arquivo "${fileName}" adicionado à biblioteca de mídia.`);

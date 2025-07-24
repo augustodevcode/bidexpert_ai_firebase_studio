@@ -1,4 +1,4 @@
-
+// src/app/admin/wizard/actions.ts
 'use server';
 
 import { getCourts } from '../courts/actions';
@@ -11,13 +11,13 @@ import { getBens } from '../bens/actions';
 import { getLotCategories } from '../categories/actions';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
 
 /**
  * @fileoverview Server Actions para o assistente de criação de leilões (Wizard).
  * Agrega dados de diversas fontes e cria o leilão e seus lotes de forma transacional.
  */
-
 
 /**
  * Busca todos os dados iniciais necessários para popular os seletores e opções do wizard.
@@ -75,11 +75,11 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
     return { success: false, message: "Detalhes do leilão incompletos." };
   }
   
-  const db = getDatabaseAdapter();
+  const auctionService = new AuctionService();
+  const lotService = new LotService();
 
   // 1. Create the Auction
-  // @ts-ignore - The adapter method expects a slightly different type
-  const auctionResult = await db.createAuction(wizardData.auctionDetails);
+  const auctionResult = await auctionService.createAuction(wizardData.auctionDetails);
   
   if (!auctionResult.success || !auctionResult.auctionId) {
     return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };
@@ -92,8 +92,7 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
         ...lot,
         auctionId: auctionResult.auctionId, // Link to the newly created auction
       };
-      await db.createLot(lotDataForCreation);
-      // In a real scenario, you'd handle potential lot creation failures more gracefully
+      await lotService.createLot(lotDataForCreation);
     }
   }
 

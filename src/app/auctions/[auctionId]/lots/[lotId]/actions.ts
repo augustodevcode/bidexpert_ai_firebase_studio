@@ -6,8 +6,13 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
+import { LotService } from '@/services/lot.service';
+import { SellerService } from '@/services/seller.service';
 import type { Lot, BidInfo, Review, LotQuestion, SellerProfileInfo, UserLotMaxBid } from '@/types';
+
+const lotService = new LotService();
+const sellerService = new SellerService();
 
 /**
  * Result type for the placeBidOnLot action.
@@ -38,46 +43,40 @@ export async function placeBidOnLot(
   bidAmount: number
 ): Promise<PlaceBidResult> {
     try {
-        const db = getDatabaseAdapter();
-        const lot = await db.getLot(lotIdOrPublicId);
+        const lot = await lotService.getLotById(lotIdOrPublicId);
         
         if (!lot) return { success: false, message: 'Lote não encontrado.'};
         if (lot.status !== 'ABERTO_PARA_LANCES') return { success: false, message: 'Este lote não está aberto para lances.'};
         if (bidAmount <= lot.price) return { success: false, message: `O lance deve ser maior que R$ ${lot.price.toLocaleString('pt-BR')}.`};
 
-        // Get previous high bidder before creating the new bid
-        // @ts-ignore
-        const currentBids = await db.getBidsForLot ? await db.getBidsForLot(lot.id) : [];
+        const currentBids = await getBidsForLot(lot.id);
         const previousHighBid = currentBids[0];
 
-        // @ts-ignore
-        const newBidResult = await db.createBid({
-            lotId: lot.id,
-            auctionId: lot.auctionId,
-            bidderId: userId,
-            bidderDisplay: userDisplayName,
-            amount: bidAmount,
+        const newBid = await prisma.bid.create({
+            data: {
+                lotId: lot.id,
+                auctionId: lot.auctionId,
+                bidderId: userId,
+                bidderDisplay: userDisplayName,
+                amount: bidAmount,
+            }
         });
 
-        // After creating the new bid, check if we need to send a notification
         if (previousHighBid && previousHighBid.bidderId !== userId) {
-            // @ts-ignore
-            if (db.createNotification) {
-                // @ts-ignore
-                await db.createNotification({
+            await prisma.notification.create({
+                data: {
                     userId: previousHighBid.bidderId,
                     message: `Seu lance no lote "${lot.title}" foi superado.`,
                     link: `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`,
-                });
-            }
+                }
+            });
         }
 
-        const updatedLot = await db.updateLot(lot.id, {
+        const updatedLot = await lotService.updateLot(lot.id, {
             price: bidAmount,
             bidsCount: (lot.bidsCount || 0) + 1
         });
         
-        // Revalidate paths to update UI across the app
         revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
         revalidatePath(`/auctions/${auctionIdOrPublicId}/live`);
         revalidatePath(`/live-dashboard`);
@@ -86,10 +85,10 @@ export async function placeBidOnLot(
             success: true,
             message: "Lance realizado com sucesso!",
             updatedLot: {
-                price: lot.price + 100, // Placeholder
+                price: bidAmount,
                 bidsCount: (lot.bidsCount || 0) + 1,
             },
-            newBid: newBidResult.bid as BidInfo,
+            newBid: newBid as BidInfo,
         };
     } catch (error: any) {
         console.error("Error placing bid:", error);
@@ -106,12 +105,14 @@ export async function placeBidOnLot(
  */
 export async function placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean, message: string }> {
   try {
-    const db = getDatabaseAdapter();
-    const lot = await db.getLot(lotId);
+    const lot = await lotService.getLotById(lotId);
     if (!lot) return { success: false, message: 'Lote não encontrado.' };
     
-    // @ts-ignore
-    await db.upsertUserLotMaxBid({ userId, lotId, maxAmount, isActive: true });
+    await prisma.userLotMaxBid.upsert({
+        where: { userId_lotId: { userId, lotId }},
+        update: { maxAmount, isActive: true },
+        create: { userId, lotId, maxAmount, isActive: true }
+    });
     
     revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
     return { success: true, message: "Lance máximo definido com sucesso!" };
@@ -129,13 +130,13 @@ export async function placeMaxBid(lotId: string, userId: string, maxAmount: numb
  */
 export async function getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: string): Promise<UserLotMaxBid | null> {
   if (!userId) return null;
-  const db = getDatabaseAdapter();
-  const lot = await db.getLot(lotIdOrPublicId);
+  const lot = await lotService.getLotById(lotIdOrPublicId);
   if (!lot) return null;
 
   try {
-    // @ts-ignore
-    return db.getActiveUserLotMaxBid ? db.getActiveUserLotMaxBid(userId, lot.id) : null;
+    return prisma.userLotMaxBid.findFirst({
+        where: { userId: userId, lotId: lot.id, isActive: true }
+    });
   } catch (error) {
     console.error("Error fetching active max bid:", error);
     return null;
@@ -148,13 +149,11 @@ export async function getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: st
  * @returns {Promise<BidInfo[]>} An array of bid records, ordered by most recent first.
  */
 export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
-    const db = getDatabaseAdapter();
-    const lot = await db.getLot(lotIdOrPublicId);
+    const lot = await lotService.getLotById(lotIdOrPublicId);
     if (!lot) return [];
 
     try {
-        // @ts-ignore
-        return db.getBidsForLot ? await db.getBidsForLot(lot.id) : [];
+        return prisma.bid.findMany({ where: { lotId: lot.id }, orderBy: { timestamp: 'desc' } });
     } catch (error) {
         console.error("Error fetching bids:", error);
         return [];
@@ -167,12 +166,10 @@ export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>
  * @returns {Promise<Review[]>} An array of review records.
  */
 export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-    const db = getDatabaseAdapter();
-    const lot = await db.getLot(lotIdOrPublicId);
+    const lot = await lotService.getLotById(lotIdOrPublicId);
     if (!lot) return [];
     try {
-        // @ts-ignore
-        return db.getReviewsForLot ? db.getReviewsForLot(lot.id) : [];
+        return prisma.review.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
     } catch (error) {
         console.error("Error fetching reviews:", error);
         return [];
@@ -195,15 +192,15 @@ export async function createReview(
   rating: number,
   comment: string
 ): Promise<{ success: boolean; message: string; reviewId?: string }> {
-  const db = getDatabaseAdapter();
-  const lot = await db.getLot(lotIdOrPublicId);
+  const lot = await lotService.getLotById(lotIdOrPublicId);
   if (!lot) return { success: false, message: "Lote não encontrado." };
 
   try {
-    // @ts-ignore
-    const result = await db.createReview({ lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment });
+    const newReview = await prisma.review.create({
+        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
+    });
     revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-    return result;
+    return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
   } catch(error) {
     console.error("Error creating review:", error);
     return { success: false, message: "Falha ao enviar avaliação." };
@@ -216,12 +213,11 @@ export async function createReview(
  * @returns {Promise<LotQuestion[]>} An array of question records.
  */
 export async function getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
-    const db = getDatabaseAdapter();
-    const lot = await db.getLot(lotIdOrPublicId);
+    const lot = await lotService.getLotById(lotIdOrPublicId);
     if (!lot) return [];
     try {
         // @ts-ignore
-        return db.getQuestionsForLot ? db.getQuestionsForLot(lot.id) : [];
+        return prisma.lotQuestion.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
     } catch (error) {
         console.error("Error fetching questions:", error);
         return [];
@@ -242,15 +238,15 @@ export async function askQuestionOnLot(
   userDisplayName: string,
   questionText: string
 ): Promise<{ success: boolean; message: string; questionId?: string }> {
-  const db = getDatabaseAdapter();
-  const lot = await db.getLot(lotIdOrPublicId);
+  const lot = await lotService.getLotById(lotIdOrPublicId);
   if (!lot) return { success: false, message: "Lote não encontrado." };
 
   try {
-    // @ts-ignore
-    const result = await db.createQuestion({ lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true });
+    const newQuestion = await prisma.lotQuestion.create({
+        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
+    });
     revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-    return result;
+    return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
   } catch(error) {
     console.error("Error creating question:", error);
     return { success: false, message: "Falha ao enviar pergunta." };
@@ -277,11 +273,12 @@ export async function answerQuestionOnLot(
   auctionId: string 
 ): Promise<{ success: boolean; message: string }> {
   try {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    const result = await db.answerQuestion(questionId, { answerText, answeredByUserId, answeredByUserDisplayName });
+    await prisma.lotQuestion.update({
+        where: { id: questionId },
+        data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date() }
+    });
     revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
-    return result;
+    return { success: true, message: "Resposta enviada com sucesso." };
   } catch (error) {
     console.error("Error answering question:", error);
     return { success: false, message: "Falha ao enviar resposta."};
@@ -296,14 +293,7 @@ export async function answerQuestionOnLot(
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicIdOrSlug) return null;
     try {
-        const db = getDatabaseAdapter();
-        // @ts-ignore
-        if (db.getSellerBySlug) {
-             // @ts-ignore
-             return db.getSellerBySlug(sellerIdOrPublicIdOrSlug);
-        }
-        const allSellers = await db.getSellers();
-        return allSellers.find(s => s.id === sellerIdOrPublicIdOrSlug || s.publicId === sellerIdOrPublicIdOrSlug || s.slug === sellerIdOrPublicIdOrSlug) || null;
+        return sellerService.getSellerBySlug(sellerIdOrPublicIdOrSlug);
     } catch(error) {
         console.error("Error fetching seller details:", error);
         return null;

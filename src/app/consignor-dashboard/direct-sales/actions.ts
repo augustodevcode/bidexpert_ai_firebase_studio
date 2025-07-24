@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { prisma } from '@/lib/prisma';
 import type { DirectSaleOffer } from '@/types';
 
 /**
@@ -19,14 +19,11 @@ export async function getDirectSaleOffersForConsignorAction(sellerId: string): P
     return [];
   }
   
-  const db = await getDatabaseAdapter();
-  // @ts-ignore
-  if (db.getDirectSaleOffersForConsignor) {
-    // @ts-ignore
-    return db.getDirectSaleOffersForConsignor(sellerId);
-  }
+  // Directly query using Prisma
+  const offers = await prisma.directSaleOffer.findMany({
+    where: { sellerId: sellerId },
+    orderBy: { createdAt: 'desc' }
+  });
 
-  // Fallback logic
-  const allOffers = await db.getDirectSaleOffers();
-  return allOffers ? allOffers.filter(o => o.sellerId === sellerId) : [];
+  return offers as DirectSaleOffer[];
 }
