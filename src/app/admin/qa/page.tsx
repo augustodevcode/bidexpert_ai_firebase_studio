@@ -16,7 +16,8 @@ import {
     runAuctionEndToEndTest,
     runLotEndToEndTest
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
   output: string;
@@ -80,7 +81,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
     action: runBemEndToEndTest,
   },
-  {
+   {
     id: 'auction-creation',
     title: 'Teste de Cadastro de Leilão',
     description: 'Verifica a criação de um novo leilão e a vinculação com leiloeiro e comitente.',
@@ -95,9 +96,11 @@ const tests: TestConfig[] = [
 ];
 
 export default function QualityAssurancePage() {
+    const { toast } = useToast();
     const [testResult, setTestResult] = useState<TestResult | null>(null);
     const [runningTest, setRunningTest] = useState<string | null>(null);
     const [lastTestRun, setLastTestRun] = useState<string | null>(null);
+    const [hasCopied, setHasCopied] = useState(false);
 
     const handleRunTest = async (testId: string) => {
         setRunningTest(testId);
@@ -110,6 +113,14 @@ export default function QualityAssurancePage() {
         const result = await testToRun.action();
         setTestResult(result);
         setRunningTest(null);
+    };
+
+    const handleCopyLog = () => {
+        if (!testResult?.output) return;
+        navigator.clipboard.writeText(testResult.output);
+        setHasCopied(true);
+        toast({ title: "Log Copiado!", description: "O log de saída do console foi copiado para a área de transferência." });
+        setTimeout(() => setHasCopied(false), 2500);
     };
 
     return (
@@ -160,7 +171,9 @@ export default function QualityAssurancePage() {
                                     <ServerCrash className="h-5 w-5" />
                                     <span>Teste Falhou</span>
                                 </div>
-                                <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded max-h-80 overflow-auto">{testResult.error}</pre>
+                                {testResult.error && (
+                                  <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded max-h-80 overflow-auto">{testResult.error}</pre>
+                                )}
                             </div>
                         ) : (
                             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
@@ -170,7 +183,13 @@ export default function QualityAssurancePage() {
                                 </div>
                             </div>
                         )}
-                        <h4 className="text-sm font-semibold mt-4 mb-2">Saída do Console:</h4>
+                        <div className="flex justify-between items-center mt-4 mb-2">
+                             <h4 className="text-sm font-semibold">Saída do Console:</h4>
+                             <Button variant="outline" size="sm" onClick={handleCopyLog} disabled={!testResult.output}>
+                                {hasCopied ? <CheckCircle className="mr-2 h-4 w-4 text-green-600"/> : <Copy className="mr-2 h-4 w-4"/>}
+                                {hasCopied ? 'Copiado!' : 'Copiar Log'}
+                             </Button>
+                        </div>
                         <pre className="bg-muted text-muted-foreground p-4 rounded-md text-xs max-h-96 overflow-auto">{testResult.output || "Nenhuma saída no console."}</pre>
                     </CardContent>
                 </Card>
