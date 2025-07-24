@@ -16,11 +16,12 @@ import {
     runAuctionEndToEndTest,
     runLotEndToEndTest,
     runRoleEndToEndTest,
-    runSubcategoryEndToEndTest
+    runSubcategoryEndToEndTest,
+    runStateEndToEndTest,
+    runCityEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { runStateEndToEndTest } from './actions';
 
 interface TestResult {
   output: string;
@@ -71,6 +72,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Estado',
     description: 'Verifica a criação de um novo estado e validação de UF duplicada.',
     action: runStateEndToEndTest,
+  },
+  {
+    id: 'city-creation',
+    title: 'Teste de Cadastro de Cidade',
+    description: 'Verifica a criação de uma cidade e sua vinculação com um estado.',
+    action: runCityEndToEndTest,
   },
   {
     id: 'court-creation',
@@ -137,8 +144,9 @@ export default function QualityAssurancePage() {
     };
 
     const handleCopyLog = () => {
-        if (!testResult?.output) return;
-        navigator.clipboard.writeText(testResult.output);
+        if (!testResult?.output && !testResult?.error) return;
+        const logToCopy = `--- STDOUT ---\n${testResult.output}\n\n--- STDERR ---\n${testResult.error || 'N/A'}`;
+        navigator.clipboard.writeText(logToCopy);
         setHasCopied(true);
         toast({ title: "Log Copiado!", description: "O log de saída do console foi copiado para a área de transferência." });
         setTimeout(() => setHasCopied(false), 2500);
@@ -206,7 +214,7 @@ export default function QualityAssurancePage() {
                         )}
                         <div className="flex justify-between items-center mt-4 mb-2">
                              <h4 className="text-sm font-semibold">Saída do Console:</h4>
-                             <Button variant="outline" size="sm" onClick={handleCopyLog} disabled={!testResult.output}>
+                             <Button variant="outline" size="sm" onClick={handleCopyLog} disabled={!testResult.output && !testResult.error}>
                                 {hasCopied ? <CheckCircle className="mr-2 h-4 w-4 text-green-600"/> : <Copy className="mr-2 h-4 w-4"/>}
                                 {hasCopied ? 'Copiado!' : 'Copiar Log'}
                              </Button>

@@ -97,3 +97,8 @@ export async function runStateEndToEndTest(): Promise<{ success: boolean; output
     const command = `dotenv -e .env -- tsx ./tests/state.test.ts`;
     return runTestScript(command);
 }
+
+export async function runCityEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/city.test.ts`;
+    return runTestScript(command);
+}
