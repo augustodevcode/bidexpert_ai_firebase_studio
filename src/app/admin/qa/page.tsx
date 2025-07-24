@@ -9,7 +9,8 @@ import {
     runAuctioneerEndToEndTest, 
     runCategoryEndToEndTest, 
     runCourtEndToEndTest,
-    runJudicialDistrictEndToEndTest
+    runJudicialDistrictEndToEndTest,
+    runJudicialBranchEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
@@ -57,6 +58,12 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.',
     action: runJudicialDistrictEndToEndTest,
   },
+  {
+    id: 'judicial-branch-creation',
+    title: 'Teste de Cadastro de Vara',
+    description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.',
+    action: runJudicialBranchEndToEndTest,
+  },
 ];
 
 export default function QualityAssurancePage() {
@@ -89,7 +96,7 @@ export default function QualityAssurancePage() {
                         Execute testes automatizados para verificar a integridade das funcionalidades críticas da plataforma.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {tests.map(test => (
                         <Card key={test.id} className="bg-secondary/30">
                             <CardHeader>

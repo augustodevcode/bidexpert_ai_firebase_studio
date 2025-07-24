@@ -57,3 +57,8 @@ export async function runJudicialDistrictEndToEndTest(): Promise<{ success: bool
     const command = `dotenv -e .env -- tsx ./tests/judicial-district.test.ts`;
     return runTestScript(command);
 }
+
+export async function runJudicialBranchEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/judicial-branch.test.ts`;
+    return runTestScript(command);
+}
