@@ -35,7 +35,7 @@ interface CategoryFormProps {
   submitButtonText: string;
 }
 
-type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl';
+type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl' | 'logoUrl';
 
 export default function CategoryForm({
   initialData,
@@ -56,16 +56,21 @@ export default function CategoryForm({
       name: initialData?.name || '',
       description: initialData?.description || '',
       iconName: initialData?.iconName || '',
+      logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
       dataAiHintIcon: initialData?.dataAiHintIcon || '',
       coverImageUrl: initialData?.coverImageUrl || '',
+      coverImageMediaId: initialData?.coverImageMediaId || null,
       dataAiHintCover: initialData?.dataAiHintCover || '',
       megaMenuImageUrl: initialData?.megaMenuImageUrl || '',
+      megaMenuImageMediaId: initialData?.megaMenuImageMediaId || null,
       dataAiHintMegaMenu: initialData?.dataAiHintMegaMenu || '',
     },
   });
 
   const coverImageUrlPreview = form.watch('coverImageUrl');
   const megaMenuImageUrlPreview = form.watch('megaMenuImageUrl');
+  const logoUrlPreview = form.watch('logoUrl');
 
   const openMediaDialog = (target: DialogTarget) => {
     setDialogTarget(target);
@@ -77,10 +82,13 @@ export default function CategoryForm({
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
         form.setValue(dialogTarget, selectedMediaItem.urlOriginal);
+        // @ts-ignore
+        form.setValue(`${dialogTarget.replace('Url', '')}MediaId`, selectedMediaItem.id || null);
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }
     }
+    setIsMediaDialogOpen(false);
   };
 
   async function onSubmit(values: CategoryFormValues) {
@@ -198,20 +206,7 @@ export default function CategoryForm({
               )}
             />
 
-            <FormField
-                control={form.control}
-                name="iconName"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Ícone da Categoria</FormLabel>
-                        <FormControl>
-                            <IconPicker value={field.value || ''} onChange={field.onChange} />
-                        </FormControl>
-                        <FormDescription>Selecione um ícone da biblioteca Lucide para representar esta categoria.</FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
+            {renderImageInput('logoUrl', 'Logo da Categoria', 'Ícone que representa a categoria, exibido em listas.', logoUrlPreview, 'logoUrl')}
 
             <Separator />
             <div className="space-y-1">

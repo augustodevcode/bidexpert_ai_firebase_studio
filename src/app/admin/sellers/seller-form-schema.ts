@@ -1,3 +1,4 @@
+
 import * as z from 'zod';
 
 export const sellerFormSchema = z.object({
@@ -17,6 +18,7 @@ export const sellerFormSchema = z.object({
   zipCode: z.string().max(10).optional().nullable(),
   website: z.string().url({ message: "URL do website inválida." }).optional().nullable().or(z.literal('')),
   logoUrl: z.string().url({ message: "URL do logo inválida." }).optional().nullable().or(z.literal('')),
+  logoMediaId: z.string().optional().nullable(),
   dataAiHintLogo: z.string().max(50, {message: "Dica de IA para logo não pode exceder 50 caracteres."}).optional().nullable(),
   description: z.string().max(2000, {
     message: "A descrição não pode exceder 2000 caracteres.",

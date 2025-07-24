@@ -1,5 +1,4 @@
 
-// src/app/admin/sellers/seller-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -75,6 +74,7 @@ export default function SellerForm({
       zipCode: initialData?.zipCode || '',
       website: initialData?.website || '',
       logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
       judicialBranchId: initialData?.judicialBranchId || null,
@@ -90,6 +90,7 @@ export default function SellerForm({
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
         form.setValue('logoUrl', selectedMediaItem.urlOriginal);
+        form.setValue('logoMediaId', selectedMediaItem.id || null);
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }

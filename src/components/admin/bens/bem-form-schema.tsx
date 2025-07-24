@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/bem-form-schema.ts
 import * as z from 'zod';
 import type { Bem } from '@/types';
@@ -58,109 +59,19 @@ export const bemFormSchema = z.object({
   propertyRegistrationNumber: z.string().max(50).optional().nullable(),
   iptuNumber: z.string().max(50).optional().nullable(),
   isOccupied: z.boolean().optional(),
-  totalArea: z.coerce.number().min(0).optional().nullable(),
-  builtArea: z.coerce.number().min(0).optional().nullable(),
+  area: z.coerce.number().min(0).optional().nullable(),
   bedrooms: z.coerce.number().int().min(0).optional().nullable(),
-  suites: z.coerce.number().int().min(0).optional().nullable(),
   bathrooms: z.coerce.number().int().min(0).optional().nullable(),
   parkingSpaces: z.coerce.number().int().min(0).optional().nullable(),
-  constructionType: z.string().max(100).optional().nullable(),
-  finishes: z.string().max(500).optional().nullable(),
-  infrastructure: z.string().max(500).optional().nullable(),
-  condoDetails: z.string().max(500).optional().nullable(),
-  improvements: z.string().max(500).optional().nullable(),
-  topography: z.string().max(100).optional().nullable(),
-  liensAndEncumbrances: z.string().max(1000).optional().nullable(),
-  propertyDebts: z.string().max(500).optional().nullable(),
-  unregisteredRecords: z.string().max(500).optional().nullable(),
-  hasHabiteSe: z.boolean().optional(),
-  zoningRestrictions: z.string().max(200).optional().nullable(),
-  amenities: z.array(z.object({ value: z.string().min(1, 'Amenity cannot be empty') })).optional(),
-  
-  // Eletrônicos
-  brand: z.string().max(50).optional().nullable(),
-  serialNumber: z.string().max(100).optional().nullable(),
-  itemCondition: z.string().max(100).optional().nullable(),
-  specifications: z.string().max(1000).optional().nullable(),
-  includedAccessories: z.string().max(500).optional().nullable(),
-  batteryCondition: z.string().max(100).optional().nullable(),
-  hasInvoice: z.boolean().optional(),
-  hasWarranty: z.boolean().optional(),
-  repairHistory: z.string().max(500).optional().nullable(),
-  
-  // Eletrodomésticos
-  applianceCapacity: z.string().max(50).optional().nullable(),
-  voltage: z.string().max(20).optional().nullable(),
-  applianceType: z.string().max(50).optional().nullable(),
-  additionalFunctions: z.string().max(200).optional().nullable(),
-  
+
   // Máquinas e Equipamentos
   hoursUsed: z.coerce.number().int().min(0).optional().nullable(),
-  engineType: z.string().max(50).optional().nullable(),
-  capacityOrPower: z.string().max(100).optional().nullable(),
-  maintenanceHistory: z.string().max(1000).optional().nullable(),
-  installationLocation: z.string().max(200).optional().nullable(),
-  compliesWithNR: z.string().max(100).optional().nullable(),
-  operatingLicenses: z.string().max(200).optional().nullable(),
-  
-  // Semoventes (Livestock)
-  breed: z.string().max(50).optional().nullable(),
-  age: z.string().max(30).optional().nullable(),
-  sex: z.enum(['Macho', 'Fêmea']).optional().nullable(),
-  weight: z.string().max(30).optional().nullable(),
-  individualId: z.string().max(50).optional().nullable(),
-  purpose: z.string().max(100).optional().nullable(),
-  sanitaryCondition: z.string().max(200).optional().nullable(),
-  lineage: z.string().max(200).optional().nullable(),
-  isPregnant: z.boolean().optional(),
-  specialSkills: z.string().max(200).optional().nullable(),
-  gtaDocument: z.string().max(100).optional().nullable(),
-  breedRegistryDocument: z.string().max(100).optional().nullable(),
 
-  // Móveis
-  furnitureType: z.string().max(100).optional().nullable(),
-  material: z.string().max(100).optional().nullable(),
-  style: z.string().max(50).optional().nullable(),
-  dimensions: z.string().max(100).optional().nullable(),
-  pieceCount: z.coerce.number().int().min(0).optional().nullable(),
-  
-  // Joias
-  jewelryType: z.string().max(100).optional().nullable(),
-  metal: z.string().max(100).optional().nullable(),
-  gemstones: z.string().max(500).optional().nullable(),
-  totalWeight: z.string().max(50).optional().nullable(),
-  jewelrySize: z.string().max(50).optional().nullable(),
-  authenticityCertificate: z.string().max(200).optional().nullable(),
-  
-  // Obras de Arte e Antiguidades
-  workType: z.string().max(100).optional().nullable(),
-  artist: z.string().max(100).optional().nullable(),
-  period: z.string().max(100).optional().nullable(),
-  technique: z.string().max(100).optional().nullable(),
-  provenance: z.string().max(500).optional().nullable(),
-  
-  // Embarcações
-  boatType: z.string().max(100).optional().nullable(),
-  boatLength: z.string().max(50).optional().nullable(),
-  hullMaterial: z.string().max(50).optional().nullable(),
-  onboardEquipment: z.string().max(1000).optional().nullable(),
-  
-  // Alimentos
-  productName: z.string().max(100).optional().nullable(),
-  quantity: z.string().max(50).optional().nullable(),
-  packagingType: z.string().max(50).optional().nullable(),
-  expirationDate: z.date().optional().nullable(),
-  storageConditions: z.string().max(200).optional().nullable(),
-  
-  // Metais Preciosos e Pedras
-  preciousMetalType: z.string().max(50).optional().nullable(),
-  purity: z.string().max(50).optional().nullable(),
-  
-  // Bens Florestais
-  forestGoodsType: z.string().max(100).optional().nullable(),
-  volumeOrQuantity: z.string().max(100).optional().nullable(),
-  species: z.string().max(100).optional().nullable(),
-  dofNumber: z.string().max(100).optional().nullable(),
+  // Semoventes (Gado)
+  breed: z.string().max(50).optional().nullable(),
+  sex: z.enum(['Macho', 'Fêmea']).optional().nullable(),
+  age: z.string().max(30).optional().nullable(),
+  vaccinationStatus: z.string().max(200).optional().nullable(),
 });
 
 export type BemFormData = z.infer<typeof bemFormSchema>;
