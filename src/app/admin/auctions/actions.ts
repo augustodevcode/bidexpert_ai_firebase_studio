@@ -3,64 +3,42 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { prisma } from '@/lib/prisma'; 
+import { prisma } from '@/lib/prisma'; // Keep for related simple queries
+import { AuctionService } from '@/services/auction.service';
+
+const auctionService = new AuctionService();
 
 export async function getAuctions(): Promise<Auction[]> {
-    const auctions = await prisma.auction.findMany({
-        orderBy: { auctionDate: 'desc' },
-        include: { lots: true }
-    });
-     // @ts-ignore
-    return auctions.map(a => ({...a, totalLots: a.lots.length}));
+    return auctionService.getAuctions();
 }
 
 export async function getAuction(id: string): Promise<Auction | null> {
-    const auction = await prisma.auction.findFirst({
-        where: { OR: [{ id }, { publicId: id }] },
-        // @ts-ignore
-        include: { lots: true, auctionStages: true }
-    });
-    if (!auction) return null;
-     // @ts-ignore
-    return {...auction, totalLots: auction.lots.length};
+    return auctionService.getAuctionById(id);
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
-    try {
-        const result = await prisma.auction.create({
-            // @ts-ignore
-            data: data
-        });
+    const result = await auctionService.createAuction(data);
+    if (result.success) {
         revalidatePath('/admin/auctions');
-        return { success: true, message: 'Leilão criado com sucesso.', auctionId: result.id };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao criar leilão: ${error.message}` };
     }
+    return result;
 }
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
-    try {
-        await prisma.auction.update({ where: { id }, data: data as any });
+    const result = await auctionService.updateAuction(id, data);
+    if (result.success) {
         revalidatePath('/admin/auctions');
         revalidatePath(`/admin/auctions/${id}/edit`);
-        return { success: true, message: 'Leilão atualizado com sucesso.' };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao atualizar leilão: ${error.message}` };
     }
+    return result;
 }
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-    try {
-        const lots = await prisma.lot.count({ where: { auctionId: id }});
-        if (lots > 0) {
-            return { success: false, message: `Não é possível excluir. O leilão possui ${lots} lote(s) associado(s).` };
-        }
-        await prisma.auction.delete({ where: { id } });
-        revalidatePath('/admin/auctions');
-        return { success: true, message: 'Leilão excluído com sucesso.' };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao excluir leilão: ${error.message}` };
+    const result = await auctionService.deleteAuction(id);
+    if (result.success) {
+      revalidatePath('/admin/auctions');
     }
+    return result;
 }
 
 export async function updateAuctionTitle(id: string, newTitle: string): Promise<{ success: boolean; message: string; }> {
@@ -80,16 +58,16 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
-    // @ts-ignore
-    return prisma.auction.findMany({
+    const auctions = await prisma.auction.findMany({
         where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
         include: { lots: true }
     });
+    // @ts-ignore
+    return auctions.map(a => ({...a, totalLots: a.lots.length}));
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    // @ts-ignore
-    return prisma.auction.findMany({
+    const auctions = await prisma.auction.findMany({
         where: {
             seller: {
                 OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
@@ -97,11 +75,12 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
         },
         include: { lots: true }
     });
+     // @ts-ignore
+    return auctions.map(a => ({...a, totalLots: a.lots.length}));
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-     // @ts-ignore
-     return prisma.auction.findMany({
+     const auctions = await prisma.auction.findMany({
         where: {
             auctioneer: {
                 OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
@@ -109,4 +88,6 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promi
         },
         include: { lots: true }
     });
+     // @ts-ignore
+    return auctions.map(a => ({...a, totalLots: a.lots.length}));
 }

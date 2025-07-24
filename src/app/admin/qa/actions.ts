@@ -72,3 +72,8 @@ export async function runBemEndToEndTest(): Promise<{ success: boolean; output: 
     const command = `dotenv -e .env -- tsx ./tests/bem.test.ts`;
     return runTestScript(command);
 }
+
+export async function runAuctionEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/auction.test.ts`;
+    return runTestScript(command);
+}
