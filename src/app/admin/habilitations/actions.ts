@@ -5,8 +5,10 @@ import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import type { UserProfileData, UserDocument, UserHabilitationStatus, Role } from '@/types';
 import { RoleRepository } from '@/repositories/role.repository';
+import { UserService } from '@/services/user.service';
 
 const roleRepository = new RoleRepository();
+const userService = new UserService();
 
 /**
  * Fetches users whose documents are pending review.
@@ -32,17 +34,13 @@ export async function habilitateUserAction(userId: string): Promise<{ success: b
       throw new Error("O perfil 'BIDDER' não foi encontrado. Popule os dados essenciais.");
     }
 
-    await prisma.$transaction([
-      prisma.user.update({
-        where: { id: userId },
-        data: { habilitationStatus: 'HABILITADO' }
-      }),
-      prisma.usersOnRoles.upsert({
-        where: { userId_roleId: { userId, roleId: bidderRole.id } },
-        update: {},
-        create: { userId, roleId: bidderRole.id, assignedBy: 'system-habilitation' }
-      })
-    ]);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { habilitationStatus: 'HABILITADO' }
+    });
+
+    // Use a service to add the role, not replace it
+    await userService.updateUserRoles(userId, [bidderRole.id]);
 
     revalidatePath('/admin/habilitations');
     revalidatePath(`/admin/habilitations/${userId}`);

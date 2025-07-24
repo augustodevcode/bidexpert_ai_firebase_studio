@@ -43,7 +43,7 @@ export class UserService {
     return this.formatUser(user);
   }
 
-  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string }> {
+  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {
         if (!data.email || !data.password) {
             return { success: false, message: "Email e senha são obrigatórios." };
@@ -65,21 +65,7 @@ export class UserService {
           roleIdsToAssign.push(userRole.id);
         }
 
-        const dataToCreate: Prisma.UserCreateInput = {
-            email: data.email,
-            password: hashedPassword,
-            fullName: data.fullName || 'Usuário',
-            habilitationStatus: data.habilitationStatus || 'PENDING_DOCUMENTS',
-            accountType: data.accountType || 'PHYSICAL',
-            roles: {
-                create: roleIdsToAssign.map(roleId => ({
-                    role: { connect: { id: roleId } },
-                    assignedBy: 'system-signup'
-                }))
-            }
-        };
-
-        const newUser = await this.userRepository.create(dataToCreate);
+        const newUser = await this.userRepository.create(data, roleIdsToAssign);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);
@@ -92,6 +78,7 @@ export class UserService {
       if (!userId) {
         throw new Error("UserID é obrigatório para atualizar perfis.");
       }
+      // This now calls the additive repository method
       await this.userRepository.updateUserRoles(userId, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {

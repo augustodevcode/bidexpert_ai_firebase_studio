@@ -37,27 +37,31 @@ export class UserRepository {
     });
   }
 
-  async create(data: Prisma.UserCreateInput): Promise<User> {
-    return prisma.user.create({ data });
+  async create(userData: Prisma.UserCreateInput, roleIds: string[]): Promise<User> {
+    const dataWithRoles: Prisma.UserCreateInput = {
+      ...userData,
+      roles: {
+        create: roleIds.map(roleId => ({
+          role: { connect: { id: roleId } },
+          assignedBy: 'system-signup'
+        }))
+      }
+    };
+    return prisma.user.create({ data: dataWithRoles });
   }
 
-  async updateUserRoles(userId: string, roleIds: string[]) {
-    return prisma.$transaction(async (tx) => {
-      // 1. Delete all existing roles for the user
-      await tx.usersOnRoles.deleteMany({
-        where: { userId },
-      });
-
-      // 2. Add the new roles
-      if (roleIds && roleIds.length > 0) {
-        await tx.usersOnRoles.createMany({
-          data: roleIds.map(roleId => ({
-            userId,
-            roleId,
-            assignedBy: 'admin-panel', 
-          })),
-        });
-      }
+  async updateUserRoles(userId: string, roleIdsToAdd: string[]) {
+    if (roleIdsToAdd.length === 0) return;
+    
+    // This now adds roles without removing existing ones.
+    // `skipDuplicates` prevents errors if the user already has one of the roles.
+    await prisma.usersOnRoles.createMany({
+      data: roleIdsToAdd.map(roleId => ({
+        userId,
+        roleId,
+        assignedBy: 'system', // or another appropriate value
+      })),
+      skipDuplicates: true,
     });
   }
 

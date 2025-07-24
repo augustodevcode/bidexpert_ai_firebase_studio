@@ -37,8 +37,10 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         
         // 1. Create Roles if they don't exist
         const userRole = await roleRepository.findByNormalizedName('USER');
+        const bidderRole = await roleRepository.findByNormalizedName('BIDDER');
         const analystRole = await roleRepository.findByNormalizedName('AUCTION_ANALYST');
         assert.ok(userRole, "USER role must exist for the test to run. Please seed essential data.");
+        assert.ok(bidderRole, "BIDDER role must exist for the test to run. Please seed essential data.");
         assert.ok(analystRole, "AUCTION_ANALYST role must exist for the test to run. Please seed essential data.");
 
         // 2. Create Analyst and Bidding Users
@@ -54,7 +56,7 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
                 fullName: `Bidder ${i}${testSuffix}`, 
                 email: `bidder${i}${testSuffix}@example.com`, 
                 password: 'password123', 
-                roleIds: [userRole!.id],
+                roleIds: [userRole!.id], // Start as a basic user
             });
             assert.ok(userResult.success && userResult.userId, `Bidder ${i} must be created successfully.`);
             const user = (await userService.getUserById(userResult.userId!));
@@ -111,11 +113,12 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         // Step 1: Habilitate users via Analyst
         console.log('Habilitating users via Analyst...');
         for (const user of biddingUsers) {
+            // Analyst approves documentation, user status becomes 'HABILITADO' and gets BIDDER role.
             const habilitationResult = await habilitateUserAction(user.id);
             assert.strictEqual(habilitationResult.success, true, `Should habilitate user ${user.fullName}`);
-            // Also enable for specific auction
+            // User enables themselves for this specific auction
             const auctionHabilitationResult = await habilitateForAuctionAction(user.id, testAuction.id);
-            assert.strictEqual(auctionHabilitationResult.success, true, `Should habilitate user ${user.fullName} for auction ${testAuction.id}`);
+            assert.strictEqual(auctionHabilitationResult.success, true, `Should enable user ${user.fullName} for auction ${testAuction.id}`);
         }
         console.log('Users habilitated for auction.');
 
@@ -125,7 +128,7 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         const bidIncrement = 1000;
         
         for (let i = 0; i < 10; i++) { // 10 rounds of bidding
-            for (const [index, user] of biddingUsers.entries()) {
+            for (const user of biddingUsers) {
                 const bidAmount = currentPrice + bidIncrement;
                 if (bidAmount >= 100000) break;
                 
