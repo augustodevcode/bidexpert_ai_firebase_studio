@@ -16,10 +16,11 @@ import {
     runAuctionEndToEndTest,
     runLotEndToEndTest,
     runRoleEndToEndTest,
-    runSubcategoryEndToEndTest // Import the new test action
+    runSubcategoryEndToEndTest
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { runStateEndToEndTest } from './actions';
 
 interface TestResult {
   output: string;
@@ -64,6 +65,12 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Perfil (Role)',
     description: 'Verifica a criação de um novo perfil de usuário com permissões.',
     action: runRoleEndToEndTest,
+  },
+   {
+    id: 'state-creation',
+    title: 'Teste de Cadastro de Estado',
+    description: 'Verifica a criação de um novo estado e validação de UF duplicada.',
+    action: runStateEndToEndTest,
   },
   {
     id: 'court-creation',
