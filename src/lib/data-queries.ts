@@ -35,8 +35,6 @@ export async function fetchAuction(id: string): Promise<Auction | null> {
         where: { OR: [{ id }, { publicId: id }] },
         include: { 
             lots: { include: { bens: { include: { bem: true } } } },
-            // @ts-ignore
-            auctionStages: true,
         }
     });
     if (!auction) return null;
