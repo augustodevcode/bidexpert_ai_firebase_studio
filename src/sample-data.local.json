@@ -84,12 +84,13 @@
       "id": "role-auction-analyst",
       "name": "AUCTION_ANALYST",
       "nameNormalized": "AUCTION_ANALYST",
-      "description": "Analista com permissões para visualizar leilões e relatórios.",
+      "description": "Analista com permissões para visualizar leilões, relatórios e gerenciar habilitações de usuários.",
       "permissions": [
         "auctions:read",
         "lots:read",
         "view_reports",
-        "consignor_dashboard:view"
+        "users:read",
+        "users:manage_habilitation"
       ],
       "createdAt": "2025-07-13T00:00:00Z",
       "updatedAt": "2025-07-13T00:00:00Z"

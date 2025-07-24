@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
+    runBiddingEndToEndTest, // Added
     runSellerEndToEndTest, 
     runAuctioneerEndToEndTest, 
     runCategoryEndToEndTest, 
@@ -23,7 +24,7 @@ import {
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -37,10 +38,17 @@ interface TestConfig {
   title: string;
   description: string;
   action: () => Promise<TestResult>;
-  type: 'backend' | 'frontend';
+  type: 'backend' | 'frontend' | 'simulation';
 }
 
 const tests: TestConfig[] = [
+  {
+    id: 'bidding-e2e',
+    title: 'Simulação de Leilão (E2E)',
+    description: 'Simula 5 usuários, habilitação e um leilão com lances e soft-close.',
+    action: runBiddingEndToEndTest,
+    type: 'simulation',
+  },
   {
     id: 'menu-content',
     title: 'Conteúdo Dinâmico dos Menus',
@@ -155,8 +163,8 @@ const tests: TestConfig[] = [
   },
   {
     id: 'media-library',
-    title: 'Biblioteca de Mídia',
-    description: 'Testa a criação, atualização e exclusão de itens na biblioteca de mídia.',
+    title: 'Upload de Mídia',
+    description: 'Testa o endpoint de upload, criação de registro e salvamento do arquivo físico.',
     action: runMediaLibraryEndToEndTest,
     type: 'backend',
   },
@@ -191,6 +199,15 @@ export default function QualityAssurancePage() {
         setTimeout(() => setHasCopied(false), 2500);
     };
 
+    const getIconForTestType = (type: TestConfig['type']) => {
+        switch(type) {
+            case 'simulation': return <Users className="h-4 w-4 text-primary" />;
+            case 'backend': return <TestTubeDiagonal className="h-4 w-4 text-primary"/>;
+            case 'frontend': return <TestTube className="h-4 w-4 text-primary" />;
+            default: return <TestTube className="h-4 w-4 text-primary" />;
+        }
+    }
+
     return (
         <div className="space-y-6">
             <Card>
@@ -208,7 +225,7 @@ export default function QualityAssurancePage() {
                         <Card key={test.id} className="bg-secondary/30">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
-                                     {test.id === 'media-library' ? <Library className="h-4 w-4 text-primary" /> : (test.type === 'frontend' ? <TestTube className="h-4 w-4 text-primary" /> : <TestTubeDiagonal className="h-4 w-4 text-primary"/>)}
+                                     {getIconForTestType(test.type)}
                                      {test.title}
                                 </CardTitle>
                                 <CardDescription>{test.description}</CardDescription>
