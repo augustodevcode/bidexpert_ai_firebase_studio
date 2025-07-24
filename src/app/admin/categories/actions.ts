@@ -1,40 +1,41 @@
 // src/app/admin/categories/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { LotCategory } from '@/types';
 import { revalidatePath } from 'next/cache';
+import type { LotCategory } from '@/types';
+import { CategoryService } from '@/services/category.service';
+
+const categoryService = new CategoryService();
 
 export async function getLotCategories(): Promise<LotCategory[]> {
-  return prisma.lotCategory.findMany({
-    orderBy: { name: 'asc' },
-  });
+  return categoryService.getCategories();
 }
 
 export async function getLotCategory(id: string): Promise<LotCategory | null> {
-    return prisma.lotCategory.findUnique({ where: { id }});
+    return categoryService.getCategoryById(id);
 }
 
-export async function updateLotCategory(id: string, data: { name: string; description?: string }): Promise<{ success: boolean, message: string }> {
-    try {
-        await prisma.lotCategory.update({
-            where: { id },
-            data,
-        });
+export async function updateLotCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean, message: string }> {
+    const result = await categoryService.updateCategory(id, data);
+    if (result.success) {
         revalidatePath('/admin/categories');
         revalidatePath(`/admin/categories/${id}/edit`);
-        return { success: true, message: "Categoria atualizada com sucesso." };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao atualizar categoria: ${error.message}` };
     }
+    return result;
 }
 
-export async function createLotCategory(data: { name: string; description?: string }): Promise<{ success: boolean, message: string }> {
-    try {
-        await prisma.lotCategory.create({ data });
-        revalidatePath('/admin/categories');
-        return { success: true, message: "Categoria criada com sucesso." };
-    } catch (error: any) {
-         return { success: false, message: `Falha ao criar categoria: ${error.message}` };
+export async function createLotCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean, message: string }> {
+    const result = await categoryService.createCategory(data);
+    if (result.success) {
+      revalidatePath('/admin/categories');
     }
+    return result;
+}
+
+export async function deleteLotCategory(id: string): Promise<{ success: boolean, message: string }> {
+    const result = await categoryService.deleteCategory(id);
+    if (result.success) {
+      revalidatePath('/admin/categories');
+    }
+    return result;
 }

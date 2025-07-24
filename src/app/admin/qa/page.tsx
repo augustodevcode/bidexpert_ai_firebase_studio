@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { runSellerEndToEndTest, runAuctioneerEndToEndTest } from './actions';
+import { runSellerEndToEndTest, runAuctioneerEndToEndTest, runCategoryEndToEndTest } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle } from 'lucide-react';
 
 interface TestResult {
@@ -33,14 +33,22 @@ const tests: TestConfig[] = [
     description: 'Verifica o fluxo completo de criação de um novo leiloeiro e a integridade dos dados salvos no banco.',
     action: runAuctioneerEndToEndTest,
   },
+  {
+    id: 'category-creation',
+    title: 'Teste de Cadastro de Categoria',
+    description: 'Verifica a criação de uma nova categoria de lote e a geração correta do seu slug.',
+    action: runCategoryEndToEndTest,
+  },
 ];
 
 export default function QualityAssurancePage() {
     const [testResult, setTestResult] = useState<TestResult | null>(null);
     const [runningTest, setRunningTest] = useState<string | null>(null);
+    const [lastTestRun, setLastTestRun] = useState<string | null>(null);
 
     const handleRunTest = async (testId: string) => {
         setRunningTest(testId);
+        setLastTestRun(testId);
         setTestResult(null);
 
         const testToRun = tests.find(t => t.id === testId);
@@ -88,7 +96,9 @@ export default function QualityAssurancePage() {
             {testResult && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">Resultados do Último Teste</CardTitle>
+                        <CardTitle className="flex items-center gap-2">
+                          Resultados para: <span className="text-primary">{tests.find(t => t.id === lastTestRun)?.title}</span>
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         {testResult.error || !testResult.success ? (
@@ -97,7 +107,7 @@ export default function QualityAssurancePage() {
                                     <ServerCrash className="h-5 w-5" />
                                     <span>Teste Falhou</span>
                                 </div>
-                                <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded">{testResult.error}</pre>
+                                <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded max-h-80 overflow-auto">{testResult.error}</pre>
                             </div>
                         ) : (
                             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
@@ -108,7 +118,7 @@ export default function QualityAssurancePage() {
                             </div>
                         )}
                         <h4 className="text-sm font-semibold mt-4 mb-2">Saída do Console:</h4>
-                        <pre className="bg-muted text-muted-foreground p-4 rounded-md text-xs overflow-x-auto">{testResult.output || "Nenhuma saída no console."}</pre>
+                        <pre className="bg-muted text-muted-foreground p-4 rounded-md text-xs max-h-96 overflow-auto">{testResult.output || "Nenhuma saída no console."}</pre>
                     </CardContent>
                 </Card>
             )}

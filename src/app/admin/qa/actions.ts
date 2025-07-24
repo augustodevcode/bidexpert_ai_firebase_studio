@@ -52,3 +52,13 @@ export async function runAuctioneerEndToEndTest(): Promise<{ success: boolean; o
     const command = `dotenv -e .env -- tsx ./tests/auctioneer.test.ts`;
     return runTestScript(command);
 }
+
+/**
+ * Executes the end-to-end test for the category creation flow.
+ * @returns {Promise<{ success: boolean; output: string; error?: string }>} 
+ *          An object containing the success status and the output/error from the test execution.
+ */
+export async function runCategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/category.test.ts`;
+    return runTestScript(command);
+}
