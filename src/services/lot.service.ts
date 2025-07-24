@@ -34,20 +34,25 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
-      const { bemIds, ...lotData } = data;
-      const dataToCreate: Prisma.LotCreateInput = {
-        ...lotData,
-        publicId: `LOTE-PUB-${uuidv4()}`,
-        slug: slugify(data.title || ''),
-        bens: bemIds ? { connect: bemIds.map(id => ({ id })) } : undefined,
-      };
+      const { auctionId, categoryId, bemIds, ...lotData } = data;
 
-      if (data.auctionId) {
-        dataToCreate.auction = { connect: { id: data.auctionId } };
+      if (!auctionId) {
+        return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
 
-      if (data.categoryId) {
-        dataToCreate.category = { connect: { id: data.categoryId } };
+      const dataToCreate: Prisma.LotCreateInput = {
+        ...(lotData as any),
+        publicId: `LOTE-PUB-${uuidv4()}`,
+        slug: slugify(data.title || ''),
+        auction: { connect: { id: auctionId } },
+      };
+
+      if (categoryId) {
+        dataToCreate.category = { connect: { id: categoryId } };
+      }
+
+      if (bemIds && bemIds.length > 0) {
+        dataToCreate.bens = { connect: bemIds.map(id => ({ id })) };
       }
 
       const newLot = await this.repository.create(dataToCreate);
@@ -60,11 +65,19 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { bemIds, ...lotData } = data;
+      const { auctionId, categoryId, bemIds, ...lotData } = data;
       const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
 
       if (data.title) {
         dataToUpdate.slug = slugify(data.title);
+      }
+      
+      if (auctionId) {
+        dataToUpdate.auction = { connect: { id: auctionId } };
+      }
+      
+      if (categoryId) {
+        dataToUpdate.category = { connect: { id: categoryId } };
       }
       
       if (bemIds !== undefined) {
