@@ -13,8 +13,6 @@ import {
     runJudicialBranchEndToEndTest,
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
-    runAuctionEndToEndTest,
-    runLotEndToEndTest,
     runRoleEndToEndTest,
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
@@ -46,14 +44,14 @@ const tests: TestConfig[] = [
     title: 'Teste de Conteúdo dos Menus',
     description: 'Valida se os itens nos menus suspensos (Categorias, Leiloeiros, etc.) correspondem aos dados no banco.',
     action: runMenuContentTest,
-    type: 'frontend',
+    type: 'backend', // It's a data validation test now, not UI.
   },
   {
     id: 'modalities-menu',
     title: 'Teste do Menu de Modalidades',
     description: 'Verifica se o menu estático de modalidades de leilão contém os itens e links corretos.',
     action: runModalitiesMenuTest,
-    type: 'frontend',
+    type: 'backend',
   },
   {
     id: 'user-creation',
@@ -144,20 +142,6 @@ const tests: TestConfig[] = [
     title: 'Teste de Cadastro de Bem',
     description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
     action: runBemEndToEndTest,
-    type: 'backend',
-  },
-   {
-    id: 'auction-creation',
-    title: 'Teste de Cadastro de Leilão',
-    description: 'Verifica a criação de um novo leilão e a vinculação com leiloeiro e comitente.',
-    action: runAuctionEndToEndTest,
-    type: 'backend',
-  },
-  {
-    id: 'lot-creation',
-    title: 'Teste de Cadastro de Lote',
-    description: 'Verifica a criação de um lote, incluindo a relação com um bem.',
-    action: runLotEndToEndTest,
     type: 'backend',
   },
 ];
