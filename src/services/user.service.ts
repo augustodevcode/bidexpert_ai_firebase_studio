@@ -24,6 +24,7 @@ export class UserService {
       roleIds: roles.map((r: any) => r.id),
       roleNames: roles.map((r: any) => r.name),
       permissions,
+      // For compatibility with older components that might expect a single roleName
       roleName: roles[0]?.name,
     };
   }
@@ -34,6 +35,10 @@ export class UserService {
   }
 
   async getUserById(id: string): Promise<UserProfileWithPermissions | null> {
+    if (!id) {
+        console.warn("[UserService] getUserById called with a null or undefined id.");
+        return null;
+    }
     const user = await this.userRepository.findById(id);
     return this.formatUser(user);
   }

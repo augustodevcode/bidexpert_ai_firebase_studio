@@ -1,6 +1,6 @@
 // src/repositories/user.repository.ts
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, User } from '@prisma/client';
 
 export class UserRepository {
   async findAll() {
@@ -37,7 +37,7 @@ export class UserRepository {
     });
   }
 
-  async create(data: Prisma.UserCreateInput, roleIds: string[]) {
+  async create(data: Prisma.UserCreateInput, roleIds: string[]): Promise<User> {
     return prisma.$transaction(async (tx) => {
       const newUser = await tx.user.create({ data });
       if (roleIds && roleIds.length > 0) {
@@ -64,7 +64,7 @@ export class UserRepository {
       if (roleIds && roleIds.length > 0) {
         await tx.usersOnRoles.createMany({
           data: roleIds.map(roleId => ({
-            userId, // This was the bug, it was undefined. Now it's passed correctly.
+            userId,
             roleId,
             assignedBy: 'admin-panel', 
           })),

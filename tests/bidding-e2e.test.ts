@@ -38,8 +38,10 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         // 2. Create Analyst User with the correct role
         const analystResult = await userService.createUser({ fullName: `Analyst ${testSuffix}`, email: `analyst${testSuffix}@example.com`, password: 'password123', roleIds: [analystRole.id] });
         assert.ok(analystResult.userId, "Analyst user must be created successfully.");
-        analystUser = (await userService.getUserById(analystResult.userId))!;
-        assert.ok(analystUser, "Analyst user profile must be fetched successfully.");
+        const fetchedAnalyst = await userService.getUserById(analystResult.userId);
+        assert.ok(fetchedAnalyst, "Analyst user profile must be fetched successfully.");
+        analystUser = fetchedAnalyst;
+
 
         // 3. Create Bidding Users with the correct role
         for (let i = 1; i <= 5; i++) {
@@ -58,27 +60,36 @@ test.describe('Full Bidding E2E Test with Soft-Close', () => {
         // 5. Create Auction
         const auctionResult = await auctionService.createAuction({ title: `Auction ${testSuffix}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: testAuctioneer.id, sellerId: testSeller.id, softCloseEnabled: true, softCloseMinutes: 3 });
         assert.ok(auctionResult.auctionId, "Auction must be created successfully.");
-        testAuction = (await auctionService.getAuctionById(auctionResult.auctionId))!;
-        assert.ok(testAuction, "Auction profile must be fetched successfully.");
+        const fetchedAuction = (await auctionService.getAuctionById(auctionResult.auctionId));
+        assert.ok(fetchedAuction, "Auction profile must be fetched successfully.");
+        testAuction = fetchedAuction;
         
         // 6. Create Lot
         const lotResult = await lotService.createLot({ title: `Lot ${testSuffix}`, auctionId: testAuction.id, price: 50000, initialPrice: 50000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bidIncrementStep: 1000, endDate: new Date(Date.now() + 5 * 60 * 1000) }); // Ends in 5 mins
         assert.ok(lotResult.lotId, "Lot must be created successfully.");
-        testLot = (await lotService.getLotById(lotResult.lotId))!;
-        assert.ok(testLot, "Lot profile must be fetched successfully.");
+        const fetchedLot = (await lotService.getLotById(lotResult.lotId))!;
+        assert.ok(fetchedLot, "Lot profile must be fetched successfully.");
+        testLot = fetchedLot;
+        
         console.log('--- Bidding E2E Test: Setup complete ---');
     });
 
     test.after(async () => {
         console.log('--- Bidding E2E Test: Cleaning up data ---');
         try {
-            await prisma.bid.deleteMany({ where: { lotId: testLot.id } });
-            await prisma.lot.deleteMany({ where: { id: testLot.id } });
-            await prisma.auction.deleteMany({ where: { id: testAuction.id } });
-            await prisma.user.deleteMany({ where: { email: { endsWith: `${testSuffix}@example.com` } } });
-            await prisma.seller.deleteMany({ where: { name: { endsWith: testSuffix } } });
-            await prisma.auctioneer.deleteMany({ where: { name: { endsWith: testSuffix } } });
-            await prisma.lotCategory.deleteMany({ where: { name: { endsWith: testSuffix } } });
+            if (testLot) await prisma.bid.deleteMany({ where: { lotId: testLot.id } });
+            if (testLot) await prisma.lot.delete({ where: { id: testLot.id } });
+            if (testAuction) await prisma.auction.delete({ where: { id: testAuction.id } });
+            if (biddingUsers.length > 0) {
+                 const idsToDelete = biddingUsers.map(u => u.id).filter(Boolean);
+                 if (idsToDelete.length > 0) {
+                     await prisma.user.deleteMany({ where: { id: { in: idsToDelete } } });
+                 }
+            }
+            if (analystUser) await prisma.user.delete({ where: { id: analystUser.id } });
+            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
             console.error('Cleanup error:', error);
         }
