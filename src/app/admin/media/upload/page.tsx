@@ -27,7 +27,7 @@ interface UploadResult {
 }
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf', 'image/svg+xml'];
-const MAX_FILE_SIZE_MB = 10;
+const MAX_FILE_SIZE_MB = 100;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export default function AdvancedMediaUploadPage() {
