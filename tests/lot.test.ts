@@ -12,11 +12,11 @@ let testBem: any;
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
+let createdLotId: string | undefined;
 
 test.describe('Lot Service E2E Tests', () => {
 
     test.before(async () => {
-        // Create all dependency records for a Lot
         testCategory = await prisma.lotCategory.upsert({
             where: { slug: 'categoria-teste-lotes' },
             update: {},
@@ -55,12 +55,16 @@ test.describe('Lot Service E2E Tests', () => {
 
     test.after(async () => {
         try {
-            await prisma.lot.deleteMany({ where: { title: testLotTitle }});
-            await prisma.bem.delete({ where: { id: testBem.id }});
-            await prisma.auction.delete({ where: { id: testAuction.id } });
-            await prisma.seller.delete({ where: { id: testSeller.id } });
-            await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
-            await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+             if (createdLotId) {
+                // The repository now handles the cascade deletion within a transaction
+                await lotService.deleteLot(createdLotId);
+            }
+            // Clean up dependencies in reverse order of creation
+            if (testBem) await prisma.bem.delete({ where: { id: testBem.id } });
+            if (testAuction) await prisma.auction.delete({ where: { id: testAuction.id } });
+            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
             console.error("Cleanup error:", error);
         }
@@ -83,6 +87,7 @@ test.describe('Lot Service E2E Tests', () => {
 
         // Act
         const result = await lotService.createLot(newLotData);
+        createdLotId = result.lotId; // Store for cleanup
 
         // Assert: Check the service method result
         assert.strictEqual(result.success, true, 'LotService.createLot should return success: true');
@@ -104,7 +109,6 @@ test.describe('Lot Service E2E Tests', () => {
         assert.strictEqual(createdLotFromDb.auctionId, testAuction.id, 'Lot auctionId should match');
         assert.strictEqual(createdLotFromDb.bens.length, 1, 'Lot should be linked to 1 bem');
         
-        // Assert the join table record
         const joinRecord = await prisma.lotBens.findFirst({
             where: {
                 lotId: createdLotFromDb.id,

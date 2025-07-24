@@ -2,6 +2,7 @@
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
+import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 export class LotService {
@@ -16,7 +17,7 @@ export class LotService {
     return lots.map(lot => ({
       ...lot,
       auctionName: lot.auction?.title,
-      bens: lot.bens
+      bens: lot.bens.map((lb: any) => lb.bem) || [] // Extract bem from LotBens
     }));
   }
 
@@ -26,7 +27,7 @@ export class LotService {
     return {
       ...lot,
       auctionName: lot.auction?.title,
-      bens: lot.bens?.map((lb: any) => lb.bem) || [] // Extract bem from LotBens
+      bens: lot.bens?.map((lb: any) => lb.bem) || []
     };
   }
 
@@ -35,21 +36,26 @@ export class LotService {
       if (!data.auctionId) {
         return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
+      if (!data.categoryId) {
+          return { success: false, message: "A categoria é obrigatória para o lote."}
+      }
 
-      const lotData = {
-        title: data.title || 'Lote sem título',
-        number: data.number,
-        description: data.description,
-        price: data.price,
-        initialPrice: data.initialPrice,
-        status: data.status,
-        auctionId: data.auctionId,
-        categoryId: data.categoryId,
+      const { bemIds, ...lotData } = data;
+
+      const dataToCreate: Prisma.LotCreateInput = {
+        title: lotData.title || 'Lote sem título',
+        number: lotData.number,
+        description: lotData.description,
+        price: lotData.price,
+        initialPrice: lotData.initialPrice,
+        status: lotData.status,
         publicId: `LOTE-PUB-${uuidv4()}`,
-        slug: slugify(data.title || ''),
+        slug: slugify(lotData.title || ''),
+        auction: { connect: { id: data.auctionId } },
+        category: { connect: { id: data.categoryId } },
       };
       
-      const newLot = await this.repository.create(lotData, data.bemIds || []);
+      const newLot = await this.repository.create(dataToCreate, bemIds || []);
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
     } catch (error: any) {
       console.error("Error in LotService.createLot:", error);
@@ -60,11 +66,18 @@ export class LotService {
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const { bemIds, ...lotData } = data;
+      const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
       if (lotData.title) {
-        lotData.slug = slugify(lotData.title);
+        dataToUpdate.slug = slugify(lotData.title);
+      }
+       if (lotData.categoryId) {
+        dataToUpdate.category = { connect: { id: lotData.categoryId } };
+      }
+       if (lotData.auctionId) {
+        dataToUpdate.auction = { connect: { id: lotData.auctionId } };
       }
       
-      await this.repository.update(id, lotData, bemIds);
+      await this.repository.update(id, dataToUpdate, bemIds);
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in LotService.updateLot for id ${id}:`, error);
@@ -74,6 +87,7 @@ export class LotService {
 
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
     try {
+      // The repository now handles the transactional deletion of Lot and LotBens.
       await this.repository.delete(id);
       return { success: true, message: 'Lote excluído com sucesso.' };
     } catch (error: any) {

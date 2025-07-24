@@ -26,11 +26,11 @@ export class LotRepository {
     });
   }
 
-  async create(lotData: Omit<Lot, 'id' | 'createdAt' | 'updatedAt' | 'bens'>, bemIds: string[]): Promise<Lot> {
+  async create(lotData: Prisma.LotCreateInput, bemIds: string[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
       // 1. Create the Lot without the bens relation
       const newLot = await tx.lot.create({
-        data: lotData as any,
+        data: lotData,
       });
 
       // 2. If there are bemIds, create the entries in the join table
@@ -43,11 +43,11 @@ export class LotRepository {
         });
       }
 
-      return newLot;
+      return newLot as Lot;
     });
   }
 
-  async update(id: string, lotData: Partial<LotFormData>, bemIds?: string[]): Promise<Lot> {
+  async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
         // 1. Update the scalar fields of the Lot
         const updatedLot = await tx.lot.update({
@@ -71,13 +71,13 @@ export class LotRepository {
                 });
             }
         }
-        return updatedLot;
+        return updatedLot as Lot;
     });
   }
 
   async delete(id: string): Promise<void> {
      await prisma.$transaction(async (tx) => {
-        // Delete from the join table first
+        // Delete from the join table first to respect foreign key constraints
         await tx.lotBens.deleteMany({
             where: { lotId: id },
         });
