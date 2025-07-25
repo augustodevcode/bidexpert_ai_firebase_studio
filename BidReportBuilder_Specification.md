@@ -98,6 +98,13 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   The `ReportDesigner` component will call the `onReportChanged` callback in the `BidReportBuilder` component to update the `reportUrl` state, which will in turn update the `PreviewPanel`.
 *   The `AIPanel` component will call the `onGetAIAssistance` callback in the `BidReportBuilder` component to pass the current state of the report to the AI API.
 
+### 6.4. Element Manipulation
+
+*   **Adding Elements:** The `handleAddElement` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to create and add new report elements to the design surface.
+*   **Selecting Elements:** The `handleSelectionChanged` function in the `BidReportBuilder` component updates the `selectedElement` state, which is then passed to the `PropertiesPanel` component.
+*   **Changing Properties:** The `handleElementPropertyChanged` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to update the properties of the selected report element.
+*   **Data Binding:** The `handleSelectDataSource` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to bind a data source to the selected report element.
+
 ## 7. Backend Implementation Details
 
 ### 7.1. API Routes

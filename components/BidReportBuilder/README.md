@@ -45,9 +45,10 @@ The Bid Report Builder is a self-service reporting tool that allows users to cre
 
 1.  **Create a new report:** Click the "New Report" button in the toolbar.
 2.  **Add report elements:** Click the buttons in the toolbar to add report elements to the design surface.
-3.  **Customize report elements:** Select a report element in the designer to see its properties in the properties panel.
-4.  **Connect to a data source:** Select a data source from the data source manager and then select a report element to bind it to.
-5.  **Preview the report:** The preview panel will automatically update as you make changes to the report.
-6.  **Export the report:** Click the "Export" button in the toolbar to export the report to a different format.
-7.  **Print the report:** Click the "Print" button in the toolbar to print the report.
-8.  **Use the AI assistant:** Use the AI assistant to get help with creating your report.
+3.  **Select an element:** Click on a report element in the designer to select it.
+4.  **Customize report elements:** Change the properties of the selected element in the properties panel.
+5.  **Connect to a data source:** Select a data source from the data source manager and then select a report element to bind it to.
+6.  **Preview the report:** The preview panel will automatically update as you make changes to the report.
+7.  **Export the report:** Click the "Export" button in the toolbar to export the report to a different format.
+8.  **Print the report:** Click the "Print" button in the toolbar to print the report.
+9.  **Use the AI assistant:** Use the AI assistant to get help with creating your report.

@@ -27,9 +27,9 @@ const BidReportBuilder = () => {
   const handleAddElement = (elementType) => {
     if (designerRef.current) {
       const designer = designerRef.current.instance;
-      // This is a placeholder for the actual implementation
-      // You will need to use the DevExpress Report Designer API to add elements
-      console.log(`Adding ${elementType} to the designer`);
+      const report = designer.GetReport();
+      const control = designer.CreateControl(elementType, report);
+      report.bands.detail.controls.add(control);
     }
   };
 
@@ -40,9 +40,11 @@ const BidReportBuilder = () => {
   const handleSelectDataSource = (dataSource) => {
     if (designerRef.current && selectedElement) {
       const designer = designerRef.current.instance;
-      // This is a placeholder for the actual implementation
-      // You will need to use the DevExpress Report Designer API to bind the data source
-      console.log(`Binding data source ${dataSource.name} to element ${selectedElement.id}`);
+      const report = designer.GetReport();
+      const control = report.getControlById(selectedElement.id);
+      if (control) {
+        control.dataSource = dataSource;
+      }
     }
   };
 
@@ -64,6 +66,17 @@ const BidReportBuilder = () => {
     }
   };
 
+  const handleElementPropertyChanged = (element, propertyName, propertyValue) => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const report = designer.GetReport();
+      const control = report.getControlById(element.id);
+      if (control) {
+        control[propertyName] = propertyValue;
+      }
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h1>Bid Report Builder</h1>
@@ -76,7 +89,7 @@ const BidReportBuilder = () => {
           <ReportDesigner ref={designerRef} onSelectionChanged={handleSelectionChanged} onReportChanged={handleReportChanged} />
         </div>
         <div style={{ width: '300px', marginLeft: '20px' }}>
-          <PropertiesPanel selectedElement={selectedElement} />
+          <PropertiesPanel selectedElement={selectedElement} onElementPropertyChanged={handleElementPropertyChanged} />
           <AIPanel onGetAIAssistance={handleGetAIAssistance} />
         </div>
       </div>
