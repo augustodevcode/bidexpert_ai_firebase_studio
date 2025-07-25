@@ -74,15 +74,43 @@ The `BidReportBuilder` will support the following user roles:
 
 The `BidReportBuilder` will have a clean, modern, and intuitive user interface. It will be designed to be easy to use for both technical and non-technical users.
 
-## 6. Next Steps
+## 6. Frontend Implementation Details
+
+### 6.1. Components
+
+*   **`BidReportBuilder`:** The main component that orchestrates the entire report builder UI.
+*   **`ReportDesigner`:** The component that wraps the DevExpress Report Designer component.
+*   **`Toolbar`:** The component that contains the buttons for adding new report elements.
+*   **`PropertiesPanel`:** The component that displays the properties of the selected report element.
+*   **`DataSourceManager`:** The component that allows users to connect to and manage data sources.
+*   **`PreviewPanel`:** The component that displays a preview of the report.
+*   **`AIPanel`:** The component that provides the UI for the AI-powered features.
+
+### 6.2. State Management
+
+The frontend will use React's built-in state management (`useState`, `useEffect`) to manage the state of the `BidReportBuilder` component.
+
+## 7. Backend Implementation Details
+
+### 7.1. API Routes
+
+*   **/api/reports:** Handles CRUD operations for reports.
+*   **/api/datasources:** Handles CRUD operations for data sources.
+*   **/api/ai:** Handles requests for AI-powered features.
+*   **/api/auth/[...nextauth]:** Handles user authentication and authorization.
+
+### 7.2. Database
+
+The backend will use a PostgreSQL database with Prisma as the ORM.
+
+### 7.3. AI Integration
+
+The backend will use the OpenAI API to provide AI-powered features.
+
+## 8. Next Steps
 
 The next steps in the development of the `BidReportBuilder` component are:
 
-1.  **Component Scaffolding:** Create the basic file structure for the component.
-2.  **Data Model with Prisma:** Define the Prisma schema for the reports.
-3.  **Backend API with Next.js:** Create the Next.js API routes for the backend.
-4.  **Frontend with React:** Build the React components for the UI.
-5.  **AI Integration:** Integrate the AI-powered features.
-6.  **Integration with `bidexpert_ai_firebase_studio`:** Integrate the component into the main application.
-7.  **Testing:** Write unit and integration tests.
-8.  **Documentation:** Create documentation for the component.
+1.  **Testing:** Revisit the testing setup and write comprehensive unit and integration tests.
+2.  **Deployment:** Deploy the `BidReportBuilder` component to a staging environment for testing and feedback.
+3.  **User Feedback:** Gather feedback from users and iterate on the component.

@@ -3,40 +3,69 @@ import React, { useState } from 'react';
 const AIPanel = () => {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState('');
+  const [error, setError] = useState('');
 
   const handleNLQ = async () => {
-    const res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query, type: 'nlq' }),
-    });
-    const data = await res.json();
-    setResult(data.query);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query, type: 'nlq' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult(data.query);
+        setError('');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      setError('An error occurred while processing your request.');
+    }
   };
 
   const handleChartRecommendation = async () => {
-    const res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'chart-recommendation' }),
-    });
-    const data = await res.json();
-    setResult(`Recommended chart type: ${data.chartType}`);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'chart-recommendation' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult(`Recommended chart type: ${data.chartType}`);
+        setError('');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      setError('An error occurred while processing your request.');
+    }
   };
 
   const handleLayoutSuggestion = async () => {
-    const res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'layout-suggestion' }),
-    });
-    const data = await res.json();
-    setResult(`Suggested layout: ${data.layout}`);
+    try {
+      const res = await fetch('/api/ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'layout-suggestion' }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResult(`Suggested layout: ${data.layout}`);
+        setError('');
+      } else {
+        setError(data.message);
+      }
+    } catch (error) {
+      setError('An error occurred while processing your request.');
+    }
   };
 
   return (
     <div>
       <h3>AI Assistant</h3>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <div>
         <input
           type="text"
