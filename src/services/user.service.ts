@@ -3,7 +3,7 @@ import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
 import type { UserProfileWithPermissions, UserCreationData } from '@/types';
 import bcrypt from 'bcrypt';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
 
@@ -73,7 +73,7 @@ export class UserService {
         const dataToCreate: Prisma.UserCreateInput = {
             ...userData,
             id: newId,
-            uid: newId, // Guarantee uid is set
+            uid: newId, 
             password: hashedPassword,
         };
         
@@ -106,6 +106,54 @@ export class UserService {
     } catch (error: any) {
         console.error(`Error in UserService.deleteUser for id ${id}:`, error);
         return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
+    }
+  }
+
+  /**
+   * Checks if a user has submitted all required documents and updates their status to 'HABILITADO' if so.
+   * @param {string} userId - The ID of the user to check.
+   * @returns {Promise<void>}
+   */
+  async checkAndHabilitateUser(userId: string): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { documents: true }
+    });
+
+    if (!user || user.habilitationStatus === 'HABILITADO') {
+      return; // Skip if user not found or already habilitated
+    }
+    
+    // Determine the account type to find required documents
+    const accountType = user.accountType || 'PHYSICAL';
+    
+    const requiredDocTypes = await prisma.documentType.findMany({
+      where: { 
+        isRequired: true,
+        appliesTo: {
+          has: accountType
+        }
+      }
+    });
+
+    const submittedApprovedDocTypeIds = new Set(
+      user.documents.filter(d => d.status === 'APPROVED').map(d => d.documentTypeId)
+    );
+
+    const allRequiredDocsApproved = requiredDocTypes.every(
+      requiredDoc => submittedApprovedDocTypeIds.has(requiredDoc.id)
+    );
+
+    if (allRequiredDocsApproved) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { habilitationStatus: 'HABILITADO' }
+      });
+      // You might want to add the 'BIDDER' role here as well
+      const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
+      if(bidderRole) {
+        await this.updateUserRoles(userId, [bidderRole.id]);
+      }
     }
   }
 }

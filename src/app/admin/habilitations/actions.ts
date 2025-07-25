@@ -1,4 +1,3 @@
-
 // src/app/admin/habilitations/actions.ts
 'use server';
 
@@ -30,24 +29,13 @@ export async function getHabilitationRequests(): Promise<UserProfileData[]> {
  */
 export async function habilitateUserAction(userId: string): Promise<{ success: boolean; message: string }> {
   try {
-    const bidderRole = await roleRepository.findByNormalizedName('BIDDER');
-    if (!bidderRole) {
-      throw new Error("O perfil 'BIDDER' não foi encontrado. Popule os dados essenciais.");
-    }
-
-    await prisma.user.update({
-      where: { id: userId },
-      data: { habilitationStatus: 'HABILITADO' }
-    });
-
-    // Use a service to add the role, not replace it
-    await userService.updateUserRoles(userId, [bidderRole.id]);
+    await userService.checkAndHabilitateUser(userId);
 
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
         revalidatePath(`/admin/habilitations/${userId}`);
     }
-    return { success: true, message: "Usuário habilitado com sucesso e perfil de arrematante atribuído." };
+    return { success: true, message: "Status do usuário verificado e atualizado com sucesso." };
   } catch (e: any) {
     console.error(`Failed to habilitate user ${userId}:`, e);
     return { success: false, message: `Erro ao habilitar usuário: ${e.message}`};
@@ -115,18 +103,28 @@ export async function getUserDocumentsForReview(userId: string): Promise<UserDoc
   return documents as UserDocument[];
 }
 
-export async function approveDocument(documentId: string): Promise<{ success: boolean; message: string }> {
+export async function approveDocument(documentId: string, analystId: string): Promise<{ success: boolean; message: string }> {
   try {
+    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: documentId}});
+    if (!docToUpdate) {
+      throw new Error("Documento não encontrado.");
+    }
+
     await prisma.userDocument.update({
       where: { id: documentId },
       data: { status: 'APPROVED', rejectionReason: null }
     });
+    
+    // After approval, check if the user is now fully habilitated
+    await userService.checkAndHabilitateUser(docToUpdate.userId);
+
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
     }
     return { success: true, message: 'Documento aprovado.' };
-  } catch(e) {
-    return { success: false, message: 'Falha ao aprovar documento.' };
+  } catch(e: any) {
+    console.error(`Error approving document ${documentId}:`, e);
+    return { success: false, message: `Falha ao aprovar documento: ${e.message}` };
   }
 }
 
@@ -135,15 +133,26 @@ export async function rejectDocument(documentId: string, reason: string): Promis
     return { success: false, message: 'O motivo da rejeição é obrigatório.' };
   }
    try {
+    const docToUpdate = await prisma.userDocument.findUnique({ where: {id: documentId}});
+    if (!docToUpdate) {
+      throw new Error("Documento não encontrado.");
+    }
+
     await prisma.userDocument.update({
       where: { id: documentId },
       data: { status: 'REJECTED', rejectionReason: reason }
     });
+
+    await prisma.user.update({
+        where: { id: docToUpdate.userId },
+        data: { habilitationStatus: 'REJECTED_DOCUMENTS' }
+    });
+
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
     }
     return { success: true, message: 'Documento rejeitado.' };
-  } catch(e) {
+  } catch(e: any) {
     return { success: false, message: 'Falha ao rejeitar documento.' };
   }
 }
