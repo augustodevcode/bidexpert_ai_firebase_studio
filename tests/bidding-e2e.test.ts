@@ -75,13 +75,15 @@ test.describe('Full Auction E2E Simulation Test', () => {
         testSeller = (await sellerService.getSellerById(sellerRes.sellerId!))!;
         
         // 5. Judicial Entities
-        testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: `T${testRunId.charAt(0)}`, slug: `st-${testRunId}` } });
+        // Ensure UF is unique by taking two distinct characters from the random ID
+        const uniqueUf = `T${testRunId.substring(1, 2).toUpperCase()}`;
+        testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: uniqueUf, slug: `st-${testRunId}` } });
         testCourt = await prisma.court.create({ data: { name: `Court ${testRunId}`, stateUf: testState.uf, slug: `court-${testRunId}` } });
         testDistrict = await prisma.judicialDistrict.create({ data: { name: `District ${testRunId}`, slug: `dist-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
         testBranch = await prisma.judicialBranch.create({ data: { name: `Branch ${testRunId}`, slug: `branch-${testRunId}`, districtId: testDistrict.id } });
         
         // 6. Judicial Seller (Vara)
-        const judicialSellerRes = await sellerService.createSeller({ name: `Vara ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id } as any);
+        const judicialSellerRes = await sellerService.createSeller({ name: `Vara ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-${testRunId}` } as any);
         testJudicialSeller = (await sellerService.getSellerById(judicialSellerRes.sellerId!))!;
 
         console.log(`--- [E2E Setup - ${testRunId}] Setup complete ---`);
@@ -102,7 +104,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
             await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
             await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
             await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.state.deleteMany({ where: { name: { contains: testRunId } } });
+            if (testState) await prisma.state.delete({ where: { id: testState.id } });
             await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
             await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
             await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
