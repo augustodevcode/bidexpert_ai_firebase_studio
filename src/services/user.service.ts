@@ -4,6 +4,8 @@ import { RoleRepository } from '@/repositories/role.repository';
 import type { UserProfileWithPermissions, UserCreationData } from '@/types';
 import bcrypt from 'bcrypt';
 import type { Prisma } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
+
 
 export class UserService {
   private userRepository: UserRepository;
@@ -66,9 +68,12 @@ export class UserService {
         }
 
         const { roleIds, ...userData } = data;
+        const newId = uuidv4();
 
         const dataToCreate: Prisma.UserCreateInput = {
             ...userData,
+            id: newId,
+            uid: newId, // Guarantee uid is set
             password: hashedPassword,
         };
         

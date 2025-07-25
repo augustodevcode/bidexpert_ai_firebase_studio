@@ -1,4 +1,3 @@
-
 // tests/bidding-e2e.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
@@ -9,7 +8,7 @@ import { UserService } from '../src/services/user.service';
 import { SellerService } from '../src/services/seller.service';
 import { JudicialProcessService } from '../src/services/judicial-process.service';
 import { BemService } from '../src/services/bem.service';
-import { habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
 import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch } from '../src/types';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -65,7 +64,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
                 fullName: `Bidder ${i} ${testRunId}`, 
                 email: `bidder${i}-${testRunId}@test.com`, 
                 password: 'password123', 
-                roleIds: [userRole!.id, bidderRole!.id], // Assign BIDDER role on creation
+                roleIds: [userRole!.id, bidderRole!.id],
                 habilitationStatus: 'HABILITADO' // Create user as already habilitated
             });
             assert.ok(userRes.success && userRes.userId, `Bidder ${i} user creation failed.`);
@@ -171,16 +170,6 @@ test.describe('Full Auction E2E Simulation Test', () => {
     
     test('should simulate bidding on the judicial lot', async () => {
         console.log(`\n--- Simulating Bidding on Judicial Lot: ${judicialLot.title} ---`);
-        
-        for (const user of biddingUsers) {
-            const res = await checkHabilitationForAuctionAction(user.id, judicialAuction.id);
-            if (!res) {
-                 await habilitateForAuctionAction(user.id, judicialAuction.id);
-            }
-            const isHabilitado = await checkHabilitationForAuctionAction(user.id, judicialAuction.id);
-            assert.ok(isHabilitado, `Habilitation should succeed for ${user.fullName}`);
-        }
-        console.log('- Bidders habilitated for the auction.');
         
         const bid1 = await placeBidOnLot(judicialLot.id, judicialAuction.id, biddingUsers[0].id, biddingUsers[0].fullName!, 13000);
         assert.ok(bid1.success, 'Bid 1 should be successful');
