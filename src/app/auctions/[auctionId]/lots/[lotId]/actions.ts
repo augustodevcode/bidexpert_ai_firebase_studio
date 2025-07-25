@@ -47,6 +47,19 @@ export async function placeBidOnLot(
         const lot = await lotService.getLotById(lotIdOrPublicId);
         
         if (!lot) return { success: false, message: 'Lote não encontrado.'};
+        
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.habilitationStatus !== 'HABILITADO') {
+            return { success: false, message: "Apenas usuários com status 'HABILITADO' podem dar lances."};
+        }
+        
+        const isHabilitadoForAuction = await prisma.auctionHabilitation.findUnique({
+            where: { userId_auctionId: { userId, auctionId: lot.auctionId } }
+        });
+        if (!isHabilitadoForAuction) {
+            return { success: false, message: "Você não está habilitado para dar lances neste leilão. Por favor, habilite-se na página do leilão." };
+        }
+
         if (lot.status !== 'ABERTO_PARA_LANCES') return { success: false, message: 'Este lote não está aberto para lances.'};
         if (bidAmount <= lot.price) return { success: false, message: `O lance deve ser maior que R$ ${lot.price.toLocaleString('pt-BR')}.`};
 
@@ -73,7 +86,7 @@ export async function placeBidOnLot(
             });
         }
 
-        const updatedLot = await lotService.updateLot(lot.id, {
+        await lotService.updateLot(lot.id, {
             price: bidAmount,
             bidsCount: (lot.bidsCount || 0) + 1
         });
@@ -84,12 +97,14 @@ export async function placeBidOnLot(
             revalidatePath(`/live-dashboard`);
         }
         
+        const updatedLot = await lotService.getLotById(lotIdOrPublicId);
+        
         return {
             success: true,
             message: "Lance realizado com sucesso!",
             updatedLot: {
-                price: bidAmount,
-                bidsCount: (lot.bidsCount || 0) + 1,
+                price: updatedLot?.price,
+                bidsCount: updatedLot?.bidsCount,
             },
             newBid: newBid as BidInfo,
         };

@@ -85,8 +85,10 @@ export async function saveUserDocument(
         data: { habilitationStatus: 'PENDING_ANALYSIS' }
     });
     
-    revalidatePath('/dashboard/documents');
-    revalidatePath(`/admin/habilitations/${userId}`);
+    if (process.env.NODE_ENV !== 'test') {
+      revalidatePath('/dashboard/documents');
+      revalidatePath(`/admin/habilitations/${userId}`);
+    }
 
     return { success: true, message: "Documento salvo com sucesso." };
   } catch (error: any) {
