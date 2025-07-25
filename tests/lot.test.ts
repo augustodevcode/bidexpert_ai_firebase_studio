@@ -4,9 +4,12 @@ import assert from 'node:assert';
 import { LotService } from '../src/services/lot.service';
 import { prisma } from '../src/lib/prisma';
 import type { LotFormData, Auction, Bem, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const lotService = new LotService();
-const testLotTitle = 'Lote de Teste E2E (Notebook Dell)';
+const testRunId = uuidv4().substring(0, 8); // Unique ID for this test run
+
+const testLotTitle = `Lote de Teste E2E ${testRunId}`;
 let testAuction: any;
 let testBem: any;
 let testSeller: SellerProfileInfo;
@@ -17,21 +20,22 @@ let createdLotId: string | undefined;
 test.describe('Lot Service E2E Tests', () => {
 
     test.before(async () => {
+        // Use the unique testRunId to ensure data does not conflict with other tests
         testCategory = await prisma.lotCategory.create({
-            data: { name: 'Categoria Teste para Lotes', slug: 'categoria-teste-lotes', hasSubcategories: false }
+            data: { name: `Categoria Teste Lotes ${testRunId}`, slug: `cat-lotes-${testRunId}`, hasSubcategories: false }
         });
         testAuctioneer = await prisma.auctioneer.create({
-            data: { name: 'Leiloeiro de Teste para Lotes', publicId: 'leiloeiro-pub-id-lot-test', slug: 'leiloeiro-teste-lotes' }
+            data: { name: `Leiloeiro Teste Lotes ${testRunId}`, publicId: `leiloeiro-lotes-${testRunId}`, slug: `leiloeiro-lotes-${testRunId}` }
         });
         testSeller = await prisma.seller.create({
-            data: { name: 'Comitente de Teste para Lotes', publicId: 'seller-pub-id-lot-test', slug: 'comitente-teste-lotes', isJudicial: false }
+            data: { name: `Comitente Teste Lotes ${testRunId}`, publicId: `seller-lotes-${testRunId}`, slug: `comitente-lotes-${testRunId}`, isJudicial: false }
         });
         
         testAuction = await prisma.auction.create({
             data: { 
-                title: 'Leilão de Teste para Lotes',
-                publicId: 'auc-pub-id-lot-test',
-                slug: 'leilao-teste-lotes',
+                title: `Leilão de Teste para Lotes ${testRunId}`,
+                publicId: `auc-lotes-${testRunId}`,
+                slug: `leilao-teste-lotes-${testRunId}`,
                 auctioneerId: testAuctioneer.id,
                 sellerId: testSeller.id,
                 status: 'ABERTO_PARA_LANCES',
@@ -41,8 +45,8 @@ test.describe('Lot Service E2E Tests', () => {
         
         testBem = await prisma.bem.create({
             data: {
-                title: 'Bem de Teste para Lote E2E',
-                publicId: 'bem-pub-id-lot-test',
+                title: `Bem de Teste para Lote E2E ${testRunId}`,
+                publicId: `bem-lotes-${testRunId}`,
                 status: 'DISPONIVEL',
                 categoryId: testCategory.id,
                 sellerId: testSeller.id,
