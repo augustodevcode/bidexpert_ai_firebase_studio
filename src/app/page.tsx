@@ -8,17 +8,18 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
-import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { fetchPlatformSettings } from '@/lib/data-queries'; // Corrigido para usar a nova função de busca de dados
 import FeaturedItems from '@/components/featured-items';
 import type { Auction, Lot } from '@/types';
 
 async function HomePageContent() {
+  // A busca de dados agora usa as funções centralizadas e seguras para Server Components
   const [platformSettings, allAuctions, allLots, categories] = await Promise.all([
-    getPlatformSettings(),
+    fetchPlatformSettings(),
     getAuctions(),
     getLots(),
-    getCategories(),
+    getLotCategories(),
   ]);
 
   if (!platformSettings) {

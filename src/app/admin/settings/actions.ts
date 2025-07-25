@@ -6,13 +6,14 @@ import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { exec } from 'child_process';
 import util from 'util';
+import { fetchPlatformSettings } from '@/lib/data-queries';
 
 const execPromise = util.promisify(exec);
 
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
-  // There should only ever be one settings document.
-  return prisma.platformSettings.findFirst();
+  // A action agora chama a função centralizada para consistência.
+  return fetchPlatformSettings();
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
