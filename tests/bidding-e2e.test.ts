@@ -1,3 +1,4 @@
+
 // tests/bidding-e2e.test.ts
 import test from 'node:test';
 import assert from 'node:assert';
@@ -64,7 +65,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
                 fullName: `Bidder ${i} ${testRunId}`, 
                 email: `bidder${i}-${testRunId}@test.com`, 
                 password: 'password123', 
-                roleIds: [userRole!.id],
+                roleIds: [userRole!.id, bidderRole!.id], // Assign BIDDER role on creation
                 habilitationStatus: 'HABILITADO' // Create user as already habilitated
             });
             assert.ok(userRes.success && userRes.userId, `Bidder ${i} user creation failed.`);
@@ -109,13 +110,14 @@ test.describe('Full Auction E2E Simulation Test', () => {
             if (testBemJudicial) await bemService.deleteBem(testBemJudicial.id);
             if (testBemExtrajudicial) await bemService.deleteBem(testBemExtrajudicial.id);
             if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
-            await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
+            if (testSeller) await sellerService.deleteSeller(testSeller.id);
+            if (testJudicialSeller) await sellerService.deleteSeller(testJudicialSeller.id);
+            if (testBranch) await prisma.judicialBranch.delete({ where: { id: testBranch.id } });
+            if (testDistrict) await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
+            if (testCourt) await prisma.court.delete({ where: { id: testCourt.id } });
             if (testState) await prisma.state.delete({ where: { id: testState.id } });
-            await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
             await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
         } catch (error) {
             console.error("[E2E Teardown] Error during cleanup:", error);
@@ -169,9 +171,16 @@ test.describe('Full Auction E2E Simulation Test', () => {
     
     test('should simulate bidding on the judicial lot', async () => {
         console.log(`\n--- Simulating Bidding on Judicial Lot: ${judicialLot.title} ---`);
-        // Skipping per-auction habilitation as requested
-        // Users are created with general habilitation status
-        console.log('- Bidders are pre-habilitated for this test run.');
+        
+        for (const user of biddingUsers) {
+            const res = await checkHabilitationForAuctionAction(user.id, judicialAuction.id);
+            if (!res) {
+                 await habilitateForAuctionAction(user.id, judicialAuction.id);
+            }
+            const isHabilitado = await checkHabilitationForAuctionAction(user.id, judicialAuction.id);
+            assert.ok(isHabilitado, `Habilitation should succeed for ${user.fullName}`);
+        }
+        console.log('- Bidders habilitated for the auction.');
         
         const bid1 = await placeBidOnLot(judicialLot.id, judicialAuction.id, biddingUsers[0].id, biddingUsers[0].fullName!, 13000);
         assert.ok(bid1.success, 'Bid 1 should be successful');
