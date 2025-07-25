@@ -1,3 +1,4 @@
+
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -5,6 +6,7 @@ import type { UserProfileWithPermissions, UserCreationData } from '@/types';
 import bcrypt from 'bcrypt';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/prisma';
 
 
 export class UserService {
@@ -131,7 +133,7 @@ export class UserService {
       where: { 
         isRequired: true,
         appliesTo: {
-          has: accountType
+          contains: accountType // Corrected from 'has' to 'contains'
         }
       }
     });
