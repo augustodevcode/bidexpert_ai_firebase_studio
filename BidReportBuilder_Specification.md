@@ -90,6 +90,14 @@ The `BidReportBuilder` will have a clean, modern, and intuitive user interface. 
 
 The frontend will use React's built-in state management (`useState`, `useEffect`) to manage the state of the `BidReportBuilder` component.
 
+### 6.3. Component Integration
+
+*   The `Toolbar` component will call the `onAddElement` callback in the `BidReportBuilder` component to add new elements to the design surface.
+*   The `ReportDesigner` component will call the `onSelectionChanged` callback in the `BidReportBuilder` component to update the `selectedElement` state.
+*   The `DataSourceManager` component will call the `onSelectDataSource` callback in the `BidReportBuilder` component to bind a data source to a report element.
+*   The `ReportDesigner` component will call the `onReportChanged` callback in the `BidReportBuilder` component to update the `reportUrl` state, which will in turn update the `PreviewPanel`.
+*   The `AIPanel` component will call the `onGetAIAssistance` callback in the `BidReportBuilder` component to pass the current state of the report to the AI API.
+
 ## 7. Backend Implementation Details
 
 ### 7.1. API Routes

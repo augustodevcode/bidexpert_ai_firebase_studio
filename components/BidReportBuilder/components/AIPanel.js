@@ -1,17 +1,13 @@
 import React, { useState } from 'react';
 
-const AIPanel = () => {
+const AIPanel = ({ onGetAIAssistance }) => {
   const [query, setQuery] = useState('');
   const [result, setResult] = useState('');
   const [error, setError] = useState('');
 
   const handleNLQ = async () => {
     try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, type: 'nlq' }),
-      });
+      const res = await onGetAIAssistance({ query, type: 'nlq' });
       const data = await res.json();
       if (res.ok) {
         setResult(data.query);
@@ -26,11 +22,7 @@ const AIPanel = () => {
 
   const handleChartRecommendation = async () => {
     try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'chart-recommendation' }),
-      });
+      const res = await onGetAIAssistance({ type: 'chart-recommendation' });
       const data = await res.json();
       if (res.ok) {
         setResult(`Recommended chart type: ${data.chartType}`);
@@ -45,11 +37,7 @@ const AIPanel = () => {
 
   const handleLayoutSuggestion = async () => {
     try {
-      const res = await fetch('/api/ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'layout-suggestion' }),
-      });
+      const res = await onGetAIAssistance({ type: 'layout-suggestion' });
       const data = await res.json();
       if (res.ok) {
         setResult(`Suggested layout: ${data.layout}`);
