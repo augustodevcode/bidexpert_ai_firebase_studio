@@ -83,7 +83,7 @@ export async function saveUserDocument(
 
     // Update user's main habilitation status
     const userService = new UserService();
-    await userService.checkAndHabilitateUser(userId); // This will update status to PENDING_ANALYSIS or HABILITADO
+    await userService.checkAndHabilitateUser(userId);
     
     // Only revalidate paths when not in a test environment
     if (process.env.NODE_ENV !== 'test') {

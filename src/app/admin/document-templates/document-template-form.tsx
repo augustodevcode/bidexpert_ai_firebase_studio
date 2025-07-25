@@ -41,6 +41,7 @@ const availableVariables = {
         { label: "Leiloeiro", value: "{{{auctioneer.name}}}"},
         { label: "Matrícula do Leiloeiro", value: "{{{auctioneer.registrationNumber}}}"},
         { label: "Comitente", value: "{{{seller.name}}}"},
+        { label: "CNPJ/CPF do Comitente", value: "{{{seller.documentNumber}}}"},
         { label: "Nome do Arrematante", value: "{{{winner.fullName}}}"},
         { label: "CPF/CNPJ do Arrematante", value: "{{{winner.cpf}}}"},
         { label: "Endereço do Arrematante", value: "{{{winner.address}}}"},

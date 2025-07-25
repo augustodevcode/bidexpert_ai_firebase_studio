@@ -92,7 +92,7 @@ test.describe('User Habilitation E2E Test', () => {
         console.log('\n--- Test: Full Habilitation Flow ---');
 
         const saveDocResult = await saveUserDocument(regularUser.id, testDocumentType.id, `/fake/path/doc-${testRunId}.pdf`, `doc-${testRunId}.pdf`);
-        assert.ok(saveDocResult.success, 'Saving user document should succeed.');
+        assert.ok(saveDocResult.success, `Saving user document should succeed. Error: ${saveDocResult.message}`);
         let updatedUser = await userService.getUserById(regularUser.id);
         assert.strictEqual(updatedUser?.habilitationStatus, 'PENDING_ANALYSIS', 'User status should be PENDING_ANALYSIS after upload.');
         console.log('- Step 1: Document uploaded and user status is PENDING_ANALYSIS.');
@@ -102,7 +102,7 @@ test.describe('User Habilitation E2E Test', () => {
         assert.ok(docToApprove, 'Uploaded document should be found for approval.');
         
         const approvalResult = await approveDocument(docToApprove!.id, analystUser.id);
-        assert.ok(approvalResult.success, 'Document approval action should succeed.');
+        assert.ok(approvalResult.success, `Document approval action should succeed. Error: ${approvalResult.message}`);
         
         updatedUser = await userService.getUserById(regularUser.id);
         assert.strictEqual(updatedUser?.habilitationStatus, 'HABILITADO', 'User status should be HABILITADO after approval.');
@@ -114,7 +114,7 @@ test.describe('User Habilitation E2E Test', () => {
         console.log('- Step 3: Blocked bid for user not enabled for the specific auction.');
 
         const habilitationRes = await habilitateForAuctionAction(regularUser.id, testAuction.id);
-        assert.ok(habilitationRes.success, 'Auction-specific habilitation should succeed.');
+        assert.ok(habilitationRes.success, `Auction-specific habilitation should succeed. Error: ${habilitationRes.message}`);
         const isHabilitado = await checkHabilitationForAuctionAction(regularUser.id, testAuction.id);
         assert.ok(isHabilitado, 'Check habilitation should return true after enabling.');
         console.log('- Step 4: User successfully enabled for the auction.');

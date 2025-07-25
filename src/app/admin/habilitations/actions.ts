@@ -120,6 +120,7 @@ export async function approveDocument(documentId: string, analystId: string): Pr
 
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
+        revalidatePath(`/admin/habilitations/${docToUpdate.userId}`);
     }
     return { success: true, message: 'Documento aprovado.' };
   } catch(e: any) {
@@ -150,6 +151,7 @@ export async function rejectDocument(documentId: string, reason: string): Promis
 
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
+        revalidatePath(`/admin/habilitations/${docToUpdate.userId}`);
     }
     return { success: true, message: 'Documento rejeitado.' };
   } catch(e: any) {
