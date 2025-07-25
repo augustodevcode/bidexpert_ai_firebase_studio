@@ -41,12 +41,19 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
+      const { userId, ...sellerData } = data;
+
       // Prepare the data for creation, generating the required fields.
       const dataToCreate: Prisma.SellerCreateInput = {
-        ...data,
+        ...sellerData,
         slug: slugify(data.name),
         publicId: `COM-${uuidv4()}`,
       };
+      
+      // If a userId is provided, create the connection.
+      if (userId) {
+        dataToCreate.user = { connect: { id: userId } };
+      }
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
       return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };

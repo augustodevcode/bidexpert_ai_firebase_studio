@@ -73,8 +73,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
         // 4. Extrajudicial Seller (Consignor)
         const sellerRes = await sellerService.createSeller({ name: `Consignor Seller ${testRunId}`, isJudicial: false, userId: consignorUser.id } as any);
         testSeller = (await sellerService.getSellerById(sellerRes.sellerId!))!;
-        await prisma.user.update({ where: { id: consignorUser.id }, data: { seller: { connect: { id: testSeller.id } } } }); // Link back
-
+        
         // 5. Judicial Entities
         testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: `T${testRunId.charAt(0)}`, slug: `st-${testRunId}` } });
         testCourt = await prisma.court.create({ data: { name: `Court ${testRunId}`, stateUf: testState.uf, slug: `court-${testRunId}` } });
