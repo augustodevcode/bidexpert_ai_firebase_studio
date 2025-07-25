@@ -7,8 +7,7 @@ import {
     sampleSubcategories, 
     sampleCourts, 
     sampleStates, 
-    sampleCities,
-    sampleUsers
+    sampleCities
 } from '@/lib/sample-data';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
@@ -23,7 +22,7 @@ async function seedEssentialData() {
         const settingsCount = await prisma.platformSettings.count();
         if (settingsCount === 0) {
             // @ts-ignore
-            await prisma.platformSettings.create({ data: samplePlatformSettings });
+            await prisma.platformSettings.create({ data: { ...samplePlatformSettings, id: 'global' } });
             console.log("[DB INIT] ✅ SUCCESS: Platform settings created.");
         } else {
             console.log("[DB INIT] 🟡 INFO: Platform settings already exist.");
@@ -82,15 +81,19 @@ async function seedEssentialData() {
 
         // Seeding Cities
         console.log('[DB INIT] LOG: Seeding Cities...');
-        let newCitiesCount = 0;
-        for (const city of sampleCities) {
-            const existingCity = await prisma.city.findUnique({ where: { ibgeCode: city.ibgeCode } });
-            if (!existingCity) {
-                await prisma.city.create({ data: city });
-                newCitiesCount++;
+        if (sampleCities && sampleCities.length > 0) {
+            let newCitiesCount = 0;
+            for (const city of sampleCities) {
+                const existingCity = await prisma.city.findUnique({ where: { ibgeCode: city.ibgeCode } });
+                if (!existingCity) {
+                    await prisma.city.create({ data: city });
+                    newCitiesCount++;
+                }
             }
+            console.log(`[DB INIT] ✅ SUCCESS: Processed ${sampleCities.length} cities, ${newCitiesCount} new cities created.`);
+        } else {
+            console.log('[DB INIT] 🟡 INFO: No cities found in sample data to seed.');
         }
-        console.log(`[DB INIT] ✅ SUCCESS: Processed ${sampleCities.length} cities, ${newCitiesCount} new cities created.`);
         
         // Seeding Courts
         console.log('[DB INIT] LOG: Seeding Courts...');

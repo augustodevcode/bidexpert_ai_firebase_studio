@@ -22,12 +22,11 @@ export async function updatePlatformSettings(data: Partial<PlatformSettings>): P
         if (currentSettings) {
             await prisma.platformSettings.update({
                 where: { id: currentSettings.id },
-                data
+                data: data as any,
             });
         } else {
              await prisma.platformSettings.create({
-                // @ts-ignore
-                data: data
+                data: { ...data, id: 'global' } as any,
              });
         }
         revalidatePath('/', 'layout');
