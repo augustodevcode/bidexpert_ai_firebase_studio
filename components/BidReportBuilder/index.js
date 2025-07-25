@@ -77,13 +77,40 @@ const BidReportBuilder = () => {
     }
   };
 
+  const handleSaveReport = async () => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const report = designer.GetReport();
+      const reportJson = report.serialize();
+
+      await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: 'New Report',
+          description: 'A new report created from the designer',
+          definition: reportJson,
+        }),
+      });
+    }
+  };
+
+  const handleLoadReport = async () => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const response = await fetch(`/api/reports/${reportUrl}`);
+      const reportJson = await response.json();
+      designer.OpenReport(reportJson.definition);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h1>Bid Report Builder</h1>
       <div style={{ display: 'flex' }}>
         <div style={{ width: '200px', marginRight: '20px' }}>
           <DataSourceManager onSelectDataSource={handleSelectDataSource} />
-          <Toolbar onAddElement={handleAddElement} />
+          <Toolbar onAddElement={handleAddElement} onSaveReport={handleSaveReport} onLoadReport={handleLoadReport} />
         </div>
         <div style={{ flex: 1 }}>
           <ReportDesigner ref={designerRef} onSelectionChanged={handleSelectionChanged} onReportChanged={handleReportChanged} />

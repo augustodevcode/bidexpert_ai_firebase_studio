@@ -1,19 +1,17 @@
 import React from 'react';
 
-const Toolbar = () => {
-  const handleAddElement = (elementType) => {
-    // This will be implemented later
-    console.log(`Adding ${elementType}`);
-  };
-
+const Toolbar = ({ onAddElement, onSaveReport, onLoadReport }) => {
   return (
     <div>
       <h3>Toolbar</h3>
-      <button onClick={() => handleAddElement('Table')}>Add Table</button>
-      <button onClick={() => handleAddElement('Chart')}>Add Chart</button>
-      <button onClick={() => handleAddElement('TextBox')}>Add Text Box</button>
-      <button onClick={() => handleAddElement('Image')}>Add Image</button>
-      <button onClick={() => handleAddElement('RichText')}>Add Rich Text</button>
+      <button onClick={() => onAddElement('Table')}>Add Table</button>
+      <button onClick={() => onAddElement('Chart')}>Add Chart</button>
+      <button onClick={() => onAddElement('TextBox')}>Add Text Box</button>
+      <button onClick={() => onAddElement('Image')}>Add Image</button>
+      <button onClick={() => onAddElement('RichText')}>Add Rich Text</button>
+      <hr />
+      <button onClick={onSaveReport}>Save Report</button>
+      <button onClick={onLoadReport}>Load Report</button>
     </div>
   );
 };

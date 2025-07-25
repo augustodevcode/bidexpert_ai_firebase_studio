@@ -105,6 +105,12 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   **Changing Properties:** The `handleElementPropertyChanged` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to update the properties of the selected report element.
 *   **Data Binding:** The `handleSelectDataSource` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to bind a data source to the selected report element.
 
+### 6.5. Save/Load Logic
+
+*   The `Toolbar` component contains `Save` and `Load` buttons that trigger the `handleSaveReport` and `handleLoadReport` functions in the `BidReportBuilder` component.
+*   The `handleSaveReport` function serializes the report to JSON and sends it to the backend API to be saved to the database.
+*   The `handleLoadReport` function fetches a report from the backend API and loads it into the designer.
+
 ## 7. Backend Implementation Details
 
 ### 7.1. API Routes
