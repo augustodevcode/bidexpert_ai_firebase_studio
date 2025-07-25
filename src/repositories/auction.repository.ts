@@ -19,7 +19,7 @@ export class AuctionRepository {
         auctioneer: true,
         seller: true,
         category: true,
-        auctionStages: true,
+        // auctionStages: true, // This field is a JSON type, not a relation, so it cannot be "included". It's returned by default.
       },
     });
   }

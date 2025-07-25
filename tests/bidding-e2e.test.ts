@@ -75,8 +75,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
         testSeller = (await sellerService.getSellerById(sellerRes.sellerId!))!;
         
         // 5. Judicial Entities
-        // Ensure UF is unique by taking two distinct characters from the random ID
-        const uniqueUf = `T${testRunId.substring(1, 2).toUpperCase()}`;
+        const uniqueUf = testRunId.substring(0, 2).toUpperCase();
         testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: uniqueUf, slug: `st-${testRunId}` } });
         testCourt = await prisma.court.create({ data: { name: `Court ${testRunId}`, stateUf: testState.uf, slug: `court-${testRunId}` } });
         testDistrict = await prisma.judicialDistrict.create({ data: { name: `District ${testRunId}`, slug: `dist-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
@@ -90,7 +89,7 @@ test.describe('Full Auction E2E Simulation Test', () => {
     });
 
     test.after(async () => {
-        // Comprehensive cleanup
+        // Comprehensive cleanup in reverse order of dependency
         console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
         try {
             if (judicialLot) await lotService.deleteLot(judicialLot.id);
