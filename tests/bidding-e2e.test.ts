@@ -89,6 +89,28 @@ test.describe('Full Auction E2E Simulation Test', () => {
 
     test.after(async () => {
         // Comprehensive cleanup
+        console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
+        try {
+            if (judicialLot) await lotService.deleteLot(judicialLot.id);
+            if (extrajudicialLot) await lotService.deleteLot(extrajudicialLot.id);
+            if (judicialAuction) await auctionService.deleteAuction(judicialAuction.id);
+            if (extrajudicialAuction) await auctionService.deleteAuction(extrajudicialAuction.id);
+            if (testBemJudicial) await bemService.deleteBem(testBemJudicial.id);
+            if (testBemExtrajudicial) await bemService.deleteBem(testBemExtrajudicial.id);
+            if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
+            await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.state.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
+        } catch (error) {
+            console.error("[E2E Teardown] Error during cleanup:", error);
+        }
+        await prisma.$disconnect();
+        console.log(`--- [E2E Teardown - ${testRunId}] Cleanup finished ---`);
     });
 
     test('should simulate the full lifecycle of a JUDICIAL auction', async () => {
@@ -161,3 +183,24 @@ test.describe('Full Auction E2E Simulation Test', () => {
         console.log('- Bidding successful, price updated.');
     });
 });
+
+/**
+ * --- NEW TEST STRATEGY ---
+ * This test file can now be executed by a wrapper script.
+ * The script would look something like this:
+ *
+ *   #!/bin/bash
+ *   npx tsx ./tests/bidding-e2e.test.ts
+ *   
+ *   if [ $? -ne 0 ]; then
+ *     echo "Test failed! Fetching logs..."
+ *     # The AI would then be prompted to call the apphosting_fetch_logs tool
+ *     # Example (conceptual):
+ *     # default_api.apphosting_fetch_logs(backendId: 'your-backend-id', location: 'your-location')
+ *   else
+ *     echo "Test passed successfully!"
+ *   fi
+ * 
+ * This approach separates the test logic from the log analysis logic,
+ * making the process more robust and aligned with standard CI/CD practices.
+ */
