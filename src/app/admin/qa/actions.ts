@@ -42,6 +42,11 @@ export async function runBiddingEndToEndTest(): Promise<{ success: boolean; outp
     return runTestScript(command);
 }
 
+export async function runHabilitationEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `dotenv -e .env -- tsx ./tests/habilitation.test.ts`;
+    return runTestScript(command);
+}
+
 export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
     const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
     return runTestScript(command);

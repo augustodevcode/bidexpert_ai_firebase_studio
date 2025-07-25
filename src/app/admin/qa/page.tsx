@@ -5,7 +5,8 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-    runBiddingEndToEndTest, // Added
+    runBiddingEndToEndTest,
+    runHabilitationEndToEndTest, 
     runSellerEndToEndTest, 
     runAuctioneerEndToEndTest, 
     runCategoryEndToEndTest, 
@@ -24,7 +25,7 @@ import {
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -47,6 +48,13 @@ const tests: TestConfig[] = [
     title: 'Simulação de Leilão (E2E)',
     description: 'Simula 5 usuários, habilitação e um leilão com lances e soft-close.',
     action: runBiddingEndToEndTest,
+    type: 'simulation',
+  },
+   {
+    id: 'habilitation-e2e',
+    title: 'Habilitação de Licitante (E2E)',
+    description: 'Simula o fluxo completo de um usuário enviando documentos, sendo aprovado e dando um lance.',
+    action: runHabilitationEndToEndTest,
     type: 'simulation',
   },
   {
