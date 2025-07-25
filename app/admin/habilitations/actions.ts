@@ -41,7 +41,10 @@ export async function habilitateUserAction(userId: string): Promise<{ success: b
     });
 
     // Use a service to add the role, not replace it
-    await userService.updateUserRoles(userId, [bidderRole.id]);
+    const user = await userService.getUserById(userId);
+    const existingRoleIds = user?.roles.map(r => r.id) || [];
+    const newRoleIds = [...new Set([...existingRoleIds, bidderRole.id])];
+    await userService.updateUserRoles(userId, newRoleIds);
 
     if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
