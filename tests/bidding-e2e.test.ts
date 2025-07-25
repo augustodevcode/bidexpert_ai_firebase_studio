@@ -8,9 +8,9 @@ import { UserService } from '../src/services/user.service';
 import { SellerService } from '../src/services/seller.service';
 import { JudicialProcessService } from '../src/services/judicial-process.service';
 import { BemService } from '../src/services/bem.service';
-import { habilitateUserAction, habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
 import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess } from '../src/types';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch } from '../src/types';
 import { RoleRepository } from '@/repositories/role.repository';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -32,7 +32,8 @@ let testSeller: SellerProfileInfo;
 let testJudicialSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
-let testCourt: any, testDistrict: any, testBranch: any, testJudicialProcess: any;
+let testState: StateInfo;
+let testCourt: Court, testDistrict: JudicialDistrict, testBranch: JudicialBranch, testJudicialProcess: JudicialProcess;
 let testBemJudicial: Bem, testBemExtrajudicial: Bem;
 let judicialAuction: Auction, extrajudicialAuction: Auction;
 let judicialLot: Lot, extrajudicialLot: Lot;
@@ -55,15 +56,15 @@ test.describe('Full Auction E2E Simulation Test', () => {
 
         // 2. Users
         const analystRes = await userService.createUser({ fullName: `Analyst ${testRunId}`, email: `analyst-${testRunId}@test.com`, password: 'password123', roleIds: [analystRole!.id] });
-        testAnalyst = (await userService.getUserById(analystResult.userId!))!;
+        testAnalyst = (await userService.getUserById(analystRes.userId!))!;
 
         for (let i = 1; i <= 2; i++) {
             const userRes = await userService.createUser({ fullName: `Bidder ${i} ${testRunId}`, email: `bidder${i}-${testRunId}@test.com`, password: 'password123', roleIds: [userRole!.id] });
-            biddingUsers.push((await userService.getUserById(userResult.userId!))!);
+            biddingUsers.push((await userService.getUserById(userRes.userId!))!);
         }
 
         const consignorRes = await userService.createUser({ fullName: `Consignor User ${testRunId}`, email: `consignor-${testRunId}@test.com`, password: 'password123', roleIds: [userRole!.id, consignorRole!.id] });
-        consignorUser = (await userService.getUserById(consignorResult.userId!))!;
+        consignorUser = (await userService.getUserById(consignorRes.userId!))!;
 
         // 3. Core Entities
         testCategory = await prisma.lotCategory.create({ data: { name: `Category ${testRunId}`, slug: `cat-${testRunId}`, hasSubcategories: false } });
