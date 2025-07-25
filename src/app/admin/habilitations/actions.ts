@@ -42,8 +42,10 @@ export async function habilitateUserAction(userId: string): Promise<{ success: b
     // Use a service to add the role, not replace it
     await userService.updateUserRoles(userId, [bidderRole.id]);
 
-    revalidatePath('/admin/habilitations');
-    revalidatePath(`/admin/habilitations/${userId}`);
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/admin/habilitations');
+        revalidatePath(`/admin/habilitations/${userId}`);
+    }
     return { success: true, message: "Usuário habilitado com sucesso e perfil de arrematante atribuído." };
   } catch (e: any) {
     console.error(`Failed to habilitate user ${userId}:`, e);
@@ -64,7 +66,9 @@ export async function habilitateForAuctionAction(userId: string, auctionId: stri
             update: {},
             create: { userId, auctionId }
         });
-        revalidatePath(`/auctions/${auctionId}`);
+        if (process.env.NODE_ENV !== 'test') {
+            revalidatePath(`/auctions/${auctionId}`);
+        }
         return { success: true, message: 'Você foi habilitado para este leilão com sucesso!' };
     } catch (e: any) {
         console.error(`Failed to habilitate user ${userId} for auction ${auctionId}:`, e);
@@ -116,7 +120,9 @@ export async function approveDocument(documentId: string): Promise<{ success: bo
       where: { id: documentId },
       data: { status: 'APPROVED', rejectionReason: null }
     });
-    revalidatePath('/admin/habilitations');
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/admin/habilitations');
+    }
     return { success: true, message: 'Documento aprovado.' };
   } catch(e) {
     return { success: false, message: 'Falha ao aprovar documento.' };
@@ -132,7 +138,9 @@ export async function rejectDocument(documentId: string, reason: string): Promis
       where: { id: documentId },
       data: { status: 'REJECTED', rejectionReason: reason }
     });
-    revalidatePath('/admin/habilitations');
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/admin/habilitations');
+    }
     return { success: true, message: 'Documento rejeitado.' };
   } catch(e) {
     return { success: false, message: 'Falha ao rejeitar documento.' };

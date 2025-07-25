@@ -77,9 +77,11 @@ export async function placeBidOnLot(
             bidsCount: (lot.bidsCount || 0) + 1
         });
         
-        revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
-        revalidatePath(`/auctions/${auctionIdOrPublicId}/live`);
-        revalidatePath(`/live-dashboard`);
+        if (process.env.NODE_ENV !== 'test') {
+            revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);
+            revalidatePath(`/auctions/${auctionIdOrPublicId}/live`);
+            revalidatePath(`/live-dashboard`);
+        }
         
         return {
             success: true,
@@ -114,7 +116,9 @@ export async function placeMaxBid(lotId: string, userId: string, maxAmount: numb
         create: { userId, lotId, maxAmount, isActive: true }
     });
     
-    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    }
     return { success: true, message: "Lance máximo definido com sucesso!" };
   } catch (error) {
     console.error("Error setting max bid:", error);
@@ -169,6 +173,7 @@ export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[
     const lot = await lotService.getLotById(lotIdOrPublicId);
     if (!lot) return [];
     try {
+        // @ts-ignore
         return prisma.review.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
     } catch (error) {
         console.error("Error fetching reviews:", error);
@@ -199,7 +204,9 @@ export async function createReview(
     const newReview = await prisma.review.create({
         data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
     });
-    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    }
     return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
   } catch(error) {
     console.error("Error creating review:", error);
@@ -245,7 +252,9 @@ export async function askQuestionOnLot(
     const newQuestion = await prisma.lotQuestion.create({
         data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
     });
-    revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    }
     return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
   } catch(error) {
     console.error("Error creating question:", error);
@@ -277,7 +286,9 @@ export async function answerQuestionOnLot(
         where: { id: questionId },
         data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date() }
     });
-    revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
+    if (process.env.NODE_ENV !== 'test') {
+        revalidatePath(`/auctions/${auctionId}/lots/${lotId}`);
+    }
     return { success: true, message: "Resposta enviada com sucesso." };
   } catch (error) {
     console.error("Error answering question:", error);
