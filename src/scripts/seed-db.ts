@@ -1,3 +1,4 @@
+
 // scripts/seed-db.ts
 import { prisma } from '@/lib/prisma';
 import { 
@@ -21,7 +22,7 @@ async function seedFullData() {
     console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
 
     try {
-        // Seeding Admin User
+        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
         console.log('[DB SEED] Seeding Admin User...');
         const adminUserFromSample = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
         if (adminUserFromSample) {
@@ -122,20 +123,21 @@ async function seedFullData() {
         for (const user of otherUsers) {
             const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
             if (!existingUser) {
-                const hashedPassword = await bcrypt.hash(user.password || 'password123', 10);
-                const role = await prisma.role.findFirst({ where: { id: user.roleId }});
+                const { id, uid, ...userData } = user;
+                const hashedPassword = await bcrypt.hash(userData.password || 'password123', 10);
+                const role = await prisma.role.findFirst({ where: { id: userData.roleId }});
                 if (role) {
                      const newUser = await prisma.user.create({
                         data: {
-                            email: user.email,
-                            fullName: user.fullName,
+                            email: userData.email,
+                            fullName: userData.fullName,
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            seller: user.sellerId ? { connect: { id: user.sellerId }} : undefined,
+                            seller: userData.sellerId ? { connect: { id: userData.sellerId }} : undefined,
                         }
                     });
-                    await prisma.usersOnRoles.create({
+                     await prisma.usersOnRoles.create({
                         data: { userId: newUser.id, roleId: role.id, assignedBy: 'seed-script' }
                     });
                 }
