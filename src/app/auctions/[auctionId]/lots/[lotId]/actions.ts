@@ -110,7 +110,7 @@ export async function placeBidOnLot(
         };
     } catch (error: any) {
         console.error("Error placing bid:", error);
-        return { success: false, message: "Ocorreu um erro ao registrar seu lance."};
+        return { success: false, message: `Ocorreu um erro ao registrar seu lance: ${error.message}`};
     }
 }
 

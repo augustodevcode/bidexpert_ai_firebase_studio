@@ -8,6 +8,7 @@
 import { revalidatePath } from 'next/cache';
 import { prisma } from '@/lib/prisma';
 import type { DocumentType, UserDocument } from '@/types';
+import { UserService } from '@/services/user.service'; // Import UserService
 
 /**
  * Fetches all available document types from the database.
@@ -80,10 +81,8 @@ export async function saveUserDocument(
     });
 
     // Update user's main habilitation status
-    await prisma.user.update({
-        where: { id: userId },
-        data: { habilitationStatus: 'PENDING_ANALYSIS' }
-    });
+    const userService = new UserService();
+    await userService.checkAndHabilitateUser(userId); // This will update status to PENDING_ANALYSIS or HABILITADO
     
     if (process.env.NODE_ENV !== 'test') {
       revalidatePath('/dashboard/documents');

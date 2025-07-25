@@ -61,7 +61,7 @@ export async function habilitateForAuctionAction(userId: string, auctionId: stri
         return { success: true, message: 'Você foi habilitado para este leilão com sucesso!' };
     } catch (e: any) {
         console.error(`Failed to habilitate user ${userId} for auction ${auctionId}:`, e);
-        return { success: false, message: 'Não foi possível completar sua habilitação para este leilão.' };
+        return { success: false, message: `Não foi possível completar sua habilitação para este leilão. ${e.message}` };
     }
 }
 
