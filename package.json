@@ -20,7 +20,12 @@
     "db:setup-admin": "echo \"Error: Please specify which database to use. Run 'npm run db:setup-admin:mysql' or 'npm run db:setup-admin:postgres'\" && exit 1",
     "db:setup-admin:mysql": "tsx ./scripts/setup-admin-user.ts --db=mysql",
     "db:setup-admin:postgres": "tsx ./scripts/setup-admin-user.ts --db=postgres",
-    "seed:media": "tsx ./scripts/seed-media-library.ts"
+    "seed:media": "tsx ./scripts/seed-media-library.ts",
+    "test": "playwright test",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:report": "playwright show-report",
+    "test:unit": "jest"
   },
   "dependencies": {
     "@genkit-ai/googleai": "^1.8.0",
@@ -80,6 +85,7 @@
   },
   "devDependencies": {
     "@firecms/cli": "^3.0.0-beta.13",
+    "@playwright/test": "^1.53.2",
     "@types/leaflet": "^1.9.12",
     "@types/node": "^22.15.30",
     "@types/pg": "^8.11.6",
