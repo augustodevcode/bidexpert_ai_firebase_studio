@@ -1,5 +1,4 @@
 
-
 'use client'; 
 
 import AuctionForm from '../../auction-form';
@@ -7,7 +6,7 @@ import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import { getDocumentTemplates, getDocumentTemplate as getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, DocumentTemplate } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, DocumentTemplate, UserProfileWithPermissions } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,6 +40,8 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
+import { getUserProfileData } from '@/app/admin/users/actions';
+
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
@@ -97,15 +98,23 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
     const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
     
-    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType']) => {
-        setIsLoading(prev => ({...prev, [type]: true}));
+    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType'], lot?: Lot, winner?: UserProfileWithPermissions | null) => {
+        setIsLoading(prev => ({...prev, [`${type}-${lot?.id || 'auction'}`]: true}));
         toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
 
         try {
+            // Fetch related entities if not already present
+            const auctioneer = auction.auctioneerId ? await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId)) : null;
+            const seller = auction.sellerId ? await getSellers().then(list => list.find(s => s.id === auction.sellerId)) : null;
+
             const result = await generateDocument({
                 documentType: type,
                 data: {
                     auction,
+                    lot,
+                    winner,
+                    auctioneer,
+                    seller,
                     currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
                 },
             });
@@ -130,7 +139,7 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
             console.error("Error generating document:", error);
             toast({ title: 'Erro ao Gerar PDF', description: error.message, variant: 'destructive'});
         } finally {
-            setIsLoading(prev => ({...prev, [type]: false}));
+            setIsLoading(prev => ({...prev, [`${type}-${lot?.id || 'auction'}`]: false}));
         }
     };
     
@@ -145,8 +154,8 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('EVALUATION_REPORT')} disabled={!hasGenerateReportPerm || isLoading['EVALUATION_REPORT']}>
-                                    {isLoading['EVALUATION_REPORT'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4"/>} Gerar Laudo de Avaliação (PDF)
+                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('EVALUATION_REPORT')} disabled={!hasGenerateReportPerm || isLoading['EVALUATION_REPORT-auction']}>
+                                    {isLoading['EVALUATION_REPORT-auction'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4"/>} Gerar Laudo de Avaliação (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>
@@ -155,8 +164,8 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('AUCTION_CERTIFICATE')} disabled={!hasGenerateCertificatePerm || isLoading['AUCTION_CERTIFICATE']}>
-                                    {isLoading['AUCTION_CERTIFICATE'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4"/>} Gerar Relatório de Arremates (PDF)
+                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('AUCTION_CERTIFICATE')} disabled={!hasGenerateCertificatePerm || isLoading['AUCTION_CERTIFICATE-auction']}>
+                                    {isLoading['AUCTION_CERTIFICATE-auction'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4"/>} Gerar Relatório de Arremates (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>

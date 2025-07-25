@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -35,12 +36,63 @@ export async function generateDocument(input: GenerateDocumentInput): Promise<Ge
 // Default templates if nothing is found in the database
 const defaultTemplates: Record<GenerateDocumentInput['documentType'], string> = {
   WINNING_BID_TERM: `
-    <!DOCTYPE html><html><body><h1>Termo de Arrematação (Padrão)</h1><p>Lote: {{lot.title}}</p><p>Arrematante: {{winner.fullName}}</p><p>Valor: R$ {{lot.price}}</p></body></html>`,
+    <!DOCTYPE html><html><body><h1>Termo de Arrematação (Padrão)</h1><p>Lote: {{{lote.titulo}}}</p><p>Arrematante: {{{arrematante.nomeCompleto}}}</p><p>Valor: R$ {{{lote.valor_arremate}}}</p></body></html>`,
   EVALUATION_REPORT: `
-    <!DOCTYPE html><html><head><style>body { font-family: sans-serif; padding: 2rem; } h1 { color: #F97316; } table { width: 100%; border-collapse: collapse; margin-top: 1rem; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head><body><h1>Laudo de Avaliação (Padrão)</h1><h2>Leilão: {{auction.title}}</h2><p>Este é um laudo de avaliação de exemplo gerado pelo sistema para o leilão acima. Data: {{currentDate}}</p></body></html>`,
+    <!DOCTYPE html><html><head><style>body { font-family: sans-serif; padding: 2rem; } h1 { color: #F97316; } table { width: 100%; border-collapse: collapse; margin-top: 1rem; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head><body><h1>Laudo de Avaliação (Padrão)</h1><h2>Leilão: {{{leilao.titulo}}}</h2><p>Este é um laudo de avaliação de exemplo gerado pelo sistema para o leilão acima. Data: {{dataAtual}}</p></body></html>`,
   AUCTION_CERTIFICATE: `
-    <!DOCTYPE html><html><body><h1>Certificado de Leilão (Padrão)</h1><h2>Leilão: {{auction.title}}</h2><p>Certificamos que este leilão foi realizado em {{auction.endDate}}. Total de lotes vendidos: {{auction.totalLotsSold}}</p></body></html>`,
+    <!DOCTYPE html><html><body><h1>Certificado de Leilão (Padrão)</h1><h2>Leilão: {{{leilao.titulo}}}</h2><p>Certificamos que este leilão foi realizado em {{leilao.dataFim}}. Total de lotes vendidos: {{leilao.totalLotesVendidos}}</p></body></html>`,
 };
+
+/**
+ * Translates the keys of a data object to Portuguese for Handlebars templating.
+ * @param {any} data - The original data object.
+ * @returns {any} A new object with translated keys.
+ */
+function translateDataKeysToPortuguese(data: any): any {
+    if (!data) return {};
+
+    const translated: any = {};
+    if (data.lot) {
+        translated.lote = {
+            titulo: data.lot.title,
+            numero: data.lot.number,
+            descricao: data.lot.description,
+            valor_arremate: data.lot.price?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+        };
+    }
+    if (data.auction) {
+        translated.leilao = {
+            titulo: data.auction.title,
+            id_publico: data.auction.publicId,
+            dataFim: data.auction.endDate ? new Date(data.auction.endDate).toLocaleDateString('pt-BR') : '',
+            totalLotesVendidos: data.auction.lots?.filter((l: any) => l.status === 'VENDIDO').length || 0,
+        };
+    }
+    if (data.winner) {
+         translated.arrematante = {
+            nomeCompleto: data.winner.fullName,
+            cpf: data.winner.cpf,
+            endereco: `${data.winner.street || ''}, ${data.winner.number || ''} - ${data.winner.city || ''}/${data.winner.state || ''}`,
+        };
+    }
+     if (data.auctioneer) {
+        translated.leiloeiro = {
+            nome: data.auctioneer.name,
+            matricula: data.auctioneer.registrationNumber,
+        };
+    }
+    if (data.seller) {
+        translated.comitente = {
+            nome: data.seller.name,
+            documento: data.seller.cnpj || data.seller.cpf || '',
+        };
+    }
+    if (data.currentDate) {
+        translated.dataAtual = data.currentDate;
+    }
+
+    return translated;
+}
 
 
 const generateDocumentFlow = ai.defineFlow(
@@ -61,9 +113,12 @@ const generateDocumentFlow = ai.defineFlow(
       }
     }
 
+    // Step 1.5: Translate data keys to Portuguese
+    const templateData = translateDataKeysToPortuguese(input.data);
+
     // Step 2: Use Handlebars to compile the template.
     const template = Handlebars.compile(htmlTemplate);
-    const compiledHtml = template(input.data);
+    const compiledHtml = template(templateData);
       
     // Step 3: Use Puppeteer to generate the PDF
     let browser;
@@ -84,7 +139,9 @@ const generateDocumentFlow = ai.defineFlow(
         console.log('[Puppeteer] PDF generated successfully.');
         
         const pdfBase64 = pdfBuffer.toString('base64');
-        const fileName = `${slugify(input.documentType)}-${slugify(input.data?.auction?.title) || Date.now()}.pdf`;
+        
+        const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
+        const fileName = `${slugify(input.documentType)}-${slugify(templateData?.leilao?.titulo) || Date.now()}.pdf`;
 
         return {
             pdfBase64,

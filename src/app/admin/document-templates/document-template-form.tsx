@@ -32,35 +32,36 @@ const templateTypeOptions = [
 
 const availableVariables = {
     WINNING_BID_TERM: [
-        { label: "Título do Lote", value: "{{{lot.title}}}"},
-        { label: "Número do Lote", value: "{{{lot.number}}}"},
-        { label: "Descrição do Lote", value: "{{{lot.description}}}"},
-        { label: "Valor do Arremate", value: "{{{lot.price}}}"},
-        { label: "Leilão", value: "{{{auction.title}}}"},
-        { label: "ID Público do Leilão", value: "{{{auction.publicId}}}"},
-        { label: "Leiloeiro", value: "{{{auctioneer.name}}}"},
-        { label: "Matrícula do Leiloeiro", value: "{{{auctioneer.registrationNumber}}}"},
-        { label: "Comitente", value: "{{{seller.name}}}"},
-        { label: "CNPJ/CPF do Comitente", value: "{{{seller.documentNumber}}}"},
-        { label: "Nome do Arrematante", value: "{{{winner.fullName}}}"},
-        { label: "CPF/CNPJ do Arrematante", value: "{{{winner.cpf}}}"},
-        { label: "Endereço do Arrematante", value: "{{{winner.address}}}"},
-        { label: "Data Atual", value: "{{{currentDate}}}"},
+        { label: "Título do Lote", value: "{{{lote.titulo}}}"},
+        { label: "Número do Lote", value: "{{{lote.numero}}}"},
+        { label: "Descrição do Lote", value: "{{{lote.descricao}}}"},
+        { label: "Valor do Arremate", value: "{{{lote.valor_arremate}}}"},
+        { label: "Leilão", value: "{{{leilao.titulo}}}"},
+        { label: "ID Público do Leilão", value: "{{{leilao.id_publico}}}"},
+        { label: "Leiloeiro", value: "{{{leiloeiro.nome}}}"},
+        { label: "Matrícula do Leiloeiro", value: "{{{leiloeiro.matricula}}}"},
+        { label: "Comitente", value: "{{{comitente.nome}}}"},
+        { label: "CPF/CNPJ do Comitente", value: "{{{comitente.documento}}}"},
+        { label: "Nome do Arrematante", value: "{{{arrematante.nomeCompleto}}}"},
+        { label: "CPF/CNPJ do Arrematante", value: "{{{arrematante.cpf}}}"},
+        { label: "Endereço do Arrematante", value: "{{{arrematante.endereco}}}"},
+        { label: "Data Atual", value: "{{{dataAtual}}}"},
     ],
     EVALUATION_REPORT: [
-        { label: "Título do Leilão", value: "{{{auction.title}}}"},
-        { label: "ID Público do Leilão", value: "{{{auction.publicId}}}"},
-        { label: "Leiloeiro", value: "{{{auctioneer.name}}}"},
-        { label: "Comitente", value: "{{{seller.name}}}"},
-        { label: "Data da Avaliação", value: "{{{currentDate}}}"},
-        { label: "Lista de Lotes (WIP)", value: "{{#each lots}}{{/each}}"},
+        { label: "Título do Leilão", value: "{{{leilao.titulo}}}"},
+        { label: "ID Público do Leilão", value: "{{{leilao.id_publico}}}"},
+        { label: "Leiloeiro", value: "{{{leiloeiro.nome}}}"},
+        { label: "Comitente", value: "{{{comitente.nome}}}"},
+        { label: "Data da Avaliação", value: "{{{dataAtual}}}"},
+        { label: "Lista de Lotes (WIP)", value: "{{#each lotes}}{{/each}}"},
     ],
     AUCTION_CERTIFICATE: [
-        { label: "Título do Leilão", value: "{{{auction.title}}}"},
-        { label: "Data de Encerramento", value: "{{{auction.endDate}}}"},
-        { label: "Leiloeiro", value: "{{{auctioneer.name}}}"},
-        { label: "Comitente", value: "{{{seller.name}}}"},
-        { label: "Data da Emissão", value: "{{{currentDate}}}"},
+        { label: "Título do Leilão", value: "{{{leilao.titulo}}}"},
+        { label: "Data de Encerramento", value: "{{{leilao.dataFim}}}"},
+        { label: "Leiloeiro", value: "{{{leiloeiro.nome}}}"},
+        { label: "Comitente", value: "{{{comitente.nome}}}"},
+        { label: "Data da Emissão", value: "{{{dataAtual}}}"},
+        { label: "Total de Lotes Vendidos", value: "{{{leilao.totalLotesVendidos}}}" },
     ]
 };
 
@@ -119,7 +120,7 @@ export default function DocumentTemplateForm({
                 <FormField control={form.control} name="name" render={({ field }) => (<FormItem><FormLabel>Nome do Template</FormLabel><FormControl><Input placeholder="Ex: Auto de Arrematação Padrão" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Tipo de Documento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo" /></SelectTrigger></FormControl><SelectContent>{templateTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
               </div>
-              <FormField control={form.control} name="content" render={({ field }) => (<FormItem><FormLabel>Conteúdo do Template</FormLabel><FormControl><Textarea placeholder="Escreva o conteúdo do seu documento aqui. Use as variáveis disponíveis..." {...field} rows={20} className="font-mono text-xs" /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="content" render={({ field }) => (<FormItem><FormLabel>Conteúdo do Template (HTML)</FormLabel><FormControl><Textarea placeholder="Escreva o conteúdo do seu documento aqui. Use as variáveis disponíveis..." {...field} rows={20} className="font-mono text-xs" /></FormControl><FormMessage /></FormItem>)} />
             </CardContent>
             <CardFooter className="flex justify-end gap-2 p-6 border-t">
               <Button type="button" variant="outline" onClick={() => router.push('/admin/document-templates')} disabled={isSubmitting}>Cancelar</Button>
