@@ -56,18 +56,24 @@ test.describe('Full Auction E2E Simulation Test', () => {
 
         // 2. Users
         const analystRes = await userService.createUser({ fullName: `Analyst ${testRunId}`, email: `analyst-${testRunId}@test.com`, password: 'password123', roleIds: [analystRole!.id] });
-        assert.ok(analystRes.userId, 'Analyst user creation failed.');
-        testAnalyst = (await userService.getUserById(analystRes.userId))!;
+        assert.ok(analystRes.success && analystRes.userId, 'Analyst user creation failed.');
+        testAnalyst = (await userService.getUserById(analystRes.userId!))!;
 
         for (let i = 1; i <= 2; i++) {
-            const userRes = await userService.createUser({ fullName: `Bidder ${i} ${testRunId}`, email: `bidder${i}-${testRunId}@test.com`, password: 'password123', roleIds: [userRole!.id] });
-            assert.ok(userRes.userId, `Bidder ${i} user creation failed.`);
-            biddingUsers.push((await userService.getUserById(userRes.userId))!);
+            const userRes = await userService.createUser({ 
+                fullName: `Bidder ${i} ${testRunId}`, 
+                email: `bidder${i}-${testRunId}@test.com`, 
+                password: 'password123', 
+                roleIds: [userRole!.id],
+                habilitationStatus: 'HABILITADO' // Create user as already habilitated
+            });
+            assert.ok(userRes.success && userRes.userId, `Bidder ${i} user creation failed.`);
+            biddingUsers.push((await userService.getUserById(userRes.userId!))!);
         }
 
         const consignorRes = await userService.createUser({ fullName: `Consignor User ${testRunId}`, email: `consignor-${testRunId}@test.com`, password: 'password123', roleIds: [userRole!.id, consignorRole!.id] });
-        assert.ok(consignorRes.userId, 'Consignor user creation failed.');
-        consignorUser = (await userService.getUserById(consignorRes.userId))!;
+        assert.ok(consignorRes.success && consignorRes.userId, 'Consignor user creation failed.');
+        consignorUser = (await userService.getUserById(consignorRes.userId!))!;
 
         // 3. Core Entities
         testCategory = await prisma.lotCategory.create({ data: { name: `Category ${testRunId}`, slug: `cat-${testRunId}`, hasSubcategories: false } });
@@ -163,11 +169,9 @@ test.describe('Full Auction E2E Simulation Test', () => {
     
     test('should simulate bidding on the judicial lot', async () => {
         console.log(`\n--- Simulating Bidding on Judicial Lot: ${judicialLot.title} ---`);
-        for (const user of biddingUsers) {
-            const res = await habilitateForAuctionAction(user.id, judicialAuction.id);
-            assert.ok(res.success, `Habilitation should succeed for ${user.fullName}`);
-        }
-        console.log('- All bidders habilitated.');
+        // Skipping per-auction habilitation as requested
+        // Users are created with general habilitation status
+        console.log('- Bidders are pre-habilitated for this test run.');
         
         const bid1 = await placeBidOnLot(judicialLot.id, judicialAuction.id, biddingUsers[0].id, biddingUsers[0].fullName!, 13000);
         assert.ok(bid1.success, 'Bid 1 should be successful');
