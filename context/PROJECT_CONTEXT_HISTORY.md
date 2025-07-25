@@ -41,9 +41,9 @@ This document summarizes the BidExpert project, including its purpose, core feat
 
 ### Key Features & Functionalities Implemented/Worked On:
 
-1.  **Architectural Refactoring (MVC + Services):** The entire application was refactored to a layered MVC (Model-View-Controller) architecture with a dedicated Service Layer. This major undertaking replaced the direct-to-adapter data access with a more robust pattern: `Controller (Action) -> Service -> Repository -> Prisma ORM`. This enhances scalability, maintainability, and testability.
+1.  **Architectural Refactoring (MVC + Service + Repository):** The entire application was refactored to a layered architecture. This major undertaking replaced direct-to-database calls with a more robust pattern: `Controller (Action) -> Service -> Repository -> Prisma ORM`. This enhances scalability, maintainability, and testability.
 
-2.  **Prisma ORM Integration:** The project was migrated to use Prisma as the primary ORM for data access, replacing the previous multi-adapter system. A comprehensive `schema.prisma` was created to support PostgreSQL, MySQL, and serve as a reference for Firestore.
+2.  **Prisma ORM Integration:** The project was migrated to use Prisma as the primary ORM for data access, replacing the previous multi-adapter system. A comprehensive `prisma/schema.prisma` was created to support PostgreSQL and MySQL.
 
 3.  **Full Admin Panel:** Comprehensive CRUD (Create, Read, Update, Delete) functionality for all major entities, including auctions, lots, users, roles, sellers, auctioneers, categories, judicial entities, media, and more.
 
@@ -65,7 +65,7 @@ This document summarizes the BidExpert project, including its purpose, core feat
 *   **Module Not Found (`@prisma/client`):** Resolved by ensuring the `postinstall` script correctly runs `prisma generate` with access to environment variables.
 *   **Data Loss Warning on `db push`:** Resolved by adding the `--accept-data-loss` flag to the `db:push` script, appropriate for a development environment where data can be re-seeded.
 *   **Invalid Directory Structure:** Corrected a critical structural issue where `app` directories were nested or outside the `src` folder, preventing Next.js from building correctly.
-*   **Prisma Relation Errors:** Corrected multiple `PrismaClientValidationError` errors by aligning the `include` and `connect` statements in the code with the actual relations defined in `schema.prisma` (e.g., `roles` instead of `role`, using `nameNormalized` for connections).
+*   **E2E Test Failures:** Debugged and resolved a series of cascading errors in the E2E simulation test (`bidding-e2e.test.ts`), including unique constraint violations (`State_uf_key`), incorrect foreign key updates, and `revalidatePath` errors in a non-Next.js context.
 
 ### Key Decisions & Patterns:
 *   **MVC + Service + Repository Architecture:** The entire application now adheres to a strict separation of concerns. This is the mandated architecture for all new development.

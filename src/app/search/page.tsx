@@ -28,7 +28,7 @@ import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getDirectSaleOffers } from './actions';
+import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 

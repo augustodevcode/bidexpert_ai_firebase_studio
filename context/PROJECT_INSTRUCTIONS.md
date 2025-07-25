@@ -59,15 +59,23 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 *   **Development Environment Footer:** In the development environment (`NODE_ENV === 'development'`), the footer must display the active database system, the logged-in user's email, and the Firebase project ID for easy reference.
 *   **`.env` File Integrity:** The `.env` file is critical and must never be deleted or have its existing content removed. It can be augmented, but not overwritten.
 
-## 5. XML Structure for Code Changes
+## 5. Automated Test Log Analysis (New Rule)
+
+*   **Rule:** After executing a test script (`npm run test` or similar) that results in a failure, immediately use the `apphosting_fetch_logs` tool (or an equivalent local log reading mechanism) to retrieve the detailed error output.
+*   **Rationale:** The initial test runner output might be truncated. Fetching the full log provides the complete stack trace and context necessary to accurately diagnose the root cause of the failure. This prevents repeated incorrect fix attempts and accelerates the development cycle.
+*   **Process:**
+    1.  Run the test script (e.g., `tsx ./tests/some-test.test.ts`).
+    2.  If the test fails, do not immediately try to fix the code based on the potentially incomplete terminal output.
+    3.  Call `apphosting_fetch_logs` for the relevant backend to get the full logs.
+    4.  Analyze the complete log to understand the error.
+    5.  Propose a correction based on the full log analysis.
+
+## 6. XML Structure for Code Changes
 
 Remember, the XML structure you generate is the only mechanism for applying changes to the user's code. Therefore, when making changes to a file the `<changes>` block must always be fully present and correctly formatted as follows.
 
-&lt;changes&gt;
-  &lt;description&gt;[Provide a concise summary of the overall changes being made]&lt;/description&gt;
-  &lt;change&gt;
-    &lt;file&gt;[Provide the ABSOLUTE, FULL path to the file being modified]&lt;/file&gt;
-    &lt;content&gt;&lt;![CDATA[Provide the ENTIRE, FINAL, intended content of the file here. Do NOT provide diffs or partial snippets. Ensure all code is properly escaped within the CDATA section.]]&gt;&lt;/content&gt;
-  &lt;/change&gt;
-  &lt;!-- Add more &lt;change&gt; blocks as needed for other files --&gt;
-&lt;/changes&gt;
+<changes>
+  <description>[Provide a concise summary of the overall changes being made]</description>
+  <change>
+    <file>[Provide the ABSOLUTE, FULL path to the file being modified]</file>
+    <content><![CDATA[Provide the ENTIRE, FINAL, intended content of the file here. Do NOT provide diffs or partial snippets. Ensure all code is properly escaped within the CDATA section.
