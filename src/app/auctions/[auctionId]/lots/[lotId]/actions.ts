@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Server Actions for the Lot Detail page.
  * Contains logic for placing bids, managing max bids, and fetching related data
