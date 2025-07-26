@@ -7,35 +7,39 @@ import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCate
 import { v4 as uuidv4 } from 'uuid';
 
 const auctionService = new AuctionService();
-const testRunId = uuidv4().substring(0, 8); // Unique ID for this test run
-const testAuctionTitle = `Super Leilão de Teste E2E ${testRunId}`;
+const testRunId = `auction-e2e-${uuidv4().substring(0, 8)}`;
+const testAuctionTitle = `Super Leilão de Teste ${testRunId}`;
+
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
+let createdAuctionId: string | undefined;
 
 test.describe('Auction Service E2E Tests', () => {
 
     test.before(async () => {
         // Create dependency records
         testCategory = await prisma.lotCategory.create({
-            data: { name: `Categoria Teste Leilões ${testRunId}`, slug: `cat-leiloes-${testRunId}`, hasSubcategories: false }
+            data: { name: `Cat. Leilões ${testRunId}`, slug: `cat-leiloes-${testRunId}`, hasSubcategories: false }
         });
         testAuctioneer = await prisma.auctioneer.create({
-            data: { name: `Leiloeiro Teste Leilões ${testRunId}`, publicId: `leiloeiro-pub-id-leilao-test-${testRunId}`, slug: `leiloeiro-teste-leiloes-${testRunId}` }
+            data: { name: `Leiloeiro Leilões ${testRunId}`, publicId: `leiloeiro-pub-${testRunId}`, slug: `leiloeiro-leiloes-${testRunId}` }
         });
         testSeller = await prisma.seller.create({
-            data: { name: `Comitente Teste Leilões ${testRunId}`, publicId: `seller-pub-id-leilao-test-${testRunId}`, slug: `comitente-teste-leiloes-${testRunId}`, isJudicial: false }
+            data: { name: `Comitente Leilões ${testRunId}`, publicId: `seller-pub-${testRunId}`, slug: `comitente-leiloes-${testRunId}`, isJudicial: false }
         });
     });
 
     test.after(async () => {
         try {
-            await prisma.auction.deleteMany({ where: { title: testAuctionTitle }});
+            if (createdAuctionId) {
+                await prisma.auction.delete({ where: { id: createdAuctionId }});
+            }
             if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
             if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
             if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
-            // Ignore cleanup errors
+            console.error(`[AUCTION TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -55,6 +59,7 @@ test.describe('Auction Service E2E Tests', () => {
 
         // Act
         const result = await auctionService.createAuction(newAuctionData);
+        createdAuctionId = result.auctionId; // Store for cleanup
 
         // Assert: Check the service method result
         assert.strictEqual(result.success, true, 'AuctionService.createAuction should return success: true');

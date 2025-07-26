@@ -4,34 +4,36 @@ import assert from 'node:assert';
 import { BemService } from '../src/services/bem.service';
 import { prisma } from '../src/lib/prisma';
 import type { BemFormData, SellerProfileInfo, LotCategory } from '../src/types';
-import { slugify } from '@/lib/sample-data-helpers';
 import { v4 as uuidv4 } from 'uuid';
 
 const bemService = new BemService();
-const testRunId = uuidv4().substring(0, 8);
-const testBemTitle = `Automóvel de Teste E2E (Bem) ${testRunId}`;
+const testRunId = `bem-e2e-${uuidv4().substring(0, 8)}`;
+const testBemTitle = `Automóvel de Teste (Bem) ${testRunId}`;
 let testSeller: SellerProfileInfo;
 let testCategory: LotCategory;
+let createdBemId: string | undefined;
 
 test.describe('Bem Service E2E Tests', () => {
 
     test.before(async () => {
         // Create dependency records
         testCategory = await prisma.lotCategory.create({
-            data: { name: `Categoria Teste para Bens ${testRunId}`, slug: `categoria-teste-bens-${testRunId}`, hasSubcategories: false }
+            data: { name: `Categoria Teste Bens ${testRunId}`, slug: `cat-bens-${testRunId}`, hasSubcategories: false }
         });
         testSeller = await prisma.seller.create({
-            data: { name: `Comitente Teste para Bens ${testRunId}`, publicId: `seller-pub-id-bem-test-${testRunId}`, slug: `comitente-teste-bens-${testRunId}`, isJudicial: false }
+            data: { name: `Comitente Teste Bens ${testRunId}`, publicId: `seller-pub-bem-${testRunId}`, slug: `comitente-bens-${testRunId}`, isJudicial: false }
         });
     });
 
     test.after(async () => {
         try {
-            await prisma.bem.deleteMany({ where: { title: testBemTitle }});
+            if (createdBemId) {
+                await prisma.bem.delete({ where: { id: createdBemId } });
+            }
             if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
             if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
-            // Ignore cleanup errors
+             console.error(`[BEM TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -49,12 +51,12 @@ test.describe('Bem Service E2E Tests', () => {
 
         // Act
         const result = await bemService.createBem(newBemData);
+        createdBemId = result.bemId;
 
-        // Assert: Check the service method result
+        // Assert
         assert.strictEqual(result.success, true, 'BemService.createBem should return success: true');
         assert.ok(result.bemId, 'BemService.createBem should return a bemId');
 
-        // Assert: Verify directly in the database
         const createdBemFromDb = await prisma.bem.findUnique({
             where: { id: result.bemId },
         });

@@ -4,33 +4,37 @@ import assert from 'node:assert';
 import { CityService } from '../src/services/city.service';
 import { prisma } from '../src/lib/prisma';
 import type { CityFormData, StateInfo } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const cityService = new CityService();
-const testCityName = 'Cidade de Teste E2E';
-const testStateName = 'Estado para Cidades E2E';
-const testStateUf = 'TC';
+const testRunId = `city-e2e-${uuidv4().substring(0, 8)}`;
+const testCityName = `Cidade de Teste ${testRunId}`;
+const testStateName = `Estado para Cidades ${testRunId}`;
+const testStateUf = testRunId.substring(0, 2).toUpperCase();
 let testState: StateInfo;
 
 test.describe('City Service E2E Tests', () => {
 
     test.before(async () => {
         // Create the necessary State dependency
+        await prisma.state.deleteMany({ where: { uf: testStateUf } });
         testState = await prisma.state.create({
             data: {
                 name: testStateName,
                 uf: testStateUf,
-                slug: 'estado-para-cidades-e2e',
+                slug: `estado-para-cidades-${testRunId}`,
             }
         });
     });
 
     test.after(async () => {
         try {
-            // Clean up created records
             await prisma.city.deleteMany({ where: { name: testCityName }});
-            await prisma.state.delete({ where: { id: testState.id }});
+            if (testState) {
+                await prisma.state.delete({ where: { id: testState.id }});
+            }
         } catch (error) {
-            // Ignore cleanup errors
+            console.error(`[CITY TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -40,7 +44,7 @@ test.describe('City Service E2E Tests', () => {
         const newCityData: CityFormData = {
             name: testCityName,
             stateId: testState.id,
-            ibgeCode: '1234567',
+            ibgeCode: testRunId.replace(/-/g, '').substring(0, 7),
         };
 
         // Act

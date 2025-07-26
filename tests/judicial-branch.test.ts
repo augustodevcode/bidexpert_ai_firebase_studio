@@ -4,9 +4,11 @@ import assert from 'node:assert';
 import { JudicialBranchService } from '../src/services/judicial-branch.service';
 import { prisma } from '../src/lib/prisma';
 import type { JudicialBranchFormData, Court, StateInfo, JudicialDistrict } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const branchService = new JudicialBranchService();
-const testBranchName = 'Vara de Teste E2E';
+const testRunId = `branch-e2e-${uuidv4().substring(0, 8)}`;
+const testBranchName = `Vara de Teste ${testRunId}`;
 let testCourt: Court;
 let testState: StateInfo;
 let testDistrict: JudicialDistrict;
@@ -15,33 +17,26 @@ test.describe('Judicial Branch Service E2E Tests', () => {
 
     test.before(async () => {
         // Create dependency records: State -> Court -> District
+        const uf = testRunId.substring(0, 2).toUpperCase();
         testState = await prisma.state.create({
-            data: { name: 'Estado de Teste para Varas', uf: 'TV', slug: 'estado-de-teste-varas' }
+            data: { name: `Estado Varas ${testRunId}`, uf: uf, slug: `estado-varas-${testRunId}` }
         });
         testCourt = await prisma.court.create({
-            data: { name: 'Tribunal de Teste para Varas', stateUf: 'TV', slug: 'tribunal-teste-varas', website: 'http://test.com' }
+            data: { name: `Tribunal Varas ${testRunId}`, stateUf: uf, slug: `tribunal-varas-${testRunId}`, website: 'http://test.com' }
         });
         testDistrict = await prisma.judicialDistrict.create({
-            data: { 
-                name: 'Comarca de Teste para Varas',
-                slug: 'comarca-teste-varas',
-                courtId: testCourt.id,
-                stateId: testState.id,
-            }
+            data: { name: `Comarca Varas ${testRunId}`, slug: `comarca-varas-${testRunId}`, courtId: testCourt.id, stateId: testState.id }
         });
     });
     
     test.after(async () => {
         try {
-            // Clean up in reverse order of creation
-            await prisma.judicialBranch.deleteMany({
-                where: { name: testBranchName }
-            });
+            await prisma.judicialBranch.deleteMany({ where: { name: testBranchName } });
             await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
             await prisma.court.delete({ where: { id: testCourt.id } });
             await prisma.state.delete({ where: { id: testState.id } });
         } catch (error) {
-            // Ignore cleanup errors
+            console.error(`[JUDICIAL BRANCH TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -51,7 +46,7 @@ test.describe('Judicial Branch Service E2E Tests', () => {
         const newBranchData: JudicialBranchFormData = {
             name: testBranchName,
             districtId: testDistrict.id,
-            email: 'test.vara@example.com'
+            email: `vara.teste.${testRunId}@example.com`
         };
 
         // Act

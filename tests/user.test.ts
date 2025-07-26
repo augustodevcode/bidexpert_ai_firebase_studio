@@ -4,11 +4,19 @@ import assert from 'node:assert';
 import { UserService } from '../src/services/user.service';
 import { prisma } from '../src/lib/prisma';
 import type { UserCreationData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const userService = new UserService();
-const testUserEmail = 'test.user.e2e@example.com';
+const testRunId = `user-e2e-${uuidv4().substring(0, 8)}`;
+const testUserEmail = `teste.usuario.${testRunId}@example.com`;
 
 test.describe('User Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        await prisma.user.deleteMany({
+            where: { email: testUserEmail }
+        });
+    });
     
     test.after(async () => {
         try {
@@ -24,7 +32,7 @@ test.describe('User Service E2E Tests', () => {
     test('should create a new user and assign the default USER role', async () => {
         // Arrange
         const newUser: UserCreationData = {
-            fullName: 'Usuário de Teste E2E',
+            fullName: `Usuário de Teste ${testRunId}`,
             email: testUserEmail,
             password: 'aSecurePassword123',
         };
@@ -32,11 +40,10 @@ test.describe('User Service E2E Tests', () => {
         // Act
         const result = await userService.createUser(newUser);
 
-        // Assert: Check the service method result
+        // Assert
         assert.strictEqual(result.success, true, 'UserService.createUser should return success: true');
         assert.ok(result.userId, 'UserService.createUser should return a userId');
 
-        // Assert: Verify directly in the database
         const createdUserFromDb = await prisma.user.findUnique({
             where: { id: result.userId },
             include: { roles: { include: { role: true } } },

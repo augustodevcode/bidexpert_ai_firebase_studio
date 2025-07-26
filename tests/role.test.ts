@@ -4,12 +4,20 @@ import assert from 'node:assert';
 import { RoleService } from '../src/services/role.service';
 import { prisma } from '../src/lib/prisma';
 import type { RoleFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const roleService = new RoleService();
-const testRoleName = 'Perfil de Teste E2E';
-const testRoleNameNormalized = 'PERFIL_DE_TESTE_E2E';
+const testRunId = `role-e2e-${uuidv4().substring(0, 8)}`;
+const testRoleName = `Perfil de Teste ${testRunId}`;
+const testRoleNameNormalized = `PERFIL_DE_TESTE_${testRunId.toUpperCase()}`;
 
 test.describe('Role Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        await prisma.role.deleteMany({
+            where: { name: testRoleName }
+        });
+    });
     
     test.after(async () => {
         try {
@@ -48,7 +56,7 @@ test.describe('Role Service E2E Tests', () => {
         
         assert.ok(createdRoleFromDb, 'Role should be found in the database after creation');
         assert.strictEqual(createdRoleFromDb.name, newRoleData.name, 'Role name should match');
-        assert.strictEqual(createdRoleFromDb.nameNormalized, testRoleNameNormalized, 'Role nameNormalized should be correct');
+        assert.strictEqual(createdRoleFromDb.nameNormalized, testRoleName.toUpperCase().replace(/\s/g, '_'), 'Role nameNormalized should be correct');
         assert.deepStrictEqual(createdRoleFromDb.permissions, newRoleData.permissions, 'Role permissions should match');
     });
 

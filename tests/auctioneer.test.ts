@@ -4,33 +4,43 @@ import assert from 'node:assert';
 import { AuctioneerService } from '../src/services/auctioneer.service';
 import { prisma } from '../src/lib/prisma';
 import type { AuctioneerFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const auctioneerService = new AuctioneerService();
+const testRunId = `auct-e2e-${uuidv4().substring(0,8)}`;
+const testAuctioneerName = `Leiloeiro de Teste ${testRunId}`;
+const testAuctioneerEmail = `leiloeiro.teste.${testRunId}@example.com`;
 
 test.describe('Auctioneer Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        // Clean up previous test runs to ensure a clean slate
+        await prisma.auctioneer.deleteMany({
+            where: { email: testAuctioneerEmail }
+        });
+    });
     
-    // Clean up any test data before and after tests
     test.after(async () => {
         try {
             await prisma.auctioneer.deleteMany({
-                where: { email: 'test.auctioneer.service@example.com' }
+                where: { email: testAuctioneerEmail }
             });
         } catch (error) {
-            // Ignore errors during cleanup, as the test might have failed before creation
+            // Ignore errors during cleanup
         }
         await prisma.$disconnect();
     });
 
     test('should create a new auctioneer and verify it in the database', async () => {
-        // Arrange: Define the test data for the new auctioneer
+        // Arrange
         const newAuctioneerData: AuctioneerFormData = {
-            name: 'Test Service Auctioneer',
+            name: testAuctioneerName,
             registrationNumber: 'JUCESP/TEST/123',
-            email: 'test.auctioneer.service@example.com',
+            email: testAuctioneerEmail,
             phone: '11987654321',
         };
 
-        // Act: Call the AuctioneerService directly to create the auctioneer
+        // Act
         const result = await auctioneerService.createAuctioneer(newAuctioneerData);
 
         // Assert: Check the result of the service method
@@ -44,7 +54,6 @@ test.describe('Auctioneer Service E2E Tests', () => {
 
         assert.ok(createdAuctioneerFromDb, 'Auctioneer should be found in the database after creation');
         
-        // Log the created record for debugging purposes
         console.log('--- Auctioneer Record Found in DB ---');
         console.log(createdAuctioneerFromDb);
         console.log('-----------------------------------');

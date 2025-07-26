@@ -4,10 +4,12 @@ import assert from 'node:assert';
 import { SubcategoryService } from '../src/services/subcategory.service';
 import { prisma } from '../src/lib/prisma';
 import type { SubcategoryFormData, LotCategory } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const subcategoryService = new SubcategoryService();
-const testCategoryName = 'Categoria Pai para Teste de Sub';
-const testSubcategoryName = 'Subcategoria de Teste E2E';
+const testRunId = `subcat-e2e-${uuidv4().substring(0, 8)}`;
+const testCategoryName = `Categoria Pai ${testRunId}`;
+const testSubcategoryName = `Subcategoria ${testRunId}`;
 let testParentCategory: LotCategory;
 
 test.describe('Subcategory Service E2E Tests', () => {
@@ -17,7 +19,7 @@ test.describe('Subcategory Service E2E Tests', () => {
         testParentCategory = await prisma.lotCategory.create({
             data: { 
                 name: testCategoryName, 
-                slug: 'categoria-pai-teste-sub', 
+                slug: `cat-pai-${testRunId}`, 
                 hasSubcategories: false 
             }
         });
@@ -25,14 +27,10 @@ test.describe('Subcategory Service E2E Tests', () => {
     
     test.after(async () => {
         try {
-            await prisma.subcategory.deleteMany({
-                where: { name: testSubcategoryName }
-            });
-            await prisma.lotCategory.delete({
-                where: { id: testParentCategory.id }
-            });
+            await prisma.subcategory.deleteMany({ where: { name: testSubcategoryName } });
+            await prisma.lotCategory.delete({ where: { id: testParentCategory.id } });
         } catch (error) {
-            // Ignore cleanup errors
+            console.error(`[SUBCATEGORY TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -49,11 +47,10 @@ test.describe('Subcategory Service E2E Tests', () => {
         // Act
         const result = await subcategoryService.createSubcategory(newSubcategoryData);
 
-        // Assert: Check the service method result
+        // Assert
         assert.strictEqual(result.success, true, 'Service should return success: true');
         assert.ok(result.subcategoryId, 'Service should return a subcategoryId');
 
-        // Assert: Verify directly in the database
         const createdSubcategoryFromDb = await prisma.subcategory.findUnique({
             where: { id: result.subcategoryId },
         });
@@ -66,7 +63,6 @@ test.describe('Subcategory Service E2E Tests', () => {
         assert.strictEqual(createdSubcategoryFromDb.name, newSubcategoryData.name, 'Subcategory name should match');
         assert.strictEqual(createdSubcategoryFromDb.parentCategoryId, testParentCategory.id, 'Subcategory parentCategoryId should match');
 
-        // Also verify that the parent category was updated
         const parentCategoryAfter = await prisma.lotCategory.findUnique({
             where: { id: testParentCategory.id }
         });

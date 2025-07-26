@@ -4,16 +4,24 @@ import assert from 'node:assert';
 import { SellerService } from '../src/services/seller.service';
 import { prisma } from '../src/lib/prisma';
 import type { SellerFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const sellerService = new SellerService();
+const testRunId = `seller-e2e-${uuidv4().substring(0, 8)}`;
+const testSellerEmail = `seller.teste.${testRunId}@example.com`;
 
 test.describe('Seller Service E2E Tests', () => {
     
-    // Clean up any test data before and after tests
+    test.beforeEach(async () => {
+        await prisma.seller.deleteMany({
+            where: { email: testSellerEmail }
+        });
+    });
+
     test.after(async () => {
         try {
             await prisma.seller.deleteMany({
-                where: { email: 'test.seller.service@example.com' }
+                where: { email: testSellerEmail }
             });
         } catch (error) {
             // Ignore errors during cleanup
@@ -22,11 +30,11 @@ test.describe('Seller Service E2E Tests', () => {
     });
 
     test('should create a new seller and verify it in the database', async () => {
-        // Arrange: Define the test data for the new seller
+        // Arrange
         const newSellerData: SellerFormData = {
-            name: 'Test Service Seller Inc.',
+            name: `Test Seller ${testRunId}`,
             contactName: 'Jane Doe',
-            email: 'test.seller.service@example.com',
+            email: testSellerEmail,
             phone: '9876543210',
             address: '456 Test Ave',
             city: 'Testburg',
@@ -36,21 +44,19 @@ test.describe('Seller Service E2E Tests', () => {
             isJudicial: false,
         };
 
-        // Act: Call the SellerService directly
+        // Act
         const result = await sellerService.createSeller(newSellerData);
 
-        // Assert: Check the result of the service method
+        // Assert
         assert.strictEqual(result.success, true, 'SellerService.createSeller should return success: true');
         assert.ok(result.sellerId, 'SellerService.createSeller should return a sellerId');
 
-        // Assert: Verify directly in the database
         const createdSellerFromDb = await prisma.seller.findUnique({
             where: { id: result.sellerId },
         });
 
         assert.ok(createdSellerFromDb, 'Seller should be found in the database after creation');
         
-        // Log the created record for debugging purposes
         console.log('--- Seller Record Found in DB ---');
         console.log(createdSellerFromDb);
         console.log('---------------------------------');

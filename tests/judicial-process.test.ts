@@ -4,52 +4,43 @@ import assert from 'node:assert';
 import { JudicialProcessService } from '../src/services/judicial-process.service';
 import { prisma } from '../src/lib/prisma';
 import type { JudicialProcessFormData, Court, StateInfo, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const processService = new JudicialProcessService();
-const testProcessNumber = '0000123-45.2024.8.26.0001';
+const testRunId = `proc-e2e-${uuidv4().substring(0, 8)}`;
+const testProcessNumber = `0000123-45.${new Date().getFullYear()}.${testRunId}`;
+
 let testCourt: Court;
 let testState: StateInfo;
 let testDistrict: JudicialDistrict;
 let testBranch: JudicialBranch;
 let testSeller: SellerProfileInfo;
+let createdProcessId: string;
 
 test.describe('Judicial Process Service E2E Tests', () => {
 
     test.before(async () => {
         // Create dependency records
-        testState = await prisma.state.create({
-            data: { name: 'Estado de Teste para Processos', uf: 'TP', slug: 'estado-de-teste-processos' }
-        });
-        testCourt = await prisma.court.create({
-            data: { name: 'Tribunal de Teste para Processos', stateUf: 'TP', slug: 'tribunal-teste-processos', website: 'http://test.com' }
-        });
-        testDistrict = await prisma.judicialDistrict.create({
-            data: { 
-                name: 'Comarca de Teste para Processos',
-                slug: 'comarca-teste-processos',
-                courtId: testCourt.id,
-                stateId: testState.id,
-            }
-        });
-        testBranch = await prisma.judicialBranch.create({
-            data: { name: 'Vara de Teste para Processos', slug: 'vara-teste-processos', districtId: testDistrict.id }
-        });
-        testSeller = await prisma.seller.create({
-            data: { name: 'Vara de Teste para Processos', publicId: 'seller-pub-id-proc-test', slug: 'vara-teste-processos', isJudicial: true, judicialBranchId: testBranch.id }
-        });
+        const uf = testRunId.substring(0, 2).toUpperCase();
+        testState = await prisma.state.create({ data: { name: `Estado Proc ${testRunId}`, uf: uf, slug: `estado-proc-${testRunId}` } });
+        testCourt = await prisma.court.create({ data: { name: `Tribunal Proc ${testRunId}`, stateUf: uf, slug: `tribunal-proc-${testRunId}`, website: 'http://test.com' } });
+        testDistrict = await prisma.judicialDistrict.create({ data: { name: `Comarca Proc ${testRunId}`, slug: `comarca-proc-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
+        testBranch = await prisma.judicialBranch.create({ data: { name: `Vara Proc ${testRunId}`, slug: `vara-proc-${testRunId}`, districtId: testDistrict.id } });
+        testSeller = await prisma.seller.create({ data: { name: `Vara ${testRunId}`, publicId: `seller-pub-proc-${testRunId}`, slug: `vara-proc-${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id } });
     });
     
     test.after(async () => {
         try {
-            // Clean up in reverse order of creation
-            await prisma.judicialProcess.deleteMany({ where: { processNumber: testProcessNumber } });
-            await prisma.seller.delete({ where: { id: testSeller.id } });
-            await prisma.judicialBranch.delete({ where: { id: testBranch.id } });
-            await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
-            await prisma.court.delete({ where: { id: testCourt.id } });
-            await prisma.state.delete({ where: { id: testState.id } });
+            if (createdProcessId) {
+                await processService.deleteJudicialProcess(createdProcessId);
+            }
+            await prisma.seller.deleteMany({ where: { name: `Vara ${testRunId}` } });
+            await prisma.judicialBranch.deleteMany({ where: { name: `Vara Proc ${testRunId}` } });
+            await prisma.judicialDistrict.deleteMany({ where: { name: `Comarca Proc ${testRunId}` } });
+            await prisma.court.deleteMany({ where: { name: `Tribunal Proc ${testRunId}` } });
+            await prisma.state.deleteMany({ where: { uf: testRunId.substring(0,2).toUpperCase() } });
         } catch (error) {
-            // Ignore cleanup errors
+             console.error(`[JUDICIAL PROCESS TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
@@ -64,19 +55,19 @@ test.describe('Judicial Process Service E2E Tests', () => {
             branchId: testBranch.id,
             sellerId: testSeller.id,
             parties: [
-                { name: 'Autor Teste E2E', partyType: 'AUTOR' },
-                { name: 'Réu Teste E2E', partyType: 'REU' },
+                { name: `Autor Teste ${testRunId}`, partyType: 'AUTOR' },
+                { name: `Réu Teste ${testRunId}`, partyType: 'REU' },
             ]
         };
 
         // Act
         const result = await processService.createJudicialProcess(newProcessData);
+        if (result.processId) createdProcessId = result.processId;
 
-        // Assert: Check the service method result
+        // Assert
         assert.strictEqual(result.success, true, 'Service should return success: true');
         assert.ok(result.processId, 'Service should return a processId');
 
-        // Assert: Verify directly in the database
         const createdProcessFromDb = await prisma.judicialProcess.findUnique({
             where: { id: result.processId },
             include: { parties: true },
@@ -90,6 +81,6 @@ test.describe('Judicial Process Service E2E Tests', () => {
         assert.strictEqual(createdProcessFromDb.processNumber, newProcessData.processNumber, 'Process number should match');
         assert.strictEqual(createdProcessFromDb.branchId, newProcessData.branchId, 'Process branchId should match');
         assert.strictEqual(createdProcessFromDb.parties.length, 2, 'Should have 2 parties');
-        assert.strictEqual(createdProcessFromDb.parties[0].name, 'Autor Teste E2E', 'First party name should match');
+        assert.strictEqual(createdProcessFromDb.parties[0].name, `Autor Teste ${testRunId}`, 'First party name should match');
     });
 });

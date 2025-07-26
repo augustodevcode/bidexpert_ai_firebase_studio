@@ -4,17 +4,21 @@ import assert from 'node:assert';
 import { CourtService } from '../src/services/court.service';
 import { prisma } from '../src/lib/prisma';
 import type { CourtFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const courtService = new CourtService();
-const testCourtName = 'Tribunal de Teste E2E';
+const testRunId = `court-e2e-${uuidv4().substring(0, 8)}`;
+const testCourtName = `Tribunal de Teste ${testRunId}`;
 
 test.describe('Court Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        await prisma.court.deleteMany({ where: { name: testCourtName }});
+    });
     
     test.after(async () => {
         try {
-            await prisma.court.deleteMany({
-                where: { name: testCourtName }
-            });
+            await prisma.court.deleteMany({ where: { name: testCourtName } });
         } catch (error) {
             // Ignore cleanup errors
         }

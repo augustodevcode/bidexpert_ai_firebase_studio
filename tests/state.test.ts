@@ -4,12 +4,21 @@ import assert from 'node:assert';
 import { StateService } from '../src/services/state.service';
 import { prisma } from '../src/lib/prisma';
 import type { StateFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const stateService = new StateService();
-const testStateName = 'Estado de Teste E2E';
-const testStateUf = 'TE';
+const testRunId = `state-e2e-${uuidv4().substring(0, 8)}`;
+const testStateName = `Estado de Teste ${testRunId}`;
+const testStateUf = testRunId.substring(0, 2).toUpperCase();
 
 test.describe('State Service E2E Tests', () => {
+
+    // Before each test, ensure no conflicting state exists
+    test.beforeEach(async () => {
+        await prisma.state.deleteMany({
+            where: { uf: testStateUf }
+        });
+    });
 
     test.after(async () => {
         try {
@@ -17,7 +26,7 @@ test.describe('State Service E2E Tests', () => {
                 where: { uf: testStateUf }
             });
         } catch (error) {
-            // Ignore cleanup errors, test might have failed before creation
+            // Ignore cleanup errors
         }
         await prisma.$disconnect();
     });
@@ -32,11 +41,10 @@ test.describe('State Service E2E Tests', () => {
         // Act
         const result = await stateService.createState(newStateData);
 
-        // Assert: Check the service method result
+        // Assert
         assert.strictEqual(result.success, true, 'StateService.createState should return success: true');
         assert.ok(result.stateId, 'StateService.createState should return a stateId');
 
-        // Assert: Verify directly in the database
         const createdStateFromDb = await prisma.state.findUnique({
             where: { id: result.stateId },
         });

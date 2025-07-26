@@ -3,13 +3,21 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { CategoryService } from '../src/services/category.service';
 import { prisma } from '../src/lib/prisma';
-import type { LotCategory } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const categoryService = new CategoryService();
-const testCategoryName = 'Test Category E2E';
-const testCategorySlug = 'test-category-e2e';
+const testRunId = `cat-e2e-${uuidv4().substring(0, 8)}`;
+const testCategoryName = `Categoria de Teste ${testRunId}`;
+const testCategorySlug = `categoria-de-teste-${testRunId}`;
 
 test.describe('Category Service E2E Tests', () => {
+
+    // Before each test, ensure no conflicting category exists
+    test.beforeEach(async () => {
+        await prisma.lotCategory.deleteMany({
+            where: { slug: testCategorySlug }
+        });
+    });
     
     test.after(async () => {
         try {
@@ -26,7 +34,7 @@ test.describe('Category Service E2E Tests', () => {
         // Arrange
         const newCategoryData = {
             name: testCategoryName,
-            description: 'A category created for testing purposes.',
+            description: 'Uma categoria criada para fins de teste.',
         };
 
         // Act
