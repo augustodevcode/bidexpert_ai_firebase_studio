@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
 import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo } from '@/types';
-import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw } from 'lucide-react';
+import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { createSeller, getSeller } from '@/app/admin/sellers/actions';
@@ -123,7 +123,7 @@ export default function JudicialProcessForm({
         name: branch.name,
         isJudicial: true,
         judicialBranchId: branch.id,
-      } as SellerFormData);
+      } as any); // Cast para SellerFormData
 
       if (result.success && result.sellerId) {
         toast({ title: "Sucesso!", description: `Comitente "${branch.name}" criado e vinculado.` });
@@ -174,6 +174,7 @@ export default function JudicialProcessForm({
 
 
   return (
+    <div className="space-y-6">
     <Card className="max-w-3xl mx-auto shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
@@ -245,5 +246,52 @@ export default function JudicialProcessForm({
         </form>
       </Form>
     </Card>
+
+    {initialData && (
+        <Card className="max-w-3xl mx-auto shadow-lg mt-6">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <BrainCircuit className="h-6 w-6 text-primary"/> Documentos do Processo
+                </CardTitle>
+                <CardDescription>
+                    Adicione os documentos do processo (editais, despachos, etc.) para que a IA possa extrair informações e auxiliar no cadastro.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                 <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-6 text-center space-y-2">
+                    <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground/70" />
+                    <p className="text-sm font-medium text-muted-foreground">Arraste e solte os arquivos aqui</p>
+                    <p className="text-xs text-muted-foreground">ou</p>
+                    <Button type="button" variant="secondary" size="sm">Selecione os Arquivos</Button>
+                 </div>
+                 
+                 <div>
+                    <h4 className="text-sm font-semibold mb-2">Documentos Carregados</h4>
+                    <div className="space-y-2">
+                        <div className="flex items-center justify-between p-2 border rounded-md bg-background">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-blue-500" />
+                                <span className="text-sm">Edital_Leilao_123.pdf</span>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                        </div>
+                        <div className="flex items-center justify-between p-2 border rounded-md bg-background">
+                            <div className="flex items-center gap-2">
+                                <FileText className="h-5 w-5 text-blue-500" />
+                                <span className="text-sm">Despacho_Penhora_456.pdf</span>
+                            </div>
+                            <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                        </div>
+                    </div>
+                 </div>
+            </CardContent>
+             <CardFooter className="flex justify-end">
+                <Button type="button" disabled>
+                    <Bot className="mr-2 h-4 w-4"/> Extrair Dados com IA
+                </Button>
+             </CardFooter>
+        </Card>
+    )}
+    </div>
   );
 }
