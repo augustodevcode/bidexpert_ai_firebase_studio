@@ -45,7 +45,7 @@ let testCategory: LotCategory | null = null;
 let testAuctioneer: AuctioneerProfileInfo | null = null;
 let testSeller: SellerProfileInfo | null = null;
 
-
+// This function runs once before all tests in this file.
 async function createTestData(): Promise<Auction> {
   testCategory = await prisma.lotCategory.create({
     data: { name: testData.category.name, slug: testData.category.slug, hasSubcategories: false }
@@ -85,9 +85,9 @@ async function createTestData(): Promise<Auction> {
       categoryId: testCategory.id,
       auctionDate: now,
       endDate: endDate,
-      auctionStages: [
-          { name: '1ª Praça', endDate: stage1End, initialPrice: 1500 },
-          { name: '2ª Praça', endDate: endDate, initialPrice: 750 }
+      auctionStages: [ // JSON field
+          { name: '1ª Praça', endDate: stage1End.toISOString(), initialPrice: 1500 },
+          { name: '2ª Praça', endDate: endDate.toISOString(), initialPrice: 750 }
       ]
   };
   
@@ -103,13 +103,15 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
-          categoryId: testCategory!.id
+          categoryId: testCategory!.id,
+          type: testCategory!.name, // This field is required
       }))
   });
 
   return auction as Auction;
 }
 
+// This function runs once after all tests in this file.
 async function cleanupTestData() {
     try {
         if (createdAuction) {
