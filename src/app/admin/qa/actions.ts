@@ -131,3 +131,8 @@ export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean;
     const command = `dotenv -e .env -- tsx ./tests/media.test.ts`;
     return runTestScript(command);
 }
+
+export async function runAuctionCardDetailsTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `npx playwright test tests/ui/auction-card-details.spec.ts`;
+    return runTestScript(command);
+}
