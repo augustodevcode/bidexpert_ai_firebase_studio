@@ -9,7 +9,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
-import { format, differenceInDays, differenceInHours, differenceInMinutes, isPast, differenceInSeconds } from 'date-fns';
+import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/sample-data-helpers';
@@ -27,6 +27,7 @@ import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
   ssr: false,
@@ -130,8 +131,11 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
 
-  const mentalTriggersGlobalSettings = platformSettings.mentalTriggerSettings || {};
+  const hasEditPermission = hasPermission(userProfileWithPermissions, 'manage_all');
+
+  const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchList || {
     showStatusBadge: true,
     showDiscountBadge: true,
@@ -271,34 +275,20 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            <div className="absolute top-2 left-2 flex flex-wrap items-start gap-1 z-10">
-                {auction && sectionBadges.showStatusBadge !== false && (
-                    <Badge className={`text-xs px-2 py-1 shadow-md ${getAuctionStatusColor(auction.status)}`}>
-                        Leilão: {getAuctionStatusText(auction.status)}
-                    </Badge>
-                )}
-                 {sectionBadges.showStatusBadge !== false && (
-                    <Badge variant="outline" className={`text-xs px-1.5 py-0.5 bg-background/80`}>
-                        Lote: {getAuctionStatusText(lot.status)}
-                    </Badge>
-                )}
-                {isViewed && (
-                    <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                        <Eye className="h-3 w-3 mr-0.5" /> Visto
-                    </Badge>
-                )}
-            </div>
-            {auction?.auctioneerLogoUrl && (
-              <div className="absolute bottom-1 right-1 bg-background/80 p-1 rounded-sm shadow max-w-[80px] max-h-[40px] overflow-hidden">
-                <Image
-                  src={auction.auctioneerLogoUrl}
-                  alt={auction.auctioneerName || 'Logo Comitente'}
-                  width={80}
-                  height={40}
-                  className="object-contain h-full w-full"
-                  data-ai-hint={auction.dataAiHint || "logo leiloeiro pequeno"}
-                />
-              </div>
+            {auction?.seller?.logoUrl && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                    <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
+                      <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller.dataAiHintLogo || 'logo comitente'} />
+                      <AvatarFallback>{auction.seller.name.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Comitente: {auction.seller.name}</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
 
@@ -306,6 +296,20 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
+                 <div className="flex items-center gap-2 mb-1">
+                     <Badge 
+                        className={`text-xs px-1.5 py-0.5 shadow-sm
+                            ${getLotStatusColor(lot.status)}
+                        `}
+                        >
+                        {getAuctionStatusText(lot.status)}
+                    </Badge>
+                     {mentalTriggers.map(trigger => (
+                        <Badge key={trigger} variant="secondary" className="text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                           {trigger}
+                        </Badge>
+                     ))}
+                </div>
                 <Link href={lotDetailUrl}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={lot.title}>
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
@@ -315,54 +319,37 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                   Leilão: {lot.auctionName || 'Não especificado'}
                 </p>
               </div>
-              <div className="flex-shrink-0 flex items-center space-x-0.5">
-                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleFavoriteToggle}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handlePreviewOpen}><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
-                {(lot.latitude || lot.longitude || lot.mapAddress || lot.mapEmbedUrl) && (
-                    <Tooltip><TooltipTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleMapPreviewOpen}><MapPin className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Ver Mapa</p></TooltipContent></Tooltip>
-                )}
-                <EntityEditMenu
-                  entityType="lot"
-                  entityId={lot.id}
-                  publicId={lot.publicId}
-                  currentTitle={lot.title}
-                  isFeatured={lot.isFeatured || false}
-                  onUpdate={onUpdate}
+              <EntityEditMenu 
+                 entityType="lot" 
+                 entityId={lot.id}
+                 publicId={lot.publicId} 
+                 currentTitle={lot.title} 
+                 isFeatured={lot.isFeatured || false}
+                 onUpdate={onUpdate}
                 />
-              </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               <div className="flex items-center" title={`Categoria: ${lot.type}`}>
                 {getTypeIcon(lot.type)}
                 <span className="truncate ml-1">{lot.type}</span>
-                 {lot.subcategoryName && (
-                    <>
-                        <ChevronRight className="h-3 w-3 mx-0.5 text-muted-foreground/70 flex-shrink-0" />
-                        <Layers className="h-3 w-3 mr-1 text-primary/70 flex-shrink-0" />
-                        <span className="truncate" title={lot.subcategoryName}>{lot.subcategoryName}</span>
-                    </>
-                )}
               </div>
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span className="truncate" title={displayLocation}>{displayLocation}</span>
               </div>
+               <div className="flex items-center">
+                <Gavel className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate">{lot.bidsCount || 0} Lances</span>
+              </div>
+               <div className="flex items-center">
+                <Eye className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate">{lot.views || 0} Visitas</span>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-1.5 my-2">
-                 {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-                    <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
-                )}
-                {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
-                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
-                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
-                    {trigger}
-                    </Badge>
-                ))}
-            </div>
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
+
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>

@@ -58,9 +58,9 @@ const TimeRemainingBadge: React.FC<{endDate: Date | null, status: Lot['status'],
                 const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
                 const seconds = totalSecondsLeft % 60;
                 if (hours > 0) {
-                  setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                  setRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
                 } else {
-                  setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                  setRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
                 }
             } else {
                  const days = Math.floor(totalSecondsLeft / (3600 * 24));

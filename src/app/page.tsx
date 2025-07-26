@@ -1,3 +1,4 @@
+
 // src/app/page.tsx
 import { Suspense } from 'react';
 import HeroCarousel from '@/components/hero-carousel';
@@ -90,9 +91,9 @@ async function HomePageContent() {
                     key={category.id}
                     title={category.name}
                     subtitle={`${category.itemCount || 0}+ Oportunidades`}
-                    imageUrl={category.logoUrl || categoryAssets[index]?.imageUrl || ''}
+                    imageUrl={category.coverImageUrl || categoryAssets[index]?.imageUrl || ''}
                     imageAlt={category.description || `Ícone para ${category.name}`}
-                    dataAiHint={category.dataAiHintIcon || 'categoria leilao'}
+                    dataAiHint={category.dataAiHintCover || 'categoria leilao'}
                     link={`/category/${category.slug}`}
                 />
             ))}

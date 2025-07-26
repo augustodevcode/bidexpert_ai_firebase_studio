@@ -8,8 +8,10 @@ export class AuctionRepository {
     return prisma.auction.findMany({
       orderBy: { auctionDate: 'desc' },
       include: { 
-        lots: { select: { id: true } },
-        seller: true // Include full seller object
+        _count: { select: { lots: true } },
+        seller: true, // Include full seller object
+        auctioneer: { select: { name: true } },
+        category: { select: { name: true } },
       },
     });
   }
@@ -57,7 +59,7 @@ export class AuctionRepository {
         },
       },
       include: {
-        lots: { select: { id: true } },
+        _count: { select: { lots: true } },
         seller: true,
       },
       orderBy: { auctionDate: 'desc' },

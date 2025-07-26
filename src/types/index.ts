@@ -245,7 +245,7 @@ export interface Auction {
   endDate?: string | Date | null;
   totalLots?: number;
   categoryId?: string;
-  category?: string;
+  category?: LotCategory;
   auctioneer: string;
   auctioneerId?: string;
   auctioneerName?: string; // Denormalized for display
@@ -304,8 +304,8 @@ export interface Auction {
 export interface AuctionStage {
   name: string;
   endDate: string | Date;
+  initialPrice?: number | null;
   statusText?: string;
-  initialPrice?: number;
 }
 
 
@@ -427,6 +427,7 @@ export interface LotCategory {
   hasSubcategories: boolean;
   iconName?: string | null;
   dataAiHintIcon?: string | null;
+  logoUrl?: string;
   coverImageUrl?: string;
   coverImageMediaId?: string | null;
   dataAiHintCover?: string | null;

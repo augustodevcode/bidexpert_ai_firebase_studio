@@ -50,8 +50,8 @@ export const auctionFormSchema = z.object({
   auctionType: z.enum(auctionTypeValues, {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }).optional(),
-  auctioneer: z.string().min(1, { message: "O nome do leiloeiro é obrigatório."}).max(150),
-  seller: z.string().max(150).optional(),
+  auctioneerId: z.string().min(1, { message: "O ID do leiloeiro é obrigatório."}),
+  sellerId: z.string().min(1, { message: "O ID do comitente é obrigatório."}),
   auctionDate: z.date({
     required_error: "A data do leilão é obrigatória.",
     invalid_type_error: "Por favor, insira uma data de leilão válida.",
@@ -75,6 +75,7 @@ export const auctionFormSchema = z.object({
     z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
+      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
       statusText: z.string().optional(),
     })
   ).optional().default([]),

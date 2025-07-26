@@ -1,6 +1,6 @@
 // src/services/auction.service.ts
 import { AuctionRepository } from '@/repositories/auction.repository';
-import type { Auction, AuctionFormData } from '@/types';
+import type { Auction, AuctionFormData, LotCategory } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -15,9 +15,11 @@ export class AuctionService {
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
     return auctions.map(a => ({
       ...a,
-      totalLots: a.lots?.length || 0,
+      totalLots: a._count?.lots ?? a.lots?.length ?? 0,
       sellerLogoUrl: a.seller?.logoUrl,
       sellerSlug: a.seller?.slug || a.seller?.publicId || a.seller?.id,
+      category: a.category as LotCategory | undefined,
+      auctioneerName: a.auctioneer?.name,
     }));
   }
 
@@ -29,10 +31,7 @@ export class AuctionService {
   async getAuctionById(id: string): Promise<Auction | null> {
     const auction = await this.auctionRepository.findById(id);
     if (!auction) return null;
-    return {
-      ...auction,
-      totalLots: auction.lots?.length || 0,
-    };
+    return this.mapAuctionsWithDetails([auction])[0];
   }
   
   async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
@@ -42,7 +41,7 @@ export class AuctionService {
 
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
-      const { auctioneer, seller, categoryId, auctioneerId, sellerId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, ...restOfData } = data;
 
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
@@ -70,7 +69,7 @@ export class AuctionService {
 
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { auctioneer, seller, categoryId, auctioneerId, sellerId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, ...restOfData } = data;
       const dataToUpdate: Prisma.AuctionUpdateInput = { ...restOfData };
       
       if (data.title) {

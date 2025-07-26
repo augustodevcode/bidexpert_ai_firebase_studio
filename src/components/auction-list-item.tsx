@@ -81,7 +81,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
                     <TooltipTrigger asChild>
                         <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} />
+                                <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
                                 <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                             </Avatar>
                         </Link>

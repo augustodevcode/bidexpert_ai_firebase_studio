@@ -162,8 +162,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                         <TooltipTrigger asChild>
                             <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
                                 <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md">
-                                    <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} />
-                                    <AvatarFallback>{sellerName?.charAt(0) || 'C'}</AvatarFallback>
+                                    <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente'} />
+                                    <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                                 </Avatar>
                             </Link>
                         </TooltipTrigger>

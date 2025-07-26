@@ -1,3 +1,4 @@
+
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { prisma } from '../../src/lib/prisma';
@@ -201,6 +202,6 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await expect(cardLocator.getByLabel('Favoritar')).toBeVisible();
     await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();
     await expect(cardLocator.getByLabel('Compartilhar')).toBeVisible();
-    console.log('- Verified: All user action buttons are present.');
+    await expect(cardLocator.getByLabel('Opções de Edição')).toBeVisible();
   });
 });

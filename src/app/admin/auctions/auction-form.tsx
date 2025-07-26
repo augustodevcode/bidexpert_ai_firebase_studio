@@ -99,8 +99,8 @@ export default function AuctionForm({
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
       auctionType: initialData?.auctionType || undefined,
-      auctioneer: initialData?.auctioneer || '', 
-      seller: initialData?.seller || '',       
+      auctioneerId: initialData?.auctioneerId || '', 
+      sellerId: initialData?.sellerId || '',       
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate as Date) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : null,
       mapAddress: initialData?.mapAddress || '',
@@ -341,7 +341,7 @@ export default function AuctionForm({
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="auctioneer"
+                  name="auctioneerId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Leiloeiro Responsável</FormLabel>
@@ -356,7 +356,7 @@ export default function AuctionForm({
                             <p className="p-2 text-sm text-muted-foreground">Nenhum leiloeiro cadastrado</p>
                           ) : (
                             uniqueAuctioneers.map(auc => (
-                              <SelectItem key={auc.id} value={auc.name}>{auc.name}</SelectItem>
+                              <SelectItem key={auc.id} value={auc.id}>{auc.name}</SelectItem>
                             ))
                           )}
                         </SelectContent>
@@ -367,7 +367,7 @@ export default function AuctionForm({
                 />
                 <FormField
                     control={form.control}
-                    name="seller"
+                    name="sellerId"
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Comitente/Vendedor Principal (Opcional)</FormLabel>
@@ -382,7 +382,7 @@ export default function AuctionForm({
                                 <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
                             ) : (
                             uniqueSellers.map(sel => (
-                                <SelectItem key={sel.id} value={sel.name}>{sel.name}</SelectItem>
+                                <SelectItem key={sel.id} value={sel.id}>{sel.name}</SelectItem>
                             ))
                             )}
                         </SelectContent>
@@ -443,16 +443,19 @@ export default function AuctionForm({
                     </Button>
                   )}
                 </div>
-                <div className="grid sm:grid-cols-2 gap-4">
+                <div className="grid sm:grid-cols-3 gap-4">
                   <FormField
                     control={form.control}
                     name={`auctionStages.${index}.name`}
                     render={({ field: stageField }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Nome da Praça/Etapa</FormLabel>
-                        <FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
+                      <FormItem><FormLabel className="text-xs">Nome da Praça/Etapa</FormLabel><FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl><FormMessage /></FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`auctionStages.${index}.initialPrice`}
+                    render={({ field: stageField }) => (
+                      <FormItem><FormLabel className="text-xs">Lance Inicial (R$)</FormLabel><FormControl><Input type="number" {...stageField} placeholder="Ex: 50000.00" value={stageField.value ?? ''} /></FormControl><FormMessage /></FormItem>
                     )}
                   />
                    <FormField
@@ -752,4 +755,3 @@ export default function AuctionForm({
     </TooltipProvider>
   );
 }
-

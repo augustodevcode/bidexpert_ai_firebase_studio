@@ -24,10 +24,23 @@ import {
 export default function UserNav() {
   const { userProfileWithPermissions, loading, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    // You would typically fetch the notification count from an API
+    // For now, we'll just set a placeholder
+    const fetchCount = () => {
+       // Example: setUnreadNotificationsCount(await getMyNotificationCount());
+       // As a placeholder:
+       if(userProfileWithPermissions) {
+           setUnreadNotificationsCount(5); 
+       } else {
+           setUnreadNotificationsCount(0);
+       }
+    };
+    fetchCount();
+  }, [userProfileWithPermissions]);
 
   if (loading || !isClient) {
     return (
@@ -71,7 +84,7 @@ export default function UserNav() {
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/profile" className="flex items-center">
+            <Link href="/profile/edit" className="flex items-center">
              <UserCircle2 className="mr-2 h-4 w-4" /> Meu Perfil
             </Link>
           </DropdownMenuItem>
