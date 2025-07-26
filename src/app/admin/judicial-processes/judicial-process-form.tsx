@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-processes/judicial-process-form.tsx
 'use client';
 
@@ -17,7 +16,7 @@ import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessP
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { createSeller, getSeller } from '@/app/admin/sellers/actions'; // Import createSeller and getSeller
+import { createSeller, getSeller } from '@/app/admin/sellers/actions';
 
 interface JudicialProcessFormProps {
   initialData?: JudicialProcess | null;
