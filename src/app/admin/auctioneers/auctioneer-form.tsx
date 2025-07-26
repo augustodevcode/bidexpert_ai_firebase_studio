@@ -68,7 +68,7 @@ export default function AuctioneerForm({
       logoMediaId: initialData?.logoMediaId || null,
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
-      userId: initialData?.userId || null,
+      userId: initialData?.userId || '',
     },
   });
 

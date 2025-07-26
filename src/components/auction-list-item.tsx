@@ -139,7 +139,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
               </div>
               <div className="flex items-center">
                 <Tag className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span>{auction.category}</span>
+                <span>{auction.category?.name || 'Não especificada'}</span>
               </div>
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />

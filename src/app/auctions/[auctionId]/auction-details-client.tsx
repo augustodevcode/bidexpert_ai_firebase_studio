@@ -223,7 +223,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       <div className="flex items-center" title="Categoria">
                           <Tag className="h-4 w-4 mr-2 text-primary"/>
-                          <span className="truncate">{auction.category}</span>
+                          <span className="truncate">{auction.category?.name || 'Não informada'}</span>
                       </div>
                       <div className="flex items-center" title="Localização Principal">
                           <MapPin className="h-4 w-4 mr-2 text-primary"/>
