@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from '@/components/ui/button';
 import { X } from 'lucide-react';
 import WizardFlow from './WizardFlow';
+import { WizardProvider } from './wizard-context'; // Import provider
 
 interface WizardFlowModalProps {
   isOpen: boolean;
@@ -24,7 +25,10 @@ export default function WizardFlowModal({ isOpen, onClose }: WizardFlowModalProp
           </DialogDescription>
         </DialogHeader>
         <div className="flex-grow w-full h-full">
-          <WizardFlow />
+          {/* Wrap the flow in its own provider for the modal context */}
+          <WizardProvider>
+            <WizardFlow />
+          </WizardProvider>
         </div>
         <DialogFooter className="p-4 border-t sm:justify-end">
           <Button type="button" variant="outline" onClick={onClose}>

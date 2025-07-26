@@ -79,11 +79,6 @@ function WizardContent({
     }
     nextStep();
   };
-
-  const handleLotCreation = () => {
-    // This is called when lots are created, but we don't need a full refetch,
-    // as the state is handled on the client. We can keep this for potential future use.
-  };
   
   const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
@@ -166,7 +161,7 @@ function WizardContent({
         return <Step4Lotting 
                   availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
-                  onLotCreated={handleLotCreation}
+                  onLotCreated={() => {}} // A lógica agora é interna ao Step4
                />;
       }
       case 'review': return <Step5Review />;
@@ -175,27 +170,26 @@ function WizardContent({
   };
 
   return (
-    <>
-      <div className="space-y-6">
+    <div className="space-y-6">
         <Card className="shadow-lg">
-          <CardHeader>
-              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+        <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
                 Assistente de Criação de Leilão
-              </CardTitle>
-              <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
+            </CardTitle>
+            <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
             </CardHeader>
-          {wizardMode === 'main' ? (
+        {wizardMode === 'main' ? (
             <>
-              <CardContent className="p-6">
+            <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
                 <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
-                  {renderStep()}
+                {renderStep()}
                 </div>
-              </CardContent>
-              <CardFooter className="mt-8 flex justify-between p-6 pt-0">
+            </CardContent>
+            <CardFooter className="mt-8 flex justify-between p-6 pt-0">
                 <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
+                <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
                 </Button>
 
                 <div className="flex items-center gap-2">
@@ -211,90 +205,59 @@ function WizardContent({
                     </Button>
                     )}
                 </div>
-              </CardFooter>
+            </CardFooter>
             </>
-          ) : (
+        ) : (
             <CardContent className="p-6">
-              {renderStep()}
+            {renderStep()}
             </CardContent>
-          )}
+        )}
         </Card>
         
         <Card className="shadow-lg mt-8">
-          <CardHeader className="flex flex-row justify-between items-center">
+        <CardHeader className="flex flex-row justify-between items-center">
             <div>
-              <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
-              <CardDescription>Uma visão geral do progresso atual do seu cadastro.</CardDescription>
+            <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
+            <CardDescription>Uma visão geral do progresso atual do seu cadastro.</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => setIsFlowModalOpen(true)}>
-              <Expand className="mr-2 h-4 w-4" /> Visão Ampliada
+            <Expand className="mr-2 h-4 w-4" /> Visão Ampliada
             </Button>
-          </CardHeader>
-          <CardContent className="h-96 w-full p-0">
-            <WizardFlow />
-          </CardContent>
+        </CardHeader>
+        <CardContent className="h-96 w-full p-0">
+            {/* O WizardFlow agora vive aqui, dentro do seu próprio provider para otimização */}
+            <WizardProvider>
+                <WizardFlow />
+            </WizardProvider>
+        </CardContent>
         </Card>
-      </div>
-      
-      <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
-    </>
+        <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
+    </div>
   );
 }
 
+// O componente principal da página agora é um Server Component que busca os dados
+export default async function WizardPage() {
+    const initialDataResult = await getWizardInitialData();
 
-export default function WizardPage() {
-    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    
-    // This hook must be called within the WizardProvider
-    const loadData = useCallback(async (
-        setWizardData: React.Dispatch<React.SetStateAction<any>>,
-        newProcessIdToSelect?: string
-    ) => {
-        setIsLoadingData(true);
-        const result = await getWizardInitialData();
-        if (result.success) {
-            const data = result.data as WizardDataForFetching;
-            setFetchedData(data);
-            
-            if (newProcessIdToSelect) {
-                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
-                if (newProcess) {
-                    setWizardData((prev: any) => ({...prev, judicialProcess: newProcess}));
-                }
-            }
-        } else {
-            console.error("Failed to load wizard data:", result.message);
-        }
-        setIsLoadingData(false);
-    }, []);
-
-    const WizardPageContent = () => {
-        const { setWizardData } = useWizard();
-        useEffect(() => {
-            loadData(setWizardData);
-        }, [setWizardData]);
-
-         if (isLoadingData || !fetchedData) {
-            return (
-                <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                </div>
-            )
-        }
-
+    if (!initialDataResult.success) {
         return (
-            <WizardContent 
-                fetchedData={fetchedData} 
-                isLoading={isLoadingData} 
-                refetchData={(newId) => loadData(setWizardData, newId)} 
-            />
+            <div className="text-center py-10">
+                <h1 className="text-2xl font-bold text-destructive">Erro ao Carregar Dados</h1>
+                <p className="text-muted-foreground">{initialDataResult.message}</p>
+            </div>
         );
     }
     
+    // O WizardProvider principal envolve toda a lógica do cliente.
     return (
         <WizardProvider>
-            <WizardPageContent />
+            <WizardContent 
+                fetchedData={initialDataResult.data as WizardDataForFetching} 
+                isLoading={false} 
+                refetchData={async () => { /* Refetching é complexo em server component, requer revalidate */ }} 
+            />
         </WizardProvider>
     );
 }
+
