@@ -9,6 +9,7 @@ import PropertiesPanel from './components/PropertiesPanel';
 import DataSourceManager from './components/DataSourceManager';
 import PreviewPanel from './components/PreviewPanel';
 import VariablePanel from './components/VariablePanel';
+import MediaLibrary from './components/MediaLibrary';
 import { steps } from './tour';
 import styles from './styles/ReportBuilder.css';
 
@@ -129,6 +130,40 @@ const BidReportBuilder = () => {
     }
   };
 
+  const handleExportReport = async (format) => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const report = designer.GetReport();
+      const reportJson = report.serialize();
+
+      const response = await fetch('/api/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          format,
+          report: reportJson,
+        }),
+      });
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `report.${format}`;
+      a.click();
+    }
+  };
+
+  const handleSelectImage = (image) => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const report = designer.GetReport();
+      const control = designer.CreateControl('XRPictureBox', report);
+      control.imageUrl = image.url;
+      report.bands.detail.controls.add(control);
+    }
+  };
+
   return (
     <DndProvider backend={HTML5Backend}>
       <div className={styles.container}>
@@ -138,8 +173,9 @@ const BidReportBuilder = () => {
           <div className="data-source-manager" style={{ width: '200px', marginRight: '20px' }}>
             <DataSourceManager onSelectDataSource={handleSelectDataSource} />
             <VariablePanel />
+            <MediaLibrary onSelectImage={handleSelectImage} />
             <div className="toolbar">
-              <Toolbar onAddElement={handleAddElement} onSaveReport={handleSaveReport} onLoadReport={handleLoadReport} />
+              <Toolbar onAddElement={handleAddElement} onSaveReport={handleSaveReport} onLoadReport={handleLoadReport} onExportReport={handleExportReport} />
             </div>
           </div>
           <div className="report-designer" style={{ flex: 1 }}>

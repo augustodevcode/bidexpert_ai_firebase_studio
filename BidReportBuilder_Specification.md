@@ -118,6 +118,17 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   When a variable is dropped onto the designer, it is added to the report as a text element with a special syntax (e.g., `{{auction.name}}`).
 *   The backend API replaces the variable placeholders with the actual data from the database when the report is previewed, displayed, or exported.
 
+### 6.7. Export Functionality
+
+*   The `Toolbar` component contains `Export` buttons for PDF, Excel, Word, and PowerPoint formats.
+*   The `handleExportReport` function in the `BidReportBuilder` component uses the backend API to export the report to the selected format.
+*   The backend API uses the DevExpress Reporting API to export the report to the selected format.
+
+### 6.8. Media Library Integration
+
+*   The `MediaLibrary` component fetches a list of images from the backend API and displays them to the user.
+*   The `handleSelectImage` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to add the selected image to the report.
+
 ## 7. Backend Implementation Details
 
 ### 7.1. API Routes

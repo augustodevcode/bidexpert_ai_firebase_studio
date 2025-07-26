@@ -1,6 +1,6 @@
 import React from 'react';
 
-const Toolbar = ({ onAddElement, onSaveReport, onLoadReport }) => {
+const Toolbar = ({ onAddElement, onSaveReport, onLoadReport, onExportReport }) => {
   return (
     <div>
       <h3>Toolbar</h3>
@@ -12,6 +12,11 @@ const Toolbar = ({ onAddElement, onSaveReport, onLoadReport }) => {
       <hr />
       <button onClick={onSaveReport}>Save Report</button>
       <button onClick={onLoadReport}>Load Report</button>
+      <hr />
+      <button onClick={() => onExportReport('pdf')}>Export to PDF</button>
+      <button onClick={() => onExportReport('xlsx')}>Export to Excel</button>
+      <button onClick={() => onExportReport('docx')}>Export to Word</button>
+      <button onClick={() => onExportReport('pptx')}>Export to PowerPoint</button>
     </div>
   );
 };
