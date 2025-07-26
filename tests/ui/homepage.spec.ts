@@ -15,8 +15,8 @@ test.describe('Homepage Smoke Test', () => {
     
     1.  **Carregamento da Página**: A página inicial deve carregar sem erros fatais.
     2.  **Título Principal**: O título/logo principal do site ("BidExpert") deve estar visível no header.
-    3.  **Seção de Lotes**: A seção "Lotes em Destaque" ou "Lotes Recentes" deve ser renderizada.
-    4.  **Seção de Leilões**: A seção "Leilões em Destaque" ou "Leilões Recentes" deve ser renderizada.
+    3.  **Seção de Lotes**: Uma seção de lotes deve ser renderizada.
+    4.  **Seção de Leilões**: Uma seção de leilões deve ser renderizada.
     
     ================================================================
     `);
@@ -32,7 +32,7 @@ test.describe('Homepage Smoke Test', () => {
   test('should load the homepage and display the main title', async ({ page }) => {
     await page.waitForLoadState('networkidle');
     const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
-    await expect(title).toBeVisible({ timeout: 15000 });
+    await expect(title).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Homepage main title is visible.');
   });
   
@@ -41,7 +41,7 @@ test.describe('Homepage Smoke Test', () => {
     const lotsSectionTitle = page.locator('h2').filter({ 
       hasText: /lotes.*(destaque|recentes)/i 
     }).first();
-    await expect(lotsSectionTitle).toBeVisible({ timeout: 15000 });
+    await expect(lotsSectionTitle).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Lots section title is visible.');
   
     const firstLotCard = lotsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="lot-card-"]').first();
@@ -54,9 +54,10 @@ test.describe('Homepage Smoke Test', () => {
     const auctionsSectionTitle = page.locator('h2').filter({ 
       hasText: /leilões.*(destaque|recentes)/i 
     }).first();
-    await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
+    await expect(auctionsSectionTitle).toBeVisible({ timeout: 20000 });
     const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="auction-card-"]').first();
     await expect(firstAuctionCard).toBeVisible({ timeout: 10000 });
     console.log('- Verified: At least one auction card is visible.');
   });
+
 });

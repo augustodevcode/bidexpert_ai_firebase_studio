@@ -23,7 +23,8 @@ async function HomePageContent() {
     }),
     prisma.lot.findMany({ 
         take: 8, 
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
+        include: { auction: { select: { title: true } } }
     }),
     getLotCategories(),
   ]);

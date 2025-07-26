@@ -5,6 +5,8 @@ import { slugify } from '../../src/lib/sample-data-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
+let prisma: PrismaClient;
+
 const testRunId = `card-test-${uuidv4().substring(0, 8)}`;
 console.log(`[auction-card-details.spec.ts] Using testRunId: ${testRunId}`);
 
@@ -42,7 +44,6 @@ const testData = {
   }
 };
 
-let prisma: PrismaClient;
 let createdAuction: Auction | null = null;
 let testCategory: LotCategory;
 let testAuctioneer: AuctioneerProfileInfo;
@@ -123,7 +124,10 @@ async function createTestData(): Promise<Auction> {
 async function cleanupTestData() {
     console.log(`[cleanupTestData] Starting cleanup for run: ${testRunId}`);
     try {
-        if (!prisma) return;
+        if (!prisma) {
+          console.log('Prisma client not initialized, skipping cleanup');
+          return;
+        }
         if (createdAuction) {
             await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
             console.log(`[cleanupTestData] Deleted lots for auction ID: ${createdAuction.id}`);
