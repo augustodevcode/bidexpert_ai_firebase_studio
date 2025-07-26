@@ -22,7 +22,7 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente de timeline
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 
 interface AuctionCardProps {
@@ -145,7 +145,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   return (
     <TooltipProvider>
       <>
-        <Card className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+        <Card data-ai-id={`auction-card-${auction.id}`} className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
           <div className="relative">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-[16/10] relative bg-muted">
@@ -156,12 +156,13 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
                   data-ai-hint={mainImageDataAiHint}
+                  data-ai-id="auction-card-main-image"
                 />
                  {sellerLogoUrl && (
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
-                                <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md">
+                                <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md" data-ai-id="auction-card-seller-logo">
                                     <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente'} />
                                     <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                                 </Avatar>
@@ -174,12 +175,12 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 )}
               </div>
             </Link>
-             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id="auction-card-badges">
                 <Badge className={`text-xs px-2 py-1 ${statusDisplay.className}`}>
                     {statusDisplay.text}
                 </Badge>
             </div>
-             <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
+             <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id="auction-card-mental-triggers">
                 {mentalTriggers.map(trigger => (
                     <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
                         {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
@@ -253,21 +254,21 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
           <CardContent className="p-4 flex-grow">
             <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
-              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`}>ID: {auction.publicId || auction.id}</span>
+              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
               {auctionTypeDisplay && (
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1" data-ai-id="auction-card-type">
                     {auctionTypeDisplay.icon}
                     <span>{auctionTypeDisplay.label}</span>
                 </div>
                 )}
             </div>
             <Link href={`/auctions/${auction.publicId || auction.id}`}>
-              <h3 className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
+              <h3 data-ai-id="auction-card-title" className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
                 {auction.title}
               </h3>
             </Link>
             
-            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2">
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2" data-ai-id="auction-card-counters">
                 <div className="flex items-center" title={`${auction.totalLots || 0} Lotes`}>
                     <ListChecks className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
                     <span className="truncate">{auction.totalLots || 0} Lotes</span>
@@ -283,7 +284,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             </div>
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
-                <div className="space-y-1 mb-3 text-xs">
+                <div className="space-y-1 mb-3 text-xs" data-ai-id="auction-card-timeline">
                     <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             ) : null}
@@ -292,7 +293,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
           </CardContent>
           <CardFooter className="p-4 border-t flex-col items-start space-y-2">
             {auction.initialOffer && (
-              <div className="w-full">
+              <div className="w-full" data-ai-id="auction-card-initial-offer">
                 <p className="text-xs text-muted-foreground">
                   {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
                 </p>

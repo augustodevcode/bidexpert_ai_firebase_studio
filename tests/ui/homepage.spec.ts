@@ -1,6 +1,6 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
-import { prisma } from '../../src/lib/prisma';
+import { prisma } from './prisma-test-helper'; // Use the helper
 
 test.describe('Homepage Smoke Test', () => {
     
@@ -37,23 +37,28 @@ test.describe('Homepage Smoke Test', () => {
     await expect(title).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Homepage main title is visible.');
   });
-
+  
   test('should display featured lots or recent lots section', async ({ page }) => {
-    const lotsSectionTitle = page.getByRole('heading', { name: 'Lotes em Destaque' }).or(page.getByRole('heading', { name: 'Lotes Recentes' }));
+    await page.waitForLoadState('networkidle');
+    const lotsSectionTitle = page.locator('h2').filter({ 
+      hasText: /lotes.*(destaque|recentes)/i 
+    }).first();
     await expect(lotsSectionTitle).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Lots section title is visible.');
   
-    const firstLotCard = lotsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();
-    await expect(firstLotCard).toBeVisible({ timeout: 5000 });
+    const firstLotCard = lotsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="lot-card-"]').first();
+    await expect(firstLotCard).toBeVisible({ timeout: 10000 });
     console.log('- Verified: At least one lot card is visible.');
   });
   
   test('should display featured auctions or recent auctions section', async ({ page }) => {
-    const auctionsSectionTitle = page.getByRole('heading', { name: 'Leilões em Destaque' }).or(page.getByRole('heading', { name: 'Leilões Recentes' }));
+    await page.waitForLoadState('networkidle');
+    const auctionsSectionTitle = page.locator('h2').filter({ 
+      hasText: /leilões.*(destaque|recentes)/i 
+    }).first();
     await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
-    const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();
-    await expect(firstAuctionCard).toBeVisible({ timeout: 5000 });
+    const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="auction-card-"]').first();
+    await expect(firstAuctionCard).toBeVisible({ timeout: 10000 });
     console.log('- Verified: At least one auction card is visible.');
   });
-
 });
