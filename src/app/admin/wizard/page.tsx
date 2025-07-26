@@ -1,3 +1,4 @@
+
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -22,7 +23,7 @@ import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
-import BemForm from '@/app/admin/bens/bem-form';
+import BemForm from '@/components/admin/bens/bem-form';
 
 
 const allSteps = [
@@ -241,7 +242,7 @@ function WizardContent({
   );
 }
 
-function WizardPage() {
+function WizardPageContent() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider

@@ -1,3 +1,4 @@
+
 // src/components/admin/bens/bem-form.tsx
 'use client';
 

@@ -80,7 +80,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                         <Link href={auction.seller.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
                                 <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} />
-                                <AvatarFallback>{sellerName?.charAt(0) || 'C'}</AvatarFallback>
+                                <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                             </Avatar>
                         </Link>
                     </TooltipTrigger>
@@ -122,7 +122,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
               </div>
             </div>
             
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               <div className="flex items-center">
                 {auctionTypeDisplay.icon && React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
                 <span>{auctionTypeDisplay.label}</span>
