@@ -161,7 +161,6 @@ function WizardContent({
         return <Step4Lotting 
                   availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
-                  onLotCreated={() => {}} // A lógica agora é interna ao Step4
                />;
       }
       case 'review': return <Step5Review />;
@@ -170,7 +169,8 @@ function WizardContent({
   };
 
   return (
-    <div className="space-y-6">
+    <>
+      <div className="space-y-6">
         <Card className="shadow-lg">
         <CardHeader>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -230,6 +230,7 @@ function WizardContent({
         </Card>
         <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
     </div>
+    </>
   );
 }
 

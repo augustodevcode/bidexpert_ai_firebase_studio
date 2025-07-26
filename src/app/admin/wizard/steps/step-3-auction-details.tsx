@@ -33,8 +33,8 @@ const auctionDetailsSchema = z.object({
   title: z.string().min(10, 'O título deve ter pelo menos 10 caracteres.'),
   description: z.string().optional(),
   categoryId: z.string().min(1, 'A categoria principal é obrigatória.'),
-  auctioneer: z.string().min(1, 'Selecione um leiloeiro.'),
-  seller: z.string().min(1, 'Selecione um comitente.'),
+  auctioneerId: z.string().min(1, 'Selecione um leiloeiro.'),
+  sellerId: z.string().min(1, 'Selecione um comitente.'),
   auctionDate: z.date({ required_error: 'A data de início é obrigatória.' }),
   endDate: z.date().optional().nullable(),
   auctionStages: z.array(
@@ -61,8 +61,8 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
       title: wizardData.auctionDetails?.title || '',
       description: wizardData.auctionDetails?.description || '',
       categoryId: wizardData.auctionDetails?.categoryId || '',
-      auctioneer: wizardData.auctionDetails?.auctioneer || '',
-      seller: wizardData.auctionDetails?.seller || '',
+      auctioneerId: wizardData.auctionDetails?.auctioneerId || '',
+      sellerId: wizardData.auctionDetails?.sellerId || '',
       auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
       endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
       auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, endDate: new Date(stage.endDate as Date)})) || [{ name: '1ª Praça', endDate: new Date() }],
@@ -85,12 +85,17 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
   const judicialProcessSellerName = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess
     ? wizardData.judicialProcess.sellerName
     : null;
+    
+  const judicialProcessSellerId = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess
+    ? wizardData.judicialProcess.sellerId
+    : null;
+
 
   useEffect(() => {
-    if (judicialProcessSellerName && form.getValues('seller') !== judicialProcessSellerName) {
-      form.setValue('seller', judicialProcessSellerName);
+    if (judicialProcessSellerId && form.getValues('sellerId') !== judicialProcessSellerId) {
+      form.setValue('sellerId', judicialProcessSellerId);
     }
-  }, [judicialProcessSellerName, form]);
+  }, [judicialProcessSellerId, form]);
 
   const availableSellers = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
@@ -101,16 +106,18 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
 
   useEffect(() => {
     const subscription = form.watch((value) => {
-      const auctioneerDetails = auctioneers.find(a => a.name === value.auctioneer);
-      const sellerDetails = sellers.find(s => s.name === value.seller);
+      const auctioneerDetails = auctioneers.find(a => a.id === value.auctioneerId);
+      const sellerDetails = sellers.find(s => s.id === value.sellerId);
       
       setWizardData(prev => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
           ...value,
-          auctioneerId: auctioneerDetails ? auctioneerDetails.id : prev.auctionDetails?.auctioneerId,
-          sellerId: sellerDetails ? sellerDetails.id : prev.auctionDetails?.sellerId,
+          auctioneer: auctioneerDetails?.name,
+          seller: sellerDetails?.name,
+          auctioneerId: auctioneerDetails?.id,
+          sellerId: sellerDetails?.id,
         }
       }));
     });
@@ -127,8 +134,8 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
           <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="auctioneer" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctioneers.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="seller" render={({ field }) => (<FormItem><FormLabel>Comitente</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{availableSellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctioneers.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{availableSellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
           </div>
           
           <Separator />
