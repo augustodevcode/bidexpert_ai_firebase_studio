@@ -47,7 +47,6 @@ let testCategory: LotCategory;
 let testAuctioneer: AuctioneerProfileInfo;
 let testSeller: SellerProfileInfo;
 
-// This function runs once before all tests in this file.
 async function createTestData(): Promise<Auction> {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
   
@@ -120,7 +119,6 @@ async function createTestData(): Promise<Auction> {
   return auction as Auction;
 }
 
-// This function runs once after all tests in this file.
 async function cleanupTestData() {
     console.log(`[cleanupTestData] Starting cleanup for run: ${testRunId}`);
     try {
@@ -130,6 +128,7 @@ async function cleanupTestData() {
             await prisma.auction.deleteMany({ where: { id: createdAuction.id } });
             console.log(`[cleanupTestData] Deleted auction: ${createdAuction.title}`);
         }
+        // It's safer to delete by a unique field from the test run
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
         console.log(`[cleanupTestData] Deleted sellers for run: ${testRunId}`);
         await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
@@ -166,6 +165,9 @@ test.describe('Auction Card and List Item UI Validation', () => {
   });
 
   test('should display all required information on the Auction Card', async ({ page }) => {
+    console.log('--- [Test Case] Validating Auction Card UI ---');
+    console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
+    
     const cardLocator = page.locator(`.group:has-text("${testData.auction.title}")`).first();
     await expect(cardLocator).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Auction card is visible.');
@@ -177,7 +179,8 @@ test.describe('Auction Card and List Item UI Validation', () => {
     
     // Main Info
     await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(2);
+    // There are 3 links to the auction page now: image, title, and "Ver Lotes" button.
+    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(3);
     await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
     console.log('- Verified: Title, links, and public ID are correct.');
 
@@ -191,6 +194,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await expect(cardLocator.getByTitle(`${testData.auction.totalLots} Lotes`)).toBeVisible();
     await expect(cardLocator.getByText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)).toBeVisible();
     await expect(cardLocator.getByText('Extrajudicial')).toBeVisible();
+    
     await expect(cardLocator.getByTitle(`${testData.auction.visits} Visitas`)).toBeVisible();
     await expect(cardLocator.getByTitle(`${testData.auction.totalHabilitatedUsers} Usuários Habilitados`)).toBeVisible();
     console.log('- Verified: All counters and data points are correct.');
@@ -208,5 +212,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();
     await expect(cardLocator.getByLabel('Compartilhar')).toBeVisible();
     await expect(cardLocator.getByLabel('Opções de Edição')).toBeVisible();
+    console.log('- Verified: All user action buttons are present on hover.');
+    console.log('--- ✅ Test Case Passed ---');
   });
 });

@@ -28,6 +28,24 @@ let regularUser: UserProfileWithPermissions;
 let analystUser: UserProfileWithPermissions;
 
 test.describe('User Habilitation E2E Test', () => {
+    
+    console.log(`
+    ================================================================
+    [E2E TEST PLAN - User Habilitation]
+    ================================================================
+    
+    Este teste valida o fluxo completo de habilitação de um usuário.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Bloqueio Inicial**: Um usuário recém-criado (ou com documentos pendentes) NÃO deve conseguir dar lances.
+    2.  **Envio de Documentos**: O sistema deve registrar o envio de um documento e alterar o status do usuário para "Em Análise".
+    3.  **Aprovação de Documentos**: Um usuário "Analista" deve conseguir aprovar os documentos, alterando o status geral do usuário para "Habilitado".
+    4.  **Habilitação por Leilão**: Mesmo com o cadastro aprovado, o usuário ainda NÃO deve conseguir dar lances até se habilitar para o leilão específico.
+    5.  **Lance Pós-Habilitação**: Após se habilitar para o leilão, o usuário deve conseguir registrar um lance com sucesso no lote.
+    
+    ================================================================
+    `);
 
     test.before(async () => {
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Starting... ---`);
@@ -43,7 +61,11 @@ test.describe('User Habilitation E2E Test', () => {
         assert.ok(analystRes.success && analystRes.userId, 'Analyst user creation failed.');
         analystUser = (await userService.getUserById(analystRes.userId!))!;
         
-        testDocumentType = await prisma.documentType.create({ data: { name: `RG Teste ${testRunId}`, description: 'Documento de RG para teste', isRequired: true, appliesTo: 'PHYSICAL' } });
+        testDocumentType = await prisma.documentType.upsert({ 
+            where: { name: `RG Teste E2E ${testRunId}`}, 
+            update: {},
+            create: { name: `RG Teste E2E ${testRunId}`, description: 'Documento de RG para teste', isRequired: true, appliesTo: 'PHYSICAL,LEGAL' } 
+        });
 
         testCategory = await prisma.lotCategory.create({ data: { name: `Cat Hab ${testRunId}`, slug: `cat-hab-${testRunId}`, hasSubcategories: false } });
         testAuctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Hab ${testRunId}`, slug: `auct-hab-${testRunId}`, publicId: `auct-pub-hab-${testRunId}` } });
@@ -72,6 +94,7 @@ test.describe('User Habilitation E2E Test', () => {
             if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
             if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
             if (testDocumentType) await prisma.documentType.delete({ where: { id: testDocumentType.id } });
+            await prisma.usersOnRoles.deleteMany({ where: { userId: { in: [regularUser.id, analystUser.id] } } });
             await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
         } catch (error) {
             console.error("[Habilitation E2E Teardown] Error during cleanup:", error);
@@ -79,12 +102,12 @@ test.describe('User Habilitation E2E Test', () => {
         await prisma.$disconnect();
         console.log(`--- [Habilitation E2E Teardown - ${testRunId}] Complete. ---`);
     });
-    
-    test('should fail to bid if user has not submitted documents', async () => {
+
+    test('should fail to bid if user has not submitted required documents', async () => {
         console.log('\n--- Test: Bidding without submitting any documents ---');
         const bidResult = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResult.success, false, 'Bidding should fail without approved documents');
-        assert.match(bidResult.message, /Apenas usuários com status 'HABILITADO'/, 'Error message should mention habilitation status.');
+        assert.match(bidResult.message, /Apenas usuários com status \'HABILITADO\'/, 'Error message should mention habilitation status.');
         console.log('- PASSED: Blocked bid for user with pending documents.');
     });
 
@@ -93,6 +116,7 @@ test.describe('User Habilitation E2E Test', () => {
 
         const saveDocResult = await saveUserDocument(regularUser.id, testDocumentType.id, `/fake/path/doc-${testRunId}.pdf`, `doc-${testRunId}.pdf`);
         assert.ok(saveDocResult.success, `Saving user document should succeed. Error: ${saveDocResult.message}`);
+        
         let updatedUser = await userService.getUserById(regularUser.id);
         assert.strictEqual(updatedUser?.habilitationStatus, 'PENDING_ANALYSIS', 'User status should be PENDING_ANALYSIS after upload.');
         console.log('- Step 1: Document uploaded and user status is PENDING_ANALYSIS.');

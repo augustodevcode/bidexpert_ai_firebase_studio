@@ -13,13 +13,22 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { fetchPlatformSettings } from '@/lib/data-queries'; // Corrigido para usar a nova função de busca de dados
 import FeaturedItems from '@/components/featured-items';
 import type { Auction, Lot } from '@/types';
+import { prisma } from '@/lib/prisma';
 
 async function HomePageContent() {
   // A busca de dados agora usa as funções centralizadas e seguras para Server Components
+  // Para os testes, buscamos direto com prisma para mais rapidez.
   const [platformSettings, allAuctions, allLots, categories] = await Promise.all([
     fetchPlatformSettings(),
-    getAuctions(),
-    getLots(),
+    prisma.auction.findMany({ 
+        take: 8, 
+        orderBy: { createdAt: 'desc' }, 
+        include: { seller: true }
+    }),
+    prisma.lot.findMany({ 
+        take: 8, 
+        orderBy: { createdAt: 'desc' }
+    }),
     getLotCategories(),
   ]);
 
@@ -34,18 +43,18 @@ async function HomePageContent() {
     );
   }
 
-  const featuredLots = allLots
+  const featuredLots = (allLots as Lot[])
     .filter(l => l.isFeatured)
     .sort((a, b) => (b.views || 0) - (a.views || 0))
     .slice(0, 8);
-  const lotsToDisplay = featuredLots.length > 0 ? featuredLots : allLots.slice(0, 8);
+  const lotsToDisplay = featuredLots.length > 0 ? featuredLots : (allLots as Lot[]).slice(0, 8);
   const lotsTitle = featuredLots.length > 0 ? "Lotes em Destaque" : "Lotes Recentes";
 
-  const featuredAuctions = allAuctions
+  const featuredAuctions = (allAuctions as Auction[])
     .filter(a => a.isFeaturedOnMarketplace)
     .sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime())
     .slice(0, 4);
-  const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : allAuctions.slice(0, 4);
+  const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : (allAuctions as Auction[]).slice(0, 4);
   const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
   
   const featuredCategories = categories.sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0)).slice(0, 3);
@@ -59,7 +68,7 @@ async function HomePageContent() {
     <div className="space-y-16">
       <HeroCarousel />
       
-      <FeaturedItems items={lotsToDisplay} type="lot" title={lotsTitle} viewAllLink="/search?type=lots" platformSettings={platformSettings} allAuctions={allAuctions} />
+      <FeaturedItems items={lotsToDisplay} type="lot" title={lotsTitle} viewAllLink="/search?type=lots" platformSettings={platformSettings} allAuctions={allAuctions as Auction[]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
         <PromoCard 

@@ -1,20 +1,21 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
+import { prisma } from '../../src/lib/prisma';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 test.describe('Homepage Smoke Test', () => {
 
   test.beforeEach(async ({ page }) => {
-    // This script runs in the browser context, before the page loads.
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
-    // Now, navigate to the page. The init script will run before any of the page's scripts.
     await page.goto('/');
     console.log('[Homepage Test] Navigated to homepage.');
   });
 
   test('should load the homepage and display the main title', async ({ page }) => {
-    const title = page.getByRole('link', { name: 'BidExpert' }).first();
+    // This is a more stable selector that doesn't rely on the exact text which might be dynamic.
+    const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Homepage main title is visible.');
   });

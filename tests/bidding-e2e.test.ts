@@ -44,6 +44,38 @@ async function sleep(ms: number) {
 
 test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`, () => {
 
+    console.log(`
+    ================================================================
+    [E2E TEST PLAN - Bidding & Auction Lifecycle]
+    ================================================================
+    
+    Este teste valida o fluxo completo de criação e interação com leilões e lotes.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Setup de Dados**:
+        - Deve criar com sucesso todos os tipos de entidades: usuários, perfis, leiloeiros, comitentes (judiciais e extrajudiciais), categorias, e a hierarquia judicial completa.
+        - Deve criar com sucesso todos os tipos de leilões: Judicial, Extrajudicial, Silencioso, Holandês e Tomada de Preços.
+        - Deve criar e associar corretamente Bens e Lotes aos seus respectivos leilões.
+
+    2.  **Habilitação e Lances (Leilão Padrão)**:
+        - Um usuário com status 'HABILITADO' deve conseguir se habilitar para um leilão específico.
+        - Um lance válido (maior que o atual) de um usuário habilitado deve ser aceito e atualizar o preço do lote.
+        - Um lance subsequente maior de outro usuário deve ser aceito e se tornar o lance mais alto.
+        - No encerramento do lote, o usuário com o maior lance deve ser declarado o vencedor.
+
+    3.  **Lógica de Leilão Holandês (Reverso)**:
+        - O preço do lote deve diminuir automaticamente com o tempo com base no 'decrementAmount' e 'decrementIntervalSeconds'.
+        - O primeiro lance ("comprar") em um leilão holandês deve encerrar o lote e declarar o licitante como vencedor.
+        - O preço não deve cair abaixo do 'floorPrice' definido.
+
+    4.  **Lógica de Leilão Silencioso**:
+        - Lances devem ser aceitos, mas não devem atualizar o preço público do lote.
+        - O vencedor só deve ser determinado após o encerramento do lote.
+    
+    ================================================================
+    `);
+
     test.before(async () => {
         console.log(`--- [E2E Setup - ${testRunId}] Starting prerequisite data setup ---`);
         
@@ -145,7 +177,10 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         try {
             await prisma.bid.deleteMany({ where: { bidderId: { in: biddingUsers.map(u => u.id) } }});
             const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean);
-            if (lotIds.length > 0) await prisma.lot.deleteMany({ where: { id: { in: lotIds as string[] } } });
+            if (lotIds.length > 0) {
+              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds as string[] } }});
+              await prisma.lot.deleteMany({ where: { id: { in: lotIds as string[] } } });
+            }
             
             const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean);
             if (auctionIds.length > 0) {
