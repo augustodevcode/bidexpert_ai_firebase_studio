@@ -3,6 +3,18 @@ import { getSession } from 'next-auth/client'
 
 const prisma = new PrismaClient()
 
+const replaceVariables = async (definition, context) => {
+  // This is a placeholder for the actual implementation
+  // You will need to parse the definition and replace the variables
+  // with the actual data from the database.
+  let definitionString = JSON.stringify(definition);
+  for (const key in context) {
+    const regex = new RegExp(`{{${key}}}`, 'g');
+    definitionString = definitionString.replace(regex, context[key]);
+  }
+  return JSON.parse(definitionString);
+};
+
 export default async function handle(req, res) {
   const session = await getSession({ req })
 
@@ -14,10 +26,22 @@ export default async function handle(req, res) {
 
   switch (method) {
     case 'GET':
-      const reports = await prisma.report.findMany({
-        where: { ownerId: session.user.id },
-      })
-      res.json(reports)
+      if (req.query.id) {
+        const report = await prisma.report.findUnique({
+          where: { id: parseInt(req.query.id) },
+        });
+        const context = {
+          'user.name': session.user.name,
+          'user.email': session.user.email,
+        };
+        const updatedDefinition = await replaceVariables(report.definition, context);
+        res.json({ ...report, definition: updatedDefinition });
+      } else {
+        const reports = await prisma.report.findMany({
+          where: { ownerId: session.user.id },
+        });
+        res.json(reports);
+      }
       break
     case 'POST':
       const { title, description, definition } = req.body

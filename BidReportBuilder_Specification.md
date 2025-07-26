@@ -111,6 +111,13 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   The `handleSaveReport` function serializes the report to JSON and sends it to the backend API to be saved to the database.
 *   The `handleLoadReport` function fetches a report from the backend API and loads it into the designer.
 
+### 6.6. Variable Referencing and Drag-and-Drop
+
+*   The `VariablePanel` component fetches a list of available variables from the backend API and displays them to the user.
+*   The variables are draggable and can be dropped onto the report design surface.
+*   When a variable is dropped onto the designer, it is added to the report as a text element with a special syntax (e.g., `{{auction.name}}`).
+*   The backend API replaces the variable placeholders with the actual data from the database when the report is previewed, displayed, or exported.
+
 ## 7. Backend Implementation Details
 
 ### 7.1. API Routes

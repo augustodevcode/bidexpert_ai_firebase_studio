@@ -1,16 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import Joyride from 'react-joyride';
 import ReportDesigner from './components/ReportDesigner';
 import AIPanel from './components/AIPanel';
 import Toolbar from './components/Toolbar';
 import PropertiesPanel from './components/PropertiesPanel';
 import DataSourceManager from './components/DataSourceManager';
 import PreviewPanel from './components/PreviewPanel';
+import VariablePanel from './components/VariablePanel';
+import { steps } from './tour';
 import styles from './styles/ReportBuilder.css';
 
 const BidReportBuilder = () => {
   const [reports, setReports] = useState([]);
   const [selectedElement, setSelectedElement] = useState(null);
   const [reportUrl, setReportUrl] = useState('');
+  const [runTour, setRunTour] = useState(false);
   const designerRef = useRef();
 
   useEffect(() => {
@@ -22,6 +28,15 @@ const BidReportBuilder = () => {
           setReportUrl(data[0].id);
         }
       });
+  }, []);
+
+  useEffect(() => {
+    // This is a placeholder for checking if the user is new
+    // In a real application, you would check a value in localStorage or a database
+    const isNewUser = true;
+    if (isNewUser) {
+      setRunTour(true);
+    }
   }, []);
 
   const handleAddElement = (elementType) => {
@@ -104,36 +119,56 @@ const BidReportBuilder = () => {
     }
   };
 
+  const handleDropVariable = (variable) => {
+    if (designerRef.current) {
+      const designer = designerRef.current.instance;
+      const report = designer.GetReport();
+      const control = designer.CreateControl('XRLabel', report);
+      control.text = variable.value;
+      report.bands.detail.controls.add(control);
+    }
+  };
+
   return (
-    <div className={styles.container}>
-      <h1>Bid Report Builder</h1>
-      <div style={{ display: 'flex' }}>
-        <div style={{ width: '200px', marginRight: '20px' }}>
-          <DataSourceManager onSelectDataSource={handleSelectDataSource} />
-          <Toolbar onAddElement={handleAddElement} onSaveReport={handleSaveReport} onLoadReport={handleLoadReport} />
+    <DndProvider backend={HTML5Backend}>
+      <div className={styles.container}>
+        <Joyride steps={steps} run={runTour} continuous={true} />
+        <h1>Bid Report Builder</h1>
+        <div style={{ display: 'flex' }}>
+          <div className="data-source-manager" style={{ width: '200px', marginRight: '20px' }}>
+            <DataSourceManager onSelectDataSource={handleSelectDataSource} />
+            <VariablePanel />
+            <div className="toolbar">
+              <Toolbar onAddElement={handleAddElement} onSaveReport={handleSaveReport} onLoadReport={handleLoadReport} />
+            </div>
+          </div>
+          <div className="report-designer" style={{ flex: 1 }}>
+            <ReportDesigner ref={designerRef} onSelectionChanged={handleSelectionChanged} onReportChanged={handleReportChanged} onDrop={handleDropVariable} />
+          </div>
+          <div style={{ width: '300px', marginLeft: '20px' }}>
+            <div className="properties-panel">
+              <PropertiesPanel selectedElement={selectedElement} onElementPropertyChanged={handleElementPropertyChanged} />
+            </div>
+            <div className="ai-panel">
+              <AIPanel onGetAIAssistance={handleGetAIAssistance} />
+            </div>
+          </div>
         </div>
-        <div style={{ flex: 1 }}>
-          <ReportDesigner ref={designerRef} onSelectionChanged={handleSelectionChanged} onReportChanged={handleReportChanged} />
+        <div>
+          <h2>Reports</h2>
+          <ul>
+            {reports.map((report) => (
+              <li key={report.id} onClick={() => setReportUrl(report.id)}>
+                {report.title}
+              </li>
+            ))}
+          </ul>
         </div>
-        <div style={{ width: '300px', marginLeft: '20px' }}>
-          <PropertiesPanel selectedElement={selectedElement} onElementPropertyChanged={handleElementPropertyChanged} />
-          <AIPanel onGetAIAssistance={handleGetAIAssistance} />
+        <div className="preview-panel">
+          <PreviewPanel reportUrl={reportUrl} />
         </div>
       </div>
-      <div>
-        <h2>Reports</h2>
-        <ul>
-          {reports.map((report) => (
-            <li key={report.id} onClick={() => setReportUrl(report.id)}>
-              {report.title}
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div>
-        <PreviewPanel reportUrl={reportUrl} />
-      </div>
-    </div>
+    </DndProvider>
   );
 };
 
