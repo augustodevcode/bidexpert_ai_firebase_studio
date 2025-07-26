@@ -13,7 +13,8 @@
     "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
     "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
     "postinstall": "dotenv -e .env -- prisma generate",
-    "test": "NODE_ENV=test dotenv -e .env -- tsx tests/habilitation.test.ts"
+    "test": "NODE_ENV=test dotenv -e .env -- tsx tests/habilitation.test.ts",
+    "test:ui": "playwright test"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
@@ -77,6 +78,7 @@
   },
   "devDependencies": {
     "@firecms/cli": "^3.0.0-beta.13",
+    "@playwright/test": "^1.45.3",
     "@types/bcrypt": "^5.0.2",
     "@types/handlebars": "^4.1.0",
     "@types/leaflet": "^1.9.12",
@@ -96,3 +98,4 @@
   },
   "packageManager": "yarn@4.9.2"
 }
+
