@@ -8,20 +8,22 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star } from 'lucide-react';
+import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star, TrendingUp, Pencil } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import EntityEditMenu from './entity-edit-menu';
 
 
 interface AuctionListItemProps {
   auction: Auction;
+  onUpdate?: () => void;
 }
 
-export default function AuctionListItem({ auction }: AuctionListItemProps) {
+export default function AuctionListItem({ auction, onUpdate }: AuctionListItemProps) {
   const auctionTypeDisplay = auction.auctionType === 'TOMADA_DE_PRECOS' 
     ? { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3.5 w-3.5" /> }
     : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
@@ -77,7 +79,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
              {auction.seller?.logoUrl && (
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Link href={auction.seller.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                        <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
                                 <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} />
                                 <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
@@ -120,6 +122,14 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                   ID: {auction.publicId || auction.id}
                 </p>
               </div>
+              <EntityEditMenu 
+                 entityType="auction" 
+                 entityId={auction.id}
+                 publicId={auction.publicId} 
+                 currentTitle={auction.title} 
+                 isFeatured={auction.isFeaturedOnMarketplace || false}
+                 onUpdate={onUpdate}
+                />
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
