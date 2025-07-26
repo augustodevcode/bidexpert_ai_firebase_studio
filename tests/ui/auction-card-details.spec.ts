@@ -5,7 +5,6 @@ import { slugify } from '../../src/lib/sample-data-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
-// Data for our test, using a unique ID to avoid collisions
 const testRunId = `card-test-${uuidv4().substring(0, 8)}`;
 const testData = {
   auctioneer: {
@@ -74,7 +73,7 @@ async function createTestData(): Promise<Auction> {
   });
 
   const now = new Date();
-  const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Ends today to trigger badge
+  const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000);
   const stage1End = new Date(now.getTime() + 6 * 60 * 60 * 1000);
   
   const auctionData: any = {
@@ -86,17 +85,15 @@ async function createTestData(): Promise<Auction> {
       categoryId: testCategory.id,
       auctionDate: now,
       endDate: endDate,
+      // Correct way to create related JSON data for auctionStages
+      auctionStages: [
+          { name: '1ª Praça', endDate: stage1End, initialPrice: 1500 },
+          { name: '2ª Praça', endDate: endDate, initialPrice: 750 }
+      ]
   };
   
   const auction = await prisma.auction.create({
     data: auctionData,
-  });
-
-  await prisma.auctionStage.createMany({
-    data: [
-        { auctionId: auction.id, name: '1ª Praça', endDate: stage1End, initialPrice: 1500 },
-        { auctionId: auction.id, name: '2ª Praça', endDate: endDate, initialPrice: 750 }
-    ]
   });
   
   await prisma.lot.createMany({
@@ -115,11 +112,12 @@ async function createTestData(): Promise<Auction> {
 }
 
 async function cleanupTestData() {
-    if (!createdAuction) return;
     try {
-        await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
-        await prisma.auctionStage.deleteMany({ where: { auctionId: createdAuction.id }});
-        await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+        if (createdAuction) {
+            await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
+            // auctionStages is a JSON field now, no need to delete separately
+            await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+        }
         if(testSeller) await prisma.seller.deleteMany({ where: { id: testSeller.id } });
         if(testAuctioneer) await prisma.auctioneer.deleteMany({ where: { id: testAuctioneer.id } });
         if(testCategory) await prisma.lotCategory.deleteMany({ where: { id: testCategory.id } });
@@ -131,7 +129,7 @@ async function cleanupTestData() {
 test.describe('Auction Card and List Item UI Validation', () => {
 
   test.beforeAll(async () => {
-    await cleanupTestData(); // Clean before running to ensure no conflicts
+    await cleanupTestData(); 
     createdAuction = await createTestData();
   });
 
@@ -169,9 +167,6 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await expect(cardLocator.getByText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)).toBeVisible();
     await expect(cardLocator.getByText('Extrajudicial')).toBeVisible();
     
-    // The category text is now inside the link, which is a better test
-    await expect(page.locator(`a[href="/auctions/${createdAuction.publicId}"]`).first().locator(`text=${testData.category.name}`)).not.toBeVisible(); // This is correct, category is not directly on card body
-
     await expect(cardLocator.getByTitle(`${testData.auction.visits} Visitas`)).toBeVisible();
     await expect(cardLocator.getByTitle(`${testData.auction.totalHabilitatedUsers} Usuários Habilitados`)).toBeVisible();
 

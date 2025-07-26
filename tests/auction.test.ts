@@ -33,11 +33,11 @@ test.describe('Auction Service E2E Tests', () => {
     test.after(async () => {
         try {
             if (createdAuctionId) {
-                await prisma.auction.delete({ where: { id: createdAuctionId }});
+                await prisma.auction.deleteMany({ where: { id: createdAuctionId }});
             }
-            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
-            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
-            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+            if (testSeller) await prisma.seller.deleteMany({ where: { id: testSeller.id } });
+            if (testAuctioneer) await prisma.auctioneer.deleteMany({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.deleteMany({ where: { id: testCategory.id } });
         } catch (error) {
             console.error(`[AUCTION TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }

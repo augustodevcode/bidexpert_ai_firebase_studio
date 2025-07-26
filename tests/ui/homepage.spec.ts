@@ -14,13 +14,13 @@ test.describe('Homepage Smoke Test', () => {
 
   test('should load the homepage and display the main title', async ({ page }) => {
     // Assert: Check if the main title "BidExpert" is visible.
-    const title = page.getByText('BidExpert').first();
+    const title = page.getByText('BidExpert Leilões').first();
     await expect(title).toBeVisible({ timeout: 15000 });
   });
 
   test('should display featured lots or recent lots section', async ({ page }) => {
-    // Assert: Wait for the section title to be visible.
-    const lotsSectionTitle = page.locator('h2:text-matches(/Lotes em Destaque|Lotes Recentes/)');
+    // Assert: Wait for the section title to be visible using a more robust selector.
+    const lotsSectionTitle = page.getByRole('heading', { name: /Lotes em Destaque|Lotes Recentes/ });
     await expect(lotsSectionTitle).toBeVisible({ timeout: 15000 });
 
     // Assert: Check if there's at least one lot card visible within that section
@@ -30,7 +30,7 @@ test.describe('Homepage Smoke Test', () => {
   
   test('should display featured auctions or recent auctions section', async ({ page }) => {
     // Assert: Wait for the section title to be visible.
-    const auctionsSectionTitle = page.locator('h2:text-matches(/Leilões em Destaque|Leilões Recentes/)');
+    const auctionsSectionTitle = page.getByRole('heading', { name: /Leilões em Destaque|Leilões Recentes/ });
     await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
   
     // Assert: Check if there is at least one auction card visible.

@@ -16,7 +16,7 @@ let createdBemId: string | undefined;
 test.describe('Bem Service E2E Tests', () => {
 
     test.before(async () => {
-        // Create dependency records
+        // Ensure related test data is unique for this run
         testCategory = await prisma.lotCategory.create({
             data: { name: `Categoria Teste Bens ${testRunId}`, slug: `cat-bens-${testRunId}`, hasSubcategories: false }
         });
