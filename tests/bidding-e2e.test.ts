@@ -141,7 +141,7 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         const [judAucRes, extAucRes, silAucRes, tomPreRes, dutAucRes] = await Promise.all([
           auctionService.createAuction({ title: `Leilão Judicial ${testRunId}`, auctionType: 'JUDICIAL', judicialProcessId: testJudicialProcess.id, sellerId: testJudicialSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, visits: 150, totalHabilitatedUsers: 50, isFeaturedOnMarketplace: true }),
           auctionService.createAuction({ title: `Leilão Extrajudicial ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now }),
-          auctionService.createAuction({ title: `Leilão Silencioso ${testRunId}`, auctionType: 'SILENT', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now }),
+          auctionService.createAuction({ title: `Leilão Silencioso ${testRunId}`, auctionType: 'SILENT', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, silentBiddingEnabled: true }),
           auctionService.createAuction({ title: `Tomada de Preços ${testRunId}`, auctionType: 'TOMADA_DE_PRECOS', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now }),
           auctionService.createAuction({ title: `Leilão Holandês ${testRunId}`, auctionType: 'DUTCH', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, decrementAmount: 100, decrementIntervalSeconds: 3, floorPrice: 8000 }),
         ]);

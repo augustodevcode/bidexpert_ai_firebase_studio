@@ -2,7 +2,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { prisma } from '../../src/lib/prisma';
 import { slugify } from '../../src/lib/sample-data-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
 
 const testRunId = `card-test-${uuidv4().substring(0, 8)}`;
@@ -110,7 +110,7 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
-          type: testCategory.name,
+          type: testCategory.name, // Required field
           categoryId: testCategory.id,
       }))
   });
@@ -128,7 +128,6 @@ async function cleanupTestData() {
             await prisma.auction.deleteMany({ where: { id: createdAuction.id } });
             console.log(`[cleanupTestData] Deleted auction: ${createdAuction.title}`);
         }
-        // It's safer to delete by a unique field from the test run
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
         console.log(`[cleanupTestData] Deleted sellers for run: ${testRunId}`);
         await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
@@ -141,6 +140,26 @@ async function cleanupTestData() {
 }
 
 test.describe('Auction Card and List Item UI Validation', () => {
+    
+  console.log(`
+    ================================================================
+    [E2E TEST PLAN - Auction Card UI Validation]
+    ================================================================
+    
+    Este teste valida a exibição correta de todos os elementos dinâmicos
+    em um card de leilão na página de busca.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Dados Visuais**: O card deve exibir a imagem principal do leilão e o logo do comitente.
+    2.  **Informações Básicas**: O título, ID público e link para a página do leilão devem estar corretos.
+    3.  **Badges e Gatilhos**: Os badges de status (ex: "Aberto para Lances") e os gatilhos mentais (ex: "DESTAQUE", "ENCERRA HOJE") devem ser exibidos corretamente.
+    4.  **Contadores**: Os números de lotes, visitas e usuários habilitados devem corresponder aos dados do banco.
+    5.  **Etapas do Leilão**: A timeline de praças deve ser renderizada com os nomes corretos.
+    6.  **Ações do Usuário**: Os botões de Favoritar, Pré-visualizar, Compartilhar e Editar (para admins) devem estar visíveis ao passar o mouse.
+    
+    ================================================================
+    `);
 
   test.beforeAll(async () => {
     console.log('[Test Suite] Cleaning up before all tests...');
@@ -160,6 +179,17 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
+
+    // Explicit login to ensure admin session
+    console.log('[Test] beforeEach: Logging in as admin...');
+    await page.goto('/auth/login');
+    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
+    await page.locator('input[name="password"]').fill('Admin@123');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.waitForURL('**/dashboard/overview'); // Wait for redirect to complete
+    console.log('[Test] beforeEach: Login successful.');
+
+    // Navigate to the search page
     await page.goto('/search?type=auctions'); 
     console.log('[Test] beforeEach hook: Navigated to search page.');
   });
@@ -179,7 +209,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     
     // Main Info
     await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    // There are 3 links to the auction page now: image, title, and "Ver Lotes" button.
+    // Link on image, title, and "Ver Lotes" button
     await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(3);
     await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
     console.log('- Verified: Title, links, and public ID are correct.');
