@@ -59,6 +59,7 @@ export const auctionFormSchema = z.object({
   endDate: z.date().optional().nullable(),
   mapAddress: z.string().max(300, { message: "O endereço do mapa não pode exceder 300 caracteres." }).optional().nullable(),
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
+  imageMediaId: z.string().optional().nullable(),
   documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
   evaluationReportUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
   auctionCertificateUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
@@ -76,7 +77,6 @@ export const auctionFormSchema = z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
       initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
-      statusText: z.string().optional(),
     })
   ).optional().default([]),
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),

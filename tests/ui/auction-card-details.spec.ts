@@ -1,4 +1,3 @@
-
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { prisma } from '../../src/lib/prisma';
@@ -44,17 +43,20 @@ const testData = {
 };
 
 let createdAuction: Auction | null = null;
+let testCategory: LotCategory;
+let testAuctioneer: AuctioneerProfileInfo;
+let testSeller: SellerProfileInfo;
 
 // This function runs once before all tests in this file.
 async function createTestData(): Promise<Auction> {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
   
-  const testCategory = await prisma.lotCategory.create({
+  testCategory = await prisma.lotCategory.create({
     data: { name: testData.category.name, slug: testData.category.slug, hasSubcategories: false }
   });
   console.log(`[createTestData] Created category: ${testCategory.name}`);
 
-  const testAuctioneer = await prisma.auctioneer.create({
+  testAuctioneer = await prisma.auctioneer.create({
     data: { 
         name: testData.auctioneer.name, 
         slug: testData.auctioneer.slug, 
@@ -65,7 +67,7 @@ async function createTestData(): Promise<Auction> {
   });
   console.log(`[createTestData] Created auctioneer: ${testAuctioneer.name}`);
 
-  const testSeller = await prisma.seller.create({
+  testSeller = await prisma.seller.create({
     data: {
         name: testData.seller.name,
         slug: testData.seller.slug,
@@ -109,8 +111,8 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
+          type: testCategory.name,
           categoryId: testCategory.id,
-          type: testCategory.name, // This field is required
       }))
   });
   console.log(`[createTestData] Created ${testData.auction.totalLots} lots for auction ${auction.id}.`);
@@ -142,12 +144,15 @@ async function cleanupTestData() {
 test.describe('Auction Card and List Item UI Validation', () => {
 
   test.beforeAll(async () => {
+    console.log('[Test Suite] Cleaning up before all tests...');
     await cleanupTestData(); 
+    console.log('[Test Suite] Creating test data...');
     createdAuction = await createTestData();
     console.log('[Test Suite] beforeAll hook complete.');
   });
 
   test.afterAll(async () => {
+    console.log('[Test Suite] Cleaning up after all tests...');
     await cleanupTestData();
     console.log('[Test Suite] afterAll hook complete.');
   });

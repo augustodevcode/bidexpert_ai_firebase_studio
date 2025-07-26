@@ -20,24 +20,18 @@ test.describe('Homepage Smoke Test', () => {
   });
 
   test('should display featured lots or recent lots section', async ({ page }) => {
-    // Assert: Wait for the section title to be visible.
     const lotsSectionTitle = page.getByRole('heading', { name: 'Lotes em Destaque' }).or(page.getByRole('heading', { name: 'Lotes Recentes' }));
     await expect(lotsSectionTitle).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Lots section title is visible.');
   
-    // Assert: Check if there is at least one lot card visible.
     const firstLotCard = lotsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();
     await expect(firstLotCard).toBeVisible({ timeout: 5000 });
     console.log('- Verified: At least one lot card is visible.');
   });
   
   test('should display featured auctions or recent auctions section', async ({ page }) => {
-    // Assert: Wait for the section title to be visible.
     const auctionsSectionTitle = page.getByRole('heading', { name: 'Leilões em Destaque' }).or(page.getByRole('heading', { name: 'Leilões Recentes' }));
     await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
-    console.log('- Verified: Auctions section title is visible.');
-  
-    // Assert: Check if there is at least one auction card visible.
     const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();
     await expect(firstAuctionCard).toBeVisible({ timeout: 5000 });
     console.log('- Verified: At least one auction card is visible.');

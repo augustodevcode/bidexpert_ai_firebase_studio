@@ -105,6 +105,7 @@ export default function AuctionForm({
       endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : null,
       mapAddress: initialData?.mapAddress || '',
       imageUrl: initialData?.imageUrl || '',
+      imageMediaId: initialData?.imageMediaId || null,
       documentsUrl: initialData?.documentsUrl || '',
       evaluationReportUrl: initialData?.evaluationReportUrl || '',
       auctionCertificateUrl: initialData?.auctionCertificateUrl || '',
@@ -180,6 +181,7 @@ export default function AuctionForm({
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
         form.setValue('imageUrl', selectedMediaItem.urlOriginal);
+        form.setValue('imageMediaId', selectedMediaItem.id || null);
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }

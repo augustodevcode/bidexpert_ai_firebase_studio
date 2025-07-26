@@ -246,11 +246,11 @@ export interface Auction {
   totalLots?: number;
   categoryId?: string;
   category?: LotCategory;
-  auctioneer: string;
+  auctioneer: AuctioneerProfileInfo; // Changed to object
   auctioneerId?: string;
   auctioneerName?: string; // Denormalized for display
   auctioneerLogoUrl?: string;
-  seller?: SellerProfileInfo;
+  seller: SellerProfileInfo; // Changed to object
   sellerId?: string;
   mapAddress?: string | null;
   city?: string; // From seller or manual input
@@ -427,11 +427,12 @@ export interface LotCategory {
   hasSubcategories: boolean;
   iconName?: string | null;
   dataAiHintIcon?: string | null;
-  logoUrl?: string;
-  coverImageUrl?: string;
+  logoUrl?: string | null;
+  logoMediaId?: string | null;
+  coverImageUrl?: string | null;
   coverImageMediaId?: string | null;
   dataAiHintCover?: string | null;
-  megaMenuImageUrl?: string;
+  megaMenuImageUrl?: string | null;
   megaMenuImageMediaId?: string | null;
   dataAiHintMegaMenu?: string | null;
   createdAt: string | Date;
