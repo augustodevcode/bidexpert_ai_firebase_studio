@@ -7,15 +7,17 @@
 - **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`) and the Consignor Dashboard (`/consignor-dashboard/*`).
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
+- **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
 
 ## DOING
-- **Item 7:** **Auction Creation Wizard Enhancement:** Analyzing the `bidding-e2e.test.ts` results to identify and correct gaps in the Auction Wizard (`/admin/wizard`). Key tasks include:
-    - Aligning the "Bens" data source with the auction type (Judicial vs. Extrajudicial).
-    - Improving the Comitente selection logic for judicial auctions.
-    - Enhancing the `WizardFlow` visualization to better represent the bifurcated logic.
+- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process. This involves removing the old `/create` page and integrating a suggestion modal directly into the auction edit form.
 
 ## NEXT
-- **Item 8:** **Full AI Integration:** Connect the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
+- **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
+    - Criar uma seção na Biblioteca de Mídia para agrupar documentos por processo.
+    - Desenvolver um modal que exiba os dados extraídos pela IA.
+    - Construir um assistente de validação para que um Analista de Leilão possa revisar e aprovar os dados.
+    - Salvar as informações validadas automaticamente nos registros do Processo Judicial correspondente.
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
