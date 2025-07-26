@@ -4,9 +4,11 @@ import assert from 'node:assert';
 import { AuctionService } from '../src/services/auction.service';
 import { prisma } from '../src/lib/prisma';
 import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 const auctionService = new AuctionService();
-const testAuctionTitle = 'Super Leilão de Teste E2E';
+const testRunId = uuidv4().substring(0, 8); // Unique ID for this test run
+const testAuctionTitle = `Super Leilão de Teste E2E ${testRunId}`;
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
@@ -15,25 +17,23 @@ test.describe('Auction Service E2E Tests', () => {
 
     test.before(async () => {
         // Create dependency records
-        testCategory = await prisma.lotCategory.upsert({
-            where: { slug: 'categoria-teste-leiloes' },
-            update: {},
-            create: { name: 'Categoria Teste para Leilões', slug: 'categoria-teste-leiloes', hasSubcategories: false }
+        testCategory = await prisma.lotCategory.create({
+            data: { name: `Categoria Teste Leilões ${testRunId}`, slug: `cat-leiloes-${testRunId}`, hasSubcategories: false }
         });
         testAuctioneer = await prisma.auctioneer.create({
-            data: { name: 'Leiloeiro de Teste para Leilões', publicId: 'leiloeiro-pub-id-leilao-test', slug: 'leiloeiro-teste-leiloes' }
+            data: { name: `Leiloeiro Teste Leilões ${testRunId}`, publicId: `leiloeiro-pub-id-leilao-test-${testRunId}`, slug: `leiloeiro-teste-leiloes-${testRunId}` }
         });
         testSeller = await prisma.seller.create({
-            data: { name: 'Comitente de Teste para Leilões', publicId: 'seller-pub-id-leilao-test', slug: 'comitente-teste-leiloes', isJudicial: false }
+            data: { name: `Comitente Teste Leilões ${testRunId}`, publicId: `seller-pub-id-leilao-test-${testRunId}`, slug: `comitente-teste-leiloes-${testRunId}`, isJudicial: false }
         });
     });
 
     test.after(async () => {
         try {
             await prisma.auction.deleteMany({ where: { title: testAuctionTitle }});
-            await prisma.seller.delete({ where: { id: testSeller.id } });
-            await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
-            await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
             // Ignore cleanup errors
         }
@@ -47,9 +47,7 @@ test.describe('Auction Service E2E Tests', () => {
             description: 'Um leilão criado para o teste E2E.',
             status: 'EM_BREVE',
             auctionDate: new Date(),
-            auctioneer: testAuctioneer.name, // Pass name, service should handle ID
             auctioneerId: testAuctioneer.id,
-            seller: testSeller.name, // Pass name, service should handle ID
             sellerId: testSeller.id,
             categoryId: testCategory.id,
             auctionType: 'EXTRAJUDICIAL',

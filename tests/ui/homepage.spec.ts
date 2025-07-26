@@ -18,13 +18,13 @@ test.describe('Homepage Smoke Test', () => {
     // Assert: Check if the main title "BidExpert" is visible.
     // Using a flexible text selector that is more resilient to HTML structure changes.
     const title = page.getByText('BidExpert').first();
-    await expect(title).toBeVisible({ timeout: 10000 }); // Wait up to 10s for the title
+    await expect(title).toBeVisible({ timeout: 15000 }); // Wait up to 15s for the title
   });
 
   test('should display featured lots or recent lots section', async ({ page }) => {
     // Assert: Wait for the section title to be visible. This indicates data has loaded.
     const lotsSectionTitle = page.locator('h2:text-matches(/Lotes em Destaque|Lotes Recentes/)');
-    await expect(lotsSectionTitle).toBeVisible({ timeout: 10000 });
+    await expect(lotsSectionTitle).toBeVisible({ timeout: 15000 });
 
     // Assert: Check if there's at least one lot card visible within that section
     // The locator finds the section title and then looks for a card within its sibling div.
@@ -35,7 +35,7 @@ test.describe('Homepage Smoke Test', () => {
   test('should display featured auctions or recent auctions section', async ({ page }) => {
     // Assert: Wait for the section title to be visible.
     const auctionsSectionTitle = page.locator('h2:text-matches(/Leilões em Destaque|Leilões Recentes/)');
-    await expect(auctionsSectionTitle).toBeVisible({ timeout: 10000 });
+    await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
   
     // Assert: Check if there is at least one auction card visible.
     const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();

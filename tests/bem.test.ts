@@ -5,9 +5,11 @@ import { BemService } from '../src/services/bem.service';
 import { prisma } from '../src/lib/prisma';
 import type { BemFormData, SellerProfileInfo, LotCategory } from '../src/types';
 import { slugify } from '@/lib/sample-data-helpers';
+import { v4 as uuidv4 } from 'uuid';
 
 const bemService = new BemService();
-const testBemTitle = 'Automóvel de Teste E2E (Bem)';
+const testRunId = uuidv4().substring(0, 8);
+const testBemTitle = `Automóvel de Teste E2E (Bem) ${testRunId}`;
 let testSeller: SellerProfileInfo;
 let testCategory: LotCategory;
 
@@ -16,18 +18,18 @@ test.describe('Bem Service E2E Tests', () => {
     test.before(async () => {
         // Create dependency records
         testCategory = await prisma.lotCategory.create({
-            data: { name: 'Categoria Teste para Bens', slug: 'categoria-teste-bens', hasSubcategories: false }
+            data: { name: `Categoria Teste para Bens ${testRunId}`, slug: `categoria-teste-bens-${testRunId}`, hasSubcategories: false }
         });
         testSeller = await prisma.seller.create({
-            data: { name: 'Comitente Teste para Bens', publicId: 'seller-pub-id-bem-test', slug: 'comitente-teste-bens', isJudicial: false }
+            data: { name: `Comitente Teste para Bens ${testRunId}`, publicId: `seller-pub-id-bem-test-${testRunId}`, slug: `comitente-teste-bens-${testRunId}`, isJudicial: false }
         });
     });
 
     test.after(async () => {
         try {
             await prisma.bem.deleteMany({ where: { title: testBemTitle }});
-            await prisma.seller.delete({ where: { id: testSeller.id } });
-            await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
         } catch (error) {
             // Ignore cleanup errors
         }
