@@ -12,16 +12,18 @@ export class AuctionService {
     this.auctionRepository = new AuctionRepository();
   }
 
-  private mapAuctionsWithLotCount(auctions: any[]): Auction[] {
+  private mapAuctionsWithDetails(auctions: any[]): Auction[] {
     return auctions.map(a => ({
       ...a,
       totalLots: a.lots?.length || 0,
+      sellerLogoUrl: a.seller?.logoUrl,
+      sellerSlug: a.seller?.slug || a.seller?.publicId || a.seller?.id,
     }));
   }
 
   async getAuctions(): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findAll();
-    return this.mapAuctionsWithLotCount(auctions);
+    return this.mapAuctionsWithDetails(auctions);
   }
 
   async getAuctionById(id: string): Promise<Auction | null> {
@@ -30,7 +32,14 @@ export class AuctionService {
     return {
       ...auction,
       totalLots: auction.lots?.length || 0,
+      sellerLogoUrl: auction.seller?.logoUrl,
+      sellerSlug: auction.seller?.slug || auction.seller?.publicId || auction.seller?.id,
     };
+  }
+  
+  async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
+    return this.mapAuctionsWithDetails(auctions);
   }
 
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {

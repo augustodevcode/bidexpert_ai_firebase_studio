@@ -252,6 +252,8 @@ export interface Auction {
   auctioneerName?: string; // Denormalized for display
   seller?: string;
   sellerId?: string;
+  sellerSlug?: string;
+  sellerLogoUrl?: string;
   mapAddress?: string | null;
   city?: string; // From seller or manual input
   state?: string; // From seller or manual input
@@ -903,7 +905,7 @@ export interface DatabaseAdapter {
     getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]>;
     getSubcategory(id: string): Promise<Subcategory | null>;
     createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
-    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean, message: string, subcategoryId?: string }>;
+    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string, subcategoryId?: string }>;
     updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }>;
     deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
     
@@ -968,4 +970,3 @@ export interface DatabaseAdapter {
 
     close?(): Promise<void>;
 }
-

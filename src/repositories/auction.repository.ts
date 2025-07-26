@@ -7,7 +7,10 @@ export class AuctionRepository {
   async findAll(): Promise<any[]> {
     return prisma.auction.findMany({
       orderBy: { auctionDate: 'desc' },
-      include: { lots: { select: { id: true } } },
+      include: { 
+        lots: { select: { id: true } },
+        seller: { select: { logoUrl: true, slug: true, publicId: true } } // Include seller info
+      },
     });
   }
 
@@ -17,9 +20,9 @@ export class AuctionRepository {
       include: {
         lots: { include: { bens: true } },
         auctioneer: true,
-        seller: true,
+        seller: true, // Full seller object
         category: true,
-        // auctionStages: true, // This field is a JSON type, not a relation, so it cannot be "included". It's returned by default.
+        // auctionStages is a JSON field, not a relation, so it's returned by default.
       },
     });
   }
@@ -40,5 +43,24 @@ export class AuctionRepository {
 
   async countLots(auctionId: string): Promise<number> {
     return prisma.lot.count({ where: { auctionId } });
+  }
+  
+  async findByAuctioneerSlug(auctioneerSlug: string): Promise<any[]> {
+    return prisma.auction.findMany({
+      where: {
+        auctioneer: {
+          OR: [
+            { slug: auctioneerSlug },
+            { id: auctioneerSlug },
+            { publicId: auctioneerSlug },
+          ],
+        },
+      },
+      include: {
+        lots: { select: { id: true } },
+        seller: { select: { logoUrl: true, slug: true, publicId: true } },
+      },
+      orderBy: { auctionDate: 'desc' },
+    });
   }
 }

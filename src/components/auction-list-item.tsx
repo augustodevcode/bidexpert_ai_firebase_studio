@@ -14,6 +14,8 @@ import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+
 
 interface AuctionListItemProps {
   auction: Auction;
@@ -70,49 +72,55 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
-            <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
-                <Badge 
-                className={`text-xs px-2 py-1 shadow-md
-                    ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
-                    ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                    ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
-                `}
-                >
-                {getAuctionStatusText(auction.status)}
-                </Badge>
-            </div>
-            <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10">
-                {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
-                        {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
-                        {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-0.5" />}
-                        {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-0.5" />}
-                        {trigger}
-                    </Badge>
-                ))}
-            </div>
+             {auction.sellerLogoUrl && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href={auction.sellerSlug ? `/sellers/${auction.sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
+                                <AvatarImage src={auction.sellerLogoUrl} alt={auction.seller || "Logo Comitente"} />
+                                <AvatarFallback>{auction.seller?.charAt(0) || 'C'}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Comitente: {auction.seller}</p>
+                    </TooltipContent>
+                </Tooltip>
+            )}
           </div>
 
           {/* Content Column */}
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
+                 <div className="flex items-center gap-2 mb-1">
+                     <Badge 
+                        className={`text-xs px-1.5 py-0.5 shadow-sm
+                            ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
+                            ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
+                            ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+                        `}
+                        >
+                        {getAuctionStatusText(auction.status)}
+                    </Badge>
+                     {mentalTriggers.map(trigger => (
+                        <Badge key={trigger} variant="secondary" className="text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                           {trigger}
+                        </Badge>
+                     ))}
+                </div>
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
                   <h3 className="text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2" title={auction.title}>
                     {auction.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={auction.description || undefined}>
-                  {auction.description?.substring(0, 70) + '...'}
+                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`ID: ${auction.publicId || auction.id}`}>
+                  ID: {auction.publicId || auction.id}
                 </p>
               </div>
             </div>
             
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              <div className="flex items-center" title={`ID: ${auction.publicId || auction.id}`}>
-                <ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                <span className="truncate">ID: {auction.publicId ? auction.publicId.substring(0,12)+'...' : auction.id.substring(0,12)+'...'}</span>
-              </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               <div className="flex items-center">
                 {auctionTypeDisplay.icon && React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
                 <span>{auctionTypeDisplay.label}</span>
@@ -124,6 +132,18 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
               <div className="flex items-center">
                 <MapPin className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span className="truncate">{displayLocation}</span>
+              </div>
+              <div className="flex items-center">
+                <Eye className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span>{auction.visits || 0} Visitas</span>
+              </div>
+               <div className="flex items-center">
+                <ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate">{auction.totalLots || 0} Lotes</span>
+              </div>
+               <div className="flex items-center">
+                <Users className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                <span className="truncate">{auction.totalHabilitatedUsers || 0} Habilitados</span>
               </div>
             </div>
 

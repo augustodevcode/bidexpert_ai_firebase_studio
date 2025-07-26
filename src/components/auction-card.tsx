@@ -22,6 +22,8 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente de timeline
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 interface AuctionCardProps {
   auction: Auction;
@@ -101,9 +103,11 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const mainImageUrl = auction.imageUrl || auction.auctioneerLogoUrl || 'https://placehold.co/600x400.png';
+  const mainImageUrl = auction.imageUrl || 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
+  const sellerLogoUrl = auction.sellerLogoUrl;
+  const sellerSlug = auction.sellerSlug;
 
   const getAuctionTypeDisplay = (type?: Auction['auctionType']) => {
     if (!type) return null;
@@ -151,6 +155,21 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   className="object-cover"
                   data-ai-hint={mainImageDataAiHint}
                 />
+                 {sellerLogoUrl && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
+                                <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md">
+                                    <AvatarImage src={sellerLogoUrl} alt={auction.seller || "Logo Comitente"} />
+                                    <AvatarFallback>{auction.seller?.charAt(0) || 'C'}</AvatarFallback>
+                                </Avatar>
+                            </Link>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                           <p>Comitente: {auction.seller}</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
               </div>
             </Link>
              <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
@@ -246,9 +265,19 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               </h3>
             </Link>
             
-            <div className="text-xs text-muted-foreground mb-2 flex items-center">
-                 <ListChecks className="h-3 w-3 mr-1.5 flex-shrink-0" />
-                 <span>{auction.totalLots || 0} Lotes no total</span>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2">
+                <div className="flex items-center" title={`${auction.totalLots || 0} Lotes`}>
+                    <ListChecks className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.totalLots || 0} Lotes</span>
+                </div>
+                 <div className="flex items-center" title={`${auction.visits || 0} Visitas`}>
+                    <Eye className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.visits || 0} Visitas</span>
+                </div>
+                 <div className="flex items-center" title={`${auction.totalHabilitatedUsers || 0} Usuários Habilitados`}>
+                    <Users className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.totalHabilitatedUsers || 0} Habilitados</span>
+                </div>
             </div>
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (

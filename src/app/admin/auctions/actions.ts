@@ -58,36 +58,28 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
+    // This is now a simplified version. The service should be used for complex data.
     const auctions = await prisma.auction.findMany({
         where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
-        include: { lots: true }
+        include: { lots: { select: { id: true } } }
     });
     // @ts-ignore
     return auctions.map(a => ({...a, totalLots: a.lots.length}));
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-    const auctions = await prisma.auction.findMany({
+   return auctionService.mapAuctionsWithDetails(
+     await prisma.auction.findMany({
         where: {
             seller: {
                 OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
             }
         },
-        include: { lots: true }
-    });
-     // @ts-ignore
-    return auctions.map(a => ({...a, totalLots: a.lots.length}));
+        include: { lots: { select: { id: true } }, seller: { select: { logoUrl: true, slug: true, publicId: true } } }
+    })
+   );
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-     const auctions = await prisma.auction.findMany({
-        where: {
-            auctioneer: {
-                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
-            }
-        },
-        include: { lots: true }
-    });
-     // @ts-ignore
-    return auctions.map(a => ({...a, totalLots: a.lots.length}));
+    return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }
