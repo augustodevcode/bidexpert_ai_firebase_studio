@@ -73,3 +73,10 @@ firestore-debug.log
 dataconnect-debug.log
 firestore-debug.log
 .firebase/logs/vsce-debug.log
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
