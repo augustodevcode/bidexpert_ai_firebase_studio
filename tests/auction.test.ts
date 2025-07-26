@@ -18,6 +18,13 @@ let createdAuctionId: string | undefined;
 test.describe('Auction Service E2E Tests', () => {
 
     test.before(async () => {
+        console.log(`[E2E Setup - auction.test.ts - ${testRunId}] Starting...`);
+        // Clean up previous test runs to ensure a clean slate
+        await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+        await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+
         // Create dependency records
         testCategory = await prisma.lotCategory.create({
             data: { name: `Cat. Leilões ${testRunId}`, slug: `cat-leiloes-${testRunId}`, hasSubcategories: false }
@@ -28,9 +35,11 @@ test.describe('Auction Service E2E Tests', () => {
         testSeller = await prisma.seller.create({
             data: { name: `Comitente Leilões ${testRunId}`, publicId: `seller-pub-${testRunId}`, slug: `comitente-leiloes-${testRunId}`, isJudicial: false }
         });
+        console.log(`[E2E Setup - auction.test.ts - ${testRunId}] Complete.`);
     });
 
     test.after(async () => {
+        console.log(`[E2E Teardown - auction.test.ts - ${testRunId}] Cleaning up...`);
         try {
             if (createdAuctionId) {
                 await prisma.auction.deleteMany({ where: { id: createdAuctionId }});
@@ -42,6 +51,7 @@ test.describe('Auction Service E2E Tests', () => {
             console.error(`[AUCTION TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
+        console.log(`[E2E Teardown - auction.test.ts - ${testRunId}] Complete.`);
     });
 
     test('should create a new auction and verify it in the database', async () => {

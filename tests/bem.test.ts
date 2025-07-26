@@ -16,7 +16,8 @@ let createdBemId: string | undefined;
 test.describe('Bem Service E2E Tests', () => {
 
     test.before(async () => {
-        // Ensure related test data is unique for this run
+        console.log(`[E2E Setup - bem.test.ts - ${testRunId}] Starting...`);
+        // Clean up previous test runs to ensure a clean slate
         await prisma.bem.deleteMany({ where: { title: testBemTitle }});
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } }});
         await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } }});
@@ -27,9 +28,11 @@ test.describe('Bem Service E2E Tests', () => {
         testSeller = await prisma.seller.create({
             data: { name: `Comitente Teste Bens ${testRunId}`, publicId: `seller-pub-bem-${testRunId}`, slug: `comitente-bens-${testRunId}`, isJudicial: false }
         });
+        console.log(`[E2E Setup - bem.test.ts - ${testRunId}] Complete.`);
     });
 
     test.after(async () => {
+        console.log(`[E2E Teardown - bem.test.ts - ${testRunId}] Cleaning up...`);
         try {
             if (createdBemId) {
                 await prisma.bem.delete({ where: { id: createdBemId } });
@@ -40,6 +43,7 @@ test.describe('Bem Service E2E Tests', () => {
              console.error(`[BEM TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
+        console.log(`[E2E Teardown - bem.test.ts - ${testRunId}] Complete.`);
     });
 
     test('should create a new bem and verify it in the database', async () => {
