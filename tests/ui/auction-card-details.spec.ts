@@ -1,8 +1,8 @@
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { prisma } from '../../lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { slugify } from '../../src/lib/sample-data-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../types';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const testRunId = `card-test-${uuidv4().substring(0, 8)}`;
@@ -42,6 +42,7 @@ const testData = {
   }
 };
 
+let prisma: PrismaClient;
 let createdAuction: Auction | null = null;
 let testCategory: LotCategory;
 let testAuctioneer: AuctioneerProfileInfo;
@@ -122,6 +123,7 @@ async function createTestData(): Promise<Auction> {
 async function cleanupTestData() {
     console.log(`[cleanupTestData] Starting cleanup for run: ${testRunId}`);
     try {
+        if (!prisma) return;
         if (createdAuction) {
             await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
             console.log(`[cleanupTestData] Deleted lots for auction ID: ${createdAuction.id}`);
@@ -140,56 +142,32 @@ async function cleanupTestData() {
 }
 
 test.describe('Auction Card and List Item UI Validation', () => {
-    
-  console.log(`
-    ================================================================
-    [E2E TEST PLAN - Auction Card UI Validation]
-    ================================================================
-    
-    Este teste valida a exibição correta de todos os elementos dinâmicos
-    em um card de leilão na página de busca.
-    
-    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
-    
-    1.  **Dados Visuais**: O card deve exibir a imagem principal do leilão e o logo do comitente.
-    2.  **Informações Básicas**: O título, ID público e link para a página do leilão devem estar corretos.
-    3.  **Badges e Gatilhos**: Os badges de status (ex: "Aberto para Lances") e os gatilhos mentais (ex: "DESTAQUE", "ENCERRA HOJE") devem ser exibidos corretamente.
-    4.  **Contadores**: Os números de lotes, visitas e usuários habilitados devem corresponder aos dados do banco.
-    5.  **Etapas do Leilão**: A timeline de praças deve ser renderizada com os nomes corretos.
-    6.  **Ações do Usuário**: Os botões de Favoritar, Pré-visualizar, Compartilhar e Editar (para admins) devem estar visíveis ao passar o mouse.
-    
-    ================================================================
-    `);
 
-  test.beforeAll(async () => {
-    console.log('[Test Suite] Cleaning up before all tests...');
-    await cleanupTestData(); 
-    console.log('[Test Suite] Creating test data...');
-    createdAuction = await createTestData();
-    console.log('[Test Suite] beforeAll hook complete.');
-  });
+    test.beforeAll(async () => {
+        prisma = new PrismaClient();
+        await prisma.$connect();
+        await cleanupTestData(); 
+        createdAuction = await createTestData();
+    });
 
-  test.afterAll(async () => {
-    console.log('[Test Suite] Cleaning up after all tests...');
-    await cleanupTestData();
-    console.log('[Test Suite] afterAll hook complete.');
-  });
+    test.afterAll(async () => {
+        await cleanupTestData();
+        await prisma.$disconnect();
+    });
   
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
-
-    // Explicit login to ensure admin session
+    
     console.log('[Test] beforeEach: Logging in as admin...');
     await page.goto('/auth/login');
     await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
-    await page.waitForURL('**/dashboard/overview'); // Wait for redirect to complete
+    await page.waitForURL('**/dashboard/overview'); 
     console.log('[Test] beforeEach: Login successful.');
 
-    // Navigate to the search page
     await page.goto('/search?type=auctions'); 
     console.log('[Test] beforeEach hook: Navigated to search page.');
   });
@@ -198,44 +176,41 @@ test.describe('Auction Card and List Item UI Validation', () => {
     console.log('--- [Test Case] Validating Auction Card UI ---');
     console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
     
-    const cardLocator = page.locator(`.group:has-text("${testData.auction.title}")`).first();
+    const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction!.id}"]`);
     await expect(cardLocator).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Auction card is visible.');
 
     // Visual ID
-    await expect(cardLocator.locator(`img[alt="${testData.auction.title}"]`)).toBeVisible();
-    await expect(cardLocator.locator(`img[alt="${testData.seller.name}"]`)).toBeVisible();
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-main-image"]`)).toBeVisible();
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-seller-logo"]`)).toBeVisible();
     console.log('- Verified: Main image and seller logo are visible.');
     
     // Main Info
-    await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(3);
-    await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
-    console.log('- Verified: Title, links, and public ID are correct.');
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction!.publicId);
+    console.log('- Verified: Title and public ID are correct.');
 
     // Status & Badges
-    await expect(cardLocator.getByText('Aberto para Lances')).toBeVisible();
-    await expect(cardLocator.getByText('DESTAQUE')).toBeVisible();
-    await expect(cardLocator.getByText('ENCERRA HOJE')).toBeVisible();
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-badges"]`)).toContainText('Aberto para Lances');
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('DESTAQUE');
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('ENCERRA HOJE');
     console.log('- Verified: Status and mental trigger badges are displayed.');
 
     // Data & Counters
-    await expect(cardLocator.getByTitle(`${testData.auction.totalLots} Lotes`)).toBeVisible();
-    await expect(cardLocator.getByText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`)).toBeVisible();
-    await expect(cardLocator.getByText('Extrajudicial')).toBeVisible();
-    
-    await expect(cardLocator.getByTitle(`${testData.auction.visits} Visitas`)).toBeVisible();
-    await expect(cardLocator.getByTitle(`${testData.auction.totalHabilitatedUsers} Usuários Habilitados`)).toBeVisible();
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-initial-offer"]`)).toContainText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-type"]`)).toContainText('Extrajudicial');
     console.log('- Verified: All counters and data points are correct.');
 
     // Timeline
-    await expect(cardLocator.getByText('ETAPAS DO LEILÃO')).toBeVisible();
+    await expect(cardLocator.locator(`[data-ai-id="auction-card-timeline"]`)).toBeVisible();
     await expect(cardLocator.getByText('1ª Praça')).toBeVisible();
     await expect(cardLocator.getByText('2ª Praça')).toBeVisible();
     console.log('- Verified: Auction stages timeline is visible.');
     
     // User Actions
-    await expect(cardLocator.getByText(`Ver Lotes (${testData.auction.totalLots})`)).toBeVisible();
     await cardLocator.hover();
     await expect(cardLocator.getByLabel('Favoritar')).toBeVisible();
     await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();

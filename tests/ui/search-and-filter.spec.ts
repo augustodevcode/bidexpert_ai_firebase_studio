@@ -1,9 +1,11 @@
 // tests/ui/search-and-filter.spec.ts
 import { test, expect } from '@playwright/test';
-import { prisma } from '../../lib/prisma';
-import type { Auction, Lot, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../../types';
+import { PrismaClient } from '@prisma/client';
+import type { Auction, Lot, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 import { slugify } from '../../src/lib/sample-data-helpers';
+
+let prisma: PrismaClient;
 
 const testRunId = `search-e2e-${uuidv4().substring(0, 8)}`;
 
@@ -45,6 +47,10 @@ async function createSearchTestData() {
 async function cleanupSearchTestData() {
     console.log(`[Search E2E] Cleaning up test data for run: ${testRunId}`);
     try {
+        if (!prisma) {
+          console.log('Prisma client not initialized for cleanup, skipping.');
+          return;
+        }
         await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
@@ -58,12 +64,15 @@ async function cleanupSearchTestData() {
 
 test.describe('Search and Filter E2E Test', () => {
     test.beforeAll(async () => {
-        await cleanupSearchTestData(); // Clean first
+        prisma = new PrismaClient();
+        await prisma.$connect();
+        await cleanupSearchTestData();
         await createSearchTestData();
     });
 
     test.afterAll(async () => {
         await cleanupSearchTestData();
+        await prisma.$disconnect();
     });
 
     test.beforeEach(async ({ page }) => {
