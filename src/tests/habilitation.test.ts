@@ -28,6 +28,24 @@ let regularUser: UserProfileWithPermissions;
 let analystUser: UserProfileWithPermissions;
 
 test.describe('User Habilitation E2E Test', () => {
+    
+    console.log(`
+    ================================================================
+    [E2E TEST PLAN - User Habilitation]
+    ================================================================
+    
+    Este teste valida o fluxo completo de habilitação de um usuário.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Bloqueio Inicial**: Um usuário recém-criado (ou com documentos pendentes) NÃO deve conseguir dar lances.
+    2.  **Envio de Documentos**: O sistema deve registrar o envio de um documento e alterar o status do usuário para "Em Análise".
+    3.  **Aprovação de Documentos**: Um usuário "Analista" deve conseguir aprovar os documentos, alterando o status geral do usuário para "Habilitado".
+    4.  **Habilitação por Leilão**: Mesmo com o cadastro aprovado, o usuário ainda NÃO deve conseguir dar lances até se habilitar para o leilão específico.
+    5.  **Lance Pós-Habilitação**: Após se habilitar para o leilão, o usuário deve conseguir registrar um lance com sucesso no lote.
+    
+    ================================================================
+    `);
 
     test.before(async () => {
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Starting... ---`);

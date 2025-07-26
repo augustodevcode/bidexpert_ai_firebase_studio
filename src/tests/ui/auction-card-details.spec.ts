@@ -43,17 +43,19 @@ const testData = {
 };
 
 let createdAuction: Auction | null = null;
+let testCategory: LotCategory;
+let testAuctioneer: AuctioneerProfileInfo;
+let testSeller: SellerProfileInfo;
 
-// This function runs once before all tests in this file.
 async function createTestData(): Promise<Auction> {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
   
-  const testCategory = await prisma.lotCategory.create({
+  testCategory = await prisma.lotCategory.create({
     data: { name: testData.category.name, slug: testData.category.slug, hasSubcategories: false }
   });
   console.log(`[createTestData] Created category: ${testCategory.name}`);
 
-  const testAuctioneer = await prisma.auctioneer.create({
+  testAuctioneer = await prisma.auctioneer.create({
     data: { 
         name: testData.auctioneer.name, 
         slug: testData.auctioneer.slug, 
@@ -64,7 +66,7 @@ async function createTestData(): Promise<Auction> {
   });
   console.log(`[createTestData] Created auctioneer: ${testAuctioneer.name}`);
 
-  const testSeller = await prisma.seller.create({
+  testSeller = await prisma.seller.create({
     data: {
         name: testData.seller.name,
         slug: testData.seller.slug,
@@ -90,8 +92,8 @@ async function createTestData(): Promise<Auction> {
       auctionDate: now,
       endDate: endDate,
       auctionStages: [ 
-          { name: '1ª Praça', endDate: stage1End, initialPrice: 1500 },
-          { name: '2ª Praça', endDate: endDate, initialPrice: 750 }
+          { name: '1ª Praça', endDate: stage1End.toISOString(), initialPrice: 1500 },
+          { name: '2ª Praça', endDate: endDate.toISOString(), initialPrice: 750 }
       ]
   };
   
@@ -108,8 +110,8 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
-          categoryId: testCategory.id,
           type: testCategory.name,
+          categoryId: testCategory.id,
       }))
   });
   console.log(`[createTestData] Created ${testData.auction.totalLots} lots for auction ${auction.id}.`);
@@ -117,7 +119,6 @@ async function createTestData(): Promise<Auction> {
   return auction as Auction;
 }
 
-// This function runs once after all tests in this file.
 async function cleanupTestData() {
     console.log(`[cleanupTestData] Starting cleanup for run: ${testRunId}`);
     try {
@@ -139,7 +140,25 @@ async function cleanupTestData() {
 }
 
 test.describe('Auction Card and List Item UI Validation', () => {
-
+    console.log(`
+    ================================================================
+    [E2E TEST PLAN - Auction Card UI Validation]
+    ================================================================
+    
+    Este teste valida a exibição correta de todos os elementos dinâmicos
+    em um card de leilão na página de busca.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Dados Visuais**: O card deve exibir a imagem principal do leilão e o logo do comitente.
+    2.  **Informações Básicas**: O título, ID público e link para a página do leilão devem estar corretos.
+    3.  **Badges e Gatilhos**: Os badges de status (ex: "Aberto para Lances") e os gatilhos mentais (ex: "DESTAQUE", "ENCERRA HOJE") devem ser exibidos corretamente.
+    4.  **Contadores**: Os números de lotes, visitas e usuários habilitados devem corresponder aos dados do banco.
+    5.  **Etapas do Leilão**: A timeline de praças deve ser renderizada com os nomes corretos.
+    6.  **Ações do Usuário**: Os botões de Favoritar, Pré-visualizar, Compartilhar e Editar (para admins) devem estar visíveis ao passar o mouse.
+    
+    ================================================================
+    `);
   test.beforeAll(async () => {
     console.log('[Test Suite] Cleaning up before all tests...');
     await cleanupTestData(); 
@@ -155,14 +174,28 @@ test.describe('Auction Card and List Item UI Validation', () => {
   });
   
   test.beforeEach(async ({ page }) => {
+    // Definir o localStorage antes de navegar
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
+
+    // Login explícito como admin antes de cada teste
+    console.log('[Test] beforeEach: Logging in as admin...');
+    await page.goto('/auth/login');
+    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
+    await page.locator('input[name="password"]').fill('Admin@123');
+    await page.getByRole('button', { name: 'Login' }).click();
+    await page.waitForURL('/dashboard/overview'); // Aguarda o redirecionamento pós-login
+    console.log('[Test] beforeEach: Login successful.');
+
+    // Navegar para a página de busca
     await page.goto('/search?type=auctions'); 
-    console.log('[Test] beforeEach hook: Navigated to search page.');
+    console.log('[Test] beforeEach: Navigated to search page.');
   });
 
   test('should display all required information on the Auction Card', async ({ page }) => {
+    console.log('--- [Test Case] Validating Auction Card UI ---');
+    
     const cardLocator = page.locator(`.group:has-text("${testData.auction.title}")`).first();
     await expect(cardLocator).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Auction card is visible.');
@@ -174,7 +207,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     
     // Main Info
     await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(2);
+    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(3);
     await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
     console.log('- Verified: Title, links, and public ID are correct.');
 
@@ -206,5 +239,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();
     await expect(cardLocator.getByLabel('Compartilhar')).toBeVisible();
     await expect(cardLocator.getByLabel('Opções de Edição')).toBeVisible();
+    console.log('- Verified: All user action buttons are present on hover.');
+    console.log('--- ✅ Test Case Passed ---');
   });
 });

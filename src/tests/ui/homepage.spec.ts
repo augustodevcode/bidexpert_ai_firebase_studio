@@ -1,7 +1,27 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
+import { prisma } from '../../src/lib/prisma';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 test.describe('Homepage Smoke Test', () => {
+    
+  console.log(`
+    ================================================================
+    [E2E TEST PLAN - Homepage Smoke Test]
+    ================================================================
+    
+    Este teste valida que a página inicial carrega corretamente e
+    exibe suas seções principais.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Carregamento da Página**: A página inicial deve carregar sem erros.
+    2.  **Título Principal**: O título/logo principal do site ("BidExpert") deve estar visível.
+    3.  **Seção de Lotes**: A seção "Lotes em Destaque" ou "Lotes Recentes" deve ser renderizada.
+    4.  **Seção de Leilões**: A seção "Leilões em Destaque" ou "Leilões Recentes" deve ser renderizada.
+    
+    ================================================================
+    `);
 
   test.beforeEach(async ({ page }) => {
     // This script runs in the browser context, before the page loads.
@@ -14,7 +34,7 @@ test.describe('Homepage Smoke Test', () => {
   });
 
   test('should load the homepage and display the main title', async ({ page }) => {
-    const title = page.getByRole('link', { name: 'BidExpert' }).first();
+    const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Homepage main title is visible.');
   });
@@ -35,9 +55,6 @@ test.describe('Homepage Smoke Test', () => {
     // Assert: Wait for the section title to be visible.
     const auctionsSectionTitle = page.getByRole('heading', { name: 'Leilões em Destaque' }).or(page.getByRole('heading', { name: 'Leilões Recentes' }));
     await expect(auctionsSectionTitle).toBeVisible({ timeout: 15000 });
-    console.log('- Verified: Auctions section title is visible.');
-  
-    // Assert: Check if there is at least one auction card visible.
     const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('div.group').first();
     await expect(firstAuctionCard).toBeVisible({ timeout: 5000 });
     console.log('- Verified: At least one auction card is visible.');

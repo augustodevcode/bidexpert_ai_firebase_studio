@@ -7,17 +7,14 @@ import PromoCard from '@/components/promo-card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
-import { getLotCategories } from '@/app/admin/categories/actions';
-import { fetchPlatformSettings } from '@/lib/data-queries'; // Corrigido para usar a nova função de busca de dados
+import { fetchPlatformSettings } from '@/lib/data-queries';
 import FeaturedItems from '@/components/featured-items';
-import type { Auction, Lot } from '@/types';
+import type { Auction, Lot, LotCategory } from '@/types';
 import { prisma } from '@/lib/prisma';
+import { getLotCategories } from './admin/categories/actions';
 
 async function HomePageContent() {
-  // A busca de dados agora usa as funções centralizadas e seguras para Server Components
-  // Para os testes, buscamos direto com prisma para mais rapidez.
+  // Fetch data directly using Prisma for speed in this component
   const [platformSettings, allAuctions, allLots, categories] = await Promise.all([
     fetchPlatformSettings(),
     prisma.auction.findMany({ 
