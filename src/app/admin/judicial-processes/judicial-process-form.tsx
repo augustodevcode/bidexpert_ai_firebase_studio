@@ -23,6 +23,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { extractProcessData, type ExtractProcessDataOutput } from '@/ai/flows/extract-process-data-flow';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Label } from '@/components/ui/label';
 import DataValidationModal from '@/components/ai/data-validation-modal';
 
 
