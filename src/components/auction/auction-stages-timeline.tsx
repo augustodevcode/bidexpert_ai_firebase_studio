@@ -1,9 +1,8 @@
-
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
 import type { AuctionStage } from '@/types';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, DollarSign } from 'lucide-react';
 import { format, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -30,23 +29,25 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
   }, [stage.endDate]);
 
   return (
-    <div className="flex flex-col items-center flex-1 min-w-0 px-1">
-      <div className={cn(
-        "h-3.5 w-3.5 rounded-full border-2 mb-1.5",
-        isCompleted ? "bg-primary border-primary" : (isActive ? "bg-background border-primary ring-2 ring-primary/30" : "bg-background border-border")
-      )} />
-      <p className={cn(
-        "text-xs font-semibold text-center truncate w-full",
-        isActive ? 'text-primary' : (isCompleted ? 'text-muted-foreground' : 'text-foreground')
-      )} title={stage.name || ''}>
-        {stage.name || `Etapa`}
-      </p>
-      <p className="text-xs text-muted-foreground text-center">
-        {formattedDate}
-      </p>
-      <p className="text-xs text-muted-foreground text-center">
-        {formattedTime}
-      </p>
+    <div className="flex items-start gap-2 flex-1 min-w-0 px-1 text-xs">
+        <div className="flex flex-col items-center gap-1 mt-1">
+            <div className={cn(
+                "h-3.5 w-3.5 rounded-full border-2",
+                isCompleted ? "bg-primary border-primary" : (isActive ? "bg-background border-primary ring-2 ring-primary/30" : "bg-background border-border")
+            )} />
+        </div>
+        <div className="flex-grow">
+            <p className={cn(
+                "font-semibold truncate w-full",
+                isActive ? 'text-primary' : (isCompleted ? 'text-muted-foreground line-through' : 'text-foreground')
+            )} title={stage.name || ''}>
+                {stage.name || `Etapa`}
+            </p>
+            <p className="text-muted-foreground">{formattedDate} - {formattedTime}</p>
+            {stage.initialPrice && (
+                <p className="text-primary font-medium">R$ {stage.initialPrice.toLocaleString('pt-br')}</p>
+            )}
+        </div>
     </div>
   );
 };
@@ -58,12 +59,7 @@ interface AuctionStagesTimelineProps {
 
 export default function AuctionStagesTimeline({ auctionOverallStartDate, stages }: AuctionStagesTimelineProps) {
   if (!stages || stages.length === 0) {
-    return (
-      <div>
-        <h4 className="text-md font-semibold mb-3 flex items-center"><CalendarDays className="h-4 w-4 mr-2 text-primary" />Linha do Tempo</h4>
-        <p className="text-xs text-muted-foreground">Nenhuma etapa definida para este leilão.</p>
-      </div>
-    );
+    return null;
   }
 
   const processedStages = stages
@@ -81,27 +77,17 @@ export default function AuctionStagesTimeline({ auctionOverallStartDate, stages 
 
   return (
     <div>
-        <h4 className="text-md font-semibold mb-4 flex items-center"><CalendarDays className="h-4 w-4 mr-2 text-primary" />Linha do Tempo</h4>
-        <div className="w-full">
-            <div className="flex items-start">
-                {processedStages.map((stage, index) => {
-                    const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
-                    const isActive = index === activeStageIndex;
-                    const isLast = index === processedStages.length - 1;
-
-                    return (
-                        <React.Fragment key={stage.name || index}>
-                            <AuctionStageItem stage={stage} isActive={isActive} isCompleted={isCompleted} />
-                            {!isLast && (
-                                <div className={cn(
-                                    "flex-auto h-0.5 mt-[5px]",
-                                    (isCompleted || isActive) ? "bg-primary" : "bg-border"
-                                )} />
-                            )}
-                        </React.Fragment>
-                    )
-                })}
-            </div>
+        <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />ETAPAS DO LEILÃO</h4>
+        <div className="relative flex flex-col space-y-2">
+            {/* Linha vertical */}
+            <div className="absolute left-[6px] top-2 bottom-2 w-0.5 bg-border -z-10"></div>
+            {processedStages.map((stage, index) => {
+                const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
+                const isActive = index === activeStageIndex;
+                return (
+                    <AuctionStageItem key={stage.name || index} stage={stage} isActive={isActive} isCompleted={isCompleted} />
+                )
+            })}
         </div>
     </div>
   );

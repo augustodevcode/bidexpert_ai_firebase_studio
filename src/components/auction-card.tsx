@@ -4,7 +4,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
@@ -20,73 +20,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EntityEditMenu from './entity-edit-menu'; // Import the new component
-
-interface AuctionStageItemProps {
-  stage: AuctionStageType;
-  auctionId: string; 
-  index: number; 
-}
-
-// Optimized AuctionStageItem component
-const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, auctionId, index }) => {
-  const [clientTimeData, setClientTimeData] = React.useState<{ formattedDate: string; isPast: boolean } | null>(null);
-
-  React.useEffect(() => {
-    const now = new Date();
-    let stageEndDateObj: Date | null = null;
-    let isValidDate = false;
-
-    if (stage.endDate) { 
-        stageEndDateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate as string);
-        if (stageEndDateObj && !isNaN(stageEndDateObj.getTime())) {
-            isValidDate = true;
-        }
-    }
-
-    if (isValidDate && stageEndDateObj) {
-        setClientTimeData({
-            formattedDate: format(stageEndDateObj, "dd/MM/yyyy", { locale: ptBR }), // Format without time
-            isPast: stageEndDateObj < now,
-        });
-    } else {
-        console.warn(`AuctionStageItem: Invalid or missing endDate for auction stage. Auction ID: ${auctionId}, Stage Name: "${stage.name}". Received endDate:`, stage.endDate);
-        setClientTimeData({
-            formattedDate: "Data Indisponível",
-            isPast: false, 
-        });
-    }
-  }, [stage.endDate, stage.name, auctionId]); 
-
-
-  if (!clientTimeData) {
-    return (
-      <div key={`${auctionId}-stage-loading-${index}`} className="flex justify-between items-center text-xs py-1 text-muted-foreground animate-pulse">
-        <div className="flex items-center">
-            <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-            <span className="font-medium text-foreground/80">{stage.name}:</span>
-        </div>
-        <span className="font-semibold">Calculando...</span>
-      </div>
-    );
-  }
-
-  const { formattedDate, isPast } = clientTimeData;
-
-  return (
-    <div
-      key={`${auctionId}-stage-${index}`}
-      className={`flex justify-between items-center text-xs py-1 ${isPast ? 'text-muted-foreground/70 line-through' : 'text-muted-foreground'}`}
-    >
-      <div className="flex items-center">
-        <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
-        <span className="font-medium text-foreground/80">{stage.name}:</span>
-      </div>
-      <span className="font-semibold text-foreground">{formattedDate}</span>
-    </div>
-  );
-};
-
+import EntityEditMenu from './entity-edit-menu';
+import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente de timeline
 
 interface AuctionCardProps {
   auction: Auction;
@@ -116,7 +51,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
         }
     }
     
-    if ((auction.totalHabilitatedUsers || 0) > 100) { // Example threshold
+    if ((auction.totalHabilitatedUsers || 0) > 100) { 
         triggers.push('ALTA DEMANDA');
     }
     
@@ -297,7 +232,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
           <CardContent className="p-4 flex-grow">
             <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
-              <span>ID: {auction.publicId || auction.id}</span>
+              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`}>ID: {auction.publicId || auction.id}</span>
               {auctionTypeDisplay && (
                 <div className="flex items-center gap-1">
                     {auctionTypeDisplay.icon}
@@ -311,24 +246,15 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               </h3>
             </Link>
             
-            { (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') ? (
-              <div className="text-xs text-muted-foreground mb-2 flex items-center">
-                <CheckSquare className="h-3 w-3 mr-1.5 flex-shrink-0 text-green-600" />
-                <span>{soldLotsCount > 0 ? `${soldLotsCount} de ${auction.totalLots} lotes vendidos.` : 'Nenhum lote vendido.'}</span>
-              </div>
-            ) : (
-              <div className="text-xs text-muted-foreground mb-2 flex items-center">
+            <div className="text-xs text-muted-foreground mb-2 flex items-center">
                  <ListChecks className="h-3 w-3 mr-1.5 flex-shrink-0" />
                  <span>{auction.totalLots || 0} Lotes no total</span>
-              </div>
-            )}
+            </div>
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
-              <div className="space-y-1 mb-3">
-                {auction.auctionStages.map((stage, index) => (
-                  <AuctionStageItem key={`${auction.id}-stage-${index}`} stage={stage} auctionId={auction.id} index={index} />
-                ))}
-              </div>
+                <div className="space-y-1 mb-3 text-xs">
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate)} stages={auction.auctionStages} />
+                </div>
             ) : null}
 
 

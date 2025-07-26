@@ -13,6 +13,7 @@ import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente
 
 interface AuctionListItemProps {
   auction: Auction;
@@ -71,7 +72,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
             </Link>
             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
                 <Badge 
-                className={`text-xs px-2 py-1
+                className={`text-xs px-2 py-1 shadow-md
                     ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
                     ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
                     ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
@@ -126,25 +127,12 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
               </div>
             </div>
 
-            {auction.auctionStages && auction.auctionStages.length > 0 ? (
-                <div className="space-y-1 mb-2 max-h-20 overflow-y-auto text-xs">
-                    {auction.auctionStages.map((stage, index) => (
-                        <div key={index} className={`p-1.5 rounded-md ${new Date(stage.endDate as string).getTime() < new Date().getTime() ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-accent/30'}`}>
-                            <div className="flex justify-between items-center">
-                                <span className="font-medium text-xs">{stage.name}</span>
-                                <span className="text-xs">{stage.statusText || 'Encerra'}: {format(new Date(stage.endDate as string), "dd/MM HH:mm", { locale: ptBR })}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            ): (
-                 <div className="flex items-center text-xs text-muted-foreground mb-2">
-                    <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                    <span>{format(new Date(auction.auctionDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+            {auction.auctionStages && auction.auctionStages.length > 0 && (
+                <div className="my-2 p-3 bg-muted/30 rounded-md">
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate)} stages={auction.auctionStages} />
                 </div>
             )}
             
-
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div className="flex-shrink-0">
                 <p className="text-xs text-muted-foreground">
@@ -166,5 +154,3 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
     </TooltipProvider>
   );
 }
-
-    
