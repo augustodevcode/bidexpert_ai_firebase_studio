@@ -225,10 +225,7 @@ function WizardContent({
             </Button>
         </CardHeader>
         <CardContent className="h-96 w-full p-0">
-            {/* O WizardFlow agora vive aqui, dentro do seu próprio provider para otimização */}
-            <WizardProvider>
-                <WizardFlow />
-            </WizardProvider>
+            <WizardFlow />
         </CardContent>
         </Card>
         <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
@@ -236,28 +233,60 @@ function WizardContent({
   );
 }
 
-// O componente principal da página agora é um Server Component que busca os dados
-export default async function WizardPage() {
-    const initialDataResult = await getWizardInitialData();
+function WizardPage() {
+    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
 
-    if (!initialDataResult.success) {
-        return (
-            <div className="text-center py-10">
-                <h1 className="text-2xl font-bold text-destructive">Erro ao Carregar Dados</h1>
-                <p className="text-muted-foreground">{initialDataResult.message}</p>
-            </div>
-        );
+    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
+        setIsLoadingData(true);
+        const result = await getWizardInitialData();
+        if (result.success) {
+            const data = result.data as WizardDataForFetching;
+            setFetchedData(data);
+            
+            if (newProcessIdToSelect) {
+                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
+                if (newProcess) {
+                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+                }
+            }
+        } else {
+            console.error("Failed to load wizard data:", result.message);
+        }
+        setIsLoadingData(false);
+    }, [setWizardData]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    if (isLoadingData) {
+      return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
     }
     
-    // O WizardProvider principal envolve toda a lógica do cliente.
+    if (!fetchedData) {
+        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
+    }
+
     return (
-        <WizardProvider>
-            <WizardContent 
-                fetchedData={initialDataResult.data as WizardDataForFetching} 
-                isLoading={false} 
-                refetchData={async () => { /* Refetching é complexo em server component, requer revalidate */ }} 
-            />
-        </WizardProvider>
+      <WizardContent 
+        fetchedData={fetchedData} 
+        isLoading={isLoadingData} 
+        refetchData={loadData} 
+      />
     );
 }
 
+
+export default function WizardPageWrapper() {
+  return (
+    <WizardProvider>
+      <WizardPage />
+    </WizardProvider>
+  );
+}
