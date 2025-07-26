@@ -27,6 +27,8 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
     : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
 
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
+  const sellerName = auction.seller?.name;
+
 
   const mentalTriggers = React.useMemo(() => {
     const triggers: string[] = [];
@@ -72,18 +74,18 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
-             {auction.sellerLogoUrl && (
+             {auction.seller?.logoUrl && (
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Link href={auction.sellerSlug ? `/sellers/${auction.sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                        <Link href={auction.seller.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={auction.sellerLogoUrl} alt={auction.seller || "Logo Comitente"} />
-                                <AvatarFallback>{auction.seller?.charAt(0) || 'C'}</AvatarFallback>
+                                <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} />
+                                <AvatarFallback>{sellerName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Comitente: {auction.seller}</p>
+                        <p>Comitente: {sellerName}</p>
                     </TooltipContent>
                 </Tooltip>
             )}
@@ -149,7 +151,7 @@ export default function AuctionListItem({ auction }: AuctionListItemProps) {
 
             {auction.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="my-2 p-3 bg-muted/30 rounded-md">
-                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate)} stages={auction.auctionStages} />
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             )}
             

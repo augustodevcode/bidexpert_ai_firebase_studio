@@ -9,7 +9,7 @@ export class AuctionRepository {
       orderBy: { auctionDate: 'desc' },
       include: { 
         lots: { select: { id: true } },
-        seller: { select: { logoUrl: true, slug: true, publicId: true } } // Include seller info
+        seller: true // Include full seller object
       },
     });
   }
@@ -58,7 +58,7 @@ export class AuctionRepository {
       },
       include: {
         lots: { select: { id: true } },
-        seller: { select: { logoUrl: true, slug: true, publicId: true } },
+        seller: true,
       },
       orderBy: { auctionDate: 'desc' },
     });

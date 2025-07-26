@@ -106,8 +106,10 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const mainImageUrl = auction.imageUrl || 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
-  const sellerLogoUrl = auction.sellerLogoUrl;
-  const sellerSlug = auction.sellerSlug;
+  const sellerLogoUrl = auction.seller?.logoUrl;
+  const sellerSlug = auction.seller?.slug;
+  const sellerName = auction.seller?.name;
+
 
   const getAuctionTypeDisplay = (type?: Auction['auctionType']) => {
     if (!type) return null;
@@ -160,13 +162,13 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                         <TooltipTrigger asChild>
                             <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
                                 <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md">
-                                    <AvatarImage src={sellerLogoUrl} alt={auction.seller || "Logo Comitente"} />
-                                    <AvatarFallback>{auction.seller?.charAt(0) || 'C'}</AvatarFallback>
+                                    <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} />
+                                    <AvatarFallback>{sellerName?.charAt(0) || 'C'}</AvatarFallback>
                                 </Avatar>
                             </Link>
                         </TooltipTrigger>
                         <TooltipContent>
-                           <p>Comitente: {auction.seller}</p>
+                           <p>Comitente: {sellerName}</p>
                         </TooltipContent>
                     </Tooltip>
                 )}
@@ -282,7 +284,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="space-y-1 mb-3 text-xs">
-                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate)} stages={auction.auctionStages} />
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             ) : null}
 

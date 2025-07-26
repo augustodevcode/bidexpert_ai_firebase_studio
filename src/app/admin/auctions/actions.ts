@@ -61,7 +61,10 @@ export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     // This is now a simplified version. The service should be used for complex data.
     const auctions = await prisma.auction.findMany({
         where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
-        include: { lots: { select: { id: true } } }
+        include: { 
+            lots: { select: { id: true } },
+            seller: true
+        }
     });
     // @ts-ignore
     return auctions.map(a => ({...a, totalLots: a.lots.length}));
@@ -75,7 +78,10 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
                 OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
             }
         },
-        include: { lots: { select: { id: true } }, seller: { select: { logoUrl: true, slug: true, publicId: true } } }
+        include: { 
+            lots: { select: { id: true } }, 
+            seller: true 
+        }
     })
    );
 }

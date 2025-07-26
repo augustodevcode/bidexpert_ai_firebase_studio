@@ -85,7 +85,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   const [itemsPerPage, setItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
   
   const uniqueLocationsForFilter = useMemo(() => getUniqueLotLocations(auction.lots || []), [auction.lots]);
-  const sellersForFilter = useMemo(() => allSellers.filter(seller => seller.name === auction.seller), [allSellers, auction.seller]);
+  const sellersForFilter = useMemo(() => allSellers.filter(seller => seller.name === auction.seller?.name), [allSellers, auction.seller]);
 
 
   useEffect(() => {
@@ -189,7 +189,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
-  const auctioneerInitial = auctioneer?.name ? auctioneer.name.charAt(0).toUpperCase() : (auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : '?');
+  const auctioneerInitial = auctioneer?.name ? auctioneer.name.charAt(0).toUpperCase() : (auction.auctioneerName ? auction.auctioneerName.charAt(0).toUpperCase() : '?');
 
   return (
     <>
@@ -304,7 +304,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
              <SidebarFilters
                categories={allCategories}
                locations={uniqueLocationsForFilter}
-               sellers={sellersForFilter}
+               sellers={sellersForFilter.map(s => s.name)}
                onFilterSubmit={handleFilterSubmit}
                onFilterReset={handleFilterReset}
                initialFilters={activeFilters}

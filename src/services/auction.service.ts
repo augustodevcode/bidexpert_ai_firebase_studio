@@ -32,8 +32,6 @@ export class AuctionService {
     return {
       ...auction,
       totalLots: auction.lots?.length || 0,
-      sellerLogoUrl: auction.seller?.logoUrl,
-      sellerSlug: auction.seller?.slug || auction.seller?.publicId || auction.seller?.id,
     };
   }
   
