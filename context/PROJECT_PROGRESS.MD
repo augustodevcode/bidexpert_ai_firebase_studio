@@ -8,16 +8,17 @@
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
+- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process. This involved removing the old `/create` page and integrating a suggestion modal directly into the auction edit form.
+- **Item 13 - Part 1: Document Upload Foundation:** Implemented the UI and backend logic for uploading documents to a Judicial Process, setting the stage for AI extraction.
 
 ## DOING
-- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process. This involves removing the old `/create` page and integrating a suggestion modal directly into the auction edit form.
+- **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
+    - **Step 1: Criar o Fluxo Genkit de Extração:** Desenvolver o fluxo `extract-process-data-flow.ts` que recebe um documento (imagem, PDF) e retorna dados estruturados como número do processo, nomes das partes, comarca, etc.
+    - **Step 2: Conectar o Botão da UI:** Ligar o botão "Extrair Dados com IA" no formulário de processo para invocar o novo fluxo Genkit, passando o documento selecionado.
+    - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
+    - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
 
 ## NEXT
-- **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
-    - Criar uma seção na Biblioteca de Mídia para agrupar documentos por processo.
-    - Desenvolver um modal que exiba os dados extraídos pela IA.
-    - Construir um assistente de validação para que um Analista de Leilão possa revisar e aprovar os dados.
-    - Salvar as informações validadas automaticamente nos registros do Processo Judicial correspondente.
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
