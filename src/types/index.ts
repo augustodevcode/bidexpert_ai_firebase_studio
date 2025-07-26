@@ -1,5 +1,6 @@
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
+import { z } from 'zod';
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
 export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
@@ -602,7 +603,8 @@ export interface MediaItem {
     urlThumbnail: string;
     urlMedium?: string;
     urlLarge?: string;
-    linkedLotIds: string[];
+    linkedLotIds?: string[];
+    judicialProcessId?: string; // New field to link to a judicial process
     dataAiHint?: string;
     uploadedBy: string; // userId
     uploadedAt: string | Date;
@@ -868,16 +870,16 @@ export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schem
 export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;
 export type AuctionFormData = z.infer<typeof import('@/app/admin/auctions/auction-form-schema').auctionFormSchema>;
 export type SellerFormData = z.infer<typeof import('@/app/admin/sellers/seller-form-schema').sellerFormSchema>;
-export type AuctioneerFormData = z.infer<typeof import('@/app/admin/auctioneers/auctioneer-form-schema').auctioneerFormSchema>;
-export type JudicialProcessFormData = z.infer<typeof import('@/app/admin/judicial-processes/judicial-process-form-schema').judicialProcessFormSchema>;
-export type JudicialBranchFormData = z.infer<typeof import('@/app/admin/judicial-branches/judicial-branch-form-schema').judicialBranchFormSchema>;
-export type JudicialDistrictFormData = z.infer<typeof import('@/app/admin/judicial-districts/judicial-district-form-schema').judicialDistrictFormSchema>;
-export type CourtFormData = z.infer<typeof import('@/app/admin/courts/court-form-schema').courtFormSchema>;
-export type StateFormData = z.infer<typeof import('@/app/admin/states/state-form-schema').stateFormSchema>;
-export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').cityFormSchema>;
-export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategories/subcategory-form-schema').subcategoryFormSchema>;
-export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').roleFormSchema>;
-export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
+export type AuctioneerFormData = z.infer<typeof import('@/app/admin/auctioneers/auctioneer-form-schema').auctioneer-form-schema>;
+export type JudicialProcessFormData = z.infer<typeof import('@/app/admin/judicial-processes/judicial-process-form-schema').judicial-process-form-schema>;
+export type JudicialBranchFormData = z.infer<typeof import('@/app/admin/judicial-branches/judicial-branch-form-schema').judicial-branch-form-schema>;
+export type JudicialDistrictFormData = z.infer<typeof import('@/app/admin/judicial-districts/judicial-district-form-schema').judicial-district-form-schema>;
+export type CourtFormData = z.infer<typeof import('@/app/admin/courts/court-form-schema').court-form-schema>;
+export type StateFormData = z.infer<typeof import('@/app/admin/states/state-form-schema').state-form-schema>;
+export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').city-form-schema>;
+export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategories/subcategory-form-schema').subcategory-form-schema>;
+export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').role-form-schema>;
+export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').user-form-schema>;
 
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
@@ -966,3 +968,4 @@ export interface DatabaseAdapter {
 
     close?(): Promise<void>;
 }
+

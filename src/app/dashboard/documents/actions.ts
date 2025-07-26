@@ -1,4 +1,4 @@
-
+// src/app/dashboard/documents/actions.ts
 /**
  * @fileoverview Server Actions for managing user documents and habilitation status.
  * Provides functions to fetch required document types, user's submitted documents,
@@ -17,7 +17,7 @@ import { UserService } from '@/services/user.service'; // Import UserService
  * @returns {Promise<DocumentType[]>} A promise that resolves to an array of DocumentType objects.
  */
 export async function getDocumentTypes(): Promise<DocumentType[]> {
-  return prisma.documentType.findMany();
+  return prisma.documentType.findMany({ orderBy: { name: 'asc' }});
 }
 
 /**
@@ -34,7 +34,8 @@ export async function getUserDocuments(userId: string): Promise<UserDocument[]> 
     where: { userId },
     include: { documentType: true }
   });
-  return documents as UserDocument[];
+  // @ts-ignore
+  return documents;
 }
 
 /**
@@ -85,11 +86,11 @@ export async function saveUserDocument(
     const userService = new UserService();
     await userService.checkAndHabilitateUser(userId);
     
-    // Only revalidate paths when not in a test environment
     if (process.env.NODE_ENV !== 'test') {
       revalidatePath('/dashboard/documents');
       revalidatePath(`/admin/habilitations/${userId}`);
     }
+
 
     return { success: true, message: "Documento salvo com sucesso." };
   } catch (error: any) {

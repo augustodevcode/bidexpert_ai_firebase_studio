@@ -1,3 +1,4 @@
+// src/app/admin/habilitations/[userId]/document-review-client.tsx
 'use client';
 
 import { useState } from 'react';
@@ -13,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface DocumentReviewClientProps {
   initialDocuments: UserDocument[];
@@ -26,15 +28,18 @@ export default function DocumentReviewClient({ initialDocuments, user }: Documen
   const [docToReject, setDocToReject] = useState<UserDocument | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const { toast } = useToast();
+  const router = useRouter();
+
 
   const handleApprove = async (docId: string) => {
     setIsLoading(prev => ({ ...prev, [docId]: true }));
-    const result = await approveDocument(docId);
+    const result = await approveDocument(docId, user.id); // Pass analystId
     if (result.success) {
       toast({ title: "Sucesso!", description: "Documento aprovado." });
       // Re-fetch or optimistically update
       const updatedDocs = documents.map(d => d.id === docId ? { ...d, status: 'APPROVED', rejectionReason: null } as UserDocument : d);
       setDocuments(updatedDocs);
+       router.refresh(); // Refresh server-side props to get updated user habilitation status
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
@@ -61,6 +66,7 @@ export default function DocumentReviewClient({ initialDocuments, user }: Documen
       toast({ title: "Sucesso!", description: "Documento rejeitado." });
        const updatedDocs = documents.map(d => d.id === docId ? { ...d, status: 'REJECTED', rejectionReason } as UserDocument : d);
        setDocuments(updatedDocs);
+        router.refresh();
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }

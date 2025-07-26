@@ -1,3 +1,4 @@
+// src/app/auth/register/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -16,13 +17,13 @@ import { ptBR } from 'date-fns/locale';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { createUser } from '@/app/admin/users/actions';
-import type { UserCreationData } from '@/app/admin/users/actions';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Separator } from '@/components/ui/separator';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { registrationFormSchema, type RegistrationFormValues } from './form-schema';
 import DocumentUploadCard from '@/components/document-upload-card';
+import type { UserCreationData } from '@/types';
 
 export default function RegisterPage() {
   const router = useRouter();

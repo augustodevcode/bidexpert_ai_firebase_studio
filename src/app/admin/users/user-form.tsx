@@ -1,4 +1,4 @@
-
+// src/app/admin/users/user-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -22,9 +22,10 @@ import { userFormSchema, type UserFormValues } from './user-form-schema';
 import type { UserProfileData, Role } from '@/types';
 import { Loader2, Save, UserPlus } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface UserFormProps {
-  initialData?: UserProfileData | null; // Para edição, não usado aqui
+  initialData?: UserProfileData | null;
   roles: Role[];
   onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
   formTitle: string;
@@ -33,7 +34,7 @@ interface UserFormProps {
 }
 
 export default function UserForm({
-  initialData, // Não será usado para o formulário de "Novo Usuário" por enquanto
+  initialData, 
   roles,
   onSubmitAction,
   formTitle,
@@ -44,21 +45,22 @@ export default function UserForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  // Remapeia a estrutura de roles do usuário inicial para um array de IDs
+  const initialRoleIds = initialData?.roles?.map(r => r.role.id) || [];
+
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
     defaultValues: {
       fullName: initialData?.fullName || '',
       email: initialData?.email || '',
-      password: '', // Senha sempre vazia no formulário de admin
-      roleId: initialData?.roleId || null,
+      password: '', // Senha sempre vazia no formulário de admin por segurança
+      roleId: initialRoleIds.length > 0 ? initialRoleIds[0] : null, // Apenas para compatibilidade
     },
   });
 
   async function onSubmit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
-      // A action `createUser` não usará a senha do formulário diretamente para criar no Firebase Auth
-      // Isso é apenas para a criação do perfil no Firestore.
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({
@@ -144,11 +146,11 @@ export default function UserForm({
               name="roleId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Perfil do Usuário</FormLabel>
-                  <Select 
-                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} 
-                    value={field.value || undefined}
-                  >
+                  <FormLabel>Perfil Principal do Usuário</FormLabel>
+                   <Select
+                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)}
+                    value={field.value || "---NONE---"}
+                   >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Selecione um perfil" />
@@ -163,6 +165,9 @@ export default function UserForm({
                       ))}
                     </SelectContent>
                   </Select>
+                  <FormDescription>
+                    Atribua o perfil principal. Perfis adicionais podem ser gerenciados na página de edição do usuário.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}

@@ -104,14 +104,14 @@ export const getPaymentStatusText = (status: PaymentStatus): string => getAuctio
 
 export const getUserDocumentStatusColor = (status: UserDocumentStatus): string => {
   switch (status) {
-    case 'APPROVED': return 'border-green-500';
-    case 'REJECTED': return 'border-red-500';
+    case 'APPROVED': return 'green-500';
+    case 'REJECTED': return 'red-500';
     case 'PENDING_ANALYSIS':
     case 'SUBMITTED':
-      return 'border-yellow-500';
+      return 'yellow-500';
     case 'NOT_SENT':
     default:
-      return 'border-gray-400';
+      return 'gray-400';
   }
 };
 

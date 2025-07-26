@@ -12,14 +12,14 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
-import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem } from '@/types';
-import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
+import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, DocumentType } from '@/types';
+import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { createSeller, getSeller } from '@/app/admin/sellers/actions';
-import { useDropzone } from 'react-dropzone';
-import { createMediaItem, getMediaItems } from '@/app/admin/media/actions';
-import { useAuth } from '@/contexts/auth-context';
+import { getDocumentTypes } from '@/app/dashboard/documents/actions'; // Reusing this action
+import DocumentUploadCard from '@/components/document-upload-card';
+
 
 interface JudicialProcessFormProps {
   initialData?: JudicialProcess | null;
@@ -54,14 +54,16 @@ export default function JudicialProcessForm({
 }: JudicialProcessFormProps) {
   const { toast } = useToast();
   const router = useRouter();
-  const { userProfileWithPermissions } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCreatingSeller, setIsCreatingSeller] = React.useState(false);
   const [sellersForSelect, setSellersForSelect] = React.useState(initialSellers);
   const [showCreateSellerButton, setShowCreateSellerButton] = React.useState(false);
-  
-  const [processDocuments, setProcessDocuments] = React.useState<MediaItem[]>([]);
-  const [isUploading, setIsUploading] = React.useState(false);
+  const [documentTypes, setDocumentTypes] = React.useState<DocumentType[]>([]);
+
+  // Fetch document types on mount
+   React.useEffect(() => {
+    getDocumentTypes().then(setDocumentTypes);
+  }, []);
 
   const form = useForm<JudicialProcessFormValues>({
     resolver: zodResolver(judicialProcessFormSchema),
@@ -75,44 +77,6 @@ export default function JudicialProcessForm({
       parties: initialData?.parties?.map(p => ({...p, id: p.id || `temp-${Math.random()}`})) || [{ name: '', partyType: 'AUTOR' }],
     },
   });
-
-  const fetchProcessDocuments = React.useCallback(async () => {
-    if (initialData?.id) {
-        const allMedia = await getMediaItems();
-        setProcessDocuments(allMedia.filter(item => item.judicialProcessId === initialData.id));
-    }
-  }, [initialData?.id]);
-
-  React.useEffect(() => {
-    fetchProcessDocuments();
-  }, [fetchProcessDocuments]);
-
-  const onDrop = React.useCallback(async (acceptedFiles: File[]) => {
-    if (!initialData?.id || !userProfileWithPermissions?.id) {
-        toast({ title: "Erro", description: "Salve o processo judicial primeiro para poder enviar documentos.", variant: "destructive" });
-        return;
-    }
-
-    setIsUploading(true);
-    for (const file of acceptedFiles) {
-        const formData = new FormData();
-        formData.append('files', file);
-        formData.append('userId', userProfileWithPermissions.id);
-        formData.append('judicialProcessId', initialData.id); // Associate with process
-        
-        try {
-            const response = await fetch('/api/upload', { method: 'POST', body: formData });
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.message || 'Falha no upload');
-        } catch (error: any) {
-            toast({ title: `Erro ao enviar ${file.name}`, description: error.message, variant: 'destructive'});
-        }
-    }
-    await fetchProcessDocuments(); // Refresh the list
-    setIsUploading(false);
-  }, [initialData?.id, userProfileWithPermissions?.id, fetchProcessDocuments, toast]);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop, noClick: true, noKeyboard: true });
 
   const { fields, append, remove } = useFieldArray({ control: form.control, name: "parties" });
 
@@ -296,43 +260,23 @@ export default function JudicialProcessForm({
         <Card className="max-w-3xl mx-auto shadow-lg mt-6">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <BrainCircuit className="h-6 w-6 text-primary"/> Documentos do Processo
+                    <BrainCircuit className="h-6 w-6 text-primary"/> Documentos do Processo e Extração por IA
                 </CardTitle>
                 <CardDescription>
-                    Adicione os documentos do processo (editais, despachos, etc.) para que a IA possa extrair informações e auxiliar no cadastro.
+                    Adicione os documentos do processo para que a IA possa extrair informações e auxiliar no cadastro.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                 <div {...getRootProps()} className={`border-2 border-dashed rounded-lg p-6 text-center space-y-2 transition-colors ${isDragActive ? 'border-primary bg-primary/10' : 'border-muted-foreground/30 hover:border-primary/70'}`}>
-                    <input {...getInputProps()} />
-                    <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground/70" />
-                    <p className="text-sm font-medium text-muted-foreground">Arraste e solte os arquivos aqui</p>
-                    <p className="text-xs text-muted-foreground">ou</p>
-                    <Button type="button" variant="secondary" size="sm" onClick={() => document.getElementById('file-upload-judicial')?.click()}>Selecione os Arquivos</Button>
-                    <input id="file-upload-judicial" type="file" multiple className="hidden" onChange={(e) => onDrop(e.target.files as any)} />
-                 </div>
-                 
-                 <div>
-                    <h4 className="text-sm font-semibold mb-2">Documentos Carregados ({processDocuments.length})</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                        {isUploading && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2"/>Enviando...</div>}
-                        {processDocuments.map(doc => (
-                           <div key={doc.id} className="flex items-center justify-between p-2 border rounded-md bg-background text-sm">
-                            <div className="flex items-center gap-2 truncate">
-                                <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                                <span className="truncate" title={doc.fileName}>{doc.fileName}</span>
-                            </div>
-                            <div className="flex-shrink-0 flex items-center gap-1">
-                                <a href={doc.urlOriginal} target="_blank" rel="noopener noreferrer"><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4"/></Button></a>
-                                <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                            </div>
-                           </div>
-                        ))}
-                         {processDocuments.length === 0 && !isUploading && (
-                             <p className="text-xs text-muted-foreground text-center py-2">Nenhum documento enviado para este processo.</p>
-                         )}
-                    </div>
-                 </div>
+                 {documentTypes.filter(dt => dt.appliesTo === 'PROCESS').map(docType => (
+                     <DocumentUploadCard
+                        key={docType.id}
+                        title={docType.name}
+                        description={docType.description}
+                        status={'NOT_SENT'} // This would be dynamic based on saved docs for this process
+                        // onFileUpload={handleFileUpload} // To be implemented
+                        onFileUpload={async (fileDetails) => console.log('File would be uploaded', fileDetails)}
+                     />
+                 ))}
             </CardContent>
              <CardFooter className="flex justify-end">
                 <Button type="button" disabled>

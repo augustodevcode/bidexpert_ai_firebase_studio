@@ -40,19 +40,19 @@ export default function UserDocumentsPage() {
   }, [toast]);
   
   useEffect(() => {
-    if (userProfileWithPermissions?.uid) {
-      fetchDocumentData(userProfileWithPermissions.uid);
+    if (userProfileWithPermissions?.id) {
+      fetchDocumentData(userProfileWithPermissions.id);
     } else if (!authLoading) {
       setIsLoading(false);
     }
   }, [userProfileWithPermissions, authLoading, fetchDocumentData]);
   
   const handleFileUploadSuccess = async (docTypeId: string, fileUrl: string, fileName: string) => {
-    if (!userProfileWithPermissions?.uid) return;
-    const result = await saveUserDocument(userProfileWithPermissions.uid, docTypeId, fileUrl, fileName);
+    if (!userProfileWithPermissions?.id) return;
+    const result = await saveUserDocument(userProfileWithPermissions.id, docTypeId, fileUrl, fileName);
     if(result.success) {
         toast({ title: "Sucesso!", description: "Documento enviado para análise."});
-        fetchDocumentData(userProfileWithPermissions.uid); // Refresh data
+        fetchDocumentData(userProfileWithPermissions.id); // Refresh data
     } else {
         toast({ title: "Erro ao Salvar", description: result.message, variant: "destructive"});
     }
@@ -61,7 +61,7 @@ export default function UserDocumentsPage() {
   const relevantDocTypes = allDocTypes.filter(dt => {
       const userAccountType = userProfileWithPermissions?.accountType || 'PHYSICAL';
       const appliesTo = dt.appliesTo ? dt.appliesTo.split(',') : [];
-      return appliesTo.includes(userAccountType);
+      return appliesTo.includes('ALL') || appliesTo.includes(userAccountType);
   });
 
   const mergedDocuments = relevantDocTypes.map(docType => {
@@ -69,7 +69,7 @@ export default function UserDocumentsPage() {
       return {
           id: userDoc?.id || `placeholder-${docType.id}`,
           documentTypeId: docType.id,
-          userId: userProfileWithPermissions?.uid || '',
+          userId: userProfileWithPermissions?.id || '',
           status: userDoc?.status || 'NOT_SENT',
           fileUrl: userDoc?.fileUrl,
           rejectionReason: userDoc?.rejectionReason,

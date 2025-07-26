@@ -1,5 +1,6 @@
 // src/services/judicial-process.service.ts
 import { JudicialProcessRepository } from '@/repositories/judicial-process.repository';
+import { SellerService } from './seller.service';
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';
 import { slugify } from '@/lib/sample-data-helpers';
 import type { Prisma } from '@prisma/client';
@@ -7,9 +8,11 @@ import { v4 as uuidv4 } from 'uuid';
 
 export class JudicialProcessService {
   private repository: JudicialProcessRepository;
+  private sellerService: SellerService;
 
   constructor() {
     this.repository = new JudicialProcessRepository();
+    this.sellerService = new SellerService();
   }
 
   async getJudicialProcesses(): Promise<JudicialProcess[]> {
@@ -37,7 +40,30 @@ export class JudicialProcessService {
 
   async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     try {
-      const { parties, courtId, districtId, branchId, sellerId, ...processData } = data;
+      const { parties, courtId, districtId, branchId, sellerId: providedSellerId, ...processData } = data;
+      let finalSellerId = providedSellerId;
+
+      // If a seller is not provided, check if one exists for the branch, or create it.
+      if (!finalSellerId && branchId) {
+        const branchSeller = await prisma.seller.findFirst({ where: { judicialBranchId: branchId }});
+        if (branchSeller) {
+          finalSellerId = branchSeller.id;
+        } else {
+          const branchDetails = await prisma.judicialBranch.findUnique({ where: { id: branchId }});
+          if (branchDetails) {
+            const newSellerResult = await this.sellerService.createSeller({
+              name: branchDetails.name,
+              isJudicial: true,
+              judicialBranchId: branchId
+            } as any);
+            if (newSellerResult.success && newSellerResult.sellerId) {
+              finalSellerId = newSellerResult.sellerId;
+            } else {
+              throw new Error(`Falha ao criar comitente para a vara: ${newSellerResult.message}`);
+            }
+          }
+        }
+      }
       
       const dataToCreate: Prisma.JudicialProcessCreateInput = {
         ...processData,
@@ -50,8 +76,8 @@ export class JudicialProcessService {
         branch: { connect: { id: branchId } },
       };
 
-      if (sellerId) {
-        dataToCreate.seller = { connect: { id: sellerId } };
+      if (finalSellerId) {
+        dataToCreate.seller = { connect: { id: finalSellerId } };
       }
 
       const newProcess = await this.repository.create(dataToCreate);

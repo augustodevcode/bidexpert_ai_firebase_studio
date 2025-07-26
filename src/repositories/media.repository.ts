@@ -28,3 +28,4 @@ export class MediaRepository {
     await prisma.mediaItem.delete({ where: { id } });
   }
 }
+

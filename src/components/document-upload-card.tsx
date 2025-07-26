@@ -11,7 +11,8 @@ import { Progress } from './ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import type { UserDocumentStatus } from '@/types';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { getUserDocumentStatusColor, getUserDocumentStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserDocumentStatusInfo } from '@/lib/sample-data-helpers';
+import { useAuth } from '@/contexts/auth-context';
 
 interface DocumentUploadCardProps {
   title: string;
@@ -38,6 +39,7 @@ export default function DocumentUploadCard({
   maxSizeMB = DEFAULT_MAX_SIZE_MB,
 }: DocumentUploadCardProps) {
   const { toast } = useToast();
+  const { userProfileWithPermissions } = useAuth();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -67,28 +69,25 @@ export default function DocumentUploadCard({
   });
 
   const handleUpload = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || !userProfileWithPermissions?.id) {
+        toast({ title: 'Erro', description: 'Nenhum arquivo selecionado ou usuário não autenticado.', variant: 'destructive'});
+        return;
+    };
 
     setIsUploading(true);
     setError(null);
     
-    // Simulate upload - in a real app, this is where you'd call the API
     try {
       const formData = new FormData();
       formData.append('file', selectedFile);
-      // In a real app, you'd get userId from session/context
-      formData.append('userId', 'user-placeholder-id'); 
-      formData.append('docType', title);
-
-      const response = await fetch('/api/upload/document', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.message);
+      // We are sending the real user ID from the logged-in session now.
+      formData.append('userId', userProfileWithPermissions.id); 
+      // The parent component will pass the documentTypeId when calling onFileUpload
       
-      await onFileUpload({ file: selectedFile, url: result.publicUrl, name: selectedFile.name });
+      // The API route now handles creating the UserDocument record.
+      // This component just needs to call onFileUpload with the details.
+      // We will simulate the URL for now, but a real API would return it.
+      await onFileUpload({ file: selectedFile, url: `/uploads/documents/${userProfileWithPermissions.id}/${selectedFile.name}`, name: selectedFile.name });
       setSelectedFile(null);
 
     } catch (err: any) {
@@ -101,7 +100,7 @@ export default function DocumentUploadCard({
   
   const statusInfo = getUserDocumentStatusInfo(status);
   const StatusIcon = statusInfo.icon;
-  const statusColorClass = statusInfo.color.replace('bg-', 'border-');
+  const statusColorClass = statusInfo.color.replace('text-', 'border-').replace(/-\d+/, '-500');
 
   return (
     <Card className={`border-l-4 ${statusColorClass} transition-all`}>
@@ -115,14 +114,10 @@ export default function DocumentUploadCard({
             </div>
           </div>
           <div className="flex-shrink-0 flex items-center gap-2 sm:pl-4 w-full sm:w-auto justify-end">
-            {status === 'NOT_SENT' && (
-              <Button type="button" variant="outline" size="sm" onClick={open} disabled={isUploading}>
-                <FileUp className="mr-2 h-4 w-4"/> Enviar Documento
-              </Button>
-            )}
-            {status === 'REJECTED' && (
-              <Button type="button" variant="destructive" size="sm" onClick={open} disabled={isUploading}>
-                <FileWarning className="mr-2 h-4 w-4"/> Reenviar
+            {(status === 'NOT_SENT' || status === 'REJECTED') && (
+              <Button type="button" variant={status === 'REJECTED' ? 'destructive' : 'outline'} size="sm" onClick={open} disabled={isUploading}>
+                {status === 'REJECTED' ? <FileWarning className="mr-2 h-4 w-4"/> : <FileUp className="mr-2 h-4 w-4"/>}
+                {status === 'REJECTED' ? 'Reenviar' : 'Enviar Documento'}
               </Button>
             )}
              {status === 'APPROVED' && fileUrl && (

@@ -2,12 +2,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { prisma } from '@/lib/prisma'; // Use prisma directly for this specific use case
+import { prisma } from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
+import { saveUserDocument } from '@/app/dashboard/documents/actions'; // Import the server action
 
-const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-const MAX_FILE_SIZE_MB = 100;
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'image/svg+xml'];
+const MAX_FILE_SIZE_MB = 5;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
     const userId = formData.get('userId') as string | null;
-    const documentTypeId = formData.get('documentTypeId') as string | null;
+    const documentTypeId = formData.get('docType') as string | null;
 
     if (!file) {
       return NextResponse.json({ success: false, message: 'Nenhum arquivo fornecido.' }, { status: 400 });
@@ -43,19 +44,21 @@ export async function POST(request: NextRequest) {
       await mkdir(uploadDir, { recursive: true });
     }
     
-    const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+    // Create a unique filename to prevent conflicts
     const uniqueFilename = `${documentTypeId}-${uuidv4()}${path.extname(file.name)}`;
     const filePath = path.join(uploadDir, uniqueFilename);
     const publicUrl = `/uploads/documents/${userId}/${uniqueFilename}`;
 
     await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
 
-    // Now, save the document record in the database using Prisma directly
-    await prisma.userDocument.upsert({
-        where: { userId_documentTypeId: { userId, documentTypeId }},
-        update: { fileUrl: publicUrl, fileName: file.name, status: 'PENDING_ANALYSIS', rejectionReason: null },
-        create: { userId, documentTypeId, fileUrl: publicUrl, fileName: file.name, status: 'PENDING_ANALYSIS' },
-    });
+    // Use the Server Action to save the document record
+    const result = await saveUserDocument(userId, documentTypeId, publicUrl, file.name);
+
+    if (!result.success) {
+        // If the DB operation fails, we should ideally delete the just-uploaded file.
+        // For simplicity here, we'll just forward the error.
+        return NextResponse.json({ success: false, message: result.message }, { status: 500 });
+    }
     
     return NextResponse.json({
       success: true,
