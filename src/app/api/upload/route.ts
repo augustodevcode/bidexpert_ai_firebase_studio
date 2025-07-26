@@ -7,7 +7,7 @@ import path from 'path';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 
-const MAX_FILE_SIZE_MB = 100;
+const MAX_FILE_SIZE_MB = 10;
 const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 const ALLOWED_MIME_TYPES = [
   'image/jpeg', 
@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     const files = formData.getAll('files') as File[];
     const uploadPath = formData.get('path') as string || 'media';
     const userId = formData.get('userId') as string | null;
+    const judicialProcessId = formData.get('judicialProcessId') as string | null;
 
     if (!files || files.length === 0) {
       return NextResponse.json(
@@ -74,22 +75,22 @@ export async function POST(request: NextRequest) {
         const publicUrl = path.join('/uploads', uploadPath, uniqueFilename).replace(/\\/g, '/');
         publicUrls.push(publicUrl);
 
-        if (uploadPath === 'media') {
-            const itemData: Partial<Omit<MediaItem, 'id'>> = {
-                fileName: file.name,
-                storagePath: publicUrl,
-                title: path.basename(file.name, path.extname(file.name)),
-                altText: path.basename(file.name, path.extname(file.name)),
-                mimeType: file.type,
-                sizeBytes: file.size,
-                dataAiHint: 'upload usuario',
-            };
-            const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
-            if (createResult.success && createResult.item) {
-                uploadedItems.push(createResult.item);
-            } else {
-                uploadErrors.push({ fileName: file.name, message: createResult.message });
-            }
+        const itemData: Partial<Omit<MediaItem, 'id'>> = {
+            fileName: file.name,
+            storagePath: publicUrl,
+            title: path.basename(file.name, path.extname(file.name)),
+            altText: path.basename(file.name, path.extname(file.name)),
+            mimeType: file.type,
+            sizeBytes: file.size,
+            dataAiHint: 'upload usuario',
+            judicialProcessId: judicialProcessId || undefined,
+        };
+        
+        const createResult = await mediaService.createMediaItem(itemData, publicUrl, userId);
+        if (createResult.success && createResult.item) {
+            uploadedItems.push(createResult.item);
+        } else {
+            uploadErrors.push({ fileName: file.name, message: createResult.message });
         }
     }
     

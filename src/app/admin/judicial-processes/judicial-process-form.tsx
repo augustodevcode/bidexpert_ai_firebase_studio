@@ -18,8 +18,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Separator } from '@/components/ui/separator';
 import { createSeller, getSeller } from '@/app/admin/sellers/actions';
 import { useDropzone } from 'react-dropzone';
-import { createMediaItem, getMediaItems } from '@/app/admin/media/actions';
+import { getMediaItems } from '@/app/admin/media/actions';
 import { useAuth } from '@/contexts/auth-context';
+import { extractProcessData, type ExtractProcessDataOutput } from '@/ai/flows/extract-process-data-flow';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
 
 interface JudicialProcessFormProps {
   initialData?: JudicialProcess | null;
@@ -43,6 +47,25 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
     { value: 'TERCEIRO_INTERESSADO', label: 'Terceiro Interessado' }, { value: 'OUTRO', label: 'Outro' },
 ];
 
+// Helper function to convert a fetched image URL to a Data URI
+async function toDataUri(url: string): Promise<string> {
+    const response = await fetch(url);
+    const blob = await response.blob();
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            if (reader.result) {
+                resolve(reader.result as string);
+            } else {
+                reject('Failed to read blob as Data URI');
+            }
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+
+
 export default function JudicialProcessForm({
   initialData, courts, allDistricts, allBranches, sellers: initialSellers,
   onSubmitAction, 
@@ -62,6 +85,9 @@ export default function JudicialProcessForm({
   
   const [processDocuments, setProcessDocuments] = React.useState<MediaItem[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
+  
+  const [isExtracting, setIsExtracting] = React.useState(false);
+  const [docToExtractId, setDocToExtractId] = React.useState<string | null>(null);
 
   const form = useForm<JudicialProcessFormValues>({
     resolver: zodResolver(judicialProcessFormSchema),
@@ -94,19 +120,25 @@ export default function JudicialProcessForm({
     }
 
     setIsUploading(true);
+    let successCount = 0;
     for (const file of acceptedFiles) {
         const formData = new FormData();
         formData.append('files', file);
         formData.append('userId', userProfileWithPermissions.id);
         formData.append('judicialProcessId', initialData.id); // Associate with process
+        formData.append('path', 'judicial-documents'); // Specific path for these files
         
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
             const result = await response.json();
             if (!response.ok) throw new Error(result.message || 'Falha no upload');
+            successCount++;
         } catch (error: any) {
             toast({ title: `Erro ao enviar ${file.name}`, description: error.message, variant: 'destructive'});
         }
+    }
+    if(successCount > 0) {
+        toast({ title: 'Upload Concluído', description: `${successCount} arquivo(s) enviado(s).` });
     }
     await fetchProcessDocuments(); // Refresh the list
     setIsUploading(false);
@@ -186,6 +218,42 @@ export default function JudicialProcessForm({
         setIsCreatingSeller(false);
     }
   };
+
+  const handleExtractWithAI = async () => {
+    if (!docToExtractId) {
+      toast({ title: 'Ação Necessária', description: 'Por favor, selecione um documento para analisar.', variant: 'default' });
+      return;
+    }
+
+    const docToProcess = processDocuments.find(d => d.id === docToExtractId);
+    if (!docToProcess || !docToProcess.urlOriginal) {
+      toast({ title: 'Erro', description: 'Documento selecionado não possui uma URL válida.', variant: 'destructive' });
+      return;
+    }
+
+    setIsExtracting(true);
+    toast({ title: 'BidExpert.AI em Ação', description: 'Analisando o documento... Isso pode levar um momento.' });
+
+    try {
+      const dataUri = await toDataUri(docToProcess.urlOriginal);
+      const result: ExtractProcessDataOutput = await extractProcessData({ documentDataUri: dataUri });
+
+      console.log("AI Extraction Result:", result);
+      toast({
+        title: "Dados Extraídos!",
+        description: `Processo: ${result.processNumber || 'N/A'}. ${result.parties?.length || 0} partes encontradas. Verifique o console para mais detalhes.`,
+        duration: 9000
+      });
+      // Here we would open the validation modal with 'result' data
+      
+    } catch (error: any) {
+      console.error("Error calling AI extraction flow:", error);
+      toast({ title: 'Erro na Extração', description: error.message, variant: 'destructive' });
+    } finally {
+      setIsExtracting(false);
+    }
+  };
+
 
   async function onSubmit(values: JudicialProcessFormValues) {
     setIsSubmitting(true);
@@ -296,10 +364,10 @@ export default function JudicialProcessForm({
         <Card className="max-w-3xl mx-auto shadow-lg mt-6">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <BrainCircuit className="h-6 w-6 text-primary"/> Documentos do Processo
+                    <BrainCircuit className="h-6 w-6 text-primary"/> BidExpert.AI - Documentos do Processo
                 </CardTitle>
                 <CardDescription>
-                    Adicione os documentos do processo (editais, despachos, etc.) para que a IA possa extrair informações e auxiliar no cadastro.
+                    Adicione os documentos do processo (editais, despachos, etc.) e depois use a IA para extrair informações e auxiliar no cadastro.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -313,30 +381,33 @@ export default function JudicialProcessForm({
                  </div>
                  
                  <div>
-                    <h4 className="text-sm font-semibold mb-2">Documentos Carregados ({processDocuments.length})</h4>
-                    <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
-                        {isUploading && <div className="flex items-center text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin mr-2"/>Enviando...</div>}
-                        {processDocuments.map(doc => (
-                           <div key={doc.id} className="flex items-center justify-between p-2 border rounded-md bg-background text-sm">
-                            <div className="flex items-center gap-2 truncate">
-                                <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                                <span className="truncate" title={doc.fileName}>{doc.fileName}</span>
-                            </div>
-                            <div className="flex-shrink-0 flex items-center gap-1">
-                                <a href={doc.urlOriginal} target="_blank" rel="noopener noreferrer"><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4"/></Button></a>
-                                <Button variant="ghost" size="icon" className="h-7 w-7"><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                            </div>
-                           </div>
-                        ))}
-                         {processDocuments.length === 0 && !isUploading && (
-                             <p className="text-xs text-muted-foreground text-center py-2">Nenhum documento enviado para este processo.</p>
-                         )}
-                    </div>
+                    <h4 className="text-sm font-semibold mb-2">Documentos Carregados para este Processo ({processDocuments.length})</h4>
+                    {processDocuments.length > 0 ? (
+                        <RadioGroup onValueChange={setDocToExtractId} className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                            {processDocuments.map(doc => (
+                            <Label key={doc.id} htmlFor={`doc-${doc.id}`} className="flex items-center justify-between p-2 border rounded-md bg-background text-sm has-[div>input:checked]:border-primary has-[div>input:checked]:bg-primary/5 cursor-pointer">
+                                <div className="flex items-center gap-2 truncate">
+                                    <RadioGroupItem value={doc.id} id={`doc-${doc.id}`} />
+                                    <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                                    <span className="truncate" title={doc.fileName}>{doc.fileName}</span>
+                                </div>
+                                <a href={doc.urlOriginal} target="_blank" rel="noopener noreferrer" onClick={e=>e.stopPropagation()}><Button variant="ghost" size="icon" className="h-7 w-7"><Eye className="h-4 w-4"/></Button></a>
+                            </Label>
+                            ))}
+                        </RadioGroup>
+                    ) : (
+                         <Alert variant="default" className="text-center">
+                            <AlertDescription>
+                                Nenhum documento enviado para este processo. Adicione arquivos acima para usar a IA.
+                            </AlertDescription>
+                        </Alert>
+                    )}
                  </div>
             </CardContent>
              <CardFooter className="flex justify-end">
-                <Button type="button" disabled>
-                    <Bot className="mr-2 h-4 w-4"/> Extrair Dados com IA
+                <Button type="button" onClick={handleExtractWithAI} disabled={!docToExtractId || isExtracting}>
+                    {isExtracting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Bot className="mr-2 h-4 w-4"/>} 
+                    {isExtracting ? 'Analisando Documento...' : 'Extrair Dados com IA'}
                 </Button>
              </CardFooter>
         </Card>
