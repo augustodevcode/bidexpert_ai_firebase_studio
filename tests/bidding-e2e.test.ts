@@ -8,7 +8,7 @@ import { UserService } from '../src/services/user.service';
 import { SellerService } from '../src/services/seller.service';
 import { JudicialProcessService } from '../src/services/judicial-process.service';
 import { BemService } from '../src/services/bem.service';
-import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
 import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch } from '../src/types';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -171,34 +171,17 @@ test.describe('Full Auction E2E Simulation Test', () => {
     test('should simulate bidding on the judicial lot', async () => {
         console.log(`\n--- Simulating Bidding on Judicial Lot: ${judicialLot.title} ---`);
         
+        // Habilitate users for the specific auction
+        await habilitateForAuctionAction(biddingUsers[0].id, judicialAuction.id);
+        await habilitateForAuctionAction(biddingUsers[1].id, judicialAuction.id);
+        
         const bid1 = await placeBidOnLot(judicialLot.id, judicialAuction.id, biddingUsers[0].id, biddingUsers[0].fullName!, 13000);
-        assert.ok(bid1.success, 'Bid 1 should be successful');
+        assert.ok(bid1.success, `Bid 1 should be successful. Error: ${bid1.message}`);
         const bid2 = await placeBidOnLot(judicialLot.id, judicialAuction.id, biddingUsers[1].id, biddingUsers[1].fullName!, 14000);
-        assert.ok(bid2.success, 'Bid 2 should be successful');
+        assert.ok(bid2.success, `Bid 2 should be successful. Error: ${bid2.message}`);
         
         const updatedLot = await lotService.getLotById(judicialLot.id);
         assert.strictEqual(updatedLot?.price, 14000, 'Lot price should be updated to the latest bid');
         console.log('- Bidding successful, price updated.');
     });
 });
-
-/**
- * --- NEW TEST STRATEGY ---
- * This test file can now be executed by a wrapper script.
- * The script would look something like this:
- *
- *   #!/bin/bash
- *   npx tsx ./tests/bidding-e2e.test.ts
- *   
- *   if [ $? -ne 0 ]; then
- *     echo "Test failed! Fetching logs..."
- *     # The AI would then be prompted to call the apphosting_fetch_logs tool
- *     # Example (conceptual):
- *     # default_api.apphosting_fetch_logs(backendId: 'your-backend-id', location: 'your-location')
- *   else
- *     echo "Test passed successfully!"
- *   fi
- * 
- * This approach separates the test logic from the log analysis logic,
- * making the process more robust and aligned with standard CI/CD practices.
- */

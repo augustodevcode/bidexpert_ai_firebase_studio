@@ -12,7 +12,7 @@
     "db:seed": "dotenv -e .env -- tsx scripts/seed-db.ts",
     "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
     "postinstall": "dotenv -e .env -- prisma generate",
-    "test": "NODE_ENV=test dotenv -e .env -- tsx tests/habilitation.test.ts",
+    "test": "NODE_ENV=test dotenv -e .env -- tsx tests/bidding-e2e.test.ts",
     "test:ui": "playwright test"
   },
   "dependencies": {
