@@ -1,3 +1,4 @@
+
 'use server';
 
 import { 
@@ -15,6 +16,7 @@ import {
   type SuggestSimilarListingsInput, 
   type SuggestSimilarListingsOutput 
 } from '@/ai/flows/suggest-similar-listings';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 export interface AISuggestionState {
   listingDetails?: SuggestListingDetailsOutput | null;
@@ -22,9 +24,22 @@ export interface AISuggestionState {
   similarListings?: SuggestSimilarListingsOutput | null;
 }
 
-export async function fetchListingDetailsSuggestions(input: SuggestListingDetailsInput): Promise<SuggestListingDetailsOutput> {
+export async function fetchListingDetailsSuggestions(input: Omit<SuggestListingDetailsInput, 'recentAuctionData'>): Promise<SuggestListingDetailsOutput> {
   try {
-    const result = await suggestListingDetails(input);
+    // Fetch a sample of recent auctions to provide context to the AI.
+    const recentAuctions = await getAuctions();
+    const recentAuctionData = recentAuctions.slice(0, 5).map(a => ({
+        title: a.title,
+        description: a.description,
+        finalPrice: a.achievedRevenue || a.initialOffer || 0 // A simplified final price
+    }));
+
+    const fullInput: SuggestListingDetailsInput = {
+        ...input,
+        recentAuctionData: JSON.stringify(recentAuctionData),
+    };
+
+    const result = await suggestListingDetails(fullInput);
     return result;
   } catch (error: any) {
     console.error("Error fetching listing details suggestions:", error);
@@ -51,3 +66,4 @@ export async function fetchSimilarListingsSuggestions(input: SuggestSimilarListi
     throw new Error(error.message || "Failed to fetch similar listings suggestions.");
   }
 }
+

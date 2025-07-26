@@ -123,7 +123,7 @@ export default function JudicialProcessForm({
         name: branch.name,
         isJudicial: true,
         judicialBranchId: branch.id,
-      });
+      } as SellerFormData);
 
       if (result.success && result.sellerId) {
         toast({ title: "Sucesso!", description: `Comitente "${branch.name}" criado e vinculado.` });
@@ -231,8 +231,8 @@ export default function JudicialProcessForm({
             {fields.map((field, index) => (
               <Card key={field.id} className="p-3 bg-background">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                    <FormField control={form.control} name={`parties.${index}.name`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input placeholder="Nome da Parte/Advogado" {...field} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
-                    <FormField control={form.control} name={`parties.${index}.partyType`} render={({ field }) => (<FormItem><FormLabel className="text-xs">Tipo</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger className="text-xs h-9"><SelectValue placeholder="Tipo" /></SelectTrigger></FormControl><SelectContent>{partyTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage className="text-xs"/></FormItem>)}/>
+                    <FormField control={form.control} name={`parties.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input placeholder="Nome da Parte/Advogado" {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
+                    <FormField control={form.control} name={`parties.${index}.partyType`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Tipo</FormLabel><Select onValueChange={stageField.onChange} defaultValue={stageField.value}><FormControl><SelectTrigger className="text-xs h-9"><SelectValue placeholder="Tipo" /></SelectTrigger></FormControl><SelectContent>{partyTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage className="text-xs"/></FormItem>)}/>
                     <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive/80" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
                 </div>
               </Card>

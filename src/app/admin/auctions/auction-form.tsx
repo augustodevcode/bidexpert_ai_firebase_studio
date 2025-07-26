@@ -38,6 +38,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 
 
 interface AuctionFormProps {
+  formRef?: React.MutableRefObject<any>; // Prop to receive the form ref
   initialData?: Auction | null;
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[]; 
@@ -73,6 +74,7 @@ const auctionTypeOptions = [
 ];
 
 export default function AuctionForm({
+  formRef,
   initialData,
   categories,
   auctioneers, 
@@ -132,6 +134,9 @@ export default function AuctionForm({
       }
     },
   });
+
+  // Expose form methods via the ref
+  React.useImperativeHandle(formRef, () => form);
   
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
@@ -747,3 +752,4 @@ export default function AuctionForm({
     </TooltipProvider>
   );
 }
+

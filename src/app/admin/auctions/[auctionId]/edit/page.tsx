@@ -11,7 +11,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature } from 'lucide-react'; // Added Gavel, FileSignature
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb } from 'lucide-react'; // Added Gavel, FileSignature, Lightbulb
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
@@ -41,6 +41,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { getUserProfileData } from '@/app/admin/users/actions';
+import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
+import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
@@ -325,11 +327,14 @@ export default function EditAuctionPage() {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   
+  const [isAISuggestionModalOpen, setIsAISuggestionModalOpen] = useState(false);
+  
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings as PlatformSettings);
   const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
   const [lotCurrentPage, setLotCurrentPage] = useState(1);
   const [lotItemsPerPage, setLotItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
   
+  const formRef = React.useRef<any>(null); // To hold a reference to the form's methods
 
   const fetchPageData = useCallback(async () => {
     if (!auctionId) return;
@@ -520,18 +525,25 @@ export default function EditAuctionPage() {
   }
 
   return (
+    <>
     <div className="space-y-8">
-       <div className="flex justify-end gap-2">
-           {isViewMode ? (
-            <Button onClick={() => setIsViewMode(false)}>
-              <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
+       <div className="flex justify-between items-center gap-2">
+            <Button variant="secondary" onClick={() => setIsAISuggestionModalOpen(true)}>
+                <Lightbulb className="mr-2 h-4 w-4" /> Otimizar com IA
             </Button>
-           ) : null}
-            <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
+            <div className="flex gap-2">
+              {isViewMode ? (
+                  <Button onClick={() => setIsViewMode(false)}>
+                  <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
+                  </Button>
+              ) : null}
+                  <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
+            </div>
         </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
           <AuctionForm
+            formRef={formRef} // Pass ref to AuctionForm
             initialData={auction}
             categories={categories}
             auctioneers={auctioneers}
@@ -588,5 +600,25 @@ export default function EditAuctionPage() {
         </CardContent>
       </Card>
     </div>
+    
+    <AISuggestionModal
+      isOpen={isAISuggestionModalOpen}
+      onClose={() => setIsAISuggestionModalOpen(false)}
+      fetchSuggestionsAction={async () => fetchListingDetailsSuggestions({
+          auctionTitle: auction.title,
+          auctionDescription: auction.description,
+          auctionCategory: auction.category || '',
+          // Em uma implementação real, poderíamos ter palavras-chave salvas.
+          auctionKeywords: auction.title.split(' ').join(','), 
+      })}
+      onApplySuggestions={async (suggestions) => {
+          if (!formRef.current) return;
+          formRef.current.setValue('title', suggestions.suggestedTitle, { shouldDirty: true });
+          formRef.current.setValue('description', suggestions.suggestedDescription, { shouldDirty: true });
+          toast({ title: 'Sugestões Aplicadas!', description: 'Os campos de título e descrição foram atualizados. Não se esqueça de salvar.' });
+      }}
+    />
+    </>
   );
 }
+
