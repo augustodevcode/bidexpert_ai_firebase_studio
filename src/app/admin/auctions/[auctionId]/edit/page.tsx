@@ -1,20 +1,19 @@
-
+// src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import { getDocumentTemplates, getDocumentTemplate as getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, DocumentTemplate, UserProfileWithPermissions } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb } from 'lucide-react'; // Added Gavel, FileSignature, Lightbulb
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/sample-data-helpers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,7 +39,6 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
-import { getUserProfileData } from '@/app/admin/users/actions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 
@@ -101,11 +99,11 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
     
     const handleGenerateDocument = async (type: GenerateDocumentInput['documentType'], lot?: Lot, winner?: UserProfileWithPermissions | null) => {
-        setIsLoading(prev => ({...prev, [`${type}-${lot?.id || 'auction'}`]: true}));
+        const loadingKey = `${type}-${lot?.id || 'auction'}`;
+        setIsLoading(prev => ({...prev, [loadingKey]: true}));
         toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
 
         try {
-            // Fetch related entities if not already present
             const auctioneer = auction.auctioneerId ? await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId)) : null;
             const seller = auction.sellerId ? await getSellers().then(list => list.find(s => s.id === auction.sellerId)) : null;
 
@@ -141,7 +139,7 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
             console.error("Error generating document:", error);
             toast({ title: 'Erro ao Gerar PDF', description: error.message, variant: 'destructive'});
         } finally {
-            setIsLoading(prev => ({...prev, [`${type}-${lot?.id || 'auction'}`]: false}));
+            setIsLoading(prev => ({...prev, [loadingKey]: false}));
         }
     };
     
@@ -334,7 +332,7 @@ export default function EditAuctionPage() {
   const [lotCurrentPage, setLotCurrentPage] = useState(1);
   const [lotItemsPerPage, setLotItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
   
-  const formRef = React.useRef<any>(null); // To hold a reference to the form's methods
+  const formRef = React.useRef<any>(null);
 
   const fetchPageData = useCallback(async () => {
     if (!auctionId) return;
@@ -367,7 +365,6 @@ export default function EditAuctionPage() {
     } finally {
         setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [auctionId, toast]);
 
 
@@ -429,7 +426,7 @@ export default function EditAuctionPage() {
   
   const handleLotItemsPerPageChange = (newSize: number) => {
       setLotItemsPerPage(newSize);
-      setLotCurrentPage(1); // Reset to first page
+      setLotCurrentPage(1);
   }
 
   const renderLotListItemForAdmin = (lot: Lot) => (
@@ -543,7 +540,7 @@ export default function EditAuctionPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
         <div className="lg:col-span-2">
           <AuctionForm
-            formRef={formRef} // Pass ref to AuctionForm
+            formRef={formRef}
             initialData={auction}
             categories={categories}
             auctioneers={auctioneers}
@@ -608,7 +605,6 @@ export default function EditAuctionPage() {
           auctionTitle: auction.title,
           auctionDescription: auction.description,
           auctionCategory: auction.category || '',
-          // Em uma implementação real, poderíamos ter palavras-chave salvas.
           auctionKeywords: auction.title.split(' ').join(','), 
       })}
       onApplySuggestions={async (suggestions) => {
@@ -621,4 +617,3 @@ export default function EditAuctionPage() {
     </>
   );
 }
-

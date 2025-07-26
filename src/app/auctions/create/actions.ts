@@ -1,4 +1,3 @@
-
 'use server';
 
 import { 
@@ -26,12 +25,11 @@ export interface AISuggestionState {
 
 export async function fetchListingDetailsSuggestions(input: Omit<SuggestListingDetailsInput, 'recentAuctionData'>): Promise<SuggestListingDetailsOutput> {
   try {
-    // Fetch a sample of recent auctions to provide context to the AI.
     const recentAuctions = await getAuctions();
     const recentAuctionData = recentAuctions.slice(0, 5).map(a => ({
         title: a.title,
         description: a.description,
-        finalPrice: a.achievedRevenue || a.initialOffer || 0 // A simplified final price
+        finalPrice: a.achievedRevenue || a.initialOffer || 0
     }));
 
     const fullInput: SuggestListingDetailsInput = {
@@ -66,4 +64,3 @@ export async function fetchSimilarListingsSuggestions(input: SuggestSimilarListi
     throw new Error(error.message || "Failed to fetch similar listings suggestions.");
   }
 }
-
