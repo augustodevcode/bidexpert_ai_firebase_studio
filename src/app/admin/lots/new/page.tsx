@@ -1,13 +1,14 @@
 // src/app/admin/lots/new/page.tsx
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
-import { getCategories, getAuctions } from '@/lib/data-queries';
+import { getAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { getBens } from '@/app/admin/bens/actions';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { LotCategory, Auction, StateInfo, CityInfo, Bem } from '@/types';
+import { getLotCategories } from '@/app/admin/categories/actions';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];
@@ -19,7 +20,7 @@ interface NewLotPageContentProps {
 }
 
 function NewLotPageContent({ categories, auctions, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
-  async function handleCreateLot(data: LotFormData) {
+  async function handleCreateLot(data: Partial<LotFormData>) {
     'use server';
     return createLot(data);
   }
@@ -44,7 +45,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
   const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
   
   const [categories, auctions, states, allCities, bens] = await Promise.all([
-    getCategories(),
+    getLotCategories(),
     getAuctions(),
     getStates(),
     getCities(),
