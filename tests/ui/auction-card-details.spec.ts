@@ -85,7 +85,6 @@ async function createTestData(): Promise<Auction> {
       categoryId: testCategory.id,
       auctionDate: now,
       endDate: endDate,
-      // Correct way to create related JSON data for auctionStages
       auctionStages: [
           { name: '1ª Praça', endDate: stage1End, initialPrice: 1500 },
           { name: '2ª Praça', endDate: endDate, initialPrice: 750 }
@@ -115,8 +114,7 @@ async function cleanupTestData() {
     try {
         if (createdAuction) {
             await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
-            // auctionStages is a JSON field now, no need to delete separately
-            await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.auction.deleteMany({ where: { id: createdAuction.id } });
         }
         if(testSeller) await prisma.seller.deleteMany({ where: { id: testSeller.id } });
         if(testAuctioneer) await prisma.auctioneer.deleteMany({ where: { id: testAuctioneer.id } });
@@ -154,8 +152,8 @@ test.describe('Auction Card and List Item UI Validation', () => {
     
     // Main Info
     await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction.publicId}"]`)).toHaveCount(2);
-    await expect(cardLocator.getByText(`ID: ${createdAuction.publicId}`)).toBeVisible();
+    await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(2);
+    await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
 
     // Status & Badges
     await expect(cardLocator.getByText('Aberto para Lances')).toBeVisible();

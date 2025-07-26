@@ -17,6 +17,10 @@ test.describe('Bem Service E2E Tests', () => {
 
     test.before(async () => {
         // Ensure related test data is unique for this run
+        await prisma.bem.deleteMany({ where: { title: testBemTitle }});
+        await prisma.seller.deleteMany({ where: { name: { contains: testRunId } }});
+        await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } }});
+
         testCategory = await prisma.lotCategory.create({
             data: { name: `Categoria Teste Bens ${testRunId}`, slug: `cat-bens-${testRunId}`, hasSubcategories: false }
         });
