@@ -1,6 +1,6 @@
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { prisma } from '../../src/lib/prisma';
+import { prisma } from '../../lib/prisma';
 import { slugify } from '../../src/lib/sample-data-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -110,7 +110,7 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
-          type: testCategory.name, // Required field
+          type: testCategory.name,
           categoryId: testCategory.id,
       }))
   });
@@ -209,7 +209,6 @@ test.describe('Auction Card and List Item UI Validation', () => {
     
     // Main Info
     await expect(cardLocator.locator('h3')).toContainText(testData.auction.title);
-    // Link on image, title, and "Ver Lotes" button
     await expect(cardLocator.locator(`a[href="/auctions/${createdAuction!.publicId}"]`)).toHaveCount(3);
     await expect(cardLocator.getByText(`ID: ${createdAuction!.publicId}`)).toBeVisible();
     console.log('- Verified: Title, links, and public ID are correct.');

@@ -1,7 +1,6 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
 import { prisma } from '../../src/lib/prisma';
-import { getAuctions } from '@/app/admin/auctions/actions';
 
 test.describe('Homepage Smoke Test', () => {
     
@@ -34,8 +33,7 @@ test.describe('Homepage Smoke Test', () => {
   });
 
   test('should load the homepage and display the main title', async ({ page }) => {
-    // This is a more stable selector that doesn't rely on the exact text which might be dynamic.
-    const title = page.locator('header').getByRole('link', { name: 'BidExpert' }).first();
+    const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 15000 });
     console.log('- Verified: Homepage main title is visible.');
   });

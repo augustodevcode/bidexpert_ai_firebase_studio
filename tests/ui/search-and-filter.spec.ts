@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { prisma } from '../../lib/prisma';
 import type { Auction, Lot, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../../types';
 import { v4 as uuidv4 } from 'uuid';
-import { slugify } from '../../lib/sample-data-helpers';
+import { slugify } from '../../src/lib/sample-data-helpers';
 
 const testRunId = `search-e2e-${uuidv4().substring(0, 8)}`;
 
