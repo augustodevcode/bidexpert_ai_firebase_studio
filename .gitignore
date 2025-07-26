@@ -70,3 +70,6 @@ firestore-debug.log
 .idx/.data/mysql/#innodb_temp/temp_8.ibt
 .idx/.data/mysql/#innodb_temp/temp_9.ibt
 .idx/.data/mysql/#innodb_temp/temp_10.ibt
+dataconnect-debug.log
+firestore-debug.log
+.firebase/logs/vsce-debug.log
