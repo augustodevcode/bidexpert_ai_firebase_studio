@@ -79,6 +79,11 @@ function WizardContent({
     }
     nextStep();
   };
+
+  const handleLotCreation = () => {
+    // This is called when lots are created, but we don't need a full refetch,
+    // as the state is handled on the client. We can keep this for potential future use.
+  };
   
   const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
@@ -161,6 +166,7 @@ function WizardContent({
         return <Step4Lotting 
                   availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
+                  onLotCreated={handleLotCreation}
                />;
       }
       case 'review': return <Step5Review />;
@@ -172,24 +178,24 @@ function WizardContent({
     <>
       <div className="space-y-6">
         <Card className="shadow-lg">
-        <CardHeader>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+          <CardHeader>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
                 Assistente de Criação de Leilão
-            </CardTitle>
-            <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
+              </CardTitle>
+              <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
             </CardHeader>
-        {wizardMode === 'main' ? (
+          {wizardMode === 'main' ? (
             <>
-            <CardContent className="p-6">
+              <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
                 <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
-                {renderStep()}
+                  {renderStep()}
                 </div>
-            </CardContent>
-            <CardFooter className="mt-8 flex justify-between p-6 pt-0">
+              </CardContent>
+              <CardFooter className="mt-8 flex justify-between p-6 pt-0">
                 <Button variant="outline" onClick={prevStep} disabled={currentStep === 0 || isLoading || isDataRefetching}>
-                <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
+                  <ChevronLeft className="mr-2 h-4 w-4" /> Anterior
                 </Button>
 
                 <div className="flex items-center gap-2">
@@ -205,31 +211,32 @@ function WizardContent({
                     </Button>
                     )}
                 </div>
-            </CardFooter>
+              </CardFooter>
             </>
-        ) : (
+          ) : (
             <CardContent className="p-6">
-            {renderStep()}
+              {renderStep()}
             </CardContent>
-        )}
+          )}
         </Card>
         
         <Card className="shadow-lg mt-8">
-        <CardHeader className="flex flex-row justify-between items-center">
+          <CardHeader className="flex flex-row justify-between items-center">
             <div>
-            <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
-            <CardDescription>Uma visão geral do progresso atual do seu cadastro.</CardDescription>
+              <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
+              <CardDescription>Uma visão geral do progresso atual do seu cadastro.</CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={() => setIsFlowModalOpen(true)}>
-            <Expand className="mr-2 h-4 w-4" /> Visão Ampliada
+              <Expand className="mr-2 h-4 w-4" /> Visão Ampliada
             </Button>
-        </CardHeader>
-        <CardContent className="h-96 w-full p-0">
+          </CardHeader>
+          <CardContent className="h-96 w-full p-0">
             <WizardFlow />
-        </CardContent>
+          </CardContent>
         </Card>
-        <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
-    </div>
+      </div>
+      
+      <WizardFlowModal isOpen={isFlowModalOpen} onClose={() => setIsFlowModalOpen(false)} />
     </>
   );
 }

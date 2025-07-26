@@ -188,7 +188,7 @@ export default function SellerForm({
                     <FormItem>
                     <FormLabel>ID Público</FormLabel>
                     <FormControl>
-                        <Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} />
+                        <Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription>
                     <FormMessage />
