@@ -241,13 +241,16 @@ function WizardContent({
   );
 }
 
-function WizardPageContent() {
+
+export default function WizardPage() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
     
-    const { setWizardData } = useWizard();
-
-    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
+    // This hook must be called within the WizardProvider
+    const loadData = useCallback(async (
+        setWizardData: React.Dispatch<React.SetStateAction<any>>,
+        newProcessIdToSelect?: string
+    ) => {
         setIsLoadingData(true);
         const result = await getWizardInitialData();
         if (result.success) {
@@ -257,39 +260,41 @@ function WizardPageContent() {
             if (newProcessIdToSelect) {
                 const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
                 if (newProcess) {
-                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+                    setWizardData((prev: any) => ({...prev, judicialProcess: newProcess}));
                 }
             }
         } else {
             console.error("Failed to load wizard data:", result.message);
         }
         setIsLoadingData(false);
-    }, [setWizardData]);
+    }, []);
 
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
+    const WizardPageContent = () => {
+        const { setWizardData } = useWizard();
+        useEffect(() => {
+            loadData(setWizardData);
+        }, [setWizardData]);
 
+         if (isLoadingData || !fetchedData) {
+            return (
+                <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                </div>
+            )
+        }
 
-    if (isLoadingData || !fetchedData) {
-      return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      )
+        return (
+            <WizardContent 
+                fetchedData={fetchedData} 
+                isLoading={isLoadingData} 
+                refetchData={(newId) => loadData(setWizardData, newId)} 
+            />
+        );
     }
-
+    
     return (
-      <WizardContent 
-        fetchedData={fetchedData} 
-        isLoading={isLoadingData} 
-        refetchData={loadData} 
-      />
+        <WizardProvider>
+            <WizardPageContent />
+        </WizardProvider>
     );
 }
-
-
-export default function WizardPage() {
-  return (
-    <WizardProvider>
-      
