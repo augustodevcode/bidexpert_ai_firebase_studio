@@ -82,14 +82,9 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
 
-  const judicialProcessSellerName = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess
-    ? wizardData.judicialProcess.sellerName
-    : null;
-    
   const judicialProcessSellerId = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess
     ? wizardData.judicialProcess.sellerId
     : null;
-
 
   useEffect(() => {
     if (judicialProcessSellerId && form.getValues('sellerId') !== judicialProcessSellerId) {
@@ -116,8 +111,6 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
           ...value,
           auctioneer: auctioneerDetails?.name,
           seller: sellerDetails?.name,
-          auctioneerId: auctioneerDetails?.id,
-          sellerId: sellerDetails?.id,
         }
       }));
     });

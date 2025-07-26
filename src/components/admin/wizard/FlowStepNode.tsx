@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/FlowStepNode.tsx
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -53,13 +52,15 @@ const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
   
   let finalTitle = title;
   
+  // Ensure we are not rendering an object. Check if the value is a string.
   if (entityType === 'process' && wizardData.judicialProcess) {
     finalTitle = `Proc: ${wizardData.judicialProcess.processNumber}`;
-  } else if (entityType === 'auctioneer' && wizardData.auctionDetails?.auctioneer) {
+  } else if (entityType === 'auctioneer' && wizardData.auctionDetails?.auctioneer && typeof wizardData.auctionDetails.auctioneer === 'string') {
     finalTitle = wizardData.auctionDetails.auctioneer;
-  } else if (entityType === 'seller' && wizardData.auctionDetails?.seller) {
+  } else if (entityType === 'seller' && wizardData.auctionDetails?.seller && typeof wizardData.auctionDetails.seller === 'string') {
     finalTitle = wizardData.auctionDetails.seller;
   }
+
 
   const editLink = (isEntity && entityType && entityId) ? `${entityLinks[entityType]}/${entityId}/edit` : null;
 
