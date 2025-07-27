@@ -1,3 +1,4 @@
+
 // src/app/admin/users/columns.tsx
 'use client';
 
@@ -10,6 +11,14 @@ import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 import Link from 'next/link';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<UserProfileWithPermissions>[] => [
