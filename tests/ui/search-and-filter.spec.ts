@@ -1,12 +1,11 @@
 // tests/ui/search-and-filter.spec.ts
 import { test, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import type { Auction, Lot, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../../src/types';
-import { v4 as uuidv4 } from 'uuid';
 import { slugify } from '../../src/lib/sample-data-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
+import { v4 as uuidv4 } from 'uuid';
 
 let prisma: PrismaClient;
-
 const testRunId = `search-e2e-${uuidv4().substring(0, 8)}`;
 
 let category1: LotCategory, category2: LotCategory;
@@ -73,9 +72,7 @@ test.describe('Search and Filter E2E Test', () => {
     });
 
     test.beforeEach(async ({ page }) => {
-        await page.addInitScript(() => {
-          window.localStorage.setItem('bidexpert_setup_complete', 'true');
-        });
+        await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
         await page.goto('/search');
     });
 

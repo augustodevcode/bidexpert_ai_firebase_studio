@@ -11,6 +11,7 @@ import FeaturedItems from '@/components/featured-items';
 import type { Auction, Lot, LotCategory } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { getLotCategories } from './admin/categories/actions';
+import { getCategoryAssets, slugify } from '@/lib/sample-data-helpers';
 
 async function HomePageContent() {
   // Fetch data directly using Prisma for speed in this component
@@ -55,11 +56,7 @@ async function HomePageContent() {
   const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
   
   const featuredCategories = categories.sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0)).slice(0, 3);
-  const categoryAssets = [
-    { imageUrl: 'https://placehold.co/400x400.png?text=Imoveis', imageAlt: 'Imóveis em Leilão', dataAiHint: 'casa apartamento' },
-    { imageUrl: 'https://placehold.co/400x400.png?text=Veiculos', imageAlt: 'Veículos em Leilão', dataAiHint: 'carro moto' },
-    { imageUrl: 'https://placehold.co/400x400.png?text=Maquinario', imageAlt: 'Maquinário em Leilão', dataAiHint: 'trator maquina' },
-  ];
+  
 
   return (
     <div className="space-y-16">
@@ -92,17 +89,20 @@ async function HomePageContent() {
       <section className="space-y-6">
         <h2 className="text-3xl font-bold text-center">Navegue por Categorias</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredCategories.map((category, index) => (
-                 <FilterLinkCard 
-                    key={category.id}
-                    title={category.name}
-                    subtitle={`${category.itemCount || 0}+ Oportunidades`}
-                    imageUrl={category.coverImageUrl || categoryAssets[index]?.imageUrl || ''}
-                    imageAlt={category.description || `Ícone para ${category.name}`}
-                    dataAiHint={category.dataAiHintCover || 'categoria leilao'}
-                    link={`/category/${category.slug}`}
-                />
-            ))}
+            {featuredCategories.map((category) => {
+                 const assets = getCategoryAssets(category.name);
+                 return (
+                     <FilterLinkCard 
+                        key={category.id}
+                        title={category.name}
+                        subtitle={`${category.itemCount || 0}+ Oportunidades`}
+                        imageUrl={category.coverImageUrl || assets.bannerUrl || ''}
+                        imageAlt={category.description || `Ícone para ${category.name}`}
+                        dataAiHint={category.dataAiHintCover || assets.bannerAiHint}
+                        link={`/category/${category.slug}`}
+                    />
+                 )
+            })}
         </div>
       </section>
     </div>

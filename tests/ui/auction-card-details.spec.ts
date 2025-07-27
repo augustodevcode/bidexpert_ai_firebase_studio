@@ -6,7 +6,6 @@ import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lo
 import { v4 as uuidv4 } from 'uuid';
 
 let prisma: PrismaClient;
-
 const testRunId = `card-test-${uuidv4().substring(0, 8)}`;
 console.log(`[auction-card-details.spec.ts] Using testRunId: ${testRunId}`);
 
@@ -44,9 +43,9 @@ const testData = {
   }
 };
 
-let createdAuction: Auction | null = null;
+let createdAuction: Auction;
 
-async function createTestData(): Promise<Auction> {
+async function createTestData() {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
   
   const category = await prisma.lotCategory.create({
@@ -144,17 +143,17 @@ async function cleanupTestData() {
 
 
 test.describe('Auction Card and List Item UI Validation', () => {
-    test.beforeAll(async () => {
-        prisma = new PrismaClient();
-        await prisma.$connect();
-        await cleanupTestData();
-        createdAuction = await createTestData();
-    });
+  test.beforeAll(async () => {
+    prisma = new PrismaClient();
+    await prisma.$connect();
+    await cleanupTestData();
+    createdAuction = await createTestData();
+  });
 
-    test.afterAll(async () => {
-        await cleanupTestData();
-        await prisma.$disconnect();
-    });
+  test.afterAll(async () => {
+    await cleanupTestData();
+    await prisma.$disconnect();
+  });
   
   test.beforeEach(async ({ page }) => {
     console.log('[Test] beforeEach hook: Setting up localStorage and logging in...');
@@ -167,7 +166,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
     await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
-    await page.waitForURL('**/dashboard/overview'); 
+    await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
     console.log('[Test] beforeEach hook: Login successful.');
 
     // Navegar para a página de busca

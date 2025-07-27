@@ -1,5 +1,7 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
+import { prisma } from '../../src/lib/prisma';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 test.describe('Homepage Smoke Test', () => {
     
@@ -44,6 +46,7 @@ test.describe('Homepage Smoke Test', () => {
     const lotsSectionTitle = page.locator('h2').filter({ 
       hasText: /lotes.*(destaque|recentes)/i 
     }).first();
+    
     await expect(lotsSectionTitle).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Lots section title is visible.');
   

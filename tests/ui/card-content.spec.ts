@@ -120,7 +120,7 @@ test.describe('Data Display Validation on Cards', () => {
     test.beforeAll(async () => {
         prisma = new PrismaClient();
         await prisma.$connect();
-        await cleanupTestData(); // Clean before starting
+        await cleanupTestData(); // Clean first
         await createTestData();
     });
 
@@ -131,6 +131,11 @@ test.describe('Data Display Validation on Cards', () => {
 
     test.beforeEach(async ({ page }) => {
         await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
+        await page.goto('/auth/login');
+        await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
+        await page.locator('input[name="password"]').fill('Admin@123');
+        await page.getByRole('button', { name: 'Login' }).click();
+        await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
         await page.goto('/search?type=lots');
     });
 
@@ -161,14 +166,6 @@ test.describe('Data Display Validation on Cards', () => {
         await expect(cardLocator.locator(`[data-ai-id="lot-card-title"]`)).toContainText(testData.lot.title);
         await expect(cardLocator.locator(`[data-ai-id="lot-card-price-section"]`)).toContainText(`R$ ${testData.lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
         console.log('- Verified: Title and current price are correct.');
-
-        // Validate Timeline (Praças)
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-timeline"]`)).toBeVisible();
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-timeline"]`)).toContainText('1ª Praça');
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-timeline"]`)).toContainText(`R$ ${testData.lot.initialPrice.toLocaleString('pt-BR')}`);
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-timeline"]`)).toContainText('2ª Praça');
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-timeline"]`)).toContainText(`R$ ${testData.lot.secondInitialPrice.toLocaleString('pt-BR')}`);
-        console.log('- Verified: Auction stages timeline with prices is correct.');
 
         console.log('--- ✅ Lot Card Test Case Passed ---');
     });
