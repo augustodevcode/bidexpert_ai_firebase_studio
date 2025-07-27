@@ -3,11 +3,18 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getCitiesPerformanceAction, type CityPerformanceData } from './actions';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, MapPin, Loader2, Package, TrendingUp, BarChart3 } from 'lucide-react';
+import { DollarSign, MapPin, Loader2, Package, TrendingUp, BarChart3, Map as MapIcon, Globe } from 'lucide-react';
 import { createCityAnalysisColumns } from './columns';
+import dynamic from 'next/dynamic';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const MapAnalysisComponent = dynamic(() => import('@/components/admin/analysis/map-analysis-component'), {
+  loading: () => <Skeleton className="w-full h-[400px] bg-muted" />,
+  ssr: false
+});
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>
@@ -16,7 +23,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-1/2" /> : value}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
@@ -52,6 +59,16 @@ export default function CityAnalysisPage() {
         return acc;
     }, { totalLots: 0, totalRevenue: 0, stateUfs: new Set<string>() });
   }, [performanceData]);
+  
+  const mapPoints = useMemo(() => {
+      return performanceData.filter(d => d.latitude && d.longitude).map(d => ({
+          id: d.id,
+          lat: d.latitude!,
+          lng: d.longitude!,
+          popupContent: `<strong>${d.name}, ${d.stateUf}</strong><br/>Receita: R$ ${d.totalRevenue.toLocaleString('pt-BR')}<br/>Lotes: ${d.totalLots}`,
+          value: d.totalRevenue,
+      }));
+  }, [performanceData]);
 
   if (isLoading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise...</div>
@@ -62,11 +79,11 @@ export default function CityAnalysisPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <BarChart3 className="h-6 w-6 mr-2 text-primary" />
-            Análise de Performance por Cidade
+            <Globe className="h-6 w-6 mr-2 text-primary" />
+            Análise Geográfica por Cidade
           </CardTitle>
           <CardDescription>
-            Visão geral do desempenho de vendas e atividade por cidade.
+            Visão geral do desempenho de vendas e atividade por cidade no mapa e em gráficos.
           </CardDescription>
         </CardHeader>
       </Card>
@@ -78,23 +95,33 @@ export default function CityAnalysisPage() {
         <StatCard title="Estados Atendidos" value={stateUfs.size} icon={TrendingUp} description="UFs com atividade" isLoading={isLoading} />
       </div>
 
-       <Card>
-        <CardHeader>
-            <CardTitle>Top 10 Cidades por Faturamento</CardTitle>
-        </CardHeader>
-        <CardContent className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(value) => `R$${Number(value)/1000}k`} />
-                <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                <Legend />
-                <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
-            </BarChart>
-            </ResponsiveContainer>
-        </CardContent>
-       </Card>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card>
+              <CardHeader>
+                  <CardTitle className="flex items-center"><MapIcon className="h-5 w-5 mr-2 text-primary"/>Mapa de Faturamento</CardTitle>
+              </CardHeader>
+              <CardContent className="h-96 w-full p-0">
+                  <MapAnalysisComponent points={mapPoints} />
+              </CardContent>
+          </Card>
+          <Card>
+              <CardHeader>
+                  <CardTitle  className="flex items-center"><BarChart3 className="h-5 w-5 mr-2 text-primary"/>Top 10 Cidades por Faturamento</CardTitle>
+              </CardHeader>
+              <CardContent className="h-96">
+                  <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chartData} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis type="number" tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                      <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
+                      <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                      <Legend />
+                      <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
+                  </BarChart>
+                  </ResponsiveContainer>
+              </CardContent>
+          </Card>
+        </div>
 
        <Card>
          <CardHeader>

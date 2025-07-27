@@ -15,6 +15,8 @@ export interface CityPerformanceData {
   lotsSoldCount: number;
   totalRevenue: number;
   salesRate: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 /**
@@ -29,7 +31,12 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
           some: {}, // Ensure the city has at least one lot
         },
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        stateUf: true,
+        latitude: true,
+        longitude: true,
         lots: {
           select: {
             id: true,
@@ -61,6 +68,8 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
         lotsSoldCount,
         totalRevenue,
         salesRate,
+        latitude: city.latitude,
+        longitude: city.longitude,
       };
     }).sort((a, b) => b.totalRevenue - a.totalRevenue); // Sort by revenue descending
     
