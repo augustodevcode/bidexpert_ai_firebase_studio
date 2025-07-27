@@ -149,6 +149,8 @@ test.describe('Data Display Validation on Cards', () => {
         console.log('--- [Test Case] Validating Lot Card Content ---');
         console.log('CRITERIA: Card must display correct title, price, status, triggers, category, and location.');
         
+        await page.screenshot({ path: `test-results/card-content-lot-before-find.png`, fullPage: true });
+
         const cardLocator = page.locator(`[data-ai-id="lot-card-${createdLot.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });
         console.log('- Verified: Lot card is visible.');
@@ -185,6 +187,7 @@ test.describe('Data Display Validation on Cards', () => {
         const pageTitle = await page.title();
         console.log(`[Test] Navigated to auction search. URL: ${page.url()}, Title: "${pageTitle}"`);
 
+        await page.screenshot({ path: `test-results/card-content-auction-before-find.png`, fullPage: true });
 
         const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });

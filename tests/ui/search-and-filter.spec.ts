@@ -75,6 +75,8 @@ test.describe('Search and Filter E2E Test', () => {
           window.localStorage.setItem('bidexpert_setup_complete', 'true');
         });
         await page.goto('/search');
+        console.log('[Search Test] Navigated to search page.');
+        await page.screenshot({ path: `test-results/search-page-load-${testRunId}.png`, fullPage: true });
     });
 
     test('should filter by search term', async ({ page }) => {

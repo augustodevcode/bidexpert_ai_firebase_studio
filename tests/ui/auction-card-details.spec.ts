@@ -179,6 +179,9 @@ test.describe('Auction Card and List Item UI Validation', () => {
     test('should display all required information on the Auction Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Auction Card UI ---');
         console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
+
+        // Take a screenshot for debugging
+        await page.screenshot({ path: `test-results/auction-card-details-before-find.png`, fullPage: true });
         
         const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });
@@ -192,7 +195,7 @@ test.describe('Auction Card and List Item UI Validation', () => {
         // Main Info
         await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId);
-        console.log('- Verified: Title and public ID are correct.');
+        console.log('- Verified: Title, links, and public ID are correct.');
 
         // Status & Badges
         await expect(cardLocator.locator(`[data-ai-id="auction-card-badges"]`)).toContainText('Aberto para Lances');

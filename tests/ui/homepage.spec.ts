@@ -41,6 +41,7 @@ test.describe('Homepage Smoke Test', () => {
     const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Homepage main title is visible.');
+    await page.screenshot({ path: 'test-results/homepage-loaded.png' });
   });
   
   test('should display featured lots or recent lots section', async ({ page }) => {
