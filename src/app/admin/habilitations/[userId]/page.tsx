@@ -9,6 +9,7 @@ import DocumentReviewClient from './document-review-client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { cn } from '@/lib/utils';
 
 export default async function DocumentReviewPage({ params }: { params: { userId: string } }) {
   const { userId } = params;
@@ -32,6 +33,9 @@ export default async function DocumentReviewPage({ params }: { params: { userId:
   }
 
   const statusInfo = getUserHabilitationStatusInfo(user.habilitationStatus);
+  const statusColorClasses = statusInfo.textColor
+    ? `border-l-4 ${statusInfo.textColor.replace('text-', 'border-')} ${statusInfo.textColor.replace('text-', 'bg-').replace('-600', '/10').replace('-700', '/10')}`
+    : 'border-l-4 border-muted-foreground bg-muted/20';
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
@@ -51,8 +55,8 @@ export default async function DocumentReviewPage({ params }: { params: { userId:
          <CardContent>
             <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Status Atual:</span>
-                <Badge variant="outline" className={`border-l-4 ${statusInfo.textColor.replace('text-', 'border-')} ${statusInfo.textColor.replace('text-', 'bg-').replace('-600', '/10').replace('-700', '/10')}`}>
-                    <statusInfo.icon className={`h-4 w-4 mr-2 ${statusInfo.textColor}`} />
+                <Badge variant="outline" className={cn(statusColorClasses)}>
+                    <statusInfo.icon className={cn("h-4 w-4 mr-2", statusInfo.textColor)} />
                     {statusInfo.text}
                 </Badge>
             </div>

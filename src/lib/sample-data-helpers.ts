@@ -134,17 +134,17 @@ export const getUserDocumentStatusInfo = (status: UserDocumentStatus | undefined
 export const getUserHabilitationStatusInfo = (status: UserHabilitationStatus | undefined) => {
   switch (status) {
     case 'HABILITADO':
-      return { text: 'Habilitado', description: 'Você está habilitado para dar lances!', color: 'text-green-600', icon: CheckCircle2, progress: 100 };
+      return { text: 'Habilitado', description: 'Você está habilitado para dar lances!', textColor: 'text-green-600', icon: CheckCircle2, progress: 100 };
     case 'PENDING_ANALYSIS':
-      return { text: 'Em Análise', description: 'Nossa equipe está analisando seus documentos.', color: 'text-yellow-600', icon: Clock, progress: 75 };
+      return { text: 'Em Análise', description: 'Nossa equipe está analisando seus documentos.', textColor: 'text-yellow-600', icon: Clock, progress: 75 };
     case 'PENDING_DOCUMENTS':
-      return { text: 'Documentos Pendentes', description: 'Envie os documentos marcados como obrigatórios (*) para prosseguir.', color: 'text-orange-600', icon: FileWarning, progress: 25 };
+      return { text: 'Documentos Pendentes', description: 'Envie os documentos marcados como obrigatórios (*) para prosseguir.', textColor: 'text-orange-600', icon: FileWarning, progress: 25 };
     case 'REJECTED_DOCUMENTS':
-      return { text: 'Documentos Rejeitados', description: 'Um ou mais documentos foram rejeitados. Verifique abaixo.', color: 'text-red-600', icon: FileWarning, progress: 50 };
+      return { text: 'Documentos Rejeitados', description: 'Um ou mais documentos foram rejeitados. Verifique abaixo.', textColor: 'text-red-600', icon: FileWarning, progress: 50 };
     case 'BLOCKED':
-      return { text: 'Conta Bloqueada', description: 'Sua conta está bloqueada. Entre em contato com o suporte.', color: 'text-gray-700', icon: ShieldAlert, progress: 0 };
+      return { text: 'Conta Bloqueada', description: 'Sua conta está bloqueada. Entre em contato com o suporte.', textColor: 'text-gray-700', icon: ShieldAlert, progress: 0 };
     default:
-      return { text: 'Pendente', description: 'Complete seu cadastro e envie os documentos.', color: 'text-muted-foreground', icon: HelpCircle, progress: 10 };
+      return { text: 'Pendente', description: 'Complete seu cadastro e envie os documentos.', textColor: 'text-muted-foreground', icon: HelpCircle, progress: 10 };
   }
 };
 
