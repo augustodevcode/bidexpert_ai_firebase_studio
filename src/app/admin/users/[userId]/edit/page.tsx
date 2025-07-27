@@ -1,15 +1,17 @@
+
 // src/app/admin/users/[userId]/edit/page.tsx
-import UserProfileForm from '../../user-profile-form'; // Importando o novo formulário de perfil
 import UserRoleForm from '../../user-role-form';
-import { getUserProfileData, updateUserProfile, updateUserRoles } from '../../actions'; 
-import { getRoles } from '@/app/admin/roles/actions'; 
+import { getUserProfileData, updateUserProfile, updateUserRoles } from '../../actions';
+import { getRoles } from '@/app/admin/roles/actions';
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import ProfileForm from '@/components/profile/profile-form'; // Importando o novo formulário unificado
+import type { EditableUserProfileData } from '@/types';
 
 export default async function EditUserPage({ params }: { params: { userId: string } }) {
   const userId = params.userId;
-  
+
   const [userProfile, roles] = await Promise.all([
       getUserProfileData(userId),
       getRoles()
@@ -31,7 +33,7 @@ export default async function EditUserPage({ params }: { params: { userId: strin
   }
 
   // Ação para o formulário de perfil
-  async function handleUpdateUserProfile(data: any) {
+  async function handleUpdateUserProfile(data: EditableUserProfileData) {
     'use server';
     return updateUserProfile(userId, data);
   }
@@ -41,12 +43,13 @@ export default async function EditUserPage({ params }: { params: { userId: strin
     'use server';
     return updateUserRoles(uid, roleIds);
   }
-  
+
   return (
     <div className="space-y-6">
-      <UserProfileForm
+      <ProfileForm
         initialData={userProfile}
         onSubmitAction={handleUpdateUserProfile}
+        context="admin"
       />
 
       <Separator />
