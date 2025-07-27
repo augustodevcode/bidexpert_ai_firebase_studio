@@ -72,7 +72,7 @@ function WizardContent({
   
   const handleNextStep = () => {
     if (currentStepId === 'auction') {
-      if (!wizardData.auctionDetails?.title || !wizardData.auctionDetails.auctioneer || !wizardData.auctionDetails.seller) {
+      if (!wizardData.auctionDetails?.title || !wizardData.auctionDetails.auctioneerId || !wizardData.auctionDetails.sellerId) {
         toast({ title: "Campos Obrigatórios", description: "Por favor, preencha o título, leiloeiro e comitente do leilão.", variant: "destructive" });
         return;
       }
@@ -148,15 +148,27 @@ function WizardContent({
       case 'type': return <Step1TypeSelection />;
       case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
-      case 'lotting':
-        const bensForProcess = wizardData.auctionType === 'JUDICIAL' 
-            ? fetchedData.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
-            : fetchedData.availableBens;
+      case 'lotting': {
+        const bensForLotting = useMemo(() => {
+          if (!fetchedData?.availableBens) return [];
+
+          if (wizardData.auctionType === 'JUDICIAL') {
+            return wizardData.judicialProcess
+              ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+              : [];
+          } else {
+            return wizardData.auctionDetails?.sellerId
+              ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+              : [];
+          }
+        }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+
         return <Step4Lotting 
-                  availableBens={bensForProcess} 
+                  availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
                   onLotCreated={handleLotCreation}
                />;
+      }
       case 'review': return <Step5Review />;
       default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
     }
@@ -232,8 +244,7 @@ function WizardContent({
 function WizardPageContent() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
-    
-    const { setWizardData } = useWizard();
+    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
 
     const loadData = useCallback(async (newProcessIdToSelect?: string) => {
         setIsLoadingData(true);
@@ -258,13 +269,16 @@ function WizardPageContent() {
         loadData();
     }, [loadData]);
 
-
-    if (isLoadingData || !fetchedData) {
+    if (isLoadingData) {
       return (
         <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      )
+      );
+    }
+    
+    if (!fetchedData) {
+        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
     }
 
     return (

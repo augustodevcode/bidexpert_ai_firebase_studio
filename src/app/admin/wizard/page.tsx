@@ -1,4 +1,3 @@
-
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -23,7 +22,7 @@ import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
-import BemForm from '@/components/admin/bens/bem-form';
+import BemForm from '@/app/admin/bens/bem-form';
 
 
 const allSteps = [
@@ -43,6 +42,55 @@ interface WizardDataForFetching {
     courts: Court[];
     districts: JudicialDistrict[];
     branches: JudicialBranch[];
+}
+
+function WizardPageContent() {
+    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
+
+    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
+        setIsLoadingData(true);
+        const result = await getWizardInitialData();
+        if (result.success) {
+            const data = result.data as WizardDataForFetching;
+            setFetchedData(data);
+            
+            if (newProcessIdToSelect) {
+                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
+                if (newProcess) {
+                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+                }
+            }
+        } else {
+            console.error("Failed to load wizard data:", result.message);
+        }
+        setIsLoadingData(false);
+    }, [setWizardData]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    if (isLoadingData) {
+      return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+    }
+    
+    if (!fetchedData) {
+        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
+    }
+
+    return (
+      <WizardContent 
+        fetchedData={fetchedData} 
+        isLoading={isLoadingData} 
+        refetchData={loadData} 
+      />
+    );
 }
 
 function WizardContent({ 
@@ -242,60 +290,11 @@ function WizardContent({
   );
 }
 
-function WizardPageContent() {
-    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
 
-    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
-        setIsLoadingData(true);
-        const result = await getWizardInitialData();
-        if (result.success) {
-            const data = result.data as WizardDataForFetching;
-            setFetchedData(data);
-            
-            if (newProcessIdToSelect) {
-                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
-                if (newProcess) {
-                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
-                }
-            }
-        } else {
-            console.error("Failed to load wizard data:", result.message);
-        }
-        setIsLoadingData(false);
-    }, [setWizardData]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-    if (isLoadingData) {
-      return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
-    }
-    
-    if (!fetchedData) {
-        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
-    }
-
-    return (
-      <WizardContent 
-        fetchedData={fetchedData} 
-        isLoading={isLoadingData} 
-        refetchData={loadData} 
-      />
-    );
-}
-
-
-export default function WizardPageWrapper() {
+export default function WizardPage() {
   return (
     <WizardProvider>
-      <WizardPage />
+      <WizardPageContent />
     </WizardProvider>
   );
 }

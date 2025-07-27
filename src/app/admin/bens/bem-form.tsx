@@ -1,5 +1,4 @@
-
-// src/components/admin/bens/bem-form.tsx
+// src/app/admin/bens/bem-form.tsx
 'use client';
 
 import * as React from 'react';
