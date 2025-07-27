@@ -34,7 +34,7 @@ export default async function DocumentReviewPage({ params }: { params: { userId:
 
   const statusInfo = getUserHabilitationStatusInfo(user.habilitationStatus);
   const statusColorClasses = statusInfo.textColor
-    ? `border-l-4 ${statusInfo.textColor.replace('text-', 'border-')} ${statusInfo.textColor.replace('text-', 'bg-').replace('-600', '/10').replace('-700', '/10')}`
+    ? `border-l-4 ${statusInfo.textColor.replace('text-', 'border-')} ${statusInfo.textColor.replace(/-\d+$/, '/10')}`
     : 'border-l-4 border-muted-foreground bg-muted/20';
 
   return (
