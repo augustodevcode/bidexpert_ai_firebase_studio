@@ -10,7 +10,7 @@ export class AuctionRepository {
       include: { 
         _count: { select: { lots: true } },
         seller: true, // Include full seller object
-        auctioneer: { select: { name: true } },
+        auctioneer: true, // Include full auctioneer object
         category: { select: { name: true } },
       },
     });

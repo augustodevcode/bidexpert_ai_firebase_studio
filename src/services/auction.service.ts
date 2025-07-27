@@ -16,9 +16,13 @@ export class AuctionService {
     return auctions.map(a => ({
       ...a,
       totalLots: a._count?.lots ?? a.lots?.length ?? 0,
-      sellerName: a.seller?.name, // Denormalize for easier access
-      auctioneerName: a.auctioneer?.name, // Denormalize for easier access
-      categoryName: a.category?.name, // Denormalize for easier access
+      seller: a.seller, // Pass the full seller object
+      auctioneer: a.auctioneer, // Pass the full auctioneer object
+      category: a.category, // Pass the full category object
+      // For compatibility, keep denormalized names if some component still uses them
+      sellerName: a.seller?.name, 
+      auctioneerName: a.auctioneer?.name,
+      categoryName: a.category?.name,
     }));
   }
 

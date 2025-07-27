@@ -12,7 +12,7 @@ import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSqua
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AuctionPreviewModal from './auction-preview-modal';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,

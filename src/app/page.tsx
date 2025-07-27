@@ -9,24 +9,20 @@ import Link from 'next/link';
 import { fetchPlatformSettings } from '@/lib/data-queries';
 import FeaturedItems from '@/components/featured-items';
 import type { Auction, Lot, LotCategory } from '@/types';
-import { prisma } from '@/lib/prisma';
 import { getLotCategories } from './admin/categories/actions';
 import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
+import { AuctionService } from '@/services/auction.service'; // Import the service
+import { LotService } from '@/services/lot.service'; // Import the service
 
 async function HomePageContent() {
-  // Fetch data directly using Prisma for speed in this component
+  const auctionService = new AuctionService();
+  const lotService = new LotService();
+
+  // Fetch data using the services
   const [platformSettings, allAuctions, allLots, categories] = await Promise.all([
     fetchPlatformSettings(),
-    prisma.auction.findMany({ 
-        take: 8, 
-        orderBy: { createdAt: 'desc' }, 
-        include: { seller: true }
-    }),
-    prisma.lot.findMany({ 
-        take: 8, 
-        orderBy: { createdAt: 'desc' },
-        include: { auction: { select: { title: true } } }
-    }),
+    auctionService.getAuctions(),
+    lotService.getLots(),
     getLotCategories(),
   ]);
 
