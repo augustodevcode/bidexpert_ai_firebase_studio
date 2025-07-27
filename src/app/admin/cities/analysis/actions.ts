@@ -31,32 +31,20 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
           some: {}, // Ensure the city has at least one lot
         },
       },
-      select: {
-        id: true,
-        name: true,
-        stateUf: true,
-        latitude: true,
-        longitude: true,
-        lots: {
-          select: {
-            id: true,
-            status: true,
-            price: true,
-          },
-        },
+      include: {
         _count: {
-          select: {
-            lots: true,
-          },
+          select: { lots: true },
+        },
+        lots: {
+          where: { status: 'VENDIDO' },
+          select: { price: true },
         },
       },
     });
 
     return citiesWithLots.map(city => {
-      const lotsSoldCount = city.lots.filter(lot => lot.status === 'VENDIDO').length;
-      const totalRevenue = city.lots
-        .filter(lot => lot.status === 'VENDIDO')
-        .reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const lotsSoldCount = city.lots.length;
+      const totalRevenue = city.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
       const totalLots = city._count.lots;
       const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
 
