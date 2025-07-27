@@ -54,7 +54,8 @@ const contentManagementItems = [
 const judicialManagementItems = [
     { title: 'Listar Tribunais', href: '/admin/courts', icon: Scale },
     { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
+    { title: 'Listar Comarcas', href: '/admin/judicial-districts', icon: Map },
+    { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart },
     { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
     { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
 ]
@@ -155,11 +156,7 @@ export default function AdminSidebar() {
               <AccordionItem value="judicial-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
-                      <NavButton item={{ title: 'Listar Tribunais', href: '/admin/courts', icon: Scale }} pathname={pathname} />
-                      <NavButton item={{ title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart }} pathname={pathname} />
-                      <NavButton item={{ title: 'Comarcas', href: '/admin/judicial-districts', icon: Map }} pathname={pathname} />
-                      <NavButton item={{ title: 'Varas', href: '/admin/judicial-branches', icon: Building2 }} pathname={pathname} />
-                      <NavButton item={{ title: 'Processos', href: '/admin/judicial-processes', icon: FileText }} pathname={pathname} />
+                      {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
                <AccordionItem value="sellers-management" className="border-b-0">
