@@ -18,6 +18,11 @@
     - Salvar as informações validadas automaticamente nos registros do Processo Judicial correspondente.
 
 ## NEXT
+- **Item 14: Dashboards de Análise e KPIs (Estratégico):** Implementar uma suíte completa de dashboards analíticos no painel de administração, conforme a nova regra de arquitetura.
+    - **Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).**
+    - **Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, etc.).
+    - **Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual.
+    - **Fase 4:** Integrar Genkit para fornecer análises e recomendações inteligentes com base nos dados dos dashboards.
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
