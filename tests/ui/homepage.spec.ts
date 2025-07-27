@@ -29,20 +29,21 @@ test.describe('Homepage Smoke Test', () => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
     // Now, navigate to the page. The init script will run before any of the page's scripts.
+    console.log('[Homepage Test] Navigating to homepage...');
     await page.goto('/');
-    console.log('[Homepage Test] Navigated to homepage.');
+    await page.waitForLoadState('networkidle');
+    const pageTitle = await page.title();
+    console.log(`[Homepage Test] Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
+    await expect(page).toHaveTitle(/BidExpert/);
   });
 
   test('should load the homepage and display the main title', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
     const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Homepage main title is visible.');
   });
   
   test('should display featured lots or recent lots section', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
-    
     const lotsSectionTitle = page.locator('h2').filter({ 
       hasText: /lotes.*(destaque|recentes)/i 
     }).first();
@@ -56,7 +57,6 @@ test.describe('Homepage Smoke Test', () => {
   });
   
   test('should display featured auctions or recent auctions section', async ({ page }) => {
-    await page.waitForLoadState('networkidle');
     const auctionsSectionTitle = page.locator('h2').filter({ 
       hasText: /leilões.*(destaque|recentes)/i 
     }).first();

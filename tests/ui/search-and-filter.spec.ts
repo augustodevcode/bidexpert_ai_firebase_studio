@@ -72,36 +72,65 @@ test.describe('Search and Filter E2E Test', () => {
     });
 
     test.beforeEach(async ({ page }) => {
+        console.log('[Test] beforeEach: Setting up localStorage and navigating to /search...');
         await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
         await page.goto('/search');
+        await page.waitForLoadState('networkidle');
+        const pageTitle = await page.title();
+        console.log(`[Test] beforeEach: Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
+        await expect(page).toHaveTitle(/BidExpert/);
     });
 
     test('should filter by search term', async ({ page }) => {
+        console.log('--- [Test Case] Filtering by search term ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.locator('input[type="search"]').fill('Ford Ka');
         await page.getByRole('button', { name: 'Buscar' }).click();
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        
+        console.log('- Action: Searched for "Ford Ka" in lots.');
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
+        console.log('- Verified: Result count updated to 1.');
+        
         await expect(page.getByText(lot1.title)).toBeVisible();
+        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot2.title)).not.toBeVisible();
+        console.log('- Verified: Incorrect lot is not visible.');
+        console.log('--- ✅ Test Case Passed ---');
     });
 
     test('should filter by category', async ({ page }) => {
+        console.log('--- [Test Case] Filtering by category ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.getByRole('button', { name: 'Categorias' }).click();
         await page.getByLabel(category2.name).check();
         await page.getByRole('button', { name: 'Aplicar Filtros' }).click();
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        
+        console.log(`- Action: Filtered for category "${category2.name}".`);
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
+        console.log('- Verified: Result count updated to 1.');
+        
         await expect(page.getByText(lot2.title)).toBeVisible();
+        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot1.title)).not.toBeVisible();
+        console.log('- Verified: Incorrect lot is not visible.');
+        console.log('--- ✅ Test Case Passed ---');
     });
     
     test('should filter by location', async ({ page }) => {
+        console.log('--- [Test Case] Filtering by location ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.getByRole('button', { name: 'Localizações' }).click();
         await page.getByLabel('Rio de Janeiro - RJ').check();
         await page.getByRole('button', { name: 'Aplicar Filtros' }).click();
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        
+        console.log('- Action: Filtered for location "Rio de Janeiro - RJ".');
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
+        console.log('- Verified: Result count updated to 1.');
+        
         await expect(page.getByText(lot2.title)).toBeVisible();
+        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot1.title)).not.toBeVisible();
+        console.log('- Verified: Incorrect lot is not visible.');
+        console.log('--- ✅ Test Case Passed ---');
     });
 });

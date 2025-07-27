@@ -161,17 +161,19 @@ test.describe('Auction Card and List Item UI Validation', () => {
         window.localStorage.setItem('bidexpert_setup_complete', 'true');
         });
         
-        // Login explícito como admin antes de cada teste
         await page.goto('/auth/login');
         await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
         await page.locator('input[name="password"]').fill('Admin@123');
         await page.getByRole('button', { name: 'Login' }).click();
-        await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
+        await expect(page.locator('header').getByRole('button')).toBeVisible(); 
         console.log('[Test] beforeEach hook: Login successful.');
 
-        // Navegar para a página de busca
+        console.log('[Test] beforeEach: Navigating to /search?type=auctions');
         await page.goto('/search?type=auctions'); 
-        console.log('[Test] beforeEach hook: Navigated to search page.');
+        await page.waitForLoadState('networkidle');
+        const pageTitle = await page.title();
+        console.log(`[Test] beforeEach: Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
+        await expect(page).toHaveTitle(/BidExpert/);
     });
 
     test('should display all required information on the Auction Card', async ({ page }) => {

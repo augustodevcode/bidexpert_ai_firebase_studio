@@ -129,17 +129,25 @@ test.describe('Data Display Validation on Cards', () => {
     });
 
     test.beforeEach(async ({ page }) => {
+        console.log('[Test] beforeEach hook: Setting up localStorage and logging in...');
         await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
         await page.goto('/auth/login');
         await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
         await page.locator('input[name="password"]').fill('Admin@123');
         await page.getByRole('button', { name: 'Login' }).click();
         await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
+        console.log('[Test] beforeEach hook: Login successful.');
+        console.log('[Test] beforeEach: Navigating to search page for lots.');
         await page.goto('/search?type=lots');
+        await page.waitForLoadState('networkidle');
+        const pageTitle = await page.title();
+        console.log(`[Test] beforeEach: Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
+        await expect(page).toHaveTitle(/BidExpert/);
     });
 
     test('should correctly display all data on the Lot Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Lot Card Content ---');
+        console.log('CRITERIA: Card must display correct title, price, status, triggers, category, and location.');
         
         const cardLocator = page.locator(`[data-ai-id="lot-card-${createdLot.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });
@@ -171,7 +179,12 @@ test.describe('Data Display Validation on Cards', () => {
 
     test('should correctly display all data on the Auction Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Auction Card Content ---');
+        console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
         await page.goto('/search?type=auctions');
+        await page.waitForLoadState('networkidle');
+        const pageTitle = await page.title();
+        console.log(`[Test] Navigated to auction search. URL: ${page.url()}, Title: "${pageTitle}"`);
+
 
         const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });
