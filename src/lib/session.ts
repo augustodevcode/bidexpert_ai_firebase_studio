@@ -17,6 +17,7 @@ if (!secretKey || secretKey.length < 32) {
  * @returns {Promise<string>} O token de sessão assinado.
  */
 export async function encrypt(payload: any) {
+    console.log('[Session Encrypt] Payload para ser criptografado:', payload);
     return new SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
@@ -30,13 +31,19 @@ export async function encrypt(payload: any) {
  * @returns {Promise<any | null>} O payload do token se for válido, caso contrário, null.
  */
 export async function decrypt(session: string | undefined = '') {
+    console.log('[Session Decrypt] Tentando decodificar a sessão do cookie.');
+    if (!session) {
+        console.log('[Session Decrypt] Sessão não fornecida.');
+        return null;
+    }
     try {
         const { payload } = await jwtVerify(session, encodedKey, {
             algorithms: ['HS256'],
         });
+        console.log('[Session Decrypt] Sessão verificada com sucesso. Payload:', payload);
         return payload;
     } catch (error) {
-        console.log('Falha ao verificar a sessão JWT.');
+        console.error('[Session Decrypt] Falha ao verificar a sessão JWT:', error);
         return null;
     }
 }
@@ -46,15 +53,17 @@ export async function decrypt(session: string | undefined = '') {
  * @param {UserProfileWithPermissions} user - O objeto de perfil do usuário.
  */
 export async function createSession(user: UserProfileWithPermissions) {
+    console.log('[Create Session] Recebido perfil de usuário para criar a sessão:', user);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const sessionPayload = {
-        userId: user.id, // Correção: Usar 'id' em vez de 'uid'
+        userId: user.id,
         email: user.email,
-        role: user.roleName,
+        roleNames: user.roleNames, // Usar roleNames para consistência
         permissions: user.permissions,
-        // Não inclua dados sensíveis ou muito grandes aqui
     };
+    console.log('[Create Session] Criando payload da sessão:', sessionPayload);
     const session = await encrypt(sessionPayload);
+    console.log('[Create Session] Token JWT gerado. Definindo cookie.');
 
     cookies().set('session', session, {
         httpOnly: true,
@@ -70,9 +79,13 @@ export async function createSession(user: UserProfileWithPermissions) {
  * @returns {Promise<any | null>} O payload da sessão se válida, senão null.
  */
 export async function getSession() {
-    // Await `cookies()` before accessing a specific cookie
-    const cookieStore = await cookies();
-    const cookie = cookieStore.get('session')?.value;
+    console.log('[Get Session] Tentando obter o cookie de sessão.');
+    const cookie = cookies().get('session')?.value;
+    if (!cookie) {
+        console.log('[Get Session] Cookie de sessão não encontrado.');
+        return null;
+    }
+    console.log('[Get Session] Cookie encontrado, prosseguindo para a decodificação.');
     const session = await decrypt(cookie);
     return session;
 }
@@ -81,5 +94,6 @@ export async function getSession() {
  * Exclui a sessão do usuário, removendo o cookie.
  */
 export async function deleteSession() {
+    console.log('[Delete Session] Excluindo o cookie de sessão.');
     cookies().delete('session');
 }

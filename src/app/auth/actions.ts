@@ -13,7 +13,9 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     if (!user) return null;
 
     const roles = user.roles?.map((ur: any) => ur.role) || [];
-    const permissions = roles.flatMap((r: any) => r.permissions as string[] || []);
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions as string[] || [])));
+    
+    console.log(`[formatUser] Formatando usuário: ${user.email}, Perfis: ${roles.map((r:any) => r.name).join(', ')}, Permissões: ${permissions.length}`);
 
     return {
         ...user,
@@ -60,7 +62,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário encontrado:`, { id: user.id, email: user.email });
+    console.log(`[Login Action] Usuário encontrado:`, { id: user.id, email: user.email, roles: user.roles.map(r => r.role.name) });
     
     const isPasswordValid = await bcrypt.compare(password, user.password);
     
@@ -74,9 +76,11 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     const userProfileWithPerms = formatUserWithPermissions(user);
 
     if (!userProfileWithPerms) {
-      return { success: false, message: 'Falha ao formatar o perfil do usuário.' };
+      console.error('[Login Action] Falha ao formatar o perfil do usuário com permissões.');
+      return { success: false, message: 'Falha ao processar o perfil do usuário.' };
     }
     
+    console.log('[Login Action] Perfil formatado com sucesso, criando sessão...');
     await createSession(userProfileWithPerms);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
@@ -102,13 +106,16 @@ export async function logout() {
  * @returns O perfil do usuário com permissões, ou null se não houver sessão válida.
  */
 export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
+    console.log('[GetCurrentUser] Buscando sessão atual...');
     const session = await getSession();
     if (!session || !session.userId) {
+        console.log('[GetCurrentUser] Sessão não encontrada ou inválida.');
         return null;
     }
     
+    console.log(`[GetCurrentUser] Sessão encontrada para userId: ${session.userId}. Buscando usuário no DB...`);
     const user = await prisma.user.findUnique({
-        where: { id: session.userId }, // Busca pelo 'id'
+        where: { id: session.userId },
         include: { 
             roles: {
                 include: {
@@ -117,6 +124,12 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
             }
         }
     });
+
+    if (!user) {
+        console.warn(`[GetCurrentUser] Usuário com ID ${session.userId} da sessão não encontrado no banco de dados.`);
+        return null;
+    }
     
+    console.log(`[GetCurrentUser] Usuário ${user.email} encontrado. Formatando perfil...`);
     return formatUserWithPermissions(user);
 }
