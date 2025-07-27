@@ -1,7 +1,7 @@
-
 // src/components/ui/data-table-view-options.tsx
 "use client"
 
+import * as React from "react"
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import { SlidersHorizontal } from "lucide-react"
 import { Table, Column } from "@tanstack/react-table"
