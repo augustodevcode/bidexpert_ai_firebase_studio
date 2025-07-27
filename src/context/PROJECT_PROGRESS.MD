@@ -4,7 +4,7 @@
 - **Item 1:** **Core Architecture Refactoring:** Fully migrated the application to a layered MVC + Service + Repository architecture using Prisma ORM. This standardized data access and improved maintainability.
 - **Item 2:** **Comprehensive Admin Panel:** Implemented full CRUD functionality for all major entities (`Auctions`, `Lots`, `Users`, `Sellers`, `Auctioneers`, `Categories`, `Judicial Entities`, etc.).
 - **Item 3:** **End-to-End Testing:** Created a robust E2E test suite (`bidding-e2e.test.ts`) that simulates the entire lifecycle of both judicial and extrajudicial auctions, from user creation to bidding.
-- **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`).
+- **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`) and the Consignor Dashboard (`/consignor-dashboard/*`).
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
@@ -13,19 +13,21 @@
 - **BidExpertOkrs - Fase 1: Admin Reports:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
 - **BidExpertOkrs - Fase 2 & 3 (Comitentes):** Implementados os dashboards de análise de grupo e individual para a entidade Comitentes.
 - **BidExpertOkrs - Fase 2 & 3 (Leiloeiros):** Implementados os dashboards de análise de grupo e individual para a entidade Leiloeiros.
+- **BidExpertOkrs - Fase 2 & 3 (Leilões):** Implementados os dashboards de análise de grupo e individual para a entidade Leilões.
+- **BidExpertOkrs - Fase 2 (Categorias):** Implementado o dashboard de análise de grupo para Categorias.
+- **BidExpertOkrs - Fase 2 (Cidades):** Implementado o dashboard de análise de grupo para Cidades.
 
 ## DOING
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
+    - **Análise Geográfica (Estados):** Implementar o dashboard de análise por Estados.
 - **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
     - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
     - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
-    - **Leilões**: Implementar dashboards de análise de grupo e individual para Leilões.
-    - **Categorias**: Implementar dashboards de análise para Categorias de Lotes.
 
 ## NEXT
 - **Item 14 (Continuação): BidExpertOkrs**
-    - **Geográfico**: Implementar dashboards de análise para Cidades e Estados.
-    - **Judicial**: Implementar dashboards de análise para Varas e Tribunais.
+    - **Análise Geográfica Avançada:** Criar dashboard para análise por Regiões (agrupando estados).
+    - **Análise Judicial**: Implementar dashboards de análise para Varas e Tribunais.
     - **IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**

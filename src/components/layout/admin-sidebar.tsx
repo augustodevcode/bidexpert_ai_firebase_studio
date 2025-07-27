@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, ClipboardCheck } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, ClipboardCheck, MapPin } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -34,7 +34,8 @@ const categoryManagementItems = [
 const locationManagementItems = [
     { title: 'Listar Cidades', href: '/admin/cities', icon: Building2 },
     { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart },
-    { title: 'Listar Estados', href: '/admin/states', icon: Map },
+    { title: 'Listar Estados', href: '/admin/states', icon: MapPin },
+    { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart },
 ];
 
 const contentManagementItems = [
