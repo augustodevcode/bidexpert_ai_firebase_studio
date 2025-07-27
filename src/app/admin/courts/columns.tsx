@@ -57,8 +57,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => {
         const website = row.getValue("website") as string;
         if (!website) return <span className="text-muted-foreground">-</span>;
+        const validUrl = website.startsWith('http') ? website : `https://${website}`;
         return (
-            <a href={website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
+            <a href={validUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline flex items-center gap-1">
                 Acessar <ExternalLink className="h-3.5 w-3.5" />
             </a>
         );
