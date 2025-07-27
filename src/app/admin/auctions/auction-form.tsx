@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
@@ -24,7 +25,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin } from 'lucide-react';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -111,6 +112,7 @@ export default function AuctionForm({
       auctionCertificateUrl: initialData?.auctionCertificateUrl || '',
       sellingBranch: initialData?.sellingBranch || '',
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
+      allowInstallmentBids: initialData?.allowInstallmentBids || true,
       silentBiddingEnabled: initialData?.silentBiddingEnabled || false,
       allowMultipleBidsPerUser: initialData?.allowMultipleBidsPerUser === false ? false : true,
       softCloseEnabled: initialData?.softCloseEnabled || false,
@@ -240,7 +242,7 @@ export default function AuctionForm({
       onMediaSelect={handleMediaSelect}
       allowMultiple={false}
     />
-    <Card className="max-w-3xl mx-auto shadow-lg">
+    <Card className="shadow-lg">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
@@ -612,6 +614,19 @@ export default function AuctionForm({
                     <div className="space-y-0.5">
                         <FormLabel>Robô de Lances (Global)</FormLabel>
                         <FormDescription>Permitir lances automáticos (robô) para este leilão?</FormDescription>
+                    </div>
+                    <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                    </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="allowInstallmentBids"
+                render={({ field }) => (
+                    <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background">
+                    <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2"><HandCoins className="h-4 w-4 text-green-600"/> Permitir Lance Parcelado</FormLabel>
+                        <FormDescription>Habilitar a opção de lances com pagamento parcelado.</FormDescription>
                     </div>
                     <FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl>
                     </FormItem>

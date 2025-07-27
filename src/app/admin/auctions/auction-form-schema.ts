@@ -1,3 +1,4 @@
+
 import * as z from 'zod';
 import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
 
@@ -65,6 +66,7 @@ export const auctionFormSchema = z.object({
   auctionCertificateUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
   sellingBranch: z.string().max(100).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
+  allowInstallmentBids: z.boolean().optional().default(true), // Novo
   silentBiddingEnabled: z.boolean().optional().default(false),
   allowMultipleBidsPerUser: z.boolean().optional().default(true),
   softCloseEnabled: z.boolean().optional().default(false), 
