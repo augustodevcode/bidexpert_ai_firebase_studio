@@ -51,14 +51,18 @@ const judicialManagementItems = [
 ]
 
 const platformManagementItems = [
-  { title: 'Usuários', href: '/admin/users', icon: Users },
   { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
   { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios', href: '/admin/reports', icon: BarChart },
+  { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart },
   { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
+];
+
+const userManagementItems = [
+    { title: 'Listar Usuários', href: '/admin/users', icon: Users },
+    { title: 'Análise de Usuários', href: '/admin/users/analysis', icon: BarChart },
 ];
 
 const sellerManagementItems = [
@@ -107,7 +111,7 @@ export default function AdminSidebar() {
         <nav className="p-2 space-y-1">
           {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
           
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management']}>
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
               <AccordionItem value="auction-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
@@ -143,6 +147,12 @@ export default function AdminSidebar() {
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Leiloeiros</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {auctioneerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+               <AccordionItem value="user-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Usuários</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {userManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="platform-management" className="border-b-0">
