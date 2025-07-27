@@ -6,30 +6,39 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctionsForConsignorAction } from './actions';
-import type { Auction } from '@/types';
-import { PlusCircle, Briefcase } from 'lucide-react';
+import type { Auction, SellerProfileInfo } from '@/types';
+import { PlusCircle, Briefcase, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorAuctionColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { hasPermission } from '@/lib/permissions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-/**
- * ConsignorAuctionsPage displays a list of auctions belonging to the currently
- * logged-in consignor. It fetches data using a server action and presents it
- * in a filterable, sortable data table.
- */
 export default function ConsignorAuctionsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
 
-  /**
-   * Fetches the auctions for a given seller ID.
-   * @param {string} sellerId The ID of the seller/consignor.
-   */
+  const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
+
+  useEffect(() => {
+    if (isUserAdmin) {
+      getSellers().then(sellers => {
+        setAllSellers(sellers);
+        if (!selectedSellerId && sellers.length > 0) {
+          setSelectedSellerId(sellers[0].id);
+        }
+      });
+    }
+  }, [isUserAdmin, selectedSellerId]);
+
   const fetchAuctions = useCallback(async (sellerId: string) => {
     setIsLoading(true);
     setError(null);
@@ -46,21 +55,20 @@ export default function ConsignorAuctionsPage() {
     }
   }, [toast]);
 
-  // Effect to trigger data fetching when the user profile is available.
   useEffect(() => {
-    const sellerId = userProfileWithPermissions?.sellerId;
-    if (!authLoading && sellerId) {
-      fetchAuctions(sellerId);
-    } else if (!authLoading) {
+    const targetSellerId = isUserAdmin ? selectedSellerId : userProfileWithPermissions?.sellerId;
+    if (!authLoading && targetSellerId) {
+      fetchAuctions(targetSellerId);
+    } else if (!authLoading && !isUserAdmin) {
       setError("Perfil de comitente não encontrado ou não vinculado à sua conta.");
       setIsLoading(false);
+    } else if (!authLoading && isUserAdmin && allSellers.length === 0) {
+      setIsLoading(false);
     }
-  }, [userProfileWithPermissions, authLoading, fetchAuctions]);
-
-  // Memoize columns to prevent re-creation on every render.
+  }, [userProfileWithPermissions, authLoading, fetchAuctions, isUserAdmin, selectedSellerId, allSellers.length]);
+  
   const columns = useMemo(() => createConsignorAuctionColumns(), []);
   
-  // Memoize options for faceted filtering.
   const statusOptions = useMemo(() => 
     [...new Set(auctions.map(a => a.status))]
       .map(status => ({ value: status, label: getAuctionStatusText(status) })),
@@ -90,6 +98,21 @@ export default function ConsignorAuctionsPage() {
           </Button>
         </CardHeader>
         <CardContent>
+          {isUserAdmin && (
+            <div className="mb-4">
+              <label className="text-sm font-medium text-muted-foreground">Visualizando como:</label>
+               <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
+                  <SelectTrigger className="w-full md:w-[300px] mt-1">
+                      <SelectValue placeholder="Selecione um comitente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {allSellers.map(seller => (
+                          <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+          )}
           <DataTable
             columns={columns}
             data={auctions}

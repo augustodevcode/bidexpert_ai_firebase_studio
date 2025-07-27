@@ -6,36 +6,52 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDirectSaleOffers, deleteDirectSaleOffer } from '@/app/admin/direct-sales/actions';
-import type { DirectSaleOffer } from '@/types';
-import { PlusCircle, ShoppingCart } from 'lucide-react';
+import type { DirectSaleOffer, SellerProfileInfo } from '@/types';
+import { PlusCircle, ShoppingCart, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/app/admin/direct-sales/columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { hasPermission } from '@/lib/permissions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-/**
- * ConsignorDirectSalesPage displays a list of direct sale offers belonging to the currently
- * logged-in consignor. It fetches data and allows for management of these offers.
- */
 export default function ConsignorDirectSalesPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const [offers, setOffers] = useState<DirectSaleOffer[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  /**
-   * Fetches the direct sale offers for a given seller ID.
-   * @param {string} sellerId The ID of the seller/consignor.
-   */
-  const fetchOffers = useCallback(async (sellerId: string) => {
+  const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
+
+  useEffect(() => {
+    if (isUserAdmin) {
+      getSellers().then(sellers => {
+        setAllSellers(sellers);
+        if (!selectedSellerId && sellers.length > 0) {
+          setSelectedSellerId(sellers[0].id);
+        }
+      });
+    }
+  }, [isUserAdmin, selectedSellerId]);
+  
+  const fetchOffers = useCallback(async () => {
+    const targetSellerId = isUserAdmin ? selectedSellerId : userProfileWithPermissions?.sellerId;
+    if (!targetSellerId) {
+        setOffers([]);
+        return;
+    }
+
     setIsLoading(true);
     setError(null);
     try {
       const allOffers = await getDirectSaleOffers();
-      const consignorOffers = allOffers.filter(o => o.sellerId === sellerId);
+      const consignorOffers = allOffers.filter(o => o.sellerId === targetSellerId);
       setOffers(consignorOffers);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar suas ofertas.";
@@ -45,25 +61,15 @@ export default function ConsignorDirectSalesPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
-  
-  // Effect to trigger data fetching when the user profile is available.
+  }, [toast, isUserAdmin, selectedSellerId, userProfileWithPermissions?.sellerId]);
+
   useEffect(() => {
-    const sellerId = userProfileWithPermissions?.sellerId;
-    if (!authLoading && sellerId) {
-      fetchOffers(sellerId);
-    } else if (!authLoading) {
-      setError("Perfil de comitente não encontrado na sua conta.");
-      setIsLoading(false);
+    if (!authLoading) {
+      fetchOffers();
     }
-  }, [userProfileWithPermissions, authLoading, toast, refetchTrigger, fetchOffers]);
+  }, [authLoading, fetchOffers, refetchTrigger]);
   
-  /**
-   * Handles the deletion of a direct sale offer and triggers a data refetch.
-   * @param {string} id The ID of the offer to delete.
-   */
-  const handleDelete = useCallback(
-    async (id: string) => {
+  const handleDelete = useCallback(async (id: string) => {
       const result = await deleteDirectSaleOffer(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });
@@ -71,11 +77,8 @@ export default function ConsignorDirectSalesPage() {
       } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
-    },
-    [toast]
-  );
+    },[toast]);
   
-  // Memoize columns and filter options for performance.
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const statusOptions = useMemo(() => 
@@ -106,6 +109,21 @@ export default function ConsignorDirectSalesPage() {
           </Button>
         </CardHeader>
         <CardContent>
+          {isUserAdmin && (
+             <div className="mb-4">
+              <label className="text-sm font-medium text-muted-foreground">Visualizando como:</label>
+               <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
+                  <SelectTrigger className="w-full md:w-[300px] mt-1">
+                      <SelectValue placeholder="Selecione um comitente..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {allSellers.map(seller => (
+                          <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+            </div>
+          )}
           <DataTable
             columns={columns}
             data={offers}
