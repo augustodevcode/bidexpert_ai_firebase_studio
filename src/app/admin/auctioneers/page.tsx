@@ -18,8 +18,7 @@ export default function AdminAuctioneersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
+  
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -38,7 +37,7 @@ export default function AdminAuctioneersPage() {
 
   useEffect(() => {
     fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
+  }, [fetchPageData]);
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteAuctioneer(id);

@@ -114,8 +114,8 @@ export default function AdminAuctionsPage() {
 
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
-    { id: 'seller', title: 'Comitente', options: sellerOptions },
-    { id: 'auctioneer', title: 'Leiloeiro', options: auctioneerOptions }
+    { id: 'seller.name', title: 'Comitente', options: sellerOptions },
+    { id: 'auctioneer.name', title: 'Leiloeiro', options: auctioneerOptions }
   ], [statusOptions, sellerOptions, auctioneerOptions]);
 
   return (
@@ -125,7 +125,7 @@ export default function AdminAuctionsPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Gavel className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Leilões
+              Listagem de Leilões
             </CardTitle>
             <CardDescription>
               Adicione, edite ou remova leilões da plataforma.

@@ -61,19 +61,19 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     enableGrouping: true,
   },
   {
-    accessorKey: "auctioneer",
+    accessorKey: "auctioneerName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Leiloeiro" />,
     enableGrouping: true,
   },
   {
-    accessorKey: "seller",
+    accessorKey: "sellerName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Comitente" />,
     enableGrouping: true,
   },
   {
     accessorKey: "totalLots",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lotes" />,
-    cell: ({ row }) => <div className="text-center">{row.getValue("totalLots") || 0}</div>
+    cell: ({ row }) => <div className="text-center">{row.original.totalLots || 0}</div>
   },
   {
     accessorKey: "auctionDate",

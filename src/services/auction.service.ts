@@ -1,7 +1,7 @@
 // src/services/auction.service.ts
 import { AuctionRepository } from '@/repositories/auction.repository';
 import type { Auction, AuctionFormData, LotCategory } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,10 +16,9 @@ export class AuctionService {
     return auctions.map(a => ({
       ...a,
       totalLots: a._count?.lots ?? a.lots?.length ?? 0,
-      sellerLogoUrl: a.seller?.logoUrl,
-      sellerSlug: a.seller?.slug || a.seller?.publicId || a.seller?.id,
-      category: a.category as LotCategory | undefined,
-      auctioneerName: a.auctioneer?.name,
+      sellerName: a.seller?.name, // Denormalize for easier access
+      auctioneerName: a.auctioneer?.name, // Denormalize for easier access
+      categoryName: a.category?.name, // Denormalize for easier access
     }));
   }
 

@@ -17,7 +17,8 @@ const topLevelNavItems = [
 ];
 
 const auctionManagementItems = [
-  { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+  { title: 'Listar Leilões', href: '/admin/auctions', icon: Gavel },
+  { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart },
   { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
   { title: 'Lotes', href: '/admin/lots', icon: Package },
   { title: 'Bens', href: '/admin/bens', icon: Package },
