@@ -136,3 +136,8 @@ export async function runAuctionCardDetailsTest(): Promise<{ success: boolean; o
     const command = `npx playwright test tests/ui/auction-card-details.spec.ts`;
     return runTestScript(command);
 }
+
+export async function runCardContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `npx playwright test tests/ui/card-content.spec.ts`;
+    return runTestScript(command);
+}

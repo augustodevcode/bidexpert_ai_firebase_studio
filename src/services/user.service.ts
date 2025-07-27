@@ -2,7 +2,7 @@
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
-import type { UserProfileWithPermissions, UserCreationData } from '@/types';
+import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData } from '@/types';
 import bcrypt from 'bcrypt';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -93,11 +93,32 @@ export class UserService {
         throw new Error("UserID é obrigatório para atualizar perfis.");
       }
       
-      await this.userRepository.updateUserRoles(userId, roleIds);
+      // First, clear existing roles for the user
+      await prisma.usersOnRoles.deleteMany({ where: { userId }});
+
+      // Then, add the new roles
+      await prisma.usersOnRoles.createMany({
+        data: roleIds.map(roleId => ({
+            userId,
+            roleId,
+            assignedBy: 'admin-panel', 
+        })),
+      });
+
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
       console.error(`Error in UserService.updateUserRoles for userId ${userId}:`, error);
       return { success: false, message: `Falha ao atualizar perfis: ${error.message}` };
+    }
+  }
+
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+    try {
+        await this.userRepository.update(userId, data);
+        return { success: true, message: "Perfil atualizado com sucesso."};
+    } catch (error: any) {
+        console.error(`Error updating user profile for ${userId}:`, error);
+        return { success: false, message: "Erro ao salvar as informações do perfil."}
     }
   }
 
@@ -154,7 +175,11 @@ export class UserService {
       // You might want to add the 'BIDDER' role here as well
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
       if(bidderRole) {
-        await this.updateUserRoles(userId, [bidderRole.id]);
+        // Use createMany with skipDuplicates to avoid errors if role already exists
+        await prisma.usersOnRoles.createMany({
+          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system-doc-approval' }],
+          skipDuplicates: true,
+        });
       }
     }
   }

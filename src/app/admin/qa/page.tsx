@@ -24,9 +24,10 @@ import {
     runMenuContentTest,
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
-    runAuctionCardDetailsTest, // Import the new test action
+    runAuctionCardDetailsTest,
+    runCardContentTest, // Import the new test action
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2 } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -57,6 +58,13 @@ const tests: TestConfig[] = [
     description: 'Simula o fluxo completo de um usuário enviando documentos, sendo aprovado e dando um lance.',
     action: runHabilitationEndToEndTest,
     type: 'simulation',
+  },
+  {
+    id: 'card-content-validation',
+    title: 'Validação de Conteúdo (UI)',
+    description: 'Cria um Leilão e um Lote com dados específicos e verifica se o Card na UI exibe todas as informações corretamente.',
+    action: runCardContentTest,
+    type: 'frontend',
   },
   {
     id: 'auction-card-details-ui',
@@ -219,7 +227,7 @@ export default function QualityAssurancePage() {
         switch(type) {
             case 'simulation': return <Users className="h-4 w-4 text-primary" />;
             case 'backend': return <TestTubeDiagonal className="h-4 w-4 text-primary"/>;
-            case 'frontend': return <TestTube2 className="h-4 w-4 text-primary" />;
+            case 'frontend': return <Palette className="h-4 w-4 text-primary" />;
             default: return <TestTube className="h-4 w-4 text-primary" />;
         }
     }

@@ -1,6 +1,8 @@
+
 // src/repositories/user.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { Prisma, User } from '@prisma/client';
+import type { EditableUserProfileData } from '@/types';
 
 export class UserRepository {
   async findAll() {
@@ -50,19 +52,29 @@ export class UserRepository {
     return prisma.user.create({ data: dataWithRoles });
   }
 
-  async updateUserRoles(userId: string, roleIdsToAdd: string[]) {
-    if (!userId || roleIdsToAdd.length === 0) return;
-    
-    // This now adds roles without removing existing ones.
-    // `skipDuplicates` prevents errors if the user already has one of the roles.
-    await prisma.usersOnRoles.createMany({
-      data: roleIdsToAdd.map(roleId => ({
-        userId,
-        roleId,
-        assignedBy: 'admin-panel', 
-      })),
-      skipDuplicates: true,
+  async update(userId: string, data: Partial<EditableUserProfileData>): Promise<User> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: data as Prisma.UserUpdateInput,
     });
+  }
+
+  async updateUserRoles(userId: string, roleIds: string[]) {
+    if (!userId) return;
+    
+    // First, clear existing roles for the user
+    await prisma.usersOnRoles.deleteMany({ where: { userId }});
+
+    // Then, add the new roles
+    if (roleIds.length > 0) {
+      await prisma.usersOnRoles.createMany({
+        data: roleIds.map(roleId => ({
+          userId,
+          roleId,
+          assignedBy: 'admin-panel', 
+        })),
+      });
+    }
   }
 
   async delete(id: string): Promise<void> {
