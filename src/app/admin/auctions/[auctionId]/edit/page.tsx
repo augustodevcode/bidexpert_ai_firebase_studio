@@ -5,12 +5,12 @@ import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3 } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/sample-data-helpers';
@@ -41,6 +41,101 @@ import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
+import { getAuctionDashboardDataAction } from '../../analysis/actions';
+import { LineChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+    <Card className="bg-secondary/40">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
+
+
+function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
+    const [dashboardData, setDashboardData] = useState<AuctionDashboardData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setIsLoading(true);
+            try {
+                const data = await getAuctionDashboardDataAction(auctionId);
+                setDashboardData(data);
+            } catch (e) {
+                console.error("Failed to fetch auction dashboard data:", e);
+                setDashboardData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
+    }, [auctionId]);
+
+    if (isLoading) {
+        return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;
+    }
+    
+    if (!dashboardData) {
+        return <p>Não foi possível carregar os dados de performance para este leilão.</p>;
+    }
+    
+    return (
+        <div className="space-y-4">
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={Gavel} />
+                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={TrendingUp} />
+                <StatCard title="Total de Lances" value={dashboardData.totalBids} icon={ListChecks} />
+                <StatCard title="Licitantes Únicos" value={dashboardData.uniqueBidders} icon={Users} />
+            </div>
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Faturamento por Categoria</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-72">
+                         <ResponsiveContainer width="100%" height="100%">
+                          <Bar
+                            data={dashboardData.revenueByCategory}
+                            layout="vertical"
+                            margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
+                           >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis type="number" stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                            <YAxis type="category" dataKey="name" stroke="#888888" fontSize={10} width={80} />
+                            <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                            <Legend />
+                            <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                          </Bar>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Atividade de Lances</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-72">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={dashboardData.bidsOverTime} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" stroke="#888888" fontSize={10} />
+                                <YAxis stroke="#888888" fontSize={10} />
+                                <Tooltip />
+                                <Legend />
+                                <Line type="monotone" dataKey="Lances" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
 
 
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
@@ -562,6 +657,21 @@ export default function EditAuctionPage() {
             <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
         </div>
       </div>
+       <Separator className="my-8"/>
+
+       <Card>
+          <CardHeader>
+              <CardTitle className="text-xl font-semibold flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
+              </CardTitle>
+              <CardDescription>
+                  KPIs e métricas de desempenho para este leilão específico.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <AuctionDashboardSection auctionId={auctionId} />
+          </CardContent>
+      </Card>
 
       <Separator className="my-8"/>
 
@@ -604,7 +714,7 @@ export default function EditAuctionPage() {
       fetchSuggestionsAction={async () => fetchListingDetailsSuggestions({
           auctionTitle: auction.title,
           auctionDescription: auction.description,
-          auctionCategory: auction.category || '',
+          auctionCategory: auction.category?.name || '',
           auctionKeywords: auction.title.split(' ').join(','), 
       })}
       onApplySuggestions={async (suggestions) => {
