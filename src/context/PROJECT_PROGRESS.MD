@@ -16,16 +16,15 @@
 - **BidExpertOkrs - Fase 2 & 3 (Leilões):** Implementados os dashboards de análise de grupo e individual para a entidade Leilões.
 - **BidExpertOkrs - Fase 2 (Categorias):** Implementado o dashboard de análise de grupo para Categorias.
 - **BidExpertOkrs - Fase 2 (Cidades):** Implementado o dashboard de análise de grupo para Cidades.
+- **BidExpertOkrs - Fase 2 (Estados):** Implementado o dashboard de análise de grupo para Estados.
 
 ## DOING
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
-    - **Análise Geográfica (Estados):** Implementar o dashboard de análise por Estados.
 - **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
     - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
     - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
 
 ## NEXT
-- **Item 14 (Continuação): BidExpertOkrs**
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
     - **Análise Geográfica Avançada:** Criar dashboard para análise por Regiões (agrupando estados).
     - **Análise Judicial**: Implementar dashboards de análise para Varas e Tribunais.
     - **IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
