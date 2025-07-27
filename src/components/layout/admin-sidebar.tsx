@@ -22,7 +22,7 @@ const auctionManagementItems = [
 ];
 
 const lotManagementItems = [
-    { title: 'Listar Lotes', href: '/admin/lots', icon: Package },
+    { title: 'Listar Lotes', href: '/admin/lots', icon: ListChecks },
     { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
     { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart },
 ];
@@ -121,7 +121,7 @@ export default function AdminSidebar() {
         <nav className="p-2 space-y-1">
           {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
           
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'asset-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'lot-management', 'asset-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
               <AccordionItem value="auction-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
