@@ -1,13 +1,13 @@
 // src/app/admin/auctions/new/page.tsx
 import AuctionForm from '../auction-form';
 import { createAuction, type AuctionFormData } from '../actions';
-import { getCategories } from '@/lib/data-queries';
+import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 
 export default async function NewAuctionPage() {
   const [categories, auctioneers, sellers] = await Promise.all([
-      getCategories(),
+      getLotCategories(),
       getAuctioneers(),
       getSellers()
   ]);
