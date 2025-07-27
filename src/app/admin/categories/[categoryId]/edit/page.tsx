@@ -1,7 +1,8 @@
-
+// src/app/admin/categories/[categoryId]/edit/page.tsx
 import CategoryForm from '../../category-form';
 import { getLotCategory, updateLotCategory } from '../../actions';
 import { notFound } from 'next/navigation';
+import type { CategoryFormValues } from '../../category-form-schema';
 
 export default async function EditCategoryPage({ params }: { params: { categoryId: string } }) {
   const categoryId = params.categoryId;
@@ -12,10 +13,11 @@ export default async function EditCategoryPage({ params }: { params: { categoryI
     notFound();
   }
 
-  async function handleUpdateCategory(data: { name:string; description?: string }) {
+  async function handleUpdateCategory(data: CategoryFormValues) {
     'use server';
-    // return updateLotCategory(categoryId, data, user?.uid);
-    return updateLotCategory(categoryId, data); // Simplified for now, action has placeholder role check
+    // The cast is safe here because the form includes all fields.
+    // In a more complex scenario, you might separate form types from DB types more strictly.
+    return updateLotCategory(categoryId, data as Partial<Pick<LotCategory, "name" | "description">>);
   }
 
   return (

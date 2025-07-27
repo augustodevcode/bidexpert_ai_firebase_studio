@@ -23,8 +23,12 @@ const auctionManagementItems = [
   { title: 'Lotes', href: '/admin/lots', icon: Package },
   { title: 'Bens', href: '/admin/bens', icon: Package },
   { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
-  { title: 'Categorias de Lotes', href: '/admin/categories', icon: ListChecks },
-  { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
+];
+
+const categoryManagementItems = [
+    { title: 'Listar Categorias', href: '/admin/categories', icon: ListChecks },
+    { title: 'Análise de Categorias', href: '/admin/categories/analysis', icon: BarChart },
+    { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
 ];
 
 const contentManagementItems = [
@@ -105,9 +109,10 @@ export default function AdminSidebar() {
                       {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
-               <AccordionItem value="content-management" className="border-b-0">
-                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
+              <AccordionItem value="category-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Categorias e Mídia</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
+                      {categoryManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                       {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>

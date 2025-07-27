@@ -66,6 +66,7 @@ export default function AdminCategoriesPage() {
               Visualize as categorias fixas da plataforma. A criação e edição foram desativadas para manter a consistência dos dados.
             </CardDescription>
           </div>
+          {/* O botão de criar foi removido para reforçar que o CRUD está desativado nesta tela. */}
         </CardHeader>
         <CardContent>
           <DataTable
