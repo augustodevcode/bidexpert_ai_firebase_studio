@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { UserCircle, Bell, ShoppingBag, Gavel, AlertCircle, Star, Settings, Loader2, CheckCircle2, Clock, FileText, FileWarning, ShieldAlert, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import type { Lot, UserWin, UserBid, UserHabilitationStatus } from '@/types';
 import { useEffect, useState, useCallback } from 'react';
 import { format, differenceInHours, differenceInMinutes, isPast, isValid } from 'date-fns';
