@@ -21,8 +21,12 @@ const auctionManagementItems = [
   { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart },
   { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
   { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Bens', href: '/admin/bens', icon: Package },
   { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
+];
+
+const assetManagementItems = [
+    { title: 'Listar Bens', href: '/admin/bens', icon: Package },
+    { title: 'Análise de Bens', href: '/admin/bens/analysis', icon: BarChart },
 ];
 
 const categoryManagementItems = [
@@ -111,11 +115,17 @@ export default function AdminSidebar() {
         <nav className="p-2 space-y-1">
           {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
           
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'asset-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
               <AccordionItem value="auction-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+               <AccordionItem value="asset-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Ativos e Estoque</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {assetManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="category-management" className="border-b-0">
