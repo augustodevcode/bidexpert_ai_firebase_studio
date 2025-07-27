@@ -3,35 +3,52 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { getSeller } from '@/app/admin/sellers/actions';
+import { getSeller, getSellers } from '@/app/admin/sellers/actions';
 import { updateConsignorProfile } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@/types';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 import SellerForm from '@/app/admin/sellers/seller-form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { hasPermission } from '@/lib/permissions';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 /**
- * Page for consignors to edit their own profile settings.
- * It fetches the current user's seller profile and provides a form to update it.
+ * Page for consignors or admins to edit seller profile settings.
  */
 export default function ConsignorSettingsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
 
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
   const [judicialBranches, setJudicialBranches] = useState<JudicialBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
-  const sellerId = userProfileWithPermissions?.sellerId;
+
+  const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
+
+  // Fetch all sellers if the user is an admin
+  useEffect(() => {
+    if (isUserAdmin) {
+      getSellers().then(sellers => {
+        setAllSellers(sellers);
+        if (!selectedSellerId && sellers.length > 0) {
+          setSelectedSellerId(sellers[0].id);
+        }
+      });
+    }
+  }, [isUserAdmin, selectedSellerId]);
 
   // Fetches initial data needed for the form
-  const fetchData = useCallback(async () => {
-    if (!sellerId) {
-      setError("Perfil de comitente não encontrado na sua conta.");
+  const fetchData = useCallback(async (sellerIdToFetch: string) => {
+    if (!sellerIdToFetch) {
+      setError("Nenhum perfil de comitente selecionado.");
       setIsLoading(false);
       return;
     }
@@ -40,12 +57,12 @@ export default function ConsignorSettingsPage() {
     setError(null);
     try {
       const [sellerData, branchesData] = await Promise.all([
-        getSeller(sellerId),
+        getSeller(sellerIdToFetch),
         getJudicialBranches()
       ]);
 
       if (!sellerData) {
-        throw new Error("Não foi possível carregar os dados do seu perfil de comitente.");
+        throw new Error("Não foi possível carregar os dados do perfil de comitente selecionado.");
       }
 
       setSellerProfile(sellerData);
@@ -58,21 +75,33 @@ export default function ConsignorSettingsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [sellerId, toast]);
+  }, [toast]);
   
-  // Trigger data fetching when the component mounts or user auth state changes
+  // Effect to decide which seller's data to fetch
   useEffect(() => {
-    if (!authLoading && userProfileWithPermissions) {
-      fetchData();
+    const targetSellerId = isUserAdmin ? selectedSellerId : userProfileWithPermissions?.sellerId;
+    
+    if (!authLoading && targetSellerId) {
+      fetchData(targetSellerId);
     } else if (!authLoading) {
-      // Handle the case where the user is loaded but not a consignor
       setIsLoading(false);
-      setError("Você precisa estar logado como comitente para ver esta página.");
+       if (!isUserAdmin) {
+        setError("Você precisa ter um perfil de comitente vinculado para ver esta página.");
+       }
     }
-  }, [authLoading, userProfileWithPermissions, fetchData]);
+  }, [authLoading, userProfileWithPermissions, fetchData, isUserAdmin, selectedSellerId]);
 
-  // Display a loading state while authentication or data fetching is in progress
-  if (isLoading || authLoading) {
+  // Handler for form submission
+  const handleUpdate = async (data: SellerFormData) => {
+    const sellerIdToUpdate = isUserAdmin ? selectedSellerId : userProfileWithPermissions?.sellerId;
+    if (!sellerIdToUpdate) {
+      return { success: false, message: 'ID do comitente não encontrado. Não é possível salvar.' };
+    }
+    return updateConsignorProfile(sellerIdToUpdate, data);
+  };
+  
+  // Render loading state
+  if (authLoading || (isLoading && !sellerProfile)) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -80,25 +109,66 @@ export default function ConsignorSettingsPage() {
     );
   }
   
-  // Display an error message if something went wrong
-  if (error || !sellerProfile) {
+  // Render error or empty state
+  if (error || (!isUserAdmin && !userProfileWithPermissions?.sellerId)) {
      return (
         <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-destructive">{error || "Perfil não encontrado."}</h2>
+            <h2 className="text-xl font-semibold text-destructive">{error || "Perfil de comitente não encontrado na sua conta."}</h2>
         </div>
      );
   }
 
-  // Render the form once data is available
+  // Admin view without any sellers to select
+  if (isUserAdmin && allSellers.length === 0 && !isLoading) {
+      return (
+        <div className="text-center py-12">
+            <h2 className="text-xl font-semibold">Nenhum Comitente Cadastrado</h2>
+            <p className="text-muted-foreground mt-2">Não há comitentes no sistema para selecionar.</p>
+        </div>
+      );
+  }
+
   return (
-    <SellerForm
-      initialData={sellerProfile}
-      judicialBranches={judicialBranches}
-      onSubmitAction={(data) => updateConsignorProfile(sellerId as string, data)}
-      formTitle="Minhas Configurações de Comitente"
-      formDescription="Atualize os detalhes do seu perfil público de vendedor."
-      submitButtonText="Salvar Alterações"
-      successRedirectPath="/consignor-dashboard/overview"
-    />
+    <div className="space-y-6">
+      {isUserAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users /> Visualizando como Administrador
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Label htmlFor="seller-select">Selecione o Comitente para Editar</Label>
+            <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
+              <SelectTrigger id="seller-select" className="w-full md:w-[400px] mt-1">
+                <SelectValue placeholder="Selecione um comitente..." />
+              </SelectTrigger>
+              <SelectContent>
+                {allSellers.map(seller => (
+                  <SelectItem key={seller.id} value={seller.id}>{seller.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </CardContent>
+        </Card>
+      )}
+
+      {sellerProfile ? (
+        <SellerForm
+          initialData={sellerProfile}
+          judicialBranches={judicialBranches}
+          onSubmitAction={handleUpdate}
+          formTitle="Minhas Configurações de Comitente"
+          formDescription="Atualize os detalhes do seu perfil público de vendedor."
+          submitButtonText="Salvar Alterações"
+          successRedirectPath="/consignor-dashboard/overview"
+        />
+      ) : (
+        // Show a loader while the selected seller's profile is being fetched
+        <div className="flex justify-center items-center h-64">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      )}
+    </div>
   );
 }
