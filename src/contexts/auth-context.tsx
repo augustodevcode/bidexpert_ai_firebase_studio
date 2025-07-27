@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { getCurrentUser, logout as logoutAction, loginAdminForDevelopment } from '@/app/auth/actions';
+import { getCurrentUser, logout as logoutAction } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -28,14 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
-      let user = await getCurrentUser();
-      
-      // Auto-login for admin in development if no session exists
-      if (!user && process.env.NODE_ENV === 'development') {
-        console.log("Nenhuma sessão ativa em DEV, tentando auto-login do admin.");
-        user = await loginAdminForDevelopment();
-      }
-
+      const user = await getCurrentUser();
       setUserProfileWithPermissions(user);
     } catch (error) {
       console.error("Failed to fetch user session:", error);
@@ -54,6 +47,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await logoutAction();
         setUserProfileWithPermissions(null);
         toast({ title: "Logout realizado com sucesso." });
+        // Full page reload might be necessary if server components cache user state
+        window.location.href = '/auth/login';
     } catch (error) {
         console.error("Logout error", error);
         toast({ title: "Erro ao fazer logout.", variant: 'destructive'});

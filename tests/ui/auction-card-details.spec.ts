@@ -1,3 +1,4 @@
+
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
@@ -45,19 +46,16 @@ const testData = {
 };
 
 let createdAuction: Auction | null = null;
-let testCategory: LotCategory;
-let testAuctioneer: AuctioneerProfileInfo;
-let testSeller: SellerProfileInfo;
 
 async function createTestData(): Promise<Auction> {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
   
-  testCategory = await prisma.lotCategory.create({
+  const category = await prisma.lotCategory.create({
     data: { name: testData.category.name, slug: testData.category.slug, hasSubcategories: false }
   });
-  console.log(`[createTestData] Created category: ${testCategory.name}`);
+  console.log(`[createTestData] Created category: ${testData.category.name}`);
 
-  testAuctioneer = await prisma.auctioneer.create({
+  const auctioneer = await prisma.auctioneer.create({
     data: { 
         name: testData.auctioneer.name, 
         slug: testData.auctioneer.slug, 
@@ -66,9 +64,9 @@ async function createTestData(): Promise<Auction> {
         dataAiHintLogo: testData.auctioneer.dataAiHintLogo
     }
   });
-  console.log(`[createTestData] Created auctioneer: ${testAuctioneer.name}`);
+  console.log(`[createTestData] Created auctioneer: ${testData.auctioneer.name}`);
 
-  testSeller = await prisma.seller.create({
+  const seller = await prisma.seller.create({
     data: {
         name: testData.seller.name,
         slug: testData.seller.slug,
@@ -78,7 +76,7 @@ async function createTestData(): Promise<Auction> {
         isJudicial: false
     }
   });
-  console.log(`[createTestData] Created seller: ${testSeller.name}`);
+  console.log(`[createTestData] Created seller: ${testData.seller.name}`);
 
   const now = new Date();
   const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Ends today
@@ -88,9 +86,9 @@ async function createTestData(): Promise<Auction> {
       ...testData.auction,
       slug: slugify(testData.auction.title),
       publicId: `pub-auction-${testRunId}`,
-      auctioneerId: testAuctioneer.id,
-      sellerId: testSeller.id,
-      categoryId: testCategory.id,
+      auctioneerId: auctioneer.id,
+      sellerId: seller.id,
+      categoryId: category.id,
       auctionDate: now,
       endDate: endDate,
       auctionStages: [ 
@@ -112,8 +110,8 @@ async function createTestData(): Promise<Auction> {
           auctionId: auction.id,
           price: testData.auction.initialOffer + (i * 100),
           status: 'ABERTO_PARA_LANCES',
-          type: testCategory.name,
-          categoryId: testCategory.id,
+          type: category.name,
+          categoryId: category.id,
       }))
   });
   console.log(`[createTestData] Created ${testData.auction.totalLots} lots for auction ${auction.id}.`);
@@ -145,19 +143,19 @@ async function cleanupTestData() {
     }
 }
 
+
 test.describe('Auction Card and List Item UI Validation', () => {
+  test.beforeAll(async () => {
+    prisma = new PrismaClient();
+    await prisma.$connect();
+    await cleanupTestData();
+    createdAuction = await createTestData();
+  });
 
-    test.beforeAll(async () => {
-        prisma = new PrismaClient();
-        await prisma.$connect();
-        await cleanupTestData(); 
-        createdAuction = await createTestData();
-    });
-
-    test.afterAll(async () => {
-        await cleanupTestData();
-        await prisma.$disconnect();
-    });
+  test.afterAll(async () => {
+    await cleanupTestData();
+    await prisma.$disconnect();
+  });
   
   test.beforeEach(async ({ page }) => {
     await page.addInitScript(() => {

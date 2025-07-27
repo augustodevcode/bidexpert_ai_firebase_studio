@@ -103,16 +103,8 @@ async function cleanupTestData() {
     return;
   }
   try {
-    const lotIds = await prisma.lot.findMany({ where: { title: { contains: testRunId } }, select: { id: true } });
-    if (lotIds.length > 0) {
-      await prisma.lot.deleteMany({ where: { id: { in: lotIds.map(l => l.id) } } });
-    }
-    
-    const auctionIds = await prisma.auction.findMany({ where: { title: { contains: testRunId } }, select: { id: true } });
-    if (auctionIds.length > 0) {
-      await prisma.auction.deleteMany({ where: { id: { in: auctionIds.map(a => a.id) } } });
-    }
-    
+    await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
+    await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
     await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });

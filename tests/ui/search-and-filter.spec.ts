@@ -24,8 +24,8 @@ async function createSearchTestData() {
     ]);
 
     [seller1, seller2] = await prisma.$transaction([
-        prisma.seller.create({ data: { name: `Comitente A ${testRunId}`, slug: `comitente-a-${testRunId}`, publicId: `pub-seller-a-${testRunId}`, isJudicial: false } }),
-        prisma.seller.create({ data: { name: `Comitente B ${testRunId}`, slug: `comitente-b-${testRunId}`, publicId: `pub-seller-b-${testRunId}`, isJudicial: false } })
+        prisma.seller.create({ data: { name: `Comitente A ${testRunId}`, slug: `comitente-a-${testRunId}`, publicId: `pub-seller-a-${testRunId}`, isJudicial: false, city: 'São Paulo', state: 'SP' } }),
+        prisma.seller.create({ data: { name: `Comitente B ${testRunId}`, slug: `comitente-b-${testRunId}`, publicId: `pub-seller-b-${testRunId}`, isJudicial: false, city: 'Rio de Janeiro', state: 'RJ' } })
     ]);
     
     auctioneer1 = await prisma.auctioneer.create({ data: { name: `Leiloeiro Search ${testRunId}`, slug: `leiloeiro-search-${testRunId}`, publicId: `pub-auctioneer-search-${testRunId}` } });
@@ -46,11 +46,8 @@ async function createSearchTestData() {
 
 async function cleanupSearchTestData() {
     console.log(`[Search E2E] Cleaning up test data for run: ${testRunId}`);
+    if (!prisma) return;
     try {
-        if (!prisma) {
-          console.log('Prisma client not initialized, skipping cleanup');
-          return;
-        }
         await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
@@ -66,7 +63,7 @@ test.describe('Search and Filter E2E Test', () => {
     test.beforeAll(async () => {
         prisma = new PrismaClient();
         await prisma.$connect();
-        await cleanupSearchTestData();
+        await cleanupSearchTestData(); // Clean first
         await createSearchTestData();
     });
 
