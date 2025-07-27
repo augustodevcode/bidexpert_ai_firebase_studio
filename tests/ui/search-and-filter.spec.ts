@@ -30,9 +30,9 @@ async function createSearchTestData() {
     auctioneer1 = await prisma.auctioneer.create({ data: { name: `Leiloeiro Search ${testRunId}`, slug: `leiloeiro-search-${testRunId}`, publicId: `pub-auctioneer-search-${testRunId}` } });
 
     [auction1, auction2, auction3] = await prisma.$transaction([
-        prisma.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP' } as any }),
-        prisma.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller2.id, categoryId: category2.id, city: 'Rio de Janeiro', state: 'RJ' } as any }),
-        prisma.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP' } as any })
+        prisma.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id } as any }),
+        prisma.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller2.id, categoryId: category2.id } as any }),
+        prisma.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id } as any })
     ]);
 
     [lot1, lot2, lot3] = await prisma.$transaction([
@@ -45,7 +45,6 @@ async function createSearchTestData() {
 
 async function cleanupSearchTestData() {
     console.log(`[Search E2E] Cleaning up test data for run: ${testRunId}`);
-    if (!prisma) return;
     try {
         await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
@@ -72,65 +71,38 @@ test.describe('Search and Filter E2E Test', () => {
     });
 
     test.beforeEach(async ({ page }) => {
-        console.log('[Test] beforeEach: Setting up localStorage and navigating to /search...');
-        await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
+        await page.addInitScript(() => {
+          window.localStorage.setItem('bidexpert_setup_complete', 'true');
+        });
         await page.goto('/search');
-        await page.waitForLoadState('networkidle');
-        const pageTitle = await page.title();
-        console.log(`[Test] beforeEach: Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
-        await expect(page).toHaveTitle(/BidExpert/);
     });
 
     test('should filter by search term', async ({ page }) => {
-        console.log('--- [Test Case] Filtering by search term ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.locator('input[type="search"]').fill('Ford Ka');
         await page.getByRole('button', { name: 'Buscar' }).click();
-        
-        console.log('- Action: Searched for "Ford Ka" in lots.');
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
-        console.log('- Verified: Result count updated to 1.');
-        
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
         await expect(page.getByText(lot1.title)).toBeVisible();
-        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot2.title)).not.toBeVisible();
-        console.log('- Verified: Incorrect lot is not visible.');
-        console.log('--- ✅ Test Case Passed ---');
     });
 
     test('should filter by category', async ({ page }) => {
-        console.log('--- [Test Case] Filtering by category ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.getByRole('button', { name: 'Categorias' }).click();
         await page.getByLabel(category2.name).check();
         await page.getByRole('button', { name: 'Aplicar Filtros' }).click();
-        
-        console.log(`- Action: Filtered for category "${category2.name}".`);
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
-        console.log('- Verified: Result count updated to 1.');
-        
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
         await expect(page.getByText(lot2.title)).toBeVisible();
-        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot1.title)).not.toBeVisible();
-        console.log('- Verified: Incorrect lot is not visible.');
-        console.log('--- ✅ Test Case Passed ---');
     });
     
     test('should filter by location', async ({ page }) => {
-        console.log('--- [Test Case] Filtering by location ---');
         await page.getByRole('button', { name: 'Lotes' }).click();
         await page.getByRole('button', { name: 'Localizações' }).click();
         await page.getByLabel('Rio de Janeiro - RJ').check();
         await page.getByRole('button', { name: 'Aplicar Filtros' }).click();
-        
-        console.log('- Action: Filtered for location "Rio de Janeiro - RJ".');
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible({ timeout: 10000 });
-        console.log('- Verified: Result count updated to 1.');
-        
+        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
         await expect(page.getByText(lot2.title)).toBeVisible();
-        console.log('- Verified: Correct lot is visible.');
         await expect(page.getByText(lot1.title)).not.toBeVisible();
-        console.log('- Verified: Incorrect lot is not visible.');
-        console.log('--- ✅ Test Case Passed ---');
     });
 });
