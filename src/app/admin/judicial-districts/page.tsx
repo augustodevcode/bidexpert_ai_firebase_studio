@@ -19,50 +19,58 @@ export default function AdminJudicialDistrictsPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchItems = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedItems = await getJudicialDistricts();
-        if (isMounted) {
-          setDistricts(fetchedItems);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comarcas.";
-        console.error("Error fetching judicial districts:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchItems();
-
-    return () => { isMounted = false; };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteJudicialDistrict(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedItems = await getJudicialDistricts();
+      setDistricts(fetchedItems);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comarcas.";
+      console.error("Error fetching judicial districts:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteJudicialDistrict(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: JudicialDistrict[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteJudicialDistrict(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} comarca(s) excluída(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
@@ -92,6 +100,7 @@ export default function AdminJudicialDistrictsPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome da comarca..."
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

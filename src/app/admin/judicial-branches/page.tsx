@@ -19,49 +19,57 @@ export default function AdminJudicialBranchesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedItems = await getJudicialBranches();
+      setBranches(fetchedItems);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar varas judiciais.";
+      console.error("Error fetching judicial branches:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+  
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchItems = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedItems = await getJudicialBranches();
-        if (isMounted) {
-          setBranches(fetchedItems);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar varas judiciais.";
-        console.error("Error fetching judicial branches:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchItems();
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
 
-    return () => { isMounted = false; };
-  }, [toast, refetchTrigger]);
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteJudicialBranch(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteJudicialBranch(id);
+  const handleDeleteSelected = useCallback(async (selectedItems: JudicialBranch[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteJudicialBranch(item.id);
       if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        successCount++;
       } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
       }
-    },
-    [toast]
-  );
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} vara(s) excluída(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -101,6 +109,7 @@ export default function AdminJudicialBranchesPage() {
             searchColumnId="name"
             searchPlaceholder="Buscar por nome da vara..."
             facetedFilterColumns={facetedFilterOptions}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

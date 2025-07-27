@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-processes/page.tsx
 'use client';
 
@@ -20,52 +19,58 @@ export default function AdminJudicialProcessesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchItems = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedItems = await getJudicialProcesses();
-        if (isMounted) {
-          setProcesses(fetchedItems);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
-        console.error("Error fetching judicial processes:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchItems();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteJudicialProcess(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedItems = await getJudicialProcesses();
+      setProcesses(fetchedItems);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
+      console.error("Error fetching judicial processes:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [fetchPageData, refetchTrigger]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteJudicialProcess(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: JudicialProcess[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteJudicialProcess(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir processo ${item.processNumber}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} processo(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
@@ -106,6 +111,7 @@ export default function AdminJudicialProcessesPage() {
             searchColumnId="processNumber"
             searchPlaceholder="Buscar por nº do processo..."
             facetedFilterColumns={facetedFilterOptions}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>
