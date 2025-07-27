@@ -6,7 +6,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import type { SellerProfileInfo } from '@/types';
+import { SellerService, type SellerDashboardData } from '@/services/seller.service';
 
 export interface SellerPerformanceData {
   id: string;
@@ -16,6 +16,7 @@ export interface SellerPerformanceData {
   totalRevenue: number;
   averageTicket: number;
 }
+const sellerService = new SellerService();
 
 /**
  * Fetches and aggregates performance data for all sellers.
@@ -53,4 +54,14 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
     console.error("[Action - getSellersPerformanceAction] Error fetching seller performance:", error);
     throw new Error("Falha ao buscar dados de performance dos comitentes.");
   }
+}
+
+
+/**
+ * Fetches dashboard data for a single seller.
+ * @param {string} sellerId - The ID of the seller.
+ * @returns {Promise<SellerDashboardData | null>} The dashboard data or null if not found.
+ */
+export async function getSellerDashboardDataAction(sellerId: string): Promise<SellerDashboardData | null> {
+    return sellerService.getSellerDashboardData(sellerId);
 }

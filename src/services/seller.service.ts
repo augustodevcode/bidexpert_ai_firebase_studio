@@ -1,9 +1,23 @@
 // src/services/seller.service.ts
 import { SellerRepository } from '@/repositories/seller.repository';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/prisma'; // Import prisma directly for complex queries
+import { format, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+export interface SellerDashboardData {
+  totalRevenue: number;
+  totalAuctions: number;
+  totalLots: number;
+  lotsSoldCount: number;
+  salesRate: number;
+  averageTicket: number;
+  salesByMonth: { name: string; Faturamento: number }[];
+}
+
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -86,5 +100,54 @@ export class SellerService {
       console.error(`Error in SellerService.deleteSeller for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
     }
+  }
+  
+  async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
+    const sellerData = await prisma.seller.findUnique({
+      where: { id: sellerId },
+      include: {
+        _count: {
+          select: { auctions: true, lots: true },
+        },
+        lots: {
+          where: { status: 'VENDIDO' },
+          select: { price: true, updatedAt: true },
+        },
+      },
+    });
+
+    if (!sellerData) return null;
+
+    const totalRevenue = sellerData.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+    const lotsSoldCount = sellerData.lots.length;
+    const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
+    const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
+
+    const salesByMonthMap = new Map<string, number>();
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const date = subMonths(now, i);
+      const monthKey = format(date, 'MMM/yy', { locale: ptBR });
+      salesByMonthMap.set(monthKey, 0);
+    }
+
+    sellerData.lots.forEach(lot => {
+      const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
+      if (salesByMonthMap.has(monthKey)) {
+        salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+      }
+    });
+    
+    const salesByMonth = Array.from(salesByMonthMap, ([name, Faturamento]) => ({ name, Faturamento }));
+
+    return {
+      totalRevenue,
+      totalAuctions: sellerData._count.auctions,
+      totalLots: sellerData._count.lots,
+      lotsSoldCount,
+      salesRate,
+      averageTicket,
+      salesByMonth,
+    };
   }
 }
