@@ -1,5 +1,10 @@
+// playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
+import dotenv from 'dotenv';
+
+// Read from default ".env" file.
+dotenv.config({ path: path.resolve(__dirname, '.', '.env') });
 
 /**
  * See https://playwright.dev/docs/test-configuration.

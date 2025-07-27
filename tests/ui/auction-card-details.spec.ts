@@ -1,4 +1,3 @@
-
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
@@ -121,11 +120,11 @@ async function createTestData(): Promise<Auction> {
 
 async function cleanupTestData() {
     console.log(`[cleanupTestData] Starting cleanup for run: ${testRunId}`);
+    if (!prisma) {
+      console.warn('[cleanupTestData] Prisma client not initialized, skipping cleanup.');
+      return;
+    }
     try {
-        if (!prisma) {
-          console.log('Prisma client not initialized, skipping cleanup');
-          return;
-        }
         if (createdAuction) {
             await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id }});
             console.log(`[cleanupTestData] Deleted lots for auction ID: ${createdAuction.id}`);
@@ -145,31 +144,33 @@ async function cleanupTestData() {
 
 
 test.describe('Auction Card and List Item UI Validation', () => {
-  test.beforeAll(async () => {
-    prisma = new PrismaClient();
-    await prisma.$connect();
-    await cleanupTestData();
-    createdAuction = await createTestData();
-  });
+    test.beforeAll(async () => {
+        prisma = new PrismaClient();
+        await prisma.$connect();
+        await cleanupTestData();
+        createdAuction = await createTestData();
+    });
 
-  test.afterAll(async () => {
-    await cleanupTestData();
-    await prisma.$disconnect();
-  });
+    test.afterAll(async () => {
+        await cleanupTestData();
+        await prisma.$disconnect();
+    });
   
   test.beforeEach(async ({ page }) => {
+    console.log('[Test] beforeEach hook: Setting up localStorage and logging in...');
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
     
-    console.log('[Test] beforeEach: Logging in as admin...');
+    // Login explícito como admin antes de cada teste
     await page.goto('/auth/login');
     await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
     await page.waitForURL('**/dashboard/overview'); 
-    console.log('[Test] beforeEach: Login successful.');
+    console.log('[Test] beforeEach hook: Login successful.');
 
+    // Navegar para a página de busca
     await page.goto('/search?type=auctions'); 
     console.log('[Test] beforeEach hook: Navigated to search page.');
   });

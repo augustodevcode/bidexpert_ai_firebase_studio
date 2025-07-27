@@ -9,14 +9,14 @@ test.describe('Homepage Smoke Test', () => {
     ================================================================
     
     Este teste valida que a página inicial carrega corretamente e
-    exibe seus elementos principais.
+    exibe suas seções principais.
     
     CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
     
     1.  **Carregamento da Página**: A página inicial deve carregar sem erros fatais.
     2.  **Título Principal**: O título/logo principal do site ("BidExpert") deve estar visível no header.
-    3.  **Seção de Lotes**: Pelo menos um card de lote deve ser renderizado.
-    4.  **Seção de Leilões**: Pelo menos um card de leilão deve ser renderizado.
+    3.  **Seção de Lotes**: Uma seção de lotes deve ser renderizada.
+    4.  **Seção de Leilões**: Uma seção de leilões deve ser renderizada.
     
     ================================================================
     `);
@@ -40,6 +40,7 @@ test.describe('Homepage Smoke Test', () => {
   
   test('should display featured lots or recent lots section', async ({ page }) => {
     await page.waitForLoadState('networkidle');
+    
     const lotsSectionTitle = page.locator('h2').filter({ 
       hasText: /lotes.*(destaque|recentes)/i 
     }).first();
