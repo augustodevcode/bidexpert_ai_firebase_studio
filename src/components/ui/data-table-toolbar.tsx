@@ -1,7 +1,7 @@
 // src/components/ui/data-table-toolbar.tsx
 "use client"
 
-import { X, ListTree } from "lucide-react"
+import { X, ListTree, Trash2 } from "lucide-react"
 import { Table } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
@@ -15,6 +15,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 
 interface DataTableToolbarProps<TData> {
@@ -30,6 +41,7 @@ interface DataTableToolbarProps<TData> {
         icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
 }
 
 export function DataTableToolbar<TData>({
@@ -37,10 +49,18 @@ export function DataTableToolbar<TData>({
   searchColumnId,
   searchPlaceholder = "Buscar...",
   facetedFilterColumns = [],
+  onDeleteSelected,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const groupableColumns = table.getAllColumns().filter(c => c.getCanGroup());
   const groupingState = table.getState().grouping;
+  const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
+
+  const handleDelete = () => {
+    if (onDeleteSelected) {
+      onDeleteSelected(table.getFilteredSelectedRowModel().rows.map(r => r.original));
+    }
+  }
 
   return (
     <div className="flex items-center justify-between">
@@ -98,6 +118,30 @@ export function DataTableToolbar<TData>({
             Limpar
             <X className="ml-2 h-4 w-4" />
           </Button>
+        )}
+        {selectedRowsCount > 0 && onDeleteSelected && (
+           <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" className="h-8">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Excluir ({selectedRowsCount})
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Confirmar Exclusão em Massa?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação é permanente e não pode ser desfeita. Você tem certeza que deseja excluir os {selectedRowsCount} itens selecionados? Itens que possuem vínculos (ex: leilões com lotes) não serão excluídos.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                    Confirmar Exclusão
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
         )}
       </div>
       <DataTableViewOptions table={table} />

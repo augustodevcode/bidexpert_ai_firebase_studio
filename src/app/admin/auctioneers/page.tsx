@@ -20,49 +20,63 @@ export default function AdminAuctioneersPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedAuctioneers = await getAuctioneers();
+      setAuctioneers(fetchedAuctioneers);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
+      console.error("Error fetching auctioneers:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
   useEffect(() => {
-    let isMounted = true;
-    const fetchAuctioneers = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedAuctioneers = await getAuctioneers();
-        if (isMounted) {
-          setAuctioneers(fetchedAuctioneers);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
-        console.error("Error fetching auctioneers:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    fetchAuctioneers();
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteAuctioneer(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      fetchPageData(); // Re-fetch after single deletion
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, fetchPageData]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteAuctioneer(id);
+  const handleDeleteSelected = useCallback(async (selectedItems: AuctioneerProfileInfo[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteAuctioneer(item.id);
       if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        successCount++;
       } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
       }
-    },
-    [toast]
-  );
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leiloeiro(s) excluído(s) com sucesso.` });
+    }
+    if (errorCount === 0 && successCount > 0) {
+      // All succeeded
+    } else if (errorCount > 0 && successCount > 0) {
+      toast({ title: "Exclusão Parcial", description: `${errorCount} leiloeiro(s) não puderam ser excluídos. Verifique o console para detalhes.`, variant: "default" });
+    }
+
+    fetchPageData(); // Always re-fetch data
+  }, [toast, fetchPageData]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -93,6 +107,7 @@ export default function AdminAuctioneersPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

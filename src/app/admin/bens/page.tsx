@@ -22,52 +22,58 @@ export default function AdminBensPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBem, setSelectedBem] = useState<Bem | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchBens = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedBens = await getBens();
-        if (isMounted) {
-          setBens(fetchedBens);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar bens.";
-        console.error("Error fetching bens:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchBens();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteBem(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedBens = await getBens();
+      setBens(fetchedBens);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar bens.";
+      console.error("Error fetching bens:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [fetchPageData, refetchTrigger]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteBem(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: Bem[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteBem(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} bem(ns) excluído(s) com sucesso.` });
+    }
+    fetchPageData(); // Always re-fetch data
+  }, [toast, fetchPageData]);
+
   const handleOpenDetails = useCallback((bem: Bem) => {
     setSelectedBem(bem);
     setIsModalOpen(true);
@@ -103,6 +109,7 @@ export default function AdminBensPage() {
               error={error}
               searchColumnId="title"
               searchPlaceholder="Buscar por título ou ID do processo..."
+              onDeleteSelected={handleDeleteSelected}
             />
           </CardContent>
         </Card>

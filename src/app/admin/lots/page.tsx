@@ -18,53 +18,58 @@ export default function AdminLotsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedLots = await getLots();
+      setLots(fetchedLots);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
+      console.error("Error fetching lots:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchLots = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedLots = await getLots();
-        if (isMounted) {
-          setLots(fetchedLots);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
-        console.error("Error fetching lots:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchLots();
+    fetchPageData();
+  }, [fetchPageData]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
+  const handleDelete = useCallback(async (id: string, auctionId?: string) => {
+    const result = await deleteLot(id, auctionId);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      fetchPageData();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, fetchPageData]);
 
-  const handleDelete = useCallback(
-    async (id: string, auctionId?: string) => {
-      const result = await deleteLot(id, auctionId);
+  const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteLot(item.id, item.auctionId);
       if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        successCount++;
       } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
+        errorCount++;
+        toast({ title: `Erro ao excluir lote ${item.number}`, description: result.message, variant: "destructive", duration: 5000 });
       }
-    },
-    [toast]
-  );
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} lote(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -109,6 +114,7 @@ export default function AdminLotsPage() {
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
             facetedFilterColumns={facetedFilterColumns}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

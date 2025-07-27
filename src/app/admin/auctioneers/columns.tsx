@@ -1,9 +1,8 @@
-
 // src/app/admin/auctioneers/columns.tsx
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, ArrowUpDown } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -72,27 +71,24 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => {
       const auctioneer = row.original;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/auctioneers/${auctioneer.slug || auctioneer.publicId || auctioneer.id}`} target="_blank">Ver Perfil Público</Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>Editar</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(auctioneer.id)} className="text-destructive">
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
+              <Eye className="h-4 w-4" />
+              <span className="sr-only">Visualizar</span>
+            </Link>
+          </Button>
+           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/auctioneers/${auctioneer.id}/edit?mode=edit`}>
+              <Pencil className="h-4 w-4" />
+               <span className="sr-only">Editar</span>
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(auctioneer.id)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+            <span className="sr-only">Excluir</span>
+          </Button>
+        </div>
       );
     },
   },
