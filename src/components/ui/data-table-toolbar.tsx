@@ -76,7 +76,7 @@ export function DataTableToolbar<TData>({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex items-center justify-between" data-ai-id="data-table-toolbar">
       <div className="flex flex-1 flex-wrap items-center gap-2">
         {searchColumnId && (
             <Input
@@ -86,6 +86,7 @@ export function DataTableToolbar<TData>({
                 table.getColumn(searchColumnId)?.setFilterValue(event.target.value)
             }
             className="h-8 w-[150px] lg:w-[250px]"
+            data-ai-id="data-table-search-input"
             />
         )}
         {facetedFilterColumns.map(col => table.getColumn(col.id) ? (

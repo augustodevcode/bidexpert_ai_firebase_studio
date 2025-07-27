@@ -105,7 +105,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4" id="bid-expert-data-grid">
+    <div className="space-y-4" data-ai-id="bid-expert-data-grid">
       <DataTableToolbar 
         table={table}
         searchColumnId={searchColumnId}

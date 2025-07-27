@@ -143,82 +143,82 @@ async function cleanupTestData() {
 
 
 test.describe('Auction Card and List Item UI Validation', () => {
-  test.beforeAll(async () => {
-    prisma = new PrismaClient();
-    await prisma.$connect();
-    await cleanupTestData();
-    createdAuction = await createTestData();
-  });
-
-  test.afterAll(async () => {
-    await cleanupTestData();
-    await prisma.$disconnect();
-  });
-  
-  test.beforeEach(async ({ page }) => {
-    console.log('[Test] beforeEach hook: Setting up localStorage and logging in...');
-    await page.addInitScript(() => {
-      window.localStorage.setItem('bidexpert_setup_complete', 'true');
+    test.beforeAll(async () => {
+        prisma = new PrismaClient();
+        await prisma.$connect();
+        await cleanupTestData();
+        createdAuction = await createTestData();
     });
-    
-    // Login explícito como admin antes de cada teste
-    await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
-    await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
-    console.log('[Test] beforeEach hook: Login successful.');
 
-    // Navegar para a página de busca
-    await page.goto('/search?type=auctions'); 
-    console.log('[Test] beforeEach hook: Navigated to search page.');
-  });
+    test.afterAll(async () => {
+        await cleanupTestData();
+        await prisma.$disconnect();
+    });
+  
+    test.beforeEach(async ({ page }) => {
+        console.log('[Test] beforeEach hook: Setting up localStorage and logging in...');
+        await page.addInitScript(() => {
+        window.localStorage.setItem('bidexpert_setup_complete', 'true');
+        });
+        
+        // Login explícito como admin antes de cada teste
+        await page.goto('/auth/login');
+        await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
+        await page.locator('input[name="password"]').fill('Admin@123');
+        await page.getByRole('button', { name: 'Login' }).click();
+        await expect(page.locator('header').getByRole('button')).toBeVisible(); // Wait for header to confirm login
+        console.log('[Test] beforeEach hook: Login successful.');
 
-  test('should display all required information on the Auction Card', async ({ page }) => {
-    console.log('--- [Test Case] Validating Auction Card UI ---');
-    console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
-    
-    const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction!.id}"]`);
-    await expect(cardLocator).toBeVisible({ timeout: 15000 });
-    console.log('- Verified: Auction card is visible.');
+        // Navegar para a página de busca
+        await page.goto('/search?type=auctions'); 
+        console.log('[Test] beforeEach hook: Navigated to search page.');
+    });
 
-    // Visual ID
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-main-image"]`)).toBeVisible();
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-seller-logo"]`)).toBeVisible();
-    console.log('- Verified: Main image and seller logo are visible.');
-    
-    // Main Info
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction!.publicId);
-    console.log('- Verified: Title and public ID are correct.');
+    test('should display all required information on the Auction Card', async ({ page }) => {
+        console.log('--- [Test Case] Validating Auction Card UI ---');
+        console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
+        
+        const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);
+        await expect(cardLocator).toBeVisible({ timeout: 15000 });
+        console.log('- Verified: Auction card is visible.');
 
-    // Status & Badges
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-badges"]`)).toContainText('Aberto para Lances');
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('DESTAQUE');
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('ENCERRA HOJE');
-    console.log('- Verified: Status and mental trigger badges are displayed.');
+        // Visual ID
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-main-image"]`)).toBeVisible();
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-seller-logo"]`)).toBeVisible();
+        console.log('- Verified: Main image and seller logo are visible.');
+        
+        // Main Info
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId);
+        console.log('- Verified: Title and public ID are correct.');
 
-    // Data & Counters
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-initial-offer"]`)).toContainText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-type"]`)).toContainText('Extrajudicial');
-    console.log('- Verified: All counters and data points are correct.');
+        // Status & Badges
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-badges"]`)).toContainText('Aberto para Lances');
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('DESTAQUE');
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-mental-triggers"]`)).toContainText('ENCERRA HOJE');
+        console.log('- Verified: Status and mental trigger badges are displayed.');
 
-    // Timeline
-    await expect(cardLocator.locator(`[data-ai-id="auction-card-timeline"]`)).toBeVisible();
-    await expect(cardLocator.getByText('1ª Praça')).toBeVisible();
-    await expect(cardLocator.getByText('2ª Praça')).toBeVisible();
-    console.log('- Verified: Auction stages timeline is visible.');
-    
-    // User Actions
-    await cardLocator.hover();
-    await expect(cardLocator.getByLabel('Favoritar')).toBeVisible();
-    await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();
-    await expect(cardLocator.getByLabel('Compartilhar')).toBeVisible();
-    await expect(cardLocator.getByLabel('Opções de Edição')).toBeVisible();
-    console.log('- Verified: All user action buttons are present on hover.');
-    console.log('--- ✅ Test Case Passed ---');
-  });
+        // Data & Counters
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-initial-offer"]`)).toContainText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-type"]`)).toContainText('Extrajudicial');
+        console.log('- Verified: All counters and data points are correct.');
+
+        // Timeline
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-timeline"]`)).toBeVisible();
+        await expect(cardLocator.getByText('1ª Praça')).toBeVisible();
+        await expect(cardLocator.getByText('2ª Praça')).toBeVisible();
+        console.log('- Verified: Auction stages timeline is visible.');
+        
+        // User Actions
+        await cardLocator.hover();
+        await expect(cardLocator.getByLabel('Favoritar')).toBeVisible();
+        await expect(cardLocator.getByLabel('Pré-visualizar')).toBeVisible();
+        await expect(cardLocator.getByLabel('Compartilhar')).toBeVisible();
+        await expect(cardLocator.getByLabel('Opções de Edição')).toBeVisible();
+        console.log('- Verified: All user action buttons are present on hover.');
+        console.log('--- ✅ Test Case Passed ---');
+    });
 });

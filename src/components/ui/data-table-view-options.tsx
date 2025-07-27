@@ -21,19 +21,24 @@ interface DataTableViewOptionsProps<TData> {
 
 // Helper function to extract a readable header name
 const getColumnHeader = <TData, TValue>(column: Column<TData, TValue>): string => {
-    if (typeof column.columnDef.header === 'function') {
-        // Attempt to find the 'title' prop passed to DataTableColumnHeader
-        // This is a bit of a workaround because react-table doesn't store meta-data in an easily accessible way here.
-        const headerComponent = column.columnDef.header({
-            column,
-        } as any); // Mock some properties needed by the function
-
+    // Acessa o objeto de definição da coluna
+    const columnDef = column.columnDef;
+    
+    // Se 'header' é uma string, retorna diretamente
+    if (typeof columnDef.header === 'string') {
+        return columnDef.header;
+    }
+    
+    // Se 'header' é uma função, tenta extrair o 'title' de 'DataTableColumnHeader'
+    if (typeof columnDef.header === 'function') {
+        const headerComponent = columnDef.header({ table: {} as Table<TData>, header: { colSpan: 1, column, getContext: () => ({ table, column, header: {} }) } } as any);
         if (headerComponent && React.isValidElement(headerComponent) && 'props' in headerComponent && 'title' in headerComponent.props) {
             return headerComponent.props.title;
         }
     }
-    // Fallback logic
-    return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
+    
+    // Fallback para o ID da coluna
+    return column.id;
 };
 
 
@@ -47,6 +52,7 @@ export function DataTableViewOptions<TData>({
           variant="outline"
           size="sm"
           className="ml-auto hidden h-8 lg:flex"
+          data-ai-id="data-table-view-options-button"
         >
           <SlidersHorizontal className="mr-2 h-4 w-4" />
           Visualização
