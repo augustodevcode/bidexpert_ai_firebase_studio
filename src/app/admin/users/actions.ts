@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { UserProfileWithPermissions, Role, UserCreationData, UserFormData } from '@/types';
+import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserProfileData, UserFormData } from '@/types';
 import { UserService } from '@/services/user.service';
 
 const userService = new UserService();
@@ -22,6 +22,16 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
   }
   return result;
 }
+
+export async function updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
+  const result = await userService.updateUserProfile(userId, data);
+   if (result.success) {
+        revalidatePath('/admin/users');
+        revalidatePath(`/admin/users/${userId}/edit`);
+    }
+  return result;
+}
+
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   const result = await userService.updateUserRoles(userId, roleIds);

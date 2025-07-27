@@ -1,26 +1,19 @@
 // src/app/admin/users/[userId]/edit/page.tsx
-import UserRoleForm from '../../user-role-form'; 
-import { getUserProfileData, updateUserRoles } from '../../actions'; 
+import UserProfileForm from '../../user-profile-form'; // Importando o novo formulário de perfil
+import UserRoleForm from '../../user-role-form';
+import { getUserProfileData, updateUserProfile, updateUserRoles } from '../../actions'; 
 import { getRoles } from '@/app/admin/roles/actions'; 
 import { notFound } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { FileText, Mail, Phone, UserCircle, MapPin, CalendarDays } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import type { UserProfileWithPermissions } from '@/types'; 
-
+import { Separator } from '@/components/ui/separator';
 
 export default async function EditUserPage({ params }: { params: { userId: string } }) {
   const userId = params.userId;
   
-  let userProfile: UserProfileWithPermissions | null = null;
-  try {
-    userProfile = await getUserProfileData(userId);
-  } catch (error) {
-    console.error("Failed to fetch user profile for edit:", error);
-  }
-  
-  const roles = await getRoles(); 
+  const [userProfile, roles] = await Promise.all([
+      getUserProfileData(userId),
+      getRoles()
+  ]);
 
   if (!userProfile) {
      return (
@@ -37,56 +30,26 @@ export default async function EditUserPage({ params }: { params: { userId: strin
      );
   }
 
+  // Ação para o formulário de perfil
+  async function handleUpdateUserProfile(data: any) {
+    'use server';
+    return updateUserProfile(userId, data);
+  }
+
+  // Ação para o formulário de roles
   async function handleUpdateUserRoles(uid: string, roleIds: string[]) {
     'use server';
     return updateUserRoles(uid, roleIds);
   }
   
-  const formattedDateOfBirth = userProfile.dateOfBirth ? format(new Date(userProfile.dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-  const formattedRgIssueDate = userProfile.rgIssueDate ? format(new Date(userProfile.rgIssueDate as string), 'dd/MM/yyyy', { locale: ptBR }) : 'Não informado';
-
   return (
     <div className="space-y-6">
-      <UserRoleForm
-        user={userProfile}
-        roles={roles}
-        onSubmitAction={handleUpdateUserRoles}
+      <UserProfileForm
+        initialData={userProfile}
+        onSubmitAction={handleUpdateUserProfile}
       />
 
-      <Card className="max-w-lg mx-auto shadow-md">
-        <CardHeader>
-          <CardTitle className="text-xl">Detalhes do Usuário</CardTitle>
-          <CardDescription>Informações adicionais do perfil (somente leitura).</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm">
-           <div className="flex items-center">
-            <UserCircle className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>Nome:</strong> <span className="ml-1 text-muted-foreground">{userProfile.fullName || 'Não informado'}</span>
-          </div>
-           <div className="flex items-center">
-            <Mail className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>Email:</strong> <span className="ml-1 text-muted-foreground">{userProfile.email}</span>
-          </div>
-          <div className="flex items-center">
-            <FileText className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>CPF:</strong> <span className="ml-1 text-muted-foreground">{userProfile.cpf || 'Não informado'}</span>
-          </div>
-          <div className="flex items-center">
-            <Phone className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>Celular:</strong> <span className="ml-1 text-muted-foreground">{userProfile.cellPhone || 'Não informado'}</span>
-          </div>
-          <div className="flex items-center">
-            <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>Data de Nasc.:</strong> <span className="ml-1 text-muted-foreground">{formattedDateOfBirth}</span>
-          </div>
-           <div className="flex items-center">
-            <MapPin className="h-4 w-4 mr-2 text-muted-foreground" />
-            <strong>Endereço:</strong> <span className="ml-1 text-muted-foreground">
-                {userProfile.street || 'Rua não informada'}, {userProfile.number || 'S/N'} - {userProfile.neighborhood || 'Bairro não informado'}, {userProfile.city || 'Cidade não informada'} - {userProfile.state || 'UF'}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+      <Separator />
+
+      <UserRoleForm
+        user={userProfile

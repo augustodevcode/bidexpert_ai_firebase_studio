@@ -1,4 +1,3 @@
-
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -176,10 +175,4 @@ export class UserService {
       if(bidderRole) {
         // Use createMany with skipDuplicates to avoid errors if role already exists
         await prisma.usersOnRoles.createMany({
-          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system-doc-approval' }],
-          skipDuplicates: true,
-        });
-      }
-    }
-  }
-}
+          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system
