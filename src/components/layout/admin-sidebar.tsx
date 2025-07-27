@@ -39,7 +39,6 @@ const judicialManagementItems = [
 ]
 
 const platformManagementItems = [
-  { title: 'Comitentes', href: '/admin/sellers', icon: Users },
   { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
   { title: 'Estados', href: '/admin/states', icon: Map },
   { title: 'Cidades', href: '/admin/cities', icon: Building2 },
@@ -71,6 +70,12 @@ const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; titl
     </Link>
   </Button>
 );
+
+const sellerManagementItems = [
+    { title: 'Listar Comitentes', href: '/admin/sellers', icon: Users },
+    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart },
+];
+
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -104,6 +109,12 @@ export default function AdminSidebar() {
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+               <AccordionItem value="sellers-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Comitentes</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {sellerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="platform-management" className="border-b-0">
