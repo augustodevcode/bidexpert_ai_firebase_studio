@@ -50,7 +50,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** This provides immediate, persistent context about the development environment, preventing confusion and aiding in debugging database or user-specific issues.
 
-## 7. Data-Driven Interface Strategy (KPIs & Dashboards)
+## 7. BidExpertOkrs: Análise, KPIs e Estratégia
 
 **Rule:** All entity management sections (CRUDs) within the admin panel must evolve into comprehensive management and analysis modules.
 -   **Individual Record View:** Each entity's detail/edit page (`/admin/[entity]/{id}/edit`) must include a dashboard section displaying relevant KPIs, historical data charts, and performance metrics specific to that record (e.g., a specific auction's performance, a seller's history).
