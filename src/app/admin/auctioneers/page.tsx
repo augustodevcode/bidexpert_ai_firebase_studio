@@ -69,12 +69,6 @@ export default function AdminAuctioneersPage() {
     if (successCount > 0) {
       toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leiloeiro(s) excluído(s) com sucesso.` });
     }
-    if (errorCount === 0 && successCount > 0) {
-      // All succeeded
-    } else if (errorCount > 0 && successCount > 0) {
-      toast({ title: "Exclusão Parcial", description: `${errorCount} leiloeiro(s) não puderam ser excluídos. Verifique o console para detalhes.`, variant: "default" });
-    }
-
     fetchPageData(); // Always re-fetch data
   }, [toast, fetchPageData]);
   

@@ -74,6 +74,28 @@ export default function AdminAuctionsPage() {
     },
     [toast]
   );
+
+  const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteAuction(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leilão(ões) excluído(s) com sucesso.` });
+    }
+    setRefetchTrigger(c => c + 1);
+  }, [toast]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -124,6 +146,7 @@ export default function AdminAuctionsPage() {
             searchColumnId="title"
             searchPlaceholder="Buscar por título..."
             facetedFilterColumns={facetedFilterColumns}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

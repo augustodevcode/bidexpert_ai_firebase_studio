@@ -50,6 +50,7 @@ interface DataTableProps<TData, TValue> {
   }[];
   rowSelection?: {};
   setRowSelection?: React.Dispatch<React.SetStateAction<{}>>;
+  onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
 }
 
 export function DataTable<TData, TValue>({
@@ -62,6 +63,7 @@ export function DataTable<TData, TValue>({
   facetedFilterColumns = [],
   rowSelection: controlledRowSelection,
   setRowSelection: setControlledRowSelection,
+  onDeleteSelected,
 }: DataTableProps<TData, TValue>) {
   const [uncontrolledRowSelection, setUncontrolledRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -71,7 +73,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
 
-  // Determine if the component is controlled or uncontrolled
+  // Determine if the component is controlled or uncontrolled for row selection
   const isControlled = controlledRowSelection !== undefined && setControlledRowSelection !== undefined;
   const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
   const setRowSelection = isControlled ? setControlledRowSelection : setUncontrolledRowSelection;
@@ -109,6 +111,7 @@ export function DataTable<TData, TValue>({
         searchColumnId={searchColumnId}
         searchPlaceholder={searchPlaceholder}
         facetedFilterColumns={facetedFilterColumns}
+        onDeleteSelected={onDeleteSelected}
       />
       <div className="rounded-md border">
         <Table>
