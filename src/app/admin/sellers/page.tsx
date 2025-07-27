@@ -80,7 +80,7 @@ export default function AdminSellersPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Users className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Comitentes
+              Listagem de Comitentes
             </CardTitle>
             <CardDescription>
               Adicione, edite ou remova comitentes/vendedores da plataforma.

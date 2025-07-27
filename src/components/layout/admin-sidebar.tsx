@@ -39,7 +39,6 @@ const judicialManagementItems = [
 ]
 
 const platformManagementItems = [
-  { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
   { title: 'Estados', href: '/admin/states', icon: Map },
   { title: 'Cidades', href: '/admin/cities', icon: Building2 },
   { title: 'Usuários', href: '/admin/users', icon: Users },
@@ -51,6 +50,17 @@ const platformManagementItems = [
   { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
+
+const sellerManagementItems = [
+    { title: 'Listar Comitentes', href: '/admin/sellers', icon: Users },
+    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart },
+];
+
+const auctioneerManagementItems = [
+    { title: 'Listar Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
+    { title: 'Análise de Leiloeiros', href: '/admin/auctioneers/analysis', icon: BarChart },
+];
+
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
@@ -71,11 +81,6 @@ const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; titl
   </Button>
 );
 
-const sellerManagementItems = [
-    { title: 'Listar Comitentes', href: '/admin/sellers', icon: Users },
-    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart },
-];
-
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -92,7 +97,7 @@ export default function AdminSidebar() {
         <nav className="p-2 space-y-1">
           {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
           
-          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management']}>
+          <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management']}>
               <AccordionItem value="auction-management" className="border-b-0">
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
@@ -115,6 +120,12 @@ export default function AdminSidebar() {
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Comitentes</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {sellerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+               <AccordionItem value="auctioneers-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Leiloeiros</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {auctioneerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
               <AccordionItem value="platform-management" className="border-b-0">

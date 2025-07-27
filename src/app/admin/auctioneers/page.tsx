@@ -81,7 +81,7 @@ export default function AdminAuctioneersPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Landmark className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Leiloeiros
+              Listagem de Leiloeiros
             </CardTitle>
             <CardDescription>
               Adicione, edite ou remova leiloeiros da plataforma.

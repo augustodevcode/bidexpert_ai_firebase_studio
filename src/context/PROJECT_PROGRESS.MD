@@ -12,17 +12,18 @@
 - **Item 13 - Part 1 & 2: Document Upload & AI Flow:** Implemented the UI and backend logic for uploading documents to a Judicial Process and created the Genkit flow for data extraction.
 - **BidExpertOkrs - Fase 1: Admin Reports:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
 - **BidExpertOkrs - Fase 2 & 3 (Comitentes):** Implementados os dashboards de análise de grupo e individual para a entidade Comitentes.
+- **BidExpertOkrs - Fase 2 & 3 (Leiloeiros):** Implementados os dashboards de análise de grupo e individual para a entidade Leiloeiros.
 
 ## DOING
 - **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
     - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
     - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
-
-## NEXT
 - **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
     - **Leilões**: Implementar dashboards de análise de grupo e individual para Leilões.
-    - **Leiloeiros**: Implementar dashboards de análise para Leiloeiros.
     - **Categorias**: Implementar dashboards de análise para Categorias de Lotes.
+
+## NEXT
+- **Item 14 (Continuação): BidExpertOkrs**
     - **Geográfico**: Implementar dashboards de análise para Cidades e Estados.
     - **Judicial**: Implementar dashboards de análise para Varas e Tribunais.
     - **IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.

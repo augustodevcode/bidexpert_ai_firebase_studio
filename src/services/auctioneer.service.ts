@@ -1,9 +1,22 @@
 // src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/prisma';
+import { format, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+export interface AuctioneerDashboardData {
+  totalRevenue: number;
+  totalAuctions: number;
+  totalLots: number;
+  lotsSoldCount: number;
+  salesRate: number;
+  averageTicket: number;
+  salesByMonth: { name: string; Faturamento: number }[];
+}
 
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
@@ -61,5 +74,61 @@ export class AuctioneerService {
       console.error(`Error in AuctioneerService.deleteAuctioneer for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
     }
+  }
+
+  async getAuctioneerDashboardData(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
+    const auctioneerData = await prisma.auctioneer.findUnique({
+      where: { id: auctioneerId },
+      include: {
+        _count: {
+          select: { auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO' },
+              select: { price: true, updatedAt: true }
+            }
+          }
+        }
+      }
+    });
+
+    if (!auctioneerData) return null;
+
+    const allLotsFromAuctions = auctioneerData.auctions.flatMap(auc => auc.lots);
+    const totalLots = await prisma.lot.count({ where: { auctioneerId: auctioneerId } });
+    
+    const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+    const lotsSoldCount = allLotsFromAuctions.length;
+    const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
+    const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
+
+    const salesByMonthMap = new Map<string, number>();
+    const now = new Date();
+    for (let i = 11; i >= 0; i--) {
+      const date = subMonths(now, i);
+      const monthKey = format(date, 'MMM/yy', { locale: ptBR });
+      salesByMonthMap.set(monthKey, 0);
+    }
+    
+    allLotsFromAuctions.forEach(lot => {
+        const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
+        if (salesByMonthMap.has(monthKey)) {
+            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+        }
+    });
+        
+    const salesByMonth = Array.from(salesByMonthMap, ([name, Faturamento]) => ({ name, Faturamento }));
+
+    return {
+      totalRevenue,
+      totalAuctions: auctioneerData._count.auctions,
+      totalLots,
+      lotsSoldCount,
+      salesRate,
+      averageTicket,
+      salesByMonth,
+    };
   }
 }
