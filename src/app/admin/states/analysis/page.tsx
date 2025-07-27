@@ -6,7 +6,7 @@ import { getStatesPerformanceAction, type StatePerformanceData } from './actions
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, MapPin, Loader2, Package, TrendingUp, Tag, City } from 'lucide-react';
+import { DollarSign, MapPin, Loader2, Package, TrendingUp, Tag, Building2 as City } from 'lucide-react'; // Corrigido: 'City' substituído por 'Building2'
 import { createColumns } from './columns';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
