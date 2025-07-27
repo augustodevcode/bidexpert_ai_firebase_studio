@@ -4,7 +4,7 @@
 
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu"
 import { SlidersHorizontal } from "lucide-react"
-import { Table } from "@tanstack/react-table"
+import { Table, Column } from "@tanstack/react-table"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -18,6 +18,24 @@ import {
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>
 }
+
+// Helper function to extract a readable header name
+const getColumnHeader = <TData, TValue>(column: Column<TData, TValue>): string => {
+    if (typeof column.columnDef.header === 'function') {
+        // Attempt to find the 'title' prop passed to DataTableColumnHeader
+        // This is a bit of a workaround because react-table doesn't store meta-data in an easily accessible way here.
+        const headerComponent = column.columnDef.header({
+            column,
+        } as any); // Mock some properties needed by the function
+
+        if (headerComponent && React.isValidElement(headerComponent) && 'props' in headerComponent && 'title' in headerComponent.props) {
+            return headerComponent.props.title;
+        }
+    }
+    // Fallback logic
+    return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
+};
+
 
 export function DataTableViewOptions<TData>({
   table,
@@ -44,10 +62,7 @@ export function DataTableViewOptions<TData>({
               typeof column.accessorFn !== "undefined" && column.getCanHide()
           )
           .map((column) => {
-            // Use the header string directly if it's a string, otherwise fallback to id
-            const columnHeader = typeof column.columnDef.header === 'string' 
-              ? column.columnDef.header 
-              : column.id;
+            const columnHeader = getColumnHeader(column);
             return (
               <DropdownMenuCheckboxItem
                 key={column.id}

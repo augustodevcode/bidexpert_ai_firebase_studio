@@ -62,6 +62,19 @@ export function DataTableToolbar<TData>({
     }
   }
 
+  // Helper function to extract a readable header name
+  const getColumnHeader = (column: any): string => {
+    if (typeof column.columnDef.header === 'function') {
+      // Attempt to find the 'title' prop passed to DataTableColumnHeader
+      const headerProps = column.columnDef.header?.({
+        column,
+        header: {} // Mock header object
+      } as any)?.props;
+      return headerProps?.title || column.id;
+    }
+    return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
+  };
+
   return (
     <div className="flex items-center justify-between">
       <div className="flex flex-1 flex-wrap items-center gap-2">
@@ -96,9 +109,7 @@ export function DataTableToolbar<TData>({
               <SelectContent>
                 <SelectItem value="__NONE__">Nenhum grupo</SelectItem>
                 {groupableColumns.map((column) => {
-                    const columnHeader = typeof column.columnDef.header === 'string' 
-                        ? column.columnDef.header 
-                        : column.id;
+                    const columnHeader = getColumnHeader(column);
                     return (
                         <SelectItem key={column.id} value={column.id}>
                             {columnHeader}
