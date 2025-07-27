@@ -6,7 +6,7 @@ import type { UserProfileWithPermissions } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
