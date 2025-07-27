@@ -2,7 +2,7 @@
 import { CityRepository } from '@/repositories/city.repository';
 import { StateRepository } from '@/repositories/state.repository';
 import type { CityInfo, CityFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 
 export class CityService {

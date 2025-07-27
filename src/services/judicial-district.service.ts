@@ -1,7 +1,7 @@
 // src/services/judicial-district.service.ts
 import { JudicialDistrictRepository } from '@/repositories/judicial-district.repository';
 import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 
 export class JudicialDistrictService {

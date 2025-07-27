@@ -2,9 +2,11 @@
 import { JudicialProcessRepository } from '@/repositories/judicial-process.repository';
 import { SellerService } from './seller.service';
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/prisma';
+
 
 export class JudicialProcessService {
   private repository: JudicialProcessRepository;

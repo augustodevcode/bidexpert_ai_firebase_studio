@@ -1,7 +1,7 @@
 // src/services/court.service.ts
 import { CourtRepository } from '@/repositories/court.repository';
 import type { Court, CourtFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 
 export class CourtService {

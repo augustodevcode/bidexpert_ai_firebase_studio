@@ -1,7 +1,7 @@
 // src/services/category.service.ts
 import { CategoryRepository } from '@/repositories/category.repository';
 import type { LotCategory } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 
 export class CategoryService {
   private categoryRepository: CategoryRepository;

@@ -1,7 +1,7 @@
 // src/services/judicial-branch.service.ts
 import { JudicialBranchRepository } from '@/repositories/judicial-branch.repository';
 import type { JudicialBranch, JudicialBranchFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 
 export class JudicialBranchService {

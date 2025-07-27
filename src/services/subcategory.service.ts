@@ -1,7 +1,7 @@
 // src/services/subcategory.service.ts
 import { SubcategoryRepository } from '@/repositories/subcategory.repository';
 import type { Subcategory, SubcategoryFormData } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { CategoryRepository } from '@/repositories/category.repository';
 
@@ -81,7 +81,7 @@ export class SubcategoryService {
       return { success: true, message: 'Subcategoria excluída com sucesso.' };
     } catch (error: any) {
       console.error(`Error in SubcategoryService.delete for id ${id}:`, error);
-      return { success: false, message: 'Falha ao excluir subcategoria. Verifique se ela não está em uso.' };
+      return { success: false, message: `Falha ao excluir subcategoria: ${error.message}` };
     }
   }
 }
