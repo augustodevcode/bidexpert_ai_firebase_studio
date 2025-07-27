@@ -18,7 +18,8 @@ export default function AdminLotsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -37,17 +38,17 @@ export default function AdminLotsPage() {
 
   useEffect(() => {
     fetchPageData();
-  }, [fetchPageData]);
+  }, [fetchPageData, refetchTrigger]);
 
   const handleDelete = useCallback(async (id: string, auctionId?: string) => {
     const result = await deleteLot(id, auctionId);
     if (result.success) {
       toast({ title: "Sucesso", description: result.message });
-      fetchPageData();
+      setRefetchTrigger(prev => prev + 1);
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
-  }, [toast, fetchPageData]);
+  }, [toast]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
     if (selectedItems.length === 0) return;
@@ -68,8 +69,8 @@ export default function AdminLotsPage() {
     if (successCount > 0) {
       toast({ title: "Exclusão em Massa Concluída", description: `${successCount} lote(s) excluído(s) com sucesso.` });
     }
-    fetchPageData();
-  }, [toast, fetchPageData]);
+    setRefetchTrigger(prev => prev + 1);
+  }, [toast]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -93,10 +94,10 @@ export default function AdminLotsPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Package className="h-6 w-6 mr-2 text-primary" />
-              Gerenciar Lotes
+              Listagem de Lotes
             </CardTitle>
             <CardDescription>
-              Adicione, edite ou remova lotes para os leilões.
+              Visualize, adicione, edite ou remova lotes para os leilões.
             </CardDescription>
           </div>
           <Button asChild>

@@ -19,10 +19,14 @@ const topLevelNavItems = [
 const auctionManagementItems = [
   { title: 'Listar Leilões', href: '/admin/auctions', icon: Gavel },
   { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart },
-  { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
-  { title: 'Lotes', href: '/admin/lots', icon: Package },
-  { title: 'Venda Direta', href: '/admin/direct-sales', icon: ShoppingCart },
 ];
+
+const lotManagementItems = [
+    { title: 'Listar Lotes', href: '/admin/lots', icon: Package },
+    { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
+    { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart },
+];
+
 
 const assetManagementItems = [
     { title: 'Listar Bens', href: '/admin/bens', icon: Package },
@@ -120,6 +124,12 @@ export default function AdminSidebar() {
                   <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
                   <AccordionContent className="pt-1 space-y-1">
                       {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                  </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="lot-management" className="border-b-0">
+                  <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Lotes</AccordionTrigger>
+                  <AccordionContent className="pt-1 space-y-1">
+                      {lotManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
                   </AccordionContent>
               </AccordionItem>
                <AccordionItem value="asset-management" className="border-b-0">
