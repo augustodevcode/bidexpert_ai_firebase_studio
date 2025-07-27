@@ -1,3 +1,4 @@
+
 // src/app/auth/actions.ts
 'use server';
 
@@ -19,6 +20,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     return {
         ...user,
+        id: user.id, // Explicitamente passando o ID
         uid: user.id, // Garantir que uid seja o mesmo que id
         roleNames: roles.map((r: any) => r.name),
         permissions,

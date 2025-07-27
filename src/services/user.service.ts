@@ -24,6 +24,8 @@ export class UserService {
     const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
     return {
       ...user,
+      id: user.id, // Ensure id is passed through
+      uid: user.id, // Ensure uid is the same as id
       roles, // Pass the full role objects
       roleIds: roles.map((r: any) => r.id),
       roleNames: roles.map((r: any) => r.name),
@@ -70,12 +72,9 @@ export class UserService {
         }
 
         const { roleIds, ...userData } = data;
-        const newId = uuidv4();
 
         const dataToCreate: Prisma.UserCreateInput = {
             ...userData,
-            id: newId,
-            uid: newId, 
             password: hashedPassword,
         };
         

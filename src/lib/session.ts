@@ -1,3 +1,4 @@
+
 // src/lib/session.ts
 import 'server-only';
 import { SignJWT, jwtVerify } from 'jose';
@@ -56,9 +57,9 @@ export async function createSession(user: UserProfileWithPermissions) {
     console.log('[Create Session] Recebido perfil de usuário para criar a sessão:', user);
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const sessionPayload = {
-        userId: user.id,
+        userId: user.id, // Usar o ID do banco de dados
         email: user.email,
-        roleNames: user.roleNames, // Usar roleNames para consistência
+        roleNames: user.roleNames,
         permissions: user.permissions,
     };
     console.log('[Create Session] Criando payload da sessão:', sessionPayload);
