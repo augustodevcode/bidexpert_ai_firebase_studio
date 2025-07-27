@@ -33,7 +33,8 @@ export async function verifyInitialData(): Promise<{ success: boolean; message: 
 }
 
 /**
- * Cria o usuário administrador inicial da plataforma.
+ * Cria ou confirma o usuário administrador inicial da plataforma.
+ * Se o usuário já existir, confirma e retorna sucesso.
  * @param {FormData} formData - Os dados do formulário de criação do admin.
  * @returns {Promise<{success: boolean; message: string}>}
  */
@@ -46,17 +47,18 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         return { success: false, message: 'Todos os campos são obrigatórios.' };
     }
     
-    console.log('[Setup Action] Criando usuário administrador...');
+    console.log('[Setup Action] Criando ou confirmando usuário administrador...');
     
     try {
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) {
-            return { success: false, message: 'Um usuário com este email já existe.' };
-        }
-
         const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' }});
         if (!adminRole) {
             throw new Error("O perfil 'ADMINISTRATOR' não foi encontrado. Execute o passo anterior (seed) primeiro.");
+        }
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) {
+            console.log(`[Setup Action] Usuário admin ${email} já existe. Confirmando e prosseguindo.`);
+            return { success: true, message: 'Usuário administrador já existe e foi confirmado.' };
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -71,7 +73,6 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
             }
         });
         
-        // Create the entry in the join table
         await prisma.usersOnRoles.create({
             data: {
                 userId: newUser.id,

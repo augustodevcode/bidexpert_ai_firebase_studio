@@ -30,7 +30,10 @@ async function seedFullData() {
             if (adminRole) {
                 const adminUser = await prisma.user.upsert({
                     where: { email: adminUserFromSample.email },
-                    update: {},
+                    update: {
+                        fullName: adminUserFromSample.fullName,
+                        habilitationStatus: 'HABILITADO',
+                    },
                     create: {
                         email: adminUserFromSample.email,
                         fullName: adminUserFromSample.fullName,
@@ -46,7 +49,7 @@ async function seedFullData() {
                     create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' }
                 });
 
-                console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
+                console.log("[DB SEED] ✅ SUCCESS: Admin user created or confirmed.");
             } else {
                  console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
             }
