@@ -44,7 +44,7 @@ export default function CityAnalysisPage() {
         .map(item => ({ name: `${item.name} - ${item.stateUf}`, Faturamento: item.totalRevenue }));
   }, [performanceData]);
   
-  const { totalLots, totalRevenue, statesCount } = useMemo(() => {
+  const { totalLots, totalRevenue, stateUfs } = useMemo(() => {
     return performanceData.reduce((acc, item) => {
         acc.totalLots += item.totalLots;
         acc.totalRevenue += item.totalRevenue;
@@ -75,7 +75,7 @@ export default function CityAnalysisPage() {
         <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma de todos os lotes vendidos" isLoading={isLoading} />
         <StatCard title="Cidades com Atividade" value={performanceData.length} icon={MapPin} description="Cidades com lotes cadastrados" isLoading={isLoading} />
         <StatCard title="Total de Lotes" value={totalLots} icon={Package} description="Lotes em todas as cidades" isLoading={isLoading} />
-        <StatCard title="Estados Atendidos" value={statesCount.size} icon={TrendingUp} description="UFs com atividade" isLoading={isLoading} />
+        <StatCard title="Estados Atendidos" value={stateUfs.size} icon={TrendingUp} description="UFs com atividade" isLoading={isLoading} />
       </div>
 
        <Card>
