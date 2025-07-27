@@ -34,9 +34,9 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
  * Realiza o login de um usuário com base no email e senha.
  * Verifica as credenciais, e se forem válidas, cria uma sessão criptografada em um cookie.
  * @param formData - O FormData do formulário de login, contendo email e senha.
- * @returns Um objeto indicando o sucesso ou falha da operação.
+ * @returns Um objeto indicando o sucesso ou falha da operação, e o perfil do usuário em caso de sucesso.
  */
-export async function login(formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function login(formData: FormData): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
 
@@ -53,7 +53,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
         include: { 
             roles: {
                 include: {
-                    role: true, // Include the actual Role data
+                    role: true,
                 }
             }
         }
@@ -86,7 +86,8 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     await createSession(userProfileWithPerms);
     
     console.log(`[Login Action] Sessão criada com sucesso para ${email}`);
-    return { success: true, message: 'Login bem-sucedido!' };
+    // Retorna o perfil do usuário junto com o sucesso
+    return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
   } catch (error: any) {
     console.error('[Login Action] Erro interno:', error);

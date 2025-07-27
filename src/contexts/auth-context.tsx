@@ -15,6 +15,7 @@ interface AuthContextType {
   setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>;
   logout: () => void;
   refetchUser: () => void;
+  loginUser: (user: UserProfileWithPermissions) => void; // Nova função
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,12 +48,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await logoutAction();
         setUserProfileWithPermissions(null);
         toast({ title: "Logout realizado com sucesso." });
-        // Full page reload might be necessary if server components cache user state
         window.location.href = '/auth/login';
     } catch (error) {
         console.error("Logout error", error);
         toast({ title: "Erro ao fazer logout.", variant: 'destructive'});
     }
+  };
+  
+  // Função para definir o usuário no estado do contexto após o login
+  const loginUser = (user: UserProfileWithPermissions) => {
+    setUserProfileWithPermissions(user);
   };
 
   if (loading) {
@@ -70,7 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loading,
       setUserProfileWithPermissions,
       logout,
-      refetchUser: fetchUser
+      refetchUser: fetchUser,
+      loginUser, // Expor a nova função
     }}>
       {children}
     </AuthContext.Provider>

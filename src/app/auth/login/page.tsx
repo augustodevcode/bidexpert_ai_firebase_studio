@@ -9,14 +9,14 @@ import { Label } from '@/components/ui/label';
 import { LogIn, Loader2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { login } from '@/app/auth/actions'; // Corrigido o caminho da importação
+import { login } from '@/app/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
 
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const { refetchUser } = useAuth();
+  const { loginUser } = useAuth(); // Usando a nova função loginUser do contexto
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,12 +31,13 @@ export default function LoginPage() {
 
     setIsLoading(false);
 
-    if (result.success) {
+    if (result.success && result.user) {
       toast({
         title: "Login bem-sucedido!",
         description: "Redirecionando...",
       });
-      await refetchUser(); // Pede ao AuthContext para buscar os dados do novo usuário
+      // Atualiza o estado global de autenticação com os dados do usuário
+      loginUser(result.user);
       const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
       router.push(redirectUrl);
     } else {
