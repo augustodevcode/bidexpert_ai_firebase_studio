@@ -20,50 +20,58 @@ export default function AdminStatesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchStates = async () => {
-      if (!isMounted) return;
+  const fetchPageData = useCallback(async () => {
       setIsLoading(true);
       setError(null);
       try {
         const fetchedStates = await getStates();
-        if (isMounted) {
-          setStates(fetchedStates);
-        }
+        setStates(fetchedStates);
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
         console.error("Error fetching states:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
+        setError(errorMessage);
+        toast({ title: "Erro", description: errorMessage, variant: "destructive" });
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    };
-    fetchStates();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteState(id);
-      if (result.success) {
-        toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteState(id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: StateInfo[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteState(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} estado(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
@@ -93,6 +101,7 @@ export default function AdminStatesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome ou UF..."
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

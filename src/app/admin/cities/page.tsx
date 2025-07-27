@@ -1,4 +1,3 @@
-
 // src/app/admin/cities/page.tsx
 'use client';
 
@@ -20,53 +19,69 @@ export default function AdminCitiesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchCities = async () => {
-      if (!isMounted) return;
+  const fetchPageData = useCallback(async () => {
       setIsLoading(true);
       setError(null);
       try {
         const fetchedCities = await getCities();
-        if (isMounted) {
-          setCities(fetchedCities);
-        }
+        setCities(fetchedCities);
       } catch (e) {
         const errorMessage = e instanceof Error ? e.message : "Falha ao buscar cidades.";
         console.error("Error fetching cities:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
+        setError(errorMessage);
+        toast({ title: "Erro", description: errorMessage, variant: "destructive" });
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    };
-    
-    fetchCities();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteCity(id);
-      if (result.success) {
-        toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteCity(id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: CityInfo[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteCity(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} cidade(s) excluída(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  
+  const stateOptions = useMemo(() => 
+    [...new Set(cities.map(c => c.stateUf))]
+      .map(uf => ({ value: uf, label: uf })),
+  [cities]);
+
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'stateUf', title: 'UF', options: stateOptions },
+  ], [stateOptions]);
+
 
   return (
     <div className="space-y-6">
@@ -95,6 +110,8 @@ export default function AdminCitiesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por cidade..."
+            facetedFilterColumns={facetedFilterColumns}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>
