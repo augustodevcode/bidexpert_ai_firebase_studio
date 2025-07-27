@@ -11,7 +11,7 @@ import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 
 export default function AdminLotsPage() {
   const [lots, setLots] = useState<Lot[]>([]);

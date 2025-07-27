@@ -8,7 +8,7 @@ import { ArrowLeft, User, AlertCircle } from 'lucide-react';
 import DocumentReviewClient from './document-review-client';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import { cn } from '@/lib/utils';
 
 export default async function DocumentReviewPage({ params }: { params: { userId: string } }) {
@@ -55,7 +55,11 @@ export default async function DocumentReviewPage({ params }: { params: { userId:
          <CardContent>
             <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Status Atual:</span>
-                <Badge variant="outline" className={cn(statusColorClasses)}>
+                <Badge variant="outline" className={cn(
+                    'border-l-4',
+                    statusInfo.textColor ? statusInfo.textColor.replace('text-', 'border-') : 'border-muted-foreground',
+                    statusInfo.textColor ? statusInfo.textColor.replace(/-\d+$/, '/10').replace('text-', 'bg-') : 'bg-muted/20'
+                )}>
                     <statusInfo.icon className={cn("h-4 w-4 mr-2", statusInfo.textColor)} />
                     {statusInfo.text}
                 </Badge>

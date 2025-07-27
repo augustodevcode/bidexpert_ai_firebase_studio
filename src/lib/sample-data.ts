@@ -1,6 +1,5 @@
-
 // src/lib/sample-data.ts
-import { slugify } from './sample-data-helpers';
+import { slugify } from './ui-helpers';
 import type { StateInfo, CityInfo } from '@/types';
 
 // Renomeado para evitar conflito de nome com as constantes exportadas

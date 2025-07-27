@@ -6,7 +6,7 @@ import type { UserProfileData } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Eye } from 'lucide-react';
 
@@ -46,7 +46,7 @@ export const createColumns = (): ColumnDef<UserProfileData>[] => [
       const user = row.original;
       return (
         <Button asChild variant="outline" size="sm">
-          <Link href={`/admin/habilitations/${user.uid}`}>
+          <Link href={`/admin/habilitations/${user.id}`}>
             <Eye className="mr-2 h-4 w-4" />Revisar Documentos
           </Link>
         </Button>

@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { CheckCircle, XCircle, Clock, Eye, Download, Loader2, MessageSquare, AlertCircle } from 'lucide-react';
 import { approveDocument, rejectDocument } from '../actions';
 import { useToast } from '@/hooks/use-toast';
-import { getUserDocumentStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserDocumentStatusInfo } from '@/lib/ui-helpers';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';

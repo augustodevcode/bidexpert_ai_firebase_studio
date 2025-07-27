@@ -11,7 +11,7 @@ import FeaturedItems from '@/components/featured-items';
 import type { Auction, Lot, LotCategory } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { getLotCategories } from './admin/categories/actions';
-import { getCategoryAssets, slugify } from '@/lib/sample-data-helpers';
+import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
 
 async function HomePageContent() {
   // Fetch data directly using Prisma for speed in this component

@@ -9,7 +9,7 @@ import type { UserProfileData } from '@/types';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { useToast } from '@/hooks/use-toast';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 
 
 export default function HabilitationsPage() {

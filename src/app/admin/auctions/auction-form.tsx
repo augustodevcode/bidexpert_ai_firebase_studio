@@ -29,7 +29,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Separator } from '@/components/ui/separator';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
@@ -372,7 +372,7 @@ export default function AuctionForm({
                     name="sellerId"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Comitente/Vendedor Principal (Opcional)</FormLabel>
+                        <FormLabel>Comitente/Vendedor Principal</FormLabel>
                         <Select onValueChange={field.onChange} value={field.value || ''}>
                         <FormControl>
                             <SelectTrigger>
