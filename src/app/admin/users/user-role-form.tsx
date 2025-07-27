@@ -50,7 +50,7 @@ export default function UserRoleForm({
     resolver: zodResolver(userRoleFormSchema),
     defaultValues: {
       // The user object has the role IDs already from the server action
-      roleIds: user?.roles?.map(r => r.role.id) || [],
+      roleIds: user?.roles?.map(r => r.id) || [],
     },
   });
 
@@ -123,9 +123,9 @@ export default function UserRoleForm({
                                   checked={field.value?.includes(role.id)}
                                   onCheckedChange={(checked) => {
                                     return checked
-                                      ? field.onChange([...field.value, role.id])
+                                      ? field.onChange([...(field.value || []), role.id])
                                       : field.onChange(
-                                          field.value?.filter(
+                                          (field.value || []).filter(
                                             (value) => value !== role.id
                                           )
                                         )
