@@ -1,7 +1,7 @@
 // tests/ui/auction-card-details.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import { slugify } from '../../src/lib/sample-data-helpers';
+import { slugify } from '../../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
