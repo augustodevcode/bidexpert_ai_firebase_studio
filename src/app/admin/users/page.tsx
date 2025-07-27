@@ -23,55 +23,61 @@ export default function AdminUsersPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [fetchedUsers, fetchedRoles] = await Promise.all([
+          getUsersWithRoles(),
+          getRoles()
+      ]);
+      setUsers(fetchedUsers);
+      setRoles(fetchedRoles);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
+      console.error("Error fetching users:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+  
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchUsers = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const [fetchedUsers, fetchedRoles] = await Promise.all([
-            getUsersWithRoles(),
-            getRoles()
-        ]);
-        if (isMounted) {
-          setUsers(fetchedUsers);
-          setRoles(fetchedRoles);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar usuários.";
-        console.error("Error fetching users:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchUsers();
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteUser(id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      fetchPageData();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, fetchPageData]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteUser(id);
+  const handleDeleteSelected = useCallback(async (selectedItems: UserProfileWithPermissions[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteUser(item.id);
       if (result.success) {
-        toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger(c => c + 1);
+        successCount++;
       } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.fullName || item.email}`, description: result.message, variant: "destructive", duration: 5000 });
       }
-    },
-    [toast]
-  );
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} usuário(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
@@ -119,6 +125,7 @@ export default function AdminUsersPage() {
             searchColumnId="email"
             searchPlaceholder="Buscar por email ou nome..."
             facetedFilterColumns={facetedFilterColumns}
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

@@ -1,4 +1,3 @@
-
 // src/app/admin/roles/page.tsx
 'use client';
 
@@ -13,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 
+const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+
 export default function AdminRolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -20,52 +21,63 @@ export default function AdminRolesPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchRoles = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedRoles = await getRoles();
-        if (isMounted) {
-          setRoles(fetchedRoles);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
-        console.error("Error fetching roles:", e);
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchRoles();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteRole(id);
-      if (result.success) {
-        toast({ title: 'Sucesso!', description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
-      }
-    },
-    [toast]
-  );
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const fetchedRoles = await getRoles();
+      setRoles(fetchedRoles);
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
+      console.error("Error fetching roles:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
   
+  useEffect(() => {
+    fetchPageData();
+  }, [refetchTrigger, fetchPageData]);
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteRole(id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      fetchPageData();
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  }, [toast, fetchPageData]);
+
+  const handleDeleteSelected = useCallback(async (selectedItems: Role[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      if (PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)) {
+        toast({ title: `Ação não Permitida`, description: `O perfil "${item.name}" é protegido e não pode ser excluído.`, variant: "destructive", duration: 5000 });
+        errorCount++;
+        continue;
+      }
+      const result = await deleteRole(item.id);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} perfil(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
@@ -95,6 +107,7 @@ export default function AdminRolesPage() {
             error={error}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do perfil..."
+            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

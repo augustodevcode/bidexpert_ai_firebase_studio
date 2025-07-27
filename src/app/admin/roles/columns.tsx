@@ -1,4 +1,3 @@
-
 // src/app/admin/roles/columns.tsx
 'use client';
 
@@ -16,15 +15,36 @@ import {
 import Link from 'next/link';
 import type { Role } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { Checkbox } from '@/components/ui/checkbox';
 
-const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTIONEER', 'AUCTION_ANALYST'];
+const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Role>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Selecionar todos"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Selecionar linha"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome do Perfil" />,
     cell: ({ row }) => {
-      const isProtected = PROTECTED_ROLES.includes(row.original.name_normalized);
+      const isProtected = PROTECTED_ROLES.includes(row.original.nameNormalized);
       return (
         <div className="font-medium flex items-center">
             <Link href={`/admin/roles/${row.original.id}/edit`} className="hover:text-primary">
@@ -59,31 +79,25 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
       const isProtected = PROTECTED_ROLES.includes(role.name_normalized);
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/roles/${role.id}/edit`}>
-                <Pencil className="mr-2 h-4 w-4"/>Editar
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => handleDelete(role.id)}
-              className="text-destructive"
-              disabled={isProtected}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/roles/${role.id}/edit`}>
+              <Pencil className="h-4 w-4" />
+              <span className="sr-only">Editar</span>
+            </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-destructive"
+            onClick={() => handleDelete(role.id)}
+            disabled={isProtected}
+            title={isProtected ? 'Perfis de sistema não podem ser excluídos' : 'Excluir Perfil'}
+          >
+            <Trash2 className="h-4 w-4" />
+            <span className="sr-only">Excluir</span>
+          </Button>
+        </div>
       );
     },
   },

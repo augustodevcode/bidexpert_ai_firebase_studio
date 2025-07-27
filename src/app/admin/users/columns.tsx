@@ -1,4 +1,3 @@
-
 // src/app/admin/users/columns.tsx
 'use client';
 
@@ -11,15 +10,6 @@ import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
 import Link from 'next/link';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<UserProfileWithPermissions>[] => [
    {
@@ -57,7 +47,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
   },
   {
-    accessorKey: "roleNames", // Keep accessor for filtering
+    accessorKey: "roleNames",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Perfil" />,
     cell: ({ row }) => {
       const roleNames = row.original.roleNames || [];
@@ -100,26 +90,24 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => {
       const user = row.original;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/users/${user.id}/edit`}>
-                <Pencil className="mr-2 h-4 w-4" />Editar Perfil
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(user.id)} className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />Excluir Usuário
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/habilitations/${user.id}`} title="Ver Documentos/Habilitação">
+              <Eye className="h-4 w-4" />
+              <span className="sr-only">Ver Habilitação</span>
+            </Link>
+          </Button>
+           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
+            <Link href={`/admin/users/${user.id}/edit`}>
+              <Pencil className="h-4 w-4" />
+               <span className="sr-only">Editar</span>
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(user.id)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+            <span className="sr-only">Excluir</span>
+          </Button>
+        </div>
       );
     },
   },
