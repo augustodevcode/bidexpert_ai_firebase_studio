@@ -175,4 +175,10 @@ export class UserService {
       if(bidderRole) {
         // Use createMany with skipDuplicates to avoid errors if role already exists
         await prisma.usersOnRoles.createMany({
-          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system
+          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system-habilitation-check' }],
+          skipDuplicates: true,
+        });
+      }
+    }
+  }
+}

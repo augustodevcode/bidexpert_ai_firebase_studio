@@ -52,4 +52,10 @@ export default async function EditUserPage({ params }: { params: { userId: strin
       <Separator />
 
       <UserRoleForm
-        user={userProfile
+        user={userProfile}
+        roles={roles}
+        onSubmitAction={handleUpdateUserRoles}
+      />
+    </div>
+  );
+}

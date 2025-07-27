@@ -149,4 +149,7 @@ export default function UserProfileForm({
             </Button>
           </CardFooter>
         </form>
-      </
+      </Form>
+    </Card>
+  );
+}
