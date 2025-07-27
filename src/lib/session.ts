@@ -48,7 +48,7 @@ export async function decrypt(session: string | undefined = '') {
 export async function createSession(user: UserProfileWithPermissions) {
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     const sessionPayload = {
-        userId: user.uid,
+        userId: user.id, // Correção: Usar 'id' em vez de 'uid'
         email: user.email,
         role: user.roleName,
         permissions: user.permissions,

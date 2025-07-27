@@ -17,6 +17,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     return {
         ...user,
+        uid: user.id, // Garantir que uid seja o mesmo que id
         roleNames: roles.map((r: any) => r.name),
         permissions,
         // For compatibility with older components that might expect a single roleName
@@ -107,7 +108,7 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     }
     
     const user = await prisma.user.findUnique({
-        where: { id: session.userId },
+        where: { id: session.userId }, // Busca pelo 'id'
         include: { 
             roles: {
                 include: {
@@ -118,48 +119,4 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     });
     
     return formatUserWithPermissions(user);
-}
-
-/**
- * DEVELOPMENT ONLY: Creates a virtual admin user or fetches from DB and creates a session.
- * @returns The admin user profile if successful, otherwise null.
- */
-export async function loginAdminForDevelopment(): Promise<UserProfileWithPermissions | null> {
-    if (process.env.NODE_ENV !== 'development') {
-        return null;
-    }
-
-    console.log('[Dev Action] Tentando login automático do admin...');
-    
-    try {
-        const adminEmail = 'admin@bidexpert.com.br';
-        let adminUser = await prisma.user.findUnique({
-            where: { email: adminEmail },
-            include: { 
-                roles: {
-                    include: {
-                        role: true
-                    }
-                }
-            }
-        });
-        
-        if (!adminUser) {
-          throw new Error('[Dev Action] Admin user not found in DB. This should be handled by seeding.');
-        }
-
-        const userProfileWithPerms = formatUserWithPermissions(adminUser);
-
-        if (!userProfileWithPerms) {
-             throw new Error('[Dev Action] Failed to format admin user profile with permissions.');
-        }
-
-        await createSession(userProfileWithPerms);
-        console.log('[Dev Action] Sessão de admin para desenvolvimento criada com sucesso.');
-        return userProfileWithPerms;
-
-    } catch (error: any) {
-        console.error("[Dev Action] Erro ao tentar logar com admin:", error);
-        return null;
-    }
 }
