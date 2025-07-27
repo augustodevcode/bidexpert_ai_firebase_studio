@@ -44,13 +44,22 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** This convention is essential for the AI to reliably identify and manipulate specific UI elements, ensuring that future requests are executed precisely. It also aids in end-to-end testing and debugging.
 
-## 6. Development Environment Information
+## 6. Next.js & React Best Practices
+
+-   **Default to Server Components:** Components should be Server Components by default. Only use the `'use client'` directive when client-side interactivity (hooks like `useState`, `useEffect`, event listeners) is absolutely necessary. This reduces the amount of JavaScript sent to the client, improving performance.
+-   **Server Actions for Mutations:** All data mutations (create, update, delete) must be handled through Next.js Server Actions. This simplifies the architecture by eliminating the need for separate API routes and provides a secure, built-in mechanism for form submissions and data handling.
+-   **Image Optimization:** Always use the built-in `next/image` component for displaying images. It provides automatic optimization, resizing, and lazy loading, which are crucial for performance.
+-   **Memoization:** In client components, use `useMemo` to memoize the results of expensive calculations and `useCallback` to memoize functions passed to child components. This prevents unnecessary re-renders and improves UI responsiveness.
+-   **Error Handling:** Implement `error.js` files at appropriate route segments to handle runtime errors gracefully and prevent the entire application from crashing.
+-   **Type Safety:** Utilize TypeScript's `import type` for type-only imports to improve build performance and maintain clear separation between type information and runtime code.
+
+## 7. Development Environment Information
 
 **Rule:** During development (`NODE_ENV === 'development'`), the application footer must display key environment information. This includes the currently active database system (e.g., MySQL, PostgreSQL), the logged-in user's email, and the active Firebase Project ID.
 
 **Rationale:** This provides immediate, persistent context about the development environment, preventing confusion and aiding in debugging database or user-specific issues.
 
-## 7. BidExpertOkrs: Análise Estratégica, KPIs e Insights
+## 8. BidExpertOkrs: Análise Estratégica, KPIs e Insights
 
 **Rule:** All entity management sections (CRUDs) must evolve into comprehensive management and analysis modules, providing strategic insights beyond simple data display. This includes:
 
