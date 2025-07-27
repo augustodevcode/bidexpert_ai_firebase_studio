@@ -1,7 +1,7 @@
 // src/components/admin/analysis/map-analysis-component.tsx
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L, { type LatLngBounds } from 'leaflet';
