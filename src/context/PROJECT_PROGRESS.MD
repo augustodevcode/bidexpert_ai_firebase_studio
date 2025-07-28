@@ -9,25 +9,17 @@
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
 - **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
-- **Item 13 - Part 1 & 2: Document Upload & AI Flow:** Implemented the UI and backend logic for uploading documents to a Judicial Process and created the Genkit flow for data extraction.
-- **BidExpertOkrs - Fase 1: Admin Reports:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
-- **BidExpertOkrs - Fase 2 & 3 (Comitentes):** Implementados os dashboards de análise de grupo e individual para a entidade Comitentes.
-- **BidExpertOkrs - Fase 2 & 3 (Leiloeiros):** Implementados os dashboards de análise de grupo e individual para a entidade Leiloeiros.
-- **BidExpertOkrs - Fase 2 & 3 (Leilões):** Implementados os dashboards de análise de grupo e individual para a entidade Leilões.
-- **BidExpertOkrs - Fase 2 (Categorias):** Implementado o dashboard de análise de grupo para Categorias.
-- **BidExpertOkrs - Fase 2 (Cidades):** Implementado o dashboard de análise de grupo para Cidades.
-- **BidExpertOkrs - Fase 2 (Estados):** Implementado o dashboard de análise de grupo para Estados.
+- **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
 
 ## DOING
-- **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
-    - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
-    - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos, conforme a nova regra de arquitetura.
+    - **Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).** (DONE)
+    - **Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões). (DONE)
+    - **Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual. (DONE for Sellers, Auctioneers, Auctions)
+    - **Fase 4 - Análise Judicial:** Implementar dashboards de análise para Varas e Tribunais.
+    - **Fase 5 - IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
 
 ## NEXT
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos.
-    - **Análise Geográfica Avançada:** Criar dashboard para análise por Regiões (agrupando estados).
-    - **Análise Judicial**: Implementar dashboards de análise para Varas e Tribunais.
-    - **IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
