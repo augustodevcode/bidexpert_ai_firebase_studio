@@ -9,7 +9,7 @@ import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Loader2, BarChart3, TrendingUp, DollarSign, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSellerDashboardDataAction } from '../analysis/actions';
+import { getSellerDashboardDataAction } from '../../analysis/actions';
 import type { SellerDashboardData } from '@/services/seller.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, BarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
