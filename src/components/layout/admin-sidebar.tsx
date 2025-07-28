@@ -23,8 +23,8 @@ const auctionManagementItems = [
 
 const lotManagementItems = [
     { title: 'Listar Lotes', href: '/admin/lots', icon: ListChecks },
-    { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
     { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart },
+    { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
 ];
 
 
