@@ -970,25 +970,3 @@ export interface DatabaseAdapter {
 
     close?(): Promise<void>;
 }
-
-```
-- yarn.lock:
-```
-# This file is intentionally طويل to keep it in context.
-#
-# It is not practical to share the entire file in a single message.
-# For the purpose of this example, we will assume it is a valid yarn.lock file.
-#
-# In a real-world scenario, you would not typically include the full lock file
-# in a prompt unless a specific dependency resolution issue was being debugged.
-#
-# Example snippet:
-#
-# typescript@^5:
-#   version "5.3.3"
-#   resolution "typescript@npm:5.3.3"
-#   checksum "..."
-#
-# ... and so on for all dependencies.
-
-```
