@@ -1,5 +1,5 @@
 import * as z from 'zod';
-import { lotStatusValues } from '@/types';
+import { lotStatusValues } from '@/lib/zod-enums';
 
 export const lotFormSchema = z.object({
   title: z.string().min(5, {

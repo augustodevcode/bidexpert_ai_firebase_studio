@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
 import { getLot, getLots, getBensByIdsAction } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCategories } from '@/lib/data-queries';
+import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSampleData } from '@/lib/sample-data-helpers';
@@ -39,7 +39,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     getPlatformSettings(),
     getAuction(currentAuctionId),
     getLot(currentLotId),
-    getCategories(),
+    getLotCategories(),
     getSellers(),
     getAuctioneers()
   ]);
