@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot } from '@/types';
@@ -27,11 +28,9 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     { label: "Ano Modelo", value: bem?.modelYear ?? bem?.year ?? lot.year },
     { label: "Marca", value: bem?.make ?? lot.make },
     { label: "Modelo", value: bem?.model ?? lot.model },
-    { label: "Série", value: bem?.series ?? lot.series },
+    { label: "Versão", value: bem?.version ?? lot.version },
     { label: "Categoria", value: lot.type },
     { label: "Subcategoria", value: lot.subcategoryName },
-    { label: "Nº de Estoque", value: lot.stockNumber },
-    { label: "Filial de Venda", value: lot.sellingBranch },
     { label: "VIN / Chassi", value: bem?.vin ?? lot.vin },
     { label: "Placa", value: bem?.plate },
     { label: "KM Rodado", value: bem?.mileage?.toLocaleString('pt-BR') },
@@ -39,44 +38,25 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     { label: "Combustível", value: bem?.fuelType },
     { label: "Transmissão", value: bem?.transmissionType },
     { label: "Chave", value: (bem?.hasKey ?? lot.hasKey) ? "Sim" : "Não" },
-    { label: "Motor", value: bem?.engineDetails ?? lot.engineDetails },
     { label: "Condição", value: lot.condition },
-    { label: "Tipo de Perda", value: lot.lossType },
-    { label: "Dano Principal", value: lot.primaryDamage },
-    { label: "Status do VIN", value: lot.vinStatus },
-    { label: "Informação do Título", value: lot.titleInfo },
-    { label: "Marca do Título", value: lot.titleBrand },
-    { label: "Código de Partida", value: lot.startCode },
-    { label: "Status dos Airbags", value: lot.airbagsStatus },
-    { label: "Estilo da Carroceria", value: lot.bodyStyle },
-    { label: "Tipo de Tração", value: lot.driveLineType },
-    { label: "Cilindros", value: lot.cylinders },
-    { label: "Sistema de Retenção", value: lot.restraintSystem },
-    { label: "Cor Externa/Interna", value: lot.exteriorInteriorColor },
-    { label: "Opcionais", value: lot.options },
-    { label: "Fabricado em", value: lot.manufacturedIn },
-    { label: "Classe do Veículo", value: lot.vehicleClass },
-    { label: "Localização no Pátio", value: lot.vehicleLocationInBranch },
-    { label: "Pista/Corrida #", value: lot.laneRunNumber },
-    { label: "Corredor/Vaga", value: lot.aisleStall },
-    { label: "Valor Real em Dinheiro (VCV)", value: lot.actualCashValue },
-    { label: "Custo Estimado de Reparo", value: lot.estimatedRepairCost },
     // Real Estate
-    { label: "Tipo de Imóvel", value: bem?.propertyType },
+    { label: "Matrícula do Imóvel", value: bem?.propertyRegistrationNumber},
+    { label: "Nº Contribuinte/IPTU", value: bem?.iptuNumber},
     { label: "Ocupado", value: bem?.isOccupied ? "Sim" : "Não" },
-    { label: "Área (m²)", value: bem?.area },
+    { label: "Área Total (m²)", value: bem?.totalArea },
+    { label: "Área Construída (m²)", value: bem?.builtArea },
     { label: "Quartos", value: bem?.bedrooms },
+    { label: "Suítes", value: bem?.suites },
     { label: "Banheiros", value: bem?.bathrooms },
     { label: "Vagas de Garagem", value: bem?.parkingSpaces },
-    { label: "Comodidades", value: bem?.amenities?.join(', ') },
      // Machinery
-    { label: "Nº de Série (Máquina)", value: bem?.serialNumber },
+    { label: "Nº de Série", value: bem?.serialNumber },
     { label: "Horas de Uso", value: bem?.hoursUsed?.toLocaleString('pt-BR') },
     // Livestock
     { label: "Raça", value: bem?.breed },
     { label: "Sexo", value: bem?.sex },
     { label: "Idade", value: bem?.age },
-    { label: "Vacinação", value: bem?.vaccinationStatus },
+    { label: "Registro da Raça", value: bem?.breedRegistryDocument },
   ];
 
   const availableSpecifications = specifications.filter(spec => spec.value !== undefined && spec.value !== null && String(spec.value).trim() !== '');
@@ -102,4 +82,3 @@ export default function LotSpecificationTab({ lot }: LotSpecificationTabProps) {
     </Card>
   );
 }
-

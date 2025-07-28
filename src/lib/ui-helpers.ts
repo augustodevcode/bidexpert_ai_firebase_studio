@@ -1,5 +1,6 @@
+
 // src/lib/ui-helpers.ts
-import type { Lot, LotCategory, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, AuctionStatus, PlatformSettings, Auction, AuctionStage } from '@/types';
+import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
 import { isPast } from 'date-fns';
 
@@ -174,36 +175,41 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
   return Array.from(locations).sort();
 };
 
-export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): Date | null {
-  if (!lot) return null;
-  
-  const relevantAuction = auction || { auctionStages: [], endDate: null, auctionDate: null };
+export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } {
+    if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
 
-  let finalEndDate: Date | null = null;
-  
-  if (relevantAuction.auctionStages && relevantAuction.auctionStages.length > 0) {
-    const now = new Date();
-    // Find the first stage that hasn't ended yet
-    let relevantStage = relevantAuction.auctionStages
-      .filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)))
-      .sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime())[0];
-    
-    // If all stages are in the past, but the lot isn't marked as finished, take the last stage.
-    // This ensures that even after a stage passes, we still have a reference date for "Encerrado".
-    if (!relevantStage && lot.status !== 'VENDIDO' && lot.status !== 'NAO_VENDIDO') {
-      relevantStage = relevantAuction.auctionStages.sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
-    }
-    
-    if (relevantStage && relevantStage.endDate) {
-      finalEndDate = new Date(relevantStage.endDate as string);
-    }
-  }
+    const relevantAuction = auction || { auctionStages: [], endDate: null, auctionDate: null };
+    let finalEndDate: Date | null = null;
+    let finalStartDate: Date | null = null;
 
-  // Fallbacks if stages logic doesn't yield a date
-  if (!finalEndDate && relevantAuction.endDate) finalEndDate = new Date(relevantAuction.endDate as string);
-  
-  // The lot's own endDate should be the ultimate fallback
-  if (!finalEndDate && lot.endDate) finalEndDate = new Date(lot.endDate as string);
-  
-  return finalEndDate;
+    if (relevantAuction.auctionStages && relevantAuction.auctionStages.length > 0) {
+        const now = new Date();
+        const futureStages = relevantAuction.auctionStages.filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)));
+        const sortedFutureStages = futureStages.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
+
+        let relevantStage: AuctionStage | undefined = sortedFutureStages[0];
+
+        if (!relevantStage) {
+            const sortedPastStages = [...relevantAuction.auctionStages].sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
+            relevantStage = sortedPastStages[0];
+        }
+
+        if (relevantStage?.endDate) {
+            finalEndDate = new Date(relevantStage.endDate as string);
+            const stageIndex = relevantAuction.auctionStages.findIndex(s => s.name === relevantStage?.name);
+            if (stageIndex > 0 && relevantAuction.auctionStages[stageIndex - 1].endDate) {
+                finalStartDate = new Date(relevantAuction.auctionStages[stageIndex - 1].endDate as string);
+            } else {
+                finalStartDate = relevantAuction.auctionDate ? new Date(relevantAuction.auctionDate as string) : null;
+            }
+        }
+    }
+
+    if (!finalEndDate) finalEndDate = relevantAuction.endDate ? new Date(relevantAuction.endDate as string) : null;
+    if (!finalStartDate) finalStartDate = relevantAuction.auctionDate ? new Date(relevantAuction.auctionDate as string) : null;
+    
+    if (lot.endDate) finalEndDate = new Date(lot.endDate as string);
+    if (lot.lotSpecificAuctionDate) finalStartDate = new Date(lot.lotSpecificAuctionDate as string);
+
+    return { effectiveLotEndDate: finalEndDate, effectiveLotStartDate: finalStartDate };
 }

@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot } from '@/types';

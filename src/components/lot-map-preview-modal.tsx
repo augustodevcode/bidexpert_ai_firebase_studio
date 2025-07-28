@@ -1,3 +1,4 @@
+
 // src/components/lot-map-preview-modal.tsx
 'use client';
 
@@ -29,7 +30,7 @@ export default function LotMapPreviewModal({ lot, platformSettings, isOpen, onCl
           </DialogDescription>
         </DialogHeader>
         
-        <div className="p-4 max-h-[60vh] overflow-y-auto">
+        <div className="p-4 h-[60vh] overflow-y-auto">
           {/* O LotMapDisplay já é importado dinamicamente internamente, não precisamos fazer isso de novo aqui. */}
           <LotMapDisplay lot={lot} platformSettings={platformSettings} />
         </div>
