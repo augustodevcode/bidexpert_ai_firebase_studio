@@ -7,6 +7,8 @@
 
 import { prisma } from '@/lib/prisma';
 import type { UserHabilitationStatus, AccountType } from '@/types';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
+
 
 export interface UserPerformanceData {
   id: string;
