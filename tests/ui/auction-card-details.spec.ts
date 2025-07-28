@@ -180,7 +180,6 @@ test.describe('Auction Card and List Item UI Validation', () => {
         console.log('--- [Test Case] Validating Auction Card UI ---');
         console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
 
-        // Take a screenshot for debugging
         await page.screenshot({ path: `test-results/auction-card-details-before-find.png`, fullPage: true });
         
         const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);

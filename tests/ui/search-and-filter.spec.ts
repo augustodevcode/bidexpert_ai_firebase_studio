@@ -74,10 +74,12 @@ test.describe('Search and Filter E2E Test', () => {
         await page.addInitScript(() => {
           window.localStorage.setItem('bidexpert_setup_complete', 'true');
         });
+        console.log('[Search Test] Navigating to search page...');
         await page.goto('/search');
         await page.waitForLoadState('networkidle');
-        console.log('[Search Test] Navigated to search page.');
-        await page.screenshot({ path: `test-results/search-page-load-${testRunId}.png`, fullPage: true });
+        const pageTitle = await page.title();
+        console.log(`[Search Test] Page loaded. URL: ${page.url()}, Title: "${pageTitle}"`);
+        await expect(page).toHaveTitle(/BidExpert/);
     });
 
     test('should filter by search term', async ({ page }) => {

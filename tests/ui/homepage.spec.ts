@@ -38,6 +38,7 @@ test.describe('Homepage Smoke Test', () => {
   });
 
   test('should load the homepage and display the main title', async ({ page }) => {
+    console.log('[Homepage Test] Verifying main title visibility...');
     const title = page.locator('header').getByRole('link', { name: /BidExpert/i }).first();
     await expect(title).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Homepage main title is visible.');
@@ -45,6 +46,7 @@ test.describe('Homepage Smoke Test', () => {
   });
   
   test('should display featured lots or recent lots section', async ({ page }) => {
+    console.log('[Homepage Test] Looking for lots section...');
     const lotsSectionTitle = page.locator('h2').filter({ 
       hasText: /lotes.*(destaque|recentes)/i 
     }).first();
@@ -58,6 +60,7 @@ test.describe('Homepage Smoke Test', () => {
   });
   
   test('should display featured auctions or recent auctions section', async ({ page }) => {
+    console.log('[Homepage Test] Looking for auctions section...');
     const auctionsSectionTitle = page.locator('h2').filter({ 
       hasText: /leilões.*(destaque|recentes)/i 
     }).first();
