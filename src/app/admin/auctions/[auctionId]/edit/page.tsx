@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
@@ -6,7 +5,7 @@ import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,6 @@ import React, { useEffect, useCallback, useMemo, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
-import { samplePlatformSettings } from '@/lib/sample-data';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -43,7 +41,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -101,7 +99,7 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
                     </CardHeader>
                     <CardContent className="h-72">
                          <ResponsiveContainer width="100%" height="100%">
-                          <Bar
+                          <RechartsBarChart
                             data={dashboardData.revenueByCategory}
                             layout="vertical"
                             margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
@@ -112,7 +110,7 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
                             <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
                             <Legend />
                             <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                          </Bar>
+                          </RechartsBarChart>
                         </ResponsiveContainer>
                     </CardContent>
                 </Card>
@@ -194,7 +192,7 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
     const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
     
-    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType'], lot?: Lot, winner?: UserProfileWithPermissions | null) => {
+    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType'], lot?: Lot, winner?: UserWin) => {
         const loadingKey = `${type}-${lot?.id || 'auction'}`;
         setIsLoading(prev => ({...prev, [loadingKey]: true}));
         toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
@@ -423,10 +421,10 @@ export default function EditAuctionPage() {
   
   const [isAISuggestionModalOpen, setIsAISuggestionModalOpen] = useState(false);
   
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings>(samplePlatformSettings as PlatformSettings);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
   const [lotCurrentPage, setLotCurrentPage] = useState(1);
-  const [lotItemsPerPage, setLotItemsPerPage] = useState(platformSettings.searchItemsPerPage || 12);
+  const [lotItemsPerPage, setLotItemsPerPage] = useState(12);
   
   const formRef = React.useRef<any>(null);
 
@@ -506,10 +504,11 @@ export default function EditAuctionPage() {
   }, [lotsInAuction, lotSortBy]);
   
   const paginatedLots = useMemo(() => {
+    if (!platformSettings) return [];
     const startIndex = (lotCurrentPage - 1) * lotItemsPerPage;
     const endIndex = startIndex + lotItemsPerPage;
     return sortedLots.slice(startIndex, endIndex);
-  }, [sortedLots, lotCurrentPage, lotItemsPerPage]);
+  }, [sortedLots, lotCurrentPage, lotItemsPerPage, platformSettings]);
 
   const handleLotSortChange = (newSortBy: string) => {
     setLotSortBy(newSortBy);
@@ -613,7 +612,7 @@ export default function EditAuctionPage() {
     </Card>
   );
 
-  if (isLoading || !auction) {
+  if (isLoading || !auction || !platformSettings) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
