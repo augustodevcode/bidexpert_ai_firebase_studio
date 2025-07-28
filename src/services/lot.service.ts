@@ -99,4 +99,40 @@ export class LotService {
       return { success: false, message: `Falha ao excluir lote: ${error.message}` };
     }
   }
+  
+  async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
+      const lot = await this.getLotById(lotId);
+      if (!lot) return { success: false, message: "Lote não encontrado." };
+      if (lot.status !== 'ABERTO_PARA_LANCES' && lot.status !== 'ENCERRADO') {
+          return { success: false, message: `O lote não pode ser finalizado no status atual (${lot.status}).`};
+      }
+
+      const winningBid = await prisma.bid.findFirst({
+          where: { lotId: lot.id },
+          orderBy: { amount: 'desc' },
+      });
+
+      if (winningBid) {
+          await prisma.lot.update({
+              where: { id: lot.id },
+              data: { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount },
+          });
+           await prisma.userWin.create({
+              data: {
+                  lotId: lot.id,
+                  userId: winningBid.bidderId,
+                  winningBidAmount: winningBid.amount,
+                  winDate: new Date(),
+                  paymentStatus: 'PENDENTE'
+              }
+          });
+          return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
+      } else {
+           await prisma.lot.update({
+              where: { id: lot.id },
+              data: { status: 'NAO_VENDIDO' },
+          });
+           return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
+      }
+  }
 }
