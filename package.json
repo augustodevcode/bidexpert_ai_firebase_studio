@@ -1,3 +1,4 @@
+
 {
   "name": "nextn",
   "version": "0.1.0",
@@ -13,7 +14,8 @@
     "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
     "postinstall": "dotenv -e .env -- prisma generate",
     "test": "NODE_ENV=test dotenv -e .env -- tsx tests/bidding-e2e.test.ts",
-    "test:ui": "playwright test"
+    "test:ui": "playwright test",
+    "test:e2e": "yarn build && yarn test:ui"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",

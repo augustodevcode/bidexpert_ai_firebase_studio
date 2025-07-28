@@ -1,3 +1,4 @@
+
 // playwright.config.ts
 import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
@@ -40,7 +41,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev',
+    command: 'npm run start -- --port 9002',
     url: 'http://localhost:9002',
     reuseExistingServer: !process.env.CI,
     timeout: 120 * 1000, // Wait up to 120 seconds for the server to start
