@@ -1,15 +1,28 @@
+
 // src/app/admin/auctions/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { prisma } from '@/lib/prisma'; // Keep for related simple queries
+import { prisma } from '@/lib/prisma';
 import { AuctionService } from '@/services/auction.service';
+import { AuctioneerService } from '@/services/auctioneer.service'; // Import AuctioneerService
+import { SellerService } from '@/services/seller.service'; // Import SellerService
 
 const auctionService = new AuctionService();
 
 export async function getAuctions(): Promise<Auction[]> {
     return auctionService.getAuctions();
+}
+
+export async function getAuctioneers() {
+    const auctioneerService = new AuctioneerService();
+    return auctioneerService.getAuctioneers();
+}
+
+export async function getSellers() {
+    const sellerService = new SellerService();
+    return sellerService.getSellers();
 }
 
 export async function getAuction(id: string): Promise<Auction | null> {

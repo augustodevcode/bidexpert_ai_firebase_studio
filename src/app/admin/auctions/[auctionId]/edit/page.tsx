@@ -1,9 +1,10 @@
+
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
-import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
+import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
 import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 

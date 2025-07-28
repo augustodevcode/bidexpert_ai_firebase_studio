@@ -1,13 +1,13 @@
-
+// src/components/layout/main-nav.tsx
 'use client';
 
 import * as React from 'react'; 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
+import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
 import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react'; 
-import { useEffect, useState, useCallback, forwardRef } from 'react'; // Adicionado useCallback e forwardRef
+import { useEffect, useState, useCallback, forwardRef } from 'react';
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -16,14 +16,14 @@ import {
   NavigationMenuLink,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+} from "@/components/ui/navigation-menu"; // Alteração aqui
 import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
 import TwoColumnMegaMenu from './two-column-mega-menu';
-import type { RecentlyViewedLotInfo as HistoryListItemType } from '@/types'; // Renomeado para evitar conflito
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; 
-import type { MegaMenuLinkItem } from './mega-menu-link-list'; 
+import type { RecentlyViewedLotInfo as HistoryListItemType } from '@/types';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import Image from 'next/image';
 
 

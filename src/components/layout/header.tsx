@@ -1,20 +1,18 @@
-
+// src/components/layout/header.tsx
 'use client';
 
 import Link from 'next/link';
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'; // Importado useSearchParams
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { auth } from '@/lib/firebase';
-import { signOut } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import UserNav from './user-nav';
-import MainNav from './main-nav';
+import MainNav, { type NavItem } from './main-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
@@ -34,10 +32,9 @@ import {
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
-  NavigationMenuLink,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
+} from "@/components/ui/navigation-menu"; // Alteração aqui
 import MegaMenuCategories from './mega-menu-categories';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -257,7 +254,7 @@ export default function Header() {
     { label: 'Modalidades', isMegaMenu: true, contentKey: 'modalities', href: '/search?filter=modalities', icon: ListChecks },
     { label: 'Comitentes', isMegaMenu: true, contentKey: 'consignors', href: '/sellers', icon: Landmark },
     { label: 'Leiloeiros', isMegaMenu: true, contentKey: 'auctioneers', href: '/auctioneers', icon: Gavel },
-    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', icon: History, href: '/dashboard/history' },
+    { label: 'Histórico', isMegaMenu: true, contentKey: 'history', href: '/dashboard/history', icon: History },
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
   ];
 
@@ -357,7 +354,7 @@ export default function Header() {
             <strong>Leilão Especial de Veículos Clássicos!</strong> Lances a partir de R$1.000!
           </p>
           <Button size="sm" variant="link" asChild className="text-primary-foreground hover:text-primary-foreground/80 hidden sm:inline-flex h-auto py-1 px-2">
-            <Link href="/search?category=veiculos&status=EM_BREVE">Ver Agora</Link>
+            <Link href="/search?type=lots&tab=categories&category=veiculos">Ver Agora</Link>
           </Button>
         </div>
       </div>
@@ -618,11 +615,7 @@ export default function Header() {
 
       {/* Breadcrumbs Bar */}
       {pathname !== '/' && (
-        <div className="bg-secondary text-secondary-foreground text-xs h-10 flex items-center border-b">
-            <div className="container mx-auto px-4">
-                <DynamicBreadcrumbs />
-            </div>
-        </div>
+        <DynamicBreadcrumbs />
       )}
     </header>
   );

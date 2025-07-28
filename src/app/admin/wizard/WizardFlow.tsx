@@ -6,7 +6,7 @@ import ReactFlow, { Background, Controls, Edge, Node } from 'reactflow';
 import 'reactflow/dist/style.css';
 import { useWizard } from './wizard-context';
 import FlowStepNode, { type FlowNodeData } from './FlowStepNode';
-import { Gavel, Users, Building, FileText, Scale, Package, Boxes, ListChecks, Rocket, DollarSign, Tv, CalendarX, BrainCircuit, CheckSquare } from 'lucide-react';
+import { Gavel, Users, Building, FileText, Scale, Package, Boxes, ListChecks, Rocket, DollarSign, Tv, CalendarX } from 'lucide-react';
 
 const nodeTypes = {
   customStep: FlowStepNode,
@@ -84,15 +84,6 @@ export default function WizardFlow() {
         allEdges.push({ id: `e-input-${node.id}-processo`, source: `judicial-input-${node.id}`, target: judicialProcessNodeId, type: 'smoothstep', style: judicialEdgeStyle });
     });
 
-    // --- BIDEXPERT.AI STEPS ---
-    const aiXPos = xGap * 5.5;
-    allNodes.push({ id: 'ai-docs', type: 'customStep', position: { x: aiXPos, y: judicialYPos - yGap * 0.8 }, data: { label: '#9.1 - IA', title: 'Cadastro de Documentos', icon: FileText, status: 'todo', pathType: 'JUDICIAL', isActivePath: judicialPathIsActive } });
-    allNodes.push({ id: 'ai-analysis', type: 'customStep', position: { x: aiXPos, y: judicialYPos }, data: { label: '#9.2 - IA', title: 'Análise com BidExpert.AI', icon: BrainCircuit, status: 'todo', pathType: 'JUDICIAL', isActivePath: judicialPathIsActive } });
-    allNodes.push({ id: 'ai-validation', type: 'customStep', position: { x: aiXPos, y: judicialYPos + yGap * 0.8 }, data: { label: '#9.3 - IA', title: 'Validação dos Dados', icon: CheckSquare, status: 'todo', pathType: 'JUDICIAL', isActivePath: judicialPathIsActive } });
-    allEdges.push({ id: 'e-processo-aidocs', source: judicialProcessNodeId, target: 'ai-docs', type: 'smoothstep', style: judicialEdgeStyle });
-    allEdges.push({ id: 'e-aidocs-aianalysis', source: 'ai-docs', target: 'ai-analysis', type: 'smoothstep', style: judicialEdgeStyle });
-    allEdges.push({ id: 'e-aianalysis-aivalidation', source: 'ai-analysis', target: 'ai-validation', type: 'smoothstep', style: judicialEdgeStyle });
-
     // --- AUCTION ENTITY PRE-REQUISITES (for all paths) ---
     const sellerId = auctionDetails?.sellerId;
     const auctioneerId = auctionDetails?.auctioneerId;
@@ -120,7 +111,7 @@ export default function WizardFlow() {
         id: bensProcessoNodeId, type: 'customStep', position: { x: xGap * 7, y: judicialYPos },
         data: { label: `Fonte de Itens`, title: 'Bens do Processo', icon: Package, status: judicialProcess ? 'done' : 'todo', pathType: 'JUDICIAL', isActivePath: judicialPathIsActive }
     });
-    allEdges.push({ id: 'e-aivalidation-bens', source: 'ai-validation', target: bensProcessoNodeId, type: 'smoothstep', style: judicialEdgeStyle });
+    allEdges.push({ id: 'e-processo-bens', source: judicialProcessNodeId, target: bensProcessoNodeId, type: 'smoothstep', style: judicialEdgeStyle });
     
     allNodes.push({
       id: bensComitenteNodeId, type: 'customStep', position: { x: xGap * 5.5, y: otherPathsYBase + yGap * 1.3},

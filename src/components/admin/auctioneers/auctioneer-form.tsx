@@ -1,9 +1,9 @@
-
+// src/app/admin/auctioneers/auctioneer-form.tsx
 'use client';
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form'; // Added useWatch
+import { useForm, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -20,10 +20,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctioneerFormSchema, type AuctioneerFormValues } from './auctioneer-form-schema';
 import type { AuctioneerProfileInfo, MediaItem } from '@/types';
-import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react'; // Added ImageIcon, XCircle
+import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import Image from 'next/image'; // Added Image
-import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog'; // Added ChooseMediaDialog
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { consultaCepAction } from '@/lib/actions/cep';
 
 interface AuctioneerFormProps {
   initialData?: AuctioneerProfileInfo | null;
@@ -50,6 +51,7 @@ export default function AuctioneerForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
 
   const form = useForm<AuctioneerFormValues>({
     resolver: zodResolver(auctioneerFormSchema),
@@ -65,6 +67,7 @@ export default function AuctioneerForm({
       zipCode: initialData?.zipCode || '',
       website: initialData?.website || '',
       logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
       userId: initialData?.userId || '',
@@ -78,12 +81,27 @@ export default function AuctioneerForm({
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
         form.setValue('logoUrl', selectedMediaItem.urlOriginal);
+        form.setValue('logoMediaId', selectedMediaItem.id || null);
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }
     }
     setIsMediaDialogOpen(false);
   };
+  
+  const handleCepLookup = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    setIsCepLoading(true);
+    const result = await consultaCepAction(cep);
+    if (result.success && result.data) {
+        form.setValue('address', result.data.logradouro);
+        form.setValue('city', result.data.localidade);
+        form.setValue('state', result.data.uf);
+    } else {
+        toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+    }
+    setIsCepLoading(false);
+  }
 
   async function onSubmit(values: AuctioneerFormValues) {
     setIsSubmitting(true);
@@ -223,6 +241,34 @@ export default function AuctioneerForm({
                 />
               </div>
                <FormField
+                control={form.control}
+                name="zipCode"
+                render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>CEP</FormLabel>
+                        <div className="flex gap-2">
+                            <FormControl>
+                                <Input 
+                                    placeholder="00000-000"
+                                    {...field}
+                                    value={field.value ?? ''} 
+                                    onChange={(e) => {
+                                        field.onChange(e);
+                                        if (e.target.value.replace(/\D/g, '').length === 8) {
+                                            handleCepLookup(e.target.value);
+                                        }
+                                    }}
+                                />
+                            </FormControl>
+                            <Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>
+                                {isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}
+                            </Button>
+                        </div>
+                        <FormMessage />
+                    </FormItem>
+                )}
+              />
+               <FormField
                   control={form.control}
                   name="address"
                   render={({ field }) => (
@@ -257,19 +303,6 @@ export default function AuctioneerForm({
                       <FormLabel>Estado/UF (Opcional)</FormLabel>
                       <FormControl>
                         <Input placeholder="SP" {...field} value={field.value ?? ""} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="zipCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CEP (Opcional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="00000-000" {...field} value={field.value ?? ""} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
