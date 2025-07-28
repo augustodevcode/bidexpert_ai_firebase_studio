@@ -33,7 +33,7 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promi
                 OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
             }
         },
-        include: { lots: true }
+        include: { lots: true, seller: true }
     });
 }
 

@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
@@ -19,7 +19,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { AuctioneerService, type AuctioneerDashboardData } from '@/services/auctioneer.service';
+import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
+import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
@@ -39,17 +40,22 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
 function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) {
     const [dashboardData, setDashboardData] = useState<AuctioneerDashboardData | null>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const service = useMemo(() => new AuctioneerService(), []);
 
     useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
-            const data = await service.getAuctioneerDashboardData(auctioneerId);
-            setDashboardData(data);
-            setIsLoading(false);
+            try {
+                const data = await getAuctioneerDashboardDataAction(auctioneerId);
+                setDashboardData(data);
+            } catch (error) {
+                console.error("Failed to fetch auctioneer dashboard data:", error);
+                setDashboardData(null);
+            } finally {
+                setIsLoading(false);
+            }
         }
         fetchData();
-    }, [auctioneerId, service]);
+    }, [auctioneerId]);
 
     if (isLoading) {
         return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;

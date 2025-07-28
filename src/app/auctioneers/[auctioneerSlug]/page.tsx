@@ -1,4 +1,4 @@
-
+// src/app/auctioneers/[auctioneerSlug]/page.tsx
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
@@ -8,7 +8,7 @@ import { useParams } from 'next/navigation';
 import { getAuctionsByAuctioneerSlug } from '@/app/admin/auctions/actions'; 
 import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; 
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import type { Auction, AuctioneerProfileInfo, PlatformSettings } from '@/types';
+import type { Auction, AuctioneerProfileInfo, PlatformSettings, Lot } from '@/types';
 import AuctionCard from '@/components/auction-card';
 import AuctionListItem from '@/components/auction-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
@@ -59,7 +59,7 @@ function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
           R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
         </p>
         <p className="text-xs text-muted-foreground truncate">
-          {auction.totalLots || 0} lotes | {auction.category} | {auction.city}, {auction.state}
+          {auction.totalLots || 0} lotes | {auction.category?.name} | {auction.city}, {auction.state}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
           <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1.5"></span>
@@ -293,9 +293,9 @@ export default function AuctioneerDetailsPage() {
                 ) : (
                   <p className="text-sm text-muted-foreground">Nenhuma descrição adicional fornecida por este leiloeiro.</p>
                 )}
-                {auctioneerProfile.memberSince && (
+                {auctioneerProfile.createdAt && (
                   <p className="text-xs text-muted-foreground mt-3">
-                    Membro desde: {format(new Date(auctioneerProfile.memberSince as string), 'MMMM yyyy', { locale: ptBR })}
+                    Membro desde: {format(new Date(auctioneerProfile.createdAt as string), 'MMMM yyyy', { locale: ptBR })}
                   </p>
                 )}
               </CardContent>
@@ -356,19 +356,21 @@ export default function AuctioneerDetailsPage() {
     </TooltipProvider>
 
     {hasEditPermissions && (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
-            <Link href={editUrl}>
-              <Pencil className="h-6 w-6" />
-              <span className="sr-only">Editar Leiloeiro</span>
-            </Link>
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent side="left">
-          <p>Editar Leiloeiro</p>
-        </TooltipContent>
-      </Tooltip>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
+              <Link href={editUrl}>
+                <Pencil className="h-6 w-6" />
+                <span className="sr-only">Editar Leiloeiro</span>
+              </Link>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="left">
+            <p>Editar Leiloeiro</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     )}
   </>
   );

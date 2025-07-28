@@ -8,6 +8,7 @@
 import { prisma } from '@/lib/prisma';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
 import type { AnalyzeAuctionDataInput } from '@/ai/flows/analyze-auction-data-flow';
+import { AuctioneerService, type AuctioneerDashboardData } from '@/services/auctioneer.service';
 
 export interface AuctioneerPerformanceData {
   id: string;
@@ -19,6 +20,8 @@ export interface AuctioneerPerformanceData {
   averageTicket: number;
   salesRate: number;
 }
+const auctioneerService = new AuctioneerService();
+
 
 /**
  * Fetches and aggregates performance data for all auctioneers.
@@ -69,6 +72,16 @@ export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerfo
     throw new Error("Falha ao buscar dados de performance dos leiloeiros.");
   }
 }
+
+/**
+ * Fetches dashboard data for a single auctioneer.
+ * @param {string} auctioneerId - The ID of the auctioneer.
+ * @returns {Promise<AuctioneerDashboardData | null>} The dashboard data or null if not found.
+ */
+export async function getAuctioneerDashboardDataAction(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
+    return auctioneerService.getAuctioneerDashboardData(auctioneerId);
+}
+
 
 /**
  * Sends auctioneer performance data to an AI flow for analysis.
