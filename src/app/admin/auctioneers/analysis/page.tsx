@@ -2,8 +2,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getAuctioneersPerformanceAction, type AuctioneerPerformanceData } from './actions';
-import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
+import { getAuctioneersPerformanceAction, analyzeAuctioneerDataAction, type AuctioneerPerformanceData } from './actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
@@ -32,7 +31,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Au
         if (!isLoading && performanceData.length > 0) {
             setIsLoadingAI(true);
             const dataForAI = performanceData.map(({ id, ...rest }) => ({...rest, title: rest.name})); // Adapt 'name' to 'title' for the generic AI prompt
-            analyzeAuctionDataAction({ performanceData: dataForAI })
+            analyzeAuctioneerDataAction({ performanceData: dataForAI })
                 .then(result => setAnalysis(result))
                 .catch(err => {
                     console.error("AI Analysis for Auctioneers failed:", err);

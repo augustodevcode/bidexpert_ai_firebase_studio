@@ -6,6 +6,8 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
+import type { AnalyzeAuctionDataInput } from '@/ai/flows/analyze-auction-data-flow';
 
 export interface AuctioneerPerformanceData {
   id: string;
@@ -66,4 +68,19 @@ export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerfo
     console.error("[Action - getAuctioneersPerformanceAction] Error fetching auctioneer performance:", error);
     throw new Error("Falha ao buscar dados de performance dos leiloeiros.");
   }
+}
+
+/**
+ * Sends auctioneer performance data to an AI flow for analysis.
+ * @param {AnalyzeAuctionDataInput} input - The performance data to be analyzed.
+ * @returns {Promise<string>} A promise resolving to the AI-generated analysis text.
+ */
+export async function analyzeAuctioneerDataAction(input: AnalyzeAuctionDataInput): Promise<string> {
+    try {
+        const analysis = await analyzeAuctionData(input);
+        return analysis.analysis;
+    } catch (error: any) {
+        console.error("[Action - analyzeAuctioneerDataAction] Error calling AI flow:", error);
+        throw new Error("Falha ao gerar análise de IA para leiloeiros.");
+    }
 }
