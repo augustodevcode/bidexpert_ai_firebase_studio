@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -7,9 +6,9 @@ import type { Lot, AuctionStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ChevronLeft, ChevronRight, MapPin, Tag, CalendarClock, ImageOff } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import { Button } from '../ui/button';
 import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
 
@@ -108,7 +107,7 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
                     index === currentImageIndex ? 'border-primary ring-1 ring-primary' : 'border-transparent hover:border-muted-foreground/50'
                   }`}
                 >
-                  <Image src={imgUrl} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || "miniatura galeria"} />
+                  <Image src={imgUrl} alt={`Miniatura ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'miniatura galeria'} />
                 </button>
               ))}
             </div>

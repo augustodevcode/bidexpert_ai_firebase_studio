@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot } from '@/types';
@@ -37,7 +36,7 @@ export default function UpcomingLotsPanel({ lots, currentLotId }: UpcomingLotsPa
               >
                 <div className="flex items-center gap-2">
                   <div className="relative w-14 h-10 bg-muted rounded-sm overflow-hidden flex-shrink-0">
-                    <Image src={lot.imageUrl} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "miniatura proximo lote"} />
+                    <Image src={lot.imageUrl || 'https://placehold.co/120x80.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "miniatura proximo lote"} />
                   </div>
                   <div className="flex-grow overflow-hidden">
                     <p className="text-xs font-medium text-foreground truncate">

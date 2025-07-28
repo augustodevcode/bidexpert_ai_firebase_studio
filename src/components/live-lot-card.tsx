@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Lot } from '@/types';
@@ -8,30 +7,37 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Clock, Eye, Gavel, Tag } from 'lucide-react';
-import { format, differenceInMinutes, differenceInHours, differenceInDays, isPast } from 'date-fns';
+import { format, differenceInMinutes, differenceInHours, differenceInDays, isPast, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useEffect, useState } from 'react';
-import { getAuctionStatusText, getLotStatusColor } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor } from '@/lib/ui-helpers';
 
 interface LiveLotCardProps {
   lot: Lot;
   isHighlighted?: boolean;
 }
 
-function TimeRemaining({ endDate, status }: { endDate: Date; status: Lot['status'] }) {
+function TimeRemaining({ endDate, status }: { endDate: Date | string | null; status: Lot['status'] }) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
+    if (!endDate) return;
+    const end = new Date(endDate);
+    if (!isValid(end)) {
+        setRemaining('Data inválida');
+        return;
+    }
+
     const calculate = () => {
       const now = new Date();
-      if (isPast(endDate) || status !== 'ABERTO_PARA_LANCES') {
-        setRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(endDate) ? 'ENCERRADO' : status));
+      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
+        setRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
         return;
       }
 
-      const minutes = differenceInMinutes(endDate, now);
-      const hours = differenceInHours(endDate, now);
-      const days = differenceInDays(endDate, now);
+      const minutes = differenceInMinutes(end, now);
+      const hours = differenceInHours(end, now);
+      const days = differenceInDays(end, now);
 
       if (days > 0) {
         setRemaining(`${days}d ${hours % 24}h`);
@@ -43,9 +49,8 @@ function TimeRemaining({ endDate, status }: { endDate: Date; status: Lot['status
         setRemaining('Encerrando!');
       }
     };
-
     calculate();
-    const interval = setInterval(calculate, 60000); // Update every 30 seconds
+    const interval = setInterval(calculate, 60000); // Update every minute
     return () => clearInterval(interval);
   }, [endDate, status]);
 
@@ -108,7 +113,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
         <div className="w-full flex justify-between items-center text-xs">
             <div className={`flex items-center gap-1 ${isHighlighted ? 'text-destructive font-semibold' : 'text-muted-foreground'}`}>
                 <Clock className="h-3 w-3" />
-                <TimeRemaining endDate={new Date(lot.endDate as string)} status={lot.status} />
+                <TimeRemaining endDate={lot.endDate} status={lot.status} />
             </div>
             <div className={`flex items-center gap-1 ${isHighlighted ? 'text-foreground' : 'text-muted-foreground'}`}>
                 <Gavel className="h-3 w-3" />

@@ -1,4 +1,3 @@
-
 'use client';
 
 import type { Auction } from '@/types';
@@ -13,7 +12,7 @@ interface AuctionInfoPanelProps {
 }
 
 export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
-  const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : 'L';
+  const auctioneerInitial = auction.auctioneerName ? auction.auctioneerName.charAt(0).toUpperCase() : 'L';
   
   return (
     <Card className="shadow-md">
@@ -26,19 +25,19 @@ export default function AuctionInfoPanel({ auction }: AuctionInfoPanelProps) {
         <div>
           <p className="font-medium text-muted-foreground">Leiloeiro:</p>
           <div className="flex items-center gap-2 mt-0.5">
-            {auction.auctioneerLogoUrl && (
+            {auction.auctioneer?.logoUrl && (
               <Avatar className="h-7 w-7">
-                <AvatarImage src={auction.auctioneerLogoUrl} alt={auction.auctioneer} data-ai-hint="logo leiloeiro pequeno" />
+                <AvatarImage src={auction.auctioneer.logoUrl} alt={auction.auctioneerName} data-ai-hint="logo leiloeiro pequeno" />
                 <AvatarFallback>{auctioneerInitial}</AvatarFallback>
               </Avatar>
             )}
-            <span className="text-foreground">{auction.auctioneer}</span>
+            <span className="text-foreground">{auction.auctioneerName}</span>
           </div>
         </div>
-        {auction.seller && (
+        {auction.seller?.name && (
           <div>
             <p className="font-medium text-muted-foreground">Comitente Principal:</p>
-            <p className="text-foreground">{auction.seller}</p>
+            <p className="text-foreground">{auction.seller.name}</p>
           </div>
         )}
         <div className="pt-1 space-y-1.5">
