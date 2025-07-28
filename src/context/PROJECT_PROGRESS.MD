@@ -10,13 +10,14 @@
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
 - **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
+- **Item 14 - Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).**
+- **Item 14 - Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões).
+- **Item 14 - Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual (Sellers, Auctioneers, Auctions).
+- **Item 14 - Fase 4 (Parcial):** Implementar dashboards de análise para Tribunais e Comarcas.
 
 ## DOING
 - **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos, conforme a nova regra de arquitetura.
-    - **Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).** (DONE)
-    - **Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões). (DONE)
-    - **Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual. (DONE for Sellers, Auctioneers, Auctions)
-    - **Fase 4 - Análise Judicial:** Implementar dashboards de análise para Varas e Tribunais.
+    - **Fase 4 - Análise Judicial:** Implementar dashboard de análise para Varas.
     - **Fase 5 - IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
 
 ## NEXT

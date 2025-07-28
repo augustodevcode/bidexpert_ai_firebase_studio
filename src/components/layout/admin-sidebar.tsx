@@ -56,7 +56,8 @@ const judicialManagementItems = [
     { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart },
     { title: 'Listar Comarcas', href: '/admin/judicial-districts', icon: Map },
     { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
+    { title: 'Listar Varas', href: '/admin/judicial-branches', icon: Building2 },
+    { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart },
     { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
 ]
 
