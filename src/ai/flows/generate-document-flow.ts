@@ -15,6 +15,10 @@ import { z } from 'genkit';
 import puppeteer from 'puppeteer';
 import Handlebars from 'handlebars';
 import { getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions'; // Import necessary actions
+import { getSellers } from '@/app/admin/sellers/actions';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export const GenerateDocumentInputSchema = z.object({
   documentType: z.enum(['WINNING_BID_TERM', 'EVALUATION_REPORT', 'AUCTION_CERTIFICATE']),
@@ -36,11 +40,11 @@ export async function generateDocument(input: GenerateDocumentInput): Promise<Ge
 // Default templates if nothing is found in the database
 const defaultTemplates: Record<GenerateDocumentInput['documentType'], string> = {
   WINNING_BID_TERM: `
-    <!DOCTYPE html><html><body><h1>Termo de Arrematação (Padrão)</h1><p>Lote: {{{lote.titulo}}}</p><p>Arrematante: {{{arrematante.nomeCompleto}}}</p><p>Valor: R$ {{{lote.valor_arremate}}}</p></body></html>`,
+    <!DOCTYPE html><html><body style="font-family: sans-serif; padding: 2rem;"><h1>Termo de Arrematação (Padrão)</h1><p>Lote: <strong>{{{lote.titulo}}}</strong> (nº {{{lote.numero}}})</p><p>Arrematante: <strong>{{{arrematante.nomeCompleto}}}</strong> (CPF: {{{arrematante.cpf}}})</p><p>Valor do Arremate: <strong>R$ {{{lote.valor_arremate}}}</strong></p><p>Leilão: <i>{{{leilao.titulo}}}</i> em {{dataAtual}}</p></body></html>`,
   EVALUATION_REPORT: `
     <!DOCTYPE html><html><head><style>body { font-family: sans-serif; padding: 2rem; } h1 { color: #F97316; } table { width: 100%; border-collapse: collapse; margin-top: 1rem; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head><body><h1>Laudo de Avaliação (Padrão)</h1><h2>Leilão: {{{leilao.titulo}}}</h2><p>Este é um laudo de avaliação de exemplo gerado pelo sistema para o leilão acima. Data: {{dataAtual}}</p></body></html>`,
   AUCTION_CERTIFICATE: `
-    <!DOCTYPE html><html><body><h1>Certificado de Leilão (Padrão)</h1><h2>Leilão: {{{leilao.titulo}}}</h2><p>Certificamos que este leilão foi realizado em {{leilao.dataFim}}. Total de lotes vendidos: {{leilao.totalLotesVendidos}}</p></body></html>`,
+    <!DOCTYPE html><html><body style="font-family: sans-serif; padding: 2rem;"><h1>Certificado de Leilão (Padrão)</h1><h2>Leilão: {{{leilao.titulo}}}</h2><p>Certificamos que este leilão foi realizado em {{leilao.dataFim}}. Total de lotes vendidos: {{leilao.totalLotesVendidos}}</p><p>Comitente: {{{comitente.nome}}}</p><p>Leiloeiro: {{{leiloeiro.nome}}}</p></body></html>`,
 };
 
 /**
