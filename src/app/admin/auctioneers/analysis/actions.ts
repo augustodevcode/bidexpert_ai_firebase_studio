@@ -12,6 +12,7 @@ export interface AuctioneerPerformanceData {
   name: string;
   totalAuctions: number;
   totalLots: number;
+  lotsSoldCount: number;
   totalRevenue: number;
   averageTicket: number;
   salesRate: number;
@@ -55,6 +56,7 @@ export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerfo
         name: auctioneer.name,
         totalAuctions: auctioneer._count.auctions,
         totalLots: totalLotsInAuctions,
+        lotsSoldCount,
         totalRevenue,
         averageTicket,
         salesRate,

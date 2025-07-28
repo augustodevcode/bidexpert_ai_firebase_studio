@@ -88,7 +88,10 @@ export class AuctioneerService {
             lots: {
               where: { status: 'VENDIDO' },
               select: { price: true, updatedAt: true }
-            }
+            },
+            _count: {
+              select: { lots: true },
+            },
           }
         }
       }
@@ -97,7 +100,7 @@ export class AuctioneerService {
     if (!auctioneerData) return null;
 
     const allLotsFromAuctions = auctioneerData.auctions.flatMap(auc => auc.lots);
-    const totalLots = await prisma.lot.count({ where: { auctioneerId: auctioneerId } });
+    const totalLots = auctioneerData.auctions.reduce((sum, auc) => sum + auc._count.lots, 0);
     
     const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
     const lotsSoldCount = allLotsFromAuctions.length;
