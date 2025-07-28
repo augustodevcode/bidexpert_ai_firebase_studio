@@ -44,55 +44,6 @@ interface WizardDataForFetching {
     branches: JudicialBranch[];
 }
 
-function WizardPageContent() {
-    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
-    const [isLoadingData, setIsLoadingData] = useState(true);
-    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
-
-    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
-        setIsLoadingData(true);
-        const result = await getWizardInitialData();
-        if (result.success) {
-            const data = result.data as WizardDataForFetching;
-            setFetchedData(data);
-            
-            if (newProcessIdToSelect) {
-                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
-                if (newProcess) {
-                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
-                }
-            }
-        } else {
-            console.error("Failed to load wizard data:", result.message);
-        }
-        setIsLoadingData(false);
-    }, [setWizardData]);
-
-    useEffect(() => {
-        loadData();
-    }, [loadData]);
-
-    if (isLoadingData) {
-      return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        </div>
-      );
-    }
-    
-    if (!fetchedData) {
-        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
-    }
-
-    return (
-      <WizardContent 
-        fetchedData={fetchedData} 
-        isLoading={isLoadingData} 
-        refetchData={loadData} 
-      />
-    );
-}
-
 function WizardContent({ 
     fetchedData, 
     isLoading, 
@@ -290,11 +241,60 @@ function WizardContent({
   );
 }
 
+function WizardPageProvider() {
+    const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
+    const [isLoadingData, setIsLoadingData] = useState(true);
+    const { setWizardData } = useWizard();
+
+    const loadData = useCallback(async (newProcessIdToSelect?: string) => {
+        setIsLoadingData(true);
+        const result = await getWizardInitialData();
+        if (result.success) {
+            const data = result.data as WizardDataForFetching;
+            setFetchedData(data);
+            
+            if (newProcessIdToSelect) {
+                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
+                if (newProcess) {
+                    setWizardData(prev => ({...prev, judicialProcess: newProcess}));
+                }
+            }
+        } else {
+            console.error("Failed to load wizard data:", result.message);
+        }
+        setIsLoadingData(false);
+    }, [setWizardData]);
+
+    useEffect(() => {
+        loadData();
+    }, [loadData]);
+
+    if (isLoadingData) {
+      return (
+        <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        </div>
+      );
+    }
+    
+    if (!fetchedData) {
+        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
+    }
+
+    return (
+      <WizardContent 
+        fetchedData={fetchedData} 
+        isLoading={isLoadingData} 
+        refetchData={loadData} 
+      />
+    );
+}
+
 
 export default function WizardPage() {
   return (
     <WizardProvider>
-      <WizardPageContent />
+      <WizardPageProvider />
     </WizardProvider>
   );
 }
