@@ -141,7 +141,7 @@ const generateDocumentFlow = ai.defineFlow(
         const pdfBase64 = pdfBuffer.toString('base64');
         
         const slugify = (text: string) => text.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]+/g, '');
-        const fileName = `${slugify(input.documentType)}-${slugify(templateData?.leilao?.titulo) || Date.now()}.pdf`;
+        const fileName = `${slugify(input.documentType)}-${slugify(templateData?.leilao?.titulo || templateData?.lote?.titulo || Date.now())}.pdf`;
 
         return {
             pdfBase64,

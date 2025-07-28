@@ -1,3 +1,4 @@
+
 // src/app/admin/document-templates/document-template-form-schema.ts
 import * as z from 'zod';
 import type { DocumentTemplateType } from '@/types';

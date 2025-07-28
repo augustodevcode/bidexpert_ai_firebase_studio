@@ -1,3 +1,4 @@
+
 // src/app/admin/document-templates/new/page.tsx
 import DocumentTemplateForm from '../document-template-form';
 import { createDocumentTemplate } from '../actions';

@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
@@ -13,7 +14,7 @@ import Link from 'next/link';
 import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3 } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +43,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -310,8 +311,8 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
                     <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
                     {auction.endDate && !isPast(new Date(auction.endDate as string)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
-                    <p><strong>Leiloeiro:</strong> {auction.auctioneer}</p>
-                    <p><strong>Comitente:</strong> {auction.seller || 'N/A'}</p>
+                    <p><strong>Leiloeiro:</strong> {auction.auctioneerName}</p>
+                    <p><strong>Comitente:</strong> {auction.seller?.name || 'N/A'}</p>
                 </CardContent>
             </Card>
 
@@ -713,7 +714,7 @@ export default function EditAuctionPage() {
       onClose={() => setIsAISuggestionModalOpen(false)}
       fetchSuggestionsAction={async () => fetchListingDetailsSuggestions({
           auctionTitle: auction.title,
-          auctionDescription: auction.description,
+          auctionDescription: auction.description || '',
           auctionCategory: auction.category?.name || '',
           auctionKeywords: auction.title.split(' ').join(','), 
       })}

@@ -1,8 +1,9 @@
+
 // src/app/admin/layout.tsx
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
@@ -15,12 +16,13 @@ export default function AdminLayout({
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/admin/dashboard');
+      router.push(`/auth/login?redirect=${pathname}`);
     }
-  }, [userProfileWithPermissions, loading, router]);
+  }, [userProfileWithPermissions, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -52,7 +54,7 @@ export default function AdminLayout({
           Você não tem permissão para acessar esta área.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
+          (Perfil: {userProfileWithPermissions?.roleNames?.join(', ') || 'N/A'})
         </p>
         <button
           onClick={() => router.push('/')}

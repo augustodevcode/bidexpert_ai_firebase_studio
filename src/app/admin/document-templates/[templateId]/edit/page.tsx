@@ -1,3 +1,4 @@
+
 // src/app/admin/document-templates/[templateId]/edit/page.tsx
 import DocumentTemplateForm from '../../document-template-form';
 import { getDocumentTemplate, updateDocumentTemplate } from '../../actions';

@@ -1,3 +1,4 @@
+
 // src/app/admin/document-templates/columns.tsx
 'use client';
 
