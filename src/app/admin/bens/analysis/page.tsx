@@ -6,8 +6,9 @@ import { getBensAnalysisAction, type BemAnalysisData } from './actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, Loader2, Package, TrendingUp, BarChart3, Boxes, CheckSquare } from 'lucide-react';
+import { DollarSign, Loader2, Package, TrendingUp, BarChart3, Boxes, CheckSquare, BrainCircuit } from 'lucide-react';
 import { createBemAnalysisColumns } from './columns';
+import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions'; // Reusing generic analysis action
 
 const StatCard = ({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description: string }) => (
     <Card>
@@ -23,6 +24,56 @@ const StatCard = ({ title, value, icon: Icon, description }: { title: string, va
 );
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF6666'];
+
+function AIAnalysisSection({ performanceData, isLoading }: { performanceData: BemAnalysisData | null, isLoading: boolean }) {
+    const [analysis, setAnalysis] = useState<string | null>(null);
+    const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading && performanceData && performanceData.bens.length > 0) {
+            setIsLoadingAI(true);
+            const dataForAI = performanceData.bens.slice(0, 50).map(bem => ({
+                title: bem.title,
+                status: bem.status,
+                totalRevenue: bem.evaluationValue, // Using evaluation value as a proxy for revenue potential
+                categoryName: bem.categoryName,
+            }));
+            
+            analyzeAuctionDataAction({ performanceData: dataForAI })
+                .then(result => setAnalysis(result))
+                .catch(err => {
+                    console.error("AI Analysis for Bens failed:", err);
+                    setAnalysis("Não foi possível gerar a análise de IA para os bens no momento.");
+                })
+                .finally(() => setIsLoadingAI(false));
+        }
+    }, [performanceData, isLoading]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center">
+                    <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise do Inventário (IA)
+                </CardTitle>
+                <CardDescription>
+                    Insights gerados por IA com base na composição e valor do seu inventário de bens.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoadingAI ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Analisando inventário...</span>
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground whitespace-pre-line bg-secondary/40 p-4 rounded-md">
+                        {analysis || "Nenhuma análise disponível."}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function BemAnalysisPage() {
   const [analysisData, setAnalysisData] = useState<BemAnalysisData | null>(null);
@@ -72,6 +123,8 @@ export default function BemAnalysisPage() {
         <StatCard title="Valor em Estoque" value={analysisData.totalEvaluationValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma das avaliações dos bens disponíveis" />
         <StatCard title="Bens em Lotes" value={analysisData.lottedBensCount} icon={Boxes} description="Itens que já estão em algum lote" />
       </div>
+
+       <AIAnalysisSection performanceData={analysisData} isLoading={isLoading} />
 
        <Card>
         <CardHeader>

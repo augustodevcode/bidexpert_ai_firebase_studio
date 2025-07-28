@@ -18,7 +18,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-1/2" /> : value}</div>
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>

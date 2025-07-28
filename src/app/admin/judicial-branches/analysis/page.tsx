@@ -3,10 +3,11 @@
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getBranchesPerformanceAction, type BranchPerformanceData } from './actions';
+import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, FileText, Loader2, Gavel, TrendingUp, BarChart3, Building2, ListChecks } from 'lucide-react';
+import { DollarSign, FileText, Loader2, Gavel, TrendingUp, BarChart3, Building2, ListChecks, BrainCircuit } from 'lucide-react';
 import { createBranchAnalysisColumns } from './columns';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -20,6 +21,50 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         </CardContent>
     </Card>
 );
+
+function AIAnalysisSection({ performanceData, isLoading }: { performanceData: BranchPerformanceData[], isLoading: boolean }) {
+    const [analysis, setAnalysis] = useState<string | null>(null);
+    const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading && performanceData.length > 0) {
+            setIsLoadingAI(true);
+            const dataForAI = performanceData.map(({ id, ...rest }) => ({...rest, title: rest.name}));
+            analyzeAuctionDataAction({ performanceData: dataForAI })
+                .then(result => setAnalysis(result))
+                .catch(err => {
+                    console.error("AI Analysis for Branches failed:", err);
+                    setAnalysis("Não foi possível gerar a análise de IA para as varas no momento.");
+                })
+                .finally(() => setIsLoadingAI(false));
+        }
+    }, [performanceData, isLoading]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center">
+                    <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise por Vara (IA)
+                </CardTitle>
+                <CardDescription>
+                    Insights gerados por IA com base na performance de vendas por vara judicial.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoadingAI ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Analisando dados das varas...</span>
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground whitespace-pre-line bg-secondary/40 p-4 rounded-md">
+                        {analysis || "Nenhuma análise disponível."}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function BranchAnalysisPage() {
   const [performanceData, setPerformanceData] = useState<BranchPerformanceData[]>([]);
@@ -78,6 +123,8 @@ export default function BranchAnalysisPage() {
         <StatCard title="Total de Leilões" value={totalAuctions.toLocaleString('pt-BR')} icon={Gavel} />
         <StatCard title="Total de Lotes Vendidos" value={totalLotsSold.toLocaleString('pt-BR')} icon={ListChecks} />
       </div>
+      
+      <AIAnalysisSection performanceData={performanceData} isLoading={isLoading}/>
 
        <Card>
         <CardHeader>
