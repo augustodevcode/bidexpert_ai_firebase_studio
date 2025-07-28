@@ -2,13 +2,14 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getAuctionsPerformanceAction, type AuctionPerformanceData } from './actions';
+import { getAuctionsPerformanceAction, type AuctionPerformanceData, analyzeAuctionDataAction } from './actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown } from 'lucide-react';
+import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit } from 'lucide-react';
 import { createAuctionAnalysisColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>
@@ -23,6 +24,48 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
     </Card>
 );
 
+function AIAnalysisSection({ performanceData, isLoading }: { performanceData: AuctionPerformanceData[], isLoading: boolean }) {
+    const [analysis, setAnalysis] = useState<string | null>(null);
+    const [isLoadingAI, setIsLoadingAI] = useState(false);
+
+    useEffect(() => {
+        if (!isLoading && performanceData.length > 0) {
+            setIsLoadingAI(true);
+            analyzeAuctionDataAction({ performanceData })
+                .then(result => setAnalysis(result))
+                .catch(err => {
+                    console.error("AI Analysis failed:", err);
+                    setAnalysis("Não foi possível gerar a análise de IA no momento.");
+                })
+                .finally(() => setIsLoadingAI(false));
+        }
+    }, [performanceData, isLoading]);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center">
+                    <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise e Recomendações da IA
+                </CardTitle>
+                <CardDescription>
+                    Insights gerados por IA com base nos dados de performance dos leilões.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {isLoadingAI ? (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Analisando dados e gerando insights...</span>
+                    </div>
+                ) : (
+                    <div className="text-sm text-muted-foreground whitespace-pre-line bg-secondary/40 p-4 rounded-md">
+                        {analysis || "Nenhuma análise disponível."}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
 
 export default function AuctionAnalysisPage() {
   const [performanceData, setPerformanceData] = useState<AuctionPerformanceData[]>([]);
@@ -89,6 +132,8 @@ export default function AuctionAnalysisPage() {
         <StatCard title="Lotes Vendidos" value={totalLotsSold} icon={Package} description="Total de lotes arrematados" isLoading={isLoading} />
         <StatCard title="Leilões Realizados" value={performanceData.length} icon={TrendingUp} description="Total de leilões cadastrados" isLoading={isLoading} />
       </div>
+      
+      <AIAnalysisSection performanceData={performanceData} isLoading={isLoading} />
 
        <Card>
         <CardHeader>

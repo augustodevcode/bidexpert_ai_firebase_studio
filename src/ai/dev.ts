@@ -6,3 +6,4 @@ import '@/ai/flows/suggest-listing-details.ts';
 import '@/ai/flows/suggest-similar-listings.ts';
 import '@/ai/flows/generate-document-flow.ts';
 import '@/ai/flows/extract-process-data-flow.ts';
+import '@/ai/flows/analyze-auction-data-flow.ts';

@@ -9,6 +9,8 @@ import { prisma } from '@/lib/prisma';
 import type { AuctionPerformanceData, AuctionDashboardData } from '@/types';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
+import type { AnalyzeAuctionDataInput } from '@/ai/flows/analyze-auction-data-flow';
 
 /**
  * Fetches and aggregates performance data for all auctions.
@@ -118,5 +120,21 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
     } catch (error: any) {
         console.error(`[Action - getAuctionDashboardDataAction] Error fetching dashboard data for auction ${auctionId}:`, error);
         throw new Error("Falha ao buscar dados de performance do leilão.");
+    }
+}
+
+
+/**
+ * Sends auction performance data to an AI flow for analysis.
+ * @param {AnalyzeAuctionDataInput} input - The performance data to be analyzed.
+ * @returns {Promise<string>} A promise resolving to the AI-generated analysis text.
+ */
+export async function analyzeAuctionDataAction(input: AnalyzeAuctionDataInput): Promise<string> {
+    try {
+        const analysis = await analyzeAuctionData(input);
+        return analysis.analysis;
+    } catch (error: any) {
+        console.error("[Action - analyzeAuctionDataAction] Error calling AI flow:", error);
+        throw new Error("Falha ao gerar análise de IA.");
     }
 }
