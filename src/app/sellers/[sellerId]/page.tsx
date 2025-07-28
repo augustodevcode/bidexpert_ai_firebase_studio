@@ -1,11 +1,10 @@
-
+// src/app/sellers/[sellerId]/page.tsx
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
 import { getLotsBySellerSlug } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
@@ -17,12 +16,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
 import { Star, Loader2, Mail, Phone, Globe, Briefcase, Users, TrendingUp, MessageSquare, Pencil } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -63,7 +61,7 @@ export default function SellerDetailsPage() {
           const [foundSeller, lots, auctions, settings] = await Promise.all([
               getSellerBySlug(sellerIdSlug),
               getLotsBySellerSlug(sellerIdSlug),
-              getAuctionsBySellerSlug(sellerIdSlug),
+              getAuctions(),
               getPlatformSettings()
           ]);
           setPlatformSettings(settings);

@@ -1,6 +1,7 @@
 
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
+import DevDbIndicator from '@/components/layout/dev-db-indicator'; 
 
 export default function Footer() {
   const quickLinks = [
@@ -81,10 +82,12 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-8 text-center">
+        <div className="border-t border-border pt-8 flex flex-col items-center">
           <p className="text-sm text-muted-foreground">
             &copy; {new Date().getFullYear()} BidExpert. Todos os direitos reservados.
           </p>
+          {/* Indicador de DB visível apenas em desenvolvimento */}
+          <DevDbIndicator />
         </div>
       </div>
     </footer>

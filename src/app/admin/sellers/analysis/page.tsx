@@ -2,8 +2,7 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getSellersPerformanceAction, type SellerPerformanceData } from './actions';
-import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
+import { getSellersPerformanceAction, analyzeSellerDataAction, type SellerPerformanceData } from './actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
@@ -31,8 +30,8 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Se
     useEffect(() => {
         if (!isLoading && performanceData.length > 0) {
             setIsLoadingAI(true);
-            const dataForAI = performanceData.map(({ id, ...rest }) => rest);
-            analyzeAuctionDataAction({ performanceData: dataForAI })
+            const dataForAI = performanceData.map(({ id, ...rest }) => ({...rest, title: rest.name})); // Adapt 'name' to 'title'
+            analyzeSellerDataAction({ performanceData: dataForAI })
                 .then(result => setAnalysis(result))
                 .catch(err => {
                     console.error("AI Analysis for Sellers failed:", err);
@@ -138,7 +137,7 @@ export default function SellerAnalysisPage() {
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" tickFormatter={(value) => `R$${Number(value)/1000}k`} />
                 <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
                 <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
             </BarChart>

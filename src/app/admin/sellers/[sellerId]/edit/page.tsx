@@ -7,7 +7,7 @@ import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../.
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Loader2, BarChart3, TrendingUp, DollarSign, ListChecks } from 'lucide-react';
+import { Edit, Trash2, Loader2, BarChart3, TrendingUp, DollarSign, ListChecks, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellerDashboardDataAction } from '../../analysis/actions';
 import type { SellerDashboardData } from '@/services/seller.service';

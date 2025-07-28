@@ -7,6 +7,9 @@
 
 import { prisma } from '@/lib/prisma';
 import { SellerService, type SellerDashboardData } from '@/services/seller.service';
+import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
+import type { AnalyzeAuctionDataInput } from '@/ai/flows/analyze-auction-data-flow';
+
 
 export interface SellerPerformanceData {
   id: string;
@@ -64,4 +67,20 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
  */
 export async function getSellerDashboardDataAction(sellerId: string): Promise<SellerDashboardData | null> {
     return sellerService.getSellerDashboardData(sellerId);
+}
+
+
+/**
+ * Sends seller performance data to an AI flow for analysis.
+ * @param {AnalyzeAuctionDataInput} input - The performance data to be analyzed.
+ * @returns {Promise<string>} A promise resolving to the AI-generated analysis text.
+ */
+export async function analyzeSellerDataAction(input: AnalyzeAuctionDataInput): Promise<string> {
+    try {
+        const analysis = await analyzeAuctionData(input);
+        return analysis.analysis;
+    } catch (error: any) {
+        console.error("[Action - analyzeSellerDataAction] Error calling AI flow:", error);
+        throw new Error("Falha ao gerar análise de IA para comitentes.");
+    }
 }
