@@ -47,9 +47,9 @@ This project uses **Prisma ORM** as its data access layer, allowing for flexible
 
 When using a fresh database, you need to create the necessary tables/collections and populate essential data.
 
--   **`npm run db:push` (For SQL Databases):** If using PostgreSQL or MySQL, run this command **once** to sync your Prisma schema with the database.
+-   **`npx prisma db push` (For SQL Databases):** If using PostgreSQL or MySQL, run this command **once** to sync your Prisma schema with the database.
     ```bash
-    npm run db:push
+    npx prisma db push
     ```
 -   **`npm run dev`**: The first time you run the development server, it will automatically execute an initialization script (`init-db.ts`). This script populates **essential data only** (like Roles, Categories, States, etc.). This step is required for the application to start correctly.
 
@@ -65,4 +65,3 @@ npm run db:seed
 ```
 
 Your selected database is now ready to use with the application.
-

@@ -5,7 +5,7 @@
   "private": "true",
   "scripts": {
     "dev": "npm run db:push && npm run db:init && dotenv -e .env -- next dev --port 9002 --hostname 0.0.0.0",
-    "build": "yarn install && prisma generate && next build",
+    "build": "npm install && prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
@@ -14,8 +14,8 @@
     "db:push": "dotenv -e .env -- prisma db push --accept-data-loss",
     "postinstall": "dotenv -e .env -- prisma generate",
     "test": "NODE_ENV=test dotenv -e .env -- tsx tests/bidding-e2e.test.ts",
-    "test:ui": "playwright test",
-    "test:e2e": "yarn build && yarn test:ui"
+    "test:ui": "npx playwright test",
+    "test:e2e": "npm run build && npm run test:ui"
   },
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
