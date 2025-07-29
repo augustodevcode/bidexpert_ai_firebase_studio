@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
@@ -36,6 +35,8 @@ import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import EntitySelector from '@/components/ui/entity-selector'; // Import the new component
+import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from './actions';
 
 
 interface AuctionFormProps {
@@ -78,8 +79,8 @@ export default function AuctionForm({
   formRef,
   initialData,
   categories,
-  auctioneers, 
-  sellers,    
+  auctioneers: initialAuctioneers, 
+  sellers: initialSellers,    
   onSubmitAction,
   formTitle,
   formDescription,
@@ -92,6 +93,12 @@ export default function AuctionForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  
+  const [auctioneers, setAuctioneers] = React.useState(initialAuctioneers);
+  const [sellers, setSellers] = React.useState(initialSellers);
+  const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
+  const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
+
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -141,34 +148,25 @@ export default function AuctionForm({
   // Expose form methods via the ref
   React.useImperativeHandle(formRef, () => form);
   
+  const handleRefetchSellers = React.useCallback(async () => {
+    setIsFetchingSellers(true);
+    const newSellers = await refetchSellers();
+    setSellers(newSellers);
+    setIsFetchingSellers(false);
+  }, []);
+
+  const handleRefetchAuctioneers = React.useCallback(async () => {
+    setIsFetchingAuctioneers(true);
+    const newAuctioneers = await refetchAuctioneers();
+    setAuctioneers(newAuctioneers);
+    setIsFetchingAuctioneers(false);
+  }, []);
+  
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
   const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
   const watchedAutoRelist = useWatch({ control: form.control, name: 'autoRelistSettings' });
   const watchedSilentBidding = form.watch('silentBiddingEnabled');
-
-  const uniqueAuctioneers = React.useMemo(() => {
-    const seenNames = new Set();
-    return auctioneers.filter(auc => {
-        if (seenNames.has(auc.name)) {
-            return false;
-        }
-        seenNames.add(auc.name);
-        return true;
-    });
-  }, [auctioneers]);
-
-  const uniqueSellers = React.useMemo(() => {
-    const seenNames = new Set();
-    return sellers.filter(sel => {
-        if (seenNames.has(sel.name)) {
-            return false;
-        }
-        seenNames.add(sel.name);
-        return true;
-    });
-  }, [sellers]);
-
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -342,60 +340,50 @@ export default function AuctionForm({
                   </div>
               </>
             )}
-            <div className="grid md:grid-cols-2 gap-6">
-                <FormField
-                  control={form.control}
-                  name="auctioneerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Leiloeiro Responsável</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o leiloeiro" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {uniqueAuctioneers.length === 0 ? (
-                            <p className="p-2 text-sm text-muted-foreground">Nenhum leiloeiro cadastrado</p>
-                          ) : (
-                            uniqueAuctioneers.map(auc => (
-                              <SelectItem key={auc.id} value={auc.id}>{auc.name}</SelectItem>
-                            ))
-                          )}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                    control={form.control}
-                    name="sellerId"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Comitente/Vendedor Principal</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || ''}>
-                        <FormControl>
-                            <SelectTrigger>
-                            <SelectValue placeholder="Selecione o comitente" />
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {uniqueSellers.length === 0 ? (
-                                <p className="p-2 text-sm text-muted-foreground">Nenhum comitente cadastrado</p>
-                            ) : (
-                            uniqueSellers.map(sel => (
-                                <SelectItem key={sel.id} value={sel.id}>{sel.name}</SelectItem>
-                            ))
-                            )}
-                        </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
+            <FormField
+              control={form.control}
+              name="auctioneerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Leiloeiro Responsável</FormLabel>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={auctioneers.map(a => ({ value: a.id, label: a.name }))}
+                      placeholder="Selecione o leiloeiro"
+                      searchPlaceholder="Buscar leiloeiro..."
+                      emptyStateMessage="Nenhum leiloeiro encontrado."
+                      createNewUrl="/admin/auctioneers/new"
+                      editUrlPrefix="/admin/auctioneers"
+                      onRefetch={handleRefetchAuctioneers}
+                      isFetching={isFetchingAuctioneers}
+                    />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+                control={form.control}
+                name="sellerId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Comitente/Vendedor Principal</FormLabel>
+                    <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={sellers.map(s => ({ value: s.id, label: s.name }))}
+                      placeholder="Selecione o comitente"
+                      searchPlaceholder="Buscar comitente..."
+                      emptyStateMessage="Nenhum comitente encontrado."
+                      createNewUrl="/admin/sellers/new"
+                      editUrlPrefix="/admin/sellers"
+                      onRefetch={handleRefetchSellers}
+                      isFetching={isFetchingSellers}
+                    />
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
             
             <Separator />
              <FormField
