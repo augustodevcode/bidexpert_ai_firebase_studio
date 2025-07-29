@@ -7,7 +7,6 @@
 
 import { prisma } from '@/lib/prisma';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import type { AnalyzeAuctionDataInput } from '@/ai/flows/analyze-auction-data-flow';
 import { AuctioneerService, type AuctioneerDashboardData } from '@/services/auctioneer.service';
 
 export interface AuctioneerPerformanceData {
@@ -85,10 +84,10 @@ export async function getAuctioneerDashboardDataAction(auctioneerId: string): Pr
 
 /**
  * Sends auctioneer performance data to an AI flow for analysis.
- * @param {AnalyzeAuctionDataInput} input - The performance data to be analyzed.
+ * @param {object} input - The performance data to be analyzed.
  * @returns {Promise<string>} A promise resolving to the AI-generated analysis text.
  */
-export async function analyzeAuctioneerDataAction(input: AnalyzeAuctionDataInput): Promise<string> {
+export async function analyzeAuctioneerDataAction(input: { performanceData: any[] }): Promise<string> {
     try {
         const analysis = await analyzeAuctionData(input);
         return analysis.analysis;

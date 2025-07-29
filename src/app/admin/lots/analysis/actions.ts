@@ -44,7 +44,7 @@ export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> 
 
     return lots.map(lot => ({
       ...lot,
-      auctionName: lot.auction.title,
+      auctionName: lot.auction?.title || 'N/A',
       categoryName: lot.category?.name || 'N/A',
       sellerName: lot.seller?.name || 'N/A',
       bidsCount: lot._count.bids,

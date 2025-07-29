@@ -4,9 +4,6 @@
  * @fileOverview This file defines a Genkit flow to predict the optimal opening bid value for an auction.
  *
  * The flow uses historical auction data to suggest an opening bid that balances attracting initial bids with achieving a fast auction resolution.
- *  - predictOpeningValue - A function that handles the prediction of the optimal opening bid value.
- *  - PredictOpeningValueInput - The input type for the predictOpeningValue function.
- *  - PredictOpeningValueOutput - The return type for the predictOpeningValue function.
  */
 
 import {ai} from '@/ai/genkit';

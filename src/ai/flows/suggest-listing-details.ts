@@ -2,10 +2,6 @@
 
 /**
  * @fileOverview AI flow to suggest optimal listing details for auctions based on current trends.
- *
- * - suggestListingDetails - A function that generates listing detail recommendations.
- * - SuggestListingDetailsInput - The input type for the suggestListingDetails function.
- * - SuggestListingDetailsOutput - The return type for the suggestListingDetails function.
  */
 
 import {ai} from '@/ai/genkit';
@@ -23,7 +19,7 @@ export type SuggestListingDetailsInput = z.infer<typeof SuggestListingDetailsInp
 const SuggestListingDetailsOutputSchema = z.object({
   suggestedTitle: z.string().describe('A suggested title for the auction listing.'),
   suggestedDescription: z.string().describe('A suggested description for the auction listing.'),
-  suggestedCategory: z.string().describe('A suggested category for the auction listing.'),
+  suggestedCategory: z.string().describe('A potentially better category for the listing.'),
   suggestedKeywords: z.string().describe('Suggested keywords to attract more interest.'),
   predictedOpeningValue: z.number().describe('Predicted optimal opening value for a fast auction resolution.'),
   similarListings: z.array(z.string()).describe('Titles of similar listings that may serve as inspiration.'),

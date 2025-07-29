@@ -2,19 +2,16 @@
 
 import { 
   suggestListingDetails, 
-  type SuggestListingDetailsInput, 
-  type SuggestListingDetailsOutput 
 } from '@/ai/flows/suggest-listing-details';
+import type { SuggestListingDetailsInput, SuggestListingDetailsOutput } from '@/ai/flows/suggest-listing-details';
 import { 
   predictOpeningValue, 
-  type PredictOpeningValueInput, 
-  type PredictOpeningValueOutput 
 } from '@/ai/flows/predict-opening-value';
+import type { PredictOpeningValueInput, PredictOpeningValueOutput } from '@/ai/flows/predict-opening-value';
 import { 
   suggestSimilarListings, 
-  type SuggestSimilarListingsInput, 
-  type SuggestSimilarListingsOutput 
 } from '@/ai/flows/suggest-similar-listings';
+import type { SuggestSimilarListingsInput, SuggestSimilarListingsOutput } from '@/ai/flows/suggest-similar-listings';
 import { getAuctions } from '@/app/admin/auctions/actions';
 
 export interface AISuggestionState {

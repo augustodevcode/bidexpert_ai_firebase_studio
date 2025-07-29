@@ -5,28 +5,23 @@
  * @fileOverview A Genkit flow to analyze auction performance data.
  * This flow takes a summary of auction data and uses an AI model to generate
  * a textual analysis with strategic insights and recommendations.
- *
- * - analyzeAuctionData - The main function to trigger the analysis.
- * - AnalyzeAuctionDataInput - The input type for the analysis function.
- * - AnalyzeAuctionDataOutput - The return type, containing the AI-generated text.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import type { AuctionPerformanceData } from '@/app/admin/auctions/analysis/actions';
 
 // --- Input Schema ---
-export const AnalyzeAuctionDataInputSchema = z.object({
+const AnalyzeAuctionDataInputSchema = z.object({
   performanceData: z.array(z.any()).describe('An array of auction performance objects, where each object contains metrics like title, status, totalLots, lotsSoldCount, totalRevenue, averageTicket, and salesRate.'),
 });
-export type AnalyzeAuctionDataInput = z.infer<typeof AnalyzeAuctionDataInputSchema>;
+type AnalyzeAuctionDataInput = z.infer<typeof AnalyzeAuctionDataInputSchema>;
 
 
 // --- Output Schema ---
-export const AnalyzeAuctionDataOutputSchema = z.object({
+const AnalyzeAuctionDataOutputSchema = z.object({
   analysis: z.string().describe("A comprehensive textual analysis of the provided auction data, highlighting key trends, identifying top-performing auctions, pointing out potential areas for improvement, and providing actionable recommendations for the business strategy."),
 });
-export type AnalyzeAuctionDataOutput = z.infer<typeof AnalyzeAuctionDataOutputSchema>;
+type AnalyzeAuctionDataOutput = z.infer<typeof AnalyzeAuctionDataOutputSchema>;
 
 
 // --- Exported Function ---

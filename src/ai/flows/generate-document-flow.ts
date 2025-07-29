@@ -5,13 +5,10 @@
  * @fileOverview A Genkit flow to generate PDF documents from HTML templates.
  * This flow takes data, compiles it into an HTML template using Handlebars,
  * and then uses Puppeteer to convert the HTML into a PDF file.
- *  - generateDocument - The main function to trigger the document generation.
- *  - GenerateDocumentInput - The input type for the generation function.
- *  - GenerateDocumentOutput - The return type, containing the PDF as a Base64 string.
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import puppeteer from 'puppeteer';
 import Handlebars from 'handlebars';
 import { getDocumentTemplateAction } from '@/app/admin/document-templates/actions';
@@ -20,14 +17,14 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-export const GenerateDocumentInputSchema = z.object({
+const GenerateDocumentInputSchema = z.object({
   documentType: z.enum(['WINNING_BID_TERM', 'EVALUATION_REPORT', 'AUCTION_CERTIFICATE']),
   templateId: z.string().optional(), // Optional: If you want to use a specific template from DB
   data: z.any().describe("The data object to populate the template, e.g., auction, lot, winner details."),
 });
 export type GenerateDocumentInput = z.infer<typeof GenerateDocumentInputSchema>;
 
-export const GenerateDocumentOutputSchema = z.object({
+const GenerateDocumentOutputSchema = z.object({
   pdfBase64: z.string().describe("The generated PDF file encoded as a Base64 string."),
   fileName: z.string().describe("A suggested filename for the document, e.g., 'termo-arrematacao-lote-123.pdf'"),
 });

@@ -1,12 +1,7 @@
-// src/ai/flows/suggest-similar-listings.ts
 'use server';
 
 /**
  * @fileOverview This file defines a Genkit flow that suggests similar successful listings to a seller for inspiration.
- *
- * - suggestSimilarListings - A function that suggests similar listings.
- * - SuggestSimilarListingsInput - The input type for the suggestSimilarListings function.
- * - SuggestSimilarListingsOutput - The output type for the suggestSimilarListings function.
  */
 
 import {ai} from '@/ai/genkit';

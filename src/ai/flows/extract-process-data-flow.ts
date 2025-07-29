@@ -5,15 +5,11 @@
  * @fileOverview A Genkit flow to extract structured data from judicial process documents.
  * This flow takes an image of a document and uses AI to parse and return key information
  * such as process number, parties involved, and court details.
- *
- * - extractProcessData - The main function to trigger the data extraction.
- * - ExtractProcessDataInput - The input type for the extraction function.
- * - ExtractProcessDataOutput - The return type, containing the structured data.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { ProcessPartyType } from '@/types';
+import type { ProcessPartyType } from '@/types';
 
 // Define party types for Zod schema validation
 const partyTypes: [ProcessPartyType, ...ProcessPartyType[]] = [
@@ -21,7 +17,7 @@ const partyTypes: [ProcessPartyType, ...ProcessPartyType[]] = [
 ];
 
 // --- Input Schema ---
-export const ExtractProcessDataInputSchema = z.object({
+const ExtractProcessDataInputSchema = z.object({
   documentDataUri: z
     .string()
     .describe(
@@ -37,7 +33,7 @@ const ExtractedPartySchema = z.object({
     partyType: z.enum(partyTypes).describe("O tipo/papel da parte no processo (ex: AUTOR, REU).")
 });
 
-export const ExtractProcessDataOutputSchema = z.object({
+const ExtractProcessDataOutputSchema = z.object({
   processNumber: z.string().optional().describe("O número único do processo, no formato 0000000-00.0000.0.00.0000."),
   courtName: z.string().optional().describe("O nome do tribunal (ex: Tribunal de Justiça de São Paulo)."),
   districtName: z.string().optional().describe("O nome da comarca (ex: Comarca de Campinas)."),
