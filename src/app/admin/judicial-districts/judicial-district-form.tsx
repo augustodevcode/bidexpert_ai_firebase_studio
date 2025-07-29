@@ -8,13 +8,15 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialDistrictFormSchema, type JudicialDistrictFormValues } from './judicial-district-form-schema';
 import type { JudicialDistrict, Court, StateInfo } from '@/types';
 import { Loader2, Save, Map } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getCourts } from '../courts/actions';
+import { getStates } from '../states/actions';
 
 interface JudicialDistrictFormProps {
   initialData?: JudicialDistrict | null;
@@ -28,8 +30,8 @@ interface JudicialDistrictFormProps {
 
 export default function JudicialDistrictForm({
   initialData,
-  courts,
-  states,
+  courts: initialCourts,
+  states: initialStates,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -38,6 +40,11 @@ export default function JudicialDistrictForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+
+  const [courts, setCourts] = React.useState(initialCourts);
+  const [states, setStates] = React.useState(initialStates);
+  const [isFetchingCourts, setIsFetchingCourts] = React.useState(false);
+  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
 
   const form = useForm<JudicialDistrictFormValues>({
     resolver: zodResolver(judicialDistrictFormSchema),
@@ -48,6 +55,20 @@ export default function JudicialDistrictForm({
       zipCode: initialData?.zipCode || '',
     },
   });
+  
+  const handleRefetch = React.useCallback(async (entity: 'courts' | 'states') => {
+    if (entity === 'courts') {
+      setIsFetchingCourts(true);
+      const data = await getCourts();
+      setCourts(data);
+      setIsFetchingCourts(false);
+    } else if (entity === 'states') {
+      setIsFetchingStates(true);
+      const data = await getStates();
+      setStates(data);
+      setIsFetchingStates(false);
+    }
+  }, []);
 
   async function onSubmit(values: JudicialDistrictFormValues) {
     setIsSubmitting(true);
@@ -77,38 +98,20 @@ export default function JudicialDistrictForm({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nome da Comarca</FormLabel>
-                <FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormItem><FormLabel>Nome da Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="courtId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Tribunal</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o tribunal" /></SelectTrigger></FormControl>
-                  <SelectContent>{courts.map(c => <SelectItem key={c.id} value={c.id}>{c.name} ({c.stateUf})</SelectItem>)}</SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+              <FormItem><FormLabel>Tribunal</FormLabel>
+                <EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: `${c.name} (${c.stateUf})` }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal." createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} />
+              <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="stateId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Estado</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Selecione o estado" /></SelectTrigger></FormControl>
-                  <SelectContent>{states.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
+              <FormItem><FormLabel>Estado</FormLabel>
+                <EntitySelector value={field.value} onChange={field.onChange} options={states.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o estado" searchPlaceholder="Buscar estado..." emptyStateMessage="Nenhum estado." createNewUrl="/admin/states/new" editUrlPrefix="/admin/states" onRefetch={() => handleRefetch('states')} isFetching={isFetchingStates} />
+              <FormMessage /></FormItem>
             )} />
             <FormField control={form.control} name="zipCode" render={({ field }) => (
-              <FormItem>
-                <FormLabel>CEP (Opcional)</FormLabel>
-                <FormControl><Input placeholder="49400-000" {...field} value={field.value ?? ''} /></FormControl>
-                <FormMessage />
-              </FormItem>
+              <FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="49400-000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
             )} />
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">

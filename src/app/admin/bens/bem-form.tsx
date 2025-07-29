@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/bem-form.tsx
 'use client';
 
@@ -31,6 +32,10 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getLotCategories } from '../categories/actions';
+import { getJudicialProcesses } from '../judicial-processes/actions';
+import { getSellers } from '../sellers/actions';
 
 interface BemFormProps {
   initialData?: Partial<Bem> | null;
@@ -71,9 +76,9 @@ const categoryIcons: Record<string, React.ReactNode> = {
 
 export default function BemForm({
   initialData,
-  processes,
-  categories,
-  sellers,
+  processes: initialProcesses,
+  categories: initialCategories,
+  sellers: initialSellers,
   onSubmitAction,
   onSuccess,
   onCancel,
@@ -88,6 +93,15 @@ export default function BemForm({
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [dialogTarget, setDialogTarget] = React.useState<'main' | 'gallery' | null>(null);
+
+  // States for refetching entity lists
+  const [categories, setCategories] = React.useState(initialCategories);
+  const [processes, setProcesses] = React.useState(initialProcesses);
+  const [sellers, setSellers] = React.useState(initialSellers);
+  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
+  const [isFetchingProcesses, setIsFetchingProcesses] = React.useState(false);
+  const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
+
 
   const form = useForm<BemFormData>({
     resolver: zodResolver(bemFormSchema),
@@ -128,6 +142,25 @@ export default function BemForm({
   
   const categorySpecificIcon = categoryIcons[categorySlug] || <Gavel className="h-4 w-4"/>;
   
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'processes' | 'sellers') => {
+    if (entity === 'categories') {
+      setIsFetchingCategories(true);
+      const data = await getLotCategories();
+      setCategories(data);
+      setIsFetchingCategories(false);
+    } else if (entity === 'processes') {
+      setIsFetchingProcesses(true);
+      const data = await getJudicialProcesses();
+      setProcesses(data);
+      setIsFetchingProcesses(false);
+    } else if (entity === 'sellers') {
+      setIsFetchingSellers(true);
+      const data = await getSellers();
+      setSellers(data);
+      setIsFetchingSellers(false);
+    }
+  }, []);
+
   React.useEffect(() => {
     const fetchSubcats = async (parentId: string) => {
         setIsLoadingSubcategories(true);
@@ -240,23 +273,21 @@ export default function BemForm({
                         <FormField name="evaluationValue" control={form.control} render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="150000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                       </div>
                       <div className="grid md:grid-cols-2 gap-4">
-                        <FormField name="categoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                        <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                          <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={true} /></FormItem>)} />
+                          <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                       </div>
-                      
                       <Accordion type="single" collapsible defaultValue="item-1">
                         <AccordionItem value="item-1">
                           <AccordionTrigger className="text-md font-medium">Origem / Proprietário</AccordionTrigger>
                           <AccordionContent className="space-y-4 pt-2">
-                            <FormField name="judicialProcessId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um processo judicial" /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Nenhum</SelectItem>{processes.map(p => <SelectItem key={p.id} value={p.id}>{p.processNumber}</SelectItem>)}</SelectContent></Select><FormDescription>Para bens de origem judicial.</FormDescription><FormMessage /></FormItem>)} />
-                            <FormField name="sellerId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor (Se aplicável)</FormLabel><Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value || 'none'}><FormControl><SelectTrigger><SelectValue placeholder="Vincule a um comitente" /></SelectTrigger></FormControl><SelectContent><SelectItem value="none">Nenhum</SelectItem>{sellers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
+                             <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isFetchingProcesses} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+                             <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription></FormItem>)} />
                           </AccordionContent>
                         </AccordionItem>
                       </Accordion>
                   </TabsContent>
 
                   <TabsContent value="detalhes" className="mt-4 space-y-4">
-                     {/* Veículos */}
                       {categorySlug.includes('veiculo') && (
                         <Accordion type="multiple" defaultValue={['vehicle-id']} className="w-full space-y-2">
                           <AccordionItem value="vehicle-id">
@@ -273,7 +304,6 @@ export default function BemForm({
                         </Accordion>
                       )}
 
-                      {/* Imóveis */}
                       {categorySlug.includes('imoveis') && (
                         <Accordion type="multiple" defaultValue={['real-estate-id']} className="w-full space-y-2">
                            <AccordionItem value="real-estate-id">

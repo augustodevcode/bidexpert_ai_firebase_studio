@@ -8,13 +8,14 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialBranchFormSchema, type JudicialBranchFormValues } from './judicial-branch-form-schema';
 import type { JudicialBranch, JudicialDistrict } from '@/types';
 import { Loader2, Save, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getJudicialDistricts } from '../judicial-districts/actions';
 
 interface JudicialBranchFormProps {
   initialData?: JudicialBranch | null;
@@ -27,7 +28,7 @@ interface JudicialBranchFormProps {
 
 export default function JudicialBranchForm({
   initialData,
-  districts,
+  districts: initialDistricts,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -36,6 +37,8 @@ export default function JudicialBranchForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [districts, setDistricts] = React.useState(initialDistricts);
+  const [isFetchingDistricts, setIsFetchingDistricts] = React.useState(false);
 
   const form = useForm<JudicialBranchFormValues>({
     resolver: zodResolver(judicialBranchFormSchema),
@@ -47,6 +50,14 @@ export default function JudicialBranchForm({
       email: initialData?.email || '',
     },
   });
+  
+  const handleRefetchDistricts = React.useCallback(async () => {
+    setIsFetchingDistricts(true);
+    const data = await getJudicialDistricts();
+    setDistricts(data);
+    setIsFetchingDistricts(false);
+  }, []);
+
 
   async function onSubmit(values: JudicialBranchFormValues) {
     setIsSubmitting(true);
@@ -81,12 +92,18 @@ export default function JudicialBranchForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Comarca</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger><SelectValue placeholder="Selecione a comarca" /></SelectTrigger>
-                    </FormControl>
-                    <SelectContent>{districts.map(d => <SelectItem key={d.id} value={d.id}>{d.name} ({d.stateUf})</SelectItem>)}</SelectContent>
-                  </Select>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={districts.map(d => ({ value: d.id, label: `${d.name} (${d.stateUf})` }))}
+                      placeholder="Selecione a comarca"
+                      searchPlaceholder="Buscar comarca..."
+                      emptyStateMessage="Nenhuma comarca encontrada."
+                      createNewUrl="/admin/judicial-districts/new"
+                      editUrlPrefix="/admin/judicial-districts"
+                      onRefetch={handleRefetchDistricts}
+                      isFetching={isFetchingDistricts}
+                    />
                   <FormMessage />
                 </FormItem>
               )}
