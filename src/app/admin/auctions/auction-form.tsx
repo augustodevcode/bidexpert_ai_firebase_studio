@@ -357,6 +357,7 @@ export default function AuctionForm({
                       editUrlPrefix="/admin/auctioneers"
                       onRefetch={handleRefetchAuctioneers}
                       isFetching={isFetchingAuctioneers}
+                      disabled={isViewMode}
                     />
                   <FormMessage />
                 </FormItem>
@@ -379,6 +380,7 @@ export default function AuctionForm({
                       editUrlPrefix="/admin/sellers"
                       onRefetch={handleRefetchSellers}
                       isFetching={isFetchingSellers}
+                      disabled={isViewMode}
                     />
                     <FormMessage />
                 </FormItem>
