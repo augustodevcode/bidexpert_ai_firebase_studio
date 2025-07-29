@@ -26,13 +26,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createBemColumns } from '@/components/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 import { getBens } from '@/app/admin/bens/actions';
-import { getAuction } from '@/app/admin/auctions/actions';
+import { getAuction, getAuctions as refetchAuctions } from '@/app/admin/auctions/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import {
@@ -47,6 +47,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { finalizeLot } from './actions';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getLotCategories as refetchCategories } from '../categories/actions';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -60,6 +62,7 @@ interface LotFormProps {
   formDescription: string;
   submitButtonText: string;
   defaultAuctionId?: string;
+  onSuccessCallback?: () => void;
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
@@ -72,8 +75,8 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
 
 export default function LotForm({
   initialData,
-  categories,
-  auctions,
+  categories: initialCategories,
+  auctions: initialAuctions,
   states,
   allCities,
   initialAvailableBens,
@@ -81,7 +84,8 @@ export default function LotForm({
   formTitle,
   formDescription,
   submitButtonText,
-  defaultAuctionId
+  defaultAuctionId,
+  onSuccessCallback,
 }: LotFormProps) {
   const { toast } = useToast();
   const router = useRouter();
@@ -98,6 +102,13 @@ export default function LotForm({
   const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
   const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
   const [isFinalizing, setIsFinalizing] = React.useState(false);
+
+  // States for entity selectors
+  const [auctions, setAuctions] = React.useState(initialAuctions);
+  const [categories, setCategories] = React.useState(initialCategories);
+  const [isFetchingAuctions, setIsFetchingAuctions] = React.useState(false);
+  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
+
 
   // State for linked bens display
   const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
@@ -122,6 +133,20 @@ export default function LotForm({
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
+  
+  const handleRefetchAuctions = React.useCallback(async () => {
+    setIsFetchingAuctions(true);
+    const data = await refetchAuctions();
+    setAuctions(data);
+    setIsFetchingAuctions(false);
+  }, []);
+  
+  const handleRefetchCategories = React.useCallback(async () => {
+    setIsFetchingCategories(true);
+    const data = await refetchCategories();
+    setCategories(data);
+    setIsFetchingCategories(false);
+  }, []);
   
   React.useEffect(() => {
     let isMounted = true;
@@ -242,7 +267,11 @@ export default function LotForm({
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push(watchedAuctionId ? `/admin/auctions/${watchedAuctionId}/edit` : '/admin/lots');
+        if (onSuccessCallback) {
+          onSuccessCallback();
+        } else {
+          router.push(watchedAuctionId ? `/admin/auctions/${watchedAuctionId}/edit` : '/admin/lots');
+        }
         router.refresh();
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
@@ -265,7 +294,8 @@ export default function LotForm({
     const result = await finalizeLot(initialData.id);
     if (result.success) {
       toast({ title: "Lote Finalizado!", description: result.message });
-      router.refresh();
+      if (onSuccessCallback) onSuccessCallback();
+      else router.refresh();
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
@@ -434,7 +464,7 @@ export default function LotForm({
             </CardHeader>
             <CardContent className="space-y-6 p-6 bg-secondary/30">
               <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o leilão" /></SelectTrigger></FormControl><SelectContent>{auctions.map(auction => (<SelectItem key={auction.id} value={auction.id}>{auction.title} (ID: ...{auction.id.slice(-6)})</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o lote..." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField
@@ -458,7 +488,7 @@ export default function LotForm({
                 )}
               />
               <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(cat => (<SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={handleRefetchCategories} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)}/>
                 {availableSubcategories.length > 0 && (
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : "Selecione a subcategoria"} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
                 )}

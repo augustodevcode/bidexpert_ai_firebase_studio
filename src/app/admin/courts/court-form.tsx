@@ -1,4 +1,3 @@
-
 // src/app/admin/courts/court-form.tsx
 'use client';
 
@@ -16,13 +15,14 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { courtFormSchema, type CourtFormValues } from './court-form-schema';
 import type { Court, StateInfo } from '@/types';
 import { Loader2, Save, Scale } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getStates } from '../states/actions';
 
 interface CourtFormProps {
   initialData?: Court | null;
@@ -35,7 +35,7 @@ interface CourtFormProps {
 
 export default function CourtForm({
   initialData,
-  states,
+  states: initialStates,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -44,6 +44,8 @@ export default function CourtForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [states, setStates] = React.useState(initialStates);
+  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
 
   const form = useForm<CourtFormValues>({
     resolver: zodResolver(courtFormSchema),
@@ -53,6 +55,13 @@ export default function CourtForm({
       website: initialData?.website || '',
     },
   });
+
+  const handleRefetchStates = React.useCallback(async () => {
+    setIsFetchingStates(true);
+    const data = await getStates();
+    setStates(data);
+    setIsFetchingStates(false);
+  }, []);
 
   async function onSubmit(values: CourtFormValues) {
     setIsSubmitting(true);
@@ -111,20 +120,18 @@ export default function CourtForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Estado (UF)</FormLabel>
-                   <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {states.map((state) => (
-                        <SelectItem key={state.uf} value={state.uf}>
-                          {state.name} ({state.uf})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={states.map(s => ({ value: s.uf, label: `${s.name} (${s.uf})` }))}
+                      placeholder="Selecione o estado"
+                      searchPlaceholder="Buscar estado..."
+                      emptyStateMessage="Nenhum estado encontrado."
+                      createNewUrl="/admin/states/new"
+                      editUrlPrefix="/admin/states"
+                      onRefetch={handleRefetchStates}
+                      isFetching={isFetchingStates}
+                    />
                   <FormMessage />
                 </FormItem>
               )}

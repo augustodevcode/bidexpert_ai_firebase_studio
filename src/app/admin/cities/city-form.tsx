@@ -1,4 +1,4 @@
-
+// src/app/admin/cities/city-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -15,17 +15,18 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cityFormSchema, type CityFormValues } from './city-form-schema';
 import type { CityInfo, StateInfo } from '@/types';
 import { Loader2, Save, Building2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getStates } from '../states/actions';
 
 interface CityFormProps {
   initialData?: CityInfo | null;
-  states: StateInfo[]; // Lista de estados para o dropdown
+  states: StateInfo[];
   onSubmitAction: (data: CityFormValues) => Promise<{ success: boolean; message: string; cityId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -34,7 +35,7 @@ interface CityFormProps {
 
 export default function CityForm({
   initialData,
-  states,
+  states: initialStates,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -43,6 +44,8 @@ export default function CityForm({
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [states, setStates] = React.useState(initialStates);
+  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
 
   const form = useForm<CityFormValues>({
     resolver: zodResolver(cityFormSchema),
@@ -52,6 +55,13 @@ export default function CityForm({
       ibgeCode: initialData?.ibgeCode || '',
     },
   });
+
+  const handleRefetchStates = React.useCallback(async () => {
+    setIsFetchingStates(true);
+    const data = await getStates();
+    setStates(data);
+    setIsFetchingStates(false);
+  }, []);
 
   async function onSubmit(values: CityFormValues) {
     setIsSubmitting(true);
@@ -111,24 +121,18 @@ export default function CityForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Estado</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o estado" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {states.length === 0 ? (
-                        <p className="p-2 text-sm text-muted-foreground">Nenhum estado cadastrado</p>
-                      ) : (
-                        states.map((state) => (
-                          <SelectItem key={state.id} value={state.id}>
-                            {state.name} ({state.uf})
-                          </SelectItem>
-                        ))
-                      )}
-                    </SelectContent>
-                  </Select>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={states.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))}
+                      placeholder="Selecione o estado"
+                      searchPlaceholder="Buscar estado..."
+                      emptyStateMessage="Nenhum estado encontrado."
+                      createNewUrl="/admin/states/new"
+                      editUrlPrefix="/admin/states"
+                      onRefetch={handleRefetchStates}
+                      isFetching={isFetchingStates}
+                    />
                   <FormDescription>Selecione o estado ao qual esta cidade pertence.</FormDescription>
                   <FormMessage />
                 </FormItem>

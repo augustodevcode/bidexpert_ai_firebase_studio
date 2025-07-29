@@ -1,4 +1,3 @@
-
 // src/app/admin/subcategories/subcategory-form.tsx
 'use client';
 
@@ -17,7 +16,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { subcategoryFormSchema, type SubcategoryFormValues } from './subcategory-form-schema';
@@ -26,6 +24,8 @@ import { Loader2, Save, Layers, ImageIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getLotCategories } from '../categories/actions';
 
 interface SubcategoryFormProps {
   initialData?: Subcategory | null;
@@ -38,7 +38,7 @@ interface SubcategoryFormProps {
 
 export default function SubcategoryForm({
   initialData,
-  parentCategories,
+  parentCategories: initialParentCategories,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -48,6 +48,9 @@ export default function SubcategoryForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [parentCategories, setParentCategories] = React.useState(initialParentCategories);
+  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
+
 
   const form = useForm<SubcategoryFormValues>({
     resolver: zodResolver(subcategoryFormSchema),
@@ -63,6 +66,13 @@ export default function SubcategoryForm({
   });
 
   const iconUrlPreview = useWatch({ control: form.control, name: 'iconUrl' });
+  
+  const handleRefetchCategories = React.useCallback(async () => {
+    setIsFetchingCategories(true);
+    const data = await getLotCategories();
+    setParentCategories(data);
+    setIsFetchingCategories(false);
+  }, []);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -123,24 +133,18 @@ export default function SubcategoryForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Categoria Principal</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria principal" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {parentCategories.length === 0 ? (
-                          <p className="p-2 text-sm text-muted-foreground">Nenhuma categoria principal cadastrada</p>
-                        ) : (
-                          parentCategories.map((cat) => (
-                            <SelectItem key={cat.id} value={cat.id}>
-                              {cat.name}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
+                    <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={parentCategories.map(c => ({ value: c.id, label: c.name }))}
+                      placeholder="Selecione a categoria principal"
+                      searchPlaceholder="Buscar categoria..."
+                      emptyStateMessage="Nenhuma categoria encontrada."
+                      createNewUrl="/admin/categories/new"
+                      editUrlPrefix="/admin/categories"
+                      onRefetch={handleRefetchCategories}
+                      isFetching={isFetchingCategories}
+                    />
                     <FormDescription>A subcategoria pertencerá a esta categoria principal.</FormDescription>
                     <FormMessage />
                   </FormItem>
