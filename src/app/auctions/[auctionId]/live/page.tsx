@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/live/page.tsx
 'use client'; 
 
