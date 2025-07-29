@@ -5,8 +5,10 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 
 export default async function NewDirectSaleOfferPage() {
-  const categories = await getLotCategories();
-  const sellers = await getSellers();
+  const [categories, sellers] = await Promise.all([
+    getLotCategories(),
+    getSellers()
+  ]);
 
   async function handleCreateOffer(data: DirectSaleOfferFormData) {
     'use server';

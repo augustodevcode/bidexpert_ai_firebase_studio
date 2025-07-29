@@ -23,6 +23,10 @@ import { ptBR } from 'date-fns/locale';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Separator } from '@/components/ui/separator';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getSellers } from '../sellers/actions';
+import { getLotCategories } from '../categories/actions';
+
 
 interface DirectSaleFormProps {
   initialData?: Partial<DirectSaleOffer> | null;
@@ -37,8 +41,8 @@ interface DirectSaleFormProps {
 
 export default function DirectSaleForm({
   initialData,
-  categories,
-  sellers,
+  categories: initialCategories,
+  sellers: initialSellers,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -49,6 +53,10 @@ export default function DirectSaleForm({
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [categories, setCategories] = React.useState(initialCategories);
+  const [sellers, setSellers] = React.useState(initialSellers);
+  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
+  const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
 
   const form = useForm<DirectSaleOfferFormData>({
     resolver: zodResolver(directSaleOfferFormSchema),
@@ -59,8 +67,8 @@ export default function DirectSaleForm({
       status: initialData?.status || 'PENDING_APPROVAL',
       price: initialData?.price || undefined,
       minimumOfferPrice: initialData?.minimumOfferPrice || undefined,
-      category: initialData?.category || '',
-      sellerName: initialData?.sellerName || '',
+      categoryId: initialData?.categoryId || '',
+      sellerId: initialData?.sellerId || '',
       locationCity: initialData?.locationCity || '',
       locationState: initialData?.locationState || '',
       imageUrl: initialData?.imageUrl || '',
@@ -74,6 +82,20 @@ export default function DirectSaleForm({
   
   const offerType = useWatch({ control: form.control, name: 'offerType' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
+
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'sellers') => {
+    if (entity === 'categories') {
+      setIsFetchingCategories(true);
+      const data = await getLotCategories();
+      setCategories(data);
+      setIsFetchingCategories(false);
+    } else if (entity === 'sellers') {
+      setIsFetchingSellers(true);
+      const data = await getSellers();
+      setSellers(data);
+      setIsFetchingSellers(false);
+    }
+  }, []);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -132,8 +154,8 @@ export default function DirectSaleForm({
             )}
             
             <div className="grid md:grid-cols-2 gap-6">
-              <FormField control={form.control} name="category" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a categoria" /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="sellerName" render={({ field }) => (<FormItem><FormLabel>Vendedor</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o vendedor" /></SelectTrigger></FormControl><SelectContent>{sellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada" createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o vendedor" searchPlaceholder="Buscar vendedor..." emptyStateMessage="Nenhum vendedor encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormMessage /></FormItem>)} />
             </div>
             
             <div className="grid md:grid-cols-2 gap-6">

@@ -71,8 +71,8 @@ export default function NewConsignorDirectSaleOfferPage() {
     if (!currentSeller) {
       return { success: false, message: "Informação do vendedor não disponível." };
     }
-    // Force the sellerName to be the one from the logged-in consignor's profile
-    const dataWithSeller = { ...data, sellerName: currentSeller.name };
+    // Force the sellerId to be the one from the logged-in consignor's profile
+    const dataWithSeller = { ...data, sellerId: currentSeller.id };
     return createDirectSaleOffer(dataWithSeller);
   }
 
@@ -94,7 +94,7 @@ export default function NewConsignorDirectSaleOfferPage() {
 
   return (
     <DirectSaleForm
-      initialData={{ sellerName: currentSeller.name }} // Pre-fill seller name
+      initialData={{ sellerId: currentSeller.id }} // Pre-fill seller id
       categories={categories}
       sellers={[currentSeller]} // Pass only the current seller
       onSubmitAction={handleCreateOffer}
