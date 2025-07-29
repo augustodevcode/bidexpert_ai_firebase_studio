@@ -9,11 +9,10 @@ import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStag
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, PlusCircle, Trash2, ClockIcon, Zap } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -145,9 +144,7 @@ export default function Step3AuctionDetails({
         auctionDetails: {
           ...prev.auctionDetails,
           ...value,
-          auctioneerId: value.auctioneerId,
-          sellerId: value.sellerId,
-          auctioneer: auctioneerDetails?.name, // Denormalized name for display in other steps
+          auctioneer: auctioneerDetails?.name, // Denormalized name
           seller: sellerDetails?.name,
         }
       }));
