@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -239,8 +240,12 @@ export default function Step3AuctionDetails({
                   {fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}
                 </div>
                 <div className="grid sm:grid-cols-[1fr_1fr_auto] gap-4 items-end">
-                  <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl><FormMessage /></FormItem>)} />
-                   <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem className="flex flex-col"><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal bg-background", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"} onChange={(e) => { const [h, m] = e.target.value.split(':'); const d = stageField.value ? new Date(stageField.value) : new Date(); d.setHours(Number(h), Number(m)); stageField.onChange(d); }} /></div></PopoverContent></Popover><FormMessage /></FormItem>)}/>
+                    <div className="flex flex-col space-y-2">
+                        <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                    <div className="flex flex-col space-y-2">
+                         <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem className="flex flex-col"><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal bg-background", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"} onChange={(e) => { const [h, m] = e.target.value.split(':'); const d = stageField.value ? new Date(stageField.value) : new Date(); d.setHours(Number(h), Number(m)); stageField.onChange(d); }} /></div></PopoverContent></Popover><FormMessage /></FormItem>)}/>
+                    </div>
                 </div>
               </Card>
             ))}
