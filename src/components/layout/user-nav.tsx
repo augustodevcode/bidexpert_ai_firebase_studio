@@ -1,9 +1,9 @@
-
+// src/components/layout/user-nav.tsx
 'use client';
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { UserCircle2, LogIn, UserPlus, LogOut, LayoutDashboard, Settings, Heart, Gavel, ShoppingBag, FileText, History, BarChart, Bell, ListChecks, Tv, Briefcase as ConsignorIcon, ShieldCheck } from 'lucide-react';
@@ -147,13 +147,35 @@ export default function UserNav() {
   }
 
   return (
-    <div className="flex items-center space-x-2">
-      <Button asChild>
-        <Link href="/auth/login">Login</Link>
-      </Button>
-      <Button variant="outline" asChild>
-        <Link href="/auth/register">Registrar</Link>
-      </Button>
-    </div>
+    <TooltipProvider>
+        <div className="flex items-center space-x-1">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                        <Link href="/auth/login" aria-label="Login">
+                            <LogIn className="h-4 w-4 sm:h-5 sm:w-5" />
+                            <span className="sr-only">Login</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Fazer Login</p>
+                </TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                        <Link href="/auth/register" aria-label="Registrar">
+                            <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                             <span className="sr-only">Registrar</span>
+                        </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>Registrar-se</p>
+                </TooltipContent>
+            </Tooltip>
+        </div>
+    </TooltipProvider>
   );
 }
