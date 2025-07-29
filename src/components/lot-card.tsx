@@ -13,7 +13,7 @@ import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -318,3 +318,5 @@ export default function LotCard(props: LotCardProps) {
 
   return <LotCardClientContent {...props} />;
 }
+
+    
