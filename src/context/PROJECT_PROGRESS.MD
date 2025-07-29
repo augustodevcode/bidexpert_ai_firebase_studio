@@ -10,15 +10,14 @@
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
 - **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
-- **Item 14 - Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).**
-- **Item 14 - Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões).
-- **Item 14 - Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual (Sellers, Auctioneers, Auctions).
-- **Item 14 - Fase 4 (Parcial):** Implementar dashboards de análise para Tribunais e Comarcas.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
+    - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
+    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+    - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
 
 ## DOING
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Continuar a implementação da suíte de dashboards analíticos, conforme a nova regra de arquitetura.
-    - **Fase 4 - Análise Judicial:** Implementar dashboard de análise para Varas.
-    - **Fase 5 - IA Insights**: Integrar Genkit para fornecer análises e recomendações inteligentes em todos os dashboards.
+- **Item 14: BidExpertOkrs - Fase 5 (IA Insights):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo (Leilões, Lotes, Comitentes, etc.).
 
 ## NEXT
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
