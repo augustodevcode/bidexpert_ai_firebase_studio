@@ -26,6 +26,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
+        auctionStages: true, // Incluindo as etapas do leilão
       },
     });
 
@@ -45,6 +46,8 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
         totalRevenue,
         averageTicket,
         salesRate,
+        auctionDate: auction.auctionDate, // Passando a data para o Gantt
+        auctionStages: auction.auctionStages, // Passando as etapas para o Gantt
       };
     });
   } catch (error: any) {

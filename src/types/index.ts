@@ -883,6 +883,28 @@ export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategori
 export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').roleFormSchema>;
 export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
 
+export interface AuctionPerformanceData {
+  id: string;
+  title: string;
+  status: AuctionStatus;
+  totalLots: number;
+  lotsSoldCount: number;
+  totalRevenue: number;
+  averageTicket: number;
+  salesRate: number;
+  auctionDate: Date | string;
+  auctionStages: AuctionStage[];
+}
+
+export interface AuctionDashboardData {
+  totalRevenue: number;
+  totalBids: number;
+  uniqueBidders: number;
+  salesRate: number;
+  revenueByCategory: { name: string, Faturamento: number }[];
+  bidsOverTime: { name: string, Lances: number }[];
+}
+
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
 // ============================================================================

@@ -6,10 +6,11 @@ import { getAuctionsPerformanceAction, type AuctionPerformanceData, analyzeAucti
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit } from 'lucide-react';
+import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit, Calendar } from 'lucide-react';
 import { createAuctionAnalysisColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import AuctionGanttChart from '@/components/admin/analysis/auction-gantt-chart';
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>
@@ -134,6 +135,16 @@ export default function AuctionAnalysisPage() {
       </div>
       
       <AIAnalysisSection performanceData={performanceData} isLoading={isLoading} />
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="flex items-center"><Calendar className="h-5 w-5 mr-2 text-primary"/> Cronograma de Leilões (Gantt)</CardTitle>
+            <CardDescription>Visualização da linha do tempo dos leilões e suas etapas.</CardDescription>
+        </CardHeader>
+        <CardContent className="h-[500px] w-full">
+            <AuctionGanttChart auctions={performanceData} />
+        </CardContent>
+       </Card>
 
        <Card>
         <CardHeader>
