@@ -1,82 +1,47 @@
-
-
+// src/components/admin/wizard/steps/step-2-judicial-setup.tsx
 'use client';
 
 import { useWizard } from '../wizard-context';
 import type { JudicialProcess } from '@/types';
-import { Button } from '@/components/ui/button';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Check, ChevronsUpDown, FileText, PlusCircle } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import EntitySelector from '@/components/ui/entity-selector';
 import { useState } from 'react';
 
 interface Step2JudicialSetupProps {
   processes: JudicialProcess[];
-  onAddNewProcess: () => void;
+  onRefetchRequest: () => void;
 }
 
-export default function Step2JudicialSetup({ processes, onAddNewProcess }: Step2JudicialSetupProps) {
+export default function Step2JudicialSetup({ processes, onRefetchRequest }: Step2JudicialSetupProps) {
   const { wizardData, setWizardData } = useWizard();
-  const [open, setOpen] = useState(false);
+  const [isFetching, setIsFetching] = useState(false);
 
   const selectedProcess = wizardData.judicialProcess;
+  
+  const handleRefetch = async () => {
+      setIsFetching(true);
+      await onRefetchRequest();
+      setIsFetching(false);
+  }
 
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-semibold">Selecione o Processo Judicial</h3>
-      <div className="flex flex-col sm:flex-row gap-4 items-start">
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant="outline"
-              role="combobox"
-              aria-expanded={open}
-              className="w-full sm:w-[350px] justify-between"
-            >
-              {selectedProcess ? (
-                <span className="truncate">{selectedProcess.processNumber}</span>
-              ) : (
-                "Selecione um processo..."
-              )}
-              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-full sm:w-[350px] p-0">
-            <Command>
-              <CommandInput placeholder="Buscar por número do processo..." />
-              <CommandEmpty>Nenhum processo encontrado.</CommandEmpty>
-              <CommandList>
-                <CommandGroup>
-                  {processes.map((process) => (
-                    <CommandItem
-                      key={process.id}
-                      value={process.processNumber}
-                      onSelect={() => {
-                        setWizardData((prev) => ({ ...prev, judicialProcess: process }));
-                        setOpen(false);
-                      }}
-                    >
-                      <Check
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          selectedProcess?.id === process.id ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                      {process.processNumber}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </CommandList>
-            </Command>
-          </PopoverContent>
-        </Popover>
-        <Button variant="secondary" onClick={onAddNewProcess}>
-            <PlusCircle className="mr-2 h-4 w-4"/>
-            Cadastrar Novo Processo
-        </Button>
-      </div>
-
+      <EntitySelector
+        value={selectedProcess?.id}
+        onChange={(processId) => {
+            const process = processes.find(p => p.id === processId) || undefined;
+            setWizardData((prev) => ({ ...prev, judicialProcess: process }));
+        }}
+        options={processes.map(p => ({ value: p.id, label: p.processNumber }))}
+        placeholder="Selecione um processo..."
+        searchPlaceholder="Buscar por número..."
+        emptyStateMessage="Nenhum processo encontrado."
+        createNewUrl="/admin/judicial-processes/new"
+        editUrlPrefix="/admin/judicial-processes"
+        onRefetch={handleRefetch}
+        isFetching={isFetching}
+      />
+      
       {selectedProcess && (
         <div className="p-4 border rounded-lg bg-secondary/50 space-y-2">
             <h4 className="font-semibold text-md">Detalhes do Processo Selecionado</h4>
