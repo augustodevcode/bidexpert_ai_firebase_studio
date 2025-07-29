@@ -51,6 +51,8 @@ interface DataTableProps<TData, TValue> {
   rowSelection?: {};
   setRowSelection?: React.Dispatch<React.SetStateAction<{}>>;
   onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
+  tableInstance?: any;
+  renderChildrenAboveTable?: (table: ReturnType<typeof useReactTable<TData>>) => React.ReactNode;
 }
 
 export function DataTable<TData, TValue>({
@@ -64,6 +66,8 @@ export function DataTable<TData, TValue>({
   rowSelection: controlledRowSelection,
   setRowSelection: setControlledRowSelection,
   onDeleteSelected,
+  tableInstance,
+  renderChildrenAboveTable,
 }: DataTableProps<TData, TValue>) {
   const [uncontrolledRowSelection, setUncontrolledRowSelection] = React.useState({});
   const [columnVisibility, setColumnVisibility] =
@@ -73,7 +77,6 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
 
-  // Determine if the component is controlled or uncontrolled for row selection
   const isControlled = controlledRowSelection !== undefined && setControlledRowSelection !== undefined;
   const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
   const setRowSelection = isControlled ? setControlledRowSelection : setUncontrolledRowSelection;
@@ -113,6 +116,7 @@ export function DataTable<TData, TValue>({
         facetedFilterColumns={facetedFilterColumns}
         onDeleteSelected={onDeleteSelected}
       />
+      {renderChildrenAboveTable && renderChildrenAboveTable(table)}
       <div className="rounded-md border">
         <Table>
           <TableHeader>

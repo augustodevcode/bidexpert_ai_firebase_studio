@@ -7,13 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctions, deleteAuction } from './actions';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
-import { PlusCircle, Gavel } from 'lucide-react';
+import { PlusCircle, Gavel, Calendar } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
 import { getAuctioneers } from '../auctioneers/actions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import AuctionGanttChart from '@/components/admin/analysis/auction-gantt-chart';
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
@@ -114,9 +116,24 @@ export default function AdminAuctionsPage() {
 
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
-    { id: 'seller.name', title: 'Comitente', options: sellerOptions },
-    { id: 'auctioneer.name', title: 'Leiloeiro', options: auctioneerOptions }
+    { id: 'sellerName', title: 'Comitente', options: sellerOptions },
+    { id: 'auctioneerName', title: 'Leiloeiro', options: auctioneerOptions }
   ], [statusOptions, sellerOptions, auctioneerOptions]);
+
+  const renderDataTable = (tableInstance: any) => (
+     <DataTable
+        columns={columns}
+        data={auctions}
+        isLoading={isLoading}
+        error={error}
+        searchColumnId="title"
+        searchPlaceholder="Buscar por título..."
+        facetedFilterColumns={facetedFilterColumns}
+        onDeleteSelected={handleDeleteSelected}
+        tableInstance={tableInstance}
+      />
+  );
+
 
   return (
     <div className="space-y-6">
@@ -138,7 +155,7 @@ export default function AdminAuctionsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
+           <DataTable
             columns={columns}
             data={auctions}
             isLoading={isLoading}
@@ -147,6 +164,25 @@ export default function AdminAuctionsPage() {
             searchPlaceholder="Buscar por título..."
             facetedFilterColumns={facetedFilterColumns}
             onDeleteSelected={handleDeleteSelected}
+            renderChildrenAboveTable={(table) => (
+                <Accordion type="single" collapsible className="w-full mb-4">
+                    <AccordionItem value="gantt-chart">
+                        <AccordionTrigger>
+                           <div className="flex items-center gap-2">
+                               <Calendar className="h-4 w-4 text-primary" /> 
+                               <span>Visualizar Cronograma (Gantt)</span>
+                           </div>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <Card className="mt-2">
+                                <CardContent className="h-[500px] w-full p-2">
+                                    <AuctionGanttChart auctions={table.getFilteredRowModel().rows.map(row => row.original)} />
+                                </CardContent>
+                           </Card>
+                        </AccordionContent>
+                    </AccordionItem>
+                </Accordion>
+            )}
           />
         </CardContent>
       </Card>
