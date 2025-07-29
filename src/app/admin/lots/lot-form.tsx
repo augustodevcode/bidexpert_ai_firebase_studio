@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, LotCategory, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus } from '@/types';
+import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
@@ -66,12 +66,8 @@ interface LotFormProps {
 }
 
 const lotStatusOptions: { value: LotStatus; label: string }[] = [
-    { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
-    { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
-    { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
-    { value: 'VENDIDO', label: getAuctionStatusText('VENDIDO') },
-    { value: 'NAO_VENDIDO', label: getAuctionStatusText('NAO_VENDIDO') },
-];
+    'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'
+].map(status => ({ value: status, label: getAuctionStatusText(status) }));
 
 export default function LotForm({
   initialData,
@@ -326,10 +322,10 @@ export default function LotForm({
   };
 
   const handleUnlinkBem = (bemIdToUnlink: string) => {
-    const currentBemIds = form.getValues('bemIds') || [];
-    const newBemIds = currentBemIds.filter(id => id !== bemIdToUnlink);
-    form.setValue('bemIds', newBemIds, { shouldDirty: true });
-    toast({ title: 'Bem desvinculado.' });
+      const currentBemIds = form.getValues('bemIds') || [];
+      const newBemIds = currentBemIds.filter(id => id !== bemIdToUnlink);
+      form.setValue('bemIds', newBemIds, { shouldDirty: true });
+      toast({ title: 'Bem desvinculado.' });
   };
   
   const linkedBensDetails = React.useMemo(() => {
@@ -488,7 +484,7 @@ export default function LotForm({
                 )}
               />
               <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={handleRefetchCategories} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)}/>
+                 <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={handleRefetchCategories} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
                 {availableSubcategories.length > 0 && (
                  <FormField control={form.control} name="subcategoryId" render={({ field }) => (<FormItem><FormLabel>Subcategoria</FormLabel><Select onValueChange={field.onChange} value={field.value || undefined} disabled={isLoadingSubcategories}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? "Carregando..." : "Selecione a subcategoria"} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(subcat => (<SelectItem key={subcat.id} value={subcat.id}>{subcat.name}</SelectItem>))}</SelectContent></Select><FormMessage /></FormItem>)}/>
                 )}

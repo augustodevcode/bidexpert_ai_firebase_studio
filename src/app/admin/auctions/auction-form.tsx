@@ -35,8 +35,9 @@ import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import EntitySelector from '@/components/ui/entity-selector'; // Import the new component
+import EntitySelector from '@/components/ui/entity-selector';
 import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from './actions';
+import { getLotCategories as refetchCategories } from '../categories/actions';
 
 
 interface AuctionFormProps {
@@ -55,16 +56,8 @@ interface AuctionFormProps {
 }
 
 const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
-  { value: 'RASCUNHO', label: getAuctionStatusText('RASCUNHO') },
-  { value: 'EM_PREPARACAO', label: getAuctionStatusText('EM_PREPARACAO') },
-  { value: 'EM_BREVE', label: getAuctionStatusText('EM_BREVE') },
-  { value: 'ABERTO', label: getAuctionStatusText('ABERTO') }, 
-  { value: 'ABERTO_PARA_LANCES', label: getAuctionStatusText('ABERTO_PARA_LANCES') },
-  { value: 'ENCERRADO', label: getAuctionStatusText('ENCERRADO') },
-  { value: 'FINALIZADO', label: getAuctionStatusText('FINALIZADO') }, 
-  { value: 'CANCELADO', label: getAuctionStatusText('CANCELADO') },
-  { value: 'SUSPENSO', label: getAuctionStatusText('SUSPENSO') },
-];
+  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
+].map(status => ({ value: status, label: getAuctionStatusText(status) }));
 
 const auctionTypeOptions = [
   { value: 'JUDICIAL', label: 'Judicial' },
@@ -78,7 +71,7 @@ const auctionTypeOptions = [
 export default function AuctionForm({
   formRef,
   initialData,
-  categories,
+  categories: initialCategories,
   auctioneers: initialAuctioneers, 
   sellers: initialSellers,    
   onSubmitAction,
@@ -94,11 +87,12 @@ export default function AuctionForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   
+  const [categories, setCategories] = React.useState(initialCategories);
   const [auctioneers, setAuctioneers] = React.useState(initialAuctioneers);
   const [sellers, setSellers] = React.useState(initialSellers);
+  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
-
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -109,6 +103,7 @@ export default function AuctionForm({
       auctionType: initialData?.auctionType || undefined,
       auctioneerId: initialData?.auctioneerId || '', 
       sellerId: initialData?.sellerId || '',       
+      categoryId: initialData?.categoryId || '',
       auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate as Date) : new Date(),
       endDate: initialData?.endDate ? new Date(initialData.endDate as Date) : null,
       mapAddress: initialData?.mapAddress || '',
@@ -148,18 +143,23 @@ export default function AuctionForm({
   // Expose form methods via the ref
   React.useImperativeHandle(formRef, () => form);
   
-  const handleRefetchSellers = React.useCallback(async () => {
-    setIsFetchingSellers(true);
-    const newSellers = await refetchSellers();
-    setSellers(newSellers);
-    setIsFetchingSellers(false);
-  }, []);
-
-  const handleRefetchAuctioneers = React.useCallback(async () => {
-    setIsFetchingAuctioneers(true);
-    const newAuctioneers = await refetchAuctioneers();
-    setAuctioneers(newAuctioneers);
-    setIsFetchingAuctioneers(false);
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
+    if (entity === 'categories') {
+        setIsFetchingCategories(true);
+        const data = await refetchCategories();
+        setCategories(data);
+        setIsFetchingCategories(false);
+    } else if (entity === 'auctioneers') {
+        setIsFetchingAuctioneers(true);
+        const data = await refetchAuctioneers();
+        setAuctioneers(data);
+        setIsFetchingAuctioneers(false);
+    } else if (entity === 'sellers') {
+        setIsFetchingSellers(true);
+        const data = await refetchSellers();
+        setSellers(data);
+        setIsFetchingSellers(false);
+    }
   }, []);
   
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
@@ -340,6 +340,7 @@ export default function AuctionForm({
                   </div>
               </>
             )}
+            <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria principal" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
             <FormField
               control={form.control}
               name="auctioneerId"
@@ -355,7 +356,7 @@ export default function AuctionForm({
                       emptyStateMessage="Nenhum leiloeiro encontrado."
                       createNewUrl="/admin/auctioneers/new"
                       editUrlPrefix="/admin/auctioneers"
-                      onRefetch={handleRefetchAuctioneers}
+                      onRefetch={() => handleRefetch('auctioneers')}
                       isFetching={isFetchingAuctioneers}
                       disabled={isViewMode}
                     />
@@ -378,7 +379,7 @@ export default function AuctionForm({
                       emptyStateMessage="Nenhum comitente encontrado."
                       createNewUrl="/admin/sellers/new"
                       editUrlPrefix="/admin/sellers"
-                      onRefetch={handleRefetchSellers}
+                      onRefetch={() => handleRefetch('sellers')}
                       isFetching={isFetchingSellers}
                       disabled={isViewMode}
                     />

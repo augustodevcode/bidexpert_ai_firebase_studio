@@ -1,26 +1,13 @@
-
+// src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
 import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
 
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
-  'RASCUNHO', // Novo
-  'EM_PREPARACAO', // Novo
-  'EM_BREVE',
-  'ABERTO', 
-  'ABERTO_PARA_LANCES',
-  'ENCERRADO',
-  'FINALIZADO', 
-  'CANCELADO',
-  'SUSPENSO'
+  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ];
 
 const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionType'], undefined>)[]] = [
-  'JUDICIAL',
-  'EXTRAJUDICIAL',
-  'PARTICULAR',
-  'TOMADA_DE_PRECOS',
-  'DUTCH',
-  'SILENT',
+  'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT',
 ];
 
 const autoRelistSettingsSchema = z.object({
@@ -53,6 +40,7 @@ export const auctionFormSchema = z.object({
   }).optional(),
   auctioneerId: z.string().min(1, { message: "O ID do leiloeiro é obrigatório."}),
   sellerId: z.string().min(1, { message: "O ID do comitente é obrigatório."}),
+  categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
   auctionDate: z.date({
     required_error: "A data do leilão é obrigatória.",
     invalid_type_error: "Por favor, insira uma data de leilão válida.",

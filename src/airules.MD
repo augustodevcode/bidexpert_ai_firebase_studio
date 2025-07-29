@@ -32,13 +32,19 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 ## 5. Code Quality and Naming Conventions
 
-### 5.1. JavaScript/TypeScript Naming
+### 5.1. Form Component Standardization
+
+**Rule:** For all CRUD forms, any field representing a foreign key relationship (e.g., selecting a `seller` for an `auction`) **must** use the custom `EntitySelector` component. This component provides a standardized and enhanced user experience including search, on-the-fly creation, editing, and list refreshing. Direct use of a standard `<Select>` component for entity relationships is disallowed.
+
+**Rationale:** This ensures a consistent, powerful, and user-friendly interface across the entire admin panel, reducing development time for new forms and improving the end-user workflow by preventing the need to navigate away to create prerequisite entities.
+
+### 5.2. JavaScript/TypeScript Naming
 
 **Rule:** All new or modified functions, variables, and components must have names that are descriptive, human-readable, and contextually relevant, preferably in Portuguese (e.g., `buscarLeiloes`, `SalvarComitenteButton`). This practice applies to all parts of the codebase, from front-end components to back-end services.
 
 **Rationale:** Clear and consistent naming is fundamental for code quality, making the application easier to read, debug, and maintain for all developers involved, including AI assistants.
 
-### 5.2. HTML Element Identification
+### 5.3. HTML Element Identification
 
 **Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, and contextually relevant name. This name should reflect the element's purpose or content. For example, a button to submit a login form should be `<Button data-ai-id="login-submit-button">`, and a container for a user's profile card should be `<div data-ai-id="user-profile-card">`.
 
