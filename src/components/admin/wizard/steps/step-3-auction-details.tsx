@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -10,19 +9,22 @@ import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStag
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, PlusCircle, Trash2, ClockIcon, Zap } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { Separator } from '@/components/ui/separator';
 import { Switch } from '@/components/ui/switch';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Card } from '@/components/ui/card';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from '@/app/admin/auctions/actions';
+import { getLotCategories as refetchCategories } from '@/app/admin/categories/actions';
+
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
@@ -34,15 +36,15 @@ const auctionDetailsSchema = z.object({
   title: z.string().min(10, 'O título deve ter pelo menos 10 caracteres.'),
   description: z.string().optional(),
   categoryId: z.string().min(1, 'A categoria principal é obrigatória.'),
-  auctioneer: z.string().min(1, 'Selecione um leiloeiro.'),
-  seller: z.string().min(1, 'Selecione um comitente.'),
+  auctioneerId: z.string().min(1, 'Selecione um leiloeiro.'),
+  sellerId: z.string().min(1, 'Selecione um comitente.'),
   auctionDate: z.date({ required_error: 'A data de início é obrigatória.' }),
   endDate: z.date().optional().nullable(),
   auctionStages: z.array(
     z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
-      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional(),
+      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
     })
   ).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
@@ -53,8 +55,20 @@ const auctionDetailsSchema = z.object({
 
 type FormValues = z.infer<typeof auctionDetailsSchema>;
 
-export default function Step3AuctionDetails({ categories, auctioneers, sellers }: Step3AuctionDetailsProps) {
+export default function Step3AuctionDetails({ 
+    categories: initialCategories, 
+    auctioneers: initialAuctioneers, 
+    sellers: initialSellers 
+}: Step3AuctionDetailsProps) {
   const { wizardData, setWizardData } = useWizard();
+  
+  const [categories, setCategories] = useState(initialCategories);
+  const [auctioneers, setAuctioneers] = useState(initialAuctioneers);
+  const [sellers, setSellers] = useState(initialSellers);
+  const [isFetchingCategories, setIsFetchingCategories] = useState(false);
+  const [isFetchingAuctioneers, setIsFetchingAuctioneers] = useState(false);
+  const [isFetchingSellers, setIsFetchingSellers] = useState(false);
+
 
   const form = useForm<FormValues>({
     resolver: zodResolver(auctionDetailsSchema),
@@ -62,11 +76,11 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
       title: wizardData.auctionDetails?.title || '',
       description: wizardData.auctionDetails?.description || '',
       categoryId: wizardData.auctionDetails?.categoryId || '',
-      auctioneer: wizardData.auctionDetails?.auctioneer || '',
-      seller: wizardData.auctionDetails?.seller || '',
+      auctioneerId: wizardData.auctionDetails?.auctioneerId || '',
+      sellerId: wizardData.auctionDetails?.sellerId || '',
       auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
       endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
-      auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, endDate: new Date(stage.endDate as Date)})) || [{ name: '1ª Praça', endDate: new Date() }],
+      auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date() }],
       automaticBiddingEnabled: wizardData.auctionDetails?.automaticBiddingEnabled || false,
       allowInstallmentBids: wizardData.auctionDetails?.allowInstallmentBids || false,
       softCloseEnabled: wizardData.auctionDetails?.softCloseEnabled || false,
@@ -79,6 +93,25 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
     name: "auctionStages",
   });
   
+  const handleRefetch = useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
+    if (entity === 'categories') {
+        setIsFetchingCategories(true);
+        const data = await refetchCategories();
+        setCategories(data);
+        setIsFetchingCategories(false);
+    } else if (entity === 'auctioneers') {
+        setIsFetchingAuctioneers(true);
+        const data = await refetchAuctioneers();
+        setAuctioneers(data);
+        setIsFetchingAuctioneers(false);
+    } else if (entity === 'sellers') {
+        setIsFetchingSellers(true);
+        const data = await refetchSellers();
+        setSellers(data);
+        setIsFetchingSellers(false);
+    }
+  }, []);
+
   const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
@@ -88,10 +121,11 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
     : null;
 
   useEffect(() => {
-    if (judicialProcessSellerName && form.getValues('seller') !== judicialProcessSellerName) {
-      form.setValue('seller', judicialProcessSellerName);
+    const seller = sellers.find(s => s.name === judicialProcessSellerName);
+    if (seller && form.getValues('sellerId') !== seller.id) {
+      form.setValue('sellerId', seller.id);
     }
-  }, [judicialProcessSellerName, form]);
+  }, [judicialProcessSellerName, form, sellers]);
 
   const availableSellers = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
@@ -102,16 +136,16 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
 
   useEffect(() => {
     const subscription = form.watch((value) => {
-      const auctioneerDetails = auctioneers.find(a => a.name === value.auctioneer);
-      const sellerDetails = sellers.find(s => s.name === value.seller);
+      const auctioneerDetails = auctioneers.find(a => a.id === value.auctioneerId);
+      const sellerDetails = sellers.find(s => s.id === value.sellerId);
       
       setWizardData(prev => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
           ...value,
-          auctioneerId: auctioneerDetails ? auctioneerDetails.id : prev.auctionDetails?.auctioneerId,
-          sellerId: sellerDetails ? sellerDetails.id : prev.auctionDetails?.sellerId,
+          auctioneer: auctioneerDetails?.name,
+          seller: sellerDetails?.name,
         }
       }));
     });
@@ -125,12 +159,74 @@ export default function Step3AuctionDetails({ categories, auctioneers, sellers }
         <form className="space-y-4">
           <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Grande Leilão Judicial da Vara X" {...field} /></FormControl><FormMessage /></FormItem>)} />
           <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Breve descrição sobre o leilão..." {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField control={form.control} name="auctioneer" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctioneers.map(a => <SelectItem key={a.id} value={a.name}>{a.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-            <FormField control={form.control} name="seller" render={({ field }) => (<FormItem><FormLabel>Comitente</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{availableSellers.map(s => <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-          </div>
+           <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Categoria Principal</FormLabel>
+                <EntitySelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={categories.map(c => ({ value: c.id, label: c.name }))}
+                  placeholder="Selecione a categoria"
+                  searchPlaceholder="Buscar categoria..."
+                  emptyStateMessage="Nenhuma categoria encontrada."
+                  createNewUrl="/admin/categories/new"
+                  editUrlPrefix="/admin/categories"
+                  onRefetch={() => handleRefetch('categories')}
+                  isFetching={isFetchingCategories}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+           <FormField
+              control={form.control}
+              name="auctioneerId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Leiloeiro</FormLabel>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={auctioneers.map(a => ({ value: a.id, label: a.name }))}
+                      placeholder="Selecione o leiloeiro"
+                      searchPlaceholder="Buscar leiloeiro..."
+                      emptyStateMessage="Nenhum leiloeiro encontrado."
+                      createNewUrl="/admin/auctioneers/new"
+                      editUrlPrefix="/admin/auctioneers"
+                      onRefetch={() => handleRefetch('auctioneers')}
+                      isFetching={isFetchingAuctioneers}
+                    />
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+                control={form.control}
+                name="sellerId"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Comitente</FormLabel>
+                    <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={availableSellers.map(s => ({ value: s.id, label: s.name }))}
+                      placeholder="Selecione o comitente"
+                      searchPlaceholder="Buscar comitente..."
+                      emptyStateMessage="Nenhum comitente encontrado."
+                      createNewUrl="/admin/sellers/new"
+                      editUrlPrefix="/admin/sellers"
+                      onRefetch={() => handleRefetch('sellers')}
+                      isFetching={isFetchingSellers}
+                    />
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
           
           <Separator />
            <h3 className="text-md font-semibold text-muted-foreground pt-2">Parâmetros e Datas</h3>
