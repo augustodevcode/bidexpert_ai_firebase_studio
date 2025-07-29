@@ -26,7 +26,6 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
-        auctionStages: true, // Incluindo as etapas do leilão
       },
     });
 
