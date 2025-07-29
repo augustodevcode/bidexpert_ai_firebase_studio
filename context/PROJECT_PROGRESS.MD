@@ -21,7 +21,7 @@
 ## DOING
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
-    - Expand the gamification system with more badges and rewards.
+    - **DONE:** Expand the gamification system with more badges and rewards.
 
 ## NEXT
 - **Item 11:** **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.

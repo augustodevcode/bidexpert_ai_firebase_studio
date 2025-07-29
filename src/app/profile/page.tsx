@@ -34,7 +34,7 @@ const InfoItem = ({ icon: Icon, label, value, href }: { icon: React.ElementType,
 
 const badgeMap: Record<string, { icon: React.ElementType, label: string, description: string }> = {
     'PRIMEIRO_ARREMATE': { icon: Award, label: "Primeiro Arremate", description: "Parabéns por seu primeiro lote arrematado!" },
-    // Add other badges here
+    // Adicionar outros badges aqui conforme o sistema evolui
 };
 
 export default function ProfilePage() {
@@ -170,5 +170,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
