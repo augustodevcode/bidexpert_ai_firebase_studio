@@ -15,12 +15,12 @@
     - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+    - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 
 ## DOING
-- **Item 14: BidExpertOkrs - Fase 5 (IA Insights):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo (Leilões, Lotes, Comitentes, etc.).
+- **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 
 ## NEXT
-- **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
     - Expand the gamification system with more badges and rewards.
