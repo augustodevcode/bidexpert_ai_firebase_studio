@@ -9,7 +9,6 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { getSampleData } from '@/lib/sample-data-helpers';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,12 +45,14 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   
   if (!auctionFromDb || !lotFromDb) {
     console.warn(`[getLotPageData] Leilão ou Lote não encontrado. Auction found: ${!!auctionFromDb}, Lot found: ${!!lotFromDb}`);
+    // @ts-ignore
     return { lot: lotFromDb, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }
 
   // Verify that the lot actually belongs to the auction requested in the URL.
   if (lotFromDb.auctionId !== auctionFromDb.id) {
     console.warn(`[getLotPageData] Mismatch: Lot '${lotFromDb.id}' belongs to auction '${lotFromDb.auctionId}', not '${auctionFromDb.id}'. Returning not found.`);
+    // @ts-ignore
     return { lot: null, auction: auctionFromDb, platformSettings, allCategories, allSellers, auctioneer: null };
   }
   
@@ -60,7 +61,11 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     lotFromDb.bens = await getBensByIdsAction(lotFromDb.bemIds);
   }
 
-
+  // Ensure the lots array on the auction object is populated.
+  // The `getAuction` service should ideally handle this join.
+  if (!auctionFromDb.lots || auctionFromDb.lots.length === 0) {
+      auctionFromDb.lots = await getLots(auctionFromDb.id);
+  }
   const lotsForThisAuction = auctionFromDb.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
   const totalLotsInAuction = lotsForThisAuction.length;
@@ -68,7 +73,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   const previousLotId = lotIndex > 0 ? (lotsForThisAuction[lotIndex - 1].publicId || lotsForThisAuction[lotIndex - 1].id) : undefined;
   const nextLotId = (lotIndex > -1 && lotIndex < totalLotsInAuction - 1) ? (lotsForThisAuction[lotIndex + 1].publicId || lotsForThisAuction[lotIndex + 1].id) : undefined;
   
-  let sellerName = lotFromDb.sellerName || auctionFromDb.seller;
+  let sellerName = lotFromDb.sellerName || auctionFromDb.seller?.name;
   const sellerIdToFetch = lotFromDb.sellerId || auctionFromDb.sellerId;
   if (!sellerName && sellerIdToFetch) {
     const seller = allSellers.find(s => s.id === sellerIdToFetch || s.publicId === sellerIdToFetch);
@@ -128,7 +133,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
       <LotDetailClientContent
         lot={lot}
         auction={auction}
-        platformSettings={platformSettings}
+        platformSettings={platformSettings!}
         sellerName={sellerName}
         lotIndex={lotIndex}
         previousLotId={previousLotId}
@@ -147,7 +152,7 @@ export async function generateStaticParams() {
     const lots = await getLots(); 
     // Limit to a reasonable number for build time
     const paths = lots.slice(0, 50).map(lot => ({
-        auctionId: lot.auctionPublicId || lot.auctionId, // Use publicId if available
+        auctionId: lot.auctionId,
         lotId: lot.publicId || lot.id,
       }));
     return paths;

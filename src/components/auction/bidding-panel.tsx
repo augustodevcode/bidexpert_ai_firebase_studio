@@ -16,7 +16,7 @@ import { hasPermission } from '@/lib/permissions';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import LotAllBidsModal from './lot-all-bids-modal';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 import { cn } from '@/lib/utils';
 
@@ -118,7 +118,22 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
     }
   };
 
-  const handleSetMaxBid = async () => { /* ... (rest of the function is unchanged) */ };
+  const handleSetMaxBid = async () => {
+    if (!canUserBid || !userProfileWithPermissions || !maxBidAmountInput) return;
+    setIsSettingMaxBid(true);
+    const result = await placeMaxBid(
+        currentLot.publicId || currentLot.id,
+        userProfileWithPermissions.id,
+        parseFloat(maxBidAmountInput)
+    );
+     setIsSettingMaxBid(false);
+    if(result.success) {
+        toast({ title: 'Sucesso!', description: 'Seu lance máximo foi salvo.' });
+        fetchBidData();
+    } else {
+        toast({ title: 'Erro ao salvar lance máximo', description: result.message, variant: 'destructive' });
+    }
+  };
 
   const displayBidAmount = parseFloat(bidAmountInput) >= nextMinimumBid ? parseFloat(bidAmountInput) : nextMinimumBid;
   const bidButtonLabel = `Dar Lance (R$ ${displayBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`;

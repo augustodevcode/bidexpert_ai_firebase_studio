@@ -12,7 +12,7 @@ import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock
 import { format, isPast, differenceInSeconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,67 +50,66 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   urgencyThresholdDays = 1,
   urgencyThresholdHours = 0
 }) => {
-  const [timeRemaining, setTimeRemaining] = useState<string>('');
+  const [remaining, setRemaining] = useState('');
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
     if (!endDate) {
-      setTimeRemaining(getAuctionStatusText(status));
+      setRemaining(getAuctionStatusText(status));
       setIsUrgent(false);
       return;
     }
 
-    const calculateTime = () => {
-      const now = new Date();
-      const end = endDate instanceof Date ? endDate : new Date(endDate as string);
-
-      if (isPast(end) || status !== 'ABERTO_PARA_LANCES') {
-        setTimeRemaining(getAuctionStatusText(status === 'ABERTO_PARA_LANCES' && isPast(end) ? 'ENCERRADO' : status));
+    const interval = setInterval(() => {
+      const end = new Date(endDate as string);
+      if (isPast(end)) {
+        setRemaining('Encerrado');
+        clearInterval(interval);
         setIsUrgent(false);
         return;
       }
 
-      const totalSecondsLeft = differenceInSeconds(end, now);
-      if (totalSecondsLeft <= 0) {
-        setTimeRemaining('Encerrado');
-        setIsUrgent(false);
-        return;
-      }
+      const totalSecondsLeft = differenceInSeconds(end, new Date());
+             if (totalSecondsLeft <= 0) {
+                setRemaining('Encerrado');
+                clearInterval(interval);
+                setIsUrgent(false);
+                return;
+            }
+            
+            const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
+            const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
+            setIsUrgent(currentlyUrgent && showUrgencyTimer);
+            
+            if (currentlyUrgent && showUrgencyTimer) {
+                const hours = Math.floor(totalSecondsLeft / 3600);
+                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+                const seconds = totalSecondsLeft % 60;
+                if (hours > 0) {
+                  setRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                } else {
+                  setRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
+                }
+            } else {
+                 const days = Math.floor(totalSecondsLeft / (3600 * 24));
+                const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
+                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
 
-      const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
-      const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-      setIsUrgent(currentlyUrgent && showUrgencyTimer);
+                if (days > 0) setRemaining(`${days}d ${hours}h`);
+                else if (hours > 0) setRemaining(`${hours}h ${minutes}m`);
+                else if (minutes > 0) setRemaining(`${minutes}m`);
+                else setRemaining('Encerrando!');
+            }
 
-      if (currentlyUrgent && showUrgencyTimer) {
-        const hours = Math.floor(totalSecondsLeft / 3600);
-        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-        const seconds = totalSecondsLeft % 60;
-        if (hours > 0) {
-          setTimeRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        } else {
-          setTimeRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-        }
-      } else {
-        const days = Math.floor(totalSecondsLeft / (3600 * 24));
-        const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
-        const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
+        }, 1000);
 
-        if (days > 0) setTimeRemaining(`${days}d ${hours}h`);
-        else if (hours > 0) setTimeRemaining(`${hours}h ${minutes}m`);
-        else if (minutes > 0) setTimeRemaining(`${minutes}m`);
-        else setTimeRemaining('Encerrando!');
-      }
-    };
-
-    calculateTime();
-    const interval = setInterval(calculateTime, 1000);
-    return () => clearInterval(interval);
+        return () => clearInterval(interval);
   }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
 
   return (
     <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium">
       <Clock className="h-3 w-3 mr-1" />
-      {timeRemaining}
+      {remaining}
     </Badge>
   );
 };
@@ -176,13 +175,11 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
-
     if (newFavoriteState) {
       addFavoriteLotIdToStorage(lot.id);
     } else {
       removeFavoriteLotIdFromStorage(lot.id);
     }
-
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
       description: `O lote "${lot.title}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
@@ -421,3 +418,4 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+

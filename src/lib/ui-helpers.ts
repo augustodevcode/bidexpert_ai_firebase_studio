@@ -1,4 +1,3 @@
-
 // src/lib/ui-helpers.ts
 import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';

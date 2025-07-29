@@ -8,7 +8,7 @@ import { NavigationMenuLink } from '@/components/ui/navigation-menu';
 import type { LotCategory } from '@/types';
 import { cn } from '@/lib/utils';
 import { ChevronRight, Tag, ListChecks, type LucideIcon } from 'lucide-react';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import { Button } from '@/components/ui/button';
 import { icons } from 'lucide-react';
 
