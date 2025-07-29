@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star, TrendingUp, Pencil } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -45,7 +45,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
         }
     }
     
-    if ((auction.totalHabilitatedUsers || 0) > 100) {
+    if ((auction.totalHabilitatedUsers || 0) > 100) { 
         triggers.push('ALTA DEMANDA');
     }
     

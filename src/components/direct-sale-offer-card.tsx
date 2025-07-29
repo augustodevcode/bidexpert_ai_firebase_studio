@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import type { DirectSaleOffer } from '@/types';
@@ -8,8 +7,8 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Tag, MapPin, UserCircle, DollarSign } from 'lucide-react';
-import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { Eye, Tag, MapPin, UserCircle, DollarSign, ShoppingCart, Edit } from 'lucide-react';
+import { getLotStatusColor, getAuctionStatusText } from '@/lib/ui-helpers';
 
 interface DirectSaleOfferCardProps {
   offer: DirectSaleOffer;
