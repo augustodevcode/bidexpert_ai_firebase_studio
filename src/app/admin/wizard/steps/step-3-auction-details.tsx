@@ -24,6 +24,7 @@ import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'
 import { Card } from '@/components/ui/card';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from '@/app/admin/auctions/actions';
+import { getLotCategories as refetchCategories } from '@/app/admin/categories/actions';
 
 
 interface Step3AuctionDetailsProps {
@@ -93,8 +94,13 @@ export default function Step3AuctionDetails({
     name: "auctionStages",
   });
   
-  const handleRefetch = useCallback(async (entity: 'auctioneers' | 'sellers') => {
-    if (entity === 'auctioneers') {
+  const handleRefetch = useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
+    if (entity === 'categories') {
+        setIsFetchingCategories(true);
+        const data = await refetchCategories();
+        setCategories(data);
+        setIsFetchingCategories(false);
+    } else if (entity === 'auctioneers') {
         setIsFetchingAuctioneers(true);
         const data = await refetchAuctioneers();
         setAuctioneers(data);
@@ -139,7 +145,9 @@ export default function Step3AuctionDetails({
         auctionDetails: {
           ...prev.auctionDetails,
           ...value,
-          auctioneer: auctioneerDetails?.name,
+          auctioneerId: value.auctioneerId,
+          sellerId: value.sellerId,
+          auctioneer: auctioneerDetails?.name, // Denormalized name for display in other steps
           seller: sellerDetails?.name,
         }
       }));
@@ -154,7 +162,29 @@ export default function Step3AuctionDetails({
         <form className="space-y-4">
           <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Grande Leilão Judicial da Vara X" {...field} /></FormControl><FormMessage /></FormItem>)} />
           <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Breve descrição sobre o leilão..." {...field} value={field.value || ''} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{categories.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+          
+          <FormField
+            control={form.control}
+            name="categoryId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Categoria Principal</FormLabel>
+                <EntitySelector
+                  value={field.value}
+                  onChange={field.onChange}
+                  options={categories.map(c => ({ value: c.id, label: c.name }))}
+                  placeholder="Selecione a categoria"
+                  searchPlaceholder="Buscar categoria..."
+                  emptyStateMessage="Nenhuma categoria encontrada."
+                  createNewUrl="/admin/categories/new"
+                  editUrlPrefix="/admin/categories"
+                  onRefetch={() => handleRefetch('categories')}
+                  isFetching={isFetchingCategories}
+                />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           
            <FormField
               control={form.control}
