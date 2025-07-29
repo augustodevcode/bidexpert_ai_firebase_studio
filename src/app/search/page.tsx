@@ -16,7 +16,7 @@ import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AuctionListItem from '@/components/auction-list-item';
@@ -354,7 +354,7 @@ export default function SearchPage() {
         else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!;
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
       }
-      if (activeFilters.status && activeFilters.status.length > 0) {
+       if (activeFilters.status && activeFilters.status.length > 0) {
           if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
       }
       if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
@@ -519,7 +519,7 @@ export default function SearchPage() {
       </form>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block sticky top-24 h-fit">
+        <div className="hidden md:block">
              <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
@@ -529,7 +529,7 @@ export default function SearchPage() {
                 initialFilters={activeFilters as ActiveFilters}
                 filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
             />
-        </aside>
+        </div>
         
         <main className="min-w-0 space-y-6 md:ml-4">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
