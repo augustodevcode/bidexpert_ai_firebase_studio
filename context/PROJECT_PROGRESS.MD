@@ -8,25 +8,21 @@
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
 - **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
-- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process. This involved removing the old `/create` page and integrating a suggestion modal directly into the auction edit form.
-- **Item 13 - Part 1: Document Upload Foundation:** Implemented the UI and backend logic for uploading documents to a Judicial Process, setting the stage for AI extraction.
+- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
+- **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
+    - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
+    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+    - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+    - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
+- **Item 9:** **PDF Document Generation:** Implemented the server-side logic using Puppeteer to generate PDF documents for winning bid terms, accessible from the user's dashboard.
 
 ## DOING
-- **Item 13: Extração de Dados de Documentos com IA:** Implementar uma funcionalidade onde a IA pode processar diversos formatos de documentos (PDF, Word, imagens, etc.) para extrair informações relevantes de processos judiciais (despachos, editais, penhoras).
-    - **Step 1: Criar o Fluxo Genkit de Extração:** Desenvolver o fluxo `extract-process-data-flow.ts` que recebe um documento (imagem, PDF) e retorna dados estruturados como número do processo, nomes das partes, comarca, etc.
-    - **Step 2: Conectar o Botão da UI:** Ligar o botão "Extrair Dados com IA" no formulário de processo para invocar o novo fluxo Genkit, passando o documento selecionado.
-    - **Step 3: Desenvolver o Modal de Validação:** Criar um modal que exiba os dados extraídos pela IA, permitindo que o Analista de Leilão revise e edite as informações.
-    - **Step 4: Salvar Dados Validados:** Implementar a lógica para que, ao confirmar no modal, as informações validadas sejam salvas automaticamente nos campos do Processo Judicial correspondente.
-
-## NEXT
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Implementar uma suíte completa de dashboards analíticos no painel de administração, conforme a nova regra de arquitetura.
-    - **Fase 1: Implementar o Dashboard de Relatórios Gerais (`/admin/reports`).**
-    - **Fase 2:** Criar dashboards de análise de grupo para cada entidade principal (Cidades, Estados, Comitentes, etc.).
-    - **Fase 3:** Adicionar seções de dashboard e KPIs nas páginas de edição de cada registro individual.
-    - **Fase 4:** Integrar Genkit para fornecer análises e recomendações inteligentes com base nos dados dos dashboards.
-- **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 - **Item 10:** **Advanced UI/UX Features:**
     - Implement real-time updates for bids and auction status using WebSockets.
     - Expand the gamification system with more badges and rewards.
+
+## NEXT
 - **Item 11:** **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
 - **Item 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability.

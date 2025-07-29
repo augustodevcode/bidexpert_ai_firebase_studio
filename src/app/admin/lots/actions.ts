@@ -1,13 +1,17 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import type { Lot, Bem, LotFormData } from '@/types';
+import type { Lot, Bem, LotFormData, UserWin } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
-import { BemRepository } from '@/repositories/bem.repository'; // Usar repositório diretamente aqui é aceitável por ser uma query simples
+import { BemRepository } from '@/repositories/bem.repository';
+import { prisma } from '@/lib/prisma';
+import { generateDocument } from '@/ai/flows/generate-document-flow';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const lotService = new LotService();
-const bemRepository = new BemRepository(); // Instanciar para buscar bens
+const bemRepository = new BemRepository();
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
   return lotService.getLots(auctionId);
@@ -61,15 +65,64 @@ export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
   if (ids.length === 0) return [];
-  // This is also likely better in the LotService/Repository
-  const { prisma } = await import('@/lib/prisma');
   // @ts-ignore
   return prisma.lot.findMany({ where: { id: { in: ids } }, include: { auction: true } });
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
-  console.log(`[Action] Finalizing lot ${lotId} - not implemented for this adapter.`);
-  return { success: false, message: "Finalização de lote não implementada." };
+  const result = await lotService.finalizeLot(lotId);
+  if (result.success) {
+    const lot = await lotService.getLotById(lotId);
+    if(lot) {
+      revalidatePath(`/admin/lots/${lotId}/edit`);
+      revalidatePath(`/admin/auctions/${lot.auctionId}/edit`);
+    }
+  }
+  return result;
+}
+
+export async function generateWinningBidTermAction(lotId: string): Promise<{ success: boolean; message: string; pdfBase64?: string; fileName?: string; }> {
+  const lot = await lotService.getLotById(lotId);
+  if (!lot || !lot.winnerId || !lot.auction) {
+    return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
+  }
+  
+  const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
+  if (!winner) {
+    return { success: false, message: 'Arrematante não encontrado.'};
+  }
+
+  const { auction } = lot;
+  const auctioneer = auction.auctioneer;
+  const seller = auction.seller;
+
+  try {
+    const result = await generateDocument({
+      documentType: 'WINNING_BID_TERM',
+      data: {
+        lot: lot,
+        auction: auction,
+        winner: winner,
+        auctioneer: auctioneer,
+        seller: seller,
+        currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
+      },
+    });
+
+    if (result.pdfBase64 && result.fileName) {
+      // For simplicity, we are returning the PDF directly to the client to handle the download.
+      // A more robust implementation would save this to a secure storage (like Firebase Storage)
+      // and then save the URL in the lot's `winningBidTermUrl` field.
+      await updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); // Placeholder URL
+      return { ...result, success: true, message: 'Documento gerado com sucesso!' };
+    } else {
+      throw new Error("A geração do PDF não retornou os dados esperados.");
+    }
+
+  } catch (error: any) {
+    console.error("Error generating winning bid term:", error);
+    return { success: false, message: `Falha ao gerar documento: ${error.message}` };
+  }
 }
 
 export async function updateLotFeaturedStatus(id: string, isFeatured: boolean): Promise<{ success: boolean, message: string }> {
