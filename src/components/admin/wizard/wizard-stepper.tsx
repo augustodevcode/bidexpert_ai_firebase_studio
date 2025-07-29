@@ -1,4 +1,4 @@
-
+// src/components/admin/wizard/wizard-stepper.tsx
 'use client';
 
 import { Check } from 'lucide-react';
@@ -19,23 +19,39 @@ interface WizardStepperProps {
 export default function WizardStepper({ steps, currentStep, onStepClick }: WizardStepperProps) {
   return (
     <nav aria-label="Wizard Progress">
-      <ol role="list" className="flex items-start">
+      <ol role="list" className="grid grid-cols-5 items-start">
         {steps.map((step, stepIdx) => (
-          <li key={step.id} className="relative flex-1">
-            <div className="flex flex-col items-center gap-2">
-              <button
+          <li key={step.id} className="relative flex flex-col items-center">
+            {/* Connector line - needs to be rendered behind the circle */}
+            {stepIdx > 0 ? (
+                <div
+                    className="absolute left-0 top-5 h-0.5 w-full -translate-x-1/2 bg-border"
+                    aria-hidden="true"
+                >
+                    <div
+                        className={cn(
+                            'h-full w-full bg-primary transition-all duration-300',
+                            stepIdx <= currentStep ? 'scale-x-100' : 'scale-x-0'
+                        )}
+                        style={{ transformOrigin: 'left' }}
+                    />
+                </div>
+            ) : null}
+
+            {/* Step Circle */}
+            <button
                 type="button"
                 onClick={() => onStepClick(stepIdx)}
                 className={cn(
-                  'flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors',
+                  'relative z-10 flex h-10 w-10 items-center justify-center rounded-full border-2 transition-colors',
                   stepIdx < currentStep
                     ? 'border-primary bg-primary text-primary-foreground'
                     : stepIdx === currentStep
-                    ? 'border-primary ring-2 ring-primary/30'
+                    ? 'border-primary ring-4 ring-primary/20'
                     : 'border-muted-foreground/30 bg-muted/50 hover:border-muted-foreground/50'
                 )}
                 aria-current={stepIdx === currentStep ? 'step' : undefined}
-              >
+            >
                 {stepIdx < currentStep ? (
                   <Check className="h-6 w-6" />
                 ) : (
@@ -48,8 +64,10 @@ export default function WizardStepper({ steps, currentStep, onStepClick }: Wizar
                     0{stepIdx + 1}
                   </span>
                 )}
-              </button>
-              <div className="absolute top-12 w-full text-center">
+            </button>
+            
+            {/* Step Label */}
+            <div className="mt-2 text-center">
                  <p className={cn(
                      "text-sm font-medium",
                      stepIdx === currentStep ? 'text-primary' : 'text-foreground'
@@ -57,21 +75,7 @@ export default function WizardStepper({ steps, currentStep, onStepClick }: Wizar
                     {step.title}
                 </p>
                 <p className="text-xs text-muted-foreground hidden sm:block">{step.description}</p>
-              </div>
             </div>
-
-            {/* Connector */}
-            {stepIdx < steps.length - 1 ? (
-              <div className="absolute left-1/2 top-5 -z-10 h-0.5 w-full -translate-x-1/2 bg-border" aria-hidden="true">
-                <div
-                  className={cn(
-                    'h-full w-full bg-primary transition-all duration-300',
-                    stepIdx < currentStep ? 'scale-x-100' : 'scale-x-0'
-                  )}
-                  style={{ transformOrigin: 'left' }}
-                />
-              </div>
-            ) : null}
           </li>
         ))}
       </ol>
