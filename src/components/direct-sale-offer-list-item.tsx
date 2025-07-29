@@ -1,5 +1,3 @@
-
-
 // src/components/direct-sale-offer-list-item.tsx
 'use client';
 
@@ -10,7 +8,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Tag, MapPin, UserCircle, DollarSign, ShoppingCart, Edit } from 'lucide-react';
-import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getLotStatusColor, getAuctionStatusText } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
