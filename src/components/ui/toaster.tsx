@@ -14,18 +14,23 @@ import {
 import { Button } from "./button"
 import { Copy, Check } from "lucide-react"
 
-// Helper function to extract text content from React nodes
+// Helper function to recursively extract text content from React nodes
 const getTextContent = (node: React.ReactNode): string => {
   if (typeof node === 'string') return node;
   if (typeof node === 'number') return String(node);
   if (node === null || typeof node === 'boolean' || node === undefined) return '';
-  if (Array.isArray(node)) return node.map(getTextContent).join('');
-  // Check for props.children on valid React elements
+
+  if (Array.isArray(node)) {
+    return node.map(getTextContent).join('');
+  }
+
   if (React.isValidElement(node) && node.props.children) {
     return getTextContent(node.props.children);
   }
+
   return '';
 };
+
 
 // Extracted component to handle its own state, avoiding hook calls in a loop.
 function ToastComponent({ id, title, description, action, ...props }: any) {
