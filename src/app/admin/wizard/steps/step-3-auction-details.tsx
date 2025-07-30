@@ -305,7 +305,7 @@ export default function Step3AuctionDetails({
                       const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
                       const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); // Add 1 minute if not synced
                       const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
-                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: lastStage?.initialPrice })
+                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate })
                   }} className="text-xs mt-2">
                       <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
               </Button>
