@@ -41,7 +41,6 @@ export const auctionFormSchema = z.object({
   auctioneerId: z.string().min(1, { message: "O ID do leiloeiro é obrigatório."}),
   sellerId: z.string().min(1, { message: "O ID do comitente é obrigatório."}),
   categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
-  endDate: z.date().optional().nullable(),
   mapAddress: z.string().max(300, { message: "O endereço do mapa não pode exceder 300 caracteres." }).optional().nullable(),
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
   imageMediaId: z.string().optional().nullable(),

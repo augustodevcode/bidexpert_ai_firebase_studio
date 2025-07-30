@@ -23,7 +23,7 @@ export class AuctionService {
       sellerName: a.seller?.name, 
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      // auctionStages are included by default from the repository
+      auctionStages: a.auctionStages || [], // Ensure auctionStages is always an array
     }));
   }
 
@@ -54,27 +54,20 @@ export class AuctionService {
         throw new Error("Pelo menos uma etapa/praça do leilão é obrigatória.");
       }
 
-      const {
-        mapAddress,
-        latitude,
-        longitude,
-        ...validRestOfData
-      } = restOfData as any;
-      
+      // Deduce auctionDate from the start date of the first stage
       const derivedAuctionDate = auctionStages[0].startDate;
 
+      // Create the auction and its stages within a single transaction
       return await prisma.$transaction(async (tx) => {
           const auctionData: Prisma.AuctionCreateInput = {
-            ...(validRestOfData),
-            auctionDate: derivedAuctionDate, // Use the start date of the first stage
+            ...(restOfData as any),
+            auctionDate: derivedAuctionDate,
             publicId: `AUC-${uuidv4()}`,
             slug: slugify(data.title!),
             auctioneer: { connect: { id: auctioneerId } },
             seller: { connect: { id: sellerId } },
-            mapAddress: mapAddress,
-            latitude: latitude,
-            longitude: longitude,
           };
+
           if (categoryId) {
             auctionData.category = { connect: { id: categoryId } };
           }
@@ -84,7 +77,10 @@ export class AuctionService {
           // Create the AuctionStage records linked to the new auction
           await tx.auctionStage.createMany({
             data: auctionStages.map(stage => ({
-              ...stage,
+              name: stage.name,
+              startDate: stage.startDate,
+              endDate: stage.endDate,
+              initialPrice: stage.initialPrice,
               auctionId: newAuction.id,
             })),
           });
@@ -103,24 +99,25 @@ export class AuctionService {
       const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
       
       return await prisma.$transaction(async (tx) => {
-        const dataToUpdate: Prisma.AuctionUpdateInput = { ...restOfData };
+        const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
         if (data.title) dataToUpdate.slug = slugify(data.title);
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-        if (auctionStages && auctionStages.length > 0) {
+        if (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) {
           dataToUpdate.auctionDate = auctionStages[0].startDate;
         }
 
         await tx.auction.update({ where: { id }, data: dataToUpdate });
 
         if (auctionStages) {
-            // Simple approach: delete existing and create new ones.
-            // A more complex approach would be to diff and update/create/delete.
             await tx.auctionStage.deleteMany({ where: { auctionId: id } });
             await tx.auctionStage.createMany({
                 data: auctionStages.map(stage => ({
-                    ...stage,
+                    name: stage.name,
+                    startDate: stage.startDate,
+                    endDate: stage.endDate,
+                    initialPrice: stage.initialPrice,
                     auctionId: id,
                 })),
             });
