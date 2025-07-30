@@ -50,43 +50,36 @@ export class AuctionService {
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!sellerId) throw new Error("O ID do comitente é obrigatório.");
-      if (!auctionStages || auctionStages.length === 0) {
-        throw new Error("Pelo menos uma etapa/praça do leilão é obrigatória.");
+      
+      const derivedAuctionDate = (auctionStages && auctionStages.length > 0) ? auctionStages[0].startDate : new Date();
+
+      const auctionData: Prisma.AuctionCreateInput = {
+        ...(restOfData as any),
+        auctionDate: derivedAuctionDate,
+        publicId: `AUC-${uuidv4()}`,
+        slug: slugify(data.title!),
+        auctioneer: { connect: { id: auctioneerId } },
+        seller: { connect: { id: sellerId } },
+      };
+
+      if (categoryId) {
+        auctionData.category = { connect: { id: categoryId } };
       }
-
-      // Deduce auctionDate from the start date of the first stage
-      const derivedAuctionDate = auctionStages[0].startDate;
-
-      // Create the auction and its stages within a single transaction
-      return await prisma.$transaction(async (tx) => {
-          const auctionData: Prisma.AuctionCreateInput = {
-            ...(restOfData as any),
-            auctionDate: derivedAuctionDate,
-            publicId: `AUC-${uuidv4()}`,
-            slug: slugify(data.title!),
-            auctioneer: { connect: { id: auctioneerId } },
-            seller: { connect: { id: sellerId } },
-          };
-
-          if (categoryId) {
-            auctionData.category = { connect: { id: categoryId } };
-          }
-          
-          const newAuction = await tx.auction.create({ data: auctionData });
-
-          // Create the AuctionStage records linked to the new auction
-          await tx.auctionStage.createMany({
-            data: auctionStages.map(stage => ({
-              name: stage.name,
-              startDate: stage.startDate,
-              endDate: stage.endDate,
-              initialPrice: stage.initialPrice,
-              auctionId: newAuction.id,
+      
+      if (auctionStages && auctionStages.length > 0) {
+        auctionData.auctionStages = {
+            create: auctionStages.map(stage => ({
+                name: stage.name,
+                startDate: stage.startDate,
+                endDate: stage.endDate,
+                initialPrice: stage.initialPrice,
             })),
-          });
+        };
+      }
           
-          return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
-      });
+      const newAuction = await this.auctionRepository.create(auctionData);
+      
+      return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
       
     } catch (error: any) {
       console.error("Error in AuctionService.createAuction:", error);
@@ -104,8 +97,10 @@ export class AuctionService {
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-        if (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) {
-          dataToUpdate.auctionDate = auctionStages[0].startDate;
+        
+        const derivedAuctionDate = (auctionStages && auctionStages.length > 0) ? auctionStages[0].startDate : (data.auctionDate || undefined);
+        if (derivedAuctionDate) {
+            dataToUpdate.auctionDate = derivedAuctionDate;
         }
 
         await tx.auction.update({ where: { id }, data: dataToUpdate });
