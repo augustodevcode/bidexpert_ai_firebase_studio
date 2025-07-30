@@ -445,7 +445,7 @@ export default function AuctionForm({
 
             <div className="space-y-2">
                 <div className="flex flex-wrap gap-4 justify-between items-center">
-                    <h3 className="text-md font-semibold text-muted-foreground flex items-center"><ClockIcon className="h-4 w-4 mr-2"/>Praças / Etapas do Leilão</h3>
+                    <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4"/>Praças / Etapas do Leilão</h3>
                     <div className="flex items-center space-x-2">
                         <Label htmlFor="sync-stages" className="text-xs font-normal">Sincronizar Etapas</Label>
                         <Switch id="sync-stages" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode}/>
