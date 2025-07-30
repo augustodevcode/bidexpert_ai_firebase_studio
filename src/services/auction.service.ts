@@ -49,13 +49,23 @@ export class AuctionService {
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!sellerId) throw new Error("O ID do comitente é obrigatório.");
+      
+      const {
+        mapAddress,
+        latitude,
+        longitude,
+        ...validRestOfData // Separate the map fields from the rest
+      } = restOfData as any;
 
       const dataToCreate: Prisma.AuctionCreateInput = {
-        ...(restOfData as any),
+        ...(validRestOfData),
         publicId: `AUC-${uuidv4()}`,
         slug: slugify(data.title),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
+        mapAddress: mapAddress,
+        latitude: latitude,
+        longitude: longitude,
       };
 
       if (categoryId) {
