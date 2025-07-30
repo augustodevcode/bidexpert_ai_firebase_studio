@@ -81,14 +81,14 @@ const DatePickerWithTime = ({ field, label, disabled = false }: { field: any, la
             disabled={disabled}
             >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {field.value ? format(field.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
+            {field.value ? format(new Date(field.value), "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
             </Button>
         </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
         <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
         <div className="p-2 border-t">
-            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+            <Input type="time" defaultValue={field.value ? format(new Date(field.value), "HH:mm") : "10:00"}
             onChange={(e) => {
                 const [hours, minutes] = e.target.value.split(':');
                 const newDate = field.value ? new Date(field.value) : new Date();

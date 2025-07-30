@@ -83,6 +83,7 @@ model UsersOnRoles {
   assignedBy String // e.g., 'system', 'admin:uid'
 
   @@id([userId, roleId])
+  @@index([roleId])
 }
 
 
@@ -175,6 +176,7 @@ model UserDocument {
   updatedAt        DateTime     @updatedAt
 
   @@unique([userId, documentTypeId])
+  @@index([documentTypeId])
 }
 
 // =================================================================
@@ -416,6 +418,7 @@ model LotBens {
   bemId   String
 
   @@id([lotId, bemId])
+  @@index([bemId])
 }
 
 model UserWin {
@@ -442,6 +445,7 @@ model AuctionHabilitation {
   createdAt DateTime @default(now())
 
   @@unique([userId, auctionId])
+  @@index([auctionId])
 }
 
 model AuctionStage {
@@ -772,6 +776,7 @@ model UserLotMaxBid {
   createdAt DateTime @default(now())
 
   @@unique([userId, lotId])
+  @@index([lotId])
 }
 
 model MediaItem {
@@ -794,4 +799,6 @@ model MediaItem {
   uploadedBy      User     @relation(fields: [uploadedByUserId], references: [id])
   uploadedAt      DateTime @default(now())
   judicialProcessId String?
+
+  @@index([uploadedByUserId])
 }
