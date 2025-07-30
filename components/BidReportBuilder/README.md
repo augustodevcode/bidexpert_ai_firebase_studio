@@ -21,6 +21,13 @@ The Bid Report Builder is a self-service reporting tool that allows users to cre
 *   **Exporting and Printing:**
     *   **Export Formats:** PDF, XLSX, CSV
     *   **Printing:** Print reports directly from the browser.
+*   **Variable Referencing:**
+    *   Reference variables from your site's internal entities (auctions, lots, users, etc.).
+    *   Drag and drop variables onto the report design surface.
+*   **Media Library Integration:**
+    *   Easily add images to your reports from the media library.
+*   **Guided Tour:**
+    *   A guided tour to help new users get started with the report builder.
 
 ## Getting Started
 
@@ -56,3 +63,4 @@ The Bid Report Builder is a self-service reporting tool that allows users to cre
 11. **Export the report:** Click the export buttons in the toolbar to export the report to a different format.
 12. **Print the report:** Click the "Print" button in the toolbar to print the report.
 13. **Use the AI assistant:** Use the AI assistant to get help with creating your report.
+14. **Take the guided tour:** Click the "Help" button in the toolbar to start the guided tour.

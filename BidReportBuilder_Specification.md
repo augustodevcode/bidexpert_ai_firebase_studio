@@ -61,6 +61,22 @@ The `BidReportBuilder` will follow a client-server architecture:
 *   **Content Security Policy (CSP):** The application will implement a strict CSP to prevent XSS and other attacks.
 *   **Authentication and Authorization:** The backend will handle user authentication and authorization to ensure that only authorized users can access and create reports.
 
+### 3.6. Variable Referencing and Drag-and-Drop
+
+*   The `VariablePanel` component fetches a list of available variables from the backend API and displays them to the user.
+*   The variables are draggable and can be dropped onto the report design surface.
+*   When a variable is dropped onto the designer, it is added to the report as a text element with a special syntax (e.g., `{{auction.name}}`).
+*   The backend API replaces the variable placeholders with the actual data from the database when the report is previewed, displayed, or exported.
+
+### 3.7. Media Library Integration
+
+*   The `MediaLibrary` component fetches a list of images from the backend API and displays them to the user.
+*   The `handleSelectImage` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to add the selected image to the report.
+
+### 3.8. Guided Tour
+
+*   A guided tour to help new users get started with the report builder.
+
 ## 4. User Roles and Permissions
 
 The `BidReportBuilder` will support the following user roles:
@@ -85,6 +101,8 @@ The `BidReportBuilder` will have a clean, modern, and intuitive user interface. 
 *   **`DataSourceManager`:** The component that allows users to connect to and manage data sources.
 *   **`PreviewPanel`:** The component that displays a preview of the report.
 *   **`AIPanel`:** The component that provides the UI for the AI-powered features.
+*   **`VariablePanel`:** The component that displays the list of available variables.
+*   **`MediaLibrary`:** The component that displays a list of images from the media library.
 
 ### 6.2. State Management
 
@@ -97,6 +115,8 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   The `DataSourceManager` component will call the `onSelectDataSource` callback in the `BidReportBuilder` component to bind a data source to a report element.
 *   The `ReportDesigner` component will call the `onReportChanged` callback in the `BidReportBuilder` component to update the `reportUrl` state, which will in turn update the `PreviewPanel`.
 *   The `AIPanel` component will call the `onGetAIAssistance` callback in the `BidReportBuilder` component to pass the current state of the report to the AI API.
+*   The `VariablePanel` component will make the variables draggable, and the `ReportDesigner` component will be a drop target.
+*   The `MediaLibrary` component will call the `onSelectImage` callback in the `BidReportBuilder` component to add the selected image to the report.
 
 ### 6.4. Element Manipulation
 
@@ -137,6 +157,9 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 *   **/api/datasources:** Handles CRUD operations for data sources.
 *   **/api/ai:** Handles requests for AI-powered features.
 *   **/api/auth/[...nextauth]:** Handles user authentication and authorization.
+*   **/api/variables:** Returns a list of available variables.
+*   **/api/media:** Returns a list of images from the media library.
+*   **/api/export:** Handles requests for exporting reports.
 
 ### 7.2. Database
 
