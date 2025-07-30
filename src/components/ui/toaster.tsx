@@ -14,6 +14,19 @@ import { Button } from "./button"
 import { Copy, Check } from "lucide-react"
 import * as React from "react"
 
+// Helper function to extract text content from React nodes
+const getTextContent = (node: React.ReactNode): string => {
+  if (typeof node === 'string') return node;
+  if (typeof node === 'number') return String(node);
+  if (node === null || typeof node === 'boolean' || node === undefined) return '';
+  if (Array.isArray(node)) return node.map(getTextContent).join('');
+  if ('props' in node && node.props.children) {
+    return getTextContent(node.props.children);
+  }
+  return '';
+};
+
+
 export function Toaster() {
   const { toasts } = useToast()
 
@@ -23,10 +36,15 @@ export function Toaster() {
         const [hasCopied, setHasCopied] = React.useState(false);
 
         const handleCopy = () => {
-            const textToCopy = `${title ? title + "\n" : ""}${description || ""}`;
-            navigator.clipboard.writeText(textToCopy);
-            setHasCopied(true);
-            setTimeout(() => setHasCopied(false), 2000); // Reset icon after 2 seconds
+            const titleText = getTextContent(title);
+            const descriptionText = getTextContent(description);
+            const textToCopy = `${titleText ? titleText + "\n" : ""}${descriptionText || ""}`.trim();
+            
+            if (textToCopy) {
+              navigator.clipboard.writeText(textToCopy);
+              setHasCopied(true);
+              setTimeout(() => setHasCopied(false), 2000); // Reset icon after 2 seconds
+            }
         };
 
         return (
