@@ -53,11 +53,10 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
 };
 
 interface AuctionStagesTimelineProps {
-  auctionOverallStartDate?: Date | null;
   stages: AuctionStage[];
 }
 
-export default function AuctionStagesTimeline({ auctionOverallStartDate, stages }: AuctionStagesTimelineProps) {
+export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineProps) {
   if (!stages || stages.length === 0) {
     return null;
   }
@@ -65,15 +64,25 @@ export default function AuctionStagesTimeline({ auctionOverallStartDate, stages 
   const processedStages = stages
     .map(stage => ({
       ...stage,
+      startDate: stage.startDate ? new Date(stage.startDate as string) : null,
       endDate: stage.endDate ? new Date(stage.endDate as string) : null,
     }))
-    .sort((a, b) => (a.endDate?.getTime() || 0) - (b.endDate?.getTime() || 0));
+    .sort((a, b) => (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0));
 
-  let activeStageIndex = processedStages.findIndex(stage => stage.endDate && !isPast(stage.endDate));
+  const now = new Date();
+  let activeStageIndex = processedStages.findIndex(stage => 
+    stage.startDate && stage.endDate && now >= stage.startDate && now < stage.endDate
+  );
   
-  if (activeStageIndex === -1 && processedStages.length > 0 && processedStages.every(s => s.endDate && isPast(s.endDate))) {
+  if (activeStageIndex === -1) {
+    const nextStageIndex = processedStages.findIndex(stage => stage.startDate && now < stage.startDate);
+    if (nextStageIndex !== -1) {
+      activeStageIndex = nextStageIndex;
+    } else if (processedStages.every(s => s.endDate && isPast(s.endDate))) {
       activeStageIndex = processedStages.length;
+    }
   }
+
 
   return (
     <div>

@@ -26,6 +26,37 @@ import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } fr
 import { getLotCategories as refetchCategories } from '@/app/admin/categories/actions';
 import { Label } from '@/components/ui/label';
 
+const DatePickerWithTime = ({ field, label }: { field: any, label: string }) => (
+    <FormItem className="flex flex-col">
+    <FormLabel className="text-xs">{label}</FormLabel>
+    <Popover>
+        <PopoverTrigger asChild>
+        <FormControl>
+            <Button
+            variant={"outline"}
+            className={cn("w-full pl-3 text-left font-normal bg-card", !field.value && "text-muted-foreground")}
+            >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {field.value ? format(field.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
+            </Button>
+        </FormControl>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+        <div className="p-2 border-t">
+            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+            onChange={(e) => {
+                const [hours, minutes] = e.target.value.split(':');
+                const newDate = field.value ? new Date(field.value) : new Date();
+                newDate.setHours(Number(hours), Number(minutes));
+                field.onChange(newDate);
+            }} />
+        </div>
+        </PopoverContent>
+    </Popover>
+    <FormMessage />
+    </FormItem>
+);
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
@@ -39,15 +70,15 @@ const auctionDetailsSchema = z.object({
   categoryId: z.string().min(1, 'A categoria principal é obrigatória.'),
   auctioneerId: z.string().min(1, 'Selecione um leiloeiro.'),
   sellerId: z.string().min(1, 'Selecione um comitente.'),
-  auctionDate: z.date({ required_error: 'A data de início é obrigatória.' }),
   endDate: z.date().optional().nullable(),
   auctionStages: z.array(
     z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
+      startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
       initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
     })
-  ).optional(),
+  ).min(1, "O leilão deve ter pelo menos uma praça/etapa."),
   automaticBiddingEnabled: z.boolean().optional().default(false),
   allowInstallmentBids: z.boolean().optional().default(false),
   softCloseEnabled: z.boolean().optional().default(false),
@@ -69,7 +100,6 @@ export default function Step3AuctionDetails({
   const [isFetchingCategories, setIsFetchingCategories] = useState(false);
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = useState(false);
-  const [syncStages, setSyncStages] = useState(true);
 
 
   const form = useForm<FormValues>({
@@ -80,9 +110,8 @@ export default function Step3AuctionDetails({
       categoryId: wizardData.auctionDetails?.categoryId || '',
       auctioneerId: wizardData.auctionDetails?.auctioneerId || '',
       sellerId: wizardData.auctionDetails?.sellerId || '',
-      auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
       endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
-      auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', endDate: new Date() }],
+      auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }],
       automaticBiddingEnabled: wizardData.auctionDetails?.automaticBiddingEnabled || false,
       allowInstallmentBids: wizardData.auctionDetails?.allowInstallmentBids || false,
       softCloseEnabled: wizardData.auctionDetails?.softCloseEnabled || false,
@@ -114,43 +143,12 @@ export default function Step3AuctionDetails({
     }
   }, []);
 
-  const watchedAuctionDate = useWatch({ control: form.control, name: 'auctionDate' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
 
   const judicialProcessSellerName = wizardData.auctionType === 'JUDICIAL' && wizardData.judicialProcess
     ? wizardData.judicialProcess.sellerName
     : null;
-    
-  const handleStageDateChange = (index: number, newEndDate: Date) => {
-    const currentStages = form.getValues('auctionStages') || [];
-    const changedStage = currentStages[index];
-  
-    if (!syncStages || !changedStage) {
-      update(index, { ...changedStage, endDate: newEndDate });
-      return;
-    }
-  
-    const previousEndDate = index > 0 ? new Date(currentStages[index - 1].endDate) : new Date(form.getValues('auctionDate'));
-    const duration = differenceInMilliseconds(new Date(changedStage.endDate), previousEndDate);
-  
-    // Update the changed stage
-    const updatedStages = [...currentStages];
-    updatedStages[index] = { ...changedStage, endDate: newEndDate };
-  
-    // Update subsequent stages
-    for (let i = index + 1; i < updatedStages.length; i++) {
-      const prevStageEnd = new Date(updatedStages[i - 1].endDate);
-      const currentStage = updatedStages[i];
-      const currentStagePrevStart = i > 1 ? new Date(updatedStages[i - 2].endDate) : new Date(form.getValues('auctionDate'));
-      const currentStageDuration = differenceInMilliseconds(new Date(currentStage.endDate), currentStagePrevStart);
-      
-      updatedStages[i] = { ...currentStage, endDate: new Date(prevStageEnd.getTime() + currentStageDuration) };
-    }
-  
-    form.setValue('auctionStages', updatedStages, { shouldDirty: true, shouldValidate: true });
-  };
-
 
   useEffect(() => {
     const seller = sellers.find(s => s.name === judicialProcessSellerName);
@@ -261,41 +259,32 @@ export default function Step3AuctionDetails({
             />
           
           <Separator />
-           <h3 className="text-md font-semibold text-muted-foreground pt-2">Parâmetros e Datas</h3>
-          <FormField control={form.control} name="auctionDate" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Início (Geral)</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("pl-3 text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP", { locale: ptBR }) : <span>Escolha uma data</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
-
-            <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                    <h3 className="text-md font-semibold text-muted-foreground flex items-center">Praças / Etapas</h3>
-                    <div className="flex items-center space-x-2">
-                        <Label htmlFor="sync-stages" className="text-xs font-normal">Sincronizar Etapas</Label>
-                        <Switch id="sync-stages" checked={syncStages} onCheckedChange={setSyncStages}/>
+           <h3 className="text-md font-semibold text-muted-foreground pt-2">Praças / Etapas do Leilão</h3>
+           <div className="space-y-2">
+            {fields.map((field, index) => (
+                <Card key={field.id} className="p-3 bg-background">
+                    <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-medium text-sm">Praça / Etapa {index + 1}</h4>
+                        {fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}
                     </div>
-                </div>
-                {fields.map((field, index) => (
-                    <Card key={field.id} className="p-3 bg-background">
-                        <div className="flex justify-between items-start mb-2">
-                            <h4 className="font-medium text-sm">Praça / Etapa {index + 1}</h4>
-                            {fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}
-                        </div>
-                        <div className="grid sm:grid-cols-2 gap-4 items-end">
-                             <div className="flex flex-col space-y-2">
-                                <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Praça/Etapa</FormLabel><FormControl><Input {...stageField} placeholder={`Ex: ${index+1}ª Praça`} /></FormControl><FormMessage /></FormItem>)} />
-                            </div>
-                            <div className="flex flex-col space-y-2">
-                                <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem className="flex flex-col"><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant="outline" className={cn("w-full pl-3 text-left font-normal bg-card", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={stageField.value} onSelect={(date) => handleStageDateChange(index, date as Date)} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"} onChange={(e) => { const [h, m] = e.target.value.split(':'); const d = stageField.value ? new Date(stageField.value) : new Date(); d.setHours(Number(h), Number(m)); handleStageDateChange(index, d); }} /></div></PopoverContent></Popover><FormMessage /></FormItem>)}/>
-                            </div>
-                        </div>
-                    </Card>
-                ))}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                        <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Início" />} />
+                        <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Fim" />} />
+                    </div>
+                </Card>
+            ))}
+             <Button type="button" variant="outline" size="sm" onClick={() => {
+                      const lastStage = fields.length > 0 ? fields[fields.length - 1] : null;
+                      const nextStartDate = lastStage ? new Date(lastStage.endDate) : new Date();
+                      const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
+                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate })
+                  }} className="text-xs mt-2">
+                      <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
+              </Button>
             </div>
-            <Button type="button" variant="outline" size="sm" onClick={() => {
-                const lastStageDate = fields.length > 0 ? new Date(fields[fields.length - 1].endDate) : new Date(watchedAuctionDate);
-                const nextStageDate = new Date(lastStageDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
-                append({ name: `${fields.length + 1}ª Praça`, endDate: nextStageDate })
-            }}><PlusCircle className="mr-2 h-3.5 w-3.5"/>Adicionar Praça/Etapa</Button>
             
-            <AuctionStagesTimeline auctionOverallStartDate={watchedAuctionDate} stages={watchedStages as AuctionStage[]} />
+            <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             
              <Separator />
             <h3 className="text-md font-semibold text-muted-foreground pt-2">Opções Adicionais</h3>
