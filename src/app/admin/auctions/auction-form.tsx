@@ -1,8 +1,7 @@
-
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
-import * as React from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react'; 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -218,14 +217,11 @@ export default function AuctionForm({
       if (index > 0) {
         const prevStage = watchedStages[index - 1];
         if (prevStage.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
-           const prevEndDate = new Date(prevStage.endDate);
-           const currentStartDate = new Date(stage.startDate!);
-           const currentEndDate = new Date(stage.endDate!);
-           const duration = differenceInMilliseconds(currentEndDate, currentStartDate);
+           const newStartDate = new Date(prevStage.endDate);
+           // Maintain duration
+           const currentDuration = differenceInMilliseconds(new Date(stage.endDate!), new Date(stage.startDate!));
+           const newEndDate = new Date(newStartDate.getTime() + currentDuration);
            
-           const newStartDate = prevEndDate;
-           const newEndDate = new Date(newStartDate.getTime() + duration);
-
            form.setValue(`auctionStages.${index}.startDate`, newStartDate, { shouldDirty: true });
            form.setValue(`auctionStages.${index}.endDate`, newEndDate, { shouldDirty: true });
         }
@@ -476,7 +472,7 @@ export default function AuctionForm({
                   <Button type="button" variant="outline" size="sm" onClick={() => {
                       const lastStage = fields.length > 0 ? fields[fields.length - 1] : null;
                       const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
-                      const nextStartDate = lastEndDate;
+                      const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); // Add 1 minute if not synced
                       const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
                       append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate })
                   }} className="text-xs mt-2">
@@ -489,42 +485,6 @@ export default function AuctionForm({
             
             <Separator />
             <h3 className="text-md font-semibold text-muted-foreground flex items-center"><Landmark className="h-4 w-4 mr-2"/>Localização e Documentos</h3>
-             <FormField
-                control={form.control}
-                name="endDate"
-                render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                    <FormLabel>Data de Encerramento Geral (Opcional)</FormLabel>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                        <FormControl>
-                            <Button
-                            variant={"outline"}
-                            className={cn("w-full pl-3 text-left font-normal", !field.value && "text-muted-foreground")}
-                            >
-                            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>Escolha data e hora (se aplicável)</span>}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                        </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                        <Calendar mode="single" selected={field.value || undefined} onSelect={field.onChange} initialFocus />
-                         <div className="p-2 border-t">
-                            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "17:00"}
-                            onChange={(e) => {
-                                const [hours, minutes] = e.target.value.split(':').map(Number);
-                                const newDate = field.value ? new Date(field.value) : new Date();
-                                newDate.setHours(hours, minutes);
-                                field.onChange(newDate);
-                            }}/>
-                        </div>
-                        </PopoverContent>
-                    </Popover>
-                    <FormDescription>Data final para todos os lances, se não definida por praças individuais.</FormDescription>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
             
              <FormField
                   control={form.control}
@@ -754,4 +714,3 @@ export default function AuctionForm({
     </TooltipProvider>
   );
 }
-

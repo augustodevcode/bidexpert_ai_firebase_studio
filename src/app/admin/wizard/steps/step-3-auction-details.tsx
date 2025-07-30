@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -72,7 +71,6 @@ const auctionDetailsSchema = z.object({
   categoryId: z.string().min(1, 'A categoria principal é obrigatória.'),
   auctioneerId: z.string().min(1, 'Selecione um leiloeiro.'),
   sellerId: z.string().min(1, 'Selecione um comitente.'),
-  endDate: z.date().optional().nullable(),
   auctionStages: z.array(
     z.object({
       name: z.string().min(1, "Nome da praça é obrigatório"),
@@ -113,7 +111,6 @@ export default function Step3AuctionDetails({
       categoryId: wizardData.auctionDetails?.categoryId || '',
       auctioneerId: wizardData.auctionDetails?.auctioneerId || '',
       sellerId: wizardData.auctionDetails?.sellerId || '',
-      endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
       auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date), initialPrice: stage.initialPrice || undefined })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }],
       automaticBiddingEnabled: wizardData.auctionDetails?.automaticBiddingEnabled || false,
       allowInstallmentBids: wizardData.auctionDetails?.allowInstallmentBids || false,
@@ -122,7 +119,7 @@ export default function Step3AuctionDetails({
     }
   });
 
-  const { fields, append, remove, update } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "auctionStages",
   });
@@ -157,14 +154,11 @@ export default function Step3AuctionDetails({
       if (index > 0) {
         const prevStage = watchedStages[index - 1];
         if (prevStage.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
-           const prevEndDate = new Date(prevStage.endDate);
-           const currentStartDate = new Date(stage.startDate!);
-           const currentEndDate = new Date(stage.endDate!);
-           const duration = differenceInMilliseconds(currentEndDate, currentStartDate);
+           const newStartDate = new Date(prevStage.endDate);
+           // Maintain duration
+           const currentDuration = differenceInMilliseconds(new Date(stage.endDate!), new Date(stage.startDate!));
+           const newEndDate = new Date(newStartDate.getTime() + currentDuration);
            
-           const newStartDate = prevEndDate;
-           const newEndDate = new Date(newStartDate.getTime() + duration);
-
            form.setValue(`auctionStages.${index}.startDate`, newStartDate, { shouldDirty: true });
            form.setValue(`auctionStages.${index}.endDate`, newEndDate, { shouldDirty: true });
         }
@@ -309,9 +303,9 @@ export default function Step3AuctionDetails({
              <Button type="button" variant="outline" size="sm" onClick={() => {
                       const lastStage = fields.length > 0 ? fields[fields.length - 1] : null;
                       const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
-                      const nextStartDate = lastEndDate;
+                      const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); // Add 1 minute if not synced
                       const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
-                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate })
+                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: lastStage?.initialPrice })
                   }} className="text-xs mt-2">
                       <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
               </Button>
@@ -338,4 +332,3 @@ export default function Step3AuctionDetails({
     </div>
   );
 }
-
