@@ -25,7 +25,7 @@ jobs:
       run: bunx playwright install-deps
 
     - name: Run Playwright tests
-      run: bun test
+      run: bunx playwright test
 
     - name: Upload test report
       if: always()
