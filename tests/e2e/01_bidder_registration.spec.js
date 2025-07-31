@@ -23,8 +23,9 @@ test.describe('Bidder Registration', () => {
     // 4. Submit the form
     await page.getByRole('button', { name: 'Create Account' }).click();
 
-    // 5. Verify successful registration and redirection
-    await expect(page).toHaveURL(/.*\/dashboard.html/);
-    await expect(page.locator('h1')).toHaveText(`Welcome, ${testUser.name}!`);
+    // 5. Verify that a success message is shown
+    const messageArea = page.locator('#message-area');
+    await expect(messageArea).toBeVisible();
+    await expect(messageArea).toHaveText(/Registration successful/);
   });
 });
