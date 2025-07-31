@@ -15,7 +15,10 @@ test.describe('Bidder Registration', () => {
     await page.getByRole('link', { name: 'Register' }).click();
     await expect(page).toHaveURL(/.*\/register.html/);
 
-    // 3. Fill out the registration form
+    // 3. Wait for the page's JavaScript to be ready
+    await page.waitForSelector('body[data-ready="true"]');
+
+    // 4. Fill out the registration form
     await page.locator('#name').fill(testUser.name);
     await page.locator('#email').fill(testUser.email);
     await page.locator('#password').fill(testUser.password);

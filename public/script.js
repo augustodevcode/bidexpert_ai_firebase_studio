@@ -52,3 +52,6 @@ if (registerForm) {
 }
 
 console.log("BidExpert AI script loaded!");
+
+// Signal that the script is ready for E2E tests
+document.body.dataset.ready = 'true';
