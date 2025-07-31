@@ -24,16 +24,18 @@ try {
 
 
 // --- Registration Logic ---
-const registerForm = document.getElementById('register-form');
+// --- Registration Logic ---
+const registerBtn = document.getElementById('create-account-btn');
 
-if (registerForm) {
-  registerForm.addEventListener('submit', async (e) => {
-    // PREVENT the default form submission which reloads the page
-    e.preventDefault();
+if (registerBtn) {
+  registerBtn.addEventListener('click', async (e) => {
+    const nameInput = document.getElementById('name');
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
 
-    const name = registerForm.name.value;
-    const email = registerForm.email.value;
-    const password = registerForm.password.value;
+    const name = nameInput.value;
+    const email = emailInput.value;
+    const password = passwordInput.value;
 
     // In a real application, we would call the cloud function here.
     // For this test, we will simulate a successful call to verify the UI.

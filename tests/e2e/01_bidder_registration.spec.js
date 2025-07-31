@@ -23,10 +23,10 @@ test.describe('Bidder Registration', () => {
     await page.locator('#email').fill(testUser.email);
     await page.locator('#password').fill(testUser.password);
 
-    // 4. Submit the form
-    await page.getByRole('button', { name: 'Create Account' }).click();
+    // 5. Click the create account button
+    await page.locator('#create-account-btn').click();
 
-    // 5. Verify that a success message is shown
+    // 6. Verify that a success message is shown
     const messageArea = page.locator('#message-area');
     await expect(messageArea).toBeVisible();
     await expect(messageArea).toHaveText(/Registration successful/);
