@@ -1,11 +1,27 @@
 import React from 'react';
 import { useDrop } from 'react-dnd';
+import { TextComponent } from '../../../reporting-engine/components/text';
+import { ChartComponent } from '../../../reporting-engine/components/chart';
+import { TableComponent } from '../../../reporting-engine/components/table';
 
 const DesignSurface = ({ reportDefinition, onSelectElement }) => {
   const [, drop] = useDrop(() => ({
     accept: 'toolbar-element',
     drop: (item) => onSelectElement(item),
   }));
+
+  const renderElement = (element) => {
+    switch (element.type) {
+      case 'text':
+        return new TextComponent(element.properties).render();
+      case 'chart':
+        return new ChartComponent(element.properties).render();
+      case 'table':
+        return new TableComponent(element.properties).render();
+      default:
+        return null;
+    }
+  };
 
   return (
     <div
@@ -30,7 +46,7 @@ const DesignSurface = ({ reportDefinition, onSelectElement }) => {
           }}
           onClick={() => onSelectElement(element)}
         >
-          {element.type}
+          {renderElement(element)}
         </div>
       ))}
     </div>

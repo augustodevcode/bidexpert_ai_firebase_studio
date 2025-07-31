@@ -26,6 +26,8 @@ The reporting engine includes a set of built-in components that can be used to c
 *   **Image:** A component for rendering images.
 *   **Chart:** A component for rendering charts.
 *   **Table:** A component for rendering tables.
+*   **ChartComponent:** A component for rendering charts.
+*   **TableComponent:** A component for rendering tables.
 
 ## Extending the Reporting Engine
 

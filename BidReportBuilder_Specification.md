@@ -103,6 +103,8 @@ The `BidReportBuilder` will have a clean, modern, and intuitive user interface. 
 *   **`AIPanel`:** The component that provides the UI for the AI-powered features.
 *   **`VariablePanel`:** The component that displays the list of available variables.
 *   **`MediaLibrary`:** The component that displays a list of images from the media library.
+*   **`ChartComponent`:** A component for rendering charts.
+*   **`TableComponent`:** A component for rendering tables.
 
 ### 6.2. State Management
 
