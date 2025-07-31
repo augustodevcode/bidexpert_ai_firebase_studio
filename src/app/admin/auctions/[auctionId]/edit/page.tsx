@@ -5,7 +5,7 @@
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
-import { generateDocument, type GenerateDocumentInput } from '@/ai/flows/generate-document-flow';
+import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions'; // MUDANÇA AQUI
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -193,28 +193,18 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
     const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
     
-    const handleGenerateDocument = async (type: GenerateDocumentInput['documentType'], lot?: Lot, winner?: UserWin) => {
+    const handleGenerateDocument = async (type: 'WINNING_BID_TERM' | 'EVALUATION_REPORT' | 'AUCTION_CERTIFICATE', lot?: Lot, winner?: UserWin) => {
         const loadingKey = `${type}-${lot?.id || 'auction'}`;
         setIsLoading(prev => ({...prev, [loadingKey]: true}));
         toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
 
         try {
-            const auctioneer = auction.auctioneerId ? await getAuctioneers().then(list => list.find(a => a.id === auction.auctioneerId)) : null;
-            const seller = auction.sellerId ? await getSellers().then(list => list.find(s => s.id === auction.sellerId)) : null;
+            // MUDANÇA: Ação de gerar documento movida para um arquivo separado e seguro
+            const result = type === 'WINNING_BID_TERM' && lot
+              ? await generateWinningBidTermAction(lot.id)
+              : { success: false, message: 'Tipo de documento não suportado nesta ação.'}; // Placeholder para outros tipos
 
-            const result = await generateDocument({
-                documentType: type,
-                data: {
-                    auction,
-                    lot,
-                    winner,
-                    auctioneer,
-                    seller,
-                    currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
-                },
-            });
-
-            if (result.pdfBase64 && result.fileName) {
+            if (result.success && result.pdfBase64 && result.fileName) {
                 const byteCharacters = atob(result.pdfBase64);
                 const byteNumbers = new Array(byteCharacters.length);
                 for (let i = 0; i < byteCharacters.length; i++) {
@@ -228,7 +218,7 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                 link.click();
                 toast({ title: 'Sucesso!', description: 'Download do PDF iniciado.' });
             } else {
-                throw new Error("A resposta da API não continha um PDF válido.");
+                throw new Error(result.message || "A resposta da API não continha um PDF válido.");
             }
         } catch (error: any) {
             console.error("Error generating document:", error);
@@ -249,22 +239,22 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('EVALUATION_REPORT')} disabled={!hasGenerateReportPerm || isLoading['EVALUATION_REPORT-auction']}>
-                                    {isLoading['EVALUATION_REPORT-auction'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4"/>} Gerar Laudo de Avaliação (PDF)
+                                <Button className="w-full justify-start" disabled>
+                                    <FileText className="mr-2 h-4 w-4"/> Gerar Laudo de Avaliação (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>
-                        {!hasGenerateReportPerm && <TooltipContent><p>Você não tem permissão para gerar laudos.</p></TooltipContent>}
+                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
                             <div className="w-full">
-                                <Button className="w-full justify-start" onClick={() => handleGenerateDocument('AUCTION_CERTIFICATE')} disabled={!hasGenerateCertificatePerm || isLoading['AUCTION_CERTIFICATE-auction']}>
-                                    {isLoading['AUCTION_CERTIFICATE-auction'] ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <CheckCircle className="mr-2 h-4 w-4"/>} Gerar Relatório de Arremates (PDF)
+                                <Button className="w-full justify-start" disabled>
+                                    <CheckCircle className="mr-2 h-4 w-4"/> Gerar Relatório de Arremates (PDF)
                                 </Button>
                             </div>
                         </TooltipTrigger>
-                        {!hasGenerateCertificatePerm && <TooltipContent><p>Você não tem permissão para gerar certificados.</p></TooltipContent>}
+                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
                     </Tooltip>
                     <Tooltip>
                         <TooltipTrigger asChild>
