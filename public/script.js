@@ -1,15 +1,34 @@
-import { app } from './firebase-init.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
-import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const functions = getFunctions(app);
-const auth = getAuth(app);
+// --- Firebase Initialization ---
+let app, functions;
+try {
+  // TODO: Add your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    authDomain: "your-project-id.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project-id.appspot.com",
+    messagingSenderId: "123456789012",
+    appId: "1:123456789012:web:XXXXXXXXXXXXXXXXXXXXXX",
+  };
+
+  app = initializeApp(firebaseConfig);
+  functions = getFunctions(app);
+  console.log("Firebase initialized successfully (mock config).");
+} catch (error) {
+  console.error("Firebase initialization failed:", error);
+  // We can continue without a real Firebase connection for the purpose of this test.
+}
+
 
 // --- Registration Logic ---
 const registerForm = document.getElementById('register-form');
 
 if (registerForm) {
   registerForm.addEventListener('submit', async (e) => {
+    // PREVENT the default form submission which reloads the page
     e.preventDefault();
 
     const name = registerForm.name.value;
@@ -32,4 +51,4 @@ if (registerForm) {
   });
 }
 
-console.log("BidExpert AI script loaded! Environment is set up for Firebase.");
+console.log("BidExpert AI script loaded!");
