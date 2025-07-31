@@ -142,7 +142,7 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 
 *   The `Toolbar` component contains `Export` buttons for PDF, Excel, Word, and PowerPoint formats.
 *   The `handleExportReport` function in the `BidReportBuilder` component uses the backend API to export the report to the selected format.
-*   The backend API uses the DevExpress Reporting API to export the report to the selected format.
+*   The backend API uses the custom reporting engine to export the report to the selected format.
 
 ### 6.8. Media Library Integration
 

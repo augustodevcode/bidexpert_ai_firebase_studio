@@ -9,6 +9,15 @@ export const render = (reportDefinition) => {
       </head>
       <body>
         <h1><%= title %></h1>
+        <% pages.forEach(page => { %>
+          <% page.sections.forEach(section => { %>
+            <% section.elements.forEach(element => { %>
+              <% if (element.type === 'text') { %>
+                <p style="position: absolute; left: <%= element.properties.x %>px; top: <%= element.properties.y %>px; width: <%= element.properties.width %>px; height: <%= element.properties.height %>px;"><%= element.properties.text %></p>
+              <% } %>
+            <% }); %>
+          <% }); %>
+        <% }); %>
       </body>
     </html>
   `;

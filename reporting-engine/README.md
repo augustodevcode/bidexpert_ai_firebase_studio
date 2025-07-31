@@ -4,7 +4,7 @@ This is a custom reporting engine built from scratch using Node.js, React, and o
 
 ## Features
 
-*   **Core Rendering Engine:** A core rendering engine that can take a report definition (in a structured format like JSON) and render it to various output formats (PDF, HTML, etc.).
+*   **Core Rendering Engine:** A core rendering engine that can take a report definition (in a structured format like JSON) and render it to various output formats (PDF, HTML, DOCX, XLSX, TXT).
 *   **Report Definition Schema:** A clear and comprehensive JSON schema for the report definitions.
 *   **Data Processing and Aggregation:** A data processing module that can connect to various data sources, execute queries, and perform data aggregation (e.g., grouping, sorting, summarizing).
 *   **Component-Based Architecture:** A component-based architecture that allows new report elements and export formats to be easily added as plugins.
