@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus } from '@/types';
+import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
@@ -129,6 +129,7 @@ export default function LotForm({
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
+  const watchedStatus = useWatch({ control: form.control, name: 'status' });
   
   const handleRefetchAuctions = React.useCallback(async () => {
     setIsFetchingAuctions(true);
@@ -179,12 +180,12 @@ export default function LotForm({
       const linkedBem = allPossibleBens.find(b => b.id === watchedBemIds[0]);
 
       if (linkedBem) {
-        form.setValue('title', linkedBem.title);
-        form.setValue('description', linkedBem.description || '');
-        form.setValue('type', linkedBem.categoryId || '', { shouldValidate: true });
-        form.setValue('subcategoryId', linkedBem.subcategoryId || null, { shouldValidate: true });
-        form.setValue('evaluationValue', linkedBem.evaluationValue);
-        form.setValue('imageUrl', linkedBem.imageUrl || '');
+        if (!form.getValues('title')) form.setValue('title', linkedBem.title);
+        if (!form.getValues('description')) form.setValue('description', linkedBem.description || '');
+        if (!form.getValues('type')) form.setValue('type', linkedBem.categoryId || '', { shouldValidate: true });
+        if (!form.getValues('subcategoryId')) form.setValue('subcategoryId', linkedBem.subcategoryId || null, { shouldValidate: true });
+        if (!form.getValues('evaluationValue')) form.setValue('evaluationValue', linkedBem.evaluationValue);
+        if (!form.getValues('imageUrl')) form.setValue('imageUrl', linkedBem.imageUrl || '');
         if(!form.getValues('price') || form.getValues('price') === 0) {
             form.setValue('price', linkedBem.evaluationValue || 0);
         }
@@ -192,6 +193,7 @@ export default function LotForm({
     } else if (watchedBemIds && watchedBemIds.length > 1 && !form.getValues('title')) {
       form.setValue('title', `Lote com ${watchedBemIds.length} bens`);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedBemIds, currentAvailableBens, initialData?.bens, form]);
 
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
@@ -499,7 +501,9 @@ export default function LotForm({
                     </div>
                 </div>
               </FormItem>
-              <FormField control={form.control} name="winningBidTermUrl" render={({ field }) => (<FormItem><FormLabel>URL do Auto de Arrematação (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a finalização do lote e geração do documento.</FormDescription><FormMessage /></FormItem>)} />
+              {watchedStatus === 'VENDIDO' && (
+                <FormField control={form.control} name="winningBidTermUrl" render={({ field }) => (<FormItem><FormLabel>URL do Auto de Arrematação (Gerado)</FormLabel><FormControl><Input disabled {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este campo é preenchido automaticamente após a finalização do lote e geração do documento.</FormDescription><FormMessage /></FormItem>)} />
+              )}
             </CardContent>
           </Card>
           

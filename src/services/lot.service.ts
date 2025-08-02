@@ -74,17 +74,20 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { bemIds, categoryId, ...lotData } = data; // Usar 'type' do form
+      const { bemIds, categoryId, subcategoryId, ...lotData } = data;
       const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
 
       if (lotData.title) {
         dataToUpdate.slug = slugify(lotData.title);
       }
-       if (lotData.type) { // 'type' do form mapeia para 'categoryId'
+       if (lotData.type) {
         dataToUpdate.category = { connect: { id: lotData.type } };
       }
        if (lotData.auctionId) {
         dataToUpdate.auction = { connect: { id: lotData.auctionId } };
+      }
+      if (subcategoryId) {
+        dataToUpdate.subcategory = { connect: { id: subcategoryId } };
       }
       
       await this.repository.update(id, dataToUpdate, bemIds);
