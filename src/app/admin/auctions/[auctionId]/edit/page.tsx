@@ -42,7 +42,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, BarChart as RechartsBarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
