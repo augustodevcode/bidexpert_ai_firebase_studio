@@ -80,7 +80,7 @@ export default function CreateLotFromBensModal({
         status: 'EM_BREVE',
         price: values.initialPrice,
         categoryId: firstBem?.categoryId,
-        type: firstBem?.categoryId, // Match form schema which uses 'type' for categoryId
+        type: firstBem?.categoryId || '', // Assegura que o campo type, esperado pelo schema do form, também esteja alinhado
         subcategoryId: firstBem?.subcategoryId,
         imageUrl: firstBem?.imageUrl,
         dataAiHint: firstBem?.dataAiHint,
