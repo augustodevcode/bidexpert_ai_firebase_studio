@@ -36,7 +36,7 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
-      const { bemIds, categoryId, auctionId, type, sellerId, ...lotData } = data;
+      const { bemIds, categoryId, auctionId, type, sellerId, subcategoryId, ...lotData } = data;
       const finalCategoryId = categoryId || type;
 
       if (!auctionId) {
@@ -60,8 +60,8 @@ export class LotService {
         dataToCreate.seller = { connect: { id: sellerId } };
       }
 
-      if (lotData.subcategoryId) {
-          dataToCreate.subcategory = { connect: { id: lotData.subcategoryId } };
+      if (subcategoryId) {
+          dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
