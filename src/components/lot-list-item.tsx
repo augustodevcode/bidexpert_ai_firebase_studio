@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -28,6 +29,8 @@ import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { useAuth } from '@/contexts/auth-context';
+import { hasPermission } from '@/lib/permissions';
 
 const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
   ssr: false,
@@ -273,19 +276,21 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               />
             </Link>
             {auction?.seller?.logoUrl && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
-                    <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                      <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller.dataAiHintLogo || 'logo comitente'} />
-                      <AvatarFallback>{auction.seller.name.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                  </Link>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Comitente: {auction.seller.name}</p>
-                </TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
+                                <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller.dataAiHintLogo || 'logo comitente'}/>
+                                <AvatarFallback>{auction.seller.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p>Comitente: {auction.seller.name}</p>
+                    </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             )}
           </div>
 

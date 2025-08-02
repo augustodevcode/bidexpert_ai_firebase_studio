@@ -15,7 +15,7 @@ import Link from 'next/link';
 import type { Lot } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 
 export const createConsignorLotColumns = (): ColumnDef<Lot>[] => [
   {

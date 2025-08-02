@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorLotColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getAuctionsForConsignorAction } from '../auctions/actions';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { DirectSaleOffer } from '@/types';
@@ -85,7 +86,7 @@ export default function DirectSaleOfferCard({ offer }: DirectSaleOfferCardProps)
                 </p>
               )}
                {!offer.minimumOfferPrice && (
-                 <p className="text-md font-bold text-primary">Envie sua melhor oferta</p>
+                 <p className="text-md font-bold text-primary">Envie sua proposta</p>
                )}
             </>
           )}

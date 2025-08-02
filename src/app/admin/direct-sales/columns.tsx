@@ -17,7 +17,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { DirectSaleOffer } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -66,14 +66,14 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("status"))}</Badge>,
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
     enableGrouping: true,
   },
   {
     accessorKey: "offerType",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo de Oferta" />,
     cell: ({ row }) => <Badge variant="secondary">{getOfferTypeLabel(row.getValue("offerType"))}</Badge>,
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
     enableGrouping: true,
   },
   {

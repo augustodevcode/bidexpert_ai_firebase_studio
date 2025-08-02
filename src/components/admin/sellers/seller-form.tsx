@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -18,15 +19,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
+import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
 import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
 import { Loader2, Save, Users, Image as ImageIcon, Scale, XCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { consultaCepAction } from '@/lib/actions/cep'; 
+import EntitySelector from '@/components/ui/entity-selector';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+
 
 interface SellerFormProps {
   initialData?: SellerProfileInfo | null;
@@ -44,7 +47,7 @@ interface SellerFormProps {
 
 export default function SellerForm({
   initialData,
-  judicialBranches,
+  judicialBranches: initialBranches,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -59,6 +62,8 @@ export default function SellerForm({
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [isCepLoading, setIsCepLoading] = React.useState(false);
+  const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
+  const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
 
   const form = useForm<SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
@@ -84,6 +89,13 @@ export default function SellerForm({
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
   const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+
+  const handleRefetchBranches = React.useCallback(async () => {
+    setIsFetchingBranches(true);
+    const data = await getJudicialBranches();
+    setJudicialBranches(data);
+    setIsFetchingBranches(false);
+  }, []);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -223,19 +235,18 @@ export default function SellerForm({
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
-                        <Select onValueChange={(value) => field.onChange(value === 'none' ? null : value)} value={field.value ?? 'none'}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Nenhuma vara judicial vinculada" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                             {judicialBranches.map(branch => (
-                                <SelectItem key={branch.id} value={branch.id}>{branch.name} - {branch.districtName}</SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
+                        <EntitySelector
+                          value={field.value}
+                          onChange={field.onChange}
+                          options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
+                          placeholder="Nenhuma vara judicial vinculada"
+                          searchPlaceholder="Buscar vara..."
+                          emptyStateMessage="Nenhuma vara encontrada."
+                          createNewUrl="/admin/judicial-branches/new"
+                          editUrlPrefix="/admin/judicial-branches"
+                          onRefetch={handleRefetchBranches}
+                          isFetching={isFetchingBranches}
+                        />
                         <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription>
                         <FormMessage />
                     </FormItem>

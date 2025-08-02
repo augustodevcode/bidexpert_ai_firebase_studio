@@ -2,7 +2,19 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Loader2, AlertCircle, ShoppingBag, Gavel, Tag, DollarSign } from 'lucide-react';
+import { 
+    LineChart as LineChartIcon, 
+    PieChart as PieChartIcon, 
+    Users, 
+    DollarSign, 
+    Gavel, 
+    ListChecks as LotsIcon, 
+    BarChart3, 
+    Loader2,
+    TrendingUp,
+    CircleDollarSign,
+    Package
+} from 'lucide-react';
 import { 
     PieChart,
     Pie,
@@ -97,7 +109,7 @@ export default function ReportsPage() {
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <BarChart className="h-7 w-7 mr-3 text-primary" />
+            <BarChart3 className="h-7 w-7 mr-3 text-primary" />
             Meus Relatórios
           </CardTitle>
           <CardDescription>

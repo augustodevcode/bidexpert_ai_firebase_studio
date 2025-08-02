@@ -1,3 +1,4 @@
+
 // src/components/direct-sale-offer-list-item.tsx
 'use client';
 

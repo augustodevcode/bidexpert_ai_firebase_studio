@@ -12,7 +12,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Lot, LotCategory, PlatformSettings, SellerProfileInfo, Auction } from '@/types';
-import { slugify } from '@/lib/sample-data-helpers';
+import { slugify } from '@/lib/ui-helpers';
 import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import type { ActiveFilters } from '@/components/sidebar-filters';
@@ -24,7 +24,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
-import { getCategoryAssets } from '@/lib/sample-data-helpers';
+import { getCategoryAssets } from '@/lib/ui-helpers';
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -318,5 +319,3 @@ export default function LotCard(props: LotCardProps) {
 
   return <LotCardClientContent {...props} />;
 }
-
-    

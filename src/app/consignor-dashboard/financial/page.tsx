@@ -10,7 +10,7 @@ import { getFinancialDataForConsignor } from './actions';
 import type { UserWin, SellerProfileInfo } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { getPaymentStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -65,7 +65,7 @@ export default function ConsignorFinancialPage() {
     if (!authLoading && targetSellerId) {
       fetchFinancials(targetSellerId);
     } else if (!authLoading && !isUserAdmin) {
-      setError("Perfil de comitente não encontrado.");
+      setError("Perfil de comitente não encontrado ou não vinculado à sua conta.");
       setIsLoading(false);
     } else if (!authLoading && isUserAdmin && allSellers.length === 0) {
         setIsLoading(false);
@@ -90,7 +90,7 @@ export default function ConsignorFinancialPage() {
 
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]
-      .map(status => ({ value: status, label: getPaymentStatusText(status) })),
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
   [wins]);
 
   const facetedFilterColumns = useMemo(() => [

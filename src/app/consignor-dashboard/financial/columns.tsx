@@ -7,7 +7,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getPaymentStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 
 export const createFinancialColumns = (): ColumnDef<UserWin>[] => [
   {
@@ -36,7 +36,7 @@ export const createFinancialColumns = (): ColumnDef<UserWin>[] => [
   {
     accessorKey: 'paymentStatus',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status Pagamento" />,
-    cell: ({ row }) => <Badge variant="outline">{getPaymentStatusText(row.getValue("paymentStatus"))}</Badge>,
+    cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("paymentStatus"))}</Badge>,
     filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
   },
   {
