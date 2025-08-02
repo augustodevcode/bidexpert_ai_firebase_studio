@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, isPast, differenceInSeconds, parseISO } from 'date-fns';
+import { format, isPast, differenceInSeconds, parseISO, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
@@ -88,13 +88,13 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
   const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!effectiveEndDate) {
+    if (!effectiveEndDate || !isValid(effectiveEndDate)) {
       setDisplayMessage(getAuctionStatusText(lotStatus));
       setTimeSegments(null);
       return;
     }
 
-    const end = effectiveEndDate instanceof Date ? effectiveEndDate : new Date(effectiveEndDate);
+    const end = effectiveEndDate;
 
     const calculateTime = () => {
       const now = new Date();
@@ -134,11 +134,11 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
 
   // Client-side only date formatting to prevent hydration mismatch
   useEffect(() => {
-    if (effectiveStartDate) {
-      setFormattedStartDate(format(new Date(effectiveStartDate), 'dd/MM/yy HH:mm', { locale: ptBR }));
+    if (effectiveStartDate && isValid(effectiveStartDate)) {
+      setFormattedStartDate(format(effectiveStartDate, 'dd/MM/yy HH:mm', { locale: ptBR }));
     }
-    if (effectiveEndDate) {
-      setFormattedEndDate(format(new Date(effectiveEndDate), 'dd/MM/yy HH:mm', { locale: ptBR }));
+    if (effectiveEndDate && isValid(effectiveEndDate)) {
+      setFormattedEndDate(format(effectiveEndDate, 'dd/MM/yy HH:mm', { locale: ptBR }));
     }
   }, [effectiveStartDate, effectiveEndDate]);
 
@@ -274,7 +274,7 @@ export default function LotDetailClientContent({
     if (typeof window !== 'undefined') setCurrentUrl(window.location.href);
     
     // Format the date here to avoid hydration mismatch
-    if (auction.endDate) {
+    if (auction.endDate && isValid(new Date(auction.endDate))) {
       setFormattedAuctionEndDate(format(new Date(auction.endDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
     }
     
