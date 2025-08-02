@@ -10,7 +10,7 @@ import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getBens } from '../bens/actions';
 import { getAuctions } from '../auctions/actions';
 import type { JudicialProcess, Bem, Auction, Lot } from '@/types';
-import { Boxes, Box, Eye, FileText, Loader2, AlertCircle } from 'lucide-react';
+import { Boxes, Box, Eye, FileText, Loader2, AlertCircle, Package } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { useToast } from '@/hooks/use-toast';
