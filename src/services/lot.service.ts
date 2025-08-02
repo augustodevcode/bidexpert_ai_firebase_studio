@@ -36,16 +36,15 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
-      const finalCategoryId = data.categoryId || data.type;
+      const { bemIds, categoryId, auctionId, type, sellerId, ...lotData } = data;
+      const finalCategoryId = categoryId || type;
 
-      if (!data.auctionId) {
+      if (!auctionId) {
         return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
       if (!finalCategoryId) {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
-
-      const { bemIds, categoryId, auctionId, type, ...lotData } = data; // Extrair IDs para não serem passados diretamente
 
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
@@ -53,9 +52,13 @@ export class LotService {
         initialPrice: Number(lotData.initialPrice) || Number(lotData.price) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
-        auction: { connect: { id: auctionId } }, // Usar o auctionId extraído para conectar
+        auction: { connect: { id: auctionId } },
         category: { connect: { id: finalCategoryId } },
       };
+
+      if (sellerId) {
+        dataToCreate.seller = { connect: { id: sellerId } };
+      }
 
       if (lotData.subcategoryId) {
           dataToCreate.subcategory = { connect: { id: lotData.subcategoryId } };

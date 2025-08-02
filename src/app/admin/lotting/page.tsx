@@ -105,6 +105,8 @@ export default function LoteamentoPage() {
     let successCount = 0;
     let errorCount = 0;
 
+    const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
+
     for (const bem of selectedBens) {
         const lotNumber = String(Math.floor(Math.random() * 900) + 100); // Placeholder for a better numbering system
         const newLotData: Partial<Lot> = {
@@ -114,7 +116,7 @@ export default function LoteamentoPage() {
             initialPrice: bem.evaluationValue || 0,
             status: 'EM_BREVE',
             auctionId: selectedAuctionId,
-            sellerId: bem.sellerId,
+            sellerId: selectedAuction?.sellerId,
             categoryId: bem.categoryId,
             type: bem.categoryId,
             bemIds: [bem.id],
@@ -145,7 +147,7 @@ export default function LoteamentoPage() {
     setIsBemModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), []);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), [handleViewBemDetails]);
   const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
 
   return (
@@ -225,10 +227,7 @@ export default function LoteamentoPage() {
           selectedBens={selectedBens}
           auctionId={selectedAuctionId}
           sellerId={selectedAuction?.sellerId}
-          onLotCreated={() => {
-            setRowSelection({});
-            fetchBensForProcess();
-          }}
+          onLotCreated={fetchBensForProcess}
         />
       )}
        <BemDetailsModal 

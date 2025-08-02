@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { judicialProcessFormSchema, type JudicialProcessFormValues } from './judicial-process-form-schema';
-import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem } from '@/types';
+import type { JudicialProcess, Court, JudicialDistrict, JudicialBranch, ProcessPartyType, SellerProfileInfo, MediaItem, DocumentType } from '@/types';
 import { Loader2, Save, Gavel, PlusCircle, Trash2, Users, Building, RefreshCw, FileText, UploadCloud, BrainCircuit, Bot, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -87,7 +87,6 @@ export default function JudicialProcessForm({
   const { userProfileWithPermissions } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCreatingSeller, setIsCreatingSeller] = React.useState(false);
-  const [showCreateSellerButton, setShowCreateSellerButton] = React.useState(false);
   
   const [processDocuments, setProcessDocuments] = React.useState<MediaItem[]>([]);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -198,18 +197,17 @@ export default function JudicialProcessForm({
     }
   }, [selectedDistrictId, filteredBranches, form]);
 
-  React.useEffect(() => {
-    if (!selectedBranchId) {
-      setShowCreateSellerButton(false);
-      return;
-    }
+  const showCreateSellerButton = useMemo(() => {
+    if (!selectedBranchId) return false;
     const linkedSeller = sellersForSelect.find(s => s.judicialBranchId === selectedBranchId);
-    if (linkedSeller) {
-      form.setValue('sellerId', linkedSeller.id);
-      setShowCreateSellerButton(false);
-    } else {
-      form.setValue('sellerId', null);
-      setShowCreateSellerButton(true);
+    return !linkedSeller;
+  }, [selectedBranchId, sellersForSelect]);
+
+
+  React.useEffect(() => {
+    if (selectedBranchId) {
+      const linkedSeller = sellersForSelect.find(s => s.judicialBranchId === selectedBranchId);
+      form.setValue('sellerId', linkedSeller?.id || null);
     }
   }, [selectedBranchId, sellersForSelect, form]);
 
@@ -339,8 +337,28 @@ export default function JudicialProcessForm({
               <FormField control={form.control} name="sellerId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Comitente Principal</FormLabel>
-                     <EntitySelector value={field.value} onChange={field.onChange} options={judicialSellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione um comitente judicial" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente judicial encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} />
-                    <FormDescription>Se o comitente desejado não estiver na lista, cadastre-o na seção de comitentes e marque-o como judicial.</FormDescription>
+                     <div className="flex items-center gap-2">
+                        <EntitySelector 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                          options={judicialSellers.map(s => ({ value: s.id, label: s.name }))} 
+                          placeholder="Selecione ou crie um comitente" 
+                          searchPlaceholder="Buscar comitente..." 
+                          emptyStateMessage="Nenhum comitente judicial." 
+                          createNewUrl="/admin/sellers/new" 
+                          editUrlPrefix="/admin/sellers"
+                          onRefetch={() => handleRefetch('sellers')}
+                          isFetching={isFetchingSellers}
+                          disabled={isCreatingSeller}
+                        />
+                         {showCreateSellerButton && (
+                            <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
+                                {isCreatingSeller ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Building className="mr-2 h-4 w-4" />}
+                                Criar Comitente da Vara
+                            </Button>
+                        )}
+                     </div>
+                    <FormDescription>O comitente será preenchido automaticamente se houver um vinculado à vara selecionada.</FormDescription>
                     <FormMessage />
                   </FormItem>
               )} />
