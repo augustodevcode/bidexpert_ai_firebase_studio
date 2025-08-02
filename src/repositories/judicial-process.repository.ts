@@ -13,7 +13,7 @@ export class JudicialProcessRepository {
         seller: { select: { name: true } },
         parties: true,
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { processNumber: 'desc' } // Alterado de createdAt para processNumber
     });
   }
 
