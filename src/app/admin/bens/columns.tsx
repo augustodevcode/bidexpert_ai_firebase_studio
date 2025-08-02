@@ -75,11 +75,13 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
   {
     accessorKey: "categoryName",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria" />,
+    cell: ({ row }) => row.original.categoryName || '-',
     enableGrouping: true,
   },
   {
     accessorKey: "judicialProcessNumber",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Processo Judicial" />,
+    cell: ({ row }) => row.original.judicialProcessNumber || '-',
   },
   {
     accessorKey: "evaluationValue",

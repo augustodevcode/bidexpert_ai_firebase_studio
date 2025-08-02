@@ -19,18 +19,36 @@ export class BemRepository {
             subcategory: { select: { name: true } },
             judicialProcess: { select: { processNumber: true } },
             seller: { select: { name: true } }
+        },
+        orderBy: {
+            createdAt: 'desc'
         }
     });
   }
 
-  async findById(id: string): Promise<Bem | null> {
-    return prisma.bem.findFirst({ where: { OR: [{ id }, { publicId: id }] } });
+  async findById(id: string): Promise<any | null> {
+    return prisma.bem.findFirst({ 
+        where: { OR: [{ id }, { publicId: id }] },
+        include: {
+            category: { select: { name: true } },
+            subcategory: { select: { name: true } },
+            judicialProcess: { select: { processNumber: true } },
+            seller: { select: { name: true } }
+        }
+    });
   }
 
-  async findByIds(ids: string[]): Promise<Bem[]> {
+  async findByIds(ids: string[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    // @ts-ignore
-    return prisma.bem.findMany({ where: { id: { in: ids } } });
+    return prisma.bem.findMany({ 
+        where: { id: { in: ids } },
+        include: {
+            category: { select: { name: true } },
+            subcategory: { select: { name: true } },
+            judicialProcess: { select: { processNumber: true } },
+            seller: { select: { name: true } }
+        }
+    });
   }
 
   async create(data: Prisma.BemCreateInput): Promise<Bem> {
@@ -38,7 +56,7 @@ export class BemRepository {
     return prisma.bem.create({ data });
   }
 
-  async update(id: string, data: Partial<BemFormData>): Promise<Bem> {
+  async update(id: string, data: Partial<Prisma.BemUpdateInput>): Promise<Bem> {
     // @ts-ignore
     return prisma.bem.update({ where: { id }, data });
   }
