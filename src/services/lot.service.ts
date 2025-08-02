@@ -30,7 +30,8 @@ export class LotService {
     return {
       ...lot,
       auctionName: lot.auction?.title,
-      bens: lot.bens?.map((lb: any) => lb.bem) || []
+      bens: lot.bens?.map((lb: any) => lb.bem) || [],
+      auction: lot.auction, // Pass the full auction object
     };
   }
 

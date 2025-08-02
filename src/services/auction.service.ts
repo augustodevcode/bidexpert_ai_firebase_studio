@@ -51,7 +51,7 @@ export class AuctionService {
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!sellerId) throw new Error("O ID do comitente é obrigatório.");
       
-      const derivedAuctionDate = (auctionStages && auctionStages.length > 0) ? auctionStages[0].startDate : new Date();
+      const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : new Date();
 
       const auctionData: Prisma.AuctionCreateInput = {
         ...(restOfData as any),
@@ -98,7 +98,7 @@ export class AuctionService {
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         
-        const derivedAuctionDate = (auctionStages && auctionStages.length > 0) ? auctionStages[0].startDate : (data.auctionDate || undefined);
+        const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }

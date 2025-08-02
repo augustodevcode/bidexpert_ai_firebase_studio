@@ -1,19 +1,18 @@
-
-
+// src/components/lot-list-item.tsx
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Heart, Share2, MapPin, Eye, ListChecks, DollarSign, CalendarDays, Clock, Users, Gavel, Building, Car, Truck, Info, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import { format, isPast, differenceInSeconds, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +38,7 @@ const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
 
 
 interface TimeRemainingBadgeProps {
-  endDate: Date | string | undefined | null;
+  endDate: Date | null;
   status: Lot['status'];
   showUrgencyTimer?: boolean;
   urgencyThresholdDays?: number;
@@ -57,14 +56,14 @@ const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
-    if (!endDate || !isValid(new Date(endDate))) {
+    if (!endDate || !isValid(endDate)) {
       setRemaining(getAuctionStatusText(status));
       setIsUrgent(false);
       return;
     }
 
     const interval = setInterval(() => {
-      const end = new Date(endDate as string);
+      const end = endDate;
       if (isPast(end)) {
         setRemaining('Encerrado');
         clearInterval(interval);
@@ -281,7 +280,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                     <TooltipTrigger asChild>
                         <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller.dataAiHintLogo || 'logo comitente pequeno'}/>
+                                <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'}/>
                                 <AvatarFallback>{auction.seller.name.charAt(0)}</AvatarFallback>
                             </Avatar>
                         </Link>
@@ -423,3 +422,4 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
 
     return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
   }
+
