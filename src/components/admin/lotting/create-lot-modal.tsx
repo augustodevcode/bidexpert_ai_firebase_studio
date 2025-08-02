@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { Bem, Lot } from '@/types';
 import { Loader2, Save, PackagePlus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { createLot } from '@/app/admin/lots/actions'; // Import server action
 
 export const lotModalFormSchema = z.object({
   number: z.string().min(1, 'O número do lote é obrigatório.'),
@@ -29,14 +30,17 @@ interface CreateLotFromBensModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedBens: Bem[];
-  onLotCreated: (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionId'>) => void;
+  auctionId: string;
+  sellerId?: string | null;
+  onLotCreated: () => void; // Callback to refresh parent data
 }
 
 export default function CreateLotFromBensModal({
-  isOpen, onClose, selectedBens, onLotCreated
+  isOpen, onClose, selectedBens, auctionId, sellerId, onLotCreated
 }: CreateLotFromBensModalProps) {
   const { toast } = useToast();
-  
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+
   const totalEvaluationValue = React.useMemo(() => {
     return selectedBens.reduce((sum, bem) => sum + (bem.evaluationValue || 0), 0);
   }, [selectedBens]);
@@ -53,33 +57,45 @@ export default function CreateLotFromBensModal({
     },
   });
 
-  // Sync form defaults if selectedBens change while modal is open (less likely, but safe)
   React.useEffect(() => {
-    form.reset({
-      number: '',
-      title: defaultTitle,
-      initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
-      bidIncrementStep: undefined,
-    });
-  }, [selectedBens, defaultTitle, totalEvaluationValue, form]);
+    if (isOpen) {
+        form.reset({
+        number: '',
+        title: defaultTitle,
+        initialPrice: totalEvaluationValue > 0 ? totalEvaluationValue : undefined,
+        bidIncrementStep: undefined,
+        });
+    }
+  }, [isOpen, selectedBens, defaultTitle, totalEvaluationValue, form]);
 
 
-  function onSubmit(values: LotFromModalValues) {
+  async function onSubmit(values: LotFromModalValues) {
+    setIsSubmitting(true);
     const firstBem = selectedBens[0];
-    const newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auctionId'> = {
+    const newLotData: Partial<Lot> = {
         ...values,
+        auctionId: auctionId,
+        sellerId: sellerId,
         bemIds: selectedBens.map(b => b.id),
         status: 'EM_BREVE',
         price: values.initialPrice,
         categoryId: firstBem?.categoryId,
+        type: firstBem?.categoryId, // Match form schema which uses 'type' for categoryId
         subcategoryId: firstBem?.subcategoryId,
         imageUrl: firstBem?.imageUrl,
         dataAiHint: firstBem?.dataAiHint,
     };
+    
+    const result = await createLot(newLotData);
 
-    onLotCreated(newLotData);
-    toast({ title: 'Sucesso!', description: 'Lote preparado e adicionado ao wizard.' });
-    onClose();
+    if(result.success) {
+        toast({ title: 'Sucesso!', description: 'Lote criado com sucesso no banco de dados.' });
+        onLotCreated(); // Call callback to trigger data refetch on parent
+        onClose();
+    } else {
+        toast({ title: 'Erro ao Criar Lote', description: result.message, variant: 'destructive'});
+    }
+    setIsSubmitting(false);
   }
 
   return (
@@ -115,10 +131,10 @@ export default function CreateLotFromBensModal({
               )} />
             </div>
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-              <Button type="submit">
-                <Save className="mr-2 h-4 w-4" />
-                Preparar Lote
+              <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar Lote
               </Button>
             </DialogFooter>
           </form>

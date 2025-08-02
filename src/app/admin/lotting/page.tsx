@@ -9,13 +9,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getBens } from '../bens/actions';
 import { getAuctions } from '../auctions/actions';
-import type { JudicialProcess, Bem, Auction } from '@/types';
-import { Boxes, Package, FileText, Loader2, AlertCircle } from 'lucide-react';
+import type { JudicialProcess, Bem, Auction, Lot } from '@/types';
+import { Boxes, Box, Eye, FileText, Loader2, AlertCircle } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
+import { createColumns } from '@/components/admin/lotting/columns';
 import { useToast } from '@/hooks/use-toast';
 import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
 import { Label } from '@/components/ui/label';
+import { v4 as uuidv4 } from 'uuid';
+import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import { createLot } from '../lots/actions'; // Import the createLot server action
 
 export default function LoteamentoPage() {
   const [processes, setProcesses] = useState<JudicialProcess[]>([]);
@@ -26,53 +29,63 @@ export default function LoteamentoPage() {
   const [bens, setBens] = useState<Bem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingBens, setIsLoadingBens] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rowSelection, setRowSelection] = React.useState({});
+  const [rowSelection, setRowSelection] = useState({});
   const [isLotModalOpen, setIsLotModalOpen] = useState(false);
+  const [isBemModalOpen, setIsBemModalOpen] = useState(false);
+  const [selectedBemForModal, setSelectedBemForModal] = useState<Bem | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      setIsLoading(true);
-      try {
-        const [fetchedProcesses, fetchedAuctions] = await Promise.all([
-          getJudicialProcesses(),
-          getAuctions()
-        ]);
-        setProcesses(fetchedProcesses);
-        setAuctions(fetchedAuctions);
-      } catch (e) {
-        setError('Falha ao buscar dados iniciais.');
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchInitialData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const [fetchedProcesses, fetchedAuctions] = await Promise.all([
+        getJudicialProcesses(),
+        getAuctions()
+      ]);
+      setProcesses(fetchedProcesses);
+      setAuctions(fetchedAuctions);
+    } catch (e) {
+      setError('Falha ao buscar dados iniciais.');
+    } finally {
+      setIsLoading(false);
     }
-    fetchInitialData();
   }, []);
 
   useEffect(() => {
-    async function fetchBensForProcess() {
-      if (!selectedProcessId) {
-        setBens([]);
-        return;
-      }
-      setIsLoadingBens(true);
-      setRowSelection({}); // Reset selection when process changes
-      try {
-        const fetchedBens = await getBens(selectedProcessId);
-        setBens(fetchedBens.filter(b => b.status === 'DISPONIVEL'));
-      } catch (e) {
-        setError('Falha ao buscar os bens do processo selecionado.');
-        setBens([]);
-      } finally {
-        setIsLoadingBens(false);
-      }
+    fetchInitialData();
+  }, [fetchInitialData]);
+
+  const fetchBensForProcess = useCallback(async () => {
+    if (!selectedProcessId) {
+      setBens([]);
+      return;
     }
-    fetchBensForProcess();
+    setIsLoadingBens(true);
+    setRowSelection({});
+    try {
+      const fetchedBens = await getBens({ judicialProcessId: selectedProcessId });
+      setBens(fetchedBens.filter(b => b.status === 'DISPONIVEL'));
+    } catch (e) {
+      setError('Falha ao buscar os bens do processo selecionado.');
+      setBens([]);
+    } finally {
+      setIsLoadingBens(false);
+    }
   }, [selectedProcessId]);
 
-  const handleCreateLotClick = () => {
-    if (Object.keys(rowSelection).length === 0 || !selectedAuctionId) {
+  useEffect(() => {
+    fetchBensForProcess();
+  }, [fetchBensForProcess]);
+  
+  const selectedBens = useMemo(() => {
+    const selectedIndices = Object.keys(rowSelection).map(Number);
+    return selectedIndices.map(index => bens[index]).filter(Boolean) as Bem[];
+  }, [rowSelection, bens]);
+
+  const handleCreateGroupedLotClick = () => {
+    if (selectedBens.length === 0 || !selectedAuctionId) {
       toast({
         title: "Seleção Incompleta",
         description: "Por favor, selecione um leilão e pelo menos um bem para criar o lote.",
@@ -83,12 +96,56 @@ export default function LoteamentoPage() {
     setIsLotModalOpen(true);
   };
   
-  const selectedBens = useMemo(() => {
-    const selectedIndices = Object.keys(rowSelection).map(Number);
-    return selectedIndices.map(index => bens[index]).filter(Boolean) as Bem[];
-  }, [rowSelection, bens]);
+  const handleCreateIndividualLotsClick = async () => {
+    if (selectedBens.length === 0 || !selectedAuctionId) {
+        toast({ title: "Seleção Incompleta", description: "Por favor, selecione um leilão de destino e pelo menos um bem.", variant: "destructive" });
+        return;
+    }
+    setIsSubmitting(true);
+    let successCount = 0;
+    let errorCount = 0;
 
-  const columns = useMemo(() => createColumns(), []);
+    for (const bem of selectedBens) {
+        const lotNumber = String(Math.floor(Math.random() * 900) + 100); // Placeholder for a better numbering system
+        const newLotData: Partial<Lot> = {
+            title: bem.title,
+            number: lotNumber,
+            price: bem.evaluationValue || 0,
+            initialPrice: bem.evaluationValue || 0,
+            status: 'EM_BREVE',
+            auctionId: selectedAuctionId,
+            sellerId: bem.sellerId,
+            categoryId: bem.categoryId,
+            type: bem.categoryId,
+            bemIds: [bem.id],
+            imageUrl: bem.imageUrl,
+            dataAiHint: bem.dataAiHint,
+        };
+        const result = await createLot(newLotData);
+        if (result.success) {
+            successCount++;
+        } else {
+            errorCount++;
+            toast({ title: `Erro ao criar lote para "${bem.title}"`, description: result.message, variant: "destructive"});
+        }
+    }
+
+    toast({
+        title: "Processamento Concluído",
+        description: `${successCount} lote(s) criado(s) com sucesso. ${errorCount > 0 ? `${errorCount} falharam.` : ''}`,
+    });
+
+    setRowSelection({});
+    await fetchBensForProcess(); // Refresh the list of available bens
+    setIsSubmitting(false);
+  };
+
+  const handleViewBemDetails = (bem: Bem) => {
+    setSelectedBemForModal(bem);
+    setIsBemModalOpen(true);
+  };
+  
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), []);
   const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
 
   return (
@@ -128,10 +185,16 @@ export default function LoteamentoPage() {
                           <CardTitle className="text-lg flex items-center gap-2"><Package/> 3. Selecione os Bens Disponíveis</CardTitle>
                           <CardDescription>Selecione os bens que farão parte do novo lote.</CardDescription>
                       </div>
-                      <Button onClick={handleCreateLotClick} disabled={Object.keys(rowSelection).length === 0 || !selectedAuctionId}>
-                          <Boxes className="mr-2 h-4 w-4" />
-                          Criar Lote com Selecionados
-                      </Button>
+                      <div className="flex gap-2 flex-wrap">
+                        <Button onClick={handleCreateIndividualLotsClick} variant="outline" disabled={selectedBens.length === 0 || isSubmitting}>
+                            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Box className="mr-2 h-4 w-4" />}
+                            Lotear Individualmente
+                        </Button>
+                        <Button onClick={handleCreateGroupedLotClick} disabled={selectedBens.length === 0 || isSubmitting}>
+                            <Boxes className="mr-2 h-4 w-4" />
+                            Agrupar em Lote Único
+                        </Button>
+                      </div>
                   </CardHeader>
                   <CardContent>
                       {isLoadingBens ? (
@@ -161,17 +224,18 @@ export default function LoteamentoPage() {
           onClose={() => setIsLotModalOpen(false)}
           selectedBens={selectedBens}
           auctionId={selectedAuctionId}
-          sellerName={selectedAuction?.seller}
           sellerId={selectedAuction?.sellerId}
           onLotCreated={() => {
-            // Refetch data to show updated state
-            const currentProcessId = selectedProcessId;
-            setSelectedProcessId(''); 
-            setTimeout(() => setSelectedProcessId(currentProcessId), 100); 
             setRowSelection({});
+            fetchBensForProcess();
           }}
         />
       )}
+       <BemDetailsModal 
+        bem={selectedBemForModal} 
+        isOpen={isBemModalOpen} 
+        onClose={() => setIsBemModalOpen(false)} 
+      />
     </>
   );
 }
