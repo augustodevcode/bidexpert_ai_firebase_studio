@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
-import bcrypt from 'bcrypt';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuidv4';
 

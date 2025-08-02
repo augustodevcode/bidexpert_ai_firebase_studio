@@ -15,7 +15,7 @@ import {
   sampleUserWins,
   sampleUsers
 } from '@/lib/sample-data';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 async function seedFullData() {
@@ -24,23 +24,32 @@ async function seedFullData() {
     try {
         // Seeding Admin User (moved to setup step, but upsert here as a fallback)
         console.log('[DB SEED] Seeding Admin User...');
-        const adminUser = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
-        if (adminUser) {
+        const adminUserFromSample = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
+        if (adminUserFromSample) {
             const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
             if (adminRole) {
-                await prisma.user.upsert({
-                    where: { email: adminUser.email },
-                    update: {},
+                const adminUser = await prisma.user.upsert({
+                    where: { email: adminUserFromSample.email },
+                    update: {
+                        fullName: adminUserFromSample.fullName,
+                        habilitationStatus: 'HABILITADO',
+                    },
                     create: {
-                        email: adminUser.email,
-                        fullName: adminUser.fullName,
-                        password: await bcrypt.hash(adminUser.password || 'Admin@123', 10),
+                        email: adminUserFromSample.email,
+                        fullName: adminUserFromSample.fullName,
+                        password: await bcryptjs.hash(adminUserFromSample.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
-                        roles: { connect: [{ id: adminRole.id }] }
                     }
                 });
-                console.log("[DB SEED] ✅ SUCCESS: Admin user created or already exists.");
+                // Ensure the join table record exists
+                await prisma.usersOnRoles.upsert({
+                    where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
+                    update: {},
+                    create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' }
+                });
+
+                console.log("[DB SEED] ✅ SUCCESS: Admin user created or confirmed.");
             } else {
                  console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
             }
@@ -118,19 +127,21 @@ async function seedFullData() {
             const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
             if (!existingUser) {
                 const { id, uid, ...userData } = user;
-                const hashedPassword = await bcrypt.hash(userData.password || 'password123', 10);
+                const hashedPassword = await bcryptjs.hash(userData.password || 'password123', 10);
                 const role = await prisma.role.findFirst({ where: { id: userData.roleId }});
                 if (role) {
-                     await prisma.user.create({
+                     const newUser = await prisma.user.create({
                         data: {
                             email: userData.email,
                             fullName: userData.fullName,
                             password: hashedPassword,
                             habilitationStatus: 'HABILITADO',
                             accountType: 'PHYSICAL',
-                            roles: { connect: [{ id: role.id }] },
                             seller: userData.sellerId ? { connect: { id: userData.sellerId }} : undefined,
                         }
+                    });
+                     await prisma.usersOnRoles.create({
+                        data: { userId: newUser.id, roleId: role.id, assignedBy: 'seed-script' }
                     });
                 }
             }
