@@ -5,6 +5,7 @@ import { PlatformSettingsService } from '../src/services/platform-settings.servi
 import { prisma } from '../src/lib/prisma';
 import type { PlatformSettings } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
+import { updatePlatformSettings } from '../src/app/admin/settings/actions'; // Importar a Server Action
 
 const settingsService = new PlatformSettingsService();
 const testRunId = `settings-e2e-${uuidv4().substring(0, 8)}`;
@@ -26,10 +27,11 @@ test.describe('Platform Settings Service E2E Tests', () => {
         };
 
         // Act
-        const result = await settingsService.updateSettings(newSettingsData);
+        // Alterado para chamar a Server Action em vez do serviço diretamente
+        const result = await updatePlatformSettings(newSettingsData);
 
         // Assert: Check the service method result
-        assert.strictEqual(result.success, true, 'PlatformSettingsService.updateSettings should return success: true');
+        assert.strictEqual(result.success, true, 'updatePlatformSettings action should return success: true');
         assert.strictEqual(result.message, 'Configurações atualizadas com sucesso.', 'Success message should be correct');
 
         // Assert: Verify directly in the database
