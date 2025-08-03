@@ -134,7 +134,7 @@ export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean;
 }
 
 export async function runPlatformSettingsTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `NODE_ENV=test tsx --env-file=.env tests/platform-settings.test.ts`;
+    const command = `npx playwright test tests/ui/platform-settings.spec.ts`;
     return runTestScript(command);
 }
 

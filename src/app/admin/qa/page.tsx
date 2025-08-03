@@ -1,3 +1,4 @@
+
 // src/app/admin/qa/page.tsx
 'use client';
 
@@ -24,7 +25,7 @@ import {
     runMenuContentTest,
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
-    runPlatformSettingsTest, // Import the new test action
+    runPlatformSettingsTest,
     runAuctionCardDetailsTest,
     runCardContentTest,
 } from './actions';
@@ -62,10 +63,10 @@ const tests: TestConfig[] = [
   },
   {
     id: 'platform-settings',
-    title: 'Configurações da Plataforma',
-    description: 'Verifica a criação e atualização das configurações globais do site.',
+    title: 'Configurações da Plataforma (UI)',
+    description: 'Navega até a página de Configurações, altera dados e salva para verificar a persistência.',
     action: runPlatformSettingsTest,
-    type: 'backend',
+    type: 'frontend',
   },
   {
     id: 'card-content-validation',
