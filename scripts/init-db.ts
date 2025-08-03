@@ -40,8 +40,8 @@ async function seedEssentialData() {
     console.log('[DB INIT] LOG: Seeding Lot Categories...');
      for (const catData of sampleLotCategories) {
         await prisma.lotCategory.upsert({
-            where: { id: catData.id },
-            update: { name: catData.name, slug: catData.slug },
+            where: { slug: catData.slug },
+            update: { name: catData.name, hasSubcategories: catData.hasSubcategories },
             create: catData as any
         });
     }
@@ -51,8 +51,8 @@ async function seedEssentialData() {
     console.log('[DB INIT] LOG: Seeding Subcategories...');
      for (const subCatData of sampleSubcategories) {
         await prisma.subcategory.upsert({
-            where: { id: subCatData.id },
-            update: { name: subCatData.name, slug: subCatData.slug },
+            where: { slug: subCatData.slug },
+            update: { name: subCatData.name, parentCategoryId: subCatData.parentCategoryId },
             create: subCatData as any
         });
     }
