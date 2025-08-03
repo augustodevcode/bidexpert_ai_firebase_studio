@@ -24,10 +24,11 @@ import {
     runMenuContentTest,
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
+    runPlatformSettingsTest, // Import the new test action
     runAuctionCardDetailsTest,
-    runCardContentTest, // Import the new test action
+    runCardContentTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -58,6 +59,13 @@ const tests: TestConfig[] = [
     description: 'Simula o fluxo completo de um usuário enviando documentos, sendo aprovado e dando um lance.',
     action: runHabilitationEndToEndTest,
     type: 'simulation',
+  },
+  {
+    id: 'platform-settings',
+    title: 'Configurações da Plataforma',
+    description: 'Verifica a criação e atualização das configurações globais do site.',
+    action: runPlatformSettingsTest,
+    type: 'backend',
   },
   {
     id: 'card-content-validation',
