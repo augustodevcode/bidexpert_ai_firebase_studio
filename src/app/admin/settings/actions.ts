@@ -39,12 +39,3 @@ export async function runFullSeedAction(): Promise<{ success: boolean; message: 
         return { success: false, message: `Falha ao executar o script de seed: ${error.message}` };
     }
 }
-
-// Danger Zone Actions - Use with caution
-export async function resetSampleDataAction(): Promise<{ success: boolean; message: string; }> {
-    return { success: false, message: 'Ação não suportada. Use "Resetar Banco de Dados" e "db:seed" para recomeçar.' };
-}
-
-export async function dropAllTablesAction(): Promise<{ success: boolean; message: string; }> {
-     return { success: false, message: 'Ação não implementada para este adaptador.' };
-}

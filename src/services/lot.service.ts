@@ -60,12 +60,11 @@ export class LotService {
       if (sellerId) {
         dataToCreate.seller = { connect: { id: sellerId } };
       }
-       if (data.auctioneerId) {
+      if (data.auctioneerId) {
         dataToCreate.auctioneer = { connect: { id: data.auctioneerId } };
       }
-
       if (subcategoryId) {
-          dataToCreate.subcategory = { connect: { id: subcategoryId } };
+        dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
@@ -93,7 +92,10 @@ export class LotService {
       }
       if (subcategoryId) {
         dataToUpdate.subcategory = { connect: { id: subcategoryId } };
+      } else if (data.hasOwnProperty('subcategoryId')) { // Allow unsetting the subcategory
+        dataToUpdate.subcategory = { disconnect: true };
       }
+
       if (sellerId) {
         dataToUpdate.seller = { connect: { id: sellerId } };
       }

@@ -17,18 +17,20 @@ export class PlatformSettingsService {
       console.warn("Platform settings not found in DB, returning default sample settings.");
       return samplePlatformSettings as PlatformSettings;
     }
+    // Assegura que o tipo retornado corresponde à interface PlatformSettings, mesmo que o DB retorne campos opcionais
     return settings as PlatformSettings;
   }
 
   async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
     try {
       const currentSettings = await this.repository.findFirst();
+      const dataToUpdate = { ...data } as Prisma.PlatformSettingsUpdateInput;
+
       if (currentSettings) {
-        // @ts-ignore
-        await this.repository.update(currentSettings.id, data);
+        await this.repository.update(currentSettings.id, dataToUpdate);
       } else {
-        // @ts-ignore
-        await this.repository.create({ ...data, id: 'global' });
+        // Se não existir, cria um novo com ID 'global'
+        await this.repository.create({ ...data, id: 'global' } as Prisma.PlatformSettingsCreateInput);
       }
       return { success: true, message: 'Configurações atualizadas com sucesso.' };
     } catch (error: any) {

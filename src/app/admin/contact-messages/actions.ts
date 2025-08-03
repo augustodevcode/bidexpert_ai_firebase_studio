@@ -1,16 +1,18 @@
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
 import type { ContactMessage } from '@/types';
+import { ContactMessageService } from '@/services/contact-message.service';
+
+const contactMessageService = new ContactMessageService();
 
 /**
  * Fetches all contact messages from the database.
  * @returns {Promise<ContactMessage[]>} An array of all contact messages.
  */
 export async function getContactMessages(): Promise<ContactMessage[]> {
-  return prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' }});
+  return contactMessageService.getContactMessages();
 }
 
 /**
@@ -20,16 +22,11 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
  * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
  */
 export async function toggleMessageReadStatus(id: string, isRead: boolean): Promise<{ success: boolean; message: string }> {
-    try {
-        await prisma.contactMessage.update({
-            where: { id },
-            data: { isRead }
-        });
+    const result = await contactMessageService.toggleReadStatus(id, isRead);
+    if (result.success) {
         revalidatePath('/admin/contact-messages');
-        return { success: true, message: `Mensagem marcada como ${isRead ? 'lida' : 'não lida'}.`};
-    } catch (error: any) {
-        return { success: false, message: "Falha ao atualizar status da mensagem." };
     }
+    return result;
 }
 
 /**
@@ -38,11 +35,9 @@ export async function toggleMessageReadStatus(id: string, isRead: boolean): Prom
  * @returns {Promise<{success: boolean; message: string}>} Result of the operation.
  */
 export async function deleteContactMessage(id: string): Promise<{ success: boolean; message: string }> {
-  try {
-    await prisma.contactMessage.delete({ where: { id } });
+  const result = await contactMessageService.deleteMessage(id);
+  if (result.success) {
     revalidatePath('/admin/contact-messages');
-    return { success: true, message: "Mensagem excluída." };
-  } catch (error: any) {
-    return { success: false, message: "Falha ao excluir mensagem." };
   }
+  return result;
 }
