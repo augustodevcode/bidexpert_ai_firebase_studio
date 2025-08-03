@@ -1,4 +1,3 @@
-
 // src/app/admin/qa/page.tsx
 'use client';
 
@@ -63,10 +62,10 @@ const tests: TestConfig[] = [
   },
   {
     id: 'platform-settings',
-    title: 'Configurações da Plataforma (UI)',
-    description: 'Navega até a página de Configurações, altera dados e salva para verificar a persistência.',
+    title: 'Configurações da Plataforma (E2E)',
+    description: 'Valida a criação e atualização das configurações da plataforma via camada de serviço.',
     action: runPlatformSettingsTest,
-    type: 'frontend',
+    type: 'backend',
   },
   {
     id: 'card-content-validation',

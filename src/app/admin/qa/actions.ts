@@ -1,4 +1,3 @@
-
 // src/app/admin/qa/actions.ts
 /**
  * @fileoverview Server Actions for the Quality Assurance (QA) panel.
@@ -134,7 +133,7 @@ export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean;
 }
 
 export async function runPlatformSettingsTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/platform-settings.spec.ts`;
+    const command = `NODE_ENV=test tsx --env-file=.env tests/platform-settings.test.ts`;
     return runTestScript(command);
 }
 
