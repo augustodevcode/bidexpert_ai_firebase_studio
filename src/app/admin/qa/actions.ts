@@ -38,102 +38,102 @@ async function runTestScript(command: string): Promise<{ success: boolean; outpu
 }
 
 export async function runBiddingEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/bidding-e2e.test.ts`;
+    const command = `tsx --env-file=.env tests/bidding-e2e.test.ts`;
     return runTestScript(command);
 }
 
 export async function runHabilitationEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/habilitation.test.ts`;
+    const command = `tsx --env-file=.env tests/habilitation.test.ts`;
     return runTestScript(command);
 }
 
 export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/menu-content.test.ts`;
+    const command = `tsx --env-file=.env tests/menu-content.test.ts`;
     return runTestScript(command);
 }
 
 export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/modalities-menu.test.ts`;
+    const command = `tsx --env-file=.env tests/modalities-menu.test.ts`;
     return runTestScript(command);
 }
 
 export async function runUserEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/user.test.ts`;
+    const command = `tsx --env-file=.env tests/user.test.ts`;
     return runTestScript(command);
 }
 
 export async function runSellerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/seller.test.ts`;
+    const command = `tsx --env-file=.env tests/seller.test.ts`;
     return runTestScript(command);
 }
 
 export async function runAuctioneerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/auctioneer.test.ts`;
+    const command = `tsx --env-file=.env tests/auctioneer.test.ts`;
     return runTestScript(command);
 }
 
 export async function runCategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/category.test.ts`;
+    const command = `tsx --env-file=.env tests/category.test.ts`;
     return runTestScript(command);
 }
 
 export async function runSubcategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/subcategory.test.ts`;
+    const command = `tsx --env-file=.env tests/subcategory.test.ts`;
     return runTestScript(command);
 }
 
 export async function runRoleEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/role.test.ts`;
+    const command = `tsx --env-file=.env tests/role.test.ts`;
     return runTestScript(command);
 }
 
 export async function runStateEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/state.test.ts`;
+    const command = `tsx --env-file=.env tests/state.test.ts`;
     return runTestScript(command);
 }
 
 export async function runCityEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/city.test.ts`;
+    const command = `tsx --env-file=.env tests/city.test.ts`;
     return runTestScript(command);
 }
 
 export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/court.test.ts`;
+    const command = `tsx --env-file=.env tests/court.test.ts`;
     return runTestScript(command);
 }
 
 export async function runJudicialDistrictEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/judicial-district.test.ts`;
+    const command = `tsx --env-file=.env tests/judicial-district.test.ts`;
     return runTestScript(command);
 }
 
 export async function runJudicialBranchEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/judicial-branch.test.ts`;
+    const command = `tsx --env-file=.env tests/judicial-branch.test.ts`;
     return runTestScript(command);
 }
 
 export async function runJudicialProcessEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/judicial-process.test.ts`;
+    const command = `tsx --env-file=.env tests/judicial-process.test.ts`;
     return runTestScript(command);
 }
 
 export async function runBemEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/bem.test.ts`;
+    const command = `tsx --env-file=.env tests/bem.test.ts`;
     return runTestScript(command);
 }
 
 export async function runLotEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/lot.test.ts`;
+    const command = `tsx --env-file=.env tests/lot.test.ts`;
     return runTestScript(command);
 }
 
 export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/media.test.ts`;
+    const command = `tsx --env-file=.env tests/media.test.ts`;
     return runTestScript(command);
 }
 
 export async function runPlatformSettingsTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `dotenv -e .env -- tsx ./tests/platform-settings.test.ts`;
+    const command = `tsx --env-file=.env tests/platform-settings.test.ts`;
     return runTestScript(command);
 }
 
