@@ -16,9 +16,12 @@ export async function updatePlatformSettings(data: Partial<PlatformSettings>): P
     console.log('[ACTION - updatePlatformSettings] Received data from form:', JSON.stringify(data, null, 2));
     const result = await settingsService.updateSettings(data);
     
-    // Only revalidate if not in a test environment
-    if (process.env.NODE_ENV !== 'test' && result.success) {
+    // Check for both 'test' and the presence of VITEST which is used by node:test
+    if (process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
+      console.log('[ACTION - updatePlatformSettings] Revalidating path "/"...');
       revalidatePath('/', 'layout');
+    } else {
+      console.log('[ACTION - updatePlatformSettings] Skipping revalidation in test environment.');
     }
     
     return result;
