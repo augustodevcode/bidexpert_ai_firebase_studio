@@ -43,7 +43,7 @@ const testData = {
   }
 };
 
-let createdAuction: Auction;
+let createdAuction: Auction | null = null;
 
 async function createTestData() {
   console.log(`[createTestData] Starting for run: ${testRunId}`);
@@ -80,8 +80,11 @@ async function createTestData() {
   const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // Ends today
   const stage1End = new Date(now.getTime() + 6 * 60 * 60 * 1000);
   
+  // FIX: Destructure totalLots out to prevent passing it to Prisma, as it's a computed field.
+  const { totalLots, ...auctionInfoToCreate } = testData.auction;
+  
   const auctionData: any = {
-      ...testData.auction,
+      ...auctionInfoToCreate,
       slug: slugify(testData.auction.title),
       publicId: `pub-auction-${testRunId}`,
       auctioneerId: auctioneer.id,
@@ -140,7 +143,6 @@ async function cleanupTestData() {
         console.error("Error cleaning up card test data", e);
     }
 }
-
 
 test.describe('Auction Card and List Item UI Validation', () => {
     test.beforeAll(async () => {
