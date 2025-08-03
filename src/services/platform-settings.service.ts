@@ -24,7 +24,9 @@ export class PlatformSettingsService {
   async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
     try {
       const currentSettings = await this.repository.findFirst();
-      const dataToUpdate = { ...data } as Prisma.PlatformSettingsUpdateInput;
+      // Omit id from data to prevent trying to update it
+      const { id, ...updateData } = data;
+      const dataToUpdate = { ...updateData } as Prisma.PlatformSettingsUpdateInput;
 
       if (currentSettings) {
         await this.repository.update(currentSettings.id, dataToUpdate);
