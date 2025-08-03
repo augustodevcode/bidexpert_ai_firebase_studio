@@ -1,3 +1,4 @@
+
 // src/app/admin/categories/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
 
 export async function updateLotCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean, message: string }> {
     const result = await categoryService.updateCategory(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/categories');
         revalidatePath(`/admin/categories/${id}/edit`);
     }
@@ -26,7 +27,7 @@ export async function updateLotCategory(id: string, data: Partial<Pick<LotCatego
 
 export async function createLotCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean, message: string }> {
     const result = await categoryService.createCategory(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
     }
     return result;
@@ -34,7 +35,7 @@ export async function createLotCategory(data: Pick<LotCategory, 'name' | 'descri
 
 export async function deleteLotCategory(id: string): Promise<{ success: boolean, message: string }> {
     const result = await categoryService.deleteCategory(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
     }
     return result;

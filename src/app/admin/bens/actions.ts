@@ -1,3 +1,4 @@
+
 // src/app/admin/bens/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getBem(id: string): Promise<Bem | null> {
 
 export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     const result = await bemService.createBem(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/bens');
     }
     return result;
@@ -25,7 +26,7 @@ export async function createBem(data: BemFormData): Promise<{ success: boolean; 
 
 export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await bemService.updateBem(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/bens');
         revalidatePath(`/admin/bens/${id}/edit`);
     }
@@ -34,7 +35,7 @@ export async function updateBem(id: string, data: Partial<BemFormData>): Promise
 
 export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await bemService.deleteBem(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/bens');
     }
     return result;

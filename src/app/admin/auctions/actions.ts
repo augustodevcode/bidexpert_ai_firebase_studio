@@ -31,7 +31,7 @@ export async function getAuction(id: string): Promise<Auction | null> {
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
     const result = await auctionService.createAuction(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
     }
     return result;
@@ -39,7 +39,7 @@ export async function createAuction(data: Partial<AuctionFormData>): Promise<{ s
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
     const result = await auctionService.updateAuction(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
         revalidatePath(`/admin/auctions/${id}/edit`);
     }
@@ -48,7 +48,7 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
     const result = await auctionService.deleteAuction(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctions');
     }
     return result;

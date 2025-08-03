@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-branches/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getJudicialBranch(id: string): Promise<JudicialBranch | nu
 
 export async function createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }> {
     const result = await judicialBranchService.createJudicialBranch(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-branches');
     }
     return result;
@@ -25,7 +26,7 @@ export async function createJudicialBranch(data: JudicialBranchFormData): Promis
 
 export async function updateJudicialBranch(id: string, data: Partial<JudicialBranchFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await judicialBranchService.updateJudicialBranch(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-branches');
         revalidatePath(`/admin/judicial-branches/${id}/edit`);
     }
@@ -34,7 +35,7 @@ export async function updateJudicialBranch(id: string, data: Partial<JudicialBra
 
 export async function deleteJudicialBranch(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await judicialBranchService.deleteJudicialBranch(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-branches');
     }
     return result;

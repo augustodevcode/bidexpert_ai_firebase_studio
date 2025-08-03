@@ -1,3 +1,4 @@
+
 // src/app/admin/subcategories/actions.ts
 'use server';
 
@@ -11,7 +12,7 @@ export async function createSubcategoryAction(
   data: SubcategoryFormData
 ): Promise<{ success: boolean; message: string; subcategoryId?: string }> {
   const result = await subcategoryService.createSubcategory(data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath('/admin/categories');
   }
@@ -31,7 +32,7 @@ export async function updateSubcategoryAction(
   data: Partial<SubcategoryFormData>
 ): Promise<{ success: boolean; message: string }> {
   const result = await subcategoryService.updateSubcategory(subcategoryId, data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath(`/admin/subcategories/${subcategoryId}/edit`);
     revalidatePath('/admin/categories');
@@ -43,7 +44,7 @@ export async function deleteSubcategoryAction(
   subcategoryId: string
 ): Promise<{ success: boolean; message: string }> {
   const result = await subcategoryService.deleteSubcategory(subcategoryId);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/subcategories');
     revalidatePath('/admin/categories');
   }

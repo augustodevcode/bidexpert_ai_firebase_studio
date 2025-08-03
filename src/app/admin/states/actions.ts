@@ -1,3 +1,4 @@
+
 // src/app/admin/states/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getState(id: string): Promise<StateInfo | null> {
 
 export async function createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }> {
   const result = await stateService.createState(data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/states');
   }
   return result;
@@ -25,7 +26,7 @@ export async function createState(data: StateFormData): Promise<{ success: boole
 
 export async function updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string }> {
   const result = await stateService.updateState(id, data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/states');
     revalidatePath(`/admin/states/${id}/edit`);
   }
@@ -34,7 +35,7 @@ export async function updateState(id: string, data: Partial<StateFormData>): Pro
 
 export async function deleteState(id: string): Promise<{ success: boolean; message: string }> {
   const result = await stateService.deleteState(id);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/states');
   }
   return result;

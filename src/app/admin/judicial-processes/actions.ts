@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-processes/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getJudicialProcess(id: string): Promise<JudicialProcess | 
 
 export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     const result = await judicialProcessService.createJudicialProcess(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
     }
     return result;
@@ -25,7 +26,7 @@ export async function createJudicialProcessAction(data: JudicialProcessFormData)
 
 export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await judicialProcessService.updateJudicialProcess(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
         revalidatePath(`/admin/judicial-processes/${id}/edit`);
     }
@@ -34,7 +35,7 @@ export async function updateJudicialProcessAction(id: string, data: Partial<Judi
 
 export async function deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await judicialProcessService.deleteJudicialProcess(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
     }
     return result;

@@ -1,3 +1,4 @@
+
 // src/app/admin/auctioneers/actions.ts
 'use server';
 
@@ -39,7 +40,7 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promi
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {
     const result = await auctioneerService.createAuctioneer(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctioneers');
     }
     return result;
@@ -47,7 +48,7 @@ export async function createAuctioneer(data: AuctioneerFormData): Promise<{ succ
 
 export async function updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean, message: string }> {
     const result = await auctioneerService.updateAuctioneer(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctioneers');
         revalidatePath(`/admin/auctioneers/${id}/edit`);
     }
@@ -56,7 +57,7 @@ export async function updateAuctioneer(id: string, data: Partial<AuctioneerFormD
 
 export async function deleteAuctioneer(id: string): Promise<{ success: boolean, message: string }> {
     const result = await auctioneerService.deleteAuctioneer(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctioneers');
     }
     return result;

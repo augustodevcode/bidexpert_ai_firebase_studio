@@ -1,16 +1,16 @@
+
 // src/app/direct-sales/actions.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/lib/database';
+import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
 import type { DirectSaleOffer } from '@/types';
 
+const offerService = new DirectSaleOfferService();
+
 export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    const db = getDatabaseAdapter();
-    // @ts-ignore
-    return (db.getDirectSaleOffers && await db.getDirectSaleOffers()) || [];
+    return offerService.getDirectSaleOffers();
 }
 
 export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
-    const offers = await getDirectSaleOffers();
-    return offers.find(o => o.id === id || o.publicId === id) || null;
+    return offerService.getDirectSaleOfferById(id);
 }

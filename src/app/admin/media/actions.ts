@@ -1,3 +1,4 @@
+
 // src/app/admin/media/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function createMediaItem(
   userId: string
 ): Promise<{ success: boolean; message: string; item?: MediaItem }> {
   const result = await mediaService.createMediaItem(itemData, url, userId);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/media');
   }
   return result;
@@ -28,7 +29,7 @@ export async function updateMediaItemMetadata(
     metadata: Partial<Pick<MediaItem, 'title' | 'altText' | 'caption' | 'description'>>
 ): Promise<{ success: boolean; message: string }> {
   const result = await mediaService.updateMediaItemMetadata(id, metadata);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/media');
   }
   return result;
@@ -36,7 +37,7 @@ export async function updateMediaItemMetadata(
 
 export async function deleteMediaItem(id: string): Promise<{ success: boolean; message: string }> {
   const result = await mediaService.deleteMediaItem(id);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/media');
   }
   return result;

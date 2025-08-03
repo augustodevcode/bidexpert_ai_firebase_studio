@@ -1,3 +1,4 @@
+
 // src/app/admin/judicial-districts/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getJudicialDistrict(id: string): Promise<JudicialDistrict 
 
 export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
     const result = await districtService.createJudicialDistrict(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-districts');
     }
     return result;
@@ -25,7 +26,7 @@ export async function createJudicialDistrict(data: JudicialDistrictFormData): Pr
 
 export async function updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await districtService.updateJudicialDistrict(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-districts');
         revalidatePath(`/admin/judicial-districts/${id}/edit`);
     }
@@ -34,7 +35,7 @@ export async function updateJudicialDistrict(id: string, data: Partial<JudicialD
 
 export async function deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await districtService.deleteJudicialDistrict(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-districts');
     }
     return result;

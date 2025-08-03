@@ -1,3 +1,4 @@
+
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
@@ -23,7 +24,7 @@ export async function getContactMessages(): Promise<ContactMessage[]> {
  */
 export async function toggleMessageReadStatus(id: string, isRead: boolean): Promise<{ success: boolean; message: string }> {
     const result = await contactMessageService.toggleReadStatus(id, isRead);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/contact-messages');
     }
     return result;
@@ -36,7 +37,7 @@ export async function toggleMessageReadStatus(id: string, isRead: boolean): Prom
  */
 export async function deleteContactMessage(id: string): Promise<{ success: boolean; message: string }> {
   const result = await contactMessageService.deleteMessage(id);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/contact-messages');
   }
   return result;

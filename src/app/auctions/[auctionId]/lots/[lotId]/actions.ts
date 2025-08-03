@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 /**
  * @fileoverview Server Actions for the Lot Detail page.

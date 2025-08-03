@@ -1,3 +1,4 @@
+
 // src/app/admin/cities/actions.ts
 'use server';
 
@@ -18,7 +19,7 @@ export async function getCity(id: string): Promise<CityInfo | null> {
 
 export async function createCity(data: CityFormData): Promise<{ success: boolean, message: string, cityId?: string }> {
     const result = await cityService.createCity(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/cities');
     }
     return result;
@@ -26,7 +27,7 @@ export async function createCity(data: CityFormData): Promise<{ success: boolean
 
 export async function updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean, message: string }> {
      const result = await cityService.updateCity(id, data);
-     if (result.success) {
+     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/cities');
         revalidatePath(`/admin/cities/${id}/edit`);
     }
@@ -35,7 +36,7 @@ export async function updateCity(id: string, data: Partial<CityFormData>): Promi
 
 export async function deleteCity(id: string): Promise<{ success: boolean, message: string }> {
     const result = await cityService.deleteCity(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/cities');
     }
     return result;

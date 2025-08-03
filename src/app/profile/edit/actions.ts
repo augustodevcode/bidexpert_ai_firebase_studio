@@ -1,4 +1,5 @@
 
+
 /**
  * @fileoverview Server Action for updating a user's own profile.
  */
@@ -38,11 +39,9 @@ export async function updateUserProfile(
     
     // As `updateUser` in service might expect a different structure, let's create a dedicated one.
     // For now, let's just pass the data, assuming the service can handle it.
-    // This part of the code requires creating a new method in UserService.
-    // Let's assume a simplified update for now.
     const result = await userService.updateUserProfile(userId, data);
     
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/profile/edit'); 
       revalidatePath(`/profile`); 
     }
