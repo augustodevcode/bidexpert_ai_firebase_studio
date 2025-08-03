@@ -60,6 +60,9 @@ export class LotService {
       if (sellerId) {
         dataToCreate.seller = { connect: { id: sellerId } };
       }
+       if (data.auctioneerId) {
+        dataToCreate.auctioneer = { connect: { id: data.auctioneerId } };
+      }
 
       if (subcategoryId) {
           dataToCreate.subcategory = { connect: { id: subcategoryId } };
@@ -75,20 +78,27 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { bemIds, categoryId, subcategoryId, ...lotData } = data;
+      const { bemIds, categoryId, subcategoryId, type, auctionId, sellerId, auctioneerId, ...lotData } = data;
       const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
 
       if (lotData.title) {
         dataToUpdate.slug = slugify(lotData.title);
       }
-       if (lotData.type) {
-        dataToUpdate.category = { connect: { id: lotData.type } };
+      const finalCategoryId = categoryId || type;
+      if (finalCategoryId) {
+        dataToUpdate.category = { connect: { id: finalCategoryId } };
       }
-       if (lotData.auctionId) {
-        dataToUpdate.auction = { connect: { id: lotData.auctionId } };
+       if (auctionId) {
+        dataToUpdate.auction = { connect: { id: auctionId } };
       }
       if (subcategoryId) {
         dataToUpdate.subcategory = { connect: { id: subcategoryId } };
+      }
+      if (sellerId) {
+        dataToUpdate.seller = { connect: { id: sellerId } };
+      }
+      if (auctioneerId) {
+        dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
       }
       
       await this.repository.update(id, dataToUpdate, bemIds);

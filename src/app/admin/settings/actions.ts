@@ -1,39 +1,25 @@
 // src/app/admin/settings/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { PlatformSettings } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { exec } from 'child_process';
 import util from 'util';
-import { fetchPlatformSettings } from '@/lib/data-queries';
+import type { PlatformSettings } from '@/types';
+import { PlatformSettingsService } from '@/services/platform-settings.service';
 
 const execPromise = util.promisify(exec);
-
+const settingsService = new PlatformSettingsService();
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
-  // A action agora chama a função centralizada para consistência.
-  return fetchPlatformSettings();
+  return settingsService.getSettings();
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-    try {
-        const currentSettings = await prisma.platformSettings.findFirst();
-        if (currentSettings) {
-            await prisma.platformSettings.update({
-                where: { id: currentSettings.id },
-                data: data as any,
-            });
-        } else {
-             await prisma.platformSettings.create({
-                data: { ...data, id: 'global' } as any,
-             });
-        }
-        revalidatePath('/', 'layout');
-        return { success: true, message: 'Configurações atualizadas com sucesso.' };
-    } catch (error: any) {
-        return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };
+    const result = await settingsService.updateSettings(data);
+    if (result.success) {
+      revalidatePath('/', 'layout');
     }
+    return result;
 }
 
 export async function runFullSeedAction(): Promise<{ success: boolean; message: string; }> {

@@ -51,7 +51,7 @@ export class LotRepository {
 
   async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
-        // 1. Update the scalar fields of the Lot
+        // 1. Update the scalar fields and direct relations of the Lot
         const updatedLot = await tx.lot.update({
             where: { id },
             data: lotData,
