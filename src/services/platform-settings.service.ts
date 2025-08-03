@@ -17,21 +17,21 @@ export class PlatformSettingsService {
       console.warn("Platform settings not found in DB, returning default sample settings.");
       return samplePlatformSettings as PlatformSettings;
     }
-    // Assegura que o tipo retornado corresponde à interface PlatformSettings, mesmo que o DB retorne campos opcionais
     return settings as PlatformSettings;
   }
 
   async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+    console.log('[SERVICE - updateSettings] Processing data received from action...');
     try {
       const currentSettings = await this.repository.findFirst();
-      // Omit id from data to prevent trying to update it
       const { id, ...updateData } = data;
       const dataToUpdate = { ...updateData } as Prisma.PlatformSettingsUpdateInput;
 
       if (currentSettings) {
+        console.log(`[SERVICE - updateSettings] Found existing settings with id: ${currentSettings.id}. Calling repository to update.`);
         await this.repository.update(currentSettings.id, dataToUpdate);
       } else {
-        // Se não existir, cria um novo com ID 'global'
+        console.log('[SERVICE - updateSettings] No existing settings found. Calling repository to create new record.');
         await this.repository.create({ ...data, id: 'global' } as Prisma.PlatformSettingsCreateInput);
       }
       return { success: true, message: 'Configurações atualizadas com sucesso.' };

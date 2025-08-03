@@ -15,6 +15,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
 }
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
+    console.log('[ACTION - updatePlatformSettings] Received data from form:', JSON.stringify(data, null, 2));
     const result = await settingsService.updateSettings(data);
     if (result.success) {
       revalidatePath('/', 'layout');
