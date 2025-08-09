@@ -77,6 +77,7 @@ const platformManagementItems = [
   { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
   { title: 'Novo Template', href: '/admin/document-templates/new', icon: PlusCircle },
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
+  { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: ClipboardCheck },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
   { title: 'Novo Perfil', href: '/admin/roles/new', icon: PlusCircle },
   { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart },
