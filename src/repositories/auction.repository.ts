@@ -12,6 +12,7 @@ export class AuctionRepository {
         seller: true, // Include full seller object
         auctioneer: true, // Include full auctioneer object
         category: { select: { name: true } },
+        auctionStages: true, // Include stages here as well for consistency
       },
     });
   }
@@ -24,7 +25,7 @@ export class AuctionRepository {
         auctioneer: true,
         seller: true, // Full seller object
         category: true,
-        // auctionStages is a JSON field, not a relation, so it's returned by default.
+        auctionStages: true, // Correctly include the related auction stages
       },
     });
   }

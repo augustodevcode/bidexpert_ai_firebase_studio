@@ -64,7 +64,7 @@ const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ].map(status => ({ value: status, label: getAuctionStatusText(status) }));
 
-const modalityOptions: { value: AuctionType, label: string }[] = [
+const auctionTypeOptions: { value: AuctionType, label: string }[] = [
   { value: 'JUDICIAL', label: 'Judicial' },
   { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
   { value: 'PARTICULAR', label: 'Particular' },
@@ -223,7 +223,7 @@ export default function AuctionForm({
         const prevStage = watchedStages?.[index - 1];
         if (prevStage?.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
            const newStartDate = new Date(prevStage.endDate);
-           const currentDuration = differenceInMilliseconds(new Date(stage.endDate!), new Date(stage.startDate!));
+           const currentDuration = stage.endDate && stage.startDate ? differenceInMilliseconds(new Date(stage.endDate), new Date(stage.startDate)) : 7 * 24 * 60 * 60 * 1000;
            const newEndDate = new Date(newStartDate.getTime() + currentDuration);
            form.setValue(`auctionStages.${index}.startDate`, newStartDate, { shouldDirty: true });
            form.setValue(`auctionStages.${index}.endDate`, newEndDate, { shouldDirty: true });
@@ -292,7 +292,7 @@ export default function AuctionForm({
     { value: "participacao", title: "Modalidade, Método e Local", content: (
         <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial.</FormDescription><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial.</FormDescription><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="auctionMethod" render={({ field }) => (<FormItem><FormLabel>Método de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{methodOptions.map(opt => <SelectItem key={opt.value} value={opt.value}><div className="flex items-center gap-2"><opt.icon className="h-4 w-4"/>{opt.label}</div></SelectItem>)}</SelectContent></Select><FormDescription>Como os lances serão processados.</FormDescription><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Forma de Participação</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{participationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormDescription>{participationOptions.find(o => o.value === field.value)?.description}</FormDescription><FormMessage /></FormItem>)} />
@@ -321,8 +321,8 @@ export default function AuctionForm({
                     <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
-                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode || (syncStages && index > 0)} />
-                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
+                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode || (syncStages && index > 0)} />
+                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
                     </div>
                 </Card>
                 ))}
