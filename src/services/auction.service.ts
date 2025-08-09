@@ -91,10 +91,20 @@ export class AuctionService {
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       // Remover campos que não pertencem diretamente ao modelo Auction
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, auctionMethod, participation, address, city, state, zipCode, onlineUrl, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
-        const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
+        const dataToUpdate: Prisma.AuctionUpdateInput = { 
+          ...(restOfData as any),
+          modality,
+          auctionMethod,
+          participation,
+          address,
+          city,
+          state,
+          zipCode,
+          onlineUrl,
+        };
         if (data.title) dataToUpdate.slug = slugify(data.title);
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
@@ -102,7 +112,7 @@ export class AuctionService {
         
         // This is a crucial fix: `modality` from the form is now mapped to `auctionType` in the service/DB
         if (modality) {
-            dataToUpdate.auctionType = modality;
+            dataToUpdate.modality = modality;
         }
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);

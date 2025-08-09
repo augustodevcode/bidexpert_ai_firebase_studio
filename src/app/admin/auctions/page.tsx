@@ -15,6 +15,8 @@ import { getPlatformSettings } from '../settings/actions';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
+import AuctionCard from '@/components/auction-card';
+import AuctionListItem from '@/components/auction-list-item';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
@@ -77,7 +79,7 @@ export default function AdminAuctionsPage() {
     if (successCount > 0) {
       toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leilão(ões) excluído(s) com sucesso.` });
     }
-    fetchPageData();
+    fetchPageData(); // Re-fetch data after operation
   }, [toast, fetchPageData]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
@@ -90,6 +92,14 @@ export default function AdminAuctionsPage() {
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
   ], [statusOptions]);
+  
+  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const sortOptions = [
+    { value: 'auctionDate_desc', label: 'Mais Recentes' },
+    { value: 'endDate_asc', label: 'Encerramento Próximo' },
+    { value: 'visits_desc', label: 'Mais Visitados' },
+  ];
 
   return (
     <div className="space-y-6">
@@ -101,7 +111,7 @@ export default function AdminAuctionsPage() {
               Gerenciar Leilões
             </CardTitle>
             <CardDescription>
-              Visualize e gerencie os leilões da plataforma.
+              Visualize e gerencie os leilões da plataforma em diferentes formatos.
             </CardDescription>
           </div>
           <Button asChild>
@@ -111,16 +121,59 @@ export default function AdminAuctionsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={allAuctions}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="title"
-            searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={facetedFilterColumns}
-            onDeleteSelected={handleDeleteSelected}
-          />
+          <Tabs defaultValue="cards" className="w-full">
+            <TabsList>
+              <TabsTrigger value="cards">Cards</TabsTrigger>
+              <TabsTrigger value="list">Lista</TabsTrigger>
+              <TabsTrigger value="table">Tabela</TabsTrigger>
+            </TabsList>
+            <TabsContent value="cards" className="mt-4">
+              {platformSettings && (
+                 <SearchResultsFrame
+                    items={allAuctions}
+                    totalItemsCount={allAuctions.length}
+                    renderGridItem={renderAuctionGridItem}
+                    renderListItem={renderAuctionListItem}
+                    sortOptions={sortOptions}
+                    initialSortBy="auctionDate_desc"
+                    onSortChange={() => {}} // Sorting logic to be implemented if needed
+                    platformSettings={platformSettings}
+                    isLoading={isLoading}
+                    searchTypeLabel="leilões"
+                    defaultViewMode="grid"
+                  />
+              )}
+            </TabsContent>
+            <TabsContent value="list" className="mt-4">
+               {platformSettings && (
+                 <SearchResultsFrame
+                    items={allAuctions}
+                    totalItemsCount={allAuctions.length}
+                    renderGridItem={renderAuctionGridItem}
+                    renderListItem={renderAuctionListItem}
+                    sortOptions={sortOptions}
+                    initialSortBy="auctionDate_desc"
+                    onSortChange={() => {}}
+                    platformSettings={platformSettings}
+                    isLoading={isLoading}
+                    searchTypeLabel="leilões"
+                    defaultViewMode="list"
+                  />
+              )}
+            </TabsContent>
+             <TabsContent value="table" className="mt-4">
+               <DataTable
+                columns={columns}
+                data={allAuctions}
+                isLoading={isLoading}
+                error={error}
+                searchColumnId="title"
+                searchPlaceholder="Buscar por título..."
+                facetedFilterColumns={facetedFilterColumns}
+                onDeleteSelected={handleDeleteSelected}
+              />
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
