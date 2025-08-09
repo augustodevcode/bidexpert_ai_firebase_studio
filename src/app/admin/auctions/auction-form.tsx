@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod } from '@/types';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionModality } from '@/types';
 import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -152,7 +152,7 @@ export default function AuctionForm({
       title: initialData?.title || '',
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
-      modality: initialData?.auctionType || 'EXTRAJUDICIAL', // Corrected mapping
+      modality: initialData?.modality || 'EXTRAJUDICIAL',
       auctionMethod: initialData?.auctionMethod || 'STANDARD',
       participation: initialData?.participation || 'ONLINE',
       onlineUrl: initialData?.onlineUrl || '',
@@ -276,26 +276,26 @@ export default function AuctionForm({
     else router.back();
   };
   
-   const accordionItems = [
+  const accordionItems = [
     { value: "geral", title: "Informações Gerais", content: (
         <div className="space-y-4">
             <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
             <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro Responsável</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctioneers.map(a => ({ value: a.id, label: a.name }))} placeholder="Selecione o leiloeiro" searchPlaceholder="Buscar leiloeiro..." emptyStateMessage="Nenhum leiloeiro encontrado." createNewUrl="/admin/auctioneers/new" editUrlPrefix="/admin/auctioneers" onRefetch={() => handleRefetch('auctioneers')} isFetching={isFetchingAuctioneers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
         </div>
     )},
-    { value: "participacao", title: "Participação e Local", content: (
+    { value: "participacao", title: "Modalidade, Método e Local", content: (
         <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="modality" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial do leilão.</FormDescription><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="modality" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial.</FormDescription><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="auctionMethod" render={({ field }) => (<FormItem><FormLabel>Método de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{methodOptions.map(opt => <SelectItem key={opt.value} value={opt.value}><div className="flex items-center gap-2"><opt.icon className="h-4 w-4"/>{opt.label}</div></SelectItem>)}</SelectContent></Select><FormDescription>Como os lances serão processados.</FormDescription><FormMessage /></FormItem>)} />
             </div>
-            <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Forma de Participação</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{participationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormDescription>{participationOptions.find(o => o.value === field.value)?.description}</FormDescription><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Forma de Participação</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{participationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormDescription>{participationOptions.find(o => o.value === field.value)?.description}</FormDescription><FormMessage /></FormItem>)} />
             {(watchedParticipation === 'ONLINE' || watchedParticipation === 'HIBRIDO') && (
                 <FormField control={form.control} name="onlineUrl" render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/> URL do Leilão Online</FormLabel><FormControl><Input placeholder="https://auditorio.bidexpert.com/sala/xyz" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
             )}
@@ -371,7 +371,7 @@ export default function AuctionForm({
             <fieldset disabled={isViewMode} className="group">
               {isWizardMode ? (
                 <div className="p-4">
-                  <Accordion type="multiple" defaultValue={defaultAccordionValues}>
+                  <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full">
                     {accordionItems.map(item => (
                       <AccordionItem key={item.value} value={item.value}>
                         <AccordionTrigger>{item.title}</AccordionTrigger>

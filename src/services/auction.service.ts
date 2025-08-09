@@ -61,7 +61,7 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: data.modality, // Correctly map modality from form to auctionType in DB
+        auctionType: data.modality,
         participation: data.participation,
         auctionMethod: data.auctionMethod,
         softCloseMinutes: Number(data.softCloseMinutes),
@@ -75,8 +75,8 @@ export class AuctionService {
         auctionData.auctionStages = {
             create: auctionStages.map(stage => ({
                 name: stage.name,
-                startDate: new Date(stage.startDate),
-                endDate: new Date(stage.endDate),
+                startDate: new Date(stage.startDate as Date),
+                endDate: new Date(stage.endDate as Date),
                 initialPrice: stage.initialPrice,
             })),
         };
@@ -100,21 +100,21 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      // Desestruturar todos os campos que não são do modelo principal ou que precisam de tratamento especial
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      // Desestruturar campos que precisam de tratamento especial ou não pertencem ao modelo
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
           ...(restOfData as any),
         };
+        
+        // Mapeamento correto dos campos
+        if (modality) dataToUpdate.auctionType = modality;
+        
         if (data.title) dataToUpdate.slug = slugify(data.title);
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-        
-        if (data.modality) dataToUpdate.auctionType = data.modality;
-        if (data.participation) dataToUpdate.participation = data.participation;
-        if (data.auctionMethod) dataToUpdate.auctionMethod = data.auctionMethod;
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
