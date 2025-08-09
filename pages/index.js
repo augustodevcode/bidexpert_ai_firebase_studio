@@ -5,11 +5,11 @@ const HomePage = () => {
     <div>
       <h1>Welcome to BidExpert AI Firebase Studio</h1>
       <Link href="/report-builder">
-        <a>Go to Report Builder</a>
+        Go to Report Builder
       </Link>
       <br />
       <Link href="/report-designer">
-        <a>Go to Report Designer</a>
+        Go to Report Designer
       </Link>
     </div>
   );
