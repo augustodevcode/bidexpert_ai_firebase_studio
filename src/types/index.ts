@@ -30,7 +30,7 @@ export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_RE
 
 export type AccountType = 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
 
-export type AuctionModality = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+export type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
 export type AuctionMethod = 'STANDARD' | 'DUTCH' | 'SILENT';
 export type AuctionParticipation = 'ONLINE' | 'PRESENCIAL' | 'HIBRIDO';
 
@@ -257,11 +257,11 @@ export interface Auction {
   totalLots?: number;
   categoryId?: string;
   category?: LotCategory;
-  auctioneer: AuctioneerProfileInfo; // Changed to object
+  auctioneer?: AuctioneerProfileInfo; // Changed to object
   auctioneerId?: string;
   auctioneerName?: string; // Denormalized for display
   auctioneerLogoUrl?: string;
-  seller: SellerProfileInfo; // Changed to object
+  seller?: SellerProfileInfo; // Changed to object
   sellerId?: string;
   imageUrl?: string;
   imageMediaId?: string | null;
@@ -272,9 +272,9 @@ export interface Auction {
   initialOffer?: number; // Lowest starting price among lots
   
   // New structured fields
-  modality: AuctionModality;
-  auctionMethod: AuctionMethod;
-  participation: AuctionParticipation;
+  auctionType?: AuctionType;
+  auctionMethod?: AuctionMethod;
+  participation?: AuctionParticipation;
 
   // Location fields for presencial/hibrido
   address?: string | null;

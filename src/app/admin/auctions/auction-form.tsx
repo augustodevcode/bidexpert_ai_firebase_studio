@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionModality } from '@/types';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType } from '@/types';
 import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -64,7 +64,7 @@ const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ].map(status => ({ value: status, label: getAuctionStatusText(status) }));
 
-const modalityOptions: { value: AuctionModality, label: string }[] = [
+const modalityOptions: { value: AuctionType, label: string }[] = [
   { value: 'JUDICIAL', label: 'Judicial' },
   { value: 'EXTRAJUDICIAL', label: 'Extrajudicial' },
   { value: 'PARTICULAR', label: 'Particular' },
@@ -152,7 +152,7 @@ export default function AuctionForm({
       title: initialData?.title || '',
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
-      modality: initialData?.modality || 'EXTRAJUDICIAL',
+      auctionType: initialData?.auctionType || 'EXTRAJUDICIAL',
       auctionMethod: initialData?.auctionMethod || 'STANDARD',
       participation: initialData?.participation || 'ONLINE',
       onlineUrl: initialData?.onlineUrl || '',
@@ -292,7 +292,7 @@ export default function AuctionForm({
     { value: "participacao", title: "Modalidade, Método e Local", content: (
         <div className="space-y-4">
             <div className="grid md:grid-cols-2 gap-6">
-                <FormField control={form.control} name="modality" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial.</FormDescription><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione a modalidade" /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormDescription>Define a natureza jurídica ou comercial.</FormDescription><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="auctionMethod" render={({ field }) => (<FormItem><FormLabel>Método de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{methodOptions.map(opt => <SelectItem key={opt.value} value={opt.value}><div className="flex items-center gap-2"><opt.icon className="h-4 w-4"/>{opt.label}</div></SelectItem>)}</SelectContent></Select><FormDescription>Como os lances serão processados.</FormDescription><FormMessage /></FormItem>)} />
             </div>
             <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Forma de Participação</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{participationOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormDescription>{participationOptions.find(o => o.value === field.value)?.description}</FormDescription><FormMessage /></FormItem>)} />

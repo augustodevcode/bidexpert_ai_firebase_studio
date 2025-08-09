@@ -1,13 +1,13 @@
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
-import type { AuctionStatus, AuctionModality as AuctionModalityEnum, AuctionParticipation, AuctionMethod } from '@/types';
+import type { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod } from '@/types';
 
 // Enums from your types
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ];
 
-const modalityValues: [AuctionModalityEnum, ...AuctionModalityEnum[]] = [
+const auctionTypeValues: [AuctionType, ...AuctionType[]] = [
   'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'
 ];
 
@@ -42,8 +42,7 @@ export const auctionFormSchema = z.object({
   }).optional().nullable(),
   status: z.enum(auctionStatusValues as [string, ...string[]]).optional(),
   
-  // Renamed auctionType to modality and added new fields
-  modality: z.enum(modalityValues as [string, ...string[]], {
+  auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }),
   auctionMethod: z.enum(methodValues as [string, ...string[]]).default('STANDARD'),
