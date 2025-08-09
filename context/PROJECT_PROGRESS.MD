@@ -17,12 +17,10 @@
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 - **Item 9:** **PDF Document Generation:** Implemented the server-side logic using Puppeteer to generate PDF documents for winning bid terms, accessible from the user's dashboard.
+- **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
 
 ## DOING
-- **Item 10:** **Advanced UI/UX Features:**
-    - Implement real-time updates for bids and auction status using WebSockets.
-    - **DONE:** Expand the gamification system with more badges and rewards.
+- **Item 11:** **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
 
 ## NEXT
-- **Item 11:** **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
 - **Item 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability.
