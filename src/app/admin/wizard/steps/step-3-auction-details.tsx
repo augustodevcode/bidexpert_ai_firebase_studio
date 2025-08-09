@@ -282,7 +282,8 @@ export default function Step3AuctionDetails({
             />
           
           <Separator />
-           <div className="flex flex-wrap gap-4 justify-between items-center pt-2">
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-4 justify-between items-center pt-2">
                 <h3 className="text-md font-semibold text-muted-foreground">Praças / Etapas do Leilão</h3>
                 <div className="flex items-center space-x-2">
                     <Label htmlFor="sync-stages" className="text-xs font-normal">Sincronizar Etapas</Label>
@@ -312,6 +313,7 @@ export default function Step3AuctionDetails({
                   }} className="text-xs mt-2">
                       <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
               </Button>
+            </div>
             </div>
             
             <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
