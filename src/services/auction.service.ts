@@ -61,9 +61,10 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: data.auctionType, 
+        auctionType: data.modality, // Corrigido: modality -> auctionType
         participation: data.participation,
         auctionMethod: data.auctionMethod,
+        softCloseMinutes: Number(data.softCloseMinutes),
       };
 
       if (categoryId) {
@@ -97,10 +98,10 @@ export class AuctionService {
       if (!auctionToUpdate) {
         return { success: false, message: 'Leilão não encontrado para atualização.' };
       }
-      const internalId = auctionToUpdate.id; // Use the confirmed internal ID for the update.
+      const internalId = auctionToUpdate.id;
 
-      // Remover campos que não pertencem diretamente ao modelo Auction
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      // Desestruturar todos os campos que não são do modelo principal ou que precisam de tratamento especial
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
@@ -111,10 +112,11 @@ export class AuctionService {
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         
-        // CORREÇÃO: Mapear 'modality' e outros do formulário para os campos corretos do schema
-        if (data.modality) dataToUpdate.auctionType = data.modality;
+        // CORREÇÃO APLICADA AQUI
+        if (modality) dataToUpdate.auctionType = modality; // Mapeia o campo do formulário para o campo do banco de dados
         if (data.participation) dataToUpdate.participation = data.participation;
         if (data.auctionMethod) dataToUpdate.auctionMethod = data.auctionMethod;
+        if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
@@ -128,8 +130,8 @@ export class AuctionService {
             await tx.auctionStage.createMany({
                 data: auctionStages.map(stage => ({
                     name: stage.name,
-                    startDate: stage.startDate,
-                    endDate: stage.endDate,
+                    startDate: new Date(stage.startDate),
+                    endDate: new Date(stage.endDate),
                     initialPrice: stage.initialPrice,
                     auctionId: internalId,
                 })),
@@ -151,7 +153,6 @@ export class AuctionService {
       if (lotCount > 0) {
         return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
       }
-      // Transaction to delete stages and then auction
       await prisma.$transaction(async (tx) => {
           await tx.auctionStage.deleteMany({ where: { auctionId: id }});
           await tx.auction.delete({ where: { id } });
