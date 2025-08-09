@@ -348,7 +348,6 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
         return { success: false, message: 'Arrematante não encontrado.'};
     }
 
-<<<<<<< HEAD
     const { auction } = lot;
     const auctioneer = auction.auctioneer;
     const seller = auction.seller;
@@ -376,10 +375,6 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
         console.error("Error generating winning bid term:", error);
         return { success: false, message: `Falha ao gerar documento: ${error.message}` };
     }
-=======
-  } catch (error: any) {
-    console.error("Error generating winning bid term:", error);
-    return { success: false, message: `Falha ao gerar documento: ${error.message}` };
-  }
->>>>>>> 4cd22730991805783679ca0d12f853eae3469748
 }
+
+    
