@@ -69,12 +69,12 @@ export default function AdminLotsPage() {
             renderListItem={(item) => <LotListItem lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
             sortOptions={sortOptions}
             initialSortBy="endDate_asc"
-            onSortChange={() => {}} // Simplified sorting for tabs
+            onSortChange={() => {}} // Sorting is handled locally if needed, or can be passed
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
             currentPage={1}
-            itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
+            itemsPerPage={platformSettings.defaultListItemsPerPage || 100} // Show all in tabs
             onPageChange={() => {}}
             onItemsPerPageChange={() => {}}
             emptyStateMessage="Nenhum lote encontrado nesta categoria."
