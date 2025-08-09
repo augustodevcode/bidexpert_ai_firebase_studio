@@ -6,15 +6,20 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots, deleteLot } from './actions';
-import type { Lot } from '@/types';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import type { Lot, Auction, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import SearchResultsFrame from '@/components/search-results-frame';
+import LotCard from '@/components/lot-card';
+import LotListItem from '@/components/lot-list-item';
 
 export default function AdminLotsPage() {
-  const [lots, setLots] = useState<Lot[]>([]);
+  const [allLots, setAllLots] = useState<Lot[]>([]);
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -24,8 +29,14 @@ export default function AdminLotsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedLots = await getLots();
-      setLots(fetchedLots);
+      const [fetchedLots, fetchedAuctions, fetchedSettings] = await Promise.all([
+        getLots(),
+        getAuctions(),
+        getPlatformSettings(),
+      ]);
+      setAllLots(fetchedLots);
+      setAllAuctions(fetchedAuctions);
+      setPlatformSettings(fetchedSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
       console.error("Error fetching lots:", e);
@@ -40,52 +51,44 @@ export default function AdminLotsPage() {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
 
-  const handleDelete = useCallback(async (id: string, auctionId?: string) => {
-    const result = await deleteLot(id, auctionId);
-    if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
-      setRefetchTrigger(prev => prev + 1);
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
+  const sortOptions = [
+    { value: 'endDate_asc', label: 'Encerramento Próximo' },
+    { value: 'price_desc', label: 'Maior Valor' },
+    { value: 'price_asc', label: 'Menor Valor' },
+    { value: 'bidsCount_desc', label: 'Mais Lances' },
+    { value: 'views_desc', label: 'Mais Vistos' },
+  ];
 
-  const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteLot(item.id, item.auctionId);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir lote ${item.number}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} lote(s) excluído(s) com sucesso.` });
-    }
-    setRefetchTrigger(prev => prev + 1);
-  }, [toast]);
+  const renderLotList = (lots: Lot[]) => {
+      if (!platformSettings) return null;
+      return (
+        <SearchResultsFrame
+            items={lots}
+            totalItemsCount={lots.length}
+            renderGridItem={(item) => <LotCard lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
+            renderListItem={(item) => <LotListItem lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
+            sortOptions={sortOptions}
+            initialSortBy="endDate_asc"
+            onSortChange={() => {}} // Simplified sorting for tabs
+            platformSettings={platformSettings}
+            isLoading={isLoading}
+            searchTypeLabel="lotes"
+            currentPage={1}
+            itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
+            onPageChange={() => {}}
+            onItemsPerPageChange={() => {}}
+            emptyStateMessage="Nenhum lote encontrado nesta categoria."
+        />
+      );
+  };
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
-  const statusOptions = useMemo(() => 
-    [...new Set(lots.map(lot => lot.status))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
-  [lots]);
-
-  const facetedFilterColumns = useMemo(() => [
-    {
-      id: 'status',
-      title: 'Status',
-      options: statusOptions
-    }
-  ], [statusOptions]);
+  const featuredLots = useMemo(() => allLots.filter(l => l.isFeatured), [allLots]);
+  const draftLots = useMemo(() => allLots.filter(l => l.status === 'RASCUNHO'), [allLots]);
+  const upcomingLots = useMemo(() => allLots.filter(l => l.status === 'EM_BREVE'), [allLots]);
+  const openLots = useMemo(() => allLots.filter(l => l.status === 'ABERTO_PARA_LANCES' && !l.isFeatured), [allLots]);
+  const soldLots = useMemo(() => allLots.filter(l => l.status === 'VENDIDO'), [allLots]);
+  const notSoldLots = useMemo(() => allLots.filter(l => l.status === 'NAO_VENDIDO'), [allLots]);
+  const canceledLots = useMemo(() => allLots.filter(l => l.status === 'CANCELADO'), [allLots]);
 
   return (
     <div className="space-y-6">
@@ -94,10 +97,10 @@ export default function AdminLotsPage() {
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Package className="h-6 w-6 mr-2 text-primary" />
-              Listagem de Lotes
+              Gerenciar Lotes
             </CardTitle>
             <CardDescription>
-              Visualize, adicione, edite ou remova lotes para os leilões.
+              Visualize, adicione e edite os lotes da plataforma, organizados por status.
             </CardDescription>
           </div>
           <Button asChild>
@@ -107,16 +110,24 @@ export default function AdminLotsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={lots}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="title"
-            searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={facetedFilterColumns}
-            onDeleteSelected={handleDeleteSelected}
-          />
+          <Tabs defaultValue="open">
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 h-auto">
+              <TabsTrigger value="open">Abertos ({openLots.length})</TabsTrigger>
+              <TabsTrigger value="featured">Destaques ({featuredLots.length})</TabsTrigger>
+              <TabsTrigger value="upcoming">Em Breve ({upcomingLots.length})</TabsTrigger>
+              <TabsTrigger value="sold">Vendidos ({soldLots.length})</TabsTrigger>
+              <TabsTrigger value="not_sold">Não Vendidos ({notSoldLots.length})</TabsTrigger>
+              <TabsTrigger value="drafts">Rascunhos ({draftLots.length})</TabsTrigger>
+              <TabsTrigger value="canceled">Cancelados ({canceledLots.length})</TabsTrigger>
+            </TabsList>
+            <TabsContent value="open" className="mt-4">{renderLotList(openLots)}</TabsContent>
+            <TabsContent value="featured" className="mt-4">{renderLotList(featuredLots)}</TabsContent>
+            <TabsContent value="upcoming" className="mt-4">{renderLotList(upcomingLots)}</TabsContent>
+            <TabsContent value="sold" className="mt-4">{renderLotList(soldLots)}</TabsContent>
+            <TabsContent value="not_sold" className="mt-4">{renderLotList(notSoldLots)}</TabsContent>
+            <TabsContent value="drafts" className="mt-4">{renderLotList(draftLots)}</TabsContent>
+            <TabsContent value="canceled" className="mt-4">{renderLotList(canceledLots)}</TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
