@@ -61,7 +61,9 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: data.modality, // Mapeando modality para auctionType
+        auctionType: data.auctionType, 
+        participation: data.participation,
+        auctionMethod: data.auctionMethod,
       };
 
       if (categoryId) {
@@ -91,8 +93,14 @@ export class AuctionService {
 
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
+      const auctionToUpdate = await this.auctionRepository.findById(id);
+      if (!auctionToUpdate) {
+        return { success: false, message: 'Leilão não encontrado para atualização.' };
+      }
+      const internalId = auctionToUpdate.id; // Use the confirmed internal ID for the update.
+
       // Remover campos que não pertencem diretamente ao modelo Auction
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
@@ -103,27 +111,27 @@ export class AuctionService {
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         
-        // CORREÇÃO: Mapear 'modality' do formulário para o campo 'auctionType' do schema
-        if (modality) {
-            dataToUpdate.auctionType = modality;
-        }
+        // CORREÇÃO: Mapear 'modality' e outros do formulário para os campos corretos do schema
+        if (data.modality) dataToUpdate.auctionType = data.modality;
+        if (data.participation) dataToUpdate.participation = data.participation;
+        if (data.auctionMethod) dataToUpdate.auctionMethod = data.auctionMethod;
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
 
-        await tx.auction.update({ where: { id }, data: dataToUpdate });
+        await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
         if (auctionStages) {
-            await tx.auctionStage.deleteMany({ where: { auctionId: id } });
+            await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
                 data: auctionStages.map(stage => ({
                     name: stage.name,
                     startDate: stage.startDate,
                     endDate: stage.endDate,
                     initialPrice: stage.initialPrice,
-                    auctionId: id,
+                    auctionId: internalId,
                 })),
             });
         }
