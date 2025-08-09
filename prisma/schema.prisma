@@ -1,5 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
@@ -83,8 +82,9 @@ model City {
   stateUf   String?            @db.VarChar(2)
   ibgeCode  String?            @unique @db.VarChar(10)
   lotCount  Int?               @default(0)
-  districts JudicialDistrict[]
   lots      Lot[]
+  district  JudicialDistrict?  @relation(fields: [districtId], references: [id])
+  districtId String?           @unique
 }
 
 model LotCategory {
@@ -142,14 +142,11 @@ model User {
   notifications       Notification[]
   sellerProfile       Seller?
   auctioneerProfile   Auctioneer?
-  documents           UserDocument[]        @relation("UserDocuments")
-  reviewedDocuments   UserDocument[]        @relation("DocumentAnalyst")
+  documents           UserDocument[]
   mediaItems          MediaItem[]
   maxBids             UserLotMaxBid[]
   habilitations       AuctionHabilitation[]
   wonLots             Lot[]                 @relation("LotWinner")
-  ownedReports        Report[]              @relation("UserReports")
-  sharedReports       ReportShare[]         @relation("SharedReports")
 }
 
 model Seller {
@@ -174,7 +171,6 @@ model Seller {
   userId           String?          @unique
   judicialBranch   JudicialBranch?  @relation(fields: [judicialBranchId], references: [id])
   judicialBranchId String?          @unique
-  judicialProcess  JudicialProcess?
   auctions         Auction[]
   lots             Lot[]
   bens             Bem[]
@@ -226,12 +222,11 @@ model JudicialDistrict {
   courtId           String?
   state             State?            @relation(fields: [stateId], references: [id])
   stateId           String?
-  city              City?             @relation(fields: [cityId], references: [id])
   zipCode           String?           @db.VarChar(10)
   branches          JudicialBranch[]
   judicialProcesses JudicialProcess[]
   auctions          Auction[]         @relation("DistrictAuctions")
-  cityId            String?
+  city              City[]
 }
 
 model JudicialBranch {
@@ -259,12 +254,11 @@ model JudicialProcess {
   districtId    String?
   branch        JudicialBranch? @relation(fields: [branchId], references: [id])
   branchId      String?
-  seller        Seller?         @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  seller        Seller?         @relation(fields: [sellerId], references: [id])
   sellerId      String?         @unique
   parties       JudicialParty[]
   bens          Bem[]
   auctions      Auction[]
-  mediaItems    MediaItem[]
 }
 
 model JudicialParty {
@@ -343,7 +337,7 @@ model Bem {
   unregisteredRecords        String?          @db.Text
   hasHabiteSe                Boolean?
   zoningRestrictions         String?          @db.VarChar(200)
-  amenities                  String?          @db.Text
+  amenities                  Json?
   brand                      String?          @db.VarChar(50)
   serialNumber               String?          @db.VarChar(100)
   itemCondition              String?          @db.VarChar(100)
@@ -552,43 +546,40 @@ model LotBens {
 }
 
 model MediaItem {
-  id                String           @id @default(uuid())
-  fileName          String
-  storagePath       String
-  title             String?
-  altText           String?
-  caption           String?          @db.VarChar(500)
-  description       String?          @db.Text
-  mimeType          String           @db.VarChar(100)
-  sizeBytes         Int?
-  urlOriginal       String
-  urlThumbnail      String?
-  urlMedium         String?
-  urlLarge          String?
-  linkedLotIds      Json?
-  dataAiHint        String?          @db.VarChar(100)
-  uploadedBy        User             @relation(fields: [uploadedByUserId], references: [id])
-  uploadedByUserId  String
-  uploadedAt        DateTime         @default(now())
-  // New field to link media directly to a judicial process.
-  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
-  judicialProcessId String?
+  id                  String           @id @default(uuid())
+  fileName            String
+  storagePath         String
+  title               String?
+  altText             String?
+  caption             String?          @db.VarChar(500)
+  description         String?          @db.Text
+  mimeType            String           @db.VarChar(100)
+  sizeBytes           Int?
+  urlOriginal         String
+  urlThumbnail        String?
+  urlMedium           String?
+  urlLarge            String?
+  linkedLotIds        Json?
+  dataAiHint          String?          @db.VarChar(100)
+  uploadedBy          User             @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId    String
+  judicialProcessId   String?
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  uploadedAt          DateTime         @default(now())
 }
 
 model UserDocument {
-  id              String             @id @default(uuid())
-  user            User               @relation("UserDocuments", fields: [userId], references: [id])
+  id              String        @id @default(uuid())
+  user            User          @relation(fields: [userId], references: [id])
   userId          String
-  documentType    DocumentType       @relation(fields: [documentTypeId], references: [id])
+  documentType    DocumentType  @relation(fields: [documentTypeId], references: [id])
   documentTypeId  String
   status          UserDocumentStatus @default(PENDING_ANALYSIS)
   fileUrl         String
   fileName        String?
-  rejectionReason String?            @db.Text
-  reviewedBy      User?              @relation("DocumentAnalyst", fields: [analystId], references: [id], onDelete: SetNull)
-  analystId       String?
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
+  rejectionReason String?       @db.Text
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@unique([userId, documentTypeId])
 }
@@ -678,12 +669,12 @@ model Notification {
 }
 
 model ContactMessage {
-  id        String   @id @default(uuid())
-  name      String   @db.VarChar(150)
-  email     String   @db.VarChar(150)
-  subject   String?
-  message   String   @db.Text
-  isRead    Boolean  @default(false)
+  id      String   @id @default(uuid())
+  name    String   @db.VarChar(150)
+  email   String   @db.VarChar(150)
+  subject String?
+  message String   @db.Text
+  isRead  Boolean  @default(false)
   createdAt DateTime @default(now())
 }
 
@@ -699,15 +690,15 @@ model AuctionHabilitation {
 }
 
 model Report {
-  id          String        @id @default(uuid())
-  title       String
+  id          String       @id @default(uuid())
+  name        String
   description String?
   definition  Json
-  owner       User          @relation("UserReports", fields: [ownerId], references: [id])
+  owner       User         @relation("UserReports", fields: [ownerId], references: [id])
   ownerId     String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
   shares      ReportShare[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
 }
 
 model ReportShare {
@@ -716,7 +707,9 @@ model ReportShare {
   reportId String
   user     User   @relation("SharedReports", fields: [userId], references: [id])
   userId   String
-  @@unique([userId, reportId])
+  canEdit  Boolean @default(false)
+
+  @@unique([reportId, userId])
 }
 
 

@@ -91,7 +91,7 @@ export class AuctionService {
     try {
       const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
       
-      return await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
         if (data.title) dataToUpdate.slug = slugify(data.title);
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
@@ -102,6 +102,9 @@ export class AuctionService {
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
+
+        // Removido para prevenir o erro de 'Unknown Argument'
+        delete (dataToUpdate as any).mapAddress; 
 
         await tx.auction.update({ where: { id }, data: dataToUpdate });
 
@@ -117,9 +120,9 @@ export class AuctionService {
                 })),
             });
         }
-        
-        return { success: true, message: 'Leilão atualizado com sucesso.' };
       });
+
+      return { success: true, message: 'Leilão atualizado com sucesso.' };
       
     } catch (error: any) {
       console.error(`Error in AuctionService.updateAuction for id ${id}:`, error);
