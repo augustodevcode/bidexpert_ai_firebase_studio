@@ -1,12 +1,12 @@
 // src/components/layout/main-nav.tsx
 'use client';
 
-import * as React from 'react'; 
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, RecentlyViewedLotInfo } from '@/types';
-import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react'; 
+import { ChevronDown, History, Home, Landmark, Gavel, Percent, Phone, ListChecks, Tag, Users, FileText as FileTextIcon, BookOpen } from 'lucide-react';
 import { useEffect, useState, useCallback, forwardRef } from 'react';
 import {
   NavigationMenu,
@@ -57,7 +57,7 @@ export interface NavItem {
   label: string;
   isMegaMenu?: boolean;
   contentKey?: 'categories' | 'modalities' | 'consignors' | 'auctioneers' | 'history';
-  icon?: React.ElementType; 
+  icon?: React.ElementType;
   megaMenuAlign?: "start" | "center" | "end";
   twoColumnMegaMenuProps?: {
     sidebarTitle?: string;
@@ -71,7 +71,7 @@ export interface NavItem {
       buttonText: string;
     };
   };
-  hrefPrefix?: string; 
+  hrefPrefix?: string;
 }
 
 const modalityMegaMenuGroups: MegaMenuGroup[] = [
@@ -100,26 +100,26 @@ interface MainNavProps extends React.HTMLAttributes<HTMLElement> {
 const MAX_ITEMS_IN_TW_COL_SIDEBAR = 5;
 
 
-export default function MainNav({ 
-    items, 
-    className, 
-    onLinkClick, 
+export default function MainNav({
+    items,
+    className,
+    onLinkClick,
     isMobile = false,
     searchCategories = [],
     auctioneers = [],
     consignorMegaMenuGroups = [],
     recentlyViewedItems = [],
     HistoryListItemComponent,
-    ...props 
+    ...props
 }: MainNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [isClient, setIsClient] = useState(false);
-  
+
   useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   if (!isClient && isMobile) return null;
 
   if (isMobile) {
@@ -128,7 +128,7 @@ export default function MainNav({
         {items.map((item) => (
           item.href && !item.isMegaMenu ? (
             <Link
-              key={item.label} 
+              key={item.label}
               href={item.href}
               onClick={onLinkClick}
               className={cn(
@@ -139,14 +139,14 @@ export default function MainNav({
               {item.icon && <item.icon className="h-4 w-4" />}
               <span>{item.label}</span>
             </Link>
-          ) : item.isMegaMenu && item.contentKey ? ( 
+          ) : item.isMegaMenu && item.contentKey ? (
             <div key={item.label} className="py-1">
                 <Link
-                    href={item.href || '#'} 
+                    href={item.href || '#'}
                     onClick={(e) => {
-                        if (!item.href && onLinkClick) { 
+                        if (!item.href && onLinkClick) {
                         } else if (onLinkClick) {
-                            onLinkClick(); 
+                            onLinkClick();
                         }
                     }}
                     className={cn(
@@ -165,7 +165,7 @@ export default function MainNav({
                         <Link key={cat.slug} href={`/category/${cat.slug}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{cat.name}</Link>
                     ))}
                     {item.contentKey === 'categories' && <Link href="/search?type=lots&tab=categories" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todas categorias</Link>}
-                    
+
                     {item.contentKey === 'modalities' && modalityMegaMenuGroups[0].items.map(mod => (
                           <Link key={mod.href} href={mod.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{mod.label}</Link>
                     ))}
@@ -173,12 +173,12 @@ export default function MainNav({
                           <Link key={con.href} href={con.href} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{con.label}</Link>
                     ))}
                     {item.contentKey === 'consignors' && (consignorMegaMenuGroups[0]?.items || []).length > 4 && <Link href="/sellers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos comitentes</Link>}
-                    
+
                     {item.contentKey === 'auctioneers' && auctioneers.slice(0,3).map(auc => (
                         <Link key={auc.id} href={`/auctioneers/${auc.slug || auc.publicId || auc.id}`} onClick={onLinkClick} className="block text-sm text-muted-foreground hover:text-primary py-1">{auc.name}</Link>
                     ))}
                       {item.contentKey === 'auctioneers' && auctioneers.length > 3 && <Link href="/auctioneers" onClick={onLinkClick} className="block text-sm text-primary hover:underline py-1">Ver todos leiloeiros</Link>}
-                    
+
                      {item.contentKey === 'history' && HistoryListItemComponent && (
                         <div className="mt-2 space-y-1 max-h-60 overflow-y-auto">
                             {recentlyViewedItems.length === 0 ? (
@@ -198,13 +198,13 @@ export default function MainNav({
       </nav>
     );
   }
-  
+
 
   return (
     <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
       <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
         {items.map((item) => {
-          let megaMenuPropsForTwoColumn: any = null; 
+          let megaMenuPropsForTwoColumn: any = null;
           const currentParamsType = searchParams.get('type');
           const currentCategoryParam = searchParams.get('category');
           const currentAuctionTypeParam = searchParams.get('auctionType');
@@ -219,7 +219,7 @@ export default function MainNav({
               finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Modalidades de Leilão';
               finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Leilões', icon: ListChecks };
             } else if (item.contentKey === 'consignors') {
-              const consignorItems = (consignorMegaMenuGroups[0]?.items || []);
+              const consignorItems = (consignorMegaMenuGroups && consignorMegaMenuGroups.length > 0 && consignorMegaMenuGroups[0]?.items) || [];
               finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
               if (consignorItems.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
                 finalViewAllLink = { href: '/sellers', label: 'Ver Todos Comitentes', icon: Users };
@@ -238,7 +238,7 @@ export default function MainNav({
               }
               finalSidebarTitle = item.twoColumnMegaMenuProps.sidebarTitle || 'Leiloeiros em Destaque';
             }
-            
+
             megaMenuPropsForTwoColumn = {
               ...item.twoColumnMegaMenuProps,
               sidebarTitle: finalSidebarTitle,
@@ -271,16 +271,16 @@ export default function MainNav({
                     isActiveTrigger && 'bg-accent text-primary font-semibold'
                   )}
                 >
-                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> } 
+                  {item.icon && <item.icon className="mr-1.5 h-4 w-4" /> }
                   {item.label}
                 </NavigationMenuTrigger>
                 <NavigationMenuContent align={item.megaMenuAlign || "start"}>
                   {item.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
-                  
+
                   {megaMenuPropsForTwoColumn && (item.contentKey === 'modalities' || item.contentKey === 'consignors' || item.contentKey === 'auctioneers') && (
                     <TwoColumnMegaMenu {...megaMenuPropsForTwoColumn} onLinkClick={onLinkClick} />
                   )}
-                  
+
                   {item.contentKey === 'history' && HistoryListItemComponent && (
                      <div className="w-80 p-2">
                         <div className="flex justify-between items-center p-2 border-b mb-1">
@@ -299,9 +299,9 @@ export default function MainNav({
                         )}
                         <div className="border-t mt-1 pt-1">
                             <NavigationMenuLink asChild>
-                                <Link 
-                                    href="/dashboard/history" 
-                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")} 
+                                <Link
+                                    href="/dashboard/history"
+                                    className={cn(navigationMenuTriggerStyle(), "w-full justify-center text-primary hover:underline text-xs py-1 h-auto bg-transparent hover:bg-accent")}
                                     onClick={onLinkClick}
                                 >
                                 Ver Histórico Completo
@@ -314,7 +314,7 @@ export default function MainNav({
               </NavigationMenuItem>
             );
           }
-          return ( 
+          return (
             item.href ? (
               <NavigationMenuItem key={item.href}>
                 <NavigationMenuLink asChild>
