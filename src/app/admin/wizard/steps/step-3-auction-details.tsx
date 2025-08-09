@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -190,11 +189,14 @@ export default function Step3AuctionDetails({
       const auctioneerDetails = auctioneers.find(a => a.id === value.auctioneerId);
       const sellerDetails = sellers.find(s => s.id === value.sellerId);
       
+      const auctionDate = (value.auctionStages && value.auctionStages.length > 0 && value.auctionStages[0].startDate) ? value.auctionStages[0].startDate : new Date();
+      
       setWizardData(prev => ({
         ...prev,
         auctionDetails: {
           ...prev.auctionDetails,
           ...value,
+          auctionDate: auctionDate, // Set the main date from the first stage
           auctioneer: auctioneerDetails?.name,
           seller: sellerDetails?.name,
         }
@@ -333,4 +335,3 @@ export default function Step3AuctionDetails({
     </div>
   );
 }
-
