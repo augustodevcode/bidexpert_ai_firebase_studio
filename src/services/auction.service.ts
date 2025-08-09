@@ -61,7 +61,7 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: data.modality, // Corrigido: modality -> auctionType
+        auctionType: data.modality, // Correctly map modality from form to auctionType in DB
         participation: data.participation,
         auctionMethod: data.auctionMethod,
         softCloseMinutes: Number(data.softCloseMinutes),
@@ -75,8 +75,8 @@ export class AuctionService {
         auctionData.auctionStages = {
             create: auctionStages.map(stage => ({
                 name: stage.name,
-                startDate: stage.startDate,
-                endDate: stage.endDate,
+                startDate: new Date(stage.startDate),
+                endDate: new Date(stage.endDate),
                 initialPrice: stage.initialPrice,
             })),
         };
@@ -101,7 +101,7 @@ export class AuctionService {
       const internalId = auctionToUpdate.id;
 
       // Desestruturar todos os campos que não são do modelo principal ou que precisam de tratamento especial
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
@@ -112,8 +112,7 @@ export class AuctionService {
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         
-        // CORREÇÃO APLICADA AQUI
-        if (modality) dataToUpdate.auctionType = modality; // Mapeia o campo do formulário para o campo do banco de dados
+        if (data.modality) dataToUpdate.auctionType = data.modality;
         if (data.participation) dataToUpdate.participation = data.participation;
         if (data.auctionMethod) dataToUpdate.auctionMethod = data.auctionMethod;
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
