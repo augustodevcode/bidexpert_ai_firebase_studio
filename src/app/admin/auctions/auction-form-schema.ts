@@ -1,6 +1,6 @@
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
-import type { AuctionStatus, Auction } from '@/types';
+import type { AuctionStatus, Auction, AuctionModality } from '@/types';
 
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
@@ -8,6 +8,10 @@ const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
 
 const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionType'], undefined>)[]] = [
   'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT',
+];
+
+const modalityValues: [AuctionModality, ...AuctionModality[]] = [
+  'ONLINE', 'PRESENCIAL', 'HIBRIDO'
 ];
 
 const autoRelistSettingsSchema = z.object({
@@ -39,7 +43,15 @@ export const auctionFormSchema = z.object({
   auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
   sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
   categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
-  mapAddress: z.string().max(300, { message: "O endereço do mapa não pode exceder 300 caracteres." }).optional().nullable(),
+  
+  // New Fields
+  modality: z.enum(modalityValues).default('ONLINE'),
+  onlineUrl: z.string().url({ message: "URL inválida." }).optional().or(z.literal('')),
+  address: z.string().max(255).optional().nullable(),
+  city: z.string().max(100).optional().nullable(),
+  state: z.string().max(50).optional().nullable(),
+  zipCode: z.string().max(10).optional().nullable(),
+
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
   imageMediaId: z.string().optional().nullable(),
   documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
@@ -57,6 +69,7 @@ export const auctionFormSchema = z.object({
   marketplaceAnnouncementTitle: z.string().max(150, {message: "Título do anúncio muito longo."}).optional().nullable(),
   auctionStages: z.array(
     z.object({
+      id: z.string().optional(),
       name: z.string().min(1, "Nome da praça é obrigatório"),
       startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),

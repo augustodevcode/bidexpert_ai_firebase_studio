@@ -22,8 +22,8 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins } from 'lucide-react';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionModality } from '@/types';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format, differenceInMilliseconds } from 'date-fns';
@@ -39,6 +39,8 @@ import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } fr
 import { getLotCategories as refetchCategories } from '../categories/actions';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { consultaCepAction } from '@/lib/actions/cep';
 
 interface AuctionFormProps {
   formRef?: React.MutableRefObject<any>;
@@ -68,6 +70,12 @@ const auctionTypeOptions = [
   { value: 'TOMADA_DE_PRECOS', label: 'Tomada de Preços' },
   { value: 'DUTCH', label: 'Holandês (Reverso)' },
   { value: 'SILENT', label: 'Silencioso (Lance Fechado)' },
+];
+
+const modalityOptions: { value: AuctionModality, label: string, description: string }[] = [
+    { value: 'ONLINE', label: 'Somente Online', description: 'O leilão ocorre exclusivamente pela internet.' },
+    { value: 'PRESENCIAL', label: 'Somente Presencial', description: 'O leilão ocorre em um local físico, sem participação online.' },
+    { value: 'HIBRIDO', label: 'Híbrido (Online e Presencial)', description: 'Participantes podem dar lances tanto online quanto no local físico.' },
 ];
 
 const DatePickerWithTime = ({ field, label, disabled = false }: { field: any, label: string, disabled?: boolean }) => (
@@ -131,6 +139,7 @@ export default function AuctionForm({
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
   const [syncStages, setSyncStages] = React.useState(true);
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
   
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -142,7 +151,12 @@ export default function AuctionForm({
       auctioneerId: initialData?.auctioneerId || '',
       sellerId: initialData?.sellerId || '',
       categoryId: initialData?.categoryId || '',
-      mapAddress: initialData?.mapAddress || '',
+      modality: initialData?.modality || 'ONLINE',
+      onlineUrl: initialData?.onlineUrl || '',
+      address: initialData?.address || '',
+      city: initialData?.city || '',
+      state: initialData?.state || '',
+      zipCode: initialData?.zipCode || '',
       imageUrl: initialData?.imageUrl || '',
       imageMediaId: initialData?.imageMediaId || null,
       documentsUrl: initialData?.documentsUrl || '',
@@ -168,6 +182,7 @@ export default function AuctionForm({
   
   const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
   const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
+  const watchedModality = useWatch({ control: form.control, name: 'modality' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   
   React.useImperativeHandle(formRef, () => form);
@@ -235,41 +250,88 @@ export default function AuctionForm({
     }
   }
   
+  const handleCepLookup = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    setIsCepLoading(true);
+    const result = await consultaCepAction(cep);
+    if (result.success && result.data) {
+        form.setValue('address', result.data.logradouro);
+        form.setValue('city', result.data.localidade);
+        form.setValue('state', result.data.uf);
+    } else {
+        toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+    }
+    setIsCepLoading(false);
+  }
+
   const handleCancelClick = () => {
     if (onCancelEdit) onCancelEdit();
     else router.back();
   };
 
   const formContent = (
-    <div className="space-y-6">
-        <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-        {!isWizardMode && (
+    <Tabs defaultValue="geral" className="w-full">
+      <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+        <TabsTrigger value="geral">Geral</TabsTrigger>
+        <TabsTrigger value="local">Modalidade e Local</TabsTrigger>
+        <TabsTrigger value="datas">Datas e Prazos</TabsTrigger>
+        <TabsTrigger value="opcoes">Opções Avançadas</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="geral" className="mt-6 space-y-6">
+          <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
           <div className="grid md:grid-cols-2 gap-6">
             <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/modalidade" /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
           </div>
-        )}
-        <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria principal" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro Responsável</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctioneers.map(a => ({ value: a.id, label: a.name }))} placeholder="Selecione o leiloeiro" searchPlaceholder="Buscar leiloeiro..." emptyStateMessage="Nenhum leiloeiro encontrado." createNewUrl="/admin/auctioneers/new" editUrlPrefix="/admin/auctioneers" onRefetch={() => handleRefetch('auctioneers')} isFetching={isFetchingAuctioneers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-        <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-        <Separator />
-        <div className="space-y-2">
-          <div className="flex flex-wrap gap-4 justify-between items-center"><h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4" />Praças / Etapas do Leilão</h3><div className="flex items-center space-x-2"><Label htmlFor="sync-stages-main" className="text-xs font-normal">Sincronizar Etapas</Label><Switch id="sync-stages-main" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode} /></div></div>
-          {fields.map((field, index) => (
-            <Card key={field.id} className="p-3 bg-background">
-              <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
-                <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode || (syncStages && index > 0)} />
-                <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
-              </div>
-            </Card>
-          ))}
-          {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
-        </div>
-        <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
-    </div>
+          <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria principal" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro Responsável</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctioneers.map(a => ({ value: a.id, label: a.name }))} placeholder="Selecione o leiloeiro" searchPlaceholder="Buscar leiloeiro..." emptyStateMessage="Nenhum leiloeiro encontrado." createNewUrl="/admin/auctioneers/new" editUrlPrefix="/admin/auctioneers" onRefetch={() => handleRefetch('auctioneers')} isFetching={isFetchingAuctioneers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+      </TabsContent>
+
+       <TabsContent value="local" className="mt-6 space-y-6">
+           <FormField control={form.control} name="modality" render={({ field }) => (<FormItem><FormLabel>Modalidade de Execução</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue /></SelectTrigger></FormControl><SelectContent>{modalityOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormDescription>{modalityOptions.find(o => o.value === field.value)?.description}</FormDescription><FormMessage /></FormItem>)} />
+            {(watchedModality === 'ONLINE' || watchedModality === 'HIBRIDO') && (
+                 <FormField control={form.control} name="onlineUrl" render={({ field }) => (<FormItem><FormLabel className="flex items-center gap-2"><Globe className="h-4 w-4"/> URL do Leilão Online</FormLabel><FormControl><Input placeholder="https://auditorio.bidexpert.com/sala/xyz" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+            )}
+            {(watchedModality === 'PRESENCIAL' || watchedModality === 'HIBRIDO') && (
+                <div className="space-y-4 p-4 border rounded-md">
+                    <h4 className="font-semibold flex items-center gap-2"><Building className="h-4 w-4"/> Endereço do Evento Presencial</h4>
+                    <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                    <div className="grid md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                    </div>
+                </div>
+            )}
+       </TabsContent>
+
+      <TabsContent value="datas" className="mt-6 space-y-4">
+          <div className="space-y-2">
+            <div className="flex flex-wrap gap-4 justify-between items-center"><h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4" />Praças / Etapas do Leilão</h3><div className="flex items-center space-x-2"><Label htmlFor="sync-stages-main" className="text-xs font-normal">Sincronizar Etapas</Label><Switch id="sync-stages-main" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode} /></div></div>
+            {fields.map((field, index) => (
+              <Card key={field.id} className="p-3 bg-background">
+                <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+                  <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
+                  <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode || (syncStages && index > 0)} />
+                  <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
+                </div>
+              </Card>
+            ))}
+            {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
+          </div>
+          <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
+      </TabsContent>
+      
+       <TabsContent value="opcoes" className="mt-6 space-y-4">
+          <FormField control={form.control} name="automaticBiddingEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Robô de Lances</FormLabel><FormDescription className="text-xs">Permitir lances automáticos (robô)?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+          <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Lance Parcelado</FormLabel><FormDescription className="text-xs">Permitir lances parcelados?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+          <FormField control={form.control} name="softCloseEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close</FormLabel><FormDescription className="text-xs">Estender o tempo final com novos lances?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+      </TabsContent>
+    </Tabs>
   );
 
   return (
@@ -287,7 +349,7 @@ export default function AuctionForm({
                     <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
                     <CardDescription>{formDescription}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-muted/10">
+                  <CardContent className="p-6">
                       {formContent}
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2 p-6 border-t">
