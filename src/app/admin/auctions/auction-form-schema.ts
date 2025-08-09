@@ -1,6 +1,7 @@
+
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
-import type { AuctionStatus, Auction } from '@/types'; // Auction importado para auctionTypeValues
+import type { AuctionStatus, Auction } from '@/types';
 
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
@@ -32,10 +33,10 @@ export const auctionFormSchema = z.object({
   description: z.string().max(5000, {
     message: "A descrição não pode exceder 5000 caracteres.",
   }).optional(),
-  status: z.enum(auctionStatusValues, {
+  status: z.enum(auctionStatusValues as [string, ...string[]], {
     required_error: "O status do leilão é obrigatório.",
   }),
-  auctionType: z.enum(auctionTypeValues, {
+  auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }).optional(),
   auctioneerId: z.string().min(1, { message: "O ID do leiloeiro é obrigatório."}),

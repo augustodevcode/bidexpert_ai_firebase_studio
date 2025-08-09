@@ -111,7 +111,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         themes: initialData?.themes || [],
         variableIncrementTable: initialData?.variableIncrementTable || [],
     });
-  }, [initialData, form.reset]);
+  }, [initialData, form]);
   
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
@@ -135,11 +135,52 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        
         {activeSection === 'identity' && (
             <section className="space-y-6">
                 <FormField control={form.control} name="siteTitle" render={({ field }) => (<FormItem><FormLabel>Título do Site</FormLabel><FormControl><Input placeholder="Ex: BidExpert Leilões" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="siteTagline" render={({ field }) => (<FormItem><FormLabel>Tagline do Site</FormLabel><FormControl><Input placeholder="Sua plataforma de leilões" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
             </section>
+        )}
+        
+        {activeSection === 'general' && (
+             <section className="space-y-6">
+                 {/* Campos de Configurações Gerais aqui */}
+             </section>
+        )}
+        
+        {activeSection === 'storage' && (
+             <section className="space-y-6">
+                <FormField control={form.control} name="storageProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Armazenamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="local">Local</SelectItem><SelectItem value="firebase">Firebase Storage</SelectItem></SelectContent></Select><FormDescription>Onde os arquivos de mídia (imagens, documentos) serão salvos.</FormDescription><FormMessage /></FormItem>)} />
+                {watchedStorageProvider === 'firebase' && (
+                     <FormField control={form.control} name="firebaseStorageBucket" render={({ field }) => (<FormItem><FormLabel>Firebase Storage Bucket</FormLabel><FormControl><Input placeholder="seu-projeto.appspot.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                )}
+                 <FormField control={form.control} name="galleryImageBasePath" render={({ field }) => (<FormItem><FormLabel>Caminho Base das Imagens (Local)</FormLabel><FormControl><Input placeholder="/uploads/media/" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Caminho público para acessar as imagens salvas localmente.</FormDescription><FormMessage /></FormItem>)} />
+             </section>
+        )}
+        
+        {activeSection === 'appearance' && (
+             <section className="space-y-6">
+                 {/* Campos de Aparência e Exibição aqui */}
+             </section>
+        )}
+        
+        {activeSection === 'listDisplay' && (
+             <section className="space-y-6">
+                 {/* Campos de Listas de Cadastros aqui */}
+             </section>
+        )}
+
+        {activeSection === 'bidding' && (
+             <section className="space-y-6">
+                 {/* Campos de Lances e Automação aqui */}
+             </section>
+        )}
+        
+        {activeSection === 'variableIncrements' && (
+             <section className="space-y-6">
+                 {/* Campos de Incremento de Lance aqui */}
+             </section>
         )}
         
         {activeSection === 'payments' && (
@@ -179,14 +220,21 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
              <FormField control={form.control} name="paymentGatewaySettings.gatewayEncryptionKey" render={({ field }) => (<FormItem><FormLabel>Chave de Criptografia do Gateway</FormLabel><FormControl><Input placeholder="Sua chave de criptografia" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
           </section>
         )}
+        
+        {activeSection === 'maps' && (
+             <section className="space-y-6">
+                 {/* Campos de Configurações de Mapa aqui */}
+             </section>
+        )}
 
         <div className="flex justify-end pt-4 border-t">
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            Salvar Configurações
+            Salvar Configurações da Seção
           </Button>
         </div>
       </form>
     </Form>
   );
 }
+

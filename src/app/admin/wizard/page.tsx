@@ -1,3 +1,4 @@
+
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -17,9 +18,11 @@ import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expa
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
+import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
+import BemForm from '@/app/admin/bens/bem-form';
 
 
 const allSteps = [
@@ -50,7 +53,8 @@ function WizardContent({
     isLoading: boolean;
     refetchData: (newProcessIdToSelect?: string) => void;
 }) {
-  const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
+  const { currentStep, wizardData, nextStep, prevStep, goToStep } = useWizard();
+  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process' | 'bem'>('main');
   const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -77,48 +81,88 @@ function WizardContent({
   };
 
   const handleLotCreation = () => {
-    // This function can be used to refresh just the 'bens' list if needed,
-    // reducing a full data refetch. For now, the main refetch covers it.
     refetchData(wizardData.judicialProcess?.id); 
   };
   
-  const handleRefreshEntities = async (entityType: 'processes' | 'bens') => {
-      toast({ title: 'Atualizando lista...', description: 'Buscando os dados mais recentes.'});
-      setIsDataRefetching(true);
-      await refetchData(entityType === 'processes' ? wizardData.judicialProcess?.id : undefined);
-      setIsDataRefetching(false);
+  const handleProcessCreated = async (newProcessId?: string) => {
+    toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
+    setIsDataRefetching(true);
+    await refetchData(newProcessId);
+    setWizardMode('main');
+    setIsDataRefetching(false);
   }
+  
+  const handleBemCreated = async () => {
+    toast({ title: "Sucesso!", description: "Bem cadastrado com sucesso." });
+    setIsDataRefetching(true);
+    await refetchData(wizardData.judicialProcess?.id);
+    setWizardMode('main');
+    setIsDataRefetching(false);
+  }
+
+  // Moved memoization to a stable place outside the switch-case
+  const bensForLotting = useMemo(() => {
+    if (!fetchedData?.availableBens) return [];
+
+    if (wizardData.auctionType === 'JUDICIAL') {
+      return wizardData.judicialProcess
+        ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+        : [];
+    } else {
+      return wizardData.auctionDetails?.sellerId
+        ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+        : [];
+    }
+  }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
 
   const renderStep = () => {
     if (isLoading || !fetchedData) {
       return <div className="flex items-center justify-center h-full min-h-[250px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
     
+    if (wizardMode === 'judicial_process') {
+      return (
+        <JudicialProcessForm
+          courts={fetchedData.courts}
+          allDistricts={fetchedData.districts}
+          allBranches={fetchedData.branches}
+          sellers={fetchedData.sellers}
+          onSubmitAction={createJudicialProcessAction}
+          onSuccess={handleProcessCreated}
+          onCancel={() => setWizardMode('main')}
+          formTitle="Novo Processo Judicial (Wizard)"
+          formDescription="Cadastre o processo. Você retornará ao assistente de leilão após salvar."
+          submitButtonText="Criar e Voltar para o Leilão"
+        />
+      );
+    }
+    
+    if (wizardMode === 'bem') {
+      return (
+        <BemForm
+          initialData={{
+            judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id : undefined,
+            sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId : undefined,
+            status: 'DISPONIVEL',
+          }}
+          processes={fetchedData.judicialProcesses}
+          categories={fetchedData.categories}
+          sellers={fetchedData.sellers}
+          onSubmitAction={createBemAction}
+          onSuccess={handleBemCreated}
+          onCancel={() => setWizardMode('main')}
+          formTitle="Novo Bem (Wizard)"
+          formDescription="Cadastre o bem. Ele ficará disponível para loteamento ao salvar."
+          submitButtonText="Criar e Voltar ao Loteamento"
+        />
+      );
+    }
+
     switch (currentStepId) {
       case 'type': return <Step1TypeSelection />;
-      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onRefetchRequest={() => handleRefreshEntities('processes')} />;
+      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
-      case 'lotting': {
-        const bensForLotting = useMemo(() => {
-          if (!fetchedData?.availableBens) return [];
-
-          if (wizardData.auctionType === 'JUDICIAL') {
-            return wizardData.judicialProcess
-              ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
-              : [];
-          } else {
-            return wizardData.auctionDetails?.sellerId
-              ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
-              : [];
-          }
-        }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
-
-        return <Step4Lotting 
-                  availableBens={bensForLotting} 
-                  auctionData={wizardData.auctionDetails as Partial<Auction>} 
-                  onLotCreated={handleLotCreation}
-               />;
-      }
+      case 'lotting': return <Step4Lotting availableBens={bensForLotting} auctionData={wizardData.auctionDetails as Partial<Auction>} onLotCreated={handleLotCreation} />;
       case 'review': return <Step5Review />;
       default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
     }
@@ -135,6 +179,7 @@ function WizardContent({
               </CardTitle>
               <CardDescription>Siga os passos para criar um novo leilão de forma completa e guiada.</CardDescription>
             </CardHeader>
+          {wizardMode === 'main' ? (
             <>
               <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
@@ -149,10 +194,8 @@ function WizardContent({
 
                 <div className="flex items-center gap-2">
                     {currentStepId === 'lotting' && (
-                        <Button asChild variant="secondary" type="button" disabled={isLoading || isDataRefetching}>
-                           <Link href="/admin/bens/new" target="_blank">
-                             <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
-                           </Link>
+                        <Button variant="secondary" type="button" onClick={() => setWizardMode('bem')} disabled={isLoading || isDataRefetching}>
+                            <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
                         </Button>
                     )}
                     {currentStep < stepsToUse.length - 1 && (
@@ -164,6 +207,11 @@ function WizardContent({
                 </div>
               </CardFooter>
             </>
+          ) : (
+            <CardContent className="p-6">
+              {renderStep()}
+            </CardContent>
+          )}
         </Card>
         
         <Card className="shadow-lg mt-8">
@@ -187,7 +235,7 @@ function WizardContent({
   );
 }
 
-function WizardPageProvider() {
+function WizardPageContent() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
     const { setWizardData } = useWizard();
@@ -215,16 +263,13 @@ function WizardPageProvider() {
         loadData();
     }, [loadData]);
 
-    if (isLoadingData) {
+
+    if (isLoadingData || !fetchedData) {
       return (
         <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      );
-    }
-    
-    if (!fetchedData) {
-        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
+      )
     }
 
     return (
@@ -240,7 +285,8 @@ function WizardPageProvider() {
 export default function WizardPage() {
   return (
     <WizardProvider>
-      <WizardPageProvider />
+      <WizardPageContent />
     </WizardProvider>
   );
 }
+

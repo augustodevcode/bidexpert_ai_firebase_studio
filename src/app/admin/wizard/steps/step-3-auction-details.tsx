@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/steps/step-3-auction-details.tsx
 'use client';
 
@@ -12,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
-import { CalendarIcon, PlusCircle, Trash2, Zap } from 'lucide-react';
+import { CalendarIcon, PlusCircle, Trash2, Zap, ClockIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, differenceInMilliseconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -38,14 +39,14 @@ const DatePickerWithTime = ({ field, label, disabled = false }: { field: any, la
             disabled={disabled}
             >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {field.value ? format(field.value, "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
+            {field.value ? format(new Date(field.value), "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
             </Button>
         </FormControl>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
         <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
         <div className="p-2 border-t">
-            <Input type="time" defaultValue={field.value ? format(field.value, "HH:mm") : "10:00"}
+            <Input type="time" defaultValue={field.value ? format(new Date(field.value), "HH:mm") : "10:00"}
             onChange={(e) => {
                 const [hours, minutes] = e.target.value.split(':');
                 const newDate = field.value ? new Date(field.value) : new Date();
@@ -305,7 +306,7 @@ export default function Step3AuctionDetails({
                       const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
                       const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); // Add 1 minute if not synced
                       const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); // Add 7 days
-                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate })
+                      append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null })
                   }} className="text-xs mt-2">
                       <PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa
               </Button>
@@ -332,3 +333,4 @@ export default function Step3AuctionDetails({
     </div>
   );
 }
+
