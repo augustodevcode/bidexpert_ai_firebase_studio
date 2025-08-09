@@ -32,14 +32,12 @@ export const auctionFormSchema = z.object({
   description: z.string().max(5000, {
     message: "A descrição não pode exceder 5000 caracteres.",
   }).optional(),
-  status: z.enum(auctionStatusValues as [string, ...string[]], {
-    required_error: "O status do leilão é obrigatório.",
-  }),
+  status: z.enum(auctionStatusValues as [string, ...string[]]).optional(),
   auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }).optional(),
-  auctioneerId: z.string().min(1, { message: "O ID do leiloeiro é obrigatório."}),
-  sellerId: z.string().min(1, { message: "O ID do comitente é obrigatório."}),
+  auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
+  sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
   categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
   mapAddress: z.string().max(300, { message: "O endereço do mapa não pode exceder 300 caracteres." }).optional().nullable(),
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
