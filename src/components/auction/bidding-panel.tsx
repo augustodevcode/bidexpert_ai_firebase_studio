@@ -19,10 +19,7 @@ import { ptBR } from 'date-fns/locale';
 import LotAllBidsModal from './lot-all-bids-modal';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
-import { cn } from '@/lib/utils';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
-
+import { useInterval } from '@/hooks/use-interval'; // Importando o hook de intervalo
 
 interface BiddingPanelProps {
   currentLot: Lot;
@@ -34,10 +31,11 @@ interface BiddingPanelProps {
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 
-export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess }: BiddingPanelProps) {
+export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess }: BiddingPanelProps) {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   
+  const [currentLot, setCurrentLot] = useState<Lot>(initialLot);
   const [bidAmountInput, setBidAmountInput] = useState<string>('');
   const [isPlacingBid, setIsPlacingBid] = useState(false);
   const [maxBidAmountInput, setMaxBidAmountInput] = useState('');
@@ -48,6 +46,11 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
   const [isAllBidsModalOpen, setIsAllBidsModalOpen] = useState(false);
   const [isHabilitando, setIsHabilitando] = useState(false);
 
+  // Atualiza o estado interno do lote quando a prop inicial muda
+  useEffect(() => {
+    setCurrentLot(initialLot);
+  }, [initialLot]);
+
   const bidIncrement = currentLot?.bidIncrementStep || ((currentLot?.price || 0) > 10000 ? 500 : ((currentLot?.price || 0) > 1000 ? 100 : 50));
   const nextMinimumBid = (currentLot?.price || 0) + bidIncrement;
 
@@ -56,6 +59,26 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
   const isDocHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
   
   const canUserBid = (isEffectivelySuperTestUser || hasAdminRights || (isDocHabilitado && isHabilitadoForThisAuction)) && currentLot?.status === 'ABERTO_PARA_LANCES';
+
+  const fetchBidHistory = useCallback(async () => {
+    if (!currentLot?.id) return;
+    setIsLoadingHistory(true);
+    try {
+      const history = await getBidsForLot(currentLot.publicId || currentLot.id);
+      setBidHistory(history);
+    } catch (error) {
+       toast({ title: "Erro de Conexão", description: "Não foi possível obter o histórico de lances.", variant: "destructive" });
+    } finally {
+        setIsLoadingHistory(false);
+    }
+  }, [currentLot?.id, currentLot?.publicId, toast]);
+  
+  useInterval(fetchBidHistory, 5000); // Polling a cada 5 segundos
+
+  useEffect(() => {
+    fetchBidHistory(); // Fetch inicial
+  }, [fetchBidHistory]);
+
 
   const handleHabilitarClick = async () => {
       if (!userProfileWithPermissions?.uid || !auction?.id) return;
@@ -69,42 +92,6 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
       }
       setIsHabilitando(false);
   };
-
-  useEffect(() => {
-    if (!currentLot || !currentLot.id) return;
-
-    setIsLoadingHistory(true);
-    const q = query(
-      collection(db, "bids"),
-      where("lotId", "==", currentLot.id),
-      orderBy("timestamp", "desc")
-    );
-
-    const unsubscribe = onSnapshot(q, (querySnapshot) => {
-      const history: BidInfo[] = [];
-      querySnapshot.forEach((doc) => {
-        history.push({ id: doc.id, ...doc.data() } as BidInfo);
-      });
-      setBidHistory(history);
-      setIsLoadingHistory(false);
-    }, (error) => {
-      console.error("Error fetching realtime bid history:", error);
-      toast({ title: "Erro de Conexão", description: "Não foi possível obter o histórico de lances em tempo real.", variant: "destructive" });
-      setIsLoadingHistory(false);
-    });
-    
-    // Fetch max bid separately as it's user-specific
-    const fetchMaxBid = async () => {
-      if (userProfileWithPermissions?.uid) {
-        const maxBid = await getActiveUserLotMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions.uid);
-        setActiveMaxBid(maxBid);
-      }
-    };
-    fetchMaxBid();
-
-    return () => unsubscribe();
-  }, [currentLot, userProfileWithPermissions?.uid, toast]);
-
 
   const handlePlaceBid = async () => {
     if (!canUserBid || !userProfileWithPermissions) return;
@@ -125,9 +112,10 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
     );
     setIsPlacingBid(false);
 
-    if (result.success) {
+    if (result.success && result.updatedLot) {
       toast({ title: 'Sucesso!', description: 'Seu lance foi registrado.' });
-      onBidSuccess(result.updatedLot!, result.newBid);
+      onBidSuccess(result.updatedLot, result.newBid);
+      setCurrentLot(prev => ({...prev, ...result.updatedLot!}));
       setBidAmountInput('');
     } else {
       toast({ title: 'Erro ao dar lance', description: result.message, variant: 'destructive' });
@@ -180,7 +168,6 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
         );
     }
     
-    // If all checks pass, show the main bidding form
     return (
         <>
             <div className="relative">
@@ -220,7 +207,7 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
               <div className="p-2 space-y-1.5 text-xs">
                 {isLoadingHistory ? (<div className="flex items-center justify-center p-4"><Loader2 className="h-4 w-4 animate-spin text-primary" /></div>)
                 : bidHistory.length > 0 ? (bidHistory.slice(0, 3).map((bid, index) => (
-                    <div key={bid.id} className={cn("flex justify-between items-center p-1.5 rounded", index === 0 && 'bg-green-100 dark:bg-green-800/30 font-semibold')}>
+                    <div key={bid.id} className={`flex justify-between items-center p-1.5 rounded ${index === 0 ? 'bg-green-100 dark:bg-green-800/30 font-semibold' : ''}`}>
                         <span>{bid.bidderDisplay}</span>
                         <span className="text-right">R$ {bid.amount.toLocaleString('pt-BR')} <span className="text-muted-foreground/70">({bid.timestamp ? format(new Date(bid.timestamp as string), 'HH:mm:ss') : ''})</span></span>
                     </div>
@@ -235,3 +222,5 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
     </>
   );
 }
+
+    

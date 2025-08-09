@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import type { Lot, AuctionStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,8 +11,8 @@ import { isPast, isValid } from 'date-fns';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import { Button } from '../ui/button';
 import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
-import { db } from '@/lib/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { useInterval } from '@/hooks/use-interval'; // Importando o hook de intervalo
+import { getLot } from '@/app/admin/lots/actions'; // Importar a server action
 
 interface CurrentLotDisplayProps {
   lot: Lot;
@@ -22,22 +22,18 @@ interface CurrentLotDisplayProps {
 export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: CurrentLotDisplayProps) {
   const [lot, setLot] = useState<Lot>(initialLot);
 
+  // Atualiza o estado interno do lote quando a prop inicial muda
   useEffect(() => {
-    setLot(initialLot); // Update local state when the prop changes
-    const lotRef = doc(db, "lots", initialLot.id);
-    const unsubscribe = onSnapshot(lotRef, (doc) => {
-        if (doc.exists()) {
-            const updatedLotData = { id: doc.id, ...doc.data() } as Lot;
-            setLot(prevLot => ({ ...prevLot, ...updatedLotData }));
-        } else {
-            console.warn(`Lot with ID ${initialLot.id} not found in real-time listener.`);
-        }
-    }, (error) => {
-        console.error("Error with real-time lot listener:", error);
-    });
-
-    return () => unsubscribe(); // Cleanup the listener
+    setLot(initialLot);
   }, [initialLot]);
+
+  // Polling para buscar atualizações do lote
+  useInterval(async () => {
+    const updatedLot = await getLot(lot.id);
+    if (updatedLot) {
+      setLot(prevLot => ({ ...prevLot, ...updatedLot }));
+    }
+  }, 5000); // Poll every 5 seconds
 
   const gallery = useMemo(() => {
     if (!lot) return ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
@@ -162,3 +158,5 @@ export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: Cu
     </Card>
   );
 }
+
+    
