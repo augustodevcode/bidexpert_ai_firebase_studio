@@ -1,11 +1,9 @@
-
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
-import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -193,41 +191,6 @@ function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; use
     const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
     const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
     
-    const handleGenerateDocument = async (type: 'WINNING_BID_TERM' | 'EVALUATION_REPORT' | 'AUCTION_CERTIFICATE', lot?: Lot, winner?: UserWin) => {
-        const loadingKey = `${type}-${lot?.id || 'auction'}`;
-        setIsLoading(prev => ({...prev, [loadingKey]: true}));
-        toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
-
-        try {
-            // MUDANÇA: Ação de gerar documento movida para um arquivo separado e seguro
-            const result = type === 'WINNING_BID_TERM' && lot
-              ? await generateWinningBidTermAction(lot.id)
-              : { success: false, message: 'Tipo de documento não suportado nesta ação.'}; // Placeholder para outros tipos
-
-            if (result.success && result.pdfBase64 && result.fileName) {
-                const byteCharacters = atob(result.pdfBase64);
-                const byteNumbers = new Array(byteCharacters.length);
-                for (let i = 0; i < byteCharacters.length; i++) {
-                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                }
-                const byteArray = new Uint8Array(byteNumbers);
-                const blob = new Blob([byteArray], { type: 'application/pdf' });
-                const link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = result.fileName;
-                link.click();
-                toast({ title: 'Sucesso!', description: 'Download do PDF iniciado.' });
-            } else {
-                throw new Error(result.message || "A resposta da API não continha um PDF válido.");
-            }
-        } catch (error: any) {
-            console.error("Error generating document:", error);
-            toast({ title: 'Erro ao Gerar PDF', description: error.message, variant: 'destructive'});
-        } finally {
-            setIsLoading(prev => ({...prev, [loadingKey]: false}));
-        }
-    };
-    
     return (
         <Card className="shadow-md">
             <CardHeader>
@@ -413,9 +376,6 @@ export default function EditAuctionPage() {
   const [isAISuggestionModalOpen, setIsAISuggestionModalOpen] = useState(false);
   
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
-  const [lotCurrentPage, setLotCurrentPage] = useState(1);
-  const [lotItemsPerPage, setLotItemsPerPage] = useState(12);
   
   const formRef = React.useRef<any>(null);
 
@@ -437,13 +397,11 @@ export default function EditAuctionPage() {
             return;
         }
         setPlatformSettings(settings as PlatformSettings);
-        setLotItemsPerPage((settings as PlatformSettings)?.searchItemsPerPage || 12);
         setAuction(fetchedAuction);
         setCategories(fetchedCategories);
         setLotsInAuction(fetchedLots);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
-        setLotCurrentPage(1); 
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
@@ -459,60 +417,6 @@ export default function EditAuctionPage() {
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
     return updateAuction(auctionId, data);
-  }
-
-  const lotSortOptions = [
-    { value: 'number_asc', label: 'Nº Lote Crescente' },
-    { value: 'number_desc', label: 'Nº Lote Decrescente' },
-    { value: 'title_asc', label: 'Título A-Z' },
-    { value: 'title_desc', label: 'Título Z-A' },
-    { value: 'status_asc', label: 'Status A-Z' },
-    { value: 'price_asc', label: 'Preço Crescente' },
-    { value: 'price_desc', label: 'Preço Decrescente' },
-  ];
-
-  const sortedLots = useMemo(() => {
-    return [...lotsInAuction].sort((a, b) => {
-      switch (lotSortBy) {
-        case 'number_asc':
-          return (parseInt(a.number || '0') || 0) - (parseInt(b.number || '0') || 0);
-        case 'number_desc':
-          return (parseInt(b.number || '0') || 0) - (parseInt(a.number || '0') || 0);
-        case 'title_asc':
-          return a.title.localeCompare(b.title);
-        case 'title_desc':
-          return b.title.localeCompare(a.title);
-        case 'status_asc':
-          return getAuctionStatusText(a.status).localeCompare(getAuctionStatusText(b.status));
-        case 'price_asc':
-          return a.price - b.price;
-        case 'price_desc':
-          return b.price - a.price;
-        default:
-          return 0;
-      }
-    });
-  }, [lotsInAuction, lotSortBy]);
-  
-  const paginatedLots = useMemo(() => {
-    if (!platformSettings) return [];
-    const startIndex = (lotCurrentPage - 1) * lotItemsPerPage;
-    const endIndex = startIndex + lotItemsPerPage;
-    return sortedLots.slice(startIndex, endIndex);
-  }, [sortedLots, lotCurrentPage, lotItemsPerPage, platformSettings]);
-
-  const handleLotSortChange = (newSortBy: string) => {
-    setLotSortBy(newSortBy);
-    setLotCurrentPage(1);
-  };
-
-  const handleLotPageChange = (newPage: number) => {
-    setLotCurrentPage(newPage);
-  };
-  
-  const handleLotItemsPerPageChange = (newSize: number) => {
-      setLotItemsPerPage(newSize);
-      setLotCurrentPage(1);
   }
 
   const renderLotListItemForAdmin = (lot: Lot) => (
@@ -680,20 +584,15 @@ export default function EditAuctionPage() {
         </CardHeader>
         <CardContent>
           <SearchResultsFrame
-            items={paginatedLots}
-            totalItemsCount={lotsInAuction.length}
+            items={lotsInAuction}
             renderGridItem={renderLotGridItemForAdmin}
             renderListItem={renderLotListItemForAdmin}
-            sortOptions={lotSortOptions}
-            initialSortBy={lotSortBy}
-            onSortChange={handleLotSortChange}
+            sortOptions={[]}
+            onSortChange={() => {}}
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
-            currentPage={lotCurrentPage}
-            itemsPerPage={lotItemsPerPage}
-            onPageChange={handleLotPageChange}
-            onItemsPerPageChange={handleLotItemsPerPageChange}
+            emptyStateMessage="Nenhum lote cadastrado para este leilão ainda."
           />
         </CardContent>
       </Card>
