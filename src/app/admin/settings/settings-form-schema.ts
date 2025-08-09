@@ -1,3 +1,4 @@
+
 // src/app/admin/settings/settings-form-schema.ts
 import * as z from 'zod';
 import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
@@ -21,6 +22,14 @@ const biddingSettingsSchema = z.object({
   instantBiddingEnabled: z.boolean().optional().default(true),
   getBidInfoInstantly: z.boolean().optional().default(true),
   biddingInfoCheckIntervalSeconds: z.coerce.number().min(1, "O intervalo deve ser de no mínimo 1 segundo.").max(60, "O intervalo não pode ser maior que 60 segundos.").optional().default(1),
+}).optional();
+
+// Novo schema para configurações de pagamento
+const paymentGatewaySettingsSchema = z.object({
+    defaultGateway: z.enum(['Pagarme', 'Stripe', 'Manual']).optional().default('Manual'),
+    platformCommissionPercentage: z.coerce.number().min(0, "A comissão não pode ser negativa.").max(20, "A comissão não pode exceder 20%.").optional().default(5),
+    gatewayApiKey: z.string().max(100).optional().nullable(),
+    gatewayEncryptionKey: z.string().max(100).optional().nullable(),
 }).optional();
 
 export const platformSettingsFormSchema = z.object({
@@ -64,6 +73,7 @@ export const platformSettingsFormSchema = z.object({
   defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional(),
   variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
   biddingSettings: biddingSettingsSchema,
+  paymentGatewaySettings: paymentGatewaySettingsSchema, // Adicionado
   defaultListItemsPerPage: z.coerce.number().min(5, "Mínimo de 5 itens por página").max(100, "Máximo de 100 itens por página").optional().default(10),
 }).refine(data => {
   const table = data.variableIncrementTable;
@@ -71,22 +81,18 @@ export const platformSettingsFormSchema = z.object({
 
   for (let i = 0; i < table.length; i++) {
     const current = table[i];
-    // O valor 'De' deve ser menor que o valor 'Até'
     if (current.to !== null && current.from >= current.to) {
       return false;
     }
-    // O valor 'De' da linha atual deve ser igual ao valor 'Até' da linha anterior
     if (i > 0) {
       const prev = table[i - 1];
       if (prev.to !== current.from) {
         return false;
       }
     }
-    // A última linha não pode ter um valor 'Até'
     if (i === table.length - 1 && current.to !== null) {
       return false;
     }
-    // Todas as linhas, exceto a última, devem ter um valor 'Até'
     if (i < table.length - 1 && current.to === null) {
         return false;
     }
@@ -95,7 +101,7 @@ export const platformSettingsFormSchema = z.object({
   return true;
 }, {
   message: "As faixas de incremento são inválidas. Verifique se não há sobreposições, se os valores 'De' e 'Até' são sequenciais e se a última faixa termina em 'em diante'.",
-  path: ['variableIncrementTable'], // Associa o erro à tabela inteira
+  path: ['variableIncrementTable'], 
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

@@ -1,3 +1,4 @@
+
 // src/app/checkout/[winId]/page.tsx
 import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';
@@ -10,16 +11,19 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 import CheckoutForm from './checkout-form';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 export default async function CheckoutPage({ params }: { params: { winId: string } }) {
   const winId = params.winId;
-  const winDetails = await getWinDetailsForCheckoutAction(winId);
+  const [winDetails, platformSettings] = await Promise.all([
+    getWinDetailsForCheckoutAction(winId),
+    getPlatformSettings(),
+  ]);
 
   if (!winDetails) {
     notFound();
   }
   
-  // Se o pagamento já foi feito, redireciona para a página de sucesso ou para o painel de arremates.
   if (winDetails.paymentStatus === 'PAGO') {
       redirect(`/dashboard/wins?payment_success=true&winId=${winId}`);
   }
@@ -37,7 +41,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
     );
   }
 
-  const commissionRate = 0.05; // 5% commission
+  const commissionRate = (platformSettings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
   const commissionValue = winDetails.winningBidAmount * commissionRate;
   const totalDue = winDetails.winningBidAmount + commissionValue;
 
@@ -75,11 +79,11 @@ export default async function CheckoutPage({ params }: { params: { winId: string
                     <span className="font-medium text-foreground">R$ {winDetails.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Comissão do Leiloeiro (5%)</span>
+                    <span className="text-muted-foreground">Comissão do Leiloeiro ({commissionRate * 100}%)</span>
                     <span className="font-medium text-foreground">R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Outras Taxas (Exemplo)</span>
+                    <span className="text-muted-foreground">Outras Taxas</span>
                     <span className="font-medium text-foreground">R$ 0,00</span>
                 </div>
              </div>

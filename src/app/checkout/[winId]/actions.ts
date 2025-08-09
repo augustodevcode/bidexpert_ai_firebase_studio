@@ -1,8 +1,10 @@
+
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -37,7 +39,8 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
       auctionName: win.lot.auction.title,
     };
 
-    return { ...win, lot: lotWithAuctionName } as UserWin;
+    // @ts-ignore
+    return { ...win, lot: lotWithAuctionName };
 
   } catch (error) {
     console.error(`Error fetching win details for checkout (winId: ${winId}):`, error);
@@ -74,6 +77,8 @@ export async function processPaymentAction(winId: string, paymentData: any): Pro
                 paymentStatus: 'PAGO'
             }
         });
+        revalidatePath(`/dashboard/wins`);
+        revalidatePath(`/checkout/${winId}`);
         return { success: true, message: "Pagamento processado com sucesso!" };
     } else {
         await prisma.userWin.update({
@@ -82,6 +87,7 @@ export async function processPaymentAction(winId: string, paymentData: any): Pro
                 paymentStatus: 'FALHOU'
             }
         });
+        revalidatePath(`/checkout/${winId}`);
         return { success: false, message: "O pagamento falhou. Por favor, tente novamente." };
     }
 }

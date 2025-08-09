@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 import { z } from 'zod';
@@ -20,7 +21,7 @@ export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECT
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO';
 export const paymentStatusValues: [PaymentStatus, ...PaymentStatus[]] = [
   'PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO'
-]; // Keep this comment
+];
 
 export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
@@ -76,6 +77,12 @@ export interface BiddingSettings {
     biddingInfoCheckIntervalSeconds: number;
 }
 
+export interface PaymentGatewaySettings {
+    defaultGateway: 'Pagarme' | 'Stripe' | 'Manual';
+    platformCommissionPercentage: number;
+    gatewayApiKey?: string | null;
+    gatewayEncryptionKey?: string | null;
+}
 
 export interface PlatformSettings {
     id: string;
@@ -123,6 +130,7 @@ export interface PlatformSettings {
     defaultUrgencyTimerHours?: number;
     variableIncrementTable?: VariableIncrementRule[];
     biddingSettings?: BiddingSettings;
+    paymentGatewaySettings?: PaymentGatewaySettings;
     defaultListItemsPerPage?: number;
     updatedAt: string | Date;
 }
@@ -304,6 +312,7 @@ export interface Auction {
 export interface AuctionStage {
   name: string;
   endDate: string | Date;
+  startDate?: string | Date; // Adicionado para timeline
   initialPrice?: number | null;
   statusText?: string;
 }
@@ -537,6 +546,7 @@ export interface DirectSaleOffer {
     minimumOfferPrice?: number;
     status: DirectSaleOfferStatus;
     category: string;
+    categoryId?: string; // Adicionado para o formulário
     sellerId: string;
     sellerName: string;
     sellerLogoUrl?: string;
