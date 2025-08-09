@@ -100,22 +100,22 @@ function WizardContent({
     setIsDataRefetching(false);
   }
 
-  // Moved memoization to a stable place outside the switch-case
-  const bensForLotting = useMemo(() => {
-    if (!fetchedData?.availableBens) return [];
+  const renderStepContent = () => {
+      switch (currentStepId) {
+        case 'type': return <Step1TypeSelection />;
+        case 'judicial': return <Step2JudicialSetup processes={fetchedData!.judicialProcesses} onRefetchRequest={() => refetchData()} />;
+        case 'auction': return <Step3AuctionDetails categories={fetchedData!.categories} auctioneers={fetchedData!.auctioneers} sellers={fetchedData!.sellers} />;
+        case 'lotting':
+          const bensForLotting = wizardData.auctionType === 'JUDICIAL' 
+              ? fetchedData!.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
+              : fetchedData!.availableBens;
+          return <Step4Lotting availableBens={bensForLotting} auctionData={wizardData.auctionDetails as Partial<Auction>} />;
+        case 'review': return <Step5Review />;
+        default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
+      }
+  };
 
-    if (wizardData.auctionType === 'JUDICIAL') {
-      return wizardData.judicialProcess
-        ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
-        : [];
-    } else {
-      return wizardData.auctionDetails?.sellerId
-        ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
-        : [];
-    }
-  }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
-
-  const renderStep = () => {
+  const renderContent = () => {
     if (isLoading || !fetchedData) {
       return <div className="flex items-center justify-center h-full min-h-[250px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
@@ -157,15 +157,8 @@ function WizardContent({
         />
       );
     }
-
-    switch (currentStepId) {
-      case 'type': return <Step1TypeSelection />;
-      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
-      case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
-      case 'lotting': return <Step4Lotting availableBens={bensForLotting} auctionData={wizardData.auctionDetails as Partial<Auction>} onLotCreated={handleLotCreation} />;
-      case 'review': return <Step5Review />;
-      default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
-    }
+    
+    return renderStepContent();
   };
 
   return (
@@ -184,7 +177,7 @@ function WizardContent({
               <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
                 <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
-                  {renderStep()}
+                  {renderContent()}
                 </div>
               </CardContent>
               <CardFooter className="mt-8 flex justify-between p-6 pt-0">
@@ -209,7 +202,7 @@ function WizardContent({
             </>
           ) : (
             <CardContent className="p-6">
-              {renderStep()}
+              {renderContent()}
             </CardContent>
           )}
         </Card>
@@ -289,4 +282,3 @@ export default function WizardPage() {
     </WizardProvider>
   );
 }
-

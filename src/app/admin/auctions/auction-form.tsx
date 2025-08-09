@@ -3,7 +3,7 @@
 
 import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, Controller, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -53,7 +53,6 @@ interface AuctionFormProps {
   isViewMode?: boolean;
   onUpdateSuccess?: () => void;
   onCancelEdit?: () => void;
-  // Props for Wizard context
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<Auction>) => void;
 }
@@ -104,6 +103,7 @@ const DatePickerWithTime = ({ field, label, disabled = false }: { field: any, la
     </FormItem>
 );
 
+
 export default function AuctionForm({
   formRef,
   initialData,
@@ -132,7 +132,7 @@ export default function AuctionForm({
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
   const [syncStages, setSyncStages] = React.useState(true);
-
+  
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
@@ -159,18 +159,22 @@ export default function AuctionForm({
       estimatedRevenue: initialData?.estimatedRevenue || undefined,
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
-      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date) })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }],
+      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date) })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
       decrementAmount: initialData?.decrementAmount || undefined,
       decrementIntervalSeconds: initialData?.decrementIntervalSeconds || undefined,
       floorPrice: initialData?.floorPrice || undefined,
       autoRelistSettings: initialData?.autoRelistSettings || { enableAutoRelist: false, recurringAutoRelist: false, relistIfWinnerNotPaid: false, relistIfWinnerNotPaidAfterHours: 2, relistIfNoBids: false, relistIfNoBidsAfterHours: 2, relistIfReserveNotMet: false, relistIfReserveNotMetAfterHours: 2, relistDurationInHours: 150 }
     },
   });
-
+  
+  const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
+  const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
+  const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
+  
   React.useImperativeHandle(formRef, () => form);
   
    useEffect(() => {
-    if (!isWizardMode) return;
+    if (!isWizardMode || !onWizardDataChange) return;
     const subscription = form.watch((value) => {
       const auctioneerDetails = auctioneers.find(a => a.id === value.auctioneerId);
       const sellerDetails = sellers.find(s => s.id === value.sellerId);
@@ -180,40 +184,23 @@ export default function AuctionForm({
         : new Date();
 
       const transformedData: Partial<Auction> = {
-        ...value,
+        ...(value as Partial<Auction>),
         auctionDate: auctionDate,
         auctioneer: auctioneerDetails?.name,
         seller: sellerDetails?.name,
       };
       
-      onWizardDataChange?.(transformedData);
+      onWizardDataChange(transformedData);
     });
     return () => subscription.unsubscribe();
   }, [form, onWizardDataChange, isWizardMode, auctioneers, sellers]);
 
-  
-  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
-    if (entity === 'categories') { setIsFetchingCategories(true); const data = await refetchCategories(); setCategories(data); setIsFetchingCategories(false); }
-    if (entity === 'auctioneers') { setIsFetchingAuctioneers(true); const data = await refetchAuctioneers(); setAuctioneers(data); setIsFetchingAuctioneers(false); }
-    if (entity === 'sellers') { setIsFetchingSellers(true); const data = await refetchSellers(); setSellers(data); setIsFetchingSellers(false); }
-  }, []);
-  
-  const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
-  const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
-  const watchedAuctionType = useWatch({ control: form.control, name: 'auctionType' });
-  const watchedAutoRelist = useWatch({ control: form.control, name: 'autoRelistSettings' });
-  const watchedSilentBidding = form.watch('silentBiddingEnabled');
-
-  const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
-
-  const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
-  
   useEffect(() => {
     if (!syncStages) return;
-    watchedStages.forEach((stage, index) => {
+    watchedStages?.forEach((stage, index) => {
       if (index > 0) {
-        const prevStage = watchedStages[index - 1];
-        if (prevStage.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
+        const prevStage = watchedStages?.[index - 1];
+        if (prevStage?.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
            const newStartDate = new Date(prevStage.endDate);
            const currentDuration = differenceInMilliseconds(new Date(stage.endDate!), new Date(stage.startDate!));
            const newEndDate = new Date(newStartDate.getTime() + currentDuration);
@@ -224,13 +211,11 @@ export default function AuctionForm({
     });
   }, [watchedStages, syncStages, form]);
 
-  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
-    if (selectedItems.length > 0 && selectedItems[0]?.urlOriginal) {
-      form.setValue('imageUrl', selectedItems[0].urlOriginal);
-      form.setValue('imageMediaId', selectedItems[0].id || null);
-    }
-    setIsMediaDialogOpen(false);
-  };
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
+    if (entity === 'categories') { setIsFetchingCategories(true); const data = await refetchCategories(); setCategories(data); setIsFetchingCategories(false); }
+    if (entity === 'auctioneers') { setIsFetchingAuctioneers(true); const data = await refetchAuctioneers(); setAuctioneers(data); setIsFetchingAuctioneers(false); }
+    if (entity === 'sellers') { setIsFetchingSellers(true); const data = await refetchSellers(); setSellers(data); setIsFetchingSellers(false); }
+  }, []);
 
   async function onSubmit(values: AuctionFormValues) {
     if (!onSubmitAction) return;
@@ -256,52 +241,48 @@ export default function AuctionForm({
     else router.back();
   };
 
-
-  const renderFormContent = () => {
-    return (
-      <div className="space-y-6">
-          <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-          {!isWizardMode && (
-            <div className="grid md:grid-cols-2 gap-6">
-              <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/modalidade" /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
+  const formContent = (
+    <div className="space-y-6">
+      <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
+      <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+      {!isWizardMode && (
+        <div className="grid md:grid-cols-2 gap-6">
+          <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
+          <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade de Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value || ''}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o tipo/modalidade" /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
+        </div>
+      )}
+      {watchedAuctionType === 'DUTCH' && ( /* ... Dutch Auction settings ... */ )}
+      <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria principal" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+      <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro Responsável</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctioneers.map(a => ({ value: a.id, label: a.name }))} placeholder="Selecione o leiloeiro" searchPlaceholder="Buscar leiloeiro..." emptyStateMessage="Nenhum leiloeiro encontrado." createNewUrl="/admin/auctioneers/new" editUrlPrefix="/admin/auctioneers" onRefetch={() => handleRefetch('auctioneers')} isFetching={isFetchingAuctioneers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+      <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
+      <Separator />
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-4 justify-between items-center"><h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4"/>Praças / Etapas do Leilão</h3><div className="flex items-center space-x-2"><Label htmlFor="sync-stages" className="text-xs font-normal">Sincronizar Etapas</Label><Switch id="sync-stages" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode}/></div></div>
+        {fields.map((field, index) => (
+          <Card key={field.id} className="p-3 bg-background">
+            <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
+              <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} /></div>
+              <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Início" disabled={isViewMode || (syncStages && index > 0)} />} /></div>
+              <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Fim" disabled={isViewMode} />} /></div>
             </div>
-          )}
-          {watchedAuctionType === 'DUTCH' && ( /* ... Dutch Auction settings ... */ )}
-          <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria principal" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro Responsável</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctioneers.map(a => ({ value: a.id, label: a.name }))} placeholder="Selecione o leiloeiro" searchPlaceholder="Buscar leiloeiro..." emptyStateMessage="Nenhum leiloeiro encontrado." createNewUrl="/admin/auctioneers/new" editUrlPrefix="/admin/auctioneers" onRefetch={() => handleRefetch('auctioneers')} isFetching={isFetchingAuctioneers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} disabled={isViewMode} /><FormMessage /></FormItem>)} />
-          <Separator />
-          <div className="space-y-2">
-            <div className="flex flex-wrap gap-4 justify-between items-center"><h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4"/>Praças / Etapas do Leilão</h3><div className="flex items-center space-x-2"><Label htmlFor="sync-stages" className="text-xs font-normal">Sincronizar Etapas</Label><Switch id="sync-stages" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode}/></div></div>
-            {fields.map((field, index) => (
-              <Card key={field.id} className="p-3 bg-background">
-                <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                  <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} /></div>
-                  <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Início" disabled={isViewMode || (syncStages && index > 0)} />} /></div>
-                  <div className="flex-grow"><FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => <DatePickerWithTime field={stageField} label="Fim" disabled={isViewMode} />} /></div>
-                </div>
-              </Card>
-            ))}
-            {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null })}} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
-          </div>
-          <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
-          <Separator />
-          {/* ...Other fields like documents, settings etc. will be rendered here based on activeSection in the full form... */}
+          </Card>
+        ))}
+        {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null })}} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
       </div>
-    );
-  };
+      <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
+      <Separator />
+    </div>
+  );
 
   return (
     <>
       <TooltipProvider>
-        <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
+        <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={() => {}} allowMultiple={false} />
         {isWizardMode ? (
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="bg-secondary/30 p-4 rounded-md border">
-                {renderFormContent()}
+                {formContent}
               </form>
             </Form>
         ) : (
@@ -314,7 +295,7 @@ export default function AuctionForm({
               <fieldset disabled={isViewMode} className="group">
                 <form onSubmit={form.handleSubmit(onSubmit)}>
                   <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-muted/10">
-                    {renderFormContent()}
+                    {formContent}
                   </CardContent>
                   {!isViewMode && (
                     <CardFooter className="flex justify-end gap-2 p-6 border-t">

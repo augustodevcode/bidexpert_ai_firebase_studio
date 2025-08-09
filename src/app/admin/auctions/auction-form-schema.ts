@@ -31,7 +31,7 @@ export const auctionFormSchema = z.object({
   }),
   description: z.string().max(5000, {
     message: "A descrição não pode exceder 5000 caracteres.",
-  }).optional(),
+  }).optional().nullable(),
   status: z.enum(auctionStatusValues as [string, ...string[]]).optional(),
   auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
@@ -62,7 +62,7 @@ export const auctionFormSchema = z.object({
       endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
       initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
     })
-  ).min(1, "O leilão deve ter pelo menos uma praça/etapa.").optional().default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }]),
+  ).min(1, "O leilão deve ter pelo menos uma praça/etapa.").optional().default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }]),
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),
   decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
   floorPrice: z.coerce.number().positive("O preço mínimo deve ser positivo.").optional().nullable(),

@@ -5,13 +5,16 @@ import { useWizard } from '../wizard-context';
 import type { JudicialProcess } from '@/types';
 import EntitySelector from '@/components/ui/entity-selector';
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { PlusCircle } from 'lucide-react';
 
 interface Step2JudicialSetupProps {
   processes: JudicialProcess[];
   onRefetchRequest: () => void;
+  onAddNewProcess?: () => void; // Tornar opcional, mas vamos chamar se existir
 }
 
-export default function Step2JudicialSetup({ processes, onRefetchRequest }: Step2JudicialSetupProps) {
+export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddNewProcess }: Step2JudicialSetupProps) {
   const { wizardData, setWizardData } = useWizard();
   const [isFetching, setIsFetching] = useState(false);
 
@@ -23,9 +26,21 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest }: Step
       setIsFetching(false);
   }
 
+  const handleAddNew = () => {
+    if (onAddNewProcess) {
+      onAddNewProcess();
+    }
+  }
+
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold">Selecione o Processo Judicial</h3>
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <h3 className="text-lg font-semibold">Selecione o Processo Judicial</h3>
+        <Button variant="secondary" onClick={handleAddNew}>
+            <PlusCircle className="mr-2 h-4 w-4"/>
+            Cadastrar Novo Processo
+        </Button>
+      </div>
       <EntitySelector
         value={selectedProcess?.id}
         onChange={(processId) => {
