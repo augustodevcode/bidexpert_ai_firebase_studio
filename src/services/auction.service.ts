@@ -46,7 +46,7 @@ export class AuctionService {
 
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
 
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
@@ -61,7 +61,7 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: data.modality,
+        auctionType: modality,
         participation: data.participation,
         auctionMethod: data.auctionMethod,
         softCloseMinutes: Number(data.softCloseMinutes),
@@ -100,21 +100,19 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      // Desestruturar campos que precisam de tratamento especial ou não pertencem ao modelo
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
+      const { modality, auctionStages, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
           ...(restOfData as any),
         };
         
-        // Mapeamento correto dos campos
         if (modality) dataToUpdate.auctionType = modality;
-        
         if (data.title) dataToUpdate.slug = slugify(data.title);
-        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
-        if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
-        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+        
+        if (data.auctioneerId) dataToUpdate.auctioneer = { connect: { id: data.auctioneerId } };
+        if (data.sellerId) dataToUpdate.seller = { connect: { id: data.sellerId } };
+        if (data.categoryId) dataToUpdate.category = { connect: { id: data.categoryId } };
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
