@@ -89,7 +89,8 @@ export class AuctionService {
 
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      // Removendo o campo problemático antes de passar para o Prisma
+      const { categoryId, auctioneerId, sellerId, auctionStages, mapAddress, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
@@ -102,9 +103,6 @@ export class AuctionService {
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
-
-        // Removido para prevenir o erro de 'Unknown Argument'
-        delete (dataToUpdate as any).mapAddress; 
 
         await tx.auction.update({ where: { id }, data: dataToUpdate });
 
