@@ -100,19 +100,20 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { modality, auctionStages, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
           ...(restOfData as any),
         };
         
-        if (modality) dataToUpdate.auctionType = modality;
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
-        if (data.auctioneerId) dataToUpdate.auctioneer = { connect: { id: data.auctioneerId } };
-        if (data.sellerId) dataToUpdate.seller = { connect: { id: data.sellerId } };
-        if (data.categoryId) dataToUpdate.category = { connect: { id: data.categoryId } };
+        // Correctly handle relation updates
+        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
+        if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+        
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
@@ -120,6 +121,9 @@ export class AuctionService {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
 
+        // Map modality to auctionType for prisma
+        if (data.modality) dataToUpdate.auctionType = data.modality;
+        
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
         if (auctionStages) {
