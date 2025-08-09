@@ -131,16 +131,15 @@ export default function AdminAuctionsPage() {
               {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
-                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
                     initialSortBy="auctionDate_desc"
-                    onSortChange={() => {}} // Sorting logic to be implemented if needed
+                    onSortChange={() => {}} // Sorting is now handled inside SearchResultsFrame
                     platformSettings={platformSettings}
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
-                    defaultViewMode="grid"
+                    facetedFilterColumns={facetedFilterColumns}
                   />
               )}
             </TabsContent>
@@ -148,7 +147,6 @@ export default function AdminAuctionsPage() {
                {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
-                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -157,7 +155,7 @@ export default function AdminAuctionsPage() {
                     platformSettings={platformSettings}
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
-                    defaultViewMode="list"
+                    facetedFilterColumns={facetedFilterColumns}
                   />
               )}
             </TabsContent>
