@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 import { z } from 'zod';
@@ -30,6 +29,10 @@ export type DocumentTemplateType = 'WINNING_BID_TERM' | 'EVALUATION_REPORT' | 'A
 export type ProcessPartyType = 'AUTOR' | 'REU' | 'ADVOGADO_AUTOR' | 'ADVOGADO_REU' | 'JUIZ' | 'ESCRIVAO' | 'PERITO' | 'ADMINISTRADOR_JUDICIAL' | 'TERCEIRO_INTERESSADO' | 'OUTRO';
 
 export type AccountType = 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
+
+export type AuctionModality = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+export type AuctionMethod = 'STANDARD' | 'DUTCH' | 'SILENT';
+export type AuctionParticipation = 'ONLINE' | 'PRESENCIAL' | 'HIBRIDO';
 
 export type BadgeVisibilitySettings = {
   showStatusBadge?: boolean;
@@ -192,7 +195,7 @@ export interface Lot {
   year?: number;
   make?: string;
   model?: string;
-  series?: string;
+  version?: string; // Alterado de series para version
   odometer?: number;
   hasKey?: boolean;
   vin?: string;
@@ -260,9 +263,6 @@ export interface Auction {
   auctioneerLogoUrl?: string;
   seller: SellerProfileInfo; // Changed to object
   sellerId?: string;
-  mapAddress?: string | null;
-  city?: string; // From seller or manual input
-  state?: string; // From seller or manual input
   imageUrl?: string;
   imageMediaId?: string | null;
   dataAiHint?: string;
@@ -270,7 +270,19 @@ export interface Auction {
   visits?: number;
   lots?: Lot[]; // Populated on demand
   initialOffer?: number; // Lowest starting price among lots
-  auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS' | 'DUTCH' | 'SILENT';
+  
+  // New structured fields
+  modality: AuctionModality;
+  auctionMethod: AuctionMethod;
+  participation: AuctionParticipation;
+
+  // Location fields for presencial/hibrido
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zipCode?: string | null;
+  onlineUrl?: string | null;
+  
   auctionStages?: AuctionStage[];
   documentsUrl?: string;
   evaluationReportUrl?: string | null;
@@ -310,6 +322,7 @@ export interface Auction {
 }
 
 export interface AuctionStage {
+  id?: string;
   name: string;
   endDate: string | Date;
   startDate?: string | Date; // Adicionado para timeline
@@ -734,7 +747,6 @@ export interface Bem {
   hasKey?: boolean;
 
   // Imóveis
-  propertyType?: string | null;
   propertyRegistrationNumber?: string | null;
   iptuNumber?: string | null;
   isOccupied?: boolean;
@@ -787,7 +799,7 @@ export interface Bem {
   // Semoventes (Livestock)
   breed?: string | null;
   age?: string | null;
-  sex?: 'Macho' | 'Fêmea' | null;
+  sex?: 'Macho' | 'Femea' | null;
   weight?: string | null;
   individualId?: string | null;
   purpose?: string | null;

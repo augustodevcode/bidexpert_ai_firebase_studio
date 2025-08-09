@@ -1,17 +1,22 @@
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
-import type { AuctionStatus, Auction, AuctionModality } from '@/types';
+import type { AuctionStatus, AuctionModality as AuctionModalityEnum, AuctionParticipation, AuctionMethod } from '@/types';
 
+// Enums from your types
 const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ];
 
-const auctionTypeValues: [Auction['auctionType'], ...(Exclude<Auction['auctionType'], undefined>)[]] = [
-  'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'DUTCH', 'SILENT',
+const modalityValues: [AuctionModalityEnum, ...AuctionModalityEnum[]] = [
+  'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'
 ];
 
-const modalityValues: [AuctionModality, ...AuctionModality[]] = [
+const participationValues: [AuctionParticipation, ...AuctionParticipation[]] = [
   'ONLINE', 'PRESENCIAL', 'HIBRIDO'
+];
+
+const methodValues: [AuctionMethod, ...AuctionMethod[]] = [
+  'STANDARD', 'DUTCH', 'SILENT'
 ];
 
 const autoRelistSettingsSchema = z.object({
@@ -26,7 +31,6 @@ const autoRelistSettingsSchema = z.object({
   relistDurationInHours: z.coerce.number().int().min(1).optional().nullable(),
 }).optional();
 
-
 export const auctionFormSchema = z.object({
   title: z.string().min(5, {
     message: "O título do leilão deve ter pelo menos 5 caracteres.",
@@ -37,21 +41,24 @@ export const auctionFormSchema = z.object({
     message: "A descrição não pode exceder 5000 caracteres.",
   }).optional().nullable(),
   status: z.enum(auctionStatusValues as [string, ...string[]]).optional(),
-  auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
-    errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
-  }).optional(),
-  auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
-  sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
-  categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
   
-  // New Fields
-  modality: z.enum(modalityValues).default('ONLINE'),
+  // Renamed auctionType to modality and added new fields
+  modality: z.enum(modalityValues as [string, ...string[]], {
+    errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
+  }),
+  auctionMethod: z.enum(methodValues as [string, ...string[]]).default('STANDARD'),
+  participation: z.enum(participationValues as [string, ...string[]]).default('ONLINE'),
+  
   onlineUrl: z.string().url({ message: "URL inválida." }).optional().or(z.literal('')),
   address: z.string().max(255).optional().nullable(),
   city: z.string().max(100).optional().nullable(),
   state: z.string().max(50).optional().nullable(),
   zipCode: z.string().max(10).optional().nullable(),
 
+  auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
+  sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
+  categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
+  
   imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
   imageMediaId: z.string().optional().nullable(),
   documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
@@ -59,7 +66,7 @@ export const auctionFormSchema = z.object({
   auctionCertificateUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
   sellingBranch: z.string().max(100).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
-  allowInstallmentBids: z.boolean().optional().default(true), // Novo
+  allowInstallmentBids: z.boolean().optional().default(true),
   silentBiddingEnabled: z.boolean().optional().default(false),
   allowMultipleBidsPerUser: z.boolean().optional().default(true),
   softCloseEnabled: z.boolean().optional().default(false), 
@@ -82,7 +89,7 @@ export const auctionFormSchema = z.object({
   autoRelistSettings: autoRelistSettingsSchema,
 }).refine(data => {
     // If it's a Dutch auction, the specific fields are required.
-    if (data.auctionType === 'DUTCH') {
+    if (data.auctionMethod === 'DUTCH') {
         return !!data.decrementAmount && !!data.decrementIntervalSeconds && !!data.floorPrice;
     }
     return true;

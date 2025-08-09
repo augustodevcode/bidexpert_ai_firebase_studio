@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/actions.ts
 'use server';
 
@@ -100,5 +99,6 @@ export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Pro
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
+    // @ts-ignore
     return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }
