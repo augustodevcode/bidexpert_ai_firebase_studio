@@ -111,7 +111,7 @@ model LotCategory {
 model Subcategory {
   id               String      @id @default(uuid())
   name             String      @db.VarChar(100)
-  slug             String?
+  slug             String?     @unique
   parentCategory   LotCategory @relation(fields: [parentCategoryId], references: [id])
   parentCategoryId String
   description      String?     @db.VarChar(500)
@@ -152,32 +152,32 @@ model User {
 }
 
 model Seller {
-  id                 String            @id @default(uuid())
-  publicId           String?           @unique @db.VarChar(100)
-  slug               String?           @unique @db.VarChar(150)
-  name               String            @unique @db.VarChar(150)
-  contactName        String?           @db.VarChar(150)
-  email              String?           @db.VarChar(150)
-  phone              String?           @db.VarChar(20)
-  address            String?           @db.VarChar(200)
-  city               String?           @db.VarChar(100)
-  state              String?           @db.VarChar(50)
-  zipCode            String?           @db.VarChar(10)
-  website            String?
-  logoUrl            String?
-  logoMediaId        String?           @db.VarChar(100)
-  dataAiHintLogo     String?           @db.VarChar(100)
-  description        String?           @db.Text
-  isJudicial         Boolean           @default(false)
-  user               User?             @relation(fields: [userId], references: [id])
-  userId             String?           @unique
-  judicialBranch     JudicialBranch?   @relation(fields: [judicialBranchId], references: [id])
-  judicialBranchId   String?           @unique
-  auctions           Auction[]
-  lots               Lot[]
-  bens               Bem[]
-  directSaleOffers   DirectSaleOffer[]
-  judicialProcesses  JudicialProcess[]
+  id               String           @id @default(uuid())
+  publicId         String?          @unique @db.VarChar(100)
+  slug             String?          @unique @db.VarChar(150)
+  name             String           @unique @db.VarChar(150)
+  contactName      String?          @db.VarChar(150)
+  email            String?          @db.VarChar(150)
+  phone            String?          @db.VarChar(20)
+  address          String?          @db.VarChar(200)
+  city             String?          @db.VarChar(100)
+  state            String?          @db.VarChar(50)
+  zipCode          String?          @db.VarChar(10)
+  website          String?
+  logoUrl          String?
+  logoMediaId      String?          @db.VarChar(100)
+  dataAiHintLogo   String?          @db.VarChar(100)
+  description      String?          @db.Text
+  isJudicial       Boolean          @default(false)
+  user             User?            @relation(fields: [userId], references: [id])
+  userId           String?          @unique
+  judicialBranch   JudicialBranch?  @relation(fields: [judicialBranchId], references: [id])
+  judicialBranchId String?          @unique
+  auctions         Auction[]
+  lots             Lot[]
+  bens             Bem[]
+  directSaleOffers DirectSaleOffer[]
+  judicialProcess  JudicialProcess?
 }
 
 model Auctioneer {
@@ -229,7 +229,6 @@ model JudicialDistrict {
   branches          JudicialBranch[]
   judicialProcesses JudicialProcess[]
   auctions          Auction[]         @relation("DistrictAuctions")
-  city              City?             @relation(fields: [cityId], references: [id])
   cityId            String?
 }
 
@@ -259,7 +258,7 @@ model JudicialProcess {
   branch        JudicialBranch? @relation(fields: [branchId], references: [id])
   branchId      String?
   seller        Seller?         @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  sellerId      String?
+  sellerId      String?         @unique
   parties       JudicialParty[]
   bens          Bem[]
   auctions      Auction[]
@@ -626,30 +625,30 @@ model UserWin {
 }
 
 model DirectSaleOffer {
-  id                   String                @id @default(uuid())
-  publicId             String?               @unique @db.VarChar(100)
+  id                   String       @id @default(uuid())
+  publicId             String?      @unique @db.VarChar(100)
   title                String
-  description          String?               @db.Text
+  description          String?      @db.Text
   offerType            DirectSaleOfferType
   price                Float?
   minimumOfferPrice    Float?
   status               DirectSaleOfferStatus @default(ACTIVE)
-  category             LotCategory           @relation(fields: [categoryId], references: [id])
+  category             LotCategory  @relation(fields: [categoryId], references: [id])
   categoryId           String
-  seller               Seller                @relation(fields: [sellerId], references: [id])
+  seller               Seller       @relation(fields: [sellerId], references: [id])
   sellerId             String
-  locationCity         String?               @db.VarChar(100)
-  locationState        String?               @db.VarChar(100)
+  locationCity         String?      @db.VarChar(100)
+  locationState        String?      @db.VarChar(100)
   imageUrl             String?
-  imageMediaId         String?               @db.VarChar(100)
-  dataAiHint           String?               @db.VarChar(100)
+  imageMediaId         String?      @db.VarChar(100)
+  dataAiHint           String?      @db.VarChar(100)
   galleryImageUrls     Json?
   mediaItemIds         Json?
   itemsIncluded        Json?
-  views                Int?                  @default(0)
+  views                Int?         @default(0)
   expiresAt            DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 }
 
 model UserLotMaxBid {
@@ -697,14 +696,12 @@ model AuctionHabilitation {
 }
 
 model Report {
-  id          String        @id @default(uuid())
+  id          String        @id @default(cuid())
   title       String
   description String?
   definition  Json
   owner       User          @relation("UserReports", fields: [ownerId], references: [id])
   ownerId     String
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
   shares      ReportShare[]
 }
 
@@ -715,7 +712,7 @@ model ReportShare {
   user     User   @relation("SharedReports", fields: [userId], references: [id])
   userId   String
 
-  @@unique([reportId, userId])
+  @@unique([userId, reportId])
 }
 
 enum AuctionStatus {
@@ -794,8 +791,8 @@ enum BemStatus {
 }
 
 enum LivestockSex {
-  MACHO
-  FEMEA
+  Macho
+  Femea
 }
 
 enum DirectSaleOfferType {
@@ -818,21 +815,4 @@ enum AuctionType {
   TOMADA_DE_PRECOS
   DUTCH
   SILENT
-}
-
-model VehicleMake {
-  id     String         @id @default(uuid())
-  name   String         @unique
-  slug   String         @unique
-  models VehicleModel[]
-}
-
-model VehicleModel {
-  id     String      @id @default(uuid())
-  name   String
-  slug   String
-  make   VehicleMake @relation(fields: [makeId], references: [id])
-  makeId String
-
-  @@unique([makeId, name])
 }

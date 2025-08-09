@@ -9,7 +9,7 @@ import {
     sampleStates, 
     sampleCities
 } from '@/lib/sample-data';
-import bcryptjs from 'bcryptjs';
+import bcrypt from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 
