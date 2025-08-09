@@ -49,3 +49,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** During development (`NODE_ENV === 'development'`), the application footer must display key environment information. This includes the currently active database system (e.g., MySQL, PostgreSQL), the logged-in user's email, and the active Firebase Project ID.
 
 **Rationale:** This provides immediate, persistent context about the development environment, preventing confusion and aiding in debugging database or user-specific issues.
+
+- **Fluxo de Dados Obrigatório**: `Frontend → Controller (Server Action) → Service → Repository → Prisma → Database`. Nunca pule camadas.
+- **Evolução, Não Substituição**: Nunca delete ou reescreva funcionalidades existentes sem um bom motivo. A prioridade é evoluir e melhorar o código atual.
+- **Consistência**: Mantenha a consistência do código, seguindo os padrões já estabelecidos no projeto.

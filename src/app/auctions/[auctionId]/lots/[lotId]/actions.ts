@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 /**
  * @fileoverview Server Actions for the Lot Detail page.
@@ -79,6 +80,12 @@ export async function placeBidOnLot(
                 amount: bidAmount,
             }
         });
+        
+        // This will now trigger the onSnapshot listener on the client
+        await lotService.updateLot(lot.id, {
+            price: bidAmount,
+            bidsCount: (lot.bidsCount || 0) + 1
+        });
 
         if (previousHighBid && previousHighBid.bidderId !== userId) {
             await prisma.notification.create({
@@ -89,11 +96,6 @@ export async function placeBidOnLot(
                 }
             });
         }
-
-        await lotService.updateLot(lot.id, {
-            price: bidAmount,
-            bidsCount: (lot.bidsCount || 0) + 1
-        });
         
         if (process.env.NODE_ENV !== 'test') {
             revalidatePath(`/auctions/${auctionIdOrPublicId}/lots/${lotIdOrPublicId}`);

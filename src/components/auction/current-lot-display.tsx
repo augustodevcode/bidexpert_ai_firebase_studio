@@ -11,13 +11,34 @@ import { isPast, isValid } from 'date-fns';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
 import { Button } from '../ui/button';
 import { DetailTimeRemaining } from '@/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 
 interface CurrentLotDisplayProps {
   lot: Lot;
   auctionStatus: AuctionStatus; // To help determine overall context
 }
 
-export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisplayProps) {
+export default function CurrentLotDisplay({ lot: initialLot, auctionStatus }: CurrentLotDisplayProps) {
+  const [lot, setLot] = useState<Lot>(initialLot);
+
+  useEffect(() => {
+    setLot(initialLot); // Update local state when the prop changes
+    const lotRef = doc(db, "lots", initialLot.id);
+    const unsubscribe = onSnapshot(lotRef, (doc) => {
+        if (doc.exists()) {
+            const updatedLotData = { id: doc.id, ...doc.data() } as Lot;
+            setLot(prevLot => ({ ...prevLot, ...updatedLotData }));
+        } else {
+            console.warn(`Lot with ID ${initialLot.id} not found in real-time listener.`);
+        }
+    }, (error) => {
+        console.error("Error with real-time lot listener:", error);
+    });
+
+    return () => unsubscribe(); // Cleanup the listener
+  }, [initialLot]);
+
   const gallery = useMemo(() => {
     if (!lot) return ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
     const mainImage = [lot.imageUrl].filter(Boolean) as string[];
@@ -30,10 +51,8 @@ export default function CurrentLotDisplay({ lot, auctionStatus }: CurrentLotDisp
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
-    // Reset image index if lot changes
     setCurrentImageIndex(0);
   }, [lot.id]);
-
 
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % gallery.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);

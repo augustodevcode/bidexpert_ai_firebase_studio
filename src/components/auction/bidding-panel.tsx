@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -19,6 +20,8 @@ import LotAllBidsModal from './lot-all-bids-modal';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, orderBy } from 'firebase/firestore';
 
 
 interface BiddingPanelProps {
@@ -67,27 +70,41 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
       setIsHabilitando(false);
   };
 
-  const fetchBidData = useCallback(async () => {
-    if (!currentLot) return;
+  useEffect(() => {
+    if (!currentLot || !currentLot.id) return;
+
     setIsLoadingHistory(true);
-    try {
-      const [history, maxBid] = await Promise.all([
-        getBidsForLot(currentLot.publicId || currentLot.id),
-        getActiveUserLotMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions?.uid || '')
-      ]);
+    const q = query(
+      collection(db, "bids"),
+      where("lotId", "==", currentLot.id),
+      orderBy("timestamp", "desc")
+    );
+
+    const unsubscribe = onSnapshot(q, (querySnapshot) => {
+      const history: BidInfo[] = [];
+      querySnapshot.forEach((doc) => {
+        history.push({ id: doc.id, ...doc.data() } as BidInfo);
+      });
       setBidHistory(history);
-      setActiveMaxBid(maxBid);
-    } catch (error) {
-      console.error("Error fetching bid data for panel:", error);
-      toast({ title: "Erro ao carregar lances", variant: "destructive"});
-    } finally {
       setIsLoadingHistory(false);
-    }
+    }, (error) => {
+      console.error("Error fetching realtime bid history:", error);
+      toast({ title: "Erro de Conexão", description: "Não foi possível obter o histórico de lances em tempo real.", variant: "destructive" });
+      setIsLoadingHistory(false);
+    });
+    
+    // Fetch max bid separately as it's user-specific
+    const fetchMaxBid = async () => {
+      if (userProfileWithPermissions?.uid) {
+        const maxBid = await getActiveUserLotMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions.uid);
+        setActiveMaxBid(maxBid);
+      }
+    };
+    fetchMaxBid();
+
+    return () => unsubscribe();
   }, [currentLot, userProfileWithPermissions?.uid, toast]);
 
-  useEffect(() => {
-    fetchBidData();
-  }, [fetchBidData]);
 
   const handlePlaceBid = async () => {
     if (!canUserBid || !userProfileWithPermissions) return;
@@ -112,7 +129,6 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
       toast({ title: 'Sucesso!', description: 'Seu lance foi registrado.' });
       onBidSuccess(result.updatedLot!, result.newBid);
       setBidAmountInput('');
-      fetchBidData();
     } else {
       toast({ title: 'Erro ao dar lance', description: result.message, variant: 'destructive' });
     }
@@ -129,7 +145,8 @@ export default function BiddingPanel({ currentLot, auction, onBidSuccess, isHabi
      setIsSettingMaxBid(false);
     if(result.success) {
         toast({ title: 'Sucesso!', description: 'Seu lance máximo foi salvo.' });
-        fetchBidData();
+        const maxBid = await getActiveUserLotMaxBid(currentLot.publicId || currentLot.id, userProfileWithPermissions.uid || '');
+        setActiveMaxBid(maxBid);
     } else {
         toast({ title: 'Erro ao salvar lance máximo', description: result.message, variant: 'destructive' });
     }
