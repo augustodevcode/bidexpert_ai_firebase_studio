@@ -57,7 +57,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => <Badge variant="outline">{getAuctionStatusText(row.getValue("status"))}</Badge>,
-    filterFn: (row, id, value) => value.includes(row.getValue(id)),
+    filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
     enableGrouping: true,
   },
   {
