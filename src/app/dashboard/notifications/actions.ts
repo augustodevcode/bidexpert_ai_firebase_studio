@@ -1,3 +1,4 @@
+
 // src/app/dashboard/notifications/actions.ts
 /**
  * @fileoverview Server Actions for managing user Notifications.
@@ -69,7 +70,9 @@ export async function markNotificationAsRead(notificationId: string, userId: str
             }
         });
 
-        revalidatePath('/dashboard/notifications');
+        if (process.env.NODE_ENV !== 'test') {
+            revalidatePath('/dashboard/notifications');
+        }
         return { success: true, message: "Notificação marcada como lida." };
 
     } catch (error: any) {

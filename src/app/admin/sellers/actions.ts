@@ -1,3 +1,4 @@
+
 // src/app/admin/sellers/actions.ts
 'use server';
 
@@ -25,7 +26,7 @@ export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     const result = await sellerService.createSeller(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/sellers');
     }
     return result;
@@ -33,7 +34,7 @@ export async function createSeller(data: SellerFormData): Promise<{ success: boo
 
 export async function updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await sellerService.updateSeller(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/sellers');
         revalidatePath(`/admin/sellers/${id}/edit`);
     }
@@ -42,7 +43,7 @@ export async function updateSeller(id: string, data: Partial<SellerFormData>): P
 
 export async function deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await sellerService.deleteSeller(id);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/sellers');
     }
     return result;

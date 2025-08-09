@@ -24,7 +24,7 @@ import {
     runMenuContentTest,
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
-    runPlatformSettingsTest, // Import the new test action
+    runPlatformSettingsTest,
     runAuctionCardDetailsTest,
     runCardContentTest,
 } from './actions';
@@ -62,8 +62,8 @@ const tests: TestConfig[] = [
   },
   {
     id: 'platform-settings',
-    title: 'Configurações da Plataforma',
-    description: 'Verifica a criação e atualização das configurações globais do site.',
+    title: 'Configurações da Plataforma (E2E)',
+    description: 'Valida a criação e atualização das configurações da plataforma via camada de serviço.',
     action: runPlatformSettingsTest,
     type: 'backend',
   },

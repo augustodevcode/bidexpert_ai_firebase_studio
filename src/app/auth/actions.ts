@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { createSession, getSession, deleteSession } from '@/lib/session';
 import type { UserProfileWithPermissions, Role } from '@/types';
 import { revalidatePath } from 'next/cache';
-import bcrypt from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuidv4';
 
@@ -66,7 +66,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     
     console.log(`[Login Action] Usuário encontrado:`, { id: user.id, email: user.email, roles: user.roles.map(r => r.role.name) });
     
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcryptjs.compare(password, user.password);
     
     console.log(`[Login Action] A senha é válida? ${isPasswordValid}`);
 
@@ -100,7 +100,9 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
  */
 export async function logout() {
   await deleteSession();
-  revalidatePath('/', 'layout'); // Garante que o layout seja re-renderizado como "deslogado"
+  if (process.env.NODE_ENV !== 'test') {
+    revalidatePath('/', 'layout'); // Garante que o layout seja re-renderizado como "deslogado"
+  }
   redirect('/');
 }
 

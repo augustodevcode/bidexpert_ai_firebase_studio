@@ -1,3 +1,4 @@
+
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getUserProfileData(userId: string): Promise<UserProfileWit
 
 export async function createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
   const result = await userService.createUser(data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/users');
   }
   return result;
@@ -25,7 +26,7 @@ export async function createUser(data: UserCreationData): Promise<{ success: boo
 
 export async function updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
   const result = await userService.updateUserProfile(userId, data);
-   if (result.success) {
+   if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
         revalidatePath(`/admin/users/${userId}/edit`);
     }
@@ -35,7 +36,7 @@ export async function updateUserProfile(userId: string, data: EditableUserProfil
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
   const result = await userService.updateUserRoles(userId, roleIds);
-   if (result.success) {
+   if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
         revalidatePath(`/admin/users/${userId}/edit`);
     }
@@ -44,7 +45,7 @@ export async function updateUserRoles(userId: string, roleIds: string[]): Promis
 
 export async function deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
   const result = await userService.deleteUser(id);
-   if (result.success) {
+   if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
     }
   return result;

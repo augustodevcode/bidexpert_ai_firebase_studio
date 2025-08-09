@@ -1,3 +1,4 @@
+
 // src/app/admin/courts/actions.ts
 'use server';
 
@@ -17,7 +18,7 @@ export async function getCourt(id: string): Promise<Court | null> {
 
 export async function createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
     const result = await courtService.createCourt(data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/courts');
     }
     return result;
@@ -25,7 +26,7 @@ export async function createCourt(data: CourtFormData): Promise<{ success: boole
 
 export async function updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
     const result = await courtService.updateCourt(id, data);
-    if (result.success) {
+    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/courts');
         revalidatePath(`/admin/courts/${id}/edit`);
     }
@@ -34,7 +35,7 @@ export async function updateCourt(id: string, data: Partial<CourtFormData>): Pro
 
 export async function deleteCourt(id: string): Promise<{ success: boolean; message: string; }> {
     const result = await courtService.deleteCourt(id);
-     if (result.success) {
+     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/courts');
     }
     return result;

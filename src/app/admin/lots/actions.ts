@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/actions.ts
 'use server';
 
@@ -21,7 +22,7 @@ export async function getLot(id: string): Promise<Lot | null> {
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
   const result = await lotService.createLot(data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/lots');
     if (data.auctionId) {
       revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
@@ -32,7 +33,7 @@ export async function createLot(data: Partial<LotFormData>): Promise<{ success: 
 
 export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
   const result = await lotService.updateLot(id, data);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/lots');
       revalidatePath(`/admin/lots/${id}/edit`);
       if (data.auctionId) {
@@ -48,7 +49,7 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 
   const result = await lotService.deleteLot(id);
   
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/lots');
     if (finalAuctionId) {
       revalidatePath(`/admin/auctions/${finalAuctionId}/edit`);
@@ -69,7 +70,7 @@ export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
   const result = await lotService.finalizeLot(lotId);
-  if (result.success) {
+  if (result.success && process.env.NODE_ENV !== 'test') {
     const lot = await lotService.getLotById(lotId);
     if(lot) {
       revalidatePath(`/admin/lots/${lotId}/edit`);
