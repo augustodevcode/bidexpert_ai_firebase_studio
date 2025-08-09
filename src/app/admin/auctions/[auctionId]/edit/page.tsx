@@ -5,7 +5,7 @@
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
-import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions'; // MUDANÇA AQUI
+import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';

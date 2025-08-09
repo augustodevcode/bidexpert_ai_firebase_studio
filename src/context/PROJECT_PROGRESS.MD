@@ -16,13 +16,11 @@
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
+- **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling.
+- **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
 
 ## DOING
 - **Item 9:** **PDF Document Generation:** Implement the server-side logic using Puppeteer (as defined in `generate-document-flow.ts`) to generate PDFs for auction reports, certificates, and winning bid terms based on the created `DocumentTemplate` entities.
 
 ## NEXT
-- **Item 10:** **Advanced UI/UX Features:**
-    - Implement real-time updates for bids and auction status using WebSockets.
-    - Expand the gamification system with more badges and rewards.
-- **Item 11:** **Payment Gateway Integration:** Integrate a payment processor for handling auction deposits and final payments for won lots.
 - **Item 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability.
