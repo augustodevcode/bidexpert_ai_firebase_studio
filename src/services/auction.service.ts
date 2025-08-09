@@ -90,7 +90,7 @@ export class AuctionService {
   async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       // Removendo campos que não pertencem ao modelo Auction
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, mapAddress, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
