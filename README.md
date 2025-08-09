@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # BidExpert - Powered by Firebase Studio
 
 This is a Next.js starter application built with Firebase Studio. It's designed to provide a robust foundation for an online auction platform, complete with an admin panel, user authentication, and a flexible data layer.
@@ -65,3 +66,7 @@ npm run db:seed
 ```
 
 Your selected database is now ready to use with the application.
+=======
+# bidexpert_ai_firebase_studio
+Projeto feito com FireBase Studio AI
+>>>>>>> bidexpert_ai_firebase_studio.git/docs-compilation
