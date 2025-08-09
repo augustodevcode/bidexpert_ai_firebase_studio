@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, HandCoins, Loader2 } from 'lucide-react';
+import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, Loader2 } from 'lucide-react';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 import type { UserWin } from '@/types';
 import { format, addDays } from 'date-fns';
@@ -16,6 +16,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { getWinsForUserAction } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
+import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions'; // Import the action
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
@@ -37,6 +38,7 @@ function WinsPageContent() {
     const searchParams = useSearchParams();
     const [wins, setWins] = useState<UserWin[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isGeneratingTerm, setIsGeneratingTerm] = useState<string | null>(null);
 
     const fetchWins = useCallback(async (userId: string) => {
       setIsLoading(true);
@@ -71,6 +73,40 @@ function WinsPageContent() {
         setIsLoading(false); // No user, stop loading
         }
     }, [userProfileWithPermissions, fetchWins]);
+
+    const handleGenerateTerm = async (lotId: string) => {
+        setIsGeneratingTerm(lotId);
+        toast({ title: 'Gerando Documento...', description: 'Aguarde, isso pode levar alguns segundos.'});
+
+        try {
+            const result = await generateWinningBidTermAction(lotId);
+
+            if (result.success && result.pdfBase64 && result.fileName) {
+                const byteCharacters = atob(result.pdfBase64);
+                const byteNumbers = new Array(byteCharacters.length);
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i);
+                }
+                const byteArray = new Uint8Array(byteNumbers);
+                const blob = new Blob([byteArray], { type: 'application/pdf' });
+                const link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = result.fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                toast({ title: 'Sucesso!', description: 'Download do PDF iniciado.' });
+            } else {
+                throw new Error(result.message || "A resposta da API não continha um PDF válido.");
+            }
+        } catch (error: any) {
+            console.error("Error generating winning bid term PDF:", error);
+            toast({ title: 'Erro ao Gerar PDF', description: error.message, variant: 'destructive'});
+        } finally {
+            setIsGeneratingTerm(null);
+        }
+    };
+
 
     if (isLoading) {
         return (
@@ -168,36 +204,35 @@ function WinsPageContent() {
                             </div>
                             </CardContent>
                             <CardFooter className="border-t pt-4 flex flex-col sm:flex-row flex-wrap gap-2">
-                            <Button size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                                <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
-                                    <Eye className="mr-2 h-4 w-4" /> Ver Lote
-                                </Link>
-                            </Button>
-                            {win.paymentStatus === 'PENDENTE' && (
-                                <Button variant="default" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                                    <Link href={`/checkout/${win.id}`}>
-                                        <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
+                                <Button size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
+                                    <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
+                                        <Eye className="mr-2 h-4 w-4" /> Ver Lote
                                     </Link>
                                 </Button>
-                            )}
-                            {win.invoiceUrl && win.paymentStatus === 'PAGO' && (
-                                <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                                    <Link href={win.invoiceUrl} target="_blank">
-                                        <FileText className="mr-2 h-4 w-4" /> Ver Fatura
-                                    </Link>
-                                </Button>
-                            )}
-                            {win.paymentStatus === 'PAGO' && (
-                                <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
-                                    <CalendarCheck className="mr-2 h-4 w-4" /> Agendar Retirada
-                                </Button>
-                            )}
-                            <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
-                                    <HandCoins className="mr-2 h-4 w-4" /> Comprov. Pag.
-                            </Button>
-                            <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
-                                    <FileText className="mr-2 h-4 w-4" /> Termo Arrem.
-                            </Button>
+                                {win.paymentStatus === 'PENDENTE' && (
+                                    <Button variant="default" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
+                                        <Link href={`/checkout/${win.id}`}>
+                                            <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
+                                        </Link>
+                                    </Button>
+                                )}
+                                {win.paymentStatus === 'PAGO' && (
+                                    <>
+                                        <Button 
+                                            variant="secondary" 
+                                            size="sm" 
+                                            className="flex-1 min-w-[calc(50%-0.25rem)]"
+                                            onClick={() => handleGenerateTerm(win.lot.id)}
+                                            disabled={isGeneratingTerm === win.lot.id}
+                                        >
+                                            {isGeneratingTerm === win.lot.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4" />}
+                                            Termo Arrem.
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
+                                            <Truck className="mr-2 h-4 w-4" /> Agendar Retirada
+                                        </Button>
+                                    </>
+                                )}
                             </CardFooter>
                         </Card>
                         )
@@ -212,7 +247,7 @@ function WinsPageContent() {
 
 export default function MyWinsPage() {
     return (
-        <React.Suspense fallback={<div>Carregando...</div>}>
+        <React.Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
             <WinsPageContent />
         </React.Suspense>
     );
