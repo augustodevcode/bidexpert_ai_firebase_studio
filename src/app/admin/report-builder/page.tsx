@@ -1,5 +1,5 @@
 // src/app/admin/report-builder/page.tsx
-import BidReportBuilder from '@/components/BidReportBuilder';
+import BidReportBuilder from '@/components/BidReportBuilder/index.js';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { ClipboardCheck } from 'lucide-react';
 
