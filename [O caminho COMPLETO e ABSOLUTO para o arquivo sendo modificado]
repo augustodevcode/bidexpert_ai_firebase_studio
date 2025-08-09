@@ -1,0 +1,12 @@
+O conteúdo FINAL e COMPLETO do arquivo deve ser colocado aqui. Não forneça diffs ou trechos parciais.
+    
+```
+## 4. Princípio da Não-Regressão e Autorização Humana
+
+**Regra:** Qualquer exclusão de funcionalidade, componente ou alteração significativa no projeto **deve ser explicitamente autorizada por um usuário humano**. Para evitar a remoção acidental de funcionalidades que estão operando corretamente ao implementar correções ou melhorias, a IA deve:
+
+1.  Declarar claramente a intenção de excluir ou refatorar um componente/arquivo/funcionalidade.
+2.  Fornecer uma breve justificativa sobre por que a mudança é necessária.
+3.  Solicitar confirmação explícita do usuário antes de gerar as alterações.
+
+**Justificativa:** Este princípio garante que o processo de desenvolvimento esteja sempre avançando e evita regressões. Ele mantém uma salvaguarda onde o desenvolvedor humano tem a palavra final sobre quaisquer alterações destrutivas ou em larga escala, preservando a estabilidade e a integridade do projeto.
