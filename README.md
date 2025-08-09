@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # BidExpert - Powered by Firebase Studio
 
 This is a Next.js starter application built with Firebase Studio. It's designed to provide a robust foundation for an online auction platform, complete with an admin panel, user authentication, and a flexible data layer.
@@ -17,14 +16,6 @@ This application follows a robust **MVC (Model-View-Controller) with a Service L
 -   **Services:** Contain the core business logic (`/services/*.ts` files), decoupled from both the database and the controllers.
 -   **Repositories:** Encapsulate all database queries using the Prisma Client, providing a clean data access layer.
 
-### The Role of the Adapter Pattern
-
-You will notice files like `firestore.adapter.ts`. This is a deliberate use of the **Adapter Design Pattern**.
-
--   **The Goal:** To allow our application's services and controllers to work with any database (Firestore, MySQL, PostgreSQL) without changing their own code.
--   **How it Works:** We define a standard interface (`DatabaseAdapter` in `src/types/index.ts`). This interface is the "contract" that our application expects. Each adapter (e.g., `FirestoreAdapter`) implements this contract, "translating" the standard calls (like `getLots()`) into the specific syntax required by that particular database.
--   **The Benefit:** This makes the system incredibly flexible. We can switch the underlying database just by changing an environment variable, without rewriting our business logic.
-
 ---
 
 ## Database Setup
@@ -33,11 +24,13 @@ This project uses **Prisma ORM** as its data access layer, allowing for flexible
 
 ### 1. Environment Setup
 
--   For **Firestore (Default for this project)**: Ensure your Firebase project credentials are set up correctly. No `DATABASE_URL` is needed. Set the following in your `.env` file:
+-   For **MySQL (Default for this project)**: Ensure your MySQL server is running. Set the following in your `.env` file with your database credentials.
     ```
-    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=FIRESTORE
+    # Example for MySQL
+    NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=MYSQL
+    DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
     ```
--   For **PostgreSQL or MySQL**: Set up your database and provide the connection string in your `.env` file. Change the `provider` in `prisma/schema.prisma` accordingly.
+-   For **PostgreSQL**: Set up your database and provide the connection string in your `.env` file. Change the `provider` in `prisma/schema.prisma` to `postgresql`.
     ```
     # Example for PostgreSQL
     NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM=POSTGRES
@@ -48,13 +41,13 @@ This project uses **Prisma ORM** as its data access layer, allowing for flexible
 
 When using a fresh database, you need to create the necessary tables/collections and populate essential data.
 
--   **`npx prisma db push` (For SQL Databases):** If using PostgreSQL or MySQL, run this command **once** to sync your Prisma schema with the database.
+-   **`npx prisma db push` (For SQL Databases):** If using MySQL or PostgreSQL, run this command **once** to sync your Prisma schema with the database. This command is included in the `npm run dev` script, so it will run automatically on startup.
     ```bash
     npx prisma db push
     ```
 -   **`npm run dev`**: The first time you run the development server, it will automatically execute an initialization script (`init-db.ts`). This script populates **essential data only** (like Roles, Categories, States, etc.). This step is required for the application to start correctly.
 
--   **`npm run db:seed`**: After the server has started at least uma vez, you can run this script manually in your terminal to populate the database with a **full set of sample data** (auctions, lots, users, etc.). Use this to get a fully populated environment for development and demonstration. The script checks for existing data to prevent duplication.
+-   **`npm run db:seed`**: After the server has started at least once, you can run this script manually in your terminal to populate the database with a **full set of sample data** (auctions, lots, users, etc.). Use this to get a fully populated environment for development and demonstration. The script checks for existing data to prevent duplication.
 
 ```bash
 # First, run the development server. This will initialize the database with essential data.
@@ -66,7 +59,3 @@ npm run db:seed
 ```
 
 Your selected database is now ready to use with the application.
-=======
-# bidexpert_ai_firebase_studio
-Projeto feito com FireBase Studio AI
->>>>>>> bidexpert_ai_firebase_studio.git/docs-compilation

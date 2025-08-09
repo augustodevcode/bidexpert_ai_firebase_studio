@@ -1,18 +1,18 @@
 import React from 'react';
-import { DocumentViewer } from 'devexpress-reporting-react';
-import 'devextreme/dist/css/dx.light.css';
-import '@devexpress/analytics-core/dist/css/dx-analytics.common.css';
-import '@devexpress/analytics-core/dist/css/dx-analytics.light.css';
-import 'devexpress-reporting/dist/css/dx-webdocumentviewer.css';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const PreviewPanel = ({ reportUrl }) => {
   return (
-    <div>
-      <h3>Preview</h3>
-      <DocumentViewer reportUrl={reportUrl}>
-        <RequestOptions host="http://localhost:3000/" invokeAction="DXXRDV" />
-      </DocumentViewer>
-    </div>
+    <Card className="h-full">
+      <CardHeader>
+        <CardTitle className="text-lg">Pré-Visualização</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="h-full w-full border rounded-lg flex items-center justify-center bg-gray-50">
+          <p className="text-gray-400">A pré-visualização do relatório aparecerá aqui.</p>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

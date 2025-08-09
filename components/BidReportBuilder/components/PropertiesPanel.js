@@ -1,41 +1,23 @@
 import React from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-const PropertiesPanel = ({ selectedElement, onElementPropertyChanged }) => {
-  if (!selectedElement) {
-    return (
-      <div>
-        <h3>Properties</h3>
-        <p>Select an element to see its properties.</p>
-      </div>
-    );
-  }
-
-  const handlePropertyChanged = (e) => {
-    onElementPropertyChanged(selectedElement, e.target.name, e.target.value);
-  };
-
+const PropertiesPanel = ({ selectedElement }) => {
   return (
-    <div>
-      <h3>Properties</h3>
-      <div>
-        <label>ID:</label>
-        <input type="text" name="id" value={selectedElement.id} readOnly />
-      </div>
-      <div>
-        <label>Type:</label>
-        <input type="text" name="type" value={selectedElement.type} readOnly />
-      </div>
-      <div>
-        <label>Text:</label>
-        <input
-          type="text"
-          name="text"
-          value={selectedElement.text || ''}
-          onChange={handlePropertyChanged}
-        />
-      </div>
-      {/* Add more properties here */}
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Propriedades</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {selectedElement ? (
+          <div>
+            <p>Elemento selecionado: {selectedElement.type}</p>
+            {/* Properties fields will go here */}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Selecione um elemento para ver suas propriedades.</p>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

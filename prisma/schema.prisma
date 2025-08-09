@@ -1,16 +1,10 @@
-<<<<<<< HEAD
 // prisma/schema.prisma
-=======
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
->>>>>>> bidexpert_ai_firebase_studio.git/docs-compilation
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-<<<<<<< HEAD
   provider     = "mysql"
   url          = env("DATABASE_URL")
   relationMode = "prisma"
@@ -42,6 +36,7 @@ model PlatformSettings {
   defaultUrgencyTimerHours         Int?
   variableIncrementTable           Json?
   biddingSettings                  Json?
+  paymentGatewaySettings           Json?
   defaultListItemsPerPage          Int?      @default(10)
   updatedAt                        DateTime? @updatedAt
 }
@@ -79,14 +74,14 @@ model State {
 }
 
 model City {
-  id        String    @id @default(uuid())
-  name      String    @db.VarChar(150)
-  slug      String?   @db.VarChar(150)
-  state     State     @relation(fields: [stateId], references: [id])
+  id        String             @id @default(uuid())
+  name      String             @db.VarChar(150)
+  slug      String?            @db.VarChar(150)
+  state     State              @relation(fields: [stateId], references: [id])
   stateId   String
-  stateUf   String?   @db.VarChar(2)
-  ibgeCode  String?   @unique @db.VarChar(10)
-  lotCount  Int?      @default(0)
+  stateUf   String?            @db.VarChar(2)
+  ibgeCode  String?            @unique @db.VarChar(10)
+  lotCount  Int?               @default(0)
   districts JudicialDistrict[]
   lots      Lot[]
 }
@@ -147,10 +142,13 @@ model User {
   sellerProfile       Seller?
   auctioneerProfile   Auctioneer?
   documents           UserDocument[]
+  reviewedDocuments   UserDocument[]        @relation("DocumentAnalyst")
   mediaItems          MediaItem[]
   maxBids             UserLotMaxBid[]
   habilitations       AuctionHabilitation[]
   wonLots             Lot[]                 @relation("LotWinner")
+  ownedReports        Report[]              @relation("UserReports")
+  sharedReports       ReportShare[]         @relation("SharedReports")
 }
 
 model Seller {
@@ -216,7 +214,7 @@ model Court {
   updatedAt         DateTime           @updatedAt
   districts         JudicialDistrict[]
   judicialProcesses JudicialProcess[]
-  auctions          Auction[]
+  auctions          Auction[]          @relation("CourtAuctions")
 }
 
 model JudicialDistrict {
@@ -227,12 +225,12 @@ model JudicialDistrict {
   courtId           String?
   state             State?            @relation(fields: [stateId], references: [id])
   stateId           String?
-  city              City?             @relation(fields: [cityId], references: [id])
-  cityId            String?
   zipCode           String?           @db.VarChar(10)
   branches          JudicialBranch[]
   judicialProcesses JudicialProcess[]
-  auctions          Auction[]
+  auctions          Auction[]         @relation("DistrictAuctions")
+  city              City?             @relation(fields: [cityId], references: [id])
+  cityId            String?
 }
 
 model JudicialBranch {
@@ -246,7 +244,7 @@ model JudicialBranch {
   email             String?           @db.VarChar(150)
   seller            Seller?
   judicialProcesses JudicialProcess[]
-  auctions          Auction[]
+  auctions          Auction[]         @relation("BranchAuctions")
 }
 
 model JudicialProcess {
@@ -260,11 +258,12 @@ model JudicialProcess {
   districtId    String?
   branch        JudicialBranch? @relation(fields: [branchId], references: [id])
   branchId      String?
-  seller        Seller?         @relation(fields: [sellerId], references: [id])
-  sellerId      String?         @unique
+  seller        Seller?         @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  sellerId      String?
   parties       JudicialParty[]
   bens          Bem[]
   auctions      Auction[]
+  mediaItems    MediaItem[]
 }
 
 model JudicialParty {
@@ -291,14 +290,14 @@ model Bem {
   seller                     Seller?          @relation(fields: [sellerId], references: [id])
   sellerId                   String?
   evaluationValue            Float?
-  imageUrl                   String?          @db.Text
+  imageUrl                   String?
   imageMediaId               String?          @db.VarChar(100)
   galleryImageUrls           Json?
   mediaItemIds               Json?
   dataAiHint                 String?          @db.VarChar(100)
   locationCity               String?          @db.VarChar(100)
   locationState              String?          @db.VarChar(100)
-  address                    String?          @db.Text
+  address                    String?
   latitude                   Float?
   longitude                  Float?
   plate                      String?          @db.VarChar(10)
@@ -459,13 +458,12 @@ model Auction {
   auctionStages                AuctionStage[]
   judicialProcess              JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
   judicialProcessId            String?
-  court                        Court?                @relation(fields: [courtId], references: [id])
+  court                        Court?                @relation("CourtAuctions", fields: [courtId], references: [id])
   courtId                      String?
-  district                     JudicialDistrict?     @relation(fields: [districtId], references: [id])
+  district                     JudicialDistrict?     @relation("DistrictAuctions", fields: [districtId], references: [id])
   districtId                   String?
-  branch                       JudicialBranch?       @relation(fields: [branchId], references: [id])
+  branch                       JudicialBranch?       @relation("BranchAuctions", fields: [branchId], references: [id])
   branchId                     String?
-  mapAddress                   String?
   createdAt                    DateTime              @default(now())
   updatedAt                    DateTime              @updatedAt
 }
@@ -544,33 +542,34 @@ model Lot {
 }
 
 model LotBens {
-  lot   Lot    @relation(fields: [lotId], references: [id])
+  lot   Lot  @relation(fields: [lotId], references: [id])
   lotId String
-  bem   Bem    @relation(fields: [bemId], references: [id])
+  bem   Bem  @relation(fields: [bemId], references: [id])
   bemId String
 
   @@id([lotId, bemId])
 }
 
 model MediaItem {
-  id               String   @id @default(uuid())
-  fileName         String
-  storagePath      String
-  title            String?
-  altText          String?
-  caption          String?  @db.VarChar(500)
-  description      String?  @db.Text
-  mimeType         String   @db.VarChar(100)
-  sizeBytes        Int?
-  urlOriginal      String
-  urlThumbnail     String?
-  urlMedium        String?
-  urlLarge         String?
-  linkedLotIds     Json?
-  dataAiHint       String?  @db.VarChar(100)
-  uploadedBy       User     @relation(fields: [uploadedByUserId], references: [id])
-  uploadedByUserId String
-  uploadedAt       DateTime @default(now())
+  id                String           @id @default(uuid())
+  fileName          String
+  storagePath       String
+  title             String?
+  altText           String?
+  caption           String?          @db.VarChar(500)
+  description       String?          @db.Text
+  mimeType          String           @db.VarChar(100)
+  sizeBytes         Int?
+  urlOriginal       String
+  urlThumbnail      String?
+  urlMedium         String?
+  urlLarge          String?
+  linkedLotIds      Json?
+  dataAiHint        String?          @db.VarChar(100)
+  uploadedBy        User             @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId  String
+  uploadedAt        DateTime         @default(now())
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
   judicialProcessId String?
 }
 
@@ -584,6 +583,8 @@ model UserDocument {
   fileUrl         String
   fileName        String?
   rejectionReason String?            @db.Text
+  reviewedBy      User?              @relation("DocumentAnalyst", fields: [analystId], references: [id], onDelete: SetNull)
+  analystId       String?
   createdAt       DateTime           @default(now())
   updatedAt       DateTime           @updatedAt
 
@@ -695,6 +696,27 @@ model AuctionHabilitation {
   @@unique([userId, auctionId])
 }
 
+model Report {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  definition  Json
+  owner       User          @relation("UserReports", fields: [ownerId], references: [id])
+  ownerId     String
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  shares      ReportShare[]
+}
+
+model ReportShare {
+  id       String @id @default(cuid())
+  report   Report @relation(fields: [reportId], references: [id])
+  reportId String
+  user     User   @relation("SharedReports", fields: [userId], references: [id])
+  userId   String
+
+  @@unique([reportId, userId])
+}
 
 enum AuctionStatus {
   RASCUNHO
@@ -772,8 +794,8 @@ enum BemStatus {
 }
 
 enum LivestockSex {
-  Macho
-  Femea
+  MACHO
+  FEMEA
 }
 
 enum DirectSaleOfferType {
@@ -796,51 +818,21 @@ enum AuctionType {
   TOMADA_DE_PRECOS
   DUTCH
   SILENT
-=======
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
-model User {
-  id         Int      @id @default(autoincrement())
-  email      String   @unique
-  name       String?
-  role       String   @default("user")
-  reports    Report[]
-  permissions ReportPermission[]
+model VehicleMake {
+  id     String         @id @default(uuid())
+  name   String         @unique
+  slug   String         @unique
+  models VehicleModel[]
 }
 
-model Report {
-  id          Int      @id @default(autoincrement())
-  title       String
-  description String?
-  definition  Json
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  owner       User     @relation(fields: [ownerId], references: [id])
-  ownerId     Int
-  permissions ReportPermission[]
-}
+model VehicleModel {
+  id     String      @id @default(uuid())
+  name   String
+  slug   String
+  make   VehicleMake @relation(fields: [makeId], references: [id])
+  makeId String
 
-model DataSource {
-  id          Int      @id @default(autoincrement())
-  name        String
-  type        String
-  connectionString String
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-}
-
-model ReportPermission {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    Int
-  report    Report   @relation(fields: [reportId], references: [id])
-  reportId  Int
-  permission String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, reportId])
->>>>>>> bidexpert_ai_firebase_studio.git/docs-compilation
+  @@unique([makeId, name])
 }
