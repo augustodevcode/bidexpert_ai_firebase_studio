@@ -1,4 +1,3 @@
-
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -17,12 +16,13 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
 import { createBem as createBemAction } from '@/app/admin/bens/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
-import BemForm from '@/app/admin/bens/bem-form';
+import BemForm from '@/components/admin/bens/bem-form';
 
 
 const allSteps = [
@@ -53,7 +53,7 @@ function WizardContent({
     isLoading: boolean;
     refetchData: (newProcessIdToSelect?: string) => void;
 }) {
-  const { currentStep, wizardData, nextStep, prevStep, goToStep } = useWizard();
+  const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
   const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process' | 'bem'>('main');
   const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
@@ -79,10 +79,6 @@ function WizardContent({
     }
     nextStep();
   };
-
-  const handleLotCreation = () => {
-    refetchData(wizardData.judicialProcess?.id); 
-  };
   
   const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
@@ -100,22 +96,7 @@ function WizardContent({
     setIsDataRefetching(false);
   }
 
-  const renderStepContent = () => {
-      switch (currentStepId) {
-        case 'type': return <Step1TypeSelection />;
-        case 'judicial': return <Step2JudicialSetup processes={fetchedData!.judicialProcesses} onRefetchRequest={() => refetchData()} />;
-        case 'auction': return <Step3AuctionDetails categories={fetchedData!.categories} auctioneers={fetchedData!.auctioneers} sellers={fetchedData!.sellers} />;
-        case 'lotting':
-          const bensForLotting = wizardData.auctionType === 'JUDICIAL' 
-              ? fetchedData!.availableBens.filter(bem => wizardData.judicialProcess ? bem.judicialProcessId === wizardData.judicialProcess.id : true)
-              : fetchedData!.availableBens;
-          return <Step4Lotting availableBens={bensForLotting} auctionData={wizardData.auctionDetails as Partial<Auction>} />;
-        case 'review': return <Step5Review />;
-        default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
-      }
-  };
-
-  const renderContent = () => {
+  const renderStep = () => {
     if (isLoading || !fetchedData) {
       return <div className="flex items-center justify-center h-full min-h-[250px]"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
     }
@@ -157,8 +138,34 @@ function WizardContent({
         />
       );
     }
-    
-    return renderStepContent();
+
+    switch (currentStepId) {
+      case 'type': return <Step1TypeSelection />;
+      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} onRefetchRequest={() => refetchData()} />;
+      case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
+      case 'lotting': {
+        const bensForLotting = useMemo(() => {
+          if (!fetchedData?.availableBens) return [];
+
+          if (wizardData.auctionType === 'JUDICIAL') {
+            return wizardData.judicialProcess
+              ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+              : [];
+          } else {
+            return wizardData.auctionDetails?.sellerId
+              ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+              : [];
+          }
+        }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+
+        return <Step4Lotting 
+                  availableBens={bensForLotting} 
+                  auctionData={wizardData.auctionDetails as Partial<Auction>} 
+               />;
+      }
+      case 'review': return <Step5Review />;
+      default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
+    }
   };
 
   return (
@@ -177,7 +184,7 @@ function WizardContent({
               <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
                 <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
-                  {renderContent()}
+                  {renderStep()}
                 </div>
               </CardContent>
               <CardFooter className="mt-8 flex justify-between p-6 pt-0">
@@ -202,7 +209,7 @@ function WizardContent({
             </>
           ) : (
             <CardContent className="p-6">
-              {renderContent()}
+              {renderStep()}
             </CardContent>
           )}
         </Card>
@@ -231,7 +238,7 @@ function WizardContent({
 function WizardPageContent() {
     const [fetchedData, setFetchedData] = useState<WizardDataForFetching | null>(null);
     const [isLoadingData, setIsLoadingData] = useState(true);
-    const { setWizardData } = useWizard();
+    const { setWizardData } = useWizard(); // useWizard must be used within WizardProvider
 
     const loadData = useCallback(async (newProcessIdToSelect?: string) => {
         setIsLoadingData(true);
@@ -256,13 +263,16 @@ function WizardPageContent() {
         loadData();
     }, [loadData]);
 
-
-    if (isLoadingData || !fetchedData) {
+    if (isLoadingData) {
       return (
         <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      )
+      );
+    }
+    
+    if (!fetchedData) {
+        return <div className="text-center py-10">Erro ao carregar dados do assistente.</div>
     }
 
     return (

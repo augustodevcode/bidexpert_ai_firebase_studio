@@ -15,7 +15,6 @@ import { useToast } from '@/hooks/use-toast';
 import type { Bem, Lot } from '@/types';
 import { Loader2, Save, PackagePlus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { createLot } from '@/app/admin/lots/actions'; // Import server action
 
 export const lotModalFormSchema = z.object({
   number: z.string().min(1, 'O número do lote é obrigatório.'),
@@ -30,13 +29,11 @@ interface CreateLotFromBensModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedBens: Bem[];
-  auctionId: string;
-  sellerId?: string | null;
-  onLotCreated: () => void; // Callback to refresh parent data
+  onLotCreated: (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => void;
 }
 
 export default function CreateLotFromBensModal({
-  isOpen, onClose, selectedBens, auctionId, sellerId, onLotCreated
+  isOpen, onClose, selectedBens, onLotCreated
 }: CreateLotFromBensModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -72,30 +69,23 @@ export default function CreateLotFromBensModal({
   async function onSubmit(values: LotFromModalValues) {
     setIsSubmitting(true);
     const firstBem = selectedBens[0];
-    const newLotData: Partial<Lot> = {
+    
+    // Passa o objeto de dados de volta para o pai, em vez de chamar a server action aqui.
+    onLotCreated({
         ...values,
-        auctionId: auctionId,
-        sellerId: sellerId,
         bemIds: selectedBens.map(b => b.id),
         status: 'EM_BREVE',
         price: values.initialPrice,
         categoryId: firstBem?.categoryId,
-        type: firstBem?.categoryId || '', // Assegura que o campo type, esperado pelo schema do form, também esteja alinhado
+        type: firstBem?.categoryId || '', 
         subcategoryId: firstBem?.subcategoryId,
         imageUrl: firstBem?.imageUrl,
         dataAiHint: firstBem?.dataAiHint,
-    };
-    
-    const result = await createLot(newLotData);
+    });
 
-    if(result.success) {
-        toast({ title: 'Sucesso!', description: 'Lote criado com sucesso no banco de dados.' });
-        onLotCreated(); // Call callback to trigger data refetch on parent
-        onClose();
-    } else {
-        toast({ title: 'Erro ao Criar Lote', description: result.message, variant: 'destructive'});
-    }
+    toast({ title: 'Sucesso!', description: 'Lote agrupado foi preparado.' });
     setIsSubmitting(false);
+    onClose();
   }
 
   return (
