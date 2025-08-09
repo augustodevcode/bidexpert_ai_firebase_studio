@@ -100,9 +100,11 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, ...restOfData } = data;
+      // Correctly separate form fields from relational/prisma-specific fields
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
+        // Build the update payload for Prisma
         const dataToUpdate: Prisma.AuctionUpdateInput = { 
           ...(restOfData as any),
         };
@@ -114,25 +116,30 @@ export class AuctionService {
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         
+        // Correctly map 'modality' from form to 'auctionType' in schema
+        if (modality) {
+          dataToUpdate.auctionType = modality;
+        }
+        
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
+        // Ensure auctionDate is derived correctly from stages if they exist
         const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
-
-        // Map modality to auctionType for prisma
-        if (data.modality) dataToUpdate.auctionType = data.modality;
         
+        // Update the main auction record
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
+        // Sync auction stages if they are provided in the data
         if (auctionStages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
                 data: auctionStages.map(stage => ({
                     name: stage.name,
-                    startDate: new Date(stage.startDate),
-                    endDate: new Date(stage.endDate),
+                    startDate: new Date(stage.startDate as Date),
+                    endDate: new Date(stage.endDate as Date),
                     initialPrice: stage.initialPrice,
                     auctionId: internalId,
                 })),
