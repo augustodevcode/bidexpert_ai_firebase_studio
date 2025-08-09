@@ -1,4 +1,5 @@
-// prisma/schema.prisma
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
@@ -141,7 +142,7 @@ model User {
   notifications       Notification[]
   sellerProfile       Seller?
   auctioneerProfile   Auctioneer?
-  documents           UserDocument[]
+  documents           UserDocument[]        @relation("UserDocuments")
   reviewedDocuments   UserDocument[]        @relation("DocumentAnalyst")
   mediaItems          MediaItem[]
   maxBids             UserLotMaxBid[]
@@ -173,11 +174,11 @@ model Seller {
   userId           String?          @unique
   judicialBranch   JudicialBranch?  @relation(fields: [judicialBranchId], references: [id])
   judicialBranchId String?          @unique
+  judicialProcess  JudicialProcess?
   auctions         Auction[]
   lots             Lot[]
   bens             Bem[]
   directSaleOffers DirectSaleOffer[]
-  judicialProcess  JudicialProcess?
 }
 
 model Auctioneer {
@@ -225,6 +226,7 @@ model JudicialDistrict {
   courtId           String?
   state             State?            @relation(fields: [stateId], references: [id])
   stateId           String?
+  city              City?             @relation(fields: [cityId], references: [id])
   zipCode           String?           @db.VarChar(10)
   branches          JudicialBranch[]
   judicialProcesses JudicialProcess[]
@@ -341,7 +343,7 @@ model Bem {
   unregisteredRecords        String?          @db.Text
   hasHabiteSe                Boolean?
   zoningRestrictions         String?          @db.VarChar(200)
-  amenities                  Json?
+  amenities                  String?          @db.Text
   brand                      String?          @db.VarChar(50)
   serialNumber               String?          @db.VarChar(100)
   itemCondition              String?          @db.VarChar(100)
@@ -568,13 +570,14 @@ model MediaItem {
   uploadedBy        User             @relation(fields: [uploadedByUserId], references: [id])
   uploadedByUserId  String
   uploadedAt        DateTime         @default(now())
+  // New field to link media directly to a judicial process.
   judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
   judicialProcessId String?
 }
 
 model UserDocument {
   id              String             @id @default(uuid())
-  user            User               @relation(fields: [userId], references: [id])
+  user            User               @relation("UserDocuments", fields: [userId], references: [id])
   userId          String
   documentType    DocumentType       @relation(fields: [documentTypeId], references: [id])
   documentTypeId  String
@@ -696,13 +699,15 @@ model AuctionHabilitation {
 }
 
 model Report {
-  id          String        @id @default(cuid())
+  id          String        @id @default(uuid())
   title       String
   description String?
   definition  Json
   owner       User          @relation("UserReports", fields: [ownerId], references: [id])
   ownerId     String
   shares      ReportShare[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model ReportShare {
@@ -711,9 +716,9 @@ model ReportShare {
   reportId String
   user     User   @relation("SharedReports", fields: [userId], references: [id])
   userId   String
-
   @@unique([userId, reportId])
 }
+
 
 enum AuctionStatus {
   RASCUNHO
