@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionModality, AuctionMethod } from '@/types';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod } from '@/types';
 import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -152,7 +152,7 @@ export default function AuctionForm({
       title: initialData?.title || '',
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
-      modality: initialData?.modality || 'EXTRAJUDICIAL',
+      modality: initialData?.auctionType || 'EXTRAJUDICIAL', // Corrected mapping
       auctionMethod: initialData?.auctionMethod || 'STANDARD',
       participation: initialData?.participation || 'ONLINE',
       onlineUrl: initialData?.onlineUrl || '',
@@ -190,6 +190,7 @@ export default function AuctionForm({
   const watchedParticipation = useWatch({ control: form.control, name: 'participation' });
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
+  const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
   
   React.useImperativeHandle(formRef, () => form);
   
@@ -342,6 +343,19 @@ export default function AuctionForm({
             <FormField control={form.control} name="automaticBiddingEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Robô de Lances</FormLabel><FormDescription className="text-xs">Permitir lances automáticos (robô)?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Lance Parcelado</FormLabel><FormDescription className="text-xs">Permitir lances parcelados?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             <FormField control={form.control} name="softCloseEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close</FormLabel><FormDescription className="text-xs">Estender o tempo final com novos lances?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+            {softCloseEnabled && (
+                 <FormField
+                  control={form.control}
+                  name="softCloseMinutes"
+                  render={({ field }) => (
+                  <FormItem className="pl-4">
+                    <FormLabel>Minutos para Soft-Close</FormLabel>
+                    <FormControl><Input type="number" {...field} value={field.value ?? 2} onChange={e => field.onChange(parseInt(e.target.value, 10))} className="w-24" /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
         </div>
     )},
   ];
