@@ -1,3 +1,4 @@
+'use client';
 import React from 'react';
 import { useDrag } from 'react-dnd';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
