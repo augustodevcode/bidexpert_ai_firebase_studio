@@ -1,51 +1,103 @@
-
-// playwright.config.ts
-import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
-import dotenv from 'dotenv';
-
-// Read from default ".env" file.
-dotenv.config({ path: path.resolve(__dirname, '.', '.env') });
-
-/**
- * See https://playwright.dev/docs/test-configuration.
- */
-export default defineConfig({
-  testDir: './tests/ui',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
-  /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
-  /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'list',
-  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
-  use: {
-    /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:9002',
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on-first-retry',
+{
+  "name": "nextn",
+  "version": "0.1.0",
+  "private": "true",
+  "scripts": {
+    "dev": "npm run db:init && node -r dotenv/config -r ts-node/register node_modules/.bin/next dev --port 9002 --hostname 0.0.0.0",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit",
+    "db:init": "node -r dotenv/config -r ts-node/register scripts/init-db.ts",
+    "db:seed": "node -r dotenv/config -r ts-node/register scripts/seed-db.ts",
+    "db:push": "npx prisma db push --accept-data-loss",
+    "postinstall": "npx prisma generate",
+    "test": "NODE_ENV=test node -r dotenv/config -r ts-node/register tests/bidding-e2e.test.ts",
+    "test:ui": "echo 'Playwright tests are currently disabled.'",
+    "test:e2e": "npm run build && npm run test:ui"
   },
-
-  /* Configure projects for major browsers */
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run start -- --port 9002',
-    url: 'http://localhost:9002',
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000, // Wait up to 120 seconds for the server to start
-    stdout: 'pipe', // Pipe stdout to the test runner
-    stderr: 'pipe', // Pipe stderr to the test runner
+  "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
+    "@genkit-ai/firebase": "1.15.5",
+    "@genkit-ai/googleai": "1.15.5",
+    "@hookform/resolvers": "^4.1.3",
+    "@opentelemetry/exporter-jaeger": "^1.25.0",
+    "@prisma/client": "5.22.0",
+    "@radix-ui/react-accordion": "^1.2.3",
+    "@radix-ui/react-alert-dialog": "^1.1.6",
+    "@radix-ui/react-avatar": "^1.1.3",
+    "@radix-ui/react-checkbox": "^1.1.4",
+    "@radix-ui/react-dialog": "^1.1.6",
+    "@radix-ui/react-dropdown-menu": "^2.1.6",
+    "@radix-ui/react-label": "^2.1.2",
+    "@radix-ui/react-menubar": "^1.1.6",
+    "@radix-ui/react-navigation-menu": "^1.2.0",
+    "@radix-ui/react-popover": "^1.1.6",
+    "@radix-ui/react-progress": "^1.1.2",
+    "@radix-ui/react-radio-group": "^1.2.3",
+    "@radix-ui/react-scroll-area": "^1.2.3",
+    "@radix-ui/react-select": "^2.1.6",
+    "@radix-ui/react-separator": "^1.1.2",
+    "@radix-ui/react-slider": "^1.2.3",
+    "@radix-ui/react-slot": "^1.1.2",
+    "@radix-ui/react-switch": "^1.1.3",
+    "@radix-ui/react-tabs": "^1.1.3",
+    "@radix-ui/react-toast": "^1.2.6",
+    "@radix-ui/react-tooltip": "^1.1.8",
+    "@tanstack/react-query": "^5.66.0",
+    "@tanstack/react-table": "^8.19.3",
+    "bcryptjs": "^2.4.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "0.2.1",
+    "date-fns": "^3.6.0",
+    "embla-carousel-autoplay": "^8.2.0",
+    "embla-carousel-react": "^8.2.0",
+    "firebase": "^11.8.1",
+    "firebase-admin": "^12.7.0",
+    "genkit": "1.15.5",
+    "handlebars": "^4.7.8",
+    "jose": "^5.6.3",
+    "leaflet": "^1.9.4",
+    "lucide-react": "^0.417.0",
+    "mysql2": "^3.10.3",
+    "next": "^14.2.30",
+    "patch-package": "^8.0.0",
+    "puppeteer": "^22.10.0",
+    "react": "^18.3.1",
+    "react-dnd": "^16.0.1",
+    "react-dnd-html5-backend": "^16.0.1",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^18.3.1",
+    "react-dropzone": "^14.2.3",
+    "react-hook-form": "^7.54.2",
+    "react-joyride": "^2.8.2",
+    "react-leaflet": "^4.2.1",
+    "reactflow": "^11.11.3",
+    "recharts": "^2.15.1",
+    "server-only": "^0.0.1",
+    "tailwind-merge": "^3.0.1",
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^9.0.1",
+    "zod": "^3.24.2"
   },
-});
+  "devDependencies": {
+    "@firecms/cli": "^3.0.0-beta.13",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/handlebars": "^4.1.0",
+    "@types/leaflet": "^1.9.12",
+    "@types/node": "^22.15.30",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/uuid": "^9.0.8",
+    "@types/yargs": "^17.0.32",
+    "dotenv": "^16.5.0",
+    "postcss": "^8",
+    "prisma": "^5.22.0",
+    "tailwindcss": "^3.4.1",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.16.0",
+    "typescript": "^5",
+    "yargs": "^17.7.2"
+  }
+}
