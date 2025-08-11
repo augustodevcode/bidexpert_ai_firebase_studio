@@ -15,7 +15,7 @@ import {
   sampleUserWins,
   sampleUsers
 } from '@/lib/sample-data';
-import bcrypt from 'bcrypt';
+import bcryptjs from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 
 async function seedFullData() {
@@ -37,7 +37,7 @@ async function seedFullData() {
                     create: {
                         email: adminUserFromSample.email,
                         fullName: adminUserFromSample.fullName,
-                        password: await bcrypt.hash(adminUserFromSample.password || 'Admin@123', 10),
+                        password: await bcryptjs.hash(adminUserFromSample.password || 'Admin@123', 10),
                         habilitationStatus: 'HABILITADO',
                         accountType: 'PHYSICAL',
                     }
@@ -127,7 +127,7 @@ async function seedFullData() {
             const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
             if (!existingUser) {
                 const { id, uid, ...userData } = user;
-                const hashedPassword = await bcrypt.hash(userData.password || 'password123', 10);
+                const hashedPassword = await bcryptjs.hash(userData.password || 'password123', 10);
                 const role = await prisma.role.findFirst({ where: { id: userData.roleId }});
                 if (role) {
                      const newUser = await prisma.user.create({
