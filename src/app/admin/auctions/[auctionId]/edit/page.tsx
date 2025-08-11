@@ -609,8 +609,8 @@ export default function EditAuctionPage() {
 
   return (
     <>
-    <div className="space-y-8">
-       <div className="flex justify-between items-center gap-2">
+      <div className="space-y-8">
+        <div className="flex justify-between items-center gap-2">
             <Button variant="secondary" onClick={() => setIsAISuggestionModalOpen(true)}>
                 <Lightbulb className="mr-2 h-4 w-4" /> Otimizar com IA
             </Button>
@@ -623,39 +623,46 @@ export default function EditAuctionPage() {
                   <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
             </div>
         </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        <div className="lg:col-span-2">
-          <AuctionForm
-            formRef={formRef}
-            initialData={auction}
-            categories={categories}
-            auctioneers={auctioneers}
-            sellers={sellers}
-            onSubmitAction={handleUpdateAuction}
-            formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
-            formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
-            submitButtonText="Salvar Alterações"
-            isViewMode={isViewMode}
-            onUpdateSuccess={() => {
-                fetchPageData();
-                setIsViewMode(true);
-            }}
-            onCancelEdit={() => setIsViewMode(true)}
-          />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            <div className="lg:col-span-2">
+              <AuctionForm
+                formRef={formRef}
+                initialData={auction}
+                categories={categories}
+                auctioneers={auctioneers}
+                sellers={sellers}
+                onSubmitAction={handleUpdateAuction}
+                formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
+                formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
+                submitButtonText="Salvar Alterações"
+                isViewMode={isViewMode}
+                onUpdateSuccess={() => {
+                    fetchPageData();
+                    setIsViewMode(true);
+                }}
+                onCancelEdit={() => setIsViewMode(true)}
+              />
+            </div>
+            <div className="lg:col-span-1 space-y-6 sticky top-24">
+                <AuctionInfoDisplay auction={auction} />
+                <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
+            </div>
         </div>
-        <div className="lg:col-span-1 space-y-6 sticky top-24">
-            <AuctionInfoDisplay auction={auction} />
-            <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
-        </div>
+        <Separator className="my-8"/>
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center">
+                    <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
+                </CardTitle>
+                <CardDescription>
+                    KPIs e métricas de desempenho para este leilão específico.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <AuctionDashboardSection auctionId={auctionId} />
+            </CardContent>
+        </Card>
       </div>
-       <Separator className="my-8"/>
-
-       <Card>
-          <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
-              </CardTitle>
-              <CardDescription>
-                  KPIs e métricas de desempenho para este leilão específico.
-              </CardDescription>
-        
+    </>
+  );
+}
