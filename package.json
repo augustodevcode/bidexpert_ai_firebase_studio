@@ -13,7 +13,7 @@
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:push": "npx prisma db push --accept-data-loss",
         "test:e2e": "npx tsx --env-file=.env tests/bidding-e2e.test.ts",
-        "postinstall": "npm prune && prisma generate"
+        "postinstall": "prisma generate"
     },
     "dependencies": {
         "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
@@ -48,7 +48,6 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.0.0",
         "date-fns": "^3.6.0",
-        "dlv": "^1.1.3",
         "embla-carousel-autoplay": "^8.1.7",
         "embla-carousel-react": "^8.1.7",
         "firebase": "^10.12.4",
