@@ -150,7 +150,6 @@ export default function AuctionForm({
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
       title: initialData?.title || '',
-      publicId: initialData?.publicId || '',
       description: initialData?.description || '',
       status: initialData?.status || 'RASCUNHO',
       auctionType: initialData?.auctionType || 'EXTRAJUDICIAL',
@@ -281,7 +280,6 @@ export default function AuctionForm({
     { value: "geral", title: "Informações Gerais", content: (
         <div className="space-y-4">
             <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Imóveis da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
-            {initialData?.publicId && (<FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>Código do Leilão (ID Público)</FormLabel><FormControl><Input readOnly disabled {...field} value={field.value ?? ""} className="cursor-not-allowed bg-muted/70" /></FormControl><FormDescription>Este é o ID público do leilão, usado para URLs.</FormDescription><FormMessage /></FormItem>)} />)}
             <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o leilão, informações importantes, etc." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
             <div className="grid md:grid-cols-2 gap-6">
                 <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status do Leilão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(option => <SelectItem key={option.value} value={option.value!}>{option.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />

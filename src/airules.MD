@@ -87,3 +87,13 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 -   **Insights com IA (Genkit):** Os dashboards devem progressivamente incorporar uma seção para análises e recomendações inteligentes geradas pelo Genkit. A IA deve interpretar os dados apresentados (KPIs, gráficos) e fornecer insights textuais, apontando oportunidades, gargalos e recomendações estratégicas para a diretoria.
 
 **Rationale:** Esta estratégia transforma o painel de administração de uma ferramenta de entrada de dados em um poderoso centro de Business Intelligence (BI) e suporte à decisão. Ela habilita a gestão baseada em dados, o monitoramento de OKRs, a identificação de oportunidades estratégicas e o alinhamento de toda a empresa em torno de objetivos mensuráveis.
+
+## 10. Gerenciamento de Dependências
+
+**Rule:** Para manter o projeto otimizado e evitar o crescimento excessivo do diretório `node_modules` e dos pacotes de produção, siga estas diretrizes:
+-   **Dependências de Desenvolvimento:** Pacotes usados exclusivamente para desenvolvimento, teste ou processos de build (e.g., `@playwright/test`, `puppeteer` para geração de PDF no servidor) **devem** ser instalados como `devDependencies`. Isso impede que eles sejam incluídos no build de produção.
+-   **Análise de Pacotes Pesados:** Antes de adicionar uma nova dependência, especialmente para funcionalidades não essenciais, avalie seu tamanho e impacto. Use ferramentas como `cost-of-modules` ou `du` para identificar os pacotes mais pesados.
+-   **Alternativas Leves:** Para funcionalidades como geração de PDF ou manipulação de imagens, considere alternativas mais leves ou serviços externos em vez de pacotes pesados como o `puppeteer` completo, se possível.
+-   **Revisão Periódica:** Revise periodicamente o `package.json` para remover dependências não utilizadas ou desnecessárias.
+
+**Rationale:** Um `node_modules` grande e pacotes de produção inchados podem levar a tempos de instalação mais longos, builds mais lentos e custos de hospedagem mais altos. Manter as dependências limpas e otimizadas é crucial para a saúde do projeto.

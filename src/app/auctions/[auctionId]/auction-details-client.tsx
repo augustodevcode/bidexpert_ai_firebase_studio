@@ -14,7 +14,7 @@ import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
 import { isPast } from 'date-fns';
-import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor } from '@/lib/ui-helpers';
+import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor } from '@/lib/sample-data-helpers';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';

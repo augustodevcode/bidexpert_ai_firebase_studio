@@ -135,46 +135,4 @@ The frontend will use React's built-in state management (`useState`, `useEffect`
 
 ### 6.6. Variable Referencing and Drag-and-Drop
 
-*   The `VariablePanel` component fetches a list of available variables from the backend API and displays them to the user.
-*   The variables are draggable and can be dropped onto the report design surface.
-*   When a variable is dropped onto the designer, it is added to the report as a text element with a special syntax (e.g., `{{auction.name}}`).
-*   The backend API replaces the variable placeholders with the actual data from the database when the report is previewed, displayed, or exported.
-
-### 6.7. Export Functionality
-
-*   The `Toolbar` component contains `Export` buttons for PDF, Excel, Word, and PowerPoint formats.
-*   The `handleExportReport` function in the `BidReportBuilder` component uses the backend API to export the report to the selected format.
-*   The backend API uses the custom reporting engine to export the report to the selected format.
-
-### 6.8. Media Library Integration
-
-*   The `MediaLibrary` component fetches a list of images from the backend API and displays them to the user.
-*   The `handleSelectImage` function in the `BidReportBuilder` component uses the DevExpress Report Designer API to add the selected image to the report.
-
-## 7. Backend Implementation Details
-
-### 7.1. API Routes
-
-*   **/api/reports:** Handles CRUD operations for reports.
-*   **/api/datasources:** Handles CRUD operations for data sources.
-*   **/api/ai:** Handles requests for AI-powered features.
-*   **/api/auth/[...nextauth]:** Handles user authentication and authorization.
-*   **/api/variables:** Returns a list of available variables.
-*   **/api/media:** Returns a list of images from the media library.
-*   **/api/export:** Handles requests for exporting reports.
-
-### 7.2. Database
-
-The backend will use a PostgreSQL database with Prisma as the ORM.
-
-### 7.3. AI Integration
-
-The backend will use the OpenAI API to provide AI-powered features.
-
-## 8. Next Steps
-
-The next steps in the development of the `BidReportBuilder` component are:
-
-1.  **Testing:** Revisit the testing setup and write comprehensive unit and integration tests.
-2.  **Deployment:** Deploy the `BidReportBuilder` component to a staging environment for testing and feedback.
-3.  **User Feedback:** Gather feedback from users and iterate on the component.
+*   The `VariablePan

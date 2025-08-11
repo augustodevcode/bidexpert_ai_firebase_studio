@@ -33,3 +33,12 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 3.  Solicitar confirmação explícita do usuário antes de gerar as alterações.
 
 **Justificativa:** Este princípio garante que o processo de desenvolvimento esteja sempre avançando e evita regressões. Ele mantém uma salvaguarda onde o desenvolvedor humano tem a palavra final sobre quaisquer alterações destrutivas ou em larga escala, preservando a estabilidade e a integridade do projeto.
+
+## 5. Gerenciamento de Dependências
+
+**Regra:** Para manter o projeto otimizado e evitar o crescimento excessivo do diretório `node_modules` e dos pacotes de produção, siga estas diretrizes:
+-   **Dependências de Desenvolvimento:** Pacotes usados exclusivamente para desenvolvimento, teste ou processos de build (e.g., `@playwright/test`, `puppeteer` para geração de PDF no servidor) **devem** ser instalados como `devDependencies`. Isso impede que eles sejam incluídos no build de produção.
+-   **Análise de Pacotes Pesados:** Antes de adicionar uma nova dependência, especialmente para funcionalidades não essenciais, avalie seu tamanho e impacto.
+-   **Revisão Periódica:** Revise periodicamente o `package.json` para remover dependências não utilizadas.
+
+**Justificativa:** Um `node_modules` grande e pacotes de produção inchados podem levar a tempos de instalação mais longos, builds mais lentos e custos de hospedagem mais altos. Manter as dependências limpas e otimizadas é crucial para a saúde do projeto.
