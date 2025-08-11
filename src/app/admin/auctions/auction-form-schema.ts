@@ -50,8 +50,8 @@ export const auctionFormSchema = z.object({
   
   onlineUrl: z.string().url({ message: "URL inválida." }).optional().or(z.literal('')),
   address: z.string().max(255).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  state: z.string().max(50).optional().nullable(),
+  cityId: z.string().optional().nullable(),
+  stateId: z.string().optional().nullable(),
   zipCode: z.string().max(10).optional().nullable(),
 
   auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),

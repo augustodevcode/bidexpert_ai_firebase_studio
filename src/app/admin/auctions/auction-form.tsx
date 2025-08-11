@@ -22,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType } from '@/types';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType, StateInfo, CityInfo } from '@/types';
 import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -37,6 +37,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import EntitySelector from '@/components/ui/entity-selector';
 import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from './actions';
 import { getLotCategories as refetchCategories } from '../categories/actions';
+import { getStates as refetchStates } from '../states/actions';
+import { getCities as refetchCities } from '../cities/actions';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -49,6 +51,8 @@ interface AuctionFormProps {
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
+  states?: StateInfo[];
+  allCities?: CityInfo[];
   onSubmitAction?: (data: AuctionFormValues) => Promise<{ success: boolean; message: string; auctionId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -122,6 +126,8 @@ export default function AuctionForm({
   categories: initialCategories,
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
+  states: initialStates = [],
+  allCities: initialAllCities = [],
   onSubmitAction,
   formTitle,
   formDescription,
@@ -140,9 +146,15 @@ export default function AuctionForm({
   const [categories, setCategories] = React.useState(initialCategories);
   const [auctioneers, setAuctioneers] = React.useState(initialAuctioneers);
   const [sellers, setSellers] = React.useState(initialSellers);
+  const [states, setStates] = React.useState(initialStates);
+  const [allCities, setAllCities] = React.useState(initialAllCities);
+
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
+  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
+  const [isFetchingCities, setIsFetchingCities] = React.useState(false);
+
   const [syncStages, setSyncStages] = React.useState(true);
   const [isCepLoading, setIsCepLoading] = React.useState(false);
   
@@ -157,8 +169,8 @@ export default function AuctionForm({
       participation: initialData?.participation || 'ONLINE',
       onlineUrl: initialData?.onlineUrl || '',
       address: initialData?.address || '',
-      city: initialData?.city || '',
-      state: initialData?.state || '',
+      cityId: initialData?.cityId || undefined,
+      stateId: initialData?.stateId || undefined,
       zipCode: initialData?.zipCode || '',
       auctioneerId: initialData?.auctioneerId || '',
       sellerId: initialData?.sellerId || '',
@@ -191,7 +203,14 @@ export default function AuctionForm({
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
+  const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
   
+  const filteredCities = useMemo(() => {
+    if (!selectedStateId) return [];
+    return allCities.filter(city => city.stateId === selectedStateId);
+  }, [selectedStateId, allCities]);
+
+
   React.useImperativeHandle(formRef, () => form);
   
    useEffect(() => {
@@ -232,11 +251,18 @@ export default function AuctionForm({
     });
   }, [watchedStages, syncStages, form]);
 
-  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers' | 'states' | 'cities') => {
     if (entity === 'categories') { setIsFetchingCategories(true); const data = await refetchCategories(); setCategories(data); setIsFetchingCategories(false); }
     if (entity === 'auctioneers') { setIsFetchingAuctioneers(true); const data = await refetchAuctioneers(); setAuctioneers(data); setIsFetchingAuctioneers(false); }
     if (entity === 'sellers') { setIsFetchingSellers(true); const data = await refetchSellers(); setSellers(data); setIsFetchingSellers(false); }
+    if (entity === 'states') { setIsFetchingStates(true); const data = await refetchStates(); setStates(data); setIsFetchingStates(false); }
+    if (entity === 'cities') { setIsFetchingCities(true); const data = await refetchCities(); setAllCities(data); setIsFetchingCities(false); }
   }, []);
+  
+  useEffect(() => {
+    if (!initialStates || initialStates.length === 0) handleRefetch('states');
+    if (!initialAllCities || initialAllCities.length === 0) handleRefetch('cities');
+  }, [initialStates, initialAllCities, handleRefetch]);
 
   async function onSubmit(values: AuctionFormValues) {
     if (!onSubmitAction) return;
@@ -263,8 +289,23 @@ export default function AuctionForm({
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
-        form.setValue('city', result.data.localidade);
-        form.setValue('state', result.data.uf);
+        const foundState = states.find(s => s.uf === result.data.uf);
+        if (foundState) {
+            form.setValue('stateId', foundState.id);
+            // After setting state, city needs to be found within the now-filtered list.
+            const citiesOfState = allCities.filter(c => c.stateId === foundState.id);
+            const foundCity = citiesOfState.find(c => c.name.toLowerCase() === result.data.localidade.toLowerCase());
+            if (foundCity) {
+                form.setValue('cityId', foundCity.id);
+            } else {
+                toast({ title: 'Cidade não encontrada', description: `A cidade "${result.data.localidade}" não foi encontrada no estado de ${foundState.name}. Cadastre-a primeiro.`, variant: 'default' });
+                form.setValue('cityId', '');
+            }
+        } else {
+             toast({ title: 'Estado não encontrado', description: `O estado com UF "${result.data.uf}" não foi encontrado. Cadastre-o primeiro.`, variant: 'default' });
+             form.setValue('stateId', '');
+             form.setValue('cityId', '');
+        }
     } else {
         toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
     }
@@ -305,8 +346,8 @@ export default function AuctionForm({
                     <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>)}/>
                     <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                     <div className="grid md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
-                        <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={states.map(s => ({ value: s.id, label: s.uf }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => handleRefetch('states')} isFetching={isFetchingStates} /><FormMessage /></FormItem>)} />
+                        <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => handleRefetch('cities')} isFetching={isFetchingCities} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
                     </div>
                 </div>
             )}

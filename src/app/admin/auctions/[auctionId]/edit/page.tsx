@@ -1,12 +1,11 @@
-
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
-import { getLots, deleteLot, finalizeLot } from '@/app/admin/lots/actions'; 
+import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +28,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
@@ -404,6 +405,8 @@ export default function EditAuctionPage() {
   const [lotsInAuction, setLotsInAuction] = React.useState<Lot[]>([]);
   const [auctioneers, setAuctioneersList] = React.useState<AuctioneerProfileInfo[]>([]);
   const [sellers, setSellersList] = React.useState<SellerProfileInfo[]>([]);
+  const [states, setStates] = React.useState<StateInfo[]>([]);
+  const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const router = useRouter();
@@ -423,13 +426,15 @@ export default function EditAuctionPage() {
     if (!auctionId) return;
     setIsLoading(true);
     try {
-        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings] = await Promise.all([
+        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities] = await Promise.all([
             getAuction(auctionId),
             getLotCategories(),
             getLots(auctionId),
             getAuctioneers(),
             getSellers(),
             getPlatformSettings(),
+            getStates(),
+            getCities(),
         ]);
 
         if (!fetchedAuction) {
@@ -443,6 +448,8 @@ export default function EditAuctionPage() {
         setLotsInAuction(fetchedLots);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
+        setStates(fetchedStates);
+        setAllCities(fetchedCities);
         setLotCurrentPage(1); 
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
@@ -631,6 +638,8 @@ export default function EditAuctionPage() {
                 categories={categories}
                 auctioneers={auctioneers}
                 sellers={sellers}
+                states={states}
+                allCities={allCities}
                 onSubmitAction={handleUpdateAuction}
                 formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
                 formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
@@ -650,17 +659,17 @@ export default function EditAuctionPage() {
         </div>
         <Separator className="my-8"/>
         <Card>
-            <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
-                </CardTitle>
-                <CardDescription>
-                    KPIs e métricas de desempenho para este leilão específico.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <AuctionDashboardSection auctionId={auctionId} />
-            </CardContent>
+          <CardHeader>
+              <CardTitle className="text-xl font-semibold flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
+              </CardTitle>
+              <CardDescription>
+                  KPIs e métricas de desempenho para este leilão específico.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <AuctionDashboardSection auctionId={auctionId} />
+          </CardContent>
         </Card>
       </div>
     </>
