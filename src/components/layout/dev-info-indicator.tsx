@@ -28,7 +28,7 @@ export default function DevInfoIndicator() {
     setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A');
   }, []);
 
-  if (process.env.NODE_ENV !== 'development') {
+  if (process.env.NODE_ENV !== 'development' || !userProfileWithPermissions) {
     return null;
   }
 
