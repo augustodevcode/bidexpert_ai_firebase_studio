@@ -100,20 +100,24 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
                         <CardTitle>Faturamento por Categoria</CardTitle>
                     </CardHeader>
                     <CardContent className="h-72">
-                         <ResponsiveContainer width="100%" height="100%">
-                          <RechartsBarChart
-                            data={dashboardData.revenueByCategory}
-                            layout="vertical"
-                            margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
-                           >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis type="number" stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
-                            <YAxis type="category" dataKey="name" stroke="#888888" fontSize={10} width={80} />
-                            <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                            <Legend />
-                            <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                          </RechartsBarChart>
-                        </ResponsiveContainer>
+                        {dashboardData.revenueByCategory && dashboardData.revenueByCategory.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                            <RechartsBarChart
+                                data={dashboardData.revenueByCategory}
+                                layout="vertical"
+                                margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                                <YAxis type="category" dataKey="name" stroke="#888888" fontSize={10} width={80} />
+                                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                                <Legend />
+                                <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                            </RechartsBarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">Nenhum dado de faturamento por categoria.</div>
+                        )}
                     </CardContent>
                 </Card>
                  <Card>
