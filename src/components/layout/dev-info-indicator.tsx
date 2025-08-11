@@ -35,18 +35,18 @@ export default function DevInfoIndicator() {
   return (
     <div className="mt-4 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1 text-center border">
         <p className="font-semibold text-foreground">Dev Info</p>
-        <p>
+        <div>
             <Badge variant="secondary" className="mr-1.5">DB System</Badge>
             <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span>
-        </p>
-         <p>
+        </div>
+         <div>
             <Badge variant="secondary" className="mr-1.5">Project</Badge>
             <span className="font-semibold text-primary">{projectId}</span>
-        </p>
-        <p>
+        </div>
+        <div>
             <Badge variant="secondary" className="mr-1.5">User</Badge>
             <span className="font-semibold text-primary truncate">{userProfileWithPermissions?.email || 'N/A'}</span>
-        </p>
+        </div>
     </div>
   );
 }
