@@ -39,7 +39,7 @@ export default function EntitySelector({
   const [open, setOpen] = React.useState(false);
 
   const selectedOption = options.find((option) => option.value === value);
-  const editHref = value ? `${editUrlPrefix}/${value}/edit` : '#';
+  const editHref = value ? `${editUrlPrefix}/${value}` : '#';
 
   return (
     <div className="flex items-center gap-1.5">
