@@ -1,7 +1,7 @@
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
