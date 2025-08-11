@@ -1,3 +1,4 @@
+
 {
     "name": "bid-expert",
     "version": "0.1.0",
@@ -15,6 +16,7 @@
         "postinstall": "npm prune && prisma generate"
     },
     "dependencies": {
+        "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
         "@google/generative-ai": "^0.2.1",
         "@hookform/resolvers": "^3.9.0",
         "@prisma/client": "^5.17.0",
@@ -45,6 +47,7 @@
         "clsx": "^2.1.1",
         "cmdk": "^1.0.0",
         "date-fns": "^3.6.0",
+        "dlv": "^1.1.3",
         "embla-carousel-autoplay": "^8.1.7",
         "embla-carousel-react": "^8.1.7",
         "firebase": "^10.12.4",
