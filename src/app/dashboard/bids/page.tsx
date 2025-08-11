@@ -11,7 +11,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { UserBid } from '@/types';
 import { getBidsForUserAction } from './actions';
 import { useToast } from '@/hooks/use-toast';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 
