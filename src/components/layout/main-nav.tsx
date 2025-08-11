@@ -13,7 +13,6 @@ import {
   NavigationMenuContent,
   NavigationMenuItem,
   NavigationMenuList,
-  NavigationMenuLink,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu"; // Alteração aqui
@@ -79,7 +78,7 @@ const modalityMegaMenuGroups: MegaMenuGroup[] = [
     items: [
       { href: '/search?type=auctions&auctionType=JUDICIAL', label: 'Leilões Judiciais', description: 'Oportunidades de processos judiciais.', icon: <Gavel className="h-4 w-4" /> },
       { href: '/search?type=auctions&auctionType=EXTRAJUDICIAL', label: 'Leilões Extrajudiciais', description: 'Negociações diretas e mais ágeis.', icon: <Landmark className="h-4 w-4" /> },
-      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processo de seleção e cotação.', icon: <FileTextIcon className="h-4 w-4" /> },
+      { href: '/search?type=auctions&auctionType=TOMADA_DE_PRECOS', label: 'Tomada de Preços', description: 'Processos de compra governamentais.', icon: <FileTextIcon className="h-4 w-4" /> },
       { href: '/direct-sales', label: 'Venda Direta', description: 'Compre itens com preço fixo.', icon: <Tag className="h-4 w-4" /> },
       { href: '/search?type=auctions&auctionType=PARTICULAR', label: 'Leilões Particulares', description: 'Leilões privados ou com acesso restrito.', icon: <Users className="h-4 w-4" /> },
     ]
