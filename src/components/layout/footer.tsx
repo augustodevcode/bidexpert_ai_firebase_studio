@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Badge } from '../ui/badge';
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 function getCookie(name: string): string | undefined {
   if (typeof document === 'undefined') {
@@ -17,43 +18,6 @@ function getCookie(name: string): string | undefined {
     return parts.pop()?.split(';').shift();
   }
 }
-
-// Sub-componente DevInfoIndicator movido para dentro do Footer
-function DevInfoIndicator() {
-  const { userProfileWithPermissions } = useAuth();
-  const [dbSystem, setDbSystem] = useState('');
-  const [projectId, setProjectId] = useState('');
-
-  useEffect(() => {
-    const dbFromCookie = getCookie('dev-config-db');
-    const dbFromEnv = process.env.NEXT_PUBLIC_ACTIVE_DATABASE_SYSTEM || 'SAMPLE_DATA';
-    setDbSystem(dbFromCookie || dbFromEnv);
-    setProjectId(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'N/A');
-  }, []);
-
-  if (process.env.NODE_ENV !== 'development') {
-    return null;
-  }
-
-  return (
-    <div className="mt-4 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground space-y-1 text-center border">
-        <div className="font-semibold text-foreground">Dev Info</div>
-        <div>
-            <Badge variant="secondary" className="mr-1.5">DB System</Badge>
-            <span className="font-semibold text-primary">{dbSystem.toUpperCase()}</span>
-        </div>
-         <div>
-            <Badge variant="secondary" className="mr-1.5">Project</Badge>
-            <span className="font-semibold text-primary">{projectId}</span>
-        </div>
-        <div>
-            <Badge variant="secondary" className="mr-1.5">User</Badge>
-            <span className="font-semibold text-primary truncate">{userProfileWithPermissions?.email || 'N/A'}</span>
-        </div>
-    </div>
-  );
-}
-
 
 export default function Footer() {
   const quickLinks = [
