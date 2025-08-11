@@ -1,23 +1,9 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAuth } from '@/contexts/auth-context';
-import { Badge } from '../ui/badge';
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
-
-function getCookie(name: string): string | undefined {
-  if (typeof document === 'undefined') {
-    return undefined;
-  }
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) {
-    return parts.pop()?.split(';').shift();
-  }
-}
 
 export default function Footer() {
   const quickLinks = [
