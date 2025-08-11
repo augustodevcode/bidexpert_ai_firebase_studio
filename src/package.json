@@ -13,7 +13,7 @@
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:push": "npx prisma db push --accept-data-loss",
         "test:e2e": "npx tsx --env-file=.env tests/bidding-e2e.test.ts",
-        "postinstall": "prisma generate"
+        "postinstall": "npm prune && prisma generate"
     },
     "dependencies": {
         "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
