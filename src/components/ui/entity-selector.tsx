@@ -16,8 +16,8 @@ interface EntitySelectorProps {
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
-  createNewUrl: string;
-  editUrlPrefix: string;
+  createNewUrl?: string | null;
+  editUrlPrefix?: string | null;
   onRefetch: () => void;
   isFetching?: boolean;
   disabled?: boolean;
@@ -62,7 +62,6 @@ export default function EntitySelector({
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onRefetch} disabled={disabled || isFetching} title="Atualizar lista">
                         {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
-                    {/* Só renderiza Link se createNewUrl for válido */}
                     {createNewUrl ? (
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
                             <Link href={createNewUrl} target="_blank" title="Adicionar novo registro">
@@ -74,7 +73,6 @@ export default function EntitySelector({
                             <PlusCircle className="h-4 w-4" />
                         </Button>
                     )}
-                    {/* Só renderiza Link se editUrlPrefix e value forem válidos */}
                     {editUrlPrefix && value ? (
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
                             <Link href={`${editUrlPrefix}/${value}`} target="_blank" title="Editar registro selecionado">
@@ -100,9 +98,9 @@ export default function EntitySelector({
                         {options.map((option) => (
                         <CommandItem
                             key={option.value}
-                            value={option.label}
+                            value={option.value} // Use o ID único como valor
                             onSelect={() => {
-                            onChange(option.value);
+                            onChange(option.value === value ? null : option.value); // Permite desmarcar
                             setOpen(false);
                             }}
                         >
