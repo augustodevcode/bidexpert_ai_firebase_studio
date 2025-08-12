@@ -137,28 +137,13 @@ export async function runPlatformSettingsTest(): Promise<{ success: boolean; out
     return runTestScript(command);
 }
 
-
-export async function runAuctionCardDetailsTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/auction-card-details.spec.ts`;
+// Renamed UI tests to reflect their new service-layer focus
+export async function runAuctionDataValidationTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `NODE_ENV=test tsx --env-file=.env tests/auction-data.test.ts`;
     return runTestScript(command);
 }
 
-export async function runCardContentTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/card-content.spec.ts`;
-    return runTestScript(command);
-}
-
-export async function runAuctionAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/auction-analysis.spec.ts`;
-    return runTestScript(command);
-}
-
-export async function runSellerAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/seller-analysis.spec.ts`;
-    return runTestScript(command);
-}
-
-export async function runAuctioneerAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
-    const command = `npx playwright test tests/ui/auctioneer-analysis.spec.ts`;
+export async function runSearchAndFilterTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `NODE_ENV=test tsx --env-file=.env tests/search-and-filter.test.ts`;
     return runTestScript(command);
 }

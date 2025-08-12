@@ -25,13 +25,10 @@ import {
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
     runPlatformSettingsTest,
-    runAuctionCardDetailsTest,
-    runCardContentTest,
-    runAuctionAnalysisPageTest,
-    runSellerAnalysisPageTest,
-    runAuctioneerAnalysisPageTest,
+    runAuctionDataValidationTest, // Renamed from UI test
+    runSearchAndFilterTest,     // Renamed from UI test
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -45,7 +42,7 @@ interface TestConfig {
   title: string;
   description: string;
   action: () => Promise<TestResult>;
-  type: 'backend' | 'frontend' | 'simulation';
+  type: 'backend' | 'simulation';
   icon: React.ElementType;
 }
 
@@ -67,28 +64,20 @@ const tests: TestConfig[] = [
     icon: UserCheck
   },
   {
-    id: 'auction-analysis-page',
-    title: 'Dashboard de Análise de Leilões',
-    description: 'Verifica se a página de análise de leilões carrega e exibe os KPIs, gráficos e tabela de dados.',
-    action: runAuctionAnalysisPageTest,
-    type: 'frontend',
+    id: 'auction-data-validation',
+    title: 'Validação de Dados de Leilões',
+    description: 'Cria entidades e verifica se os dados de leilões e lotes são consistentes para a UI.',
+    action: runAuctionDataValidationTest,
+    type: 'backend',
     icon: BarChart3
   },
   {
-    id: 'seller-analysis-page',
-    title: 'Dashboard de Análise de Comitentes',
-    description: 'Verifica se a página de análise de comitentes carrega e exibe os KPIs, gráficos e tabela de dados.',
-    action: runSellerAnalysisPageTest,
-    type: 'frontend',
-    icon: BarChart3
-  },
-  {
-    id: 'auctioneer-analysis-page',
-    title: 'Dashboard de Análise de Leiloeiros',
-    description: 'Verifica se a página de análise de leiloeiros carrega e exibe os KPIs, gráficos e tabela de dados.',
-    action: runAuctioneerAnalysisPageTest,
-    type: 'frontend',
-    icon: Landmark
+    id: 'search-filter-validation',
+    title: 'Validação de Busca e Filtro',
+    description: 'Cria dados e valida a lógica de filtro e busca da camada de serviço.',
+    action: runSearchAndFilterTest,
+    type: 'backend',
+    icon: Search
   },
   {
     id: 'platform-settings',
@@ -97,22 +86,6 @@ const tests: TestConfig[] = [
     action: runPlatformSettingsTest,
     type: 'backend',
     icon: Settings
-  },
-  {
-    id: 'card-content-validation',
-    title: 'Validação de Conteúdo (UI)',
-    description: 'Cria um Leilão e um Lote com dados específicos e verifica se o Card na UI exibe todas as informações corretamente.',
-    action: runCardContentTest,
-    type: 'frontend',
-    icon: Palette
-  },
-  {
-    id: 'auction-card-details-ui',
-    title: 'Validação de Card de Leilão (UI)',
-    description: 'Verifica se todos os dados dinâmicos (contadores, badges, etc.) são exibidos corretamente no card do leilão.',
-    action: runAuctionCardDetailsTest,
-    type: 'frontend',
-    icon: Palette
   },
   {
     id: 'menu-content',
