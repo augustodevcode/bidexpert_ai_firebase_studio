@@ -16,7 +16,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
   NavigationMenuLink,
-} from "@/components/ui/navigation-menu"; // Alteração aqui
+} from "@/components/ui/navigation-menu";
 import MegaMenuCategories from './mega-menu-categories';
 import MegaMenuLinkList, { type MegaMenuGroup } from './mega-menu-link-list';
 import MegaMenuAuctioneers from './mega-menu-auctioneers';
@@ -220,7 +220,10 @@ export default function MainNav({
               finalViewAllLink = { href: '/search?type=auctions', label: 'Ver Todos os Leilões', icon: ListChecks };
             } else if (item.contentKey === 'consignors') {
               const consignorItems = (consignorMegaMenuGroups && consignorMegaMenuGroups.length > 0 && consignorMegaMenuGroups[0]?.items) || [];
-              finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR);
+              finalSidebarItems = consignorItems.slice(0, MAX_ITEMS_IN_TW_COL_SIDEBAR).map(seller => ({
+                  ...seller,
+                  href: seller.href || `/sellers/${seller.label}`, // Fallback just in case
+              }));
               if (consignorItems.length > MAX_ITEMS_IN_TW_COL_SIDEBAR) {
                 finalViewAllLink = { href: '/sellers', label: 'Ver Todos Comitentes', icon: Users };
               }
