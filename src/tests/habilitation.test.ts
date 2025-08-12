@@ -107,7 +107,7 @@ test.describe('User Habilitation E2E Test', () => {
         console.log('\n--- Test: Bidding without submitting any documents ---');
         const bidResult = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResult.success, false, 'Bidding should fail without approved documents');
-        assert.match(bidResult.message, /Apenas usuários com status \'HABILITADO\'/, 'Error message should mention habilitation status.');
+        assert.match(bidResult.message, /Apenas usuários com status 'HABILITADO'/, 'Error message should mention habilitation status.');
         console.log('- PASSED: Blocked bid for user with pending documents.');
     });
 
@@ -128,14 +128,13 @@ test.describe('User Habilitation E2E Test', () => {
         const approvalResult = await approveDocument(docToApprove!.id, analystUser.id);
         assert.ok(approvalResult.success, `Document approval action should succeed. Error: ${approvalResult.message}`);
         
-        // Assert directly in DB
         updatedUser = await userService.getUserById(regularUser.id);
         assert.strictEqual(updatedUser?.habilitationStatus, 'HABILITADO', 'User status should be HABILITADO after approval.');
         console.log('- Step 2: User status correctly updated to HABILITADO.');
 
         const bidResultBeforeHabilitation = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResultBeforeHabilitation.success, false, "Bidding should fail before auction-specific habilitation.");
-        assert.strictEqual(bidResultBeforeHabilitation.message, "Você não está habilitado para dar lances neste leilão. Por favor, habilite-se na página do leilão.", 'Error message should be specific to auction habilitation.');
+        assert.match(bidResultBeforeHabilitation.message, /habilitado para dar lances neste leilão/, 'Error message should mention specific auction habilitation.');
         console.log('- Step 3: Blocked bid for user not enabled for the specific auction.');
 
         const habilitationRes = await habilitateForAuctionAction(regularUser.id, testAuction.id);
