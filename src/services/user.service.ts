@@ -147,6 +147,7 @@ export class UserService {
 
   /**
    * Checks if a user has submitted all required documents and updates their status to 'HABILITADO' if so.
+   * Also updates the status to 'PENDING_ANALYSIS' when the first document is submitted.
    * @param {string} userId - The ID of the user to check.
    * @returns {Promise<void>}
    */
@@ -185,15 +186,19 @@ export class UserService {
         where: { id: userId },
         data: { habilitationStatus: 'HABILITADO' }
       });
-      // You might want to add the 'BIDDER' role here as well
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
       if(bidderRole) {
-        // Use createMany with skipDuplicates to avoid errors if role already exists
         await prisma.usersOnRoles.createMany({
           data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system-habilitation-check' }],
           skipDuplicates: true,
         });
       }
+    } else if (user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
+       // **NEW LOGIC**: If any document is submitted and status is PENDING_DOCUMENTS, update to PENDING_ANALYSIS
+      await prisma.user.update({
+        where: { id: userId },
+        data: { habilitationStatus: 'PENDING_ANALYSIS' }
+      });
     }
   }
 }
