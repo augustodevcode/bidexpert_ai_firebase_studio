@@ -49,7 +49,7 @@ export default function EntitySelector({
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        className="w-full justify-between pr-14" // Add padding to the right for the icons
+                        className="w-full justify-between pr-14"
                         disabled={disabled}
                     >
                         <span className="truncate">
@@ -62,24 +62,31 @@ export default function EntitySelector({
                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onRefetch} disabled={disabled || isFetching} title="Atualizar lista">
                         {isFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                     </Button>
-                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
-                        <Link href={createNewUrl} target="_blank" title="Adicionar novo registro">
-                        <PlusCircle className="h-4 w-4" />
-                        </Link>
-                    </Button>
-                    {/* Conditional rendering for the edit link */}
-                    {value ? (
+                    {/* Só renderiza Link se createNewUrl for válido */}
+                    {createNewUrl ? (
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
+                            <Link href={createNewUrl} target="_blank" title="Adicionar novo registro">
+                                <PlusCircle className="h-4 w-4" />
+                            </Link>
+                        </Button>
+                    ) : (
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled title="Adicionar novo registro">
+                            <PlusCircle className="h-4 w-4" />
+                        </Button>
+                    )}
+                    {/* Só renderiza Link se editUrlPrefix e value forem válidos */}
+                    {editUrlPrefix && value ? (
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
                             <Link href={`${editUrlPrefix}/${value}`} target="_blank" title="Editar registro selecionado">
                                 <Pencil className="h-4 w-4" />
                             </Link>
                         </Button>
                     ) : (
-                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled={true} title="Selecione um item para editar">
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" disabled title="Selecione um item para editar">
                             <Pencil className="h-4 w-4" />
                         </Button>
                     )}
-                     <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => onChange(null)} disabled={!value || disabled} title="Limpar seleção">
+                    <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => onChange(null)} disabled={!value || disabled} title="Limpar seleção">
                         <X className="h-4 w-4" />
                     </Button>
                 </div>
