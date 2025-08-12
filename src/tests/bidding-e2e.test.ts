@@ -175,20 +175,27 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
     test.after(async () => {
         console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
         try {
-            await prisma.bid.deleteMany({ where: { bidderId: { in: biddingUsers.map(u => u.id) } }});
-            const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean);
-            if (lotIds.length > 0) {
-              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds as string[] } }});
-              await prisma.lot.deleteMany({ where: { id: { in: lotIds as string[] } } });
-            }
-            
-            const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean);
-            if (auctionIds.length > 0) {
-                 await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds as string[] } } });
-                 await prisma.auction.deleteMany({ where: { id: { in: auctionIds as string[] } } });
+            const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean) as string[];
+            if (userIds.length > 0) {
+              await prisma.notification.deleteMany({ where: { userId: { in: userIds } } });
+              await prisma.bid.deleteMany({ where: { bidderId: { in: userIds } } });
+              await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds}}});
+              await prisma.user.deleteMany({ where: { id: { in: userIds } } });
             }
 
-            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean);
+            const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
+            if (lotIds.length > 0) {
+              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
+              await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
+            }
+            
+            const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean) as string[];
+            if (auctionIds.length > 0) {
+                 await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds } } });
+                 await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
+            }
+
+            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
             if(bemIds.length > 0) await bemService.deleteBem(bemIds[0] as string);
             if(bemIds.length > 1) await bemService.deleteBem(bemIds[1] as string);
             
@@ -201,12 +208,6 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
             if (testState) await prisma.state.delete({ where: { id: testState.id } });
             if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
             if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
-            
-            const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean);
-             if (userIds.length > 0) {
-                await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds as string[]}}});
-                await prisma.user.deleteMany({ where: { id: { in: userIds as string[] } } });
-             }
 
         } catch (error) {
             console.error("[E2E Teardown] Error during cleanup:", error);
