@@ -67,6 +67,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 -   **Memoization:** In client components, use `useMemo` to memoize the results of expensive calculations and `useCallback` to memoize functions passed to child components. This prevents unnecessary re-renders and improves UI responsiveness.
 -   **Error Handling:** Implement `error.js` files at appropriate route segments to handle runtime errors gracefully and prevent the entire application from crashing.
 -   **Type Safety:** Utilize TypeScript's `import type` for type-only imports to improve build performance and maintain clear separation between type information and runtime code.
+-   **Valid Link Hrefs:** Never allow the `href` prop of a Next.js `<Link>` component to be `undefined`. If a link's path is dynamic (e.g., from an API response or props), always validate it before rendering. Provide a fallback href like `/` or `#`, or conditionally render the `<Link>` only when the `href` is valid.
 
 ## 8. Development Environment Information
 

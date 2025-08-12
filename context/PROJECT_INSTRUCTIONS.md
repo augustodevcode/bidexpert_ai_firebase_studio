@@ -59,6 +59,7 @@ These files (`PROJECT_CONTEXT_HISTORY.md`, `PROJECT_PROGRESS.MD`, `PROJECT_INSTR
 *   **Development Environment Footer:** In the development environment (`NODE_ENV === 'development'`), the footer must display the active database system, the logged-in user's email, and the Firebase project ID for easy reference.
 *   **`.env` File Integrity:** The `.env` file is critical and must never be deleted or have its existing content removed. It can be augmented, but not overwritten.
 *   **Dependency Management:** To keep the project optimized, dependencies used only for development or testing (e.g., `@playwright/test`, `puppeteer`) **must** be placed in `devDependencies` in `package.json`, not in `dependencies`.
+*   **Link Integrity:** Never allow the `href` prop of a Next.js `<Link>` component to be `undefined`. If a link's path is dynamic, always validate it before rendering. Provide a fallback href like `/` or `#`, or conditionally render the link.
 
 ## 5. Automated Test Log Analysis (New Rule)
 
