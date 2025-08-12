@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import * as React from 'react';
@@ -177,7 +178,7 @@ export default function SellerForm({
       <Form {...form}>
         <fieldset disabled={isViewMode} className="group">
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 bg-secondary/30 p-6 group-disabled:bg-muted/10">
+          <CardContent className="space-y-6 bg-secondary/30 p-6 group-disabled:bg-background/30 group-disabled:cursor-not-allowed">
             <FormField
               control={form.control}
               name="name"

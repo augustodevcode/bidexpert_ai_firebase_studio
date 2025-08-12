@@ -428,7 +428,7 @@ export default function AuctionForm({
                     <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
                     <CardDescription>{formDescription}</CardDescription>
                   </CardHeader>
-                  <CardContent className="p-6 bg-secondary/30">
+                  <CardContent className="p-6 bg-secondary/30 group-disabled:bg-background/30 group-disabled:cursor-not-allowed">
                     <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-4">
                         {accordionItems.map(item => (
                         <AccordionItem key={item.value} value={item.value} className="border bg-background/50 rounded-lg shadow-sm px-4">
@@ -441,8 +441,8 @@ export default function AuctionForm({
                     </Accordion>
                   </CardContent>
                   <CardFooter className="flex justify-end gap-2 p-6 border-t">
-                      <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting}><XCircle className="mr-2 h-4 w-4"/> Cancelar</Button>
-                      <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button>
+                      <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting} className="group-disabled:hidden"><XCircle className="mr-2 h-4 w-4"/> Cancelar</Button>
+                      <Button type="submit" disabled={isSubmitting} className="group-disabled:hidden">{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button>
                   </CardFooter>
                 </Card>
               )}

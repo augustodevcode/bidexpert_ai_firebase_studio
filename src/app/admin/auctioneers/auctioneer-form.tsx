@@ -1,3 +1,4 @@
+
 // src/app/admin/auctioneers/auctioneer-form.tsx
 'use client';
 
@@ -156,7 +157,7 @@ export default function AuctioneerForm({
         <Form {...form}>
             <fieldset disabled={isViewMode} className="group">
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-muted/10">
+            <CardContent className="space-y-6 p-6 bg-secondary/30 group-disabled:bg-background/30 group-disabled:cursor-not-allowed">
               <FormField
                 control={form.control}
                 name="name"
