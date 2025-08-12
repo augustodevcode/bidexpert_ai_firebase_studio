@@ -47,6 +47,21 @@ export class UserService {
     const user = await this.userRepository.findById(id);
     return this.formatUser(user);
   }
+  
+  async findUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
+    const user = await prisma.user.findUnique({
+      where: { email },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+    return this.formatUser(user);
+  }
+
 
   async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {

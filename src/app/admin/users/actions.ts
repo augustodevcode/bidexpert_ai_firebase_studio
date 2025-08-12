@@ -16,6 +16,15 @@ export async function getUserProfileData(userId: string): Promise<UserProfileWit
     return userService.getUserById(userId);
 }
 
+// Nova função para buscar o admin em ambiente de desenvolvimento
+export async function getAdminUserForDev(): Promise<UserProfileWithPermissions | null> {
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+  return userService.findUserByEmail('admin@bidexpert.com.br');
+}
+
+
 export async function createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
   const result = await userService.createUser(data);
   if (result.success && process.env.NODE_ENV !== 'test') {
