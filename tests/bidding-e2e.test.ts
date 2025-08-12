@@ -139,11 +139,11 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         const endDate = (minutes: number) => new Date(now.getTime() + minutes * 60000);
         
         const [judAucRes, extAucRes, silAucRes, tomPreRes, dutAucRes] = await Promise.all([
-          auctionService.createAuction({ title: `Leilão Judicial ${testRunId}`, auctionType: 'JUDICIAL', judicialProcessId: testJudicialProcess.id, sellerId: testJudicialSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, visits: 150, totalHabilitatedUsers: 50, isFeaturedOnMarketplace: true }),
-          auctionService.createAuction({ title: `Leilão Extrajudicial ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now }),
-          auctionService.createAuction({ title: `Leilão Silencioso ${testRunId}`, auctionType: 'SILENT', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, silentBiddingEnabled: true }),
-          auctionService.createAuction({ title: `Tomada de Preços ${testRunId}`, auctionType: 'TOMADA_DE_PRECOS', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now }),
-          auctionService.createAuction({ title: `Leilão Holandês ${testRunId}`, auctionType: 'DUTCH', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, decrementAmount: 100, decrementIntervalSeconds: 3, floorPrice: 8000 }),
+          auctionService.createAuction({ title: `Leilão Judicial ${testRunId}`, auctionType: 'JUDICIAL', judicialProcessId: testJudicialProcess.id, sellerId: testJudicialSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, isFeaturedOnMarketplace: true, allowInstallmentBids: true, auctionStages: [{name: '1ª Praça', startDate: now, endDate: endDate(30)}] }),
+          auctionService.createAuction({ title: `Leilão Extrajudicial ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, participation: 'HIBRIDO', address: 'Rua do Teste Híbrido, 123', onlineUrl: 'https://meet.google.com/test-hybrid', auctionStages: [{name: 'Praça Única', startDate: now, endDate: endDate(10)}] }),
+          auctionService.createAuction({ title: `Leilão Silencioso ${testRunId}`, auctionType: 'PARTICULAR', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: now, auctionMethod: 'SILENT', silentBiddingEnabled: true, auctionStages: [{name: 'Período de Lances', startDate: now, endDate: endDate(15)}] }),
+          auctionService.createAuction({ title: `Tomada de Preços ${testRunId}`, auctionType: 'TOMADA_DE_PRECOS', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO', auctionDate: now, auctionStages: [{name: 'Fase de Propostas', startDate: now, endDate: endDate(25)}]}),
+          auctionService.createAuction({ title: `Leilão Holandês ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO', auctionDate: now, auctionMethod: 'DUTCH', decrementAmount: 100, decrementIntervalSeconds: 3, floorPrice: 8000, auctionStages: [{name: 'Leilão Holandês', startDate: now, endDate: endDate(20)}] }),
         ]);
 
         assert.ok(judAucRes.success && extAucRes.success && silAucRes.success && tomPreRes.success && dutAucRes.success, "All auction types should be created successfully.");
@@ -156,10 +156,10 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
 
         // 8. Create Lots for the auctions
         const [judLotRes, extLotRes, silLotRes, dutLotRes] = await Promise.all([
-             lotService.createLot({ title: testBemJudicial.title, auctionId: judicialAuction.id, price: 12000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bemIds: [testBemJudicial.id], endDate: endDate(5) }),
-             lotService.createLot({ title: testBemExtrajudicial.title, auctionId: extrajudicialAuction.id, price: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bemIds: [testBemExtrajudicial.id], endDate: endDate(10) }),
-             lotService.createLot({ title: `Lote Silencioso ${testRunId}`, auctionId: silentAuction.id, price: 5000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: endDate(15) }),
-             lotService.createLot({ title: `Lote Holandês ${testRunId}`, auctionId: dutchAuction.id, price: 10000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: endDate(20) }),
+             lotService.createLot({ title: testBemJudicial.title, auctionId: judicialAuction.id, price: 12000, initialPrice: 12000, secondInitialPrice: 8000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bemIds: [testBemJudicial.id], endDate: endDate(5), isExclusive: true, condition: 'Usado' }),
+             lotService.createLot({ title: testBemExtrajudicial.title, auctionId: extrajudicialAuction.id, price: 25000, initialPrice: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', bemIds: [testBemExtrajudicial.id], endDate: endDate(10), condition: 'Novo' }),
+             lotService.createLot({ title: `Lote Silencioso ${testRunId}`, auctionId: silentAuction.id, price: 5000, initialPrice: 5000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: endDate(15) }),
+             lotService.createLot({ title: `Lote Holandês ${testRunId}`, auctionId: dutchAuction.id, price: 10000, initialPrice: 10000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: endDate(20) }),
         ]);
 
         assert.ok(judLotRes.success && extLotRes.success && silLotRes.success && dutLotRes.success, "All lots should be created successfully.");
@@ -175,22 +175,24 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
     test.after(async () => {
         console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
         try {
+            await prisma.notification.deleteMany({ where: { userId: { in: biddingUsers.map(u => u.id) } } });
             await prisma.bid.deleteMany({ where: { bidderId: { in: biddingUsers.map(u => u.id) } }});
-            const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean);
+            
+            const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
             if (lotIds.length > 0) {
-              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds as string[] } }});
-              await prisma.lot.deleteMany({ where: { id: { in: lotIds as string[] } } });
+              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
+              await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
             }
             
-            const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean);
+            const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean) as string[];
             if (auctionIds.length > 0) {
-                 await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds as string[] } } });
-                 await prisma.auction.deleteMany({ where: { id: { in: auctionIds as string[] } } });
+                 await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds } } });
+                 await prisma.auctionStage.deleteMany({where: {auctionId: {in: auctionIds}}});
+                 await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
             }
 
-            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean);
-            if(bemIds.length > 0) await bemService.deleteBem(bemIds[0] as string);
-            if(bemIds.length > 1) await bemService.deleteBem(bemIds[1] as string);
+            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
+            for (const bemId of bemIds) { await bemService.deleteBem(bemId); }
             
             if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
             if (testSeller) await sellerService.deleteSeller(testSeller.id);
@@ -202,10 +204,10 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
             if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
             if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
             
-            const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean);
+            const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean) as string[];
              if (userIds.length > 0) {
-                await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds as string[]}}});
-                await prisma.user.deleteMany({ where: { id: { in: userIds as string[] } } });
+                await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds}}});
+                await prisma.user.deleteMany({ where: { id: { in: userIds } } });
              }
 
         } catch (error) {
