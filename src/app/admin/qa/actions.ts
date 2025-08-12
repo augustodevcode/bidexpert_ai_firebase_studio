@@ -147,3 +147,18 @@ export async function runCardContentTest(): Promise<{ success: boolean; output: 
     const command = `npx playwright test tests/ui/card-content.spec.ts`;
     return runTestScript(command);
 }
+
+export async function runAuctionAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `npx playwright test tests/ui/auction-analysis.spec.ts`;
+    return runTestScript(command);
+}
+
+export async function runSellerAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `npx playwright test tests/ui/seller-analysis.spec.ts`;
+    return runTestScript(command);
+}
+
+export async function runAuctioneerAnalysisPageTest(): Promise<{ success: boolean; output: string; error?: string }> {
+    const command = `npx playwright test tests/ui/auctioneer-analysis.spec.ts`;
+    return runTestScript(command);
+}

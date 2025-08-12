@@ -27,8 +27,11 @@ import {
     runPlatformSettingsTest,
     runAuctionCardDetailsTest,
     runCardContentTest,
+    runAuctionAnalysisPageTest,
+    runSellerAnalysisPageTest,
+    runAuctioneerAnalysisPageTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface TestResult {
@@ -43,6 +46,7 @@ interface TestConfig {
   description: string;
   action: () => Promise<TestResult>;
   type: 'backend' | 'frontend' | 'simulation';
+  icon: React.ElementType;
 }
 
 const tests: TestConfig[] = [
@@ -52,6 +56,7 @@ const tests: TestConfig[] = [
     description: 'Simula 5 usuários, habilitação e um leilão com lances e soft-close.',
     action: runBiddingEndToEndTest,
     type: 'simulation',
+    icon: Users
   },
    {
     id: 'habilitation-e2e',
@@ -59,6 +64,31 @@ const tests: TestConfig[] = [
     description: 'Simula o fluxo completo de um usuário enviando documentos, sendo aprovado e dando um lance.',
     action: runHabilitationEndToEndTest,
     type: 'simulation',
+    icon: UserCheck
+  },
+  {
+    id: 'auction-analysis-page',
+    title: 'Dashboard de Análise de Leilões',
+    description: 'Verifica se a página de análise de leilões carrega e exibe os KPIs, gráficos e tabela de dados.',
+    action: runAuctionAnalysisPageTest,
+    type: 'frontend',
+    icon: BarChart3
+  },
+  {
+    id: 'seller-analysis-page',
+    title: 'Dashboard de Análise de Comitentes',
+    description: 'Verifica se a página de análise de comitentes carrega e exibe os KPIs, gráficos e tabela de dados.',
+    action: runSellerAnalysisPageTest,
+    type: 'frontend',
+    icon: BarChart3
+  },
+  {
+    id: 'auctioneer-analysis-page',
+    title: 'Dashboard de Análise de Leiloeiros',
+    description: 'Verifica se a página de análise de leiloeiros carrega e exibe os KPIs, gráficos e tabela de dados.',
+    action: runAuctioneerAnalysisPageTest,
+    type: 'frontend',
+    icon: Landmark
   },
   {
     id: 'platform-settings',
@@ -66,6 +96,7 @@ const tests: TestConfig[] = [
     description: 'Valida a criação e atualização das configurações da plataforma via camada de serviço.',
     action: runPlatformSettingsTest,
     type: 'backend',
+    icon: Settings
   },
   {
     id: 'card-content-validation',
@@ -73,6 +104,7 @@ const tests: TestConfig[] = [
     description: 'Cria um Leilão e um Lote com dados específicos e verifica se o Card na UI exibe todas as informações corretamente.',
     action: runCardContentTest,
     type: 'frontend',
+    icon: Palette
   },
   {
     id: 'auction-card-details-ui',
@@ -80,6 +112,7 @@ const tests: TestConfig[] = [
     description: 'Verifica se todos os dados dinâmicos (contadores, badges, etc.) são exibidos corretamente no card do leilão.',
     action: runAuctionCardDetailsTest,
     type: 'frontend',
+    icon: Palette
   },
   {
     id: 'menu-content',
@@ -87,6 +120,7 @@ const tests: TestConfig[] = [
     description: 'Valida se os itens nos menus (Categorias, Leiloeiros, etc.) correspondem aos dados no banco.',
     action: runMenuContentTest,
     type: 'backend', 
+    icon: TestTube2
   },
   {
     id: 'modalities-menu',
@@ -94,6 +128,7 @@ const tests: TestConfig[] = [
     description: 'Verifica se o menu estático de modalidades contém os itens e links corretos.',
     action: runModalitiesMenuTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'user-creation',
@@ -101,6 +136,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um usuário, hash de senha e atribuição de perfil padrão.',
     action: runUserEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'seller-creation',
@@ -108,6 +144,7 @@ const tests: TestConfig[] = [
     description: 'Verifica o fluxo completo de criação de um novo comitente.',
     action: runSellerEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'auctioneer-creation',
@@ -115,6 +152,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um novo leiloeiro e a integridade dos dados.',
     action: runAuctioneerEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'category-creation',
@@ -122,6 +160,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
     action: runCategoryEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
    {
     id: 'subcategory-creation',
@@ -129,6 +168,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma subcategoria e sua vinculação à categoria pai.',
     action: runSubcategoryEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
    {
     id: 'role-creation',
@@ -136,6 +176,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um novo perfil de usuário com permissões.',
     action: runRoleEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
    {
     id: 'state-creation',
@@ -143,6 +184,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um novo estado e validação de UF duplicada.',
     action: runStateEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'city-creation',
@@ -150,6 +192,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma cidade e sua vinculação com um estado.',
     action: runCityEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'court-creation',
@@ -157,6 +200,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.',
     action: runCourtEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'judicial-district-creation',
@@ -164,6 +208,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.',
     action: runJudicialDistrictEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'judicial-branch-creation',
@@ -171,6 +216,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.',
     action: runJudicialBranchEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'judicial-process-creation',
@@ -178,6 +224,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.',
     action: runJudicialProcessEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'bem-creation',
@@ -185,6 +232,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
     action: runBemEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'lot-creation',
@@ -192,6 +240,7 @@ const tests: TestConfig[] = [
     description: 'Verifica a criação de um lote e sua vinculação com bens e um leilão.',
     action: runLotEndToEndTest,
     type: 'backend',
+    icon: TestTube2
   },
   {
     id: 'media-library',
@@ -199,6 +248,7 @@ const tests: TestConfig[] = [
     description: 'Testa o endpoint de upload, criação de registro e salvamento do arquivo físico.',
     action: runMediaLibraryEndToEndTest,
     type: 'backend',
+    icon: Library
   },
 ];
 
@@ -231,15 +281,6 @@ export default function QualityAssurancePage() {
         setTimeout(() => setHasCopied(false), 2500);
     };
 
-    const getIconForTestType = (type: TestConfig['type']) => {
-        switch(type) {
-            case 'simulation': return <Users className="h-4 w-4 text-primary" />;
-            case 'backend': return <TestTubeDiagonal className="h-4 w-4 text-primary"/>;
-            case 'frontend': return <Palette className="h-4 w-4 text-primary" />;
-            default: return <TestTube className="h-4 w-4 text-primary" />;
-        }
-    }
-
     return (
         <div className="space-y-6">
             <Card>
@@ -257,7 +298,7 @@ export default function QualityAssurancePage() {
                         <Card key={test.id} className="bg-secondary/30">
                             <CardHeader>
                                 <CardTitle className="text-lg flex items-center gap-2">
-                                     {getIconForTestType(test.type)}
+                                     <test.icon className="h-4 w-4 text-primary" />
                                      {test.title}
                                 </CardTitle>
                                 <CardDescription>{test.description}</CardDescription>
