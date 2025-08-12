@@ -355,7 +355,7 @@ export default function AuctioneerDetailsPage() {
       </div>
     </TooltipProvider>
 
-    {hasEditPermissions && (
+    {hasEditPermissions && auctioneerProfile?.id && (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>

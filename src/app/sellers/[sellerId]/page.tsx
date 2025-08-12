@@ -239,7 +239,7 @@ export default function SellerDetailsPage() {
         </div>
       </TooltipProvider>
 
-      {hasEditPermissions && (
+      {hasEditPermissions && sellerProfile?.id && (
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
