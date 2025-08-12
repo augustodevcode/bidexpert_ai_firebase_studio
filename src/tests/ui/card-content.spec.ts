@@ -71,8 +71,8 @@ async function createTestData() {
         endDate: endDate,
         auctionStages: {
             create: [
-                { name: '1ª Praça', endDate: stage1End, initialPrice: testData.lot.initialPrice },
-                { name: '2ª Praça', endDate: endDate, initialPrice: testData.lot.secondInitialPrice }
+                { name: '1ª Praça', startDate: now, endDate: stage1End, initialPrice: testData.lot.initialPrice },
+                { name: '2ª Praça', startDate: stage1End, endDate: endDate, initialPrice: testData.lot.secondInitialPrice }
             ]
         }
     };
@@ -107,8 +107,11 @@ async function cleanupTestData() {
     return;
   }
   try {
-    await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
-    await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+    if (createdAuction) {
+        await prisma.auctionStage.deleteMany({ where: { auctionId: createdAuction.id }});
+        await prisma.lot.deleteMany({ where: { auctionId: createdAuction.id } });
+        await prisma.auction.deleteMany({ where: { id: createdAuction.id } });
+    }
     await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
@@ -186,7 +189,7 @@ test.describe('Data Display Validation on Cards', () => {
 
     test('should correctly display all data on the Auction Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Auction Card Content ---');
-        console.log('CRITERIA: Card must display correct title, images, status, counters, stages, and actions.');
+        console.log('CRITERIA: Card must display correct images, status, counters, stages, and actions.');
         await page.goto('/search?type=auctions');
         await page.waitForLoadState('networkidle');
         const pageTitle = await page.title();
