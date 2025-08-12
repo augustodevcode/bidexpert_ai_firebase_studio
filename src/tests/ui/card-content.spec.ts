@@ -58,24 +58,29 @@ async function createTestData() {
 
     const now = new Date();
     const endDate = new Date(now.getTime() + 12 * 60 * 60 * 1000); // 12 hours from now
+    const stage1End = new Date(now.getTime() + 6 * 60 * 60 * 1000);
     
-    const auction = await prisma.auction.create({
-        data: {
-            ...testData.auction,
-            slug: slugify(testData.auction.title),
-            publicId: `auc-pub-${testRunId}`,
-            auctioneerId: auctioneer.id,
-            sellerId: seller.id,
-            categoryId: category.id,
-            auctionDate: now,
-            endDate: endDate,
-            auctionStages: [ 
-                { name: '1ª Praça', endDate: endDate.toISOString(), initialPrice: testData.lot.initialPrice },
-                { name: '2ª Praça', endDate: endDate.toISOString(), initialPrice: testData.lot.secondInitialPrice }
+    const auctionData: any = {
+        ...testData.auction,
+        slug: slugify(testData.auction.title),
+        publicId: `auc-pub-${testRunId}`,
+        auctioneerId: auctioneer.id,
+        sellerId: seller.id,
+        categoryId: category.id,
+        auctionDate: now,
+        endDate: endDate,
+        auctionStages: {
+            create: [
+                { name: '1ª Praça', endDate: stage1End, initialPrice: testData.lot.initialPrice },
+                { name: '2ª Praça', endDate: endDate, initialPrice: testData.lot.secondInitialPrice }
             ]
-        } as any,
-    });
-    createdAuction = auction as Auction;
+        }
+    };
+  
+  const auction = await prisma.auction.create({
+    data: auctionData,
+  });
+  createdAuction = auction as Auction;
 
     const lot = await prisma.lot.create({
         data: {
