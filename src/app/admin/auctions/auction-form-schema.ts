@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
 import type { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod } from '@/types';
@@ -31,6 +32,12 @@ const autoRelistSettingsSchema = z.object({
   relistDurationInHours: z.coerce.number().int().min(1).optional().nullable(),
 }).optional();
 
+// Helper to validate URLs but allow "https://" or empty strings
+const optionalUrlSchema = z.string().refine(val => val === '' || val === 'https://' || z.string().url().safeParse(val).success, {
+  message: "URL inválida."
+}).optional().nullable();
+
+
 export const auctionFormSchema = z.object({
   title: z.string().min(5, {
     message: "O título do leilão deve ter pelo menos 5 caracteres.",
@@ -48,7 +55,7 @@ export const auctionFormSchema = z.object({
   auctionMethod: z.enum(methodValues as [string, ...string[]]).default('STANDARD'),
   participation: z.enum(participationValues as [string, ...string[]]).default('ONLINE'),
   
-  onlineUrl: z.string().url({ message: "URL inválida." }).optional().or(z.literal('')),
+  onlineUrl: optionalUrlSchema,
   address: z.string().max(255).optional().nullable(),
   cityId: z.string().optional().nullable(),
   stateId: z.string().optional().nullable(),
@@ -58,11 +65,11 @@ export const auctionFormSchema = z.object({
   sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
   categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
   
-  imageUrl: z.string().url({ message: "URL da imagem inválida." }).optional().or(z.literal('')),
+  imageUrl: optionalUrlSchema,
   imageMediaId: z.string().optional().nullable(),
-  documentsUrl: z.string().url({ message: "URL dos documentos inválida."}).optional().or(z.literal('')),
-  evaluationReportUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
-  auctionCertificateUrl: z.string().url({ message: "URL inválida."}).optional().or(z.literal('')),
+  documentsUrl: optionalUrlSchema,
+  evaluationReportUrl: optionalUrlSchema,
+  auctionCertificateUrl: optionalUrlSchema,
   sellingBranch: z.string().max(100).optional(),
   automaticBiddingEnabled: z.boolean().optional().default(false),
   allowInstallmentBids: z.boolean().optional().default(true),

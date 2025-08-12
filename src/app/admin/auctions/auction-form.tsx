@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
@@ -167,7 +168,7 @@ export default function AuctionForm({
       auctionType: initialData?.auctionType || 'EXTRAJUDICIAL',
       auctionMethod: initialData?.auctionMethod || 'STANDARD',
       participation: initialData?.participation || 'ONLINE',
-      onlineUrl: initialData?.onlineUrl || '',
+      onlineUrl: initialData?.onlineUrl || 'https://',
       address: initialData?.address || '',
       cityId: initialData?.cityId || undefined,
       stateId: initialData?.stateId || undefined,
@@ -175,11 +176,11 @@ export default function AuctionForm({
       auctioneerId: initialData?.auctioneerId || '',
       sellerId: initialData?.sellerId || '',
       categoryId: initialData?.categoryId || '',
-      imageUrl: initialData?.imageUrl || '',
+      imageUrl: initialData?.imageUrl || 'https://',
       imageMediaId: initialData?.imageMediaId || null,
-      documentsUrl: initialData?.documentsUrl || '',
-      evaluationReportUrl: initialData?.evaluationReportUrl || '',
-      auctionCertificateUrl: initialData?.auctionCertificateUrl || '',
+      documentsUrl: initialData?.documentsUrl || 'https://',
+      evaluationReportUrl: initialData?.evaluationReportUrl || 'https://',
+      auctionCertificateUrl: initialData?.auctionCertificateUrl || 'https://',
       sellingBranch: initialData?.sellingBranch || '',
       automaticBiddingEnabled: initialData?.automaticBiddingEnabled || false,
       allowInstallmentBids: initialData?.allowInstallmentBids === false ? false : true,
