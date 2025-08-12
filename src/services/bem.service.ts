@@ -39,14 +39,18 @@ export class BemService {
 
   async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     try {
+      // Destructure to separate relation IDs from the rest of the data
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, ...bemData } = data;
+
       const dataToCreate: Prisma.BemCreateInput = {
-        ...data,
+        ...bemData,
         publicId: `BEM-${uuidv4()}`,
       };
-      if (data.categoryId) dataToCreate.category = { connect: { id: data.categoryId } };
-      if (data.subcategoryId) dataToCreate.subcategory = { connect: { id: data.subcategoryId } };
-      if (data.judicialProcessId) dataToCreate.judicialProcess = { connect: { id: data.judicialProcessId } };
-      if (data.sellerId) dataToCreate.seller = { connect: { id: data.sellerId } };
+      
+      if (categoryId) dataToCreate.category = { connect: { id: categoryId } };
+      if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
+      if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: judicialProcessId } };
+      if (sellerId) dataToCreate.seller = { connect: { id: sellerId } };
       
       const newBem = await this.repository.create(dataToCreate);
       return { success: true, message: 'Bem criado com sucesso.', bemId: newBem.id };
@@ -58,11 +62,13 @@ export class BemService {
 
   async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const dataToUpdate: Prisma.BemUpdateInput = { ...data };
-      if (data.categoryId) dataToUpdate.category = { connect: { id: data.categoryId } };
-      if (data.subcategoryId) dataToUpdate.subcategory = { connect: { id: data.subcategoryId } };
-      if (data.judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: data.judicialProcessId } };
-      if (data.sellerId) dataToUpdate.seller = { connect: { id: data.sellerId } };
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, ...bemData } = data;
+      const dataToUpdate: Prisma.BemUpdateInput = { ...bemData };
+      
+      if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+      if (subcategoryId) dataToUpdate.subcategory = { connect: { id: subcategoryId } };
+      if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
+      if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
 
       await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Bem atualizado com sucesso.' };
