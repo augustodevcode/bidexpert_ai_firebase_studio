@@ -39,7 +39,6 @@ export default function EntitySelector({
   const [open, setOpen] = React.useState(false);
 
   const selectedOption = options.find((option) => option.value === value);
-  const editHref = value ? `${editUrlPrefix}/${value}` : '#';
 
   return (
     <div className="flex items-center gap-1.5">
@@ -71,7 +70,7 @@ export default function EntitySelector({
                     {/* Conditional rendering for the edit link */}
                     {value ? (
                         <Button type="button" variant="ghost" size="icon" className="h-7 w-7" asChild disabled={disabled}>
-                            <Link href={editHref} target="_blank" title="Editar registro selecionado">
+                            <Link href={`${editUrlPrefix}/${value}`} target="_blank" title="Editar registro selecionado">
                                 <Pencil className="h-4 w-4" />
                             </Link>
                         </Button>
