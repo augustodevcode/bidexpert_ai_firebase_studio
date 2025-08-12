@@ -89,7 +89,7 @@ export default function EntitySelector({
                     </Button>
                 </div>
             </div>
-             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50" >
+             <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-50">
                 <Command>
                     <CommandInput placeholder={searchPlaceholder} />
                     <CommandList>
@@ -98,19 +98,19 @@ export default function EntitySelector({
                         {options.map((option) => (
                         <CommandItem
                             key={option.value}
-                            value={option.value}
+                            value={option.value} // Use the unique value for selection logic
                             onSelect={(currentValue) => {
-                                // A lógica correta é usar o `currentValue` que o `cmdk` retorna, que é o 'value' do item.
+                                // currentValue is the `value` prop from the selected CommandItem
                                 onChange(currentValue === value ? null : currentValue);
                                 setOpen(false);
                             }}
                             aria-selected={value === option.value}
                         >
                             <Check
-                            className={cn(
-                                "mr-2 h-4 w-4",
-                                value === option.value ? "opacity-100" : "opacity-0"
-                            )}
+                                className={cn(
+                                    "mr-2 h-4 w-4",
+                                    value === option.value ? "opacity-100" : "opacity-0"
+                                )}
                             />
                             {option.label}
                         </CommandItem>
