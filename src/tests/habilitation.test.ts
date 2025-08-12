@@ -6,8 +6,8 @@ import { UserService } from '../src/services/user.service';
 import { AuctionService } from '../src/services/auction.service';
 import { LotService } from '../src/services/lot.service';
 import { SellerService } from '../src/services/seller.service';
-import { approveDocument, saveUserDocument } from '../src/app/dashboard/documents/actions';
-import { habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { saveUserDocument } from '../src/app/dashboard/documents/actions';
+import { approveDocument, habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
 import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, DocumentType } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -128,13 +128,14 @@ test.describe('User Habilitation E2E Test', () => {
         const approvalResult = await approveDocument(docToApprove!.id, analystUser.id);
         assert.ok(approvalResult.success, `Document approval action should succeed. Error: ${approvalResult.message}`);
         
+        // Assert directly in DB
         updatedUser = await userService.getUserById(regularUser.id);
         assert.strictEqual(updatedUser?.habilitationStatus, 'HABILITADO', 'User status should be HABILITADO after approval.');
         console.log('- Step 2: User status correctly updated to HABILITADO.');
 
         const bidResultBeforeHabilitation = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResultBeforeHabilitation.success, false, "Bidding should fail before auction-specific habilitation.");
-        assert.match(bidResultBeforeHabilitation.message, /habilitado para este leilão/, 'Error message should mention specific auction habilitation.');
+        assert.strictEqual(bidResultBeforeHabilitation.message, "Você não está habilitado para dar lances neste leilão. Por favor, habilite-se na página do leilão.", 'Error message should be specific to auction habilitation.');
         console.log('- Step 3: Blocked bid for user not enabled for the specific auction.');
 
         const habilitationRes = await habilitateForAuctionAction(regularUser.id, testAuction.id);
