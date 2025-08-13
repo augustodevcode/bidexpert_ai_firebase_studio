@@ -1,12 +1,12 @@
 // tests/search-and-filter.test.ts
-import { test, describe, before, after, it } from 'node:test';
+import { test, describe, beforeAll, afterAll, it } from 'vitest';
 import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
-import { slugify } from '../src/lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../src/types';
+import { slugify } from '@/lib/ui-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { LotService } from '../src/services/lot.service';
-import { AuctionService } from '../src/services/auction.service';
+import { LotService } from '@/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
 
 let prisma: PrismaClient;
 const lotService = new LotService();
@@ -43,7 +43,7 @@ async function createSearchTestData() {
             seller: { connect: { id: seller1.id } },
             category: { connect: { id: category1.id } },
             city: 'São Paulo', 
-            state: 'SP', 
+            state: 'SP',
         } }),
         prisma.auction.create({ data: { 
             title: `Leilão de Apartamentos RJ ${testRunId}`, 
@@ -101,19 +101,19 @@ async function cleanupSearchTestData() {
 
 describe('Search and Filter Service Logic Test', () => {
 
-    before(async () => {
+    beforeAll(async () => {
         prisma = new PrismaClient();
         await prisma.$connect();
         await cleanupSearchTestData();
         await createSearchTestData();
     });
 
-    after(async () => {
+    afterAll(async () => {
         await cleanupSearchTestData();
         await prisma.$disconnect();
     });
 
-    it('should fetch lots filtered by auctionId', async () => {
+    test('should fetch lots filtered by auctionId', async () => {
         console.log('--- Test: Fetching lots by a specific auction ID ---');
         // Act
         const lots = await lotService.getLots(auction1.id);
@@ -127,7 +127,7 @@ describe('Search and Filter Service Logic Test', () => {
         console.log('- PASSED: Correctly filtered lots by auctionId.');
     });
     
-    it('should fetch all lots when no auctionId is provided', async () => {
+    test('should fetch all lots when no auctionId is provided', async () => {
         console.log('--- Test: Fetching all lots ---');
         // Act
         const lots = await lotService.getLots();
@@ -139,7 +139,7 @@ describe('Search and Filter Service Logic Test', () => {
         console.log('- PASSED: Correctly fetched all lots.');
     });
     
-    it('should fetch auctions by auctioneer slug', async () => {
+    test('should fetch auctions by auctioneer slug', async () => {
         console.log('--- Test: Fetching auctions by auctioneer slug ---');
         // Act
         const auctions = await auctionService.getAuctionsByAuctioneerSlug(auctioneer1.slug);
