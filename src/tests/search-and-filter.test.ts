@@ -1,5 +1,5 @@
 // tests/search-and-filter.test.ts
-import test from 'node:test';
+import { test, describe, before, after } from 'node:test';
 import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
 import { slugify } from '../src/lib/ui-helpers';
@@ -64,16 +64,16 @@ async function cleanupSearchTestData() {
   }
 }
 
-test.describe('Search and Filter Service Logic Test', () => {
+describe('Search and Filter Service Logic Test', () => {
 
-    test.before(async () => {
+    before(async () => {
         prisma = new PrismaClient();
         await prisma.$connect();
         await cleanupSearchTestData();
         await createSearchTestData();
     });
 
-    test.after(async () => {
+    after(async () => {
         await cleanupSearchTestData();
         await prisma.$disconnect();
     });
