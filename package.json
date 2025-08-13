@@ -13,7 +13,7 @@
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:push": "npx prisma db push --accept-data-loss",
         "test": "vitest",
-        "test:e2e": "vitest run --config ./vitest.config.js tests/bidding-e2e.test.ts",
+        "test:e2e": "vitest run --config ./vitest.config.ts tests/bidding-e2e.test.ts",
         "postinstall": "prisma generate"
     },
     "dependencies": {

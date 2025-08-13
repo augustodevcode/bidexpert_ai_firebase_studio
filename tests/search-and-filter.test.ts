@@ -1,5 +1,5 @@
 // tests/search-and-filter.test.ts
-import { test, describe, beforeAll, afterAll } from 'vitest';
+import { test, describe, beforeAll, afterAll, expect } from 'vitest';
 import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
 import { slugify } from '../src/lib/ui-helpers';
