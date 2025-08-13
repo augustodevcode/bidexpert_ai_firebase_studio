@@ -15,7 +15,7 @@ const testRunId = `search-service-${uuidv4().substring(0, 8)}`;
 
 // Test Data Placeholders
 let category1: LotCategory, category2: LotCategory;
-let seller1: SellerProfileInfo;
+let seller1: SellerProfileInfo, seller2: SellerProfileInfo;
 let auctioneer1: AuctioneerProfileInfo;
 let auction1: Auction, auction2: Auction, auction3: Auction;
 let lot1: Lot, lot2: Lot, lot3: Lot, lot4: Lot;
@@ -29,14 +29,50 @@ async function createSearchTestData() {
         prisma.lotCategory.create({ data: { name: `Imóveis ${testRunId}`, slug: `imoveis-${testRunId}`, hasSubcategories: false } })
     ]);
 
-    seller1 = await prisma.seller.create({ data: { name: `Comitente A ${testRunId}`, slug: `comitente-a-${testRunId}`, publicId: `pub-seller-a-${testRunId}`, isJudicial: false, city: 'São Paulo', state: 'SP' } });
+    [seller1, seller2] = await prisma.$transaction([
+        prisma.seller.create({ data: { name: `Comitente A ${testRunId}`, slug: `comitente-a-${testRunId}`, publicId: `pub-seller-a-${testRunId}`, isJudicial: false, city: 'São Paulo', state: 'SP' } }),
+        prisma.seller.create({ data: { name: `Comitente B ${testRunId}`, slug: `comitente-b-${testRunId}`, publicId: `pub-seller-b-${testRunId}`, isJudicial: false, city: 'Rio de Janeiro', state: 'RJ' } })
+    ]);
     
     auctioneer1 = await prisma.auctioneer.create({ data: { name: `Leiloeiro Search ${testRunId}`, slug: `leiloeiro-search-${testRunId}`, publicId: `pub-auctioneer-search-${testRunId}` } });
 
     [auction1, auction2, auction3] = await prisma.$transaction([
-        prisma.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.550520, longitude: -46.633308 } as any }),
-        prisma.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category2.id, city: 'Rio de Janeiro', state: 'RJ', latitude: -22.906847, longitude: -43.172896 } as any }),
-        prisma.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP' } as any })
+        prisma.auction.create({ data: { 
+            title: `Leilão de Carros SP ${testRunId}`, 
+            slug: `leilao-carros-sp-${testRunId}`, 
+            publicId: `pub-auc-1-${testRunId}`, 
+            status: 'ABERTO_PARA_LANCES', 
+            auctionDate: new Date(), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller1.id } },
+            category: { connect: { id: category1.id } },
+            city: 'São Paulo', 
+            state: 'SP'
+        } }),
+        prisma.auction.create({ data: { 
+            title: `Leilão de Apartamentos RJ ${testRunId}`, 
+            slug: `leilao-apartamentos-rj-${testRunId}`, 
+            publicId: `pub-auc-2-${testRunId}`, 
+            status: 'EM_BREVE', 
+            auctionDate: new Date(Date.now() + 86400000), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller2.id } },
+            category: { connect: { id: category2.id } },
+            city: 'Rio de Janeiro', 
+            state: 'RJ'
+        } }),
+        prisma.auction.create({ data: { 
+            title: `Leilão Misto SP ${testRunId}`, 
+            slug: `leilao-misto-sp-${testRunId}`, 
+            publicId: `pub-auc-3-${testRunId}`, 
+            status: 'ABERTO_PARA_LANCES', 
+            auctionDate: new Date(), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller1.id } },
+            category: { connect: { id: category1.id } },
+            city: 'São Paulo', 
+            state: 'SP' 
+        } })
     ]);
 
     [lot1, lot2, lot3, lot4] = await prisma.$transaction([
@@ -50,7 +86,10 @@ async function createSearchTestData() {
 
 async function cleanupSearchTestData() {
   console.log(`[Search Service Test] Cleaning up test data for run: ${testRunId}`);
-  if (!prisma) return;
+  if (!prisma) {
+    console.warn('[Search Service Test] Prisma client not initialized, skipping cleanup.');
+    return;
+  }
   try {
     await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
     await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
