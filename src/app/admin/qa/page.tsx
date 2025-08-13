@@ -28,13 +28,15 @@ import {
     runAuctionDataValidationTest, // Renamed from UI test
     runSearchAndFilterTest,     // Renamed from UI test
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 interface TestResult {
   output: string;
   error?: string;
   success: boolean;
+  recommendation?: string;
 }
 
 interface TestConfig {
@@ -247,10 +249,10 @@ export default function QualityAssurancePage() {
 
     const handleCopyLog = () => {
         if (!testResult?.output && !testResult?.error) return;
-        const logToCopy = `--- STDOUT ---\n${testResult.output}\n\n--- STDERR ---\n${testResult.error || 'N/A'}`;
+        const logToCopy = `${testResult.recommendation || ''}\n\n--- FULL LOG ---\n${testResult.output}\n\n--- STDERR ---\n${testResult.error || 'N/A'}`;
         navigator.clipboard.writeText(logToCopy);
         setHasCopied(true);
-        toast({ title: "Log Copiado!", description: "O log de saída do console foi copiado para a área de transferência." });
+        toast({ title: "Copiado!", description: "A recomendação da IA e o log de saída foram copiados." });
         setTimeout(() => setHasCopied(false), 2500);
     };
 
@@ -299,8 +301,17 @@ export default function QualityAssurancePage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {testResult.error || !testResult.success ? (
-                            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
+                        {!testResult.success && testResult.recommendation && (
+                            <Alert variant="destructive" className="mb-4">
+                                <BrainCircuit className="h-5 w-5" />
+                                <AlertTitle className="font-bold">Recomendação da IA</AlertTitle>
+                                <AlertDescription className="whitespace-pre-line text-sm leading-relaxed">
+                                    {testResult.recommendation.split('================================================').join('')}
+                                </AlertDescription>
+                            </Alert>
+                        )}
+                        {!testResult.success && !testResult.recommendation && (
+                             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
                                 <div className="flex items-center gap-2 text-destructive font-bold">
                                     <ServerCrash className="h-5 w-5" />
                                     <span>Teste Falhou</span>
@@ -309,7 +320,8 @@ export default function QualityAssurancePage() {
                                   <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded max-h-80 overflow-auto">{testResult.error}</pre>
                                 )}
                             </div>
-                        ) : (
+                        )}
+                        {testResult.success && (
                             <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
                                 <div className="flex items-center gap-2 text-green-700 font-bold">
                                     <CheckCircle className="h-5 w-5" />
