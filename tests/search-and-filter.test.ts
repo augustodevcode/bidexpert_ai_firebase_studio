@@ -34,9 +34,46 @@ async function createSearchTestData() {
     auctioneer1 = await prisma.auctioneer.create({ data: { name: `Leiloeiro Search ${testRunId}`, slug: `leiloeiro-search-${testRunId}`, publicId: `pub-auctioneer-search-${testRunId}` } });
 
     [auction1, auction2, auction3] = await prisma.$transaction([
-        prisma.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.550520, longitude: -46.633308 } as any }),
-        prisma.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category2.id, city: 'Rio de Janeiro', state: 'RJ', latitude: -22.906847, longitude: -43.172896 } as any }),
-        prisma.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP' } as any })
+        prisma.auction.create({ data: { 
+            title: `Leilão de Carros SP ${testRunId}`, 
+            slug: `leilao-carros-sp-${testRunId}`, 
+            publicId: `pub-auc-1-${testRunId}`, 
+            status: 'ABERTO_PARA_LANCES', 
+            auctionDate: new Date(), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller1.id } },
+            category: { connect: { id: category1.id } },
+            city: 'São Paulo', 
+            state: 'SP', 
+            latitude: -23.550520, 
+            longitude: -46.633308 
+        } }),
+        prisma.auction.create({ data: { 
+            title: `Leilão de Apartamentos RJ ${testRunId}`, 
+            slug: `leilao-apartamentos-rj-${testRunId}`, 
+            publicId: `pub-auc-2-${testRunId}`, 
+            status: 'EM_BREVE', 
+            auctionDate: new Date(Date.now() + 86400000), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller1.id } },
+            category: { connect: { id: category2.id } },
+            city: 'Rio de Janeiro', 
+            state: 'RJ', 
+            latitude: -22.906847, 
+            longitude: -43.172896 
+        } }),
+        prisma.auction.create({ data: { 
+            title: `Leilão Misto SP ${testRunId}`, 
+            slug: `leilao-misto-sp-${testRunId}`, 
+            publicId: `pub-auc-3-${testRunId}`, 
+            status: 'ABERTO_PARA_LANCES', 
+            auctionDate: new Date(), 
+            auctioneer: { connect: { id: auctioneer1.id } },
+            seller: { connect: { id: seller1.id } },
+            category: { connect: { id: category1.id } },
+            city: 'São Paulo', 
+            state: 'SP' 
+        } })
     ]);
 
     [lot1, lot2, lot3, lot4] = await prisma.$transaction([
@@ -50,7 +87,10 @@ async function createSearchTestData() {
 
 async function cleanupSearchTestData() {
   console.log(`[Search Service Test] Cleaning up test data for run: ${testRunId}`);
-  if (!prisma) return;
+  if (!prisma) {
+    console.warn('[Search Service Test] Prisma client not initialized, skipping cleanup.');
+    return;
+  }
   try {
     await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
     await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
