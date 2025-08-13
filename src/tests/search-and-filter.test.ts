@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { slugify } from '../lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
-import { LotService } from '../services/lot.service'; // Import service to test
+import { LotService } from '../src/services/lot.service'; // Import service to test
 
 let prisma: PrismaClient;
 const lotService = new LotService();
