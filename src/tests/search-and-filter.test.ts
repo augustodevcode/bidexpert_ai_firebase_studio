@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 import { slugify } from '../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
-import { LotService } from '../src/services/lot.service'; // Import service to test
+import { LotService } from '../src/services/lot.service';
 import { AuctionService } from '../src/services/auction.service';
 
 let prisma: PrismaClient;
@@ -55,10 +55,8 @@ async function cleanupSearchTestData() {
   try {
     await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
     await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
-    const seller = await prisma.seller.findFirst({where: {name: {contains: testRunId}}});
-    if(seller) await prisma.seller.delete({ where: { id: seller.id } });
-    const auctioneer = await prisma.auctioneer.findFirst({where: {name: {contains: testRunId}}});
-    if(auctioneer) await prisma.auctioneer.delete({ where: { id: auctioneer.id } });
+    await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+    await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
   } catch (e) {
     console.error("Error cleaning up search test data", e);
