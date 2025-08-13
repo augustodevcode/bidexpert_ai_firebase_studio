@@ -1,5 +1,5 @@
 // tests/search-and-filter.test.ts
-import { test, describe, beforeAll, afterAll, it } from 'vitest';
+import { test, describe, beforeAll, afterAll, it, expect } from 'vitest';
 import assert from 'node:assert';
 import { PrismaClient } from '@prisma/client';
 import { slugify } from '@/lib/ui-helpers';
@@ -44,6 +44,8 @@ async function createSearchTestData() {
             category: { connect: { id: category1.id } },
             city: 'São Paulo', 
             state: 'SP',
+            latitude: -23.550520,
+            longitude: -46.633308,
         } }),
         prisma.auction.create({ data: { 
             title: `Leilão de Apartamentos RJ ${testRunId}`, 
@@ -55,7 +57,9 @@ async function createSearchTestData() {
             seller: { connect: { id: seller1.id } },
             category: { connect: { id: category2.id } },
             city: 'Rio de Janeiro', 
-            state: 'RJ', 
+            state: 'RJ',
+            latitude: -22.906847,
+            longitude: -43.172896,
         } }),
         prisma.auction.create({ data: { 
             title: `Leilão Misto SP ${testRunId}`, 
@@ -67,7 +71,9 @@ async function createSearchTestData() {
             seller: { connect: { id: seller1.id } },
             category: { connect: { id: category1.id } },
             city: 'São Paulo', 
-            state: 'SP' 
+            state: 'SP',
+            latitude: -23.5613,
+            longitude: -46.6800, 
         } })
     ]);
 
@@ -105,7 +111,16 @@ describe('Search and Filter Service Logic Test', () => {
         prisma = new PrismaClient();
         await prisma.$connect();
         await cleanupSearchTestData();
-        await createSearchTestData();
+        try {
+            await createSearchTestData();
+        } catch(error: any) {
+            console.error("Test setup failed:", error);
+            if (error.message.includes("Unknown argument")) {
+                console.log("\nRECOMMENDED ACTION: The database schema is out of sync with the test data. Please add the missing field to your 'prisma/schema.prisma' file and run 'npx prisma db push'.\n");
+            }
+            // Re-throw to make the test suite fail
+            throw error;
+        }
     });
 
     afterAll(async () => {
