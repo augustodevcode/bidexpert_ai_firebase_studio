@@ -15,8 +15,8 @@ export class JudicialDistrictService {
     const districts = await this.repository.findAll();
     return districts.map(d => ({
         ...d,
-        courtName: d.court.name,
-        stateUf: d.state.uf,
+        courtName: d.court?.name, // Safe access
+        stateUf: d.state?.uf,     // Safe access
     }));
   }
 
@@ -25,8 +25,8 @@ export class JudicialDistrictService {
      if (!district) return null;
     return {
         ...district,
-        courtName: district.court.name,
-        stateUf: district.state.uf,
+        courtName: district.court?.name, // Safe access
+        stateUf: district.state?.uf,     // Safe access
     }
   }
 

@@ -24,7 +24,7 @@ const bemService = new BemService();
 const roleRepository = new RoleRepository();
 
 // Test data holders
-const testRunId = uuidv4().substring(0, 8);
+const testRunId = `bidding-e2e-${uuidv4().substring(0, 8)}`;
 let testAnalyst: UserProfileWithPermissions;
 let biddingUsers: UserProfileWithPermissions[] = [];
 let consignorUser: UserProfileWithPermissions;
@@ -42,41 +42,53 @@ async function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+async function cleanup() {
+    console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
+    try {
+        const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean) as string[];
+        if (userIds.length > 0) {
+          await prisma.notification.deleteMany({ where: { userId: { in: userIds } } });
+          await prisma.bid.deleteMany({ where: { bidderId: { in: userIds } } });
+          await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds}}});
+          await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+        }
+
+        const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
+        if (lotIds.length > 0) {
+          await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
+          await prisma.userWin.deleteMany({ where: { lotId: { in: lotIds } } });
+          await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
+        }
+        
+        const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean) as string[];
+        if (auctionIds.length > 0) {
+             await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds } } });
+             await prisma.auctionStage.deleteMany({where: {auctionId: {in: auctionIds}}});
+             await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
+        }
+
+        const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
+        for (const bemId of bemIds) { await bemService.deleteBem(bemId); }
+        
+        if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
+        if (testSeller) await sellerService.deleteSeller(testSeller.id);
+        if (testJudicialSeller) await sellerService.deleteSeller(testJudicialSeller.id);
+        if (testBranch) await prisma.judicialBranch.delete({ where: { id: testBranch.id } });
+        if (testDistrict) await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
+        if (testCourt) await prisma.court.delete({ where: { id: testCourt.id } });
+        if (testState) await prisma.state.delete({ where: { id: testState.id } });
+        if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+        if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+
+    } catch (error) {
+        console.error("[E2E Teardown] Error during cleanup:", error);
+    }
+}
+
+
 test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`, () => {
-
-    console.log(`
-    ================================================================
-    [E2E TEST PLAN - Bidding & Auction Lifecycle]
-    ================================================================
-    
-    Este teste valida o fluxo completo de criação e interação com leilões e lotes.
-    
-    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
-    
-    1.  **Setup de Dados**:
-        - Deve criar com sucesso todos os tipos de entidades: usuários, perfis, leiloeiros, comitentes (judiciais e extrajudiciais), categorias, e a hierarquia judicial completa.
-        - Deve criar com sucesso todos os tipos de leilões: Judicial, Extrajudicial, Silencioso, Holandês e Tomada de Preços.
-        - Deve criar e associar corretamente Bens e Lotes aos seus respectivos leilões.
-
-    2.  **Habilitação e Lances (Leilão Padrão)**:
-        - Um usuário com status 'HABILITADO' deve conseguir se habilitar para um leilão específico.
-        - Um lance válido (maior que o atual) de um usuário habilitado deve ser aceito e atualizar o preço do lote.
-        - Um lance subsequente maior de outro usuário deve ser aceito e se tornar o lance mais alto.
-        - No encerramento do lote, o usuário com o maior lance deve ser declarado o vencedor.
-
-    3.  **Lógica de Leilão Holandês (Reverso)**:
-        - O preço do lote deve diminuir automaticamente com o tempo com base no 'decrementAmount' e 'decrementIntervalSeconds'.
-        - O primeiro lance ("comprar") em um leilão holandês deve encerrar o lote e declarar o licitante como vencedor.
-        - O preço não deve cair abaixo do 'floorPrice' definido.
-
-    4.  **Lógica de Leilão Silencioso**:
-        - Lances devem ser aceitos, mas não devem atualizar o preço público do lote.
-        - O vencedor só deve ser determinado após o encerramento do lote.
-    
-    ================================================================
-    `);
-
     test.before(async () => {
+        await cleanup();
         console.log(`--- [E2E Setup - ${testRunId}] Starting prerequisite data setup ---`);
         
         // 1. Roles
@@ -173,47 +185,7 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
     });
 
     test.after(async () => {
-        console.log(`--- [E2E Teardown - ${testRunId}] Cleaning up test data ---`);
-        try {
-            await prisma.notification.deleteMany({ where: { userId: { in: biddingUsers.map(u => u.id) } } });
-            await prisma.bid.deleteMany({ where: { bidderId: { in: biddingUsers.map(u => u.id) } }});
-            
-            const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
-            if (lotIds.length > 0) {
-              await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
-              await prisma.userWin.deleteMany({ where: { lotId: { in: lotIds } } });
-              await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
-            }
-            
-            const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id, silentAuction?.id, dutchAuction?.id, tomadaPrecos?.id].filter(Boolean) as string[];
-            if (auctionIds.length > 0) {
-                 await prisma.auctionHabilitation.deleteMany({ where: { auctionId: { in: auctionIds } } });
-                 await prisma.auctionStage.deleteMany({where: {auctionId: {in: auctionIds}}});
-                 await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
-            }
-
-            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
-            for (const bemId of bemIds) { await bemService.deleteBem(bemId); }
-            
-            if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
-            if (testSeller) await sellerService.deleteSeller(testSeller.id);
-            if (testJudicialSeller) await sellerService.deleteSeller(testJudicialSeller.id);
-            if (testBranch) await prisma.judicialBranch.delete({ where: { id: testBranch.id } });
-            if (testDistrict) await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
-            if (testCourt) await prisma.court.delete({ where: { id: testCourt.id } });
-            if (testState) await prisma.state.delete({ where: { id: testState.id } });
-            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
-            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
-            
-            const userIds = [testAnalyst?.id, consignorUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean) as string[];
-             if (userIds.length > 0) {
-                await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds}}});
-                await prisma.user.deleteMany({ where: { id: { in: userIds } } });
-             }
-
-        } catch (error) {
-            console.error("[E2E Teardown] Error during cleanup:", error);
-        }
+        await cleanup();
         await prisma.$disconnect();
         console.log(`--- [E2E Teardown - ${testRunId}] Cleanup finished ---`);
     });

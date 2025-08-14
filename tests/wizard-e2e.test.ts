@@ -20,9 +20,32 @@ let testBranch: JudicialBranch;
 let testJudicialProcess: JudicialProcess;
 let testBem: Bem;
 
+// Helper to ensure cleanup happens
+async function cleanup() {
+    console.log(`--- [Wizard E2E Teardown - ${testRunId}] Cleaning up... ---`);
+    try {
+        await prisma.lotBens.deleteMany({ where: { bem: { title: { contains: testRunId } } } });
+        await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
+        await prisma.auctionStage.deleteMany({ where: { auction: { title: { contains: testRunId } } } });
+        await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+        await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });
+        await prisma.judicialProcess.deleteMany({ where: { processNumber: { contains: testRunId } } });
+        await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.state.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+    } catch (error) {
+        console.error("[Wizard E2E Teardown] Error during cleanup:", error);
+    }
+}
+
 describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
 
     beforeAll(async () => {
+        await cleanup(); // Ensure a clean slate before starting
         console.log(`--- [Wizard E2E Setup - ${testRunId}] Starting... ---`);
         
         const uniqueUf = testRunId.substring(0, 2).toUpperCase();
@@ -63,24 +86,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
     });
 
     afterAll(async () => {
-        console.log(`--- [Wizard E2E Teardown - ${testRunId}] Cleaning up... ---`);
-        try {
-            await prisma.lotBens.deleteMany({ where: { bem: { title: { contains: testRunId } } } });
-            await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
-            await prisma.auctionStage.deleteMany({ where: { auction: { title: { contains: testRunId } } } });
-            await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
-            await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });
-            await prisma.judicialProcess.deleteMany({ where: { processNumber: { contains: testRunId } } });
-            await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.state.deleteMany({ where: { uf: testRunId.substring(0,2).toUpperCase() } });
-            await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
-            await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
-        } catch (error) {
-            console.error("[Wizard E2E Teardown] Error during cleanup:", error);
-        }
+        await cleanup();
         await prisma.$disconnect();
         console.log(`--- [Wizard E2E Teardown - ${testRunId}] Complete. ---`);
     });
@@ -91,7 +97,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         // Step 1: Fetch initial data
         console.log('- Step 1: Fetching initial data...');
         const initialDataResult = await getWizardInitialData();
-        assert.ok(initialDataResult.success, 'Should fetch initial wizard data successfully.');
+        assert.ok(initialDataResult.success, `Should fetch initial wizard data successfully. Error: ${initialDataResult.message}`);
         const wizardFetchedData = initialDataResult.data as any;
         assert.ok(wizardFetchedData.judicialProcesses.some((p:any) => p.id === testJudicialProcess.id), 'Test judicial process should be in the initial data.');
         console.log('- PASSED: Initial data fetched.');
