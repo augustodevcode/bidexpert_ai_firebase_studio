@@ -38,11 +38,14 @@ const getTextContent = (node: React.ReactNode): string => {
 function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
   const [analysisResult, setAnalysisResult] = React.useState<{ analysis: string; recommendation: string } | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [hasCopiedForAI, setHasCopiedForAI] = React.useState(false);
+  const { toast } = useToast();
 
   React.useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
       setAnalysisResult(null);
+      setHasCopiedForAI(false); // Reset copy status when modal opens
       analyzeErrorLogAction(errorLog)
         .then(result => {
           if (result.success) {
@@ -54,6 +57,16 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
         .finally(() => setIsLoading(false));
     }
   }, [isOpen, errorLog]);
+
+  const handleCopyToClipboard = () => {
+    if (!analysisResult) return;
+    const textToCopy = `**[Análise da IA]**\n\n**Causa Raiz:**\n${analysisResult.analysis}\n\n**Recomendação:**\n${analysisResult.recommendation}`;
+    navigator.clipboard.writeText(textToCopy);
+    setHasCopiedForAI(true);
+    toast({ title: "Copiado!", description: "A análise foi copiada para a área de transferência."});
+    setTimeout(() => setHasCopiedForAI(false), 2500);
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -68,23 +81,32 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
             <p className="text-muted-foreground text-sm">Analisando o log de erro...</p>
           </div>
         ) : analysisResult ? (
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
              <Alert>
               <AlertCircle className="h-4 w-4"/>
               <AlertTitle className="font-semibold">Análise da Causa Raiz</AlertTitle>
               <AlertDescription className="text-sm whitespace-pre-line">{analysisResult.analysis}</AlertDescription>
             </Alert>
              <Alert variant="default" className="bg-green-50 dark:bg-green-900/20 border-green-500/50">
-               <CheckCircle className="h-4 w-4"/>
+               <CheckCircle className="h-4 w-4 text-green-600"/>
               <AlertTitle className="font-semibold text-green-700 dark:text-green-300">Recomendação de Correção</AlertTitle>
               <AlertDescription className="text-sm whitespace-pre-line text-green-800 dark:text-green-200">{analysisResult.recommendation}</AlertDescription>
             </Alert>
           </div>
         ) : null}
-         <DialogFooter>
-          <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
-            Fechar
-          </Button>
+         <DialogFooter className="flex-col sm:flex-row sm:justify-between w-full">
+            <Button
+              type="button"
+              variant="default"
+              onClick={handleCopyToClipboard}
+              disabled={isLoading || !analysisResult || hasCopiedForAI}
+            >
+              {hasCopiedForAI ? <Check className="mr-2 h-4 w-4" /> : <Copy className="mr-2 h-4 w-4" />}
+              {hasCopiedForAI ? 'Copiado!' : 'Copiar para o Prototyper'}
+            </Button>
+            <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>
+              Fechar
+            </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
