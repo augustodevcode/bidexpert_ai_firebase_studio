@@ -1,5 +1,5 @@
 // tests/bidding-e2e.test.ts
-import test from 'node:test';
+import { test, describe, beforeAll, afterAll, expect } from 'vitest';
 import assert from 'node:assert';
 import { prisma } from '../src/lib/prisma';
 import { LotService } from '../src/services/lot.service';
@@ -87,7 +87,8 @@ async function cleanup() {
 
 
 test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`, () => {
-    test.before(async () => {
+
+    beforeAll(async () => {
         await cleanup();
         console.log(`--- [E2E Setup - ${testRunId}] Starting prerequisite data setup ---`);
         
@@ -184,10 +185,10 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         console.log(`--- [E2E Setup - ${testRunId}] Complete. ---`);
     });
 
-    test.after(async () => {
+    afterAll(async () => {
         await cleanup();
         await prisma.$disconnect();
-        console.log(`--- [E2E Teardown - ${testRunId}] Cleanup finished ---`);
+        console.log(`--- [E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
     });
 
     test('Standard Bidding: should allow users to bid and determine a winner', async () => {

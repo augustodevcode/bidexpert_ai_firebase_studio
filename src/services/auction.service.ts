@@ -61,7 +61,7 @@ export class AuctionService {
         slug: slugify(data.title!),
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
-        auctionType: modality,
+        auctionType: data.auctionType, // Use auctionType directly from data
         participation: data.participation,
         auctionMethod: data.auctionMethod,
         softCloseMinutes: Number(data.softCloseMinutes),

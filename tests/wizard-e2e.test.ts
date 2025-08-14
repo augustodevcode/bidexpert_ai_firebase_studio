@@ -27,9 +27,9 @@ async function cleanup() {
         const auctions = await prisma.auction.findMany({ where: { title: { contains: testRunId } } });
         if (auctions.length > 0) {
             const auctionIds = auctions.map(a => a.id);
+            await prisma.auctionStage.deleteMany({ where: { auctionId: { in: auctionIds } } });
             await prisma.lotBens.deleteMany({ where: { lot: { auctionId: { in: auctionIds } } } });
             await prisma.lot.deleteMany({ where: { auctionId: { in: auctionIds } } });
-            await prisma.auctionStage.deleteMany({ where: { auctionId: { in: auctionIds } } });
             await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
         }
         
@@ -128,6 +128,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
             auctioneerId: testAuctioneer.id,
             sellerId: testJudicialSeller.id,
             categoryId: testCategory.id,
+            judicialProcessId: testJudicialProcess.id, // Correctly link the process
             auctionStages: [{ name: '1ª Praça', startDate: auctionStartDate, endDate: auctionEndDate, initialPrice: 50000 }]
         };
         

@@ -79,7 +79,12 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
   const lotService = new LotService();
 
   // 1. Create the Auction
-  const auctionResult = await auctionService.createAuction(wizardData.auctionDetails);
+  const auctionData = {
+    ...wizardData.auctionDetails,
+    judicialProcessId: wizardData.judicialProcess?.id // Make sure to pass this along
+  };
+
+  const auctionResult = await auctionService.createAuction(auctionData);
   
   if (!auctionResult.success || !auctionResult.auctionId) {
     return { success: false, message: `Falha ao criar o leilão: ${auctionResult.message}` };
