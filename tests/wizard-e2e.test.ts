@@ -1,8 +1,8 @@
 // tests/wizard-e2e.test.ts
-import { test, describe, beforeAll, afterAll, expect } from 'vitest';
+import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '../src/lib/prisma';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData } from '../src/types';
+import { prisma } from '@/lib/prisma';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getWizardInitialData, createAuctionFromWizard } from '@/app/admin/wizard/actions';
@@ -96,7 +96,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         console.log(`--- [Wizard E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
     });
 
-    test('should simulate the entire wizard flow and create a complete auction', async () => {
+    it('should simulate the entire wizard flow and create a complete auction', async () => {
         console.log('\n--- Test: Full Wizard Flow Simulation ---');
 
         // Step 1: Fetch initial data

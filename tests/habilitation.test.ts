@@ -1,15 +1,15 @@
 // tests/habilitation.test.ts
-import { test, describe, beforeAll, afterAll, expect } from 'vitest';
+import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '../src/lib/prisma';
-import { UserService } from '../src/services/user.service';
-import { AuctionService } from '../src/services/auction.service';
-import { LotService } from '../src/services/lot.service';
-import { SellerService } from '../src/services/seller.service';
-import { saveUserDocument } from '../src/app/dashboard/documents/actions';
-import { approveDocument, habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
-import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, DocumentType } from '../src/types';
+import { prisma } from '@/lib/prisma';
+import { UserService } from '@/services/user.service';
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
+import { SellerService } from '@/services/seller.service';
+import { saveUserDocument } from '@/app/dashboard/documents/actions';
+import { approveDocument, habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
+import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, DocumentType } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const userService = new UserService();
@@ -29,6 +29,24 @@ let analystUser: UserProfileWithPermissions;
 
 describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
     
+    console.log(`
+    ================================================================
+    [E2E TEST PLAN - User Habilitation]
+    ================================================================
+    
+    Este teste valida o fluxo completo de habilitação de um usuário.
+    
+    CRITÉRIOS DE ACEITE A SEREM VERIFICADOS:
+    
+    1.  **Bloqueio Inicial**: Um usuário recém-criado (ou com documentos pendentes) NÃO deve conseguir dar lances.
+    2.  **Envio de Documentos**: O sistema deve registrar o envio de um documento e alterar o status do usuário para "Em Análise".
+    3.  **Aprovação de Documentos**: Um usuário "Analista" deve conseguir aprovar os documentos, alterando o status geral do usuário para "Habilitado".
+    4.  **Habilitação por Leilão**: Mesmo com o cadastro aprovado, o usuário ainda NÃO deve conseguir dar lances até se habilitar para o leilão específico.
+    5.  **Lance Pós-Habilitação**: Após se habilitar para o leilão, o usuário deve conseguir registrar um lance com sucesso no lote.
+    
+    ================================================================
+    `);
+
     beforeAll(async () => {
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Starting... ---`);
         const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'User', nameNormalized: 'USER', permissions: ['view_auctions', 'view_lots'] } });
@@ -38,16 +56,19 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         const userRes = await userService.createUser({ fullName: `Arrematante ${testRunId}`, email: `arrematante-${testRunId}@test.com`, password: 'password123', roleIds: [userRole.id], habilitationStatus: 'PENDING_DOCUMENTS' });
         assert.ok(userRes.success && userRes.userId, 'Regular user creation failed.');
         regularUser = (await userService.getUserById(userRes.userId!))!;
+        console.log(`- Created user for bidding: ${regularUser.email}`);
 
         const analystRes = await userService.createUser({ fullName: `Analista ${testRunId}`, email: `analista-${testRunId}@test.com`, password: 'password123', roleIds: [analystRole.id], habilitationStatus: 'HABILITADO' });
         assert.ok(analystRes.success && analystRes.userId, 'Analyst user creation failed.');
         analystUser = (await userService.getUserById(analystRes.userId!))!;
+        console.log(`- Created user for analysis: ${analystUser.email}`);
         
         testDocumentType = await prisma.documentType.upsert({ 
             where: { name: `RG Teste E2E ${testRunId}`}, 
             update: {},
             create: { name: `RG Teste E2E ${testRunId}`, description: 'Documento de RG para teste', isRequired: true, appliesTo: 'PHYSICAL,LEGAL' } 
         });
+        console.log(`- Ensured document type exists: ${testDocumentType.name}`);
 
         testCategory = await prisma.lotCategory.create({ data: { name: `Cat Hab ${testRunId}`, slug: `cat-hab-${testRunId}`, hasSubcategories: false } });
         testAuctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Hab ${testRunId}`, slug: `auct-hab-${testRunId}`, publicId: `auct-pub-hab-${testRunId}` } });
@@ -56,10 +77,12 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         const auctionRes = await auctionService.createAuction({ title: `Auction Hab ${testRunId}`, sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: new Date() } as any);
         assert.ok(auctionRes.success && auctionRes.auctionId, 'Auction creation failed.');
         testAuction = (await auctionService.getAuctionById(auctionRes.auctionId!))!;
+        console.log(`- Created test auction: ${testAuction.title}`);
 
         const lotRes = await lotService.createLot({ title: `Lot Hab ${testRunId}`, auctionId: testAuction.id, price: 1000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: new Date(Date.now() + 24 * 60 * 60 * 1000) } as any);
         assert.ok(lotRes.success && lotRes.lotId, 'Lot creation failed.');
         testLot = (await lotService.getLotById(lotRes.lotId!))!;
+        console.log(`- Created test lot: ${testLot.title}`);
         
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Complete. ---`);
     });
@@ -85,7 +108,7 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         console.log(`--- [Habilitation E2E Teardown - ${testRunId}] Complete. ---`);
     });
 
-    test('should fail to bid if user has not submitted required documents', async () => {
+    it('should fail to bid if user has not submitted required documents', async () => {
         console.log('\n--- Test: Bidding without submitting any documents ---');
         const bidResult = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResult.success, false, 'Bidding should fail without approved documents');
@@ -93,7 +116,7 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         console.log('- PASSED: Blocked bid for user with pending documents.');
     });
 
-    test('should go through the full habilitation flow and place a successful bid', async () => {
+    it('should go through the full habilitation flow and place a successful bid', async () => {
         console.log('\n--- Test: Full Habilitation Flow ---');
 
         console.log(`[ACTION] Saving document for user ${regularUser.id}...`);

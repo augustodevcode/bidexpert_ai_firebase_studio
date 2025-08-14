@@ -55,7 +55,7 @@ async function cleanup() {
 
         const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
         if (lotIds.length > 0) {
-          await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
+          await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } } });
           await prisma.userWin.deleteMany({ where: { lotId: { in: lotIds } } });
           await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
         }
@@ -187,7 +187,6 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
 
     afterAll(async () => {
         await cleanup();
-        await prisma.$disconnect();
         console.log(`--- [E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
     }, 60000);
 
@@ -237,5 +236,3 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
         console.log("- STATUS: ✅ PASSOU");
     });
 });
-
-  

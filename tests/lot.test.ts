@@ -120,5 +120,3 @@ describe('Lot Service E2E Tests', () => {
         assert.ok(joinRecord, 'A record should exist in the LotBens join table');
     });
 });
-
-  
