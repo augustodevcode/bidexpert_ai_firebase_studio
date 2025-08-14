@@ -65,6 +65,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
     afterAll(async () => {
         console.log(`--- [Wizard E2E Teardown - ${testRunId}] Cleaning up... ---`);
         try {
+            await prisma.lotBens.deleteMany({ where: { bem: { title: { contains: testRunId } } } });
             await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
             await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
             await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });

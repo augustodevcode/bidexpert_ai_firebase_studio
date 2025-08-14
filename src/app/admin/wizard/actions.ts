@@ -96,6 +96,9 @@ export async function createAuctionFromWizard(wizardData: WizardData): Promise<{
     }
   }
 
-  revalidatePath('/admin/auctions');
+  if (process.env.NODE_ENV !== 'test') {
+    revalidatePath('/admin/auctions');
+  }
+  
   return { success: true, message: "Leilão e lotes criados com sucesso!", auctionId: auctionResult.auctionId };
 }
