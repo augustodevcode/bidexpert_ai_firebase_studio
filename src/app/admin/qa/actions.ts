@@ -18,7 +18,7 @@ const execPromise = util.promisify(exec);
 // Helper function to read project context files for the AI
 async function getProjectContextForAI(): Promise<string> {
     try {
-        const rulesPath = path.join(process.cwd(), 'airules.MD');
+        const rulesPath = path.join(process.cwd(), 'src', 'airules.MD'); // CORRIGIDO: Caminho para src/airules.MD
         const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma');
         
         const [rulesContent, schemaContent] = await Promise.all([
