@@ -41,6 +41,7 @@ export async function analyzeTestFailure(input: AnalyzeTestFailureInput): Promis
 }
 
 export async function analyzeErrorLog(input: AnalyzeErrorLogInput): Promise<AnalysisOutput> {
+  // CORREÇÃO: Chamando o fluxo correto para erros genéricos.
   return analyzeGenericErrorLogFlow(input);
 }
 
