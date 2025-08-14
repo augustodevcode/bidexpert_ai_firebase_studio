@@ -91,16 +91,17 @@ export const auctionFormSchema = z.object({
     .min(1, "O leilão deve ter pelo menos uma praça/etapa.")
     .optional()
     .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }])
-    .refine(stages => {
-      for (let i = 1; i < stages.length; i++) {
-        if (stages[i].startDate < stages[i - 1].endDate) {
-          return false;
+    .refine((stages) => {
+        if (!stages) return true;
+        for (let i = 1; i < stages.length; i++) {
+            if (stages[i].startDate < stages[i - 1].endDate) {
+                return false;
+            }
         }
-      }
-      return true;
+        return true;
     }, {
-      message: "A data de início de uma praça não pode ser anterior ao fim da praça anterior.",
-      path: ["auctionStages"],
+        message: "A data de início de uma etapa não pode ser anterior ao fim da etapa anterior.",
+        path: ["auctionStages"],
     }),
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),
   decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
