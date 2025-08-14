@@ -113,13 +113,15 @@ ${analysisResult.recommendation}
 export async function analyzeErrorLogAction(errorLog: string): Promise<{ success: boolean; analysis: string; recommendation: string }> {
   try {
     const projectContext = await getProjectContextForAI();
+    console.log("[analyzeErrorLogAction] Calling AI to analyze generic error...");
     const result = await analyzeErrorLog({
       errorLog: errorLog,
       projectContext: projectContext,
     });
+    console.log("[analyzeErrorLogAction] AI analysis complete.", result);
     return { success: true, ...result };
   } catch (error: any) {
-    console.error("Error calling AI analysis for error log:", error);
+    console.error("[analyzeErrorLogAction] Error calling AI analysis for error log:", error);
     return {
       success: false,
       analysis: "Falha na Análise",
@@ -131,13 +133,13 @@ export async function analyzeErrorLogAction(errorLog: string): Promise<{ success
 
 export async function runBiddingEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/bidding-e2e.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runSearchAndFilterTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/search-and-filter.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
@@ -145,126 +147,126 @@ export async function runSearchAndFilterTest(): Promise<{ success: boolean; outp
 // --- Rest of the functions would follow the same pattern ---
 export async function runHabilitationEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/habilitation.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/menu-content.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/modalities-menu.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runUserEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/user.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runSellerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/seller.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runAuctioneerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/auctioneer.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runCategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/category.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runSubcategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/subcategory.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runRoleEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/role.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runStateEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/state.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runCityEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/city.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/court.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runJudicialDistrictEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/judicial-district.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runJudicialBranchEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/judicial-branch.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runJudicialProcessEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/judicial-process.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runBemEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/bem.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runLotEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/lot.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runWizardEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/wizard-e2e.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/media.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runPlatformSettingsTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/platform-settings.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
 
 export async function runAuctionDataValidationTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/auction-data.test.ts';
-    const command = `NODE_ENV=test vitest run ${testFile}`;
+    const command = `npx vitest run ${testFile}`;
     return runTestAndAnalyze(command, testFile);
 }
