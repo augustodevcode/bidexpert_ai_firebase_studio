@@ -16,7 +16,7 @@ import {
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
     runLotEndToEndTest,
-    runWizardEndToEndTest, // Import the new test action
+    runWizardEndToEndTest,
     runRoleEndToEndTest,
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
@@ -26,12 +26,13 @@ import {
     runModalitiesMenuTest,
     runMediaLibraryEndToEndTest,
     runPlatformSettingsTest,
-    runAuctionDataValidationTest, // Renamed from UI test
-    runSearchAndFilterTest,     // Renamed from UI test
+    runAuctionDataValidationTest,
+    runSearchAndFilterTest,
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit, Rocket } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit, Rocket, Workflow, PackageCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Separator } from '@/components/ui/separator';
 
 interface TestResult {
   output: string;
@@ -45,196 +46,63 @@ interface TestConfig {
   title: string;
   description: string;
   action: () => Promise<TestResult>;
-  type: 'backend' | 'simulation';
   icon: React.ElementType;
 }
 
-const tests: TestConfig[] = [
-  {
-    id: 'bidding-e2e',
-    title: 'Simulação de Leilão (E2E)',
-    description: 'Simula 5 usuários, habilitação e um leilão com lances e soft-close.',
-    action: runBiddingEndToEndTest,
-    type: 'simulation',
-    icon: Users
-  },
-  {
-    id: 'wizard-e2e',
-    title: 'Simulação do Wizard (E2E)',
-    description: 'Executa o fluxo completo do assistente de criação de leilões, desde a seleção do tipo até a publicação final.',
-    action: runWizardEndToEndTest,
-    type: 'simulation',
-    icon: Rocket
-  },
-   {
-    id: 'habilitation-e2e',
-    title: 'Habilitação de Licitante (E2E)',
-    description: 'Simula o fluxo completo de um usuário enviando documentos, sendo aprovado e dando um lance.',
-    action: runHabilitationEndToEndTest,
-    type: 'simulation',
-    icon: UserCheck
-  },
-  {
-    id: 'auction-data-validation',
-    title: 'Validação de Dados de Leilões',
-    description: 'Cria entidades e verifica se os dados de leilões e lotes são consistentes para a UI.',
-    action: runAuctionDataValidationTest,
-    type: 'backend',
-    icon: BarChart3
-  },
-  {
-    id: 'search-filter-validation',
-    title: 'Validação de Busca e Filtro',
-    description: 'Cria dados e valida a lógica de filtro e busca da camada de serviço.',
-    action: runSearchAndFilterTest,
-    type: 'backend',
-    icon: Search
-  },
-  {
-    id: 'platform-settings',
-    title: 'Configurações da Plataforma (E2E)',
-    description: 'Valida a criação e atualização das configurações da plataforma via camada de serviço.',
-    action: runPlatformSettingsTest,
-    type: 'backend',
-    icon: Settings
-  },
-  {
-    id: 'menu-content',
-    title: 'Conteúdo Dinâmico dos Menus',
-    description: 'Valida se os itens nos menus (Categorias, Leiloeiros, etc.) correspondem aos dados no banco.',
-    action: runMenuContentTest,
-    type: 'backend', 
-    icon: TestTube2
-  },
-  {
-    id: 'modalities-menu',
-    title: 'Menu de Modalidades',
-    description: 'Verifica se o menu estático de modalidades contém os itens e links corretos.',
-    action: runModalitiesMenuTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'user-creation',
-    title: 'Cadastro de Usuário',
-    description: 'Verifica a criação de um usuário, hash de senha e atribuição de perfil padrão.',
-    action: runUserEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'seller-creation',
-    title: 'Cadastro de Comitente',
-    description: 'Verifica o fluxo completo de criação de um novo comitente.',
-    action: runSellerEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'auctioneer-creation',
-    title: 'Cadastro de Leiloeiro',
-    description: 'Verifica a criação de um novo leiloeiro e a integridade dos dados.',
-    action: runAuctioneerEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'category-creation',
-    title: 'Cadastro de Categoria',
-    description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.',
-    action: runCategoryEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-   {
-    id: 'subcategory-creation',
-    title: 'Cadastro de Subcategoria',
-    description: 'Verifica a criação de uma subcategoria e sua vinculação à categoria pai.',
-    action: runSubcategoryEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-   {
-    id: 'role-creation',
-    title: 'Cadastro de Perfil (Role)',
-    description: 'Verifica a criação de um novo perfil de usuário com permissões.',
-    action: runRoleEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-   {
-    id: 'state-creation',
-    title: 'Cadastro de Estado',
-    description: 'Verifica a criação de um novo estado e validação de UF duplicada.',
-    action: runStateEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'city-creation',
-    title: 'Cadastro de Cidade',
-    description: 'Verifica a criação de uma cidade e sua vinculação com um estado.',
-    action: runCityEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'court-creation',
-    title: 'Cadastro de Tribunal',
-    description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.',
-    action: runCourtEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'judicial-district-creation',
-    title: 'Cadastro de Comarca',
-    description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.',
-    action: runJudicialDistrictEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'judicial-branch-creation',
-    title: 'Cadastro de Vara',
-    description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.',
-    action: runJudicialBranchEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'judicial-process-creation',
-    title: 'Cadastro de Processo',
-    description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.',
-    action: runJudicialProcessEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'bem-creation',
-    title: 'Cadastro de Bem',
-    description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.',
-    action: runBemEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'lot-creation',
-    title: 'Cadastro de Lote',
-    description: 'Verifica a criação de um lote e sua vinculação com bens e um leilão.',
-    action: runLotEndToEndTest,
-    type: 'backend',
-    icon: TestTube2
-  },
-  {
-    id: 'media-library',
-    title: 'Upload de Mídia',
-    description: 'Testa o endpoint de upload, criação de registro e salvamento do arquivo físico.',
-    action: runMediaLibraryEndToEndTest,
-    type: 'backend',
-    icon: Library
-  },
+interface TestGroup {
+    title: string;
+    description: string;
+    icon: React.ElementType;
+    tests: TestConfig[];
+}
+
+const testGroups: TestGroup[] = [
+    {
+        title: "Simulações End-to-End",
+        description: "Testes complexos que simulam fluxos completos de usuários, validando a integração de múltiplas funcionalidades.",
+        icon: Workflow,
+        tests: [
+            { id: 'bidding-e2e', title: 'Simulação de Leilão (E2E)', description: 'Simula 5 usuários, habilitação e um leilão com lances e soft-close.', action: runBiddingEndToEndTest, icon: Users },
+            { id: 'wizard-e2e', title: 'Simulação do Wizard (E2E)', description: 'Executa o fluxo completo do assistente de criação de leilões, desde a seleção do tipo até a publicação.', action: runWizardEndToEndTest, icon: Rocket },
+            { id: 'habilitation-e2e', title: 'Habilitação de Licitante (E2E)', description: 'Simula o fluxo de um usuário enviando documentos, sendo aprovado e dando um lance.', action: runHabilitationEndToEndTest, icon: UserCheck }
+        ]
+    },
+    {
+        title: "Validação de Lógica de Negócio e UI",
+        description: "Testes que verificam a integridade dos dados, a consistência da interface e as regras de negócio da plataforma.",
+        icon: PackageCheck,
+        tests: [
+            { id: 'auction-data-validation', title: 'Validação de Dados de Leilões', description: 'Cria entidades e verifica se os dados de leilões e lotes são consistentes para a UI.', action: runAuctionDataValidationTest, icon: BarChart3 },
+            { id: 'search-filter-validation', title: 'Validação de Busca e Filtro', description: 'Cria dados e valida a lógica de filtro e busca da camada de serviço.', action: runSearchAndFilterTest, icon: Search },
+            { id: 'platform-settings', title: 'Configurações da Plataforma (E2E)', description: 'Valida a criação e atualização das configurações da plataforma via camada de serviço.', action: runPlatformSettingsTest, icon: Settings },
+            { id: 'menu-content', title: 'Conteúdo Dinâmico dos Menus', description: 'Valida se os itens nos menus (Categorias, Leiloeiros, etc.) correspondem aos dados no banco.', action: runMenuContentTest, icon: TestTube2 },
+            { id: 'modalities-menu', title: 'Menu de Modalidades', description: 'Verifica se o menu estático de modalidades contém os itens e links corretos.', action: runModalitiesMenuTest, icon: TestTube2 },
+        ]
+    },
+    {
+        title: "Testes de Unidade (CRUD por Entidade)",
+        description: "Testes focados em validar a criação, leitura, atualização e exclusão (CRUD) de cada entidade do sistema.",
+        icon: TestTubeDiagonal,
+        tests: [
+            { id: 'user-creation', title: 'Cadastro de Usuário', description: 'Verifica a criação de um usuário, hash de senha e atribuição de perfil padrão.', action: runUserEndToEndTest, icon: TestTube2 },
+            { id: 'seller-creation', title: 'Cadastro de Comitente', description: 'Verifica o fluxo completo de criação de um novo comitente.', action: runSellerEndToEndTest, icon: TestTube2 },
+            { id: 'auctioneer-creation', title: 'Cadastro de Leiloeiro', description: 'Verifica a criação de um novo leiloeiro e a integridade dos dados.', action: runAuctioneerEndToEndTest, icon: TestTube2 },
+            { id: 'category-creation', title: 'Cadastro de Categoria', description: 'Verifica a criação de uma nova categoria de lote e a geração do slug.', action: runCategoryEndToEndTest, icon: TestTube2 },
+            { id: 'subcategory-creation', title: 'Cadastro de Subcategoria', description: 'Verifica a criação de uma subcategoria e sua vinculação à categoria pai.', action: runSubcategoryEndToEndTest, icon: TestTube2 },
+            { id: 'role-creation', title: 'Cadastro de Perfil (Role)', description: 'Verifica a criação de um novo perfil de usuário com permissões.', action: runRoleEndToEndTest, icon: TestTube2 },
+            { id: 'state-creation', title: 'Cadastro de Estado', description: 'Verifica a criação de um novo estado e validação de UF duplicada.', action: runStateEndToEndTest, icon: TestTube2 },
+            { id: 'city-creation', title: 'Cadastro de Cidade', description: 'Verifica a criação de uma cidade e sua vinculação com um estado.', action: runCityEndToEndTest, icon: TestTube2 },
+            { id: 'court-creation', title: 'Cadastro de Tribunal', description: 'Verifica a criação de uma nova entidade de Tribunal no banco de dados.', action: runCourtEndToEndTest, icon: TestTube2 },
+            { id: 'judicial-district-creation', title: 'Cadastro de Comarca', description: 'Verifica a criação de uma comarca e sua vinculação com estado e tribunal.', action: runJudicialDistrictEndToEndTest, icon: TestTube2 },
+            { id: 'judicial-branch-creation', title: 'Cadastro de Vara', description: 'Verifica a criação de uma vara judicial e sua vinculação com uma comarca.', action: runJudicialBranchEndToEndTest, icon: TestTube2 },
+            { id: 'judicial-process-creation', title: 'Cadastro de Processo', description: 'Verifica a criação de um processo judicial e a inclusão transacional de suas partes.', action: runJudicialProcessEndToEndTest, icon: TestTube2 },
+            { id: 'bem-creation', title: 'Cadastro de Bem', description: 'Verifica a criação de um novo bem (ativo) e sua associação com categoria e comitente.', action: runBemEndToEndTest, icon: TestTube2 },
+            { id: 'lot-creation', title: 'Cadastro de Lote', description: 'Verifica a criação de um lote e sua vinculação com bens e um leilão.', action: runLotEndToEndTest, icon: TestTube2 },
+            { id: 'media-library', title: 'Upload de Mídia', description: 'Testa o endpoint de upload, criação de registro e salvamento do arquivo físico.', action: runMediaLibraryEndToEndTest, icon: Library },
+        ]
+    }
 ];
+
 
 export default function QualityAssurancePage() {
     const { toast } = useToast();
@@ -248,7 +116,7 @@ export default function QualityAssurancePage() {
         setLastTestRun(testId);
         setTestResult(null);
 
-        const testToRun = tests.find(t => t.id === testId);
+        const testToRun = testGroups.flatMap(g => g.tests).find(t => t.id === testId);
         if (!testToRun) return;
 
         const result = await testToRun.action();
@@ -266,7 +134,7 @@ export default function QualityAssurancePage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-8">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -277,36 +145,49 @@ export default function QualityAssurancePage() {
                         Execute testes automatizados para verificar a integridade das funcionalidades críticas da plataforma.
                     </CardDescription>
                 </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {tests.map(test => (
-                        <Card key={test.id} className="bg-secondary/30">
-                            <CardHeader>
-                                <CardTitle className="text-lg flex items-center gap-2">
-                                     <test.icon className="h-4 w-4 text-primary" />
-                                     {test.title}
-                                </CardTitle>
-                                <CardDescription>{test.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <Button onClick={() => handleRunTest(test.id)} disabled={!!runningTest}>
-                                    {runningTest === test.id ? (
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <PlayCircle className="mr-2 h-4 w-4" />
-                                    )}
-                                    {runningTest === test.id ? 'Executando...' : 'Rodar Teste'}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    ))}
-                </CardContent>
             </Card>
+
+            {testGroups.map(group => (
+                <Card key={group.title} className="shadow-md">
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-xl">
+                           <group.icon className="h-5 w-5 text-primary" /> {group.title}
+                        </CardTitle>
+                        <CardDescription>{group.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                         {group.tests.map(test => (
+                            <Card key={test.id} className="bg-secondary/30 flex flex-col">
+                                <CardHeader className="pb-4">
+                                    <CardTitle className="text-base font-semibold flex items-center gap-2">
+                                        <test.icon className="h-4 w-4 text-primary" />
+                                        {test.title}
+                                    </CardTitle>
+                                    <CardDescription className="text-xs h-12">
+                                        {test.description}
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardFooter className="mt-auto">
+                                    <Button onClick={() => handleRunTest(test.id)} disabled={!!runningTest} className="w-full">
+                                        {runningTest === test.id ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <PlayCircle className="mr-2 h-4 w-4" />
+                                        )}
+                                        {runningTest === test.id ? 'Executando...' : 'Rodar Teste'}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        ))}
+                    </CardContent>
+                </Card>
+            ))}
 
             {testResult && (
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                          Resultados para: <span className="text-primary">{tests.find(t => t.id === lastTestRun)?.title}</span>
+                          Resultados para: <span className="text-primary">{testGroups.flatMap(g=>g.tests).find(t => t.id === lastTestRun)?.title}</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
