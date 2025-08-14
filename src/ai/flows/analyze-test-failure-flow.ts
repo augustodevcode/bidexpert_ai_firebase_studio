@@ -123,7 +123,7 @@ const analyzeTestFailureFlow = ai.defineFlow(
     outputSchema: AnalysisOutputSchema,
   },
   async (input) => {
-    const { output } = await analyzeTestFailurePrompt.generate({ input });
+    const { output } = await analyzeTestFailurePrompt(input);
     return output!;
   }
 );
@@ -135,7 +135,7 @@ const analyzeGenericErrorLogFlow = ai.defineFlow(
     outputSchema: AnalysisOutputSchema,
   },
   async (input) => {
-    const { output } = await analyzeGenericErrorPrompt.generate({ input });
+    const { output } = await analyzeGenericErrorPrompt(input);
     return output!;
   }
 );

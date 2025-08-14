@@ -187,8 +187,9 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
 
     afterAll(async () => {
         await cleanup();
+        await prisma.$disconnect();
         console.log(`--- [E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
-    }, 60000);
+    });
 
     it('Standard Bidding: should allow users to bid and determine a winner', async () => {
         console.log('\n--- Test: Standard Bidding on Extrajudicial Lot ---');
