@@ -235,6 +235,12 @@ export async function runLotEndToEndTest(): Promise<{ success: boolean; output: 
     return runTestAndAnalyze(command, testFile);
 }
 
+export async function runWizardEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/wizard-e2e.test.ts';
+    const command = `NODE_ENV=test vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
 export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/media.test.ts';
     const command = `NODE_ENV=test vitest run ${testFile}`;

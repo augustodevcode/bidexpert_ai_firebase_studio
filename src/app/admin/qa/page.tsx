@@ -16,6 +16,7 @@ import {
     runJudicialProcessEndToEndTest,
     runBemEndToEndTest,
     runLotEndToEndTest,
+    runWizardEndToEndTest, // Import the new test action
     runRoleEndToEndTest,
     runSubcategoryEndToEndTest,
     runStateEndToEndTest,
@@ -28,7 +29,7 @@ import {
     runAuctionDataValidationTest, // Renamed from UI test
     runSearchAndFilterTest,     // Renamed from UI test
 } from './actions';
-import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit } from 'lucide-react';
+import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit, Rocket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
@@ -56,6 +57,14 @@ const tests: TestConfig[] = [
     action: runBiddingEndToEndTest,
     type: 'simulation',
     icon: Users
+  },
+  {
+    id: 'wizard-e2e',
+    title: 'Simulação do Wizard (E2E)',
+    description: 'Executa o fluxo completo do assistente de criação de leilões, desde a seleção do tipo até a publicação final.',
+    action: runWizardEndToEndTest,
+    type: 'simulation',
+    icon: Rocket
   },
    {
     id: 'habilitation-e2e',
