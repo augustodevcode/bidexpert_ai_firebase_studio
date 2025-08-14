@@ -153,14 +153,10 @@ export default function AuctionForm({
   const [categories, setCategories] = React.useState(initialCategories);
   const [auctioneers, setAuctioneers] = React.useState(initialAuctioneers);
   const [sellers, setSellers] = React.useState(initialSellers);
-  const [states, setStates] = React.useState(initialStates);
-  const [allCities, setAllCities] = React.useState(initialAllCities);
-
+  
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
-  const [isFetchingStates, setIsFetchingStates] = React.useState(false);
-  const [isFetchingCities, setIsFetchingCities] = React.useState(false);
   
   const [isCepLoading, setIsCepLoading] = React.useState(false);
   
@@ -213,8 +209,8 @@ export default function AuctionForm({
   
   const filteredCities = useMemo(() => {
     if (!selectedStateId) return [];
-    return allCities.filter(city => city.stateId === selectedStateId);
-  }, [selectedStateId, allCities]);
+    return initialAllCities.filter(city => city.stateId === selectedStateId);
+  }, [selectedStateId, initialAllCities]);
 
 
   React.useImperativeHandle(formRef, () => form);
@@ -242,18 +238,11 @@ export default function AuctionForm({
   }, [form, onWizardDataChange, isWizardMode, auctioneers, sellers]);
 
 
-  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers' | 'states' | 'cities') => {
+  const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers') => {
     if (entity === 'categories') { setIsFetchingCategories(true); const data = await refetchCategories(); setCategories(data); setIsFetchingCategories(false); }
     if (entity === 'auctioneers') { setIsFetchingAuctioneers(true); const data = await refetchAuctioneers(); setAuctioneers(data); setIsFetchingAuctioneers(false); }
     if (entity === 'sellers') { setIsFetchingSellers(true); const data = await refetchSellers(); setSellers(data); setIsFetchingSellers(false); }
-    if (entity === 'states') { setIsFetchingStates(true); const data = await refetchStates(); setStates(data); setIsFetchingStates(false); }
-    if (entity === 'cities') { setIsFetchingCities(true); const data = await refetchCities(); setAllCities(data); setIsFetchingCities(false); }
   }, []);
-  
-  useEffect(() => {
-    if (!initialStates || initialStates.length === 0) handleRefetch('states');
-    if (!initialAllCities || initialAllCities.length === 0) handleRefetch('cities');
-  }, [initialStates, initialAllCities, handleRefetch]);
 
   async function onSubmit(values: AuctionFormValues) {
     if (!onSubmitAction) return;
@@ -280,11 +269,11 @@ export default function AuctionForm({
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
-        const foundState = states.find(s => s.uf === result.data.uf);
+        const foundState = initialStates.find(s => s.uf === result.data.uf);
         if (foundState) {
             form.setValue('stateId', foundState.id);
             // After setting state, city needs to be found within the now-filtered list.
-            const citiesOfState = allCities.filter(c => c.stateId === foundState.id);
+            const citiesOfState = initialAllCities.filter(c => c.stateId === foundState.id);
             const foundCity = citiesOfState.find(c => c.name.toLowerCase() === result.data.localidade.toLowerCase());
             if (foundCity) {
                 form.setValue('cityId', foundCity.id);
@@ -338,8 +327,8 @@ export default function AuctionForm({
                         <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={states.map(s => ({ value: s.id, label: s.uf }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => handleRefetch('states')} isFetching={isFetchingStates} /><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => handleRefetch('cities')} isFetching={isFetchingCities} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: s.uf }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
                         </div>
                     </div>
                 )}
