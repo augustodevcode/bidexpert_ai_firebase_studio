@@ -1,16 +1,16 @@
 // tests/bidding-e2e.test.ts
-import { test, describe, beforeAll, afterAll, expect } from 'vitest';
+import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '../src/lib/prisma';
-import { LotService } from '../src/services/lot.service';
-import { AuctionService } from '../src/services/auction.service';
-import { UserService } from '../src/services/user.service';
-import { SellerService } from '../src/services/seller.service';
-import { JudicialProcessService } from '../src/services/judicial-process.service';
-import { BemService } from '../src/services/bem.service';
-import { habilitateForAuctionAction } from '../src/app/admin/habilitations/actions';
-import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch } from '../src/types';
+import { prisma } from '@/lib/prisma';
+import { LotService } from '@/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+import { UserService } from '@/services/user.service';
+import { SellerService } from '@/services/seller.service';
+import { JudicialProcessService } from '@/services/judicial-process.service';
+import { BemService } from '@/services/bem.service';
+import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
+import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch } from '@/types';
 import { RoleRepository } from '@/repositories/role.repository';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -86,7 +86,7 @@ async function cleanup() {
 }
 
 
-test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`, () => {
+describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`, () => {
 
     beforeAll(async () => {
         await cleanup();
@@ -183,15 +183,15 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         console.log('- Step 8: Lots for each auction type created.');
         
         console.log(`--- [E2E Setup - ${testRunId}] Complete. ---`);
-    });
+    }, 60000); // 60-second timeout for setup
 
     afterAll(async () => {
         await cleanup();
         await prisma.$disconnect();
         console.log(`--- [E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
-    });
+    }, 60000);
 
-    test('Standard Bidding: should allow users to bid and determine a winner', async () => {
+    it('Standard Bidding: should allow users to bid and determine a winner', async () => {
         console.log('\n--- Test: Standard Bidding on Extrajudicial Lot ---');
         assert.ok(extrajudicialLot, 'Extrajudicial Lot must be defined');
 
@@ -237,3 +237,5 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         console.log("- STATUS: ✅ PASSOU");
     });
 });
+
+  

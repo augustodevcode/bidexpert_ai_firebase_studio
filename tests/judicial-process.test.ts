@@ -1,9 +1,9 @@
 // tests/judicial-process.test.ts
-import test from 'node:test';
+import { test, describe, beforeAll, afterAll, it } from 'vitest';
 import assert from 'node:assert';
-import { JudicialProcessService } from '../src/services/judicial-process.service';
-import { prisma } from '../src/lib/prisma';
-import type { JudicialProcessFormData, Court, StateInfo, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '../src/types';
+import { JudicialProcessService } from '@/services/judicial-process.service';
+import { prisma } from '@/lib/prisma';
+import type { JudicialProcessFormData, Court, StateInfo, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const processService = new JudicialProcessService();
@@ -17,9 +17,9 @@ let testBranch: JudicialBranch;
 let testSeller: SellerProfileInfo;
 let createdProcessId: string;
 
-test.describe('Judicial Process Service E2E Tests', () => {
+describe('Judicial Process Service E2E Tests', () => {
 
-    test.before(async () => {
+    beforeAll(async () => {
         // Create dependency records
         const uf = testRunId.substring(0, 2).toUpperCase();
         testState = await prisma.state.create({ data: { name: `Estado Proc ${testRunId}`, uf: uf, slug: `estado-proc-${testRunId}` } });
@@ -29,7 +29,7 @@ test.describe('Judicial Process Service E2E Tests', () => {
         testSeller = await prisma.seller.create({ data: { name: `Vara ${testRunId}`, publicId: `seller-pub-proc-${testRunId}`, slug: `vara-proc-${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id } });
     });
     
-    test.after(async () => {
+    afterAll(async () => {
         try {
             if (createdProcessId) {
                 await processService.deleteJudicialProcess(createdProcessId);
@@ -45,7 +45,7 @@ test.describe('Judicial Process Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should create a new judicial process with parties', async () => {
+    it('should create a new judicial process with parties', async () => {
         // Arrange
         const newProcessData: JudicialProcessFormData = {
             processNumber: testProcessNumber,
@@ -84,3 +84,5 @@ test.describe('Judicial Process Service E2E Tests', () => {
         assert.strictEqual(createdProcessFromDb.parties[0].name, `Autor Teste ${testRunId}`, 'First party name should match');
     });
 });
+
+  
