@@ -1,7 +1,7 @@
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
-import React, { useEffect, useCallback, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,6 @@ import { consultaCepAction } from '@/lib/actions/cep';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface AuctionFormProps {
-  formRef?: React.MutableRefObject<any>;
   initialData?: Partial<Auction> | null;
   categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
@@ -127,8 +126,7 @@ const accordionItemsData = [
     { value: "opcoes", title: "Opções Avançadas" },
 ];
 
-export default function AuctionForm({
-  formRef,
+const AuctionForm = forwardRef<any, AuctionFormProps>(({
   initialData,
   categories: initialCategories,
   auctioneers: initialAuctioneers,
@@ -144,7 +142,7 @@ export default function AuctionForm({
   onCancelEdit,
   isWizardMode = false,
   onWizardDataChange
-}: AuctionFormProps) {
+}, ref) => {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -200,6 +198,10 @@ export default function AuctionForm({
     },
   });
   
+  useImperativeHandle(ref, () => ({
+    setValue: form.setValue,
+  }));
+
   const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
   const watchedParticipation = useWatch({ control: form.control, name: 'participation' });
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
@@ -211,9 +213,6 @@ export default function AuctionForm({
     if (!selectedStateId) return [];
     return initialAllCities.filter(city => city.stateId === selectedStateId);
   }, [selectedStateId, initialAllCities]);
-
-
-  React.useImperativeHandle(formRef, () => form);
   
    useEffect(() => {
     if (!isWizardMode || !onWizardDataChange) return;
@@ -434,4 +433,8 @@ export default function AuctionForm({
       </TooltipProvider>
     </>
   );
-}
+});
+
+AuctionForm.displayName = "AuctionForm";
+
+export default AuctionForm;

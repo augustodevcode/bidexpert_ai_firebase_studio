@@ -676,6 +676,23 @@ export default function EditAuctionPage() {
           </CardContent>
         </Card>
       </div>
+       <AISuggestionModal
+        isOpen={isAISuggestionModalOpen}
+        onClose={() => setIsAISuggestionModalOpen(false)}
+        fetchSuggestionsAction={() => fetchListingDetailsSuggestions({
+            auctionTitle: auction.title,
+            auctionDescription: auction.description || '',
+            auctionCategory: auction.category?.name || '',
+            auctionKeywords: '', // Keywords are not part of the auction model yet
+        })}
+        onApplySuggestions={(suggestions) => {
+            if (formRef.current) {
+                formRef.current.setValue('title', suggestions.suggestedTitle, { shouldDirty: true });
+                formRef.current.setValue('description', suggestions.suggestedDescription, { shouldDirty: true });
+                toast({ title: 'Sugestões aplicadas!', description: 'O título e a descrição foram atualizados.' });
+            }
+        }}
+      />
     </>
   );
 }
