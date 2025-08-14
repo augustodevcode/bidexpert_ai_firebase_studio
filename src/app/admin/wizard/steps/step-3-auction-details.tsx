@@ -2,9 +2,13 @@
 'use client';
 
 import { useWizard } from '../wizard-context';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Auction } from '@/types';
-import AuctionForm from '@/app/admin/auctions/auction-form';
-import { useMemo } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage } from '@/types';
+import { Form } from '@/components/ui/form';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
+import AuctionForm from '@/app/admin/auctions/auction-form'; // Import the main form
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
@@ -19,32 +23,52 @@ export default function Step3AuctionDetails({
 }: Step3AuctionDetailsProps) {
   const { wizardData, setWizardData } = useWizard();
 
-  const handleWizardDataChange = (data: Partial<Auction>) => {
+  // The main AuctionForm now handles its own state via react-hook-form.
+  // We just need to pass a callback to receive the data when it changes.
+  const handleWizardDataChange = (data: Partial<any>) => {
     setWizardData(prev => ({
         ...prev,
         auctionDetails: {
             ...prev.auctionDetails,
             ...data,
+            // Ensure derived names are also updated
+            auctioneer: auctioneers.find(a => a.id === data.auctioneerId)?.name,
+            seller: sellers.find(s => s.id === data.sellerId)?.name,
         }
     }));
   };
 
-  // Define o comitente com base no tipo de leilão
+  // Determine the correct sellerId based on the auctionType
   const initialSellerId = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
-      return wizardData.judicialProcess?.sellerId || wizardData.auctionDetails?.sellerId;
+        const processSellerId = wizardData.judicialProcess?.sellerId;
+        // If the process already has a linked seller, use it.
+        if (processSellerId) {
+            return processSellerId;
+        }
     }
+    // Otherwise, use whatever is already in the auction details (if any)
     return wizardData.auctionDetails?.sellerId;
   }, [wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
 
+  // Construct the initial data for the form, ensuring dates are Date objects if they exist
   const initialDataForForm = {
     ...wizardData.auctionDetails,
     sellerId: initialSellerId,
     auctionType: wizardData.auctionType,
+    auctionDate: wizardData.auctionDetails?.auctionDate ? new Date(wizardData.auctionDetails.auctionDate) : new Date(),
+    endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
+    auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({ 
+        ...stage, 
+        startDate: stage.startDate ? new Date(stage.startDate) : new Date(),
+        endDate: stage.endDate ? new Date(stage.endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
+        initialPrice: stage.initialPrice || undefined 
+    })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
   };
 
   return (
     <AuctionForm
+        // @ts-ignore
         initialData={initialDataForForm}
         categories={categories}
         auctioneers={auctioneers}

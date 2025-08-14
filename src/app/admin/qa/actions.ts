@@ -9,7 +9,7 @@
 
 import { exec } from 'child_process';
 import util from 'util';
-import { analyzeTestFailure } from '@/ai/flows/analyze-test-failure-flow';
+import { analyzeTestFailure, analyzeErrorLog } from '@/ai/flows/analyze-test-failure-flow'; // Import analyzeErrorLog
 import * as fs from 'fs/promises';
 import path from 'path';
 
@@ -96,6 +96,28 @@ ${analysisResult.recommendation}
         }
     }
 }
+
+/**
+ * Action to analyze a generic error log with AI.
+ */
+export async function analyzeErrorLogAction(errorLog: string): Promise<{ success: boolean; analysis: string; recommendation: string }> {
+  try {
+    const projectContext = await getProjectContextForAI();
+    const result = await analyzeErrorLog({
+      errorLog: errorLog,
+      projectContext: projectContext,
+    });
+    return { success: true, ...result };
+  } catch (error: any) {
+    console.error("Error calling AI analysis for error log:", error);
+    return {
+      success: false,
+      analysis: "Falha na Análise",
+      recommendation: `Não foi possível conectar ao serviço de IA para analisar o erro: ${error.message}`
+    };
+  }
+}
+
 
 export async function runBiddingEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/bidding-e2e.test.ts';
