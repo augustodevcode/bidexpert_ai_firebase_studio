@@ -18,7 +18,7 @@ const execPromise = util.promisify(exec);
 // Helper function to read project context files for the AI
 async function getProjectContextForAI(): Promise<string> {
     try {
-        const rulesPath = path.join(process.cwd(), 'src', 'airules.MD'); // CORRIGIDO: Caminho para src/airules.MD
+        const rulesPath = path.join(process.cwd(), 'src', 'airules.MD'); 
         const schemaPath = path.join(process.cwd(), 'prisma', 'schema.prisma');
         
         const [rulesContent, schemaContent] = await Promise.all([
@@ -68,11 +68,21 @@ async function runTestAndAnalyze(command: string, testFileName: string): Promise
         try {
             console.log("[QA Action] Test failed. Invoking AI analysis flow...");
             const projectContext = await getProjectContextForAI();
+            
+            console.log("==================== AI ANALYSIS INPUT ====================");
+            console.log(`Test File: ${testFileName}`);
+            console.log("Project Context Length:", projectContext.length);
+            console.log("Full Log Length:", fullLog.length);
+            // console.log("Full Log Content:", fullLog); // Uncomment for very detailed debugging
+            console.log("=========================================================");
+
             const analysisResult = await analyzeTestFailure({
                 testLog: fullLog,
                 testFileName: testFileName,
                 projectContext: projectContext,
             });
+
+            console.log("[QA Action] AI analysis flow completed. Result:", analysisResult);
 
             const recommendation = `
 ================================================
@@ -90,7 +100,7 @@ ${analysisResult.recommendation}
             return { success: false, output: fullLog, error: errorLog, recommendation };
 
         } catch (aiError: any) {
-            console.error("[QA Action] Error during AI analysis:", aiError);
+            console.error("[QA Action] CRITICAL: Error during AI analysis flow execution:", aiError);
             const recommendation = "\n\n[ANÁLISE DA IA FALHOU]: Não foi possível analisar o erro automaticamente.";
             return { success: false, output: fullLog, error: errorLog, recommendation };
         }
