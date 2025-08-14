@@ -44,7 +44,7 @@ export default function Step5Review() {
             title: "Leilão Publicado!",
             description: "O leilão e seus lotes foram criados com sucesso.",
         });
-        resetWizard();
+        // Não resetar o wizard aqui, o redirecionamento cuidará de limpar o estado
         router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
     } else {
         toast({
@@ -71,8 +71,8 @@ export default function Step5Review() {
           <p><strong>Descrição:</strong> <span className="text-muted-foreground">{auctionDetails?.description || 'Não definida'}</span></p>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2">
             <div className="flex items-center gap-2"><strong>Modalidade:</strong> <Badge variant="outline">{auctionTypeLabels[auctionType || ''] || 'Não definida'}</Badge></div>
-            <p><strong>Leiloeiro:</strong> <span className="text-muted-foreground">{auctionDetails?.auctioneer || 'Não definido'}</span></p>
-            <p><strong>Comitente:</strong> <span className="text-muted-foreground">{auctionDetails?.seller || 'Não definido'}</span></p>
+            <p><strong>Leiloeiro:</strong> <span className="text-muted-foreground">{auctionDetails?.auctioneerName || 'Não definido'}</span></p>
+            <p><strong>Comitente:</strong> <span className="text-muted-foreground">{auctionDetails?.sellerName || 'Não definido'}</span></p>
             <p><strong>Data de Início:</strong> <span className="text-muted-foreground">{auctionDetails?.auctionDate ? format(new Date(auctionDetails.auctionDate), 'dd/MM/yyyy', {locale: ptBR}) : 'Não definida'}</span></p>
             {auctionDetails?.endDate && (
                 <p><strong>Data de Fim:</strong> <span className="text-muted-foreground">{format(new Date(auctionDetails.endDate), 'dd/MM/yyyy', {locale: ptBR})}</span></p>
@@ -117,8 +117,9 @@ export default function Step5Review() {
             createdLots.map((lot, index) => (
               <div key={index} className="p-3 border rounded-md">
                 <p className="font-semibold">Lote {lot.number}: {lot.title}</p>
-                <p className="text-xs text-muted-foreground">Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                <p className="text-xs text-muted-foreground">{lot.bemIds?.length || 0} bem(ns) agrupado(s).</p>
+                <p className="text-xs text-muted-foreground">
+                    {lot.bemIds?.length} bem(ns) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
+                </p>
               </div>
             ))
           )}
