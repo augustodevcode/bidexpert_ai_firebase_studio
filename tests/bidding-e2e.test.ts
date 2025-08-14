@@ -181,6 +181,7 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
             const lotIds = [judicialLot?.id, extrajudicialLot?.id, silentAuctionLot?.id, dutchAuctionLot?.id].filter(Boolean) as string[];
             if (lotIds.length > 0) {
               await prisma.lotBens.deleteMany({ where: { lotId: { in: lotIds } }});
+              await prisma.userWin.deleteMany({ where: { lotId: { in: lotIds } } });
               await prisma.lot.deleteMany({ where: { id: { in: lotIds } } });
             }
             
@@ -252,7 +253,9 @@ test.describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunI
         
         // CRITERION: At the end of the auction, the highest bidder is the winner.
         console.log("- CRITÉRIO: No fim do leilão, o maior licitante é o vencedor.");
-        await prisma.lot.update({ where: { id: extrajudicialLot.id }, data: { status: 'VENDIDO', winnerId: biddingUsers[1].id }});
+        const finalizationResult = await lotService.finalizeLot(extrajudicialLot.id);
+        assert.ok(finalizationResult.success, `Lot finalization should succeed. Message: ${finalizationResult.message}`);
+        
         const finalLot = await lotService.getLotById(extrajudicialLot.id);
         assert.strictEqual(finalLot?.status, 'VENDIDO', 'Lot status should be VENDIDO.');
         assert.strictEqual(finalLot?.winnerId, biddingUsers[1].id, 'Winner should be the highest bidder.');

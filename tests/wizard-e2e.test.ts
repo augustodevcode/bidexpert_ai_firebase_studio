@@ -67,6 +67,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         try {
             await prisma.lotBens.deleteMany({ where: { bem: { title: { contains: testRunId } } } });
             await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.auctionStage.deleteMany({ where: { auction: { title: { contains: testRunId } } } });
             await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
             await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });
             await prisma.judicialProcess.deleteMany({ where: { processNumber: { contains: testRunId } } });
