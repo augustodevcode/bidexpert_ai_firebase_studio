@@ -155,8 +155,7 @@ export default function AuctionForm({
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
   const [isFetchingStates, setIsFetchingStates] = React.useState(false);
   const [isFetchingCities, setIsFetchingCities] = React.useState(false);
-
-  const [syncStages, setSyncStages] = React.useState(true);
+  
   const [isCepLoading, setIsCepLoading] = React.useState(false);
   
   const form = useForm<AuctionFormValues>({
@@ -236,21 +235,6 @@ export default function AuctionForm({
     return () => subscription.unsubscribe();
   }, [form, onWizardDataChange, isWizardMode, auctioneers, sellers]);
 
-  useEffect(() => {
-    if (!syncStages) return;
-    watchedStages?.forEach((stage, index) => {
-      if (index > 0) {
-        const prevStage = watchedStages?.[index - 1];
-        if (prevStage?.endDate && stage.startDate?.getTime() !== prevStage.endDate.getTime()) {
-           const newStartDate = new Date(prevStage.endDate);
-           const currentDuration = stage.endDate && stage.startDate ? differenceInMilliseconds(new Date(stage.endDate), new Date(stage.startDate)) : 7 * 24 * 60 * 60 * 1000;
-           const newEndDate = new Date(newStartDate.getTime() + currentDuration);
-           form.setValue(`auctionStages.${index}.startDate`, newStartDate, { shouldDirty: true });
-           form.setValue(`auctionStages.${index}.endDate`, newEndDate, { shouldDirty: true });
-        }
-      }
-    });
-  }, [watchedStages, syncStages, form]);
 
   const handleRefetch = React.useCallback(async (entity: 'categories' | 'auctioneers' | 'sellers' | 'states' | 'cities') => {
     if (entity === 'categories') { setIsFetchingCategories(true); const data = await refetchCategories(); setCategories(data); setIsFetchingCategories(false); }
@@ -357,18 +341,18 @@ export default function AuctionForm({
     { value: "datas", title: "Datas e Prazos", content: (
         <div className="space-y-4">
             <div className="space-y-2">
-                <div className="flex flex-wrap gap-4 justify-between items-center"><h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4" />Praças / Etapas do Leilão</h3><div className="flex items-center space-x-2"><Label htmlFor="sync-stages-main" className="text-xs font-normal">Sincronizar Etapas</Label><Switch id="sync-stages-main" checked={syncStages} onCheckedChange={setSyncStages} disabled={isViewMode} /></div></div>
+                <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><ClockIcon className="h-4 w-4" />Praças / Etapas do Leilão</h3>
                 {fields.map((field, index) => (
                 <Card key={field.id} className="p-3 bg-background">
                     <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
                     <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
-                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode || (syncStages && index > 0)} />
+                    <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode} />
                     <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
                     </div>
                 </Card>
                 ))}
-                {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = syncStages ? lastEndDate : new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
+                {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
             </div>
             <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
         </div>

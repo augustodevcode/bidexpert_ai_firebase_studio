@@ -37,6 +37,13 @@ const optionalUrlSchema = z.string().refine(val => val === '' || val === 'https:
   message: "URL inválida."
 }).optional().nullable();
 
+const auctionStageSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "Nome da praça é obrigatório"),
+  startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
+  endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
+  initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
+});
 
 export const auctionFormSchema = z.object({
   title: z.string().min(5, {
@@ -80,15 +87,21 @@ export const auctionFormSchema = z.object({
   estimatedRevenue: z.coerce.number().positive({message: "Estimativa deve ser positiva."}).optional().nullable(),
   isFeaturedOnMarketplace: z.boolean().optional().default(false),
   marketplaceAnnouncementTitle: z.string().max(150, {message: "Título do anúncio muito longo."}).optional().nullable(),
-  auctionStages: z.array(
-    z.object({
-      id: z.string().optional(),
-      name: z.string().min(1, "Nome da praça é obrigatório"),
-      startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
-      endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
-      initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
-    })
-  ).min(1, "O leilão deve ter pelo menos uma praça/etapa.").optional().default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }]),
+  auctionStages: z.array(auctionStageSchema)
+    .min(1, "O leilão deve ter pelo menos uma praça/etapa.")
+    .optional()
+    .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }])
+    .refine(stages => {
+      for (let i = 1; i < stages.length; i++) {
+        if (stages[i].startDate < stages[i - 1].endDate) {
+          return false;
+        }
+      }
+      return true;
+    }, {
+      message: "A data de início de uma praça não pode ser anterior ao fim da praça anterior.",
+      path: ["auctionStages"],
+    }),
   decrementAmount: z.coerce.number().positive("O valor do decremento deve ser positivo.").optional().nullable(),
   decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
   floorPrice: z.coerce.number().positive("O preço mínimo deve ser positivo.").optional().nullable(),

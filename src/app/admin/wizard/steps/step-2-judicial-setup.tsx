@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/steps/step-2-judicial-setup.tsx
 'use client';
 
@@ -11,7 +12,7 @@ import { PlusCircle } from 'lucide-react';
 interface Step2JudicialSetupProps {
   processes: JudicialProcess[];
   onRefetchRequest: () => void;
-  onAddNewProcess?: () => void; // Tornar opcional, mas vamos chamar se existir
+  onAddNewProcess?: () => void;
 }
 
 export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddNewProcess }: Step2JudicialSetupProps) {

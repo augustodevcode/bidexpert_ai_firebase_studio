@@ -1,3 +1,4 @@
+
 // src/components/admin/wizard/steps/step-4-lotting.tsx
 'use client';
 
@@ -17,10 +18,9 @@ import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 interface Step4LottingProps {
   availableBens: Bem[];
   auctionData: Partial<Auction>;
-  onLotCreated: () => void; // Callback para notificar sobre a criação de um lote
 }
 
-export default function Step4Lotting({ availableBens, auctionData, onLotCreated }: Step4LottingProps) {
+export default function Step4Lotting({ availableBens, auctionData }: Step4LottingProps) {
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -45,7 +45,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
     setIsBemModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), [handleViewBemDetails]);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), []);
 
   
   const handleCreateGroupedLotClick = () => {
@@ -89,7 +89,7 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         ...prev,
         createdLots: [...(prev.createdLots || []), ...newLots]
     }));
-    toast({ title: "Sucesso!", description: `${newLots.length} lotes individuais preparados.` });
+    toast({ title: "Sucesso!", description: `${newLots.length} lote(s) individuais preparados.` });
     setRowSelection({});
     setIsCreatingIndividualLots(false);
   };
@@ -107,7 +107,6 @@ export default function Step4Lotting({ availableBens, auctionData, onLotCreated 
         ...prev,
         createdLots: [...(prev.createdLots || []), newCompleteLot]
     }));
-    onLotCreated();
     setRowSelection({});
   }
 

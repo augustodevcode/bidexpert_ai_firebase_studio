@@ -1,3 +1,4 @@
+
 // src/app/admin/wizard/page.tsx
 'use client';
 
@@ -93,11 +94,6 @@ function WizardContent({
     }
     nextStep();
   };
-
-  const handleLotCreation = () => {
-    // This is called when lots are created, but we don't need a full refetch,
-    // as the state is handled on the client. We can keep this for potential future use.
-  };
   
   const handleProcessCreated = async (newProcessId?: string) => {
     toast({ title: "Sucesso!", description: "Processo judicial cadastrado." });
@@ -160,13 +156,12 @@ function WizardContent({
 
     switch (currentStepId) {
       case 'type': return <Step1TypeSelection />;
-      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
+      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} onRefetchRequest={() => refetchData()} />;
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
       case 'lotting': {
         return <Step4Lotting 
                   availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
-                  onLotCreated={handleLotCreation}
                />;
       }
       case 'review': return <Step5Review />;
