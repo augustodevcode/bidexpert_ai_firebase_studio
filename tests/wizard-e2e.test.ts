@@ -24,10 +24,15 @@ let testBem: Bem;
 async function cleanup() {
     console.log(`--- [Wizard E2E Teardown - ${testRunId}] Cleaning up... ---`);
     try {
-        await prisma.lotBens.deleteMany({ where: { bem: { title: { contains: testRunId } } } });
-        await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
-        await prisma.auctionStage.deleteMany({ where: { auction: { title: { contains: testRunId } } } });
-        await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+        const auctions = await prisma.auction.findMany({ where: { title: { contains: testRunId } } });
+        if (auctions.length > 0) {
+            const auctionIds = auctions.map(a => a.id);
+            await prisma.lotBens.deleteMany({ where: { lot: { auctionId: { in: auctionIds } } } });
+            await prisma.lot.deleteMany({ where: { auctionId: { in: auctionIds } } });
+            await prisma.auctionStage.deleteMany({ where: { auctionId: { in: auctionIds } } });
+            await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
+        }
+        
         await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.judicialProcess.deleteMany({ where: { processNumber: { contains: testRunId } } });
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
@@ -38,7 +43,7 @@ async function cleanup() {
         await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
         await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
     } catch (error) {
-        console.error("[Wizard E2E Teardown] Error during cleanup:", error);
+        console.error(`[Wizard E2E Teardown] Error during cleanup for run ${testRunId}:`, error);
     }
 }
 
@@ -88,7 +93,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
     afterAll(async () => {
         await cleanup();
         await prisma.$disconnect();
-        console.log(`--- [Wizard E2E Teardown - ${testRunId}] Complete. ---`);
+        console.log(`--- [Wizard E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
     });
 
     test('should simulate the entire wizard flow and create a complete auction', async () => {
