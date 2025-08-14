@@ -12,7 +12,7 @@ import {
   ToastViewport,
 } from "@/components/ui/toast"
 import { Button } from "./button"
-import { Copy, Check, BrainCircuit, Loader2 } from "lucide-react"
+import { Copy, Check, BrainCircuit, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
 import { Alert, AlertDescription, AlertTitle } from "./alert"
