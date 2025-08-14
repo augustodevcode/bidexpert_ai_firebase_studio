@@ -70,6 +70,20 @@ function WizardContent({
 
   const currentStepId = stepsToUse[currentStep]?.id;
   
+  const bensForLotting = useMemo(() => {
+    if (!fetchedData?.availableBens) return [];
+
+    if (wizardData.auctionType === 'JUDICIAL') {
+      return wizardData.judicialProcess
+        ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+        : [];
+    } else {
+      return wizardData.auctionDetails?.sellerId
+        ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+        : [];
+    }
+  }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+
   const handleNextStep = () => {
     if (currentStepId === 'auction') {
       if (!wizardData.auctionDetails?.title || !wizardData.auctionDetails.auctioneerId || !wizardData.auctionDetails.sellerId) {
@@ -78,11 +92,6 @@ function WizardContent({
       }
     }
     nextStep();
-  };
-
-  const handleLotCreation = () => {
-    // This is called when lots are created, but we don't need a full refetch,
-    // as the state is handled on the client. We can keep this for potential future use.
   };
   
   const handleProcessCreated = async (newProcessId?: string) => {
@@ -146,27 +155,12 @@ function WizardContent({
 
     switch (currentStepId) {
       case 'type': return <Step1TypeSelection />;
-      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} />;
+      case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} onRefetchRequest={() => refetchData()} />;
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
       case 'lotting': {
-        const bensForLotting = useMemo(() => {
-          if (!fetchedData?.availableBens) return [];
-
-          if (wizardData.auctionType === 'JUDICIAL') {
-            return wizardData.judicialProcess
-              ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
-              : [];
-          } else {
-            return wizardData.auctionDetails?.sellerId
-              ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
-              : [];
-          }
-        }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
-
         return <Step4Lotting 
                   availableBens={bensForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
-                  onLotCreated={handleLotCreation}
                />;
       }
       case 'review': return <Step5Review />;

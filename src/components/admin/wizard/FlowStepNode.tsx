@@ -74,7 +74,7 @@ const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
       >
         {isHovered && editLink && (
             <Button asChild size="icon" variant="outline" className="absolute -top-3 -right-3 h-7 w-7 bg-background z-10">
-                <Link href={editLink} target="_blank" title="Editar entidade">
+                <Link href={editUrl} target="_blank" title="Editar entidade">
                     <Pencil className="h-4 w-4 text-primary" />
                 </Link>
             </Button>
