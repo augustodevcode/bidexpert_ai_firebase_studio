@@ -68,6 +68,10 @@ async function cleanup() {
         }
 
         const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
+        // Corrected Cleanup Order: Delete LotBens before Bem
+        if (bemIds.length > 0) {
+            await prisma.lotBens.deleteMany({ where: { bemId: { in: bemIds } } });
+        }
         for (const bemId of bemIds) { await bemService.deleteBem(bemId); }
         
         if (testJudicialProcess) await judicialProcessService.deleteJudicialProcess(testJudicialProcess.id);
@@ -125,12 +129,12 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
         
         // 5. Judicial Seller & Entities
         const uniqueUf = testRunId.substring(0, 2).toUpperCase();
-        await prisma.state.deleteMany({ where: { uf: uniqueUf }}); // Ensure clean slate for this UF
+        await prisma.state.deleteMany({where: {uf: uniqueUf}}); // Make sure it is unique before creating
         testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: uniqueUf, slug: `st-${testRunId}` } });
         testCourt = await prisma.court.create({ data: { name: `Court ${testRunId}`, stateUf: testState.uf, slug: `court-${testRunId}` } });
         testDistrict = await prisma.judicialDistrict.create({ data: { name: `District ${testRunId}`, slug: `dist-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
         testBranch = await prisma.judicialBranch.create({ data: { name: `Branch ${testRunId}`, slug: `branch-${testRunId}`, districtId: testDistrict.id } });
-        const judicialSellerRes = await sellerService.createSeller({ name: `Vara ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-${testRunId}` } as any);
+        const judicialSellerRes = await sellerService.createSeller({ name: `Vara ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-${testRunId}`, slug: `vara-wiz-${testRunId}` } as any);
         assert.ok(judicialSellerRes.success && judicialSellerRes.sellerId, 'Judicial seller creation failed');
         testJudicialSeller = (await sellerService.getSellerById(judicialSellerRes.sellerId!))!;
         console.log('- Step 3 & 4: Core entities (Category, Auctioneer, Sellers) created.');

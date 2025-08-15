@@ -61,18 +61,18 @@ describe('State Service E2E Tests', () => {
 
     it('should prevent creating a state with a duplicate UF', async () => {
         // Arrange: Create the first state
+        const firstStateUf = `DU${testRunId.substring(0,1)}`;
+        await prisma.state.deleteMany({ where: { uf: firstStateUf }}); // Ensure it does not exist
         const firstStateData: StateFormData = {
             name: `${testStateName} Original`,
-            uf: testStateUf,
+            uf: firstStateUf,
         };
-        // Ensure it doesn't exist before this test
-        await prisma.state.deleteMany({ where: { uf: testStateUf } }); 
         await stateService.createState(firstStateData);
 
         // Arrange: Prepare data for the second state with the same UF
         const duplicateStateData: StateFormData = {
             name: `${testStateName} Duplicado`,
-            uf: testStateUf,
+            uf: firstStateUf,
         };
 
         // Act: Attempt to create the second state
@@ -80,6 +80,6 @@ describe('State Service E2E Tests', () => {
 
         // Assert
         assert.strictEqual(result.success, false, 'Should fail to create a state with a duplicate UF');
-        assert.strictEqual(result.message, `Já existe um estado com a UF '${testStateUf}'.`);
+        assert.strictEqual(result.message, `Já existe um estado com a UF '${firstStateUf}'.`);
     });
 });
