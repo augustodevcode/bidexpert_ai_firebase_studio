@@ -5,10 +5,12 @@ import { useWizard } from '../wizard-context';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage } from '@/types';
+import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, Auction, StateInfo, CityInfo } from '@/types';
 import { Form } from '@/components/ui/form';
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import AuctionForm from '@/app/admin/auctions/auction-form'; // Import the main form
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
@@ -22,9 +24,28 @@ export default function Step3AuctionDetails({
     sellers 
 }: Step3AuctionDetailsProps) {
   const { wizardData, setWizardData } = useWizard();
+  const [states, setStates] = useState<StateInfo[]>([]);
+  const [cities, setCities] = useState<CityInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // The main AuctionForm now handles its own state via react-hook-form.
-  // We just need to pass a callback to receive the data when it changes.
+  useEffect(() => {
+    async function fetchLocationData() {
+        try {
+            const [fetchedStates, fetchedCities] = await Promise.all([
+                getStates(),
+                getCities()
+            ]);
+            setStates(fetchedStates);
+            setCities(fetchedCities);
+        } catch (error) {
+            console.error("Failed to load location data for wizard form", error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchLocationData();
+  }, []);
+
   const handleWizardDataChange = (data: Partial<any>) => {
     setWizardData(prev => ({
         ...prev,
@@ -32,26 +53,22 @@ export default function Step3AuctionDetails({
             ...prev.auctionDetails,
             ...data,
             // Ensure derived names are also updated
-            auctioneer: auctioneers.find(a => a.id === data.auctioneerId)?.name,
-            seller: sellers.find(s => s.id === data.sellerId)?.name,
+            auctioneerName: auctioneers.find(a => a.id === data.auctioneerId)?.name,
+            sellerName: sellers.find(s => s.id === data.sellerId)?.name,
         }
     }));
   };
 
-  // Determine the correct sellerId based on the auctionType
   const initialSellerId = useMemo(() => {
     if (wizardData.auctionType === 'JUDICIAL') {
         const processSellerId = wizardData.judicialProcess?.sellerId;
-        // If the process already has a linked seller, use it.
         if (processSellerId) {
             return processSellerId;
         }
     }
-    // Otherwise, use whatever is already in the auction details (if any)
     return wizardData.auctionDetails?.sellerId;
   }, [wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
 
-  // Construct the initial data for the form, ensuring dates are Date objects if they exist
   const initialDataForForm = {
     ...wizardData.auctionDetails,
     sellerId: initialSellerId,
@@ -60,11 +77,14 @@ export default function Step3AuctionDetails({
     endDate: wizardData.auctionDetails?.endDate ? new Date(wizardData.auctionDetails.endDate) : undefined,
     auctionStages: wizardData.auctionDetails?.auctionStages?.map(stage => ({ 
         ...stage, 
-        startDate: stage.startDate ? new Date(stage.startDate) : new Date(),
-        endDate: stage.endDate ? new Date(stage.endDate) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), 
-        initialPrice: stage.initialPrice || undefined 
-    })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
+        startDate: stage.startDate ? new Date(stage.startDate) : undefined,
+        endDate: stage.endDate ? new Date(stage.endDate) : undefined,
+    })),
   };
+  
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin"/></div>
+  }
 
   return (
     <AuctionForm
@@ -73,6 +93,8 @@ export default function Step3AuctionDetails({
         categories={categories}
         auctioneers={auctioneers}
         sellers={sellers}
+        states={states}
+        allCities={cities}
         formTitle="Detalhes do Leilão"
         formDescription="Preencha as informações principais, datas e configurações do leilão."
         isWizardMode={true}
