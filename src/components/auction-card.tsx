@@ -1,5 +1,4 @@
-
-
+// src/components/auction-card.tsx
 'use client';
 
 import * as React from 'react';
@@ -13,11 +12,13 @@ import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSqua
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AuctionPreviewModal from './auction-preview-modal';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers'; // Importação do helper
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -104,15 +105,10 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const isValidUrl = (url: string | null | undefined): boolean => {
-      if (!url) return false;
-      return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
-  };
-
-  const mainImageUrl = isValidUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
-  const sellerLogoUrl = auction.seller?.logoUrl;
+  const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
   const sellerSlug = auction.seller?.slug;
   const sellerName = auction.seller?.name;
 

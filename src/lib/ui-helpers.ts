@@ -18,6 +18,16 @@ export const slugify = (text: string): string => {
     .replace(/--+/g, '-'); 
 };
 
+/**
+ * Validates if a given URL string is a valid, absolute URL for use in next/image.
+ * @param {string | null | undefined} url The URL to validate.
+ * @returns {boolean} True if the URL is valid, false otherwise.
+ */
+export const isValidImageUrl = (url: string | null | undefined): boolean => {
+    if (!url) return false;
+    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+};
+
 
 export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDocumentStatus | UserHabilitationStatus | PaymentStatus | DirectSaleOfferStatus | string | undefined ): string => {
   if (!status) return 'Status Desconhecido';
