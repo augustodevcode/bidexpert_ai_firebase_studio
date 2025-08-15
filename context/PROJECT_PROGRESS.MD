@@ -3,7 +3,6 @@
 ## DONE
 - **Item 1:** **Core Architecture Refactoring:** Fully migrated the application to a layered MVC + Service + Repository architecture using Prisma ORM. This standardized data access and improved maintainability.
 - **Item 2:** **Comprehensive Admin Panel:** Implemented full CRUD functionality for all major entities (`Auctions`, `Lots`, `Users`, `Sellers`, `Auctioneers`, `Categories`, `Judicial Entities`, etc.).
-- **Item 3:** **End-to-End Testing:** Created a robust E2E test suite (`bidding-e2e.test.ts`) that simulates the entire lifecycle of both judicial and extrajudicial auctions, from user creation to bidding.
 - **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`) and the Consignor Dashboard (`/consignor-dashboard/*`).
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
@@ -21,10 +20,22 @@
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 
 ## DOING
-- **Item 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability.
+- **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
 
 ## NEXT
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:**
     - Substituir os campos de texto "Estado" e "Cidade" no formulário de criação/edição de leilões por componentes `EntitySelector`.
     - Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos testes.
+- **Item 16: Lógica de Relistagem de Lotes:**
+    - Implementar a funcionalidade para relistar um lote que não foi vendido.
+    - Permitir a aplicação de descontos automáticos na relistagem (ex: 50%).
+    - Adicionar um badge de "Super Oferta" ou "2ª Chance" para lotes relistados.
+- **Item 17: Reloteamento de Bens:**
+    - Criar a lógica para desvincular um `Bem` de um lote não vendido.
+    - Permitir que um `Bem` desvinculado seja associado a um novo lote em um novo leilão.
+    - Garantir que o histórico do `Bem` reflita sua participação em múltiplos lotes e leilões.
+- **Item 18: Implementação de Pagamento Parcelado:**
+    - Criar o fluxo de "checkout" para pagamento parcelado (ex: 12 boletos).
+    - Adicionar um novo `Role` "Financeiro".
+    - Desenvolver um painel financeiro para que o time possa visualizar o status dos pagamentos, comissões e desvalorização de ativos.
+- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
