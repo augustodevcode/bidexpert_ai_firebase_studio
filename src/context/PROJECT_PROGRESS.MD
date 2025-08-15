@@ -38,5 +38,8 @@
     - Criar o fluxo de "checkout" para pagamento parcelado (ex: 12 boletos).
     - Adicionar um novo `Role` "Financeiro".
     - Desenvolver um painel financeiro para que o time possa visualizar o status dos pagamentos, comissões e desvalorização de ativos.
+- **Item 19: Implementar Filtros Avançados de Busca:**
+    - Ativar e implementar a lógica de filtro para Subcategoria, Marca e Modelo na página de busca (`/search`).
+    - Criar as telas de gerenciamento (CRUD) para Marcas (`VehicleMake`) e Modelos (`VehicleModel`) de veículos.
+    - Garantir que os filtros sejam aplicados corretamente aos resultados da busca de lotes.
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
-
