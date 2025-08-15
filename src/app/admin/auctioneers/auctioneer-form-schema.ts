@@ -1,6 +1,8 @@
 
 import * as z from 'zod';
 
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
+
 export const auctioneerFormSchema = z.object({
   name: z.string().min(3, {
     message: "O nome do leiloeiro deve ter pelo menos 3 caracteres.",
@@ -17,8 +19,8 @@ export const auctioneerFormSchema = z.object({
   city: z.string().max(100).optional().nullable(),
   state: z.string().max(50).optional().nullable(), // Pode ser UF (2) ou nome completo
   zipCode: z.string().max(10).optional().nullable(),
-  website: z.string().url({ message: "URL do website inválida." }).optional().nullable().or(z.literal('')),
-  logoUrl: z.string().url({ message: "URL do logo inválida." }).optional().nullable().or(z.literal('')),
+  website: optionalUrlSchema,
+  logoUrl: optionalUrlSchema,
   logoMediaId: z.string().optional().nullable(),
   dataAiHintLogo: z.string().max(50, {message: "Dica de IA para logo não pode exceder 50 caracteres."}).optional().nullable(),
   description: z.string().max(2000, {

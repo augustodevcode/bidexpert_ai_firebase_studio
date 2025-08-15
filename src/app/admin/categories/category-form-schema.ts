@@ -1,6 +1,8 @@
 
 import * as z from 'zod';
 
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
+
 export const categoryFormSchema = z.object({
   name: z.string().min(2, {
     message: "O nome da categoria deve ter pelo menos 2 caracteres.",
@@ -11,13 +13,13 @@ export const categoryFormSchema = z.object({
     message: "A descrição não pode exceder 500 caracteres.",
   }).optional(),
   iconName: z.string().max(50, "Nome do ícone muito longo.").optional().nullable(),
-  logoUrl: z.string().url("URL do logo inválida.").optional().nullable().or(z.literal('')),
+  logoUrl: optionalUrlSchema,
   logoMediaId: z.string().optional().nullable(),
   dataAiHintIcon: z.string().max(50).optional().nullable(),
-  coverImageUrl: z.string().url({ message: "URL da imagem de capa inválida." }).optional().or(z.literal('')),
+  coverImageUrl: optionalUrlSchema,
   coverImageMediaId: z.string().optional().nullable(),
   dataAiHintCover: z.string().max(50).optional().nullable(),
-  megaMenuImageUrl: z.string().url({ message: "URL da imagem do megamenu inválida." }).optional().or(z.literal('')),
+  megaMenuImageUrl: optionalUrlSchema,
   megaMenuImageMediaId: z.string().optional().nullable(),
   dataAiHintMegaMenu: z.string().max(50).optional().nullable(),
 });

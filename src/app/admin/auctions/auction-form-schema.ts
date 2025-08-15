@@ -32,8 +32,8 @@ const autoRelistSettingsSchema = z.object({
   relistDurationInHours: z.coerce.number().int().min(1).optional().nullable(),
 }).optional();
 
-// Helper to validate URLs but allow them to be empty
-const optionalUrlSchema = z.string().url({ message: "URL inválida." }).optional().or(z.literal(''));
+// Helper to validate URLs but allow them to be empty strings. This prevents saving "https://" alone.
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
 const auctionStageSchema = z.object({
   id: z.string().optional(),

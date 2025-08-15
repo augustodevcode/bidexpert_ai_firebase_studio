@@ -12,13 +12,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Image as ImageIcon, Scale, Save, XCircle } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Scale } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep'; 
 import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '../judicial-branches/actions';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
@@ -181,7 +180,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                 </div>
                 <div className="flex-grow space-y-2">
                   <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
-                  <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)} />
+                  <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                   <FormMessage />
                 </div>
               </div>

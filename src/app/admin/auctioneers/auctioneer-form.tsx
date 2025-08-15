@@ -63,7 +63,23 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
 
   React.useEffect(() => {
     if (initialData) {
-      form.reset(initialData);
+      form.reset({
+        name: initialData?.name || '',
+        registrationNumber: initialData?.registrationNumber || '',
+        contactName: initialData?.contactName || '',
+        email: initialData?.email || '',
+        phone: initialData?.phone || '',
+        address: initialData?.address || '',
+        city: initialData?.city || '',
+        state: initialData?.state || '',
+        zipCode: initialData?.zipCode || '',
+        website: initialData?.website || '',
+        logoUrl: initialData?.logoUrl || '',
+        logoMediaId: initialData?.logoMediaId || null,
+        dataAiHintLogo: initialData?.dataAiHintLogo || '',
+        description: initialData?.description || '',
+        userId: initialData?.userId || '',
+      });
     }
   }, [initialData, form]);
 
