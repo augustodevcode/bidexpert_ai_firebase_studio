@@ -28,7 +28,7 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createBemColumns } from '@/components/admin/bens/columns';
+import { createColumns as createBemColumns } from '@/app/admin/bens/columns';
 import { Separator } from '@/components/ui/separator';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
 import { getBens } from '@/app/admin/bens/actions';
@@ -158,7 +158,7 @@ export default function LotForm({
       
       const filterForBens = auction.auctionType === 'JUDICIAL' && auction.judicialProcessId
         ? { judicialProcessId: auction.judicialProcessId }
-        : auction.sellerId ? { sellerId: auction.sellerId } : {};
+        : (auction.sellerId ? { sellerId: auction.sellerId } : {});
         
       const bens = await getBens(filterForBens);
       if (isMounted) {
