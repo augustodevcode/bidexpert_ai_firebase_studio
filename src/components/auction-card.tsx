@@ -104,7 +104,12 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const mainImageUrl = auction.imageUrl || 'https://placehold.co/600x400.png';
+  const isValidUrl = (url: string | null | undefined): boolean => {
+      if (!url) return false;
+      return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+  };
+
+  const mainImageUrl = isValidUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = auction.seller?.logoUrl;
@@ -151,7 +156,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-[16/10] relative bg-muted">
                 <Image
-                  src={mainImageUrl}
+                  src={mainImageUrl!}
                   alt={mainImageAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
