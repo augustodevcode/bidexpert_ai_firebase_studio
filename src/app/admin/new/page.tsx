@@ -1,4 +1,3 @@
-
 // src/app/admin/auctioneers/auctioneer-form.tsx
 'use client';
 
@@ -332,4 +331,3 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
 
 AuctioneerForm.displayName = "AuctioneerForm";
 export default AuctioneerForm;
-

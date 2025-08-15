@@ -1,12 +1,12 @@
 // src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Loader2, XCircle, BarChart3, Gavel, ListChecks, DollarSign, TrendingUp } from 'lucide-react';
+import { Edit, Trash2, Loader2, XCircle, BarChart3, Gavel, ListChecks, DollarSign, TrendingUp, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -24,6 +24,7 @@ import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
+import FormPageLayout from '@/components/admin/form-page-layout';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -94,103 +95,87 @@ function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) 
     )
 }
 
-function DeleteAuctioneerButton({ auctioneerId, auctioneerName, onAction }: { auctioneerId: string; auctioneerName: string; onAction: () => void; }) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
+export default function EditAuctioneerPage() {
+  const params = useParams();
+  const auctioneerId = params.auctioneerId as string;
   const router = useRouter();
+  
+  const [auctioneer, setAuctioneer] = useState<AuctioneerFormData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isViewMode, setIsViewMode] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const formRef = useRef<any>(null);
+  
+  const fetchPageData = useCallback(async () => {
+    if (!auctioneerId) return;
+    setIsLoading(true);
+    try {
+        const fetchedAuctioneer = await getAuctioneer(auctioneerId);
+        if (!fetchedAuctioneer) {
+            notFound();
+            return;
+        }
+        setAuctioneer(fetchedAuctioneer);
+    } catch(e) {
+        console.error("Failed to fetch auctioneer", e);
+        toast({title: "Erro", description: "Falha ao buscar dados do leiloeiro.", variant: "destructive"})
+    }
+    setIsLoading(false);
+  }, [auctioneerId, toast]);
 
+  useEffect(() => {
+    fetchPageData();
+  }, [fetchPageData]);
+  
+  const handleFormSubmit = async (data: AuctioneerFormData) => {
+    setIsSubmitting(true);
+    const result = await updateAuctioneer(auctioneerId, data);
+    if (result.success) {
+        toast({ title: 'Sucesso!', description: 'Leiloeiro atualizado.' });
+        fetchPageData();
+        setIsViewMode(true);
+    } else {
+        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
+    }
+    setIsSubmitting(false);
+  };
+  
   const handleDelete = async () => {
-    setIsDeleting(true);
     const result = await deleteAuctioneer(auctioneerId);
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
       router.push('/admin/auctioneers');
     } else {
       toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-      setIsDeleting(false);
     }
   };
 
-  return (
-     <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" size="sm" disabled={isDeleting}>
-          {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-          Excluir
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Esta ação é permanente. Tem certeza que deseja excluir o leiloeiro "{auctioneerName}"?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-            {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
-            Confirmar Exclusão
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-
-export default function EditAuctioneerPage() {
-  const params = useParams();
-  const auctioneerId = params.auctioneerId as string;
-  
-  const [auctioneer, setAuctioneer] = useState<AuctioneerFormData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isViewMode, setIsViewMode] = useState(true);
-  
-  const fetchPageData = useCallback(async () => {
-    if (!auctioneerId) return;
-    setIsLoading(true);
-    const fetchedAuctioneer = await getAuctioneer(auctioneerId);
-    if (!fetchedAuctioneer) {
-      notFound();
-      return;
-    }
-    setAuctioneer(fetchedAuctioneer);
-    setIsLoading(false);
-  }, [auctioneerId]);
-
-  useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData]);
-  
-
-  if (isLoading || !auctioneer) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
-  }
+  const handleSave = () => {
+    formRef.current?.requestSubmit();
+  };
 
   return (
     <div className="space-y-6">
-       <div className="flex justify-end gap-2">
-           {isViewMode ? (
-            <Button onClick={() => setIsViewMode(false)}>
-              <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
-            </Button>
-           ) : null}
-            <DeleteAuctioneerButton auctioneerId={auctioneerId} auctioneerName={auctioneer.name} onAction={fetchPageData} />
-        </div>
-      <AuctioneerForm
-        initialData={auctioneer}
-        onSubmitAction={(data) => updateAuctioneer(auctioneerId, data)}
+      <FormPageLayout
         formTitle={isViewMode ? "Visualizar Leiloeiro" : "Editar Leiloeiro"}
-        formDescription={isViewMode ? "Consulte as informações abaixo." : "Modifique os detalhes do leiloeiro existente."}
-        submitButtonText="Salvar Alterações"
+        formDescription={auctioneer?.name || 'Carregando...'}
+        icon={Gavel}
         isViewMode={isViewMode}
-        onUpdateSuccess={() => {
-            fetchPageData();
-            setIsViewMode(true);
-        }}
-        onCancelEdit={() => setIsViewMode(true)}
-      />
+        isLoading={isLoading}
+        isSubmitting={isSubmitting}
+        onEnterEditMode={() => setIsViewMode(false)}
+        onCancel={() => setIsViewMode(true)}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      >
+          <AuctioneerForm
+            ref={formRef}
+            initialData={auctioneer}
+            onSubmitAction={handleFormSubmit}
+          />
+      </FormPageLayout>
+
       <Separator className="my-8" />
        <Card>
           <CardHeader>
