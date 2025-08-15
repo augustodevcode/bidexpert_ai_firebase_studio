@@ -119,7 +119,21 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
               )} />
             {isJudicial && (
                 <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
-                    <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))} placeholder="Nenhuma vara judicial vinculada" searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada." createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={handleRefetchBranches} isFetching={isFetchingBranches} /><FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
+                    <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
+                        <EntitySelector 
+                            value={field.value}
+                            onChange={field.onChange}
+                            options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
+                            placeholder="Nenhuma vara judicial vinculada"
+                            searchPlaceholder="Buscar vara..."
+                            emptyStateMessage="Nenhuma vara encontrada."
+                            entityName="Vara"
+                            createNewUrl="/admin/judicial-branches/new"
+                            editUrlPrefix="/admin/judicial-branches"
+                            onRefetch={handleRefetchBranches}
+                            isFetching={isFetchingBranches}
+                        />
+                        <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
                     )} />
             )}
             <div className="grid md:grid-cols-2 gap-6">

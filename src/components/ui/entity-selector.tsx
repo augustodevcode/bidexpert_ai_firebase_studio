@@ -18,14 +18,25 @@ import Link from 'next/link';
 import { DataTable } from './data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 
-// Interface para as colunas da tabela, conforme especificado
-export interface EntityColumn<T> {
-  accessorKey: keyof T | 'actions';
-  header: string;
-  cell?: (row: T) => React.ReactNode;
-  enableSorting?: boolean;
-  enableHiding?: boolean;
-}
+// Criando uma coluna de seleção padrão que pode ser usada pela DataTable dentro do modal
+export const createEntitySelectorColumns = (onSelect: (value: string) => void): ColumnDef<any>[] => [
+    {
+      accessorKey: "label",
+      header: "Nome",
+      cell: ({ row }) => <div className="font-medium">{row.getValue("label")}</div>,
+    },
+    {
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="text-right">
+            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onSelect(row.original.value); }}>
+                Selecionar
+            </Button>
+        </div>
+      ),
+    },
+];
+
 
 interface EntitySelectorProps {
   value: string | null | undefined;
@@ -34,13 +45,11 @@ interface EntitySelectorProps {
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
-  entityName: string; // Ex: "Comitente", "Leiloeiro"
   createNewUrl?: string | null;
   editUrlPrefix?: string | null;
-  onRefetch: () => void;
+  onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
-  tableColumns: ColumnDef<any>[]; // Colunas para a DataTable
 }
 
 export default function EntitySelector({
@@ -50,13 +59,11 @@ export default function EntitySelector({
   placeholder,
   searchPlaceholder,
   emptyStateMessage,
-  entityName,
   createNewUrl,
   editUrlPrefix,
   onRefetch,
   isFetching = false,
   disabled = false,
-  tableColumns,
 }: EntitySelectorProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -66,6 +73,9 @@ export default function EntitySelector({
     onChange(selectedValue);
     setOpen(false);
   }
+  
+  // Memoize as colunas para evitar recriação em cada renderização
+  const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -86,14 +96,14 @@ export default function EntitySelector({
         </DialogTrigger>
         
         {editUrlPrefix && value && (
-            <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" asChild disabled={disabled} title={`Editar ${entityName} selecionado`}>
+            <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" asChild disabled={disabled} title="Editar registro selecionado">
                 <Link href={`${editUrlPrefix}/${value}`} target="_blank">
                     <Pencil className="h-4 w-4" />
                 </Link>
             </Button>
         )}
         
-        <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => onChange(null)} disabled={!value || disabled} title={`Limpar seleção de ${entityName}`}>
+        <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => onChange(null)} disabled={!value || disabled} title="Limpar seleção">
             <X className="h-4 w-4" />
         </Button>
       </div>
@@ -102,7 +112,7 @@ export default function EntitySelector({
         <DialogHeader className="p-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <ListChecks className="h-6 w-6 text-primary"/>
-            Selecionar {entityName}
+            Selecionar Registro
           </DialogTitle>
           <DialogDescription>
             Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.
@@ -113,7 +123,7 @@ export default function EntitySelector({
             <DataTable
                 columns={tableColumns}
                 data={options.map(opt => ({...opt, id: opt.value}))} // DataTable espera um campo 'id'
-                onRowClick={(row) => handleSelectAndClose(row.original.id)}
+                onRowClick={(row) => handleSelectAndClose(row.original.value)}
                 searchColumnId="label"
                 searchPlaceholder={searchPlaceholder}
                 isLoading={isFetching}
@@ -125,10 +135,16 @@ export default function EntitySelector({
                <Button variant="secondary" asChild>
                    <Link href={createNewUrl} target="_blank">
                        <PlusCircle className="mr-2 h-4 w-4"/>
-                       Novo {entityName}
+                       Criar Novo
                    </Link>
                </Button>
            )}
+          {onRefetch && (
+            <Button variant="outline" onClick={onRefetch} disabled={isFetching}>
+                <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                Atualizar Lista
+            </Button>
+          )}
           <Button variant="outline" onClick={() => setOpen(false)}>
             Fechar
           </Button>
@@ -137,22 +153,3 @@ export default function EntitySelector({
     </Dialog>
   );
 }
-
-// Criando uma coluna de seleção padrão que pode ser usada pela DataTable dentro do modal
-export const createEntitySelectorColumns = (onSelect: (value: string) => void): ColumnDef<any>[] => [
-    {
-      accessorKey: "label",
-      header: "Nome",
-      cell: ({ row }) => <div className="font-medium">{row.getValue("label")}</div>,
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => (
-        <div className="text-right">
-            <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); onSelect(row.original.value); }}>
-                Selecionar
-            </Button>
-        </div>
-      ),
-    },
-];
