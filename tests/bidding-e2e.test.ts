@@ -177,7 +177,7 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
 
         assert.ok(judLotRes.success && extLotRes.success && silLotRes.success && dutLotRes.success, "All lots should be created successfully.");
         judicialLot = (await lotService.getLotById(judLotRes.lotId!))!;
-        extrajudicialLot = (await lotService.getLotById(extLotRes.lotId!))!;
+        extrajudicialAuction = (await lotService.getLotById(extLotRes.lotId!))!;
         silentAuctionLot = (await lotService.getLotById(silLotRes.lotId!))!;
         dutchAuctionLot = (await lotService.getLotById(dutLotRes.lotId!))!;
         console.log('- Step 8: Lots for each auction type created.');

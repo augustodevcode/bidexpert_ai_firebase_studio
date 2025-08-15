@@ -1,5 +1,5 @@
-// tests/bidding-e2e.test.ts
-import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
+// src/tests/bidding-e2e.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
 import { prisma } from '@/lib/prisma';
 import { LotService } from '@/services/lot.service';

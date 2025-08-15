@@ -1,5 +1,5 @@
 // tests/lot.test.ts
-import { test, describe, beforeAll, afterAll, it } from 'vitest';
+import { describe, test, beforeAll, afterAll, it } from 'vitest';
 import assert from 'node:assert';
 import { LotService } from '@/services/lot.service';
 import { prisma } from '@/lib/prisma';

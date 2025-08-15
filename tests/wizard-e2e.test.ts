@@ -1,11 +1,14 @@
 // tests/wizard-e2e.test.ts
-import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
 import { prisma } from '@/lib/prisma';
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 import { getWizardInitialData, createAuctionFromWizard } from '@/app/admin/wizard/actions';
+import { SellerService } from '@/services/seller.service';
+import { JudicialProcessService } from '@/services/judicial-process.service';
+import { BemService } from '@/services/bem.service';
 
 const testRunId = `wizard-e2e-${uuidv4().substring(0, 8)}`;
 
@@ -48,12 +51,15 @@ async function cleanup() {
 }
 
 describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
+    const sellerService = new SellerService();
+    const judicialProcessService = new JudicialProcessService();
+    const bemService = new BemService();
 
     beforeAll(async () => {
         await cleanup(); // Ensure a clean slate before starting
         console.log(`--- [Wizard E2E Setup - ${testRunId}] Starting... ---`);
         
-        const uniqueUf = testRunId.substring(0, 2).toUpperCase();
+        const uniqueUf = `W${testRunId.substring(0, 1)}`;
         
         testCategory = await prisma.lotCategory.create({ data: { name: `Cat Wizard ${testRunId}`, slug: `cat-wiz-${testRunId}`, hasSubcategories: false } });
         testAuctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Wiz ${testRunId}`, slug: `auct-wiz-${testRunId}`, publicId: `auct-pub-wiz-${testRunId}` } });
@@ -62,30 +68,23 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         testDistrict = await prisma.judicialDistrict.create({ data: { name: `District Wiz ${testRunId}`, slug: `dist-wiz-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
         testBranch = await prisma.judicialBranch.create({ data: { name: `Branch Wiz ${testRunId}`, slug: `branch-wiz-${testRunId}`, districtId: testDistrict.id } });
         
-        testJudicialSeller = await prisma.seller.create({ data: { name: `Vara Wiz ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-wiz-${testRunId}`, slug: `vara-wiz-${testRunId}` } });
+        const judicialSellerRes = await sellerService.createSeller({ name: `Vara Wiz ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-wiz-${testRunId}`, slug: `vara-wiz-${testRunId}` } as any);
+        assert.ok(judicialSellerRes.success && judicialSellerRes.sellerId);
+        testJudicialSeller = (await sellerService.getSellerById(judicialSellerRes.sellerId!))!;
         
-        testJudicialProcess = await prisma.judicialProcess.create({
-            data: { 
-                processNumber: `500-${testRunId}`, 
-                isElectronic: true, 
-                courtId: testCourt.id, 
-                districtId: testDistrict.id, 
-                branchId: testBranch.id, 
-                sellerId: testJudicialSeller.id,
-                publicId: `proc-pub-wiz-${testRunId}`,
-            }
-        });
+        const procRes = await judicialProcessService.createJudicialProcess({ processNumber: `500-${testRunId}`, isElectronic: true, courtId: testCourt.id, districtId: testDistrict.id, branchId: testBranch.id, sellerId: testJudicialSeller.id, parties: [{ name: `Autor ${testRunId}`, partyType: 'AUTOR' }] });
+        assert.ok(procRes.success && procRes.processId, 'Judicial process should be created');
+        testJudicialProcess = (await judicialProcessService.getJudicialProcessById(procRes.processId!))!;
         
-        testBem = await prisma.bem.create({
-            data: {
-                title: `Bem para Wizard ${testRunId}`,
-                publicId: `bem-wiz-${testRunId}`,
-                status: 'DISPONIVEL',
-                categoryId: testCategory.id,
-                judicialProcessId: testJudicialProcess.id,
-                evaluationValue: 50000.00
-            }
-        });
+        const bemRes = await bemService.createBem({
+            title: `Bem para Wizard ${testRunId}`,
+            judicialProcessId: testJudicialProcess.id,
+            categoryId: testCategory.id,
+            status: 'DISPONIVEL',
+            evaluationValue: 50000.00
+        } as any);
+        assert.ok(bemRes.success && bemRes.bemId);
+        testBem = (await bemService.getBemById(bemRes.bemId!))!;
         
         console.log(`--- [Wizard E2E Setup - ${testRunId}] Complete. ---`);
     });

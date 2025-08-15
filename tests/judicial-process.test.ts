@@ -1,5 +1,5 @@
 // tests/judicial-process.test.ts
-import { test, describe, beforeAll, afterAll, it } from 'vitest';
+import { describe, test, beforeAll, afterAll, it, expect } from 'vitest';
 import assert from 'node:assert';
 import { JudicialProcessService } from '@/services/judicial-process.service';
 import { prisma } from '@/lib/prisma';
@@ -84,5 +84,3 @@ describe('Judicial Process Service E2E Tests', () => {
         assert.strictEqual(createdProcessFromDb.parties[0].name, `Autor Teste ${testRunId}`, 'First party name should match');
     });
 });
-
-  

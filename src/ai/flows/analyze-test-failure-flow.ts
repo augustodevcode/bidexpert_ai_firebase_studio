@@ -41,7 +41,6 @@ export async function analyzeTestFailure(input: AnalyzeTestFailureInput): Promis
 }
 
 export async function analyzeErrorLog(input: AnalyzeErrorLogInput): Promise<AnalysisOutput> {
-  // CORREÇÃO: Chamando o fluxo correto para erros genéricos.
   return analyzeGenericErrorLogFlow(input);
 }
 
@@ -123,6 +122,7 @@ const analyzeTestFailureFlow = ai.defineFlow(
     outputSchema: AnalysisOutputSchema,
   },
   async (input) => {
+    // CORREÇÃO: Usar a chamada de função direta do prompt
     const { output } = await analyzeTestFailurePrompt(input);
     return output!;
   }
@@ -135,6 +135,7 @@ const analyzeGenericErrorLogFlow = ai.defineFlow(
     outputSchema: AnalysisOutputSchema,
   },
   async (input) => {
+    // CORREÇÃO: Usar a chamada de função direta do prompt
     const { output } = await analyzeGenericErrorPrompt(input);
     return output!;
   }
