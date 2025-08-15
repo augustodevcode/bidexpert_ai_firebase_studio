@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -12,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star, TrendingUp, Pencil } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -60,6 +59,9 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     
     return Array.from(new Set(triggers));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+  
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
+  const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
 
 
   return (
@@ -70,19 +72,19 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block h-full w-full">
               <Image
-                src={auction.imageUrl || 'https://placehold.co/600x400.png'}
+                src={mainImageUrl!}
                 alt={auction.title}
                 fill
                 className="object-cover"
                 data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
               />
             </Link>
-             {auction.seller?.logoUrl && (
+             {sellerLogoUrl && (
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={auction.seller.logoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
+                                <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
                                 <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                             </Avatar>
                         </Link>
@@ -177,7 +179,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
               </div>
               <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                 <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                    <Eye className="mr-2 h-4 w-4" /> Ver Leilão ({auction.totalLots || 0} Lotes)
+                    <Eye className="mr-2 h-4 w-4" /> Ver Leilão ({auction.totalLots})
                 </Link>
               </Button>
             </div>

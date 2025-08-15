@@ -27,6 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 // Sort options for auctions (similar to search page)
 const sortOptionsAuctions = [
@@ -41,12 +42,14 @@ function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
   const statusText = new Date(auctionEndDate as string) < new Date() ? `Encerrado há ${differenceInDays(new Date(), new Date(auctionEndDate as string))} dias` : `Encerra em ${differenceInDays(new Date(auctionEndDate as string), new Date())} dias`;
 
+  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x450.png';
+
   return (
     <Card className="overflow-hidden shadow-md h-full flex flex-col">
       <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
         <div className="relative aspect-[4/3] bg-muted">
           <Image
-            src={auction.imageUrl || 'https://placehold.co/600x450.png'}
+            src={validImageUrl}
             alt={auction.title}
             fill
             className="object-cover"
@@ -221,6 +224,7 @@ export default function AuctioneerDetailsPage() {
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
   const editUrl = `/admin/auctioneers/${auctioneerProfile.id}/edit`;
+  const validLogoUrl = isValidImageUrl(auctioneerProfile.logoUrl) ? auctioneerProfile.logoUrl : `https://placehold.co/160x160.png?text=${auctioneerInitial}`;
 
   return (
     <>
@@ -230,7 +234,7 @@ export default function AuctioneerDetailsPage() {
         <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10">
           <div className="lg:col-span-1 space-y-3 text-center lg:text-left">
             <Avatar className="h-40 w-40 mx-auto lg:mx-0 mb-4 border-4 border-primary/30 shadow-lg">
-              <AvatarImage src={auctioneerProfile.logoUrl || `https://placehold.co/160x160.png?text=${auctioneerInitial}`} alt={auctioneerProfile.name} data-ai-hint={auctioneerProfile.dataAiHintLogo || "logo leiloeiro grande"} />
+              <AvatarImage src={validLogoUrl} alt={auctioneerProfile.name} data-ai-hint={auctioneerProfile.dataAiHintLogo || "logo leiloeiro grande"} />
               <AvatarFallback className="text-5xl">{auctioneerInitial}</AvatarFallback>
             </Avatar>
             <h1 className="text-3xl font-bold font-headline">{auctioneerProfile.name}</h1>
