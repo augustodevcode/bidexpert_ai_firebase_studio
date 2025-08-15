@@ -68,7 +68,6 @@ async function cleanup() {
         }
 
         const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
-        // Corrected Cleanup Order: Delete LotBens before Bem
         if (bemIds.length > 0) {
             await prisma.lotBens.deleteMany({ where: { bemId: { in: bemIds } } });
         }
@@ -128,18 +127,18 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
         testSeller = (await sellerService.getSellerById(sellerRes.sellerId!))!;
         
         // 5. Judicial Seller & Entities
-        const uniqueUf = testRunId.substring(0, 2).toUpperCase();
-        await prisma.state.deleteMany({where: {uf: uniqueUf}}); // Make sure it is unique before creating
-        testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: uniqueUf, slug: `st-${testRunId}` } });
-        testCourt = await prisma.court.create({ data: { name: `Court ${testRunId}`, stateUf: testState.uf, slug: `court-${testRunId}` } });
-        testDistrict = await prisma.judicialDistrict.create({ data: { name: `District ${testRunId}`, slug: `dist-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
-        testBranch = await prisma.judicialBranch.create({ data: { name: `Branch ${testRunId}`, slug: `branch-${testRunId}`, districtId: testDistrict.id } });
-        const judicialSellerRes = await sellerService.createSeller({ name: `Vara ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-${testRunId}`, slug: `vara-wiz-${testRunId}` } as any);
+        const uniqueUf = `T${testRunId.substring(1, 2)}`; // Make UF more unique
+        await prisma.state.deleteMany({ where: { uf: { contains: testRunId } } });
+        testState = await prisma.state.create({ data: { name: `State ${testRunId}`, uf: uniqueUf, slug: `st-wiz-${testRunId}` } });
+        testCourt = await prisma.court.create({ data: { name: `Court Wiz ${testRunId}`, stateUf: testState.uf, slug: `court-wiz-${testRunId}` } });
+        testDistrict = await prisma.judicialDistrict.create({ data: { name: `District Wiz ${testRunId}`, slug: `dist-wiz-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
+        testBranch = await prisma.judicialBranch.create({ data: { name: `Branch Wiz ${testRunId}`, slug: `branch-wiz-${testRunId}`, districtId: testDistrict.id } });
+        const judicialSellerRes = await sellerService.createSeller({ name: `Vara Wiz ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-wiz-${testRunId}`, slug: `vara-wiz-${testRunId}` } as any);
         assert.ok(judicialSellerRes.success && judicialSellerRes.sellerId, 'Judicial seller creation failed');
         testJudicialSeller = (await sellerService.getSellerById(judicialSellerRes.sellerId!))!;
         console.log('- Step 3 & 4: Core entities (Category, Auctioneer, Sellers) created.');
         
-        const procRes = await judicialProcessService.createJudicialProcess({ processNumber: `123-${testRunId}`, isElectronic: true, courtId: testCourt.id, districtId: testDistrict.id, branchId: testBranch.id, sellerId: testJudicialSeller.id, parties: [{ name: `Autor ${testRunId}`, partyType: 'AUTOR' }] });
+        const procRes = await judicialProcessService.createJudicialProcess({ processNumber: `500-${testRunId}`, isElectronic: true, courtId: testCourt.id, districtId: testDistrict.id, branchId: testBranch.id, sellerId: testJudicialSeller.id, parties: [{ name: `Autor ${testRunId}`, partyType: 'AUTOR' }] });
         assert.ok(procRes.success && procRes.processId, 'Judicial process should be created');
         testJudicialProcess = (await judicialProcessService.getJudicialProcessById(procRes.processId!))!;
         console.log('- Step 5: Judicial process created.');
@@ -182,7 +181,7 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
 
         assert.ok(judLotRes.success && extLotRes.success && silLotRes.success && dutLotRes.success, "All lots should be created successfully.");
         judicialLot = (await lotService.getLotById(judLotRes.lotId!))!;
-        extrajudicialAuction = (await lotService.getLotById(extLotRes.lotId!))!;
+        extrajudicialLot = (await lotService.getLotById(extLotRes.lotId!))!;
         silentAuctionLot = (await lotService.getLotById(silLotRes.lotId!))!;
         dutchAuctionLot = (await lotService.getLotById(dutLotRes.lotId!))!;
         console.log('- Step 8: Lots for each auction type created.');
@@ -196,7 +195,7 @@ describe(`[E2E] Full Auction & Bidding Lifecycle Simulation (ID: ${testRunId})`,
         console.log(`--- [E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
     });
 
-    it('Standard Bidding: should allow users to bid and determine a winner', async () => {
+    test('Standard Bidding: should allow users to bid and determine a winner', async () => {
         console.log('\n--- Test: Standard Bidding on Extrajudicial Lot ---');
         assert.ok(extrajudicialLot, 'Extrajudicial Lot must be defined');
 
