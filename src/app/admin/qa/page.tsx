@@ -28,6 +28,7 @@ import {
     runPlatformSettingsTest,
     runAuctionDataValidationTest,
     runSearchAndFilterTest,
+    analyzeErrorLogAction, // Import a nova ação
 } from './actions';
 import { Loader2, ClipboardCheck, PlayCircle, ServerCrash, CheckCircle, Copy, TestTube, TestTubeDiagonal, Library, Users, UserCheck, TestTube2, Palette, Settings, BarChart3, Landmark, Search, BrainCircuit, Rocket, Workflow, PackageCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -110,11 +111,12 @@ export default function QualityAssurancePage() {
     const [runningTest, setRunningTest] = useState<string | null>(null);
     const [lastTestRun, setLastTestRun] = useState<string | null>(null);
     const [hasCopied, setHasCopied] = useState(false);
+    const [isAnalyzing, setIsAnalyzing] = useState(false); // Novo estado para análise
 
     const handleRunTest = async (testId: string) => {
         setRunningTest(testId);
         setLastTestRun(testId);
-        setTestResult(null);
+        setTestResult(null); // Limpa o resultado anterior
 
         const testToRun = testGroups.flatMap(g => g.tests).find(t => t.id === testId);
         if (!testToRun) return;
@@ -132,6 +134,28 @@ export default function QualityAssurancePage() {
         toast({ title: "Copiado!", description: "A recomendação da IA e o log de saída foram copiados." });
         setTimeout(() => setHasCopied(false), 2500);
     };
+
+    const handleAnalyzeError = async () => {
+      if (!testResult || !testResult.error) return;
+      setIsAnalyzing(true);
+      toast({ title: "Análise Iniciada", description: "Enviando o log de erro para a IA."});
+      try {
+        const result = await analyzeErrorLogAction(testResult.error);
+        if (result.success) {
+          setTestResult(prev => ({
+            ...prev!,
+            recommendation: `**Análise:**\n${result.analysis}\n\n**Recomendação:**\n${result.recommendation}`
+          }));
+        } else {
+          toast({ title: "Falha na Análise", description: result.recommendation, variant: "destructive" });
+        }
+      } catch (e: any) {
+        toast({ title: "Erro Crítico na Análise", description: e.message, variant: "destructive" });
+      } finally {
+        setIsAnalyzing(false);
+      }
+    };
+
 
     return (
         <div className="space-y-8">
@@ -191,32 +215,34 @@ export default function QualityAssurancePage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {!testResult.success && testResult.recommendation && (
-                            <Alert variant="destructive" className="mb-4">
-                                <BrainCircuit className="h-5 w-5" />
-                                <AlertTitle className="font-bold">Recomendação da IA</AlertTitle>
-                                <AlertDescription className="whitespace-pre-line text-sm leading-relaxed">
-                                    {testResult.recommendation.split('================================================').join('')}
-                                </AlertDescription>
+                        {testResult.success ? (
+                            <Alert variant="default" className="bg-green-50 dark:bg-green-900/20 border-green-500/50">
+                                <CheckCircle className="h-5 w-5 text-green-700 dark:text-green-300"/>
+                                <AlertTitle className="font-bold text-green-800 dark:text-green-300">Teste Passou com Sucesso</AlertTitle>
                             </Alert>
-                        )}
-                        {!testResult.success && !testResult.recommendation && (
-                             <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md">
-                                <div className="flex items-center gap-2 text-destructive font-bold">
-                                    <ServerCrash className="h-5 w-5" />
-                                    <span>Teste Falhou</span>
-                                </div>
-                                {testResult.error && (
-                                  <pre className="mt-2 whitespace-pre-wrap text-xs font-mono bg-background p-2 rounded max-h-80 overflow-auto">{testResult.error}</pre>
+                        ) : (
+                            <div>
+                                {testResult.recommendation ? (
+                                    <Alert variant="destructive" className="mb-4">
+                                        <BrainCircuit className="h-5 w-5" />
+                                        <AlertTitle className="font-bold">Recomendação da IA</AlertTitle>
+                                        <AlertDescription className="whitespace-pre-line text-sm leading-relaxed mt-2">
+                                            {testResult.recommendation.split('================================================').join('')}
+                                        </AlertDescription>
+                                    </Alert>
+                                ) : (
+                                     <Alert variant="destructive" className="mb-4">
+                                        <BrainCircuit className="h-5 w-5" />
+                                        <AlertTitle className="font-bold">Análise da IA Falhou</AlertTitle>
+                                        <AlertDescription className="whitespace-pre-line text-sm leading-relaxed mt-2">
+                                            A análise automática falhou. Verifique o log abaixo e tente analisar manualmente.
+                                            <Button size="sm" variant="outline" className="mt-3" onClick={handleAnalyzeError} disabled={isAnalyzing}>
+                                                {isAnalyzing ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <BrainCircuit className="mr-2 h-4 w-4" />}
+                                                Tentar Análise Manualmente
+                                            </Button>
+                                        </AlertDescription>
+                                    </Alert>
                                 )}
-                            </div>
-                        )}
-                        {testResult.success && (
-                            <div className="p-4 bg-green-500/10 border border-green-500/20 rounded-md">
-                                <div className="flex items-center gap-2 text-green-700 font-bold">
-                                    <CheckCircle className="h-5 w-5" />
-                                    <span>Teste Passou com Sucesso</span>
-                                </div>
                             </div>
                         )}
                         <div className="flex justify-between items-center mt-4 mb-2">
