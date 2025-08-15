@@ -6,6 +6,8 @@ const bemStatusValues: [Bem['status'], ...Bem['status'][]] = [
   'CADASTRO', 'DISPONIVEL', 'LOTEADO', 'VENDIDO', 'REMOVIDO', 'INATIVADO'
 ];
 
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
+
 export const bemFormSchema = z.object({
   title: z.string().min(5, {
     message: "O título do bem deve ter pelo menos 5 caracteres.",
@@ -19,7 +21,7 @@ export const bemFormSchema = z.object({
   judicialProcessId: z.string().optional().nullable(),
   sellerId: z.string().optional().nullable(),
   evaluationValue: z.coerce.number().positive("O valor de avaliação deve ser positivo.").optional().nullable(),
-  imageUrl: z.string().url().optional().or(z.literal('')),
+  imageUrl: optionalUrlSchema,
   imageMediaId: z.string().optional().nullable(),
   galleryImageUrls: z.array(z.string().url()).optional(),
   mediaItemIds: z.array(z.string()).optional(),
