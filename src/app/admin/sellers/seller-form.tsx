@@ -12,24 +12,27 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Image as ImageIcon, Scale } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Scale, Save, XCircle } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep'; 
 import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '../judicial-branches/actions';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 interface SellerFormProps {
-  initialData?: SellerProfileInfo | null;
+  initialData?: Partial<SellerProfileInfo> | null;
   judicialBranches: JudicialBranch[];
-  onSubmitAction: (data: SellerFormValues) => Promise<any>; // Tornamos genérico para não se preocupar com o retorno aqui
+  onSubmitAction: (data: SellerFormValues) => Promise<any>;
+  onUpdateSuccess?: () => void; // Callback para quando a atualização for bem-sucedida
 }
 
-// O componente agora é um ForwardRef para que possamos acessá-lo via ref
+// Tornando o formulário um forwardRef para que o FormPageLayout possa acessá-lo
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
   initialData,
   judicialBranches: initialBranches,
   onSubmitAction,
+  onUpdateSuccess,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -59,18 +62,36 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     },
   });
 
-  // Expor o método de submit via ref
+  // Expor o método de submit do formulário via ref
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: () => {
-      form.handleSubmit(onSubmitAction)();
-    }
+    requestSubmit: form.handleSubmit(onSubmitAction),
   }));
+  
+  React.useEffect(() => {
+    form.reset({
+        name: initialData?.name || '',
+        publicId: initialData?.publicId || '',
+        contactName: initialData?.contactName || '',
+        email: initialData?.email || '',
+        phone: initialData?.phone || '',
+        address: initialData?.address || '',
+        city: initialData?.city || '',
+        state: initialData?.state || '',
+        zipCode: initialData?.zipCode || '',
+        website: initialData?.website || '',
+        logoUrl: initialData?.logoUrl || '',
+        logoMediaId: initialData?.logoMediaId || null,
+        dataAiHintLogo: initialData?.dataAiHintLogo || '',
+        description: initialData?.description || '',
+        judicialBranchId: initialData?.judicialBranchId || null,
+        isJudicial: initialData?.isJudicial || false,
+    })
+  }, [initialData, form]);
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
   const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
 
-  // ... (o resto das funções handleRefetch, handleMediaSelect, handleCepLookup permanece o mesmo)
-    const handleRefetchBranches = React.useCallback(async () => {
+  const handleRefetchBranches = React.useCallback(async () => {
     setIsFetchingBranches(true);
     const data = await getJudicialBranches();
     setJudicialBranches(data);
@@ -127,9 +148,8 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                             placeholder="Nenhuma vara judicial vinculada"
                             searchPlaceholder="Buscar vara..."
                             emptyStateMessage="Nenhuma vara encontrada."
-                            entityName="Vara"
+                            entityName="judicialBranch"
                             createNewUrl="/admin/judicial-branches/new"
-                            editUrlPrefix="/admin/judicial-branches"
                             onRefetch={handleRefetchBranches}
                             isFetching={isFetchingBranches}
                         />

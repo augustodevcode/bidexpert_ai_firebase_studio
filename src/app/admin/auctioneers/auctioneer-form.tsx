@@ -1,4 +1,3 @@
-
 // src/app/admin/auctioneers/auctioneer-form.tsx
 'use client';
 
@@ -29,20 +28,15 @@ import { consultaCepAction } from '@/lib/actions/cep';
 interface AuctioneerFormProps {
   initialData?: AuctioneerProfileInfo | null;
   onSubmitAction: (data: AuctioneerFormValues) => Promise<any>;
-  formTitle?: string;
-  formDescription?: string;
-  submitButtonText?: string;
+  onUpdateSuccess?: () => void;
 }
 
 const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText = "Salvar",
+  onUpdateSuccess,
 }, ref) => {
   const { toast } = useToast();
-  const router = useRouter();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [isCepLoading, setIsCepLoading] = React.useState(false);
 
@@ -68,7 +62,9 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   });
 
   React.useEffect(() => {
-    form.reset(initialData || {});
+    if (initialData) {
+      form.reset(initialData);
+    }
   }, [initialData, form]);
 
   // Expor o método de submit via ref para o FormPageLayout
@@ -332,4 +328,3 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
 
 AuctioneerForm.displayName = "AuctioneerForm";
 export default AuctioneerForm;
-
