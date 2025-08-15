@@ -44,6 +44,8 @@ import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
 import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { DataTable } from '@/components/ui/data-table';
+import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -418,12 +420,7 @@ export default function EditAuctionPage() {
   const { userProfileWithPermissions } = useAuth();
   
   const [isAISuggestionModalOpen, setIsAISuggestionModalOpen] = useState(false);
-  
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [lotSortBy, setLotSortBy] = useState<string>('number_asc');
-  const [lotCurrentPage, setLotCurrentPage] = useState(1);
-  const [lotItemsPerPage, setLotItemsPerPage] = useState(12);
-  
   const formRef = React.useRef<any>(null);
 
   const fetchPageData = useCallback(async () => {
@@ -446,7 +443,6 @@ export default function EditAuctionPage() {
             return;
         }
         setPlatformSettings(settings as PlatformSettings);
-        setLotItemsPerPage((settings as PlatformSettings)?.searchItemsPerPage || 12);
         setAuction(fetchedAuction);
         setCategories(fetchedCategories);
         setLotsInAuction(fetchedLots);
@@ -454,7 +450,6 @@ export default function EditAuctionPage() {
         setSellersList(fetchedSellers);
         setStates(fetchedStates);
         setAllCities(fetchedCities);
-        setLotCurrentPage(1); 
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
@@ -472,147 +467,21 @@ export default function EditAuctionPage() {
     return updateAuction(auctionId, data);
   }
 
-  const lotSortOptions = [
-    { value: 'number_asc', label: 'Nº Lote Crescente' },
-    { value: 'number_desc', label: 'Nº Lote Decrescente' },
-    { value: 'title_asc', label: 'Título A-Z' },
-    { value: 'title_desc', label: 'Título Z-A' },
-    { value: 'status_asc', label: 'Status A-Z' },
-    { value: 'price_asc', label: 'Preço Crescente' },
-    { value: 'price_desc', label: 'Preço Decrescente' },
-  ];
-
-  const sortedLots = useMemo(() => {
-    return [...lotsInAuction].sort((a, b) => {
-      switch (lotSortBy) {
-        case 'number_asc':
-          return (parseInt(a.number || '0') || 0) - (parseInt(b.number || '0') || 0);
-        case 'number_desc':
-          return (parseInt(b.number || '0') || 0) - (parseInt(a.number || '0') || 0);
-        case 'title_asc':
-          return a.title.localeCompare(b.title);
-        case 'title_desc':
-          return b.title.localeCompare(a.title);
-        case 'status_asc':
-          return getAuctionStatusText(a.status).localeCompare(getAuctionStatusText(b.status));
-        case 'price_asc':
-          return a.price - b.price;
-        case 'price_desc':
-          return b.price - a.price;
-        default:
-          return 0;
+  const handleDeleteLot = useCallback(
+    async (lotId: string) => {
+      const auctionId = auction?.id;
+      const result = await deleteLot(lotId, auctionId);
+      if (result.success) {
+        toast({ title: 'Sucesso', description: 'Lote excluído com sucesso.' });
+        fetchPageData();
+      } else {
+        toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
-    });
-  }, [lotsInAuction, lotSortBy]);
-  
-  const paginatedLots = useMemo(() => {
-    if (!platformSettings) return [];
-    const startIndex = (lotCurrentPage - 1) * lotItemsPerPage;
-    const endIndex = startIndex + lotItemsPerPage;
-    return sortedLots.slice(startIndex, endIndex);
-  }, [sortedLots, lotCurrentPage, lotItemsPerPage, platformSettings]);
-
-  const handleLotSortChange = (newSortBy: string) => {
-    setLotSortBy(newSortBy);
-    setLotCurrentPage(1);
-  };
-
-  const handleLotPageChange = (newPage: number) => {
-    setLotCurrentPage(newPage);
-  };
-  
-  const handleLotItemsPerPageChange = (newSize: number) => {
-      setLotItemsPerPage(newSize);
-      setLotCurrentPage(1);
-  }
-
-  const renderLotListItemForAdmin = (lot: Lot) => (
-    <Card key={lot.id} className="mb-2 shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-3">
-        <div className="flex flex-col sm:flex-row justify-between items-start gap-2">
-          <div className="flex-grow">
-            <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} className="hover:text-primary">
-              <h4 className="font-semibold text-sm">{lot.number ? `Lote ${lot.number}: ` : ''}{lot.title}</h4>
-            </Link>
-            <p className="text-xs text-muted-foreground">ID: {lot.publicId || lot.id}</p>
-            {lot.type && (
-             <p className="text-xs text-muted-foreground">
-               Cat: {lot.type}
-               {lot.subcategoryName && ` / ${lot.subcategoryName}`}
-             </p>
-           )}
-            <Badge variant="outline" className={`text-xs mt-1 border-current`}>
-                {getAuctionStatusText(lot.status)}
-            </Badge>
-          </div>
-          <div className="flex-shrink-0 text-right">
-            <p className="text-sm font-semibold">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            <p className="text-xs text-muted-foreground flex items-center justify-end gap-1">
-              <Gavel className="h-3 w-3"/> {lot.bidsCount || 0}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM/yy HH:mm', { locale: ptBR }) : 'N/A'}
-            </p>
-          </div>
-        </div>
-      </CardContent>
-      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
-        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
-          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
-            <Eye className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700 h-7 w-7">
-          <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} title="Editar Lote">
-            <Edit className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-        {auction && <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />}
-      </CardFooter>
-    </Card>
+    },
+    [auction?.id, fetchPageData, toast]
   );
-
-  const renderLotGridItemForAdmin = (lot: Lot) => (
-    <Card key={lot.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
-        <CardHeader className="p-3">
-            <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} className="hover:text-primary">
-                <CardTitle className="text-sm font-semibold line-clamp-2 leading-tight h-8">
-                    {lot.number ? `Lote ${lot.number}: ` : ''}{lot.title}
-                </CardTitle>
-            </Link>
-            <CardDescription className="text-xs">ID: {lot.publicId || lot.id}</CardDescription>
-            {lot.type && (
-             <CardDescription className="text-xs mt-0.5">
-               {lot.type}
-               {lot.subcategoryName && ` / ${lot.subcategoryName}`}
-             </CardDescription>
-           )}
-        </CardHeader>
-        <CardContent className="p-3 flex-grow space-y-1 text-xs">
-            <Badge variant="outline" className={`border-current`}>
-                {getAuctionStatusText(lot.status)}
-            </Badge>
-            <p className="font-medium">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-            <p className="text-muted-foreground flex items-center gap-1"><Gavel className="h-3 w-3"/> {lot.bidsCount || 0} lances</p>
-            <p className="text-muted-foreground">
-              Fim: {lot.endDate ? format(new Date(lot.endDate as string), 'dd/MM HH:mm', { locale: ptBR }) : 'N/A'}
-            </p>
-        </CardContent>
-      <CardFooter className="p-2 border-t flex justify-end items-center gap-1">
-        <Button variant="ghost" size="icon" asChild className="text-sky-600 hover:text-sky-700 h-7 w-7">
-          <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} target="_blank" title="Ver Lote (Público)">
-            <Eye className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-        <Button variant="ghost" size="icon" asChild className="text-blue-600 hover:text-blue-700 h-7 w-7">
-          <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} title="Editar Lote">
-            <Edit className="h-3.5 w-3.5" />
-          </Link>
-        </Button>
-        {auction && <DeleteLotButton lotId={lot.publicId || lot.id} lotTitle={lot.title} auctionId={auction.publicId || auctionId} onDeleteSuccess={fetchPageData} />}
-      </CardFooter>
-    </Card>
-  );
+  
+  const lotColumns = useMemo(() => createLotColumns({ handleDelete: handleDeleteLot }), [handleDeleteLot]);
 
   if (isLoading || !auction || !platformSettings) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
@@ -662,6 +531,33 @@ export default function EditAuctionPage() {
             </div>
         </div>
         <Separator className="my-8"/>
+
+        <Card>
+            <CardHeader>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="text-xl font-semibold flex items-center">
+                            <Layers className="mr-2 h-5 w-5 text-primary"/> Lotes do Leilão
+                        </CardTitle>
+                        <CardDescription>
+                            Gerencie os lotes vinculados a este leilão.
+                        </CardDescription>
+                    </div>
+                     <Button asChild>
+                        <Link href={`/admin/lots/new?auctionId=${auction.id}`}>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Lote
+                        </Link>
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <DataTable 
+                    columns={lotColumns}
+                    data={lotsInAuction}
+                />
+            </CardContent>
+        </Card>
+
         <Card>
           <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center">
@@ -696,3 +592,506 @@ export default function EditAuctionPage() {
     </>
   );
 }
+
+```
+- src/components/admin/sellers/seller-form.tsx:
+```tsx
+// src/components/admin/sellers/seller-form.tsx
+'use client';
+
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useWatch } from 'react-hook-form';
+import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
+import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Image as ImageIcon, Scale, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { consultaCepAction } from '@/lib/actions/cep'; 
+import EntitySelector from '@/components/ui/entity-selector';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+
+interface SellerFormProps {
+  initialData?: SellerProfileInfo | null;
+  judicialBranches: JudicialBranch[];
+  onSubmitAction: (data: SellerFormValues) => Promise<any>;
+}
+
+const SellerForm = React.forwardRef<any, SellerFormProps>(({
+  initialData,
+  judicialBranches: initialBranches,
+  onSubmitAction,
+}, ref) => {
+  const { toast } = useToast();
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
+  const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
+  const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
+
+  const form = useForm<SellerFormValues>({
+    resolver: zodResolver(sellerFormSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      publicId: initialData?.publicId || '',
+      contactName: initialData?.contactName || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
+      address: initialData?.address || '',
+      city: initialData?.city || '',
+      state: initialData?.state || '',
+      zipCode: initialData?.zipCode || '',
+      website: initialData?.website || '',
+      logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
+      dataAiHintLogo: initialData?.dataAiHintLogo || '',
+      description: initialData?.description || '',
+      judicialBranchId: initialData?.judicialBranchId || null,
+      isJudicial: initialData?.isJudicial || false,
+    },
+  });
+
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+  }));
+
+  const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+  const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+
+  const handleRefetchBranches = React.useCallback(async () => {
+    setIsFetchingBranches(true);
+    const data = await getJudicialBranches();
+    setJudicialBranches(data);
+    setIsFetchingBranches(false);
+  }, []);
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
+        form.setValue('logoMediaId', selectedMediaItem.id || null);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
+  
+  const handleCepLookup = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    setIsCepLoading(true);
+    const result = await consultaCepAction(cep);
+    if (result.success && result.data) {
+        form.setValue('address', result.data.logradouro);
+        form.setValue('city', result.data.localidade);
+        form.setValue('state', result.data.uf);
+    } else {
+        toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+    }
+    setIsCepLoading(false);
+  }
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+           <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Nome do Comitente/Empresa</FormLabel><FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+             {initialData?.publicId && (
+                <FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>ID Público</FormLabel><FormControl><Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription><FormMessage /></FormItem>)} />
+            )}
+            <FormField control={form.control} name="isJudicial" render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>É Comitente Judicial?</FormLabel><FormDescription>Marque se este comitente é uma entidade judicial (Vara, Tribunal, etc).</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+              )} />
+            {isJudicial && (
+                <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
+                    <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))} placeholder="Nenhuma vara judicial vinculada" searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada." createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={handleRefetchBranches} isFetching={isFetchingBranches} /><FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
+                    )} />
+            )}
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato (Opcional)</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone (Opcional)</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+             <FormField control={form.control} name="zipCode" render={({ field }) => (
+                    <FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>
+                )} />
+             <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <div className="grid md:grid-cols-3 gap-6">
+              <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado/UF</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            
+            <FormItem>
+              <FormLabel>Logo do Comitente</FormLabel>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                  {logoUrlPreview ? ( <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
+                </div>
+                <div className="flex-grow space-y-2">
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                  <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)} />
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+
+            <FormField control={form.control} name="dataAiHintLogo" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Logo - Opcional)</FormLabel><FormControl><Input placeholder="Ex: banco logo, empresa tecnologia" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição/Observações (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} value={field.value ?? ''} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+        </form>
+      </Form>
+     <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
+    </>
+  );
+});
+
+SellerForm.displayName = "SellerForm";
+export default SellerForm;
+
+```
+- src/app/admin/sellers/[sellerId]/edit/page.tsx:
+```tsx
+// src/app/admin/sellers/[sellerId]/edit/page.tsx
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import SellerForm from '@/app/admin/sellers/seller-form';
+import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../../actions';
+import { notFound, useRouter, useParams } from 'next/navigation';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { Button } from '@/components/ui/button';
+import { BarChart3, Users } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getSellerDashboardDataAction } from '../../analysis/actions';
+import type { SellerDashboardData } from '@/services/seller.service';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Separator } from '@/components/ui/separator';
+import FormPageLayout from '@/components/admin/form-page-layout'; // Importar o novo layout
+import React from 'react';
+
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+    <Card className="bg-secondary/40">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
+
+function SellerDashboardSection({ sellerId }: { sellerId: string }) {
+    const [dashboardData, setDashboardData] = useState<SellerDashboardData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setIsLoading(true);
+            const data = await getSellerDashboardDataAction(sellerId);
+            setDashboardData(data);
+            setIsLoading(false);
+        }
+        fetchData();
+    }, [sellerId]);
+
+    // ... (O conteúdo da dashboard section permanece o mesmo)
+    return (
+        <div className="space-y-4">
+             {/* ... */}
+        </div>
+    )
+}
+
+export default function EditSellerPage() {
+  const params = useParams();
+  const sellerId = params.sellerId as string;
+  const router = useRouter();
+  const { toast } = useToast();
+  
+  const [seller, setSeller] = useState<SellerFormData | null>(null);
+  const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isViewMode, setIsViewMode] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const formRef = React.useRef<any>(null); // Ref para o formulário
+
+  const fetchPageData = useCallback(async () => {
+      if (!sellerId) return;
+      setIsLoading(true);
+      try {
+        const [sellerData, branchesData] = await Promise.all([
+            getSeller(sellerId),
+            getJudicialBranches()
+        ]);
+
+        if (!sellerData) {
+            notFound();
+            return;
+        }
+        setSeller(sellerData);
+        setJudicialBranches(branchesData);
+      } catch (e) {
+          console.error("Error fetching seller data", e);
+          notFound();
+      } finally {
+        setIsLoading(false);
+      }
+  }, [sellerId]);
+
+  useEffect(() => {
+    fetchPageData();
+  }, [fetchPageData]);
+  
+  const handleDelete = async () => {
+    const result = await deleteSeller(sellerId);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      router.push('/admin/sellers');
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  };
+
+  const handleSave = async () => {
+      if (formRef.current) {
+          await formRef.current.requestSubmit();
+      }
+  };
+
+  // Esta função será passada para o SellerForm
+  const handleFormSubmit = async (data: SellerFormData) => {
+    setIsSubmitting(true);
+    const result = await updateSeller(sellerId, data);
+    if (result.success) {
+        toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
+        fetchPageData(); // Re-fetch data
+        setIsViewMode(true); // Return to view mode on success
+    } else {
+        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
+    }
+    setIsSubmitting(false);
+  }
+
+  return (
+     <div className="space-y-6">
+        <FormPageLayout
+            formTitle={isViewMode ? `Visualizar Comitente` : `Editar Comitente`}
+            formDescription={seller?.name || 'Carregando...'}
+            icon={Users}
+            isViewMode={isViewMode}
+            isLoading={isLoading}
+            isSubmitting={isSubmitting}
+            onEnterEditMode={() => setIsViewMode(false)}
+            onCancel={() => setIsViewMode(true)}
+            onSave={handleSave}
+            onDelete={handleDelete}
+        >
+            <SellerForm
+                ref={formRef} // Passando a ref para o formulário
+                initialData={seller}
+                judicialBranches={judicialBranches}
+                onSubmitAction={handleFormSubmit}
+                formTitle="Editar Comitente"
+                formDescription=""
+                submitButtonText="Salvar Alterações"
+            />
+        </FormPageLayout>
+
+        <Separator className="my-8" />
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="text-xl font-semibold flex items-center">
+                    <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance
+                </CardTitle>
+                <CardDescription>
+                    KPIs e métricas de desempenho para este comitente.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <SellerDashboardSection sellerId={sellerId} />
+            </CardContent>
+        </Card>
+     </div>
+  );
+}
+
+```
+- src/components/admin/sellers/seller-form.tsx:
+```tsx
+// src/components/admin/sellers/seller-form.tsx
+'use client';
+
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useWatch } from 'react-hook-form';
+import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
+import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
+import { useToast } from '@/hooks/use-toast';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Image as ImageIcon, Scale, XCircle } from 'lucide-react';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import { consultaCepAction } from '@/lib/actions/cep'; 
+import EntitySelector from '@/components/ui/entity-selector';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { useRouter } from 'next/navigation';
+
+interface SellerFormProps {
+  initialData?: SellerProfileInfo | null;
+  judicialBranches: JudicialBranch[];
+  onSubmitAction: (data: SellerFormValues) => Promise<any>;
+}
+
+const SellerForm = React.forwardRef<any, SellerFormProps>(({
+  initialData,
+  judicialBranches: initialBranches,
+  onSubmitAction,
+}, ref) => {
+  const { toast } = useToast();
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isCepLoading, setIsCepLoading] = React.useState(false);
+  const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
+  const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
+
+  const form = useForm<SellerFormValues>({
+    resolver: zodResolver(sellerFormSchema),
+    defaultValues: {
+      name: initialData?.name || '',
+      publicId: initialData?.publicId || '',
+      contactName: initialData?.contactName || '',
+      email: initialData?.email || '',
+      phone: initialData?.phone || '',
+      address: initialData?.address || '',
+      city: initialData?.city || '',
+      state: initialData?.state || '',
+      zipCode: initialData?.zipCode || '',
+      website: initialData?.website || '',
+      logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
+      dataAiHintLogo: initialData?.dataAiHintLogo || '',
+      description: initialData?.description || '',
+      judicialBranchId: initialData?.judicialBranchId || null,
+      isJudicial: initialData?.isJudicial || false,
+    },
+  });
+
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+  }));
+
+  const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+  const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+
+  const handleRefetchBranches = React.useCallback(async () => {
+    setIsFetchingBranches(true);
+    const data = await getJudicialBranches();
+    setJudicialBranches(data);
+    setIsFetchingBranches(false);
+  }, []);
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
+        form.setValue('logoMediaId', selectedMediaItem.id || null);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
+  
+  const handleCepLookup = async (cep: string) => {
+    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    setIsCepLoading(true);
+    const result = await consultaCepAction(cep);
+    if (result.success && result.data) {
+        form.setValue('address', result.data.logradouro);
+        form.setValue('city', result.data.localidade);
+        form.setValue('state', result.data.uf);
+    } else {
+        toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+    }
+    setIsCepLoading(false);
+  }
+
+  return (
+    <>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+           <FormField control={form.control} name="name" render={({ field }) => (
+                <FormItem><FormLabel>Nome do Comitente/Empresa</FormLabel><FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
+              )} />
+             {initialData?.publicId && (
+                <FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>ID Público</FormLabel><FormControl><Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription><FormMessage /></FormItem>)} />
+            )}
+            <FormField control={form.control} name="isJudicial" render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>É Comitente Judicial?</FormLabel><FormDescription>Marque se este comitente é uma entidade judicial (Vara, Tribunal, etc).</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+              )} />
+            {isJudicial && (
+                <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
+                    <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))} placeholder="Nenhuma vara judicial vinculada" searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada." createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={handleRefetchBranches} isFetching={isFetchingBranches} /><FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
+                    )} />
+            )}
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato (Opcional)</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <div className="grid md:grid-cols-2 gap-6">
+              <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone (Opcional)</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+             <FormField control={form.control} name="zipCode" render={({ field }) => (
+                    <FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>
+                )} />
+             <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            <div className="grid md:grid-cols-3 gap-6">
+              <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado/UF</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            
+            <FormItem>
+              <FormLabel>Logo do Comitente</FormLabel>
+              <div className="flex items-center gap-4">
+                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                  {logoUrlPreview ? ( <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
+                </div>
+                <div className="flex-grow space-y-2">
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                  <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} className="text-xs h-8" /></FormControl>)} />
+                  <FormMessage />
+                </div>
+              </div>
+            </FormItem>
+
+            <FormField control={form.control} name="dataAiHintLogo" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Logo - Opcional)</FormLabel><FormControl><Input placeholder="Ex: banco logo, empresa tecnologia" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição/Observações (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} value={field.value ?? ''} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+        </form>
+      </Form>
+     <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
+    </>
+  );
+});
+
+SellerForm.displayName = "SellerForm";
+export default SellerForm;
+```
+
