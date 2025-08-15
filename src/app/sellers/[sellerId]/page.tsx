@@ -21,6 +21,7 @@ import { getSellerBySlug } from '@/app/admin/sellers/actions';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -176,6 +177,8 @@ export default function SellerDetailsPage() {
 
   const sellerInitial = sellerProfile.name ? sellerProfile.name.charAt(0).toUpperCase() : 'S';
   const editUrl = `/admin/sellers/${sellerProfile.id}/edit`;
+  const validLogoUrl = isValidImageUrl(sellerProfile.logoUrl) ? sellerProfile.logoUrl : `https://placehold.co/128x128.png?text=${sellerInitial}`;
+
 
   return (
     <>
@@ -184,7 +187,7 @@ export default function SellerDetailsPage() {
           <section className="border-b pb-10">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-primary/30 shadow-lg">
-                <AvatarImage src={sellerProfile.logoUrl || `https://placehold.co/128x128.png?text=${sellerInitial}`} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
+                <AvatarImage src={validLogoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
                 <AvatarFallback className="text-4xl">{sellerInitial}</AvatarFallback>
               </Avatar>
               <div className="flex-grow text-center md:text-left">
@@ -198,21 +201,13 @@ export default function SellerDetailsPage() {
                   </div>
                 )}
               </div>
-               <Card className="shadow-none border-dashed p-4 min-w-[280px]">
-                  <h4 className="text-sm font-semibold mb-2">Informações de Contato</h4>
-                  <div className="space-y-1.5 text-xs">
-                      {sellerProfile.phone && (<div className="flex items-center"><Phone className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`tel:${sellerProfile.phone}`} className="hover:text-primary">{sellerProfile.phone}</a></div>)}
-                      {sellerProfile.email && (<div className="flex items-center"><Mail className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={`mailto:${sellerProfile.email}`} className="hover:text-primary">{sellerProfile.email}</a></div>)}
-                      {sellerProfile.website && (<div className="flex items-center"><Globe className="h-3.5 w-3.5 mr-2 text-muted-foreground" /><a href={sellerProfile.website.startsWith('http') ? sellerProfile.website : `https://${sellerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{sellerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
-                  </div>
-              </Card>
             </div>
           </section>
 
           {relatedLots.length > 0 && (
             <section className="pt-6">
               <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
-                <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes Ativos de {sellerProfile.name}
+                <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes de {sellerProfile.name}
               </h2>
               <SearchResultsFrame
                   items={paginatedLots}

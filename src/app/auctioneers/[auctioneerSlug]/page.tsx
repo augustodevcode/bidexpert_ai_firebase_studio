@@ -42,7 +42,7 @@ function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
   const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
   const statusText = new Date(auctionEndDate as string) < new Date() ? `Encerrado há ${differenceInDays(new Date(), new Date(auctionEndDate as string))} dias` : `Encerra em ${differenceInDays(new Date(auctionEndDate as string), new Date())} dias`;
 
-  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x450.png';
+  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x450.png?text=Leilao';
 
   return (
     <Card className="overflow-hidden shadow-md h-full flex flex-col">

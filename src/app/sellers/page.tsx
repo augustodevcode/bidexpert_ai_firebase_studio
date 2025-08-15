@@ -7,6 +7,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import type { SellerProfileInfo } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 const getSellerInitial = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'S';
@@ -49,45 +50,48 @@ export default async function SellersListPage() {
       
       {!error && sellers.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {sellers.map((seller) => (
-            <Card key={seller.id} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
-              <CardHeader className="items-center text-center p-4">
-                <Avatar className="h-24 w-24 mb-3 border-2 border-primary/30">
-                  <AvatarImage src={seller.logoUrl || `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
-                  <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
-                </Avatar>
-                <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
-                <CardDescription className="text-xs text-primary">{seller.isJudicial ? 'Comitente Judicial' : 'Comitente Verificado'}</CardDescription>
-                {seller.rating !== undefined && seller.rating > 0 && (
-                  <div className="flex items-center text-xs text-amber-600 mt-1">
-                    <Star className="h-4 w-4 fill-amber-500 text-amber-500 mr-1" />
-                    {seller.rating.toFixed(1)}
-                    <span className="text-muted-foreground ml-1">({Math.floor(Math.random() * 100 + (seller.auctionsFacilitatedCount || 0))} avaliações)</span>
-                  </div>
-                )}
-              </CardHeader>
-              <CardContent className="flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center">
-                {seller.city && seller.state && (
-                  <p className="text-xs">{seller.city} - {seller.state}</p>
-                )}
-                <div className="text-xs">
-                  <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
-                </div>
-                {seller.memberSince && (
-                  <div className="text-xs">
-                    Membro desde: {format(new Date(seller.memberSince as any), 'MM/yyyy', { locale: ptBR })}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="p-4 border-t">
-                <Button asChild variant="outline" className="w-full">
-                  <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
-                    Ver Perfil e Lotes <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+          {sellers.map((seller) => {
+            const validLogoUrl = isValidImageUrl(seller.logoUrl) ? seller.logoUrl : `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`;
+            return (
+                <Card key={seller.id} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
+                <CardHeader className="items-center text-center p-4">
+                    <Avatar className="h-24 w-24 mb-3 border-2 border-primary/30">
+                    <AvatarImage src={validLogoUrl} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || "logo comitente"} />
+                    <AvatarFallback>{getSellerInitial(seller.name)}</AvatarFallback>
+                    </Avatar>
+                    <CardTitle className="text-xl font-semibold">{seller.name}</CardTitle>
+                    <CardDescription className="text-xs text-primary">{seller.isJudicial ? 'Comitente Judicial' : 'Comitente Verificado'}</CardDescription>
+                    {seller.rating !== undefined && seller.rating > 0 && (
+                    <div className="flex items-center text-xs text-amber-600 mt-1">
+                        <Star className="h-4 w-4 fill-amber-500 text-amber-500 mr-1" />
+                        {seller.rating.toFixed(1)}
+                        <span className="text-muted-foreground ml-1">({Math.floor(Math.random() * 100 + (seller.auctionsFacilitatedCount || 0))} avaliações)</span>
+                    </div>
+                    )}
+                </CardHeader>
+                <CardContent className="flex-grow px-4 pb-4 space-y-1 text-sm text-muted-foreground text-center">
+                    {seller.city && seller.state && (
+                    <p className="text-xs">{seller.city} - {seller.state}</p>
+                    )}
+                    <div className="text-xs">
+                    <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
+                    </div>
+                    {seller.memberSince && (
+                    <div className="text-xs">
+                        Membro desde: {format(new Date(seller.memberSince as any), 'MM/yyyy', { locale: ptBR })}
+                    </div>
+                    )}
+                </CardContent>
+                <CardFooter className="p-4 border-t">
+                    <Button asChild variant="outline" className="w-full">
+                    <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`}>
+                        Ver Perfil e Lotes <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                    </Button>
+                </CardFooter>
+                </Card>
+            )
+        })}
         </div>
       )}
     </div>

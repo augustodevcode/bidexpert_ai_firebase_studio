@@ -23,9 +23,21 @@ export const slugify = (text: string): string => {
  * @param {string | null | undefined} url The URL to validate.
  * @returns {boolean} True if the URL is valid, false otherwise.
  */
-export const isValidImageUrl = (url: string | null | undefined): boolean => {
-    if (!url) return false;
-    return url.startsWith('http://') || url.startsWith('https://') || url.startsWith('/');
+export const isValidImageUrl = (url?: string | null): boolean => {
+    if (!url) {
+        return false;
+    }
+    // Check for local relative paths
+    if (url.startsWith('/')) {
+        return true;
+    }
+    // Check for absolute URLs using the URL constructor
+    try {
+        const parsed = new URL(url);
+        return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch (e) {
+        return false;
+    }
 };
 
 
