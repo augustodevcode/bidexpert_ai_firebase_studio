@@ -1,3 +1,4 @@
+
 // tests/bidding-e2e.test.ts
 import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
@@ -68,7 +69,7 @@ async function cleanup() {
         }
 
         const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
-        if (bemIds.length > 0) {
+        if(bemIds.length > 0) {
             await prisma.lotBens.deleteMany({ where: { bemId: { in: bemIds } } });
         }
         for (const bemId of bemIds) { await bemService.deleteBem(bemId); }
