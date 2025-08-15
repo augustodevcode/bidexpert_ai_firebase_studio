@@ -8,22 +8,31 @@ import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { fetchPlatformSettings } from '@/lib/data-queries';
 import FeaturedItems from '@/components/featured-items';
-import type { Auction, Lot, LotCategory } from '@/types';
+import type { Auction, Lot, LotCategory, SellerProfileInfo } from '@/types';
 import { getLotCategories } from './admin/categories/actions';
+import { getSellers } from './admin/sellers/actions'; // Import getSellers
 import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
-import { AuctionService } from '@/services/auction.service'; // Import the service
-import { LotService } from '@/services/lot.service'; // Import the service
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
+import FeaturedSellers from '@/components/featured-sellers'; // Importar o novo componente
 
 async function HomePageContent() {
   const auctionService = new AuctionService();
   const lotService = new LotService();
 
   // Fetch data using the services
-  const [platformSettings, allAuctions, allLots, categories] = await Promise.all([
+  const [
+      platformSettings, 
+      allAuctions, 
+      allLots, 
+      categories, 
+      sellers
+    ] = await Promise.all([
     fetchPlatformSettings(),
     auctionService.getAuctions(),
     lotService.getLots(),
     getLotCategories(),
+    getSellers() // Buscar os vendedores
   ]);
 
   if (!platformSettings) {
@@ -52,7 +61,7 @@ async function HomePageContent() {
   const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
   
   const featuredCategories = categories.sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0)).slice(0, 3);
-  
+  const featuredSellers = sellers.filter(s => s.logoUrl).slice(0, 12); // Pega até 12 vendedores que tenham logo
 
   return (
     <div className="space-y-16">
@@ -80,8 +89,11 @@ async function HomePageContent() {
         />
       </div>
 
-       <FeaturedItems items={auctionsToDisplay} type="auction" title={auctionsTitle} viewAllLink="/search?type=auctions" platformSettings={platformSettings} />
-
+      <FeaturedItems items={auctionsToDisplay} type="auction" title={auctionsTitle} viewAllLink="/search?type=auctions" platformSettings={platformSettings} />
+      
+      {/* Nova Seção de Vendedores */}
+      <FeaturedSellers sellers={featuredSellers} />
+      
       <section className="space-y-6">
         <h2 className="text-3xl font-bold text-center">Navegue por Categorias</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
