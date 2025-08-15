@@ -1,12 +1,12 @@
 // tests/auction-data.test.ts
-import test from 'node:test';
+import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '../src/lib/prisma';
-import { slugify } from '../src/lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../src/types';
+import { prisma } from '@/lib/prisma';
+import { slugify } from '@/lib/ui-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { AuctionService } from '../src/services/auction.service';
-import { LotService } from '../src/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
 
 const auctionService = new AuctionService();
 const lotService = new LotService();
@@ -86,19 +86,19 @@ async function cleanupTestData() {
   }
 }
 
-test.describe('Data Validation for UI Components (Service-Layer)', () => {
+describe('Data Validation for UI Components (Service-Layer)', () => {
 
-    test.before(async () => {
+    beforeAll(async () => {
         await cleanupTestData(); // Clean first
         await createTestData();
     });
 
-    test.after(async () => {
+    afterAll(async () => {
         await cleanupTestData();
         await prisma.$disconnect();
     });
 
-    test('should fetch auction data with all necessary details for card display', async () => {
+    it('should fetch auction data with all necessary details for card display', async () => {
         console.log('--- Test: Validating Auction Data for Card ---');
         const fetchedAuction = await auctionService.getAuctionById(createdAuction.id);
 
@@ -111,7 +111,7 @@ test.describe('Data Validation for UI Components (Service-Layer)', () => {
         console.log('- PASSED: Auction data is correct and properly populated.');
     });
 
-    test('should fetch lot data with all necessary details for card display', async () => {
+    it('should fetch lot data with all necessary details for card display', async () => {
         console.log('--- Test: Validating Lot Data for Card ---');
         const fetchedLot = await lotService.getLotById(createdLot.id);
 
