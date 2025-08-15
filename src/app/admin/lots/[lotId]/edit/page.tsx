@@ -12,7 +12,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import type { Lot, Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, FileSignature, Loader2 } from 'lucide-react';
+import { CheckCircle, FileSignature, Loader2, Gavel } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
