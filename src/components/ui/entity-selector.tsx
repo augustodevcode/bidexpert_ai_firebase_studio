@@ -12,7 +12,7 @@ import {
   DialogFooter,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { Check, ChevronsUpDown, PlusCircle, Pencil, X, RefreshCw, Loader2 } from 'lucide-react';
+import { Check, ChevronsUpDown, PlusCircle, Pencil, X, RefreshCw, Loader2, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import { DataTable } from './data-table';
@@ -156,4 +156,3 @@ export const createEntitySelectorColumns = (onSelect: (value: string) => void): 
       ),
     },
 ];
-```
