@@ -106,6 +106,7 @@ export const auctionFormSchema = z.object({
   decrementIntervalSeconds: z.coerce.number().int().min(1, "O intervalo deve ser de no mínimo 1 segundo.").optional().nullable(),
   floorPrice: z.coerce.number().positive("O preço mínimo deve ser positivo.").optional().nullable(),
   autoRelistSettings: autoRelistSettingsSchema,
+  judicialProcessId: z.string().optional().nullable(),
 }).refine(data => {
     // If it's a Dutch auction, the specific fields are required.
     if (data.auctionMethod === 'DUTCH') {

@@ -1,3 +1,4 @@
+
 // src/app/admin/direct-sales/direct-sale-form-schema.ts
 import * as z from 'zod';
 import type { DirectSaleOfferStatus, DirectSaleOfferType } from '@/types';
@@ -8,6 +9,8 @@ const offerStatusValues: [DirectSaleOfferStatus, ...DirectSaleOfferStatus[]] = [
 const offerTypeValues: [DirectSaleOfferType, ...DirectSaleOfferType[]] = [
   'BUY_NOW', 'ACCEPTS_PROPOSALS'
 ];
+
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
 export const directSaleOfferFormSchema = z.object({
   title: z.string().min(5, "O título deve ter pelo menos 5 caracteres.").max(200, "O título não pode exceder 200 caracteres."),
@@ -20,7 +23,7 @@ export const directSaleOfferFormSchema = z.object({
   sellerId: z.string().min(1, "O vendedor é obrigatório."),
   locationCity: z.string().max(100).optional(),
   locationState: z.string().max(100).optional(),
-  imageUrl: z.string().url("URL da imagem inválida.").optional().or(z.literal('')),
+  imageUrl: optionalUrlSchema,
   imageMediaId: z.string().optional().nullable(),
   dataAiHint: z.string().max(50).optional(),
   galleryImageUrls: z.array(z.string().url()).optional(),

@@ -1,5 +1,8 @@
+
 // src/app/admin/subcategories/subcategory-form-schema.ts
 import * as z from 'zod';
+
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
 export const subcategoryFormSchema = z.object({
   name: z.string().min(2, {
@@ -14,7 +17,7 @@ export const subcategoryFormSchema = z.object({
     message: "A descrição não pode exceder 500 caracteres.",
   }).optional().nullable(),
   displayOrder: z.coerce.number().int().optional().default(0),
-  iconUrl: z.string().url({ message: "URL do ícone inválida." }).optional().nullable().or(z.literal('')),
+  iconUrl: optionalUrlSchema,
   iconMediaId: z.string().optional().nullable(),
   dataAiHintIcon: z.string().max(50, {message: "Dica de IA para ícone não pode exceder 50 caracteres."}).optional().nullable(),
 });

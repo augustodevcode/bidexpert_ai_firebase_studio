@@ -1,5 +1,8 @@
+
 // src/app/admin/courts/court-form-schema.ts
 import * as z from 'zod';
+
+const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
 export const courtFormSchema = z.object({
   name: z.string().min(5, {
@@ -10,7 +13,7 @@ export const courtFormSchema = z.object({
   stateUf: z.string().length(2, {
     message: "Selecione o estado (UF).",
   }),
-  website: z.string().url({ message: "URL do website inválida." }).optional().nullable().or(z.literal('')),
+  website: optionalUrlSchema,
 });
 
 export type CourtFormValues = z.infer<typeof courtFormSchema>;
