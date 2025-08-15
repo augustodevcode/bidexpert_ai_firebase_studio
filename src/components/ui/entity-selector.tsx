@@ -52,7 +52,7 @@ function EditEntityModal({
 }: {
   isOpen: boolean;
   onClose: () => void;
-  entityName: string;
+  entityName?: string;
   entityId: string;
   onSuccess: () => void;
 }) {
@@ -84,6 +84,9 @@ function EditEntityModal({
                             onSuccess();
                             onClose();
                         }}
+                        formTitle="Editar Comitente"
+                        formDescription="Altere os dados do comitente"
+                        submitButtonText="Salvar"
                     />
                 );
             case 'auctioneer':
@@ -98,6 +101,9 @@ function EditEntityModal({
                             onSuccess();
                             onClose();
                         }}
+                         formTitle="Editar Leiloeiro"
+                         formDescription="Altere os dados do leiloeiro"
+                         submitButtonText="Salvar"
                     />
                 );
             // Adicionar outros casos para outras entidades
@@ -123,12 +129,12 @@ interface EntitySelectorProps {
   value: string | null | undefined;
   onChange: (value: string | null) => void;
   options: { value: string; label: string; [key: string]: any }[];
-  entityName: string; // Adicionado para saber qual entidade gerenciar
+  entityName?: string; // Alterado para opcional, mas fortemente recomendado
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
   createNewUrl?: string | null;
-  editUrlPrefix?: string | null; // Adicionado para o botão de edição
+  editUrlPrefix?: string | null;
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
@@ -138,7 +144,7 @@ export default function EntitySelector({
   value,
   onChange,
   options,
-  entityName,
+  entityName = "registro", // Valor padrão para evitar erros
   placeholder,
   searchPlaceholder,
   emptyStateMessage,
