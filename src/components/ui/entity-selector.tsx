@@ -128,6 +128,7 @@ interface EntitySelectorProps {
   searchPlaceholder: string;
   emptyStateMessage: string;
   createNewUrl?: string | null;
+  editUrlPrefix?: string | null; // Adicionado para o botão de edição
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
@@ -142,6 +143,7 @@ export default function EntitySelector({
   searchPlaceholder,
   emptyStateMessage,
   createNewUrl,
+  editUrlPrefix,
   onRefetch,
   isFetching = false,
   disabled = false,
@@ -166,24 +168,64 @@ export default function EntitySelector({
   return (
     <>
       <div className="flex items-center gap-2">
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            role="combobox"
-            aria-expanded={isListModalOpen}
-            className="w-full justify-between flex-grow"
-            disabled={disabled}
-            onClick={() => setIsListModalOpen(true)}
-          >
-            <span className="truncate">
-              {selectedOption ? selectedOption.label : placeholder}
-            </span>
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </DialogTrigger>
+        <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
+            <DialogTrigger asChild>
+                <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={isListModalOpen}
+                    className="w-full justify-between flex-grow"
+                    disabled={disabled}
+                >
+                    <span className="truncate">
+                    {selectedOption ? selectedOption.label : placeholder}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[90vw] w-full lg:max-w-4xl h-[80vh] flex flex-col p-0">
+                <DialogHeader className="p-4 border-b">
+                    <DialogTitle className="flex items-center gap-2">
+                    <ListChecks className="h-6 w-6 text-primary"/>
+                    Selecionar {entityName}
+                    </DialogTitle>
+                    <DialogDescription>
+                    Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex-grow overflow-hidden p-4">
+                    <DataTable
+                        columns={tableColumns}
+                        data={options.map(opt => ({...opt, id: opt.value}))}
+                        searchColumnId="label"
+                        searchPlaceholder={searchPlaceholder}
+                        isLoading={isFetching}
+                    />
+                </div>
+                <DialogFooter className="p-4 border-t flex justify-between">
+                    {createNewUrl && (
+                        <Button variant="secondary" asChild>
+                            <Link href={createNewUrl} target="_blank">
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Criar Novo
+                            </Link>
+                        </Button>
+                    )}
+                    {onRefetch && (
+                    <Button variant="outline" onClick={onRefetch} disabled={isFetching}>
+                        <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                        Atualizar Lista
+                    </Button>
+                    )}
+                    <Button variant="outline" onClick={() => setIsListModalOpen(false)}>
+                    Fechar
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
         
-        {value && (
+        {value && editUrlPrefix && (
             <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setIsEditModalOpen(true)} disabled={disabled} title="Editar registro selecionado">
                 <Pencil className="h-4 w-4" />
             </Button>
@@ -193,49 +235,6 @@ export default function EntitySelector({
             <X className="h-4 w-4" />
         </Button>
       </div>
-
-      <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
-        <DialogContent className="max-w-[90vw] w-full lg:max-w-4xl h-[80vh] flex flex-col p-0">
-          <DialogHeader className="p-4 border-b">
-            <DialogTitle className="flex items-center gap-2">
-              <ListChecks className="h-6 w-6 text-primary"/>
-              Selecionar {entityName}
-            </DialogTitle>
-            <DialogDescription>
-              Pesquise, visualize e selecione um registro. Você também pode criar um novo, se necessário.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-grow overflow-hidden p-4">
-              <DataTable
-                  columns={tableColumns}
-                  data={options.map(opt => ({...opt, id: opt.value}))}
-                  onRowClick={(row) => handleSelectAndClose(row.original.value)}
-                  searchColumnId="label"
-                  searchPlaceholder={searchPlaceholder}
-                  isLoading={isFetching}
-              />
-          </div>
-          <DialogFooter className="p-4 border-t flex justify-between">
-             {createNewUrl && (
-                 <Button variant="secondary" asChild>
-                     <Link href={createNewUrl} target="_blank">
-                         <PlusCircle className="mr-2 h-4 w-4"/>
-                         Criar Novo
-                     </Link>
-                 </Button>
-             )}
-            {onRefetch && (
-              <Button variant="outline" onClick={onRefetch} disabled={isFetching}>
-                  <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-                  Atualizar Lista
-              </Button>
-            )}
-            <Button variant="outline" onClick={() => setIsListModalOpen(false)}>
-              Fechar
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       
       {value && (
         <EditEntityModal
