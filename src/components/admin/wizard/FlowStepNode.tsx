@@ -52,13 +52,12 @@ const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
   
   let finalTitle = title;
   
-  // Ensure we are not rendering an object. Check if the value is a string.
   if (entityType === 'process' && wizardData.judicialProcess) {
     finalTitle = `Proc: ${wizardData.judicialProcess.processNumber}`;
-  } else if (entityType === 'auctioneer' && wizardData.auctionDetails?.auctioneer && typeof wizardData.auctionDetails.auctioneer === 'string') {
-    finalTitle = wizardData.auctionDetails.auctioneer;
-  } else if (entityType === 'seller' && wizardData.auctionDetails?.seller && typeof wizardData.auctionDetails.seller === 'string') {
-    finalTitle = wizardData.auctionDetails.seller;
+  } else if (entityType === 'auctioneer' && wizardData.auctionDetails?.auctioneerName) {
+    finalTitle = wizardData.auctionDetails.auctioneerName;
+  } else if (entityType === 'seller' && wizardData.auctionDetails?.sellerName) {
+    finalTitle = wizardData.auctionDetails.sellerName;
   }
 
 
@@ -74,7 +73,7 @@ const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
       >
         {isHovered && editLink && (
             <Button asChild size="icon" variant="outline" className="absolute -top-3 -right-3 h-7 w-7 bg-background z-10">
-                <Link href={editUrl} target="_blank" title="Editar entidade">
+                <Link href={editLink} target="_blank" title="Editar entidade">
                     <Pencil className="h-4 w-4 text-primary" />
                 </Link>
             </Button>

@@ -11,6 +11,8 @@ import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import AuctionForm from '@/app/admin/auctions/auction-form'; // Import the main form
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
+import { Loader2 } from 'lucide-react';
+
 
 interface Step3AuctionDetailsProps {
   categories: LotCategory[];
