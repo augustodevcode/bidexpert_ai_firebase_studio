@@ -18,14 +18,16 @@
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
+- **Item 20:** **Inteligência de Herança de Comitente:** Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote é preenchido automaticamente com o comitente do leilão.
+- **Item 21:** **Implementar Incremento de Lance no Lote:** Adicionado o campo `bidIncrementStep` no formulário de lote. A lógica de lances agora valida o incremento mínimo.
 
 ## DOING
 - **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
-
-## NEXT
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:**
     - Substituir os campos de texto "Estado" e "Cidade" no formulário de criação/edição de leilões por componentes `EntitySelector`.
     - Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
+
+## NEXT
 - **Item 16: Lógica de Relistagem de Lotes:**
     - Implementar a funcionalidade para relistar um lote que não foi vendido.
     - Permitir a aplicação de descontos automáticos na relistagem (ex: 50%).
@@ -42,13 +44,6 @@
     - Ativar e implementar a lógica de filtro para Subcategoria, Marca e Modelo na página de busca (`/search`).
     - Criar as telas de gerenciamento (CRUD) para Marcas (`VehicleMake`) e Modelos (`VehicleModel`) de veículos.
     - Garantir que os filtros sejam aplicados corretamente aos resultados da busca de lotes.
-- **Item 20: Inteligência de Herança de Comitente:**
-    - Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote deve ser preenchido automaticamente com o comitente do leilão.
-    - Futuramente, ao criar um leilão a partir de uma seleção de lotes, o comitente do leilão deve ser sugerido com base no comitente comum dos lotes.
-- **Item 21: Implementar Incremento de Lance no Lote:**
-    - Adicionar o campo `bidIncrementStep` no formulário de criação/edição de lote.
-    - A lógica de lances deve validar se o novo lance é igual ou superior ao lance atual mais o incremento definido.
-    - Considerar diferentes regras de incremento com base na modalidade do leilão (ex: incremento fixo, variável, etc.).
 - **Item 22: Gerenciamento Flexível da Galeria de Imagens do Lote:**
     - Implementar uma lógica no momento do loteamento que permita ao usuário escolher a fonte da galeria de imagens do lote.
     - Opções de escolha:

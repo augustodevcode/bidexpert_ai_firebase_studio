@@ -1,4 +1,3 @@
-
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 /**
  * @fileoverview Server Actions for the Lot Detail page.
@@ -66,7 +65,12 @@ export async function placeBidOnLot(
         }
 
         if (lot.status !== 'ABERTO_PARA_LANCES') return { success: false, message: 'Este lote não está aberto para lances.'};
-        if (bidAmount <= lot.price) return { success: false, message: `O lance deve ser maior que R$ ${lot.price.toLocaleString('pt-BR')}.`};
+        
+        const bidIncrement = lot.bidIncrementStep || 1; // Default to 1 if not set
+        const nextMinimumBid = lot.price + bidIncrement;
+        if (bidAmount < nextMinimumBid) {
+            return { success: false, message: `O lance deve ser de no mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}.`};
+        }
 
         const currentBids = await getBidsForLot(lot.id);
         const previousHighBid = currentBids[0];

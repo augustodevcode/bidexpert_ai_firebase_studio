@@ -20,7 +20,7 @@ export const lotFormSchema = z.object({
   }),
   initialPrice: z.coerce.number().positive().optional().nullable(),
   secondInitialPrice: z.coerce.number().positive().optional().nullable(),
-  bidIncrementStep: z.coerce.number().positive().optional().nullable(),
+  bidIncrementStep: z.coerce.number().positive("O incremento de lance deve ser um número positivo.").optional().nullable(),
   status: z.enum(lotStatusValues as [string, ...string[]]),
   stateId: z.string().optional().nullable(),
   cityId: z.string().optional().nullable(),

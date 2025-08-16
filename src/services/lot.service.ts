@@ -51,6 +51,8 @@ export class LotService {
         ...(lotData as any),
         price: Number(lotData.price) || 0,
         initialPrice: Number(lotData.initialPrice) || Number(lotData.price) || 0,
+        secondInitialPrice: Number(lotData.secondInitialPrice) || undefined,
+        bidIncrementStep: Number(lotData.bidIncrementStep) || undefined,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: auctionId } },
