@@ -27,9 +27,9 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl } from '@/lib/ui-helpers';
 
-import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot } from './actions';
+import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -281,6 +281,18 @@ export default function LotDetailClientContent({
   
   const gallery = useMemo(() => {
     if (!lot) return [];
+    
+    // Check if we should inherit media from a Bem
+    if (lot.inheritedMediaFromBemId && lot.bens && lot.bens.length > 0) {
+        const sourceBem = lot.bens.find(b => b.id === lot.inheritedMediaFromBemId);
+        if (sourceBem) {
+            const bemImages = [sourceBem.imageUrl, ...(sourceBem.galleryImageUrls || [])]
+                .filter(Boolean) as string[];
+            if (bemImages.length > 0) return bemImages;
+        }
+    }
+    
+    // Fallback to lot's own images
     const mainImage = typeof lot.imageUrl === 'string' && lot.imageUrl.trim() !== '' ? [lot.imageUrl] : [];
     const galleryImages = (lot.galleryImageUrls || []).filter(url => typeof url === 'string' && url.trim() !== '');
     const combined = [...mainImage, ...galleryImages];
@@ -367,7 +379,7 @@ export default function LotDetailClientContent({
   };
 
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
-  const prevImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev - 1 + gallery.length) % gallery.length : 0));
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length : 0));
   const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'');
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';

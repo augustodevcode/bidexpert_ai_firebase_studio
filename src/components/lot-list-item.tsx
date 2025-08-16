@@ -1,5 +1,4 @@
 
-// src/components/lot-list-item.tsx
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
@@ -9,7 +8,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail, Building, Car, Truck, Leaf, Info, CalendarDays } from 'lucide-react';
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail, Building, Car, Truck, Info, Leaf, CalendarDays } from 'lucide-react';
 import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
@@ -111,24 +110,25 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
-  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl : `https://placehold.co/600x400.png?text=Lote`;
-  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
+  const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
+  const mainImageUrl = isValidImageUrl(inheritedBem ? inheritedBem.imageUrl : lot.imageUrl) ? (inheritedBem ? inheritedBem.imageUrl : lot.imageUrl) : 'https://placehold.co/120x90.png';
+
 
   const getTypeIcon = (type?: string) => {
     if (!type) {
-      return <Info className="h-3 w-3 text-muted-foreground" />;
+      return <Info className="h-3.5 w-3.5 text-muted-foreground" />;
     }
     const upperType = type.toUpperCase();
     if (upperType.includes('CASA') || upperType.includes('IMÓVEL') || upperType.includes('APARTAMENTO')) {
-        return <Building className="h-3 w-3 text-muted-foreground" />;
+        return <Building className="h-3.5 w-3.5 text-muted-foreground" />;
     }
     if (upperType.includes('VEÍCULO') || upperType.includes('AUTOMÓVEL') || upperType.includes('CARRO')) {
-        return <Car className="h-3 w-3 text-muted-foreground" />;
+        return <Car className="h-3.5 w-3.5 text-muted-foreground" />;
     }
     if (upperType.includes('MAQUINÁRIO') || upperType.includes('TRATOR')) {
-        return <Truck className="h-3 w-3 text-muted-foreground" />;
+        return <Truck className="h-3.5 w-3.5 text-muted-foreground" />;
     }
-    return <Info className="h-3 w-3 text-muted-foreground" />;
+    return <Info className="h-3.5 w-3.5 text-muted-foreground" />;
   };
 
   return (
@@ -146,30 +146,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            {sellerLogoUrl && (
-              <TooltipProvider>
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Link href={auction?.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
-                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={sellerLogoUrl} alt={auction?.seller?.name || "Logo Comitente"} data-ai-hint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'}/>
-                                <AvatarFallback>{auction?.seller?.name ? auction.seller.name.charAt(0) : 'C'}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                        <p>Comitente: {auction?.seller?.name}</p>
-                    </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
-                {sectionBadges.showStatusBadge !== false && (
-                <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)}`}>
-                    {getAuctionStatusText(lot.status)}
-                </Badge>
-                )}
-            </div>
           </div>
 
           {/* Content Column */}
@@ -177,6 +153,9 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
                  <div className="flex items-center gap-2 mb-1">
+                     <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)}`}>
+                        {getAuctionStatusText(lot.status)}
+                    </Badge>
                      {mentalTriggers.map(trigger => (
                         <Badge key={trigger} variant="secondary" className="text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
                            {trigger}
@@ -188,9 +167,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                     Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
                   </h3>
                 </Link>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate" title={`Leilão: ${lot.auctionName}`}>
-                  Leilão: {lot.auctionName || 'Não especificado'}
-                </p>
               </div>
               <EntityEditMenu 
                  entityType="lot" 
@@ -220,8 +196,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <span className="truncate">{lot.views || 0} Visitas</span>
               </div>
             </div>
-
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
 
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>
