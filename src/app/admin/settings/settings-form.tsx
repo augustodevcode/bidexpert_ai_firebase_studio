@@ -75,7 +75,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
     resolver: zodResolver(platformSettingsFormSchema),
     defaultValues: {
       siteTitle: initialData?.siteTitle || 'BidExpert',
-      siteTagline: initialData?.siteTagline || 'Leilões Online Especializados',
+      siteTagline: initialData?.siteTagline || 'Sua plataforma de leilões online.',
       galleryImageBasePath: initialData?.galleryImageBasePath || '/uploads/media/',
       storageProvider: initialData?.storageProvider || 'local',
       firebaseStorageBucket: initialData?.firebaseStorageBucket || '',
@@ -161,25 +161,40 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         
         {activeSection === 'appearance' && (
              <section className="space-y-6">
-                 {/* Campos de Aparência e Exibição aqui */}
+                <FormField control={form.control} name="showCountdownOnCards" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Contagem Regressiva nos Cards</FormLabel><FormDescription>Exibir o cronômetro de contagem regressiva nos cards de leilão/lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                <FormField control={form.control} name="showRelatedLotsOnLotDetail" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Exibir Lotes Relacionados</FormLabel><FormDescription>Mostrar uma seção de "Outros Lotes do Leilão" na página de detalhes do lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                {form.watch('showRelatedLotsOnLotDetail') && (
+                    <FormField control={form.control} name="relatedLotsCount" render={({ field }) => (<FormItem><FormLabel>Nº de Lotes Relacionados</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                )}
              </section>
         )}
         
         {activeSection === 'listDisplay' && (
              <section className="space-y-6">
-                 {/* Campos de Listas de Cadastros aqui */}
+                <FormField control={form.control} name="defaultListItemsPerPage" render={({ field }) => (<FormItem><FormLabel>Itens por Página (Padrão)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Número padrão de itens a serem exibidos nas tabelas do painel de administração.</FormDescription><FormMessage /></FormItem>)} />
              </section>
         )}
 
         {activeSection === 'bidding' && (
              <section className="space-y-6">
-                 {/* Campos de Lances e Automação aqui */}
+                 <FormField control={form.control} name="biddingSettings.instantBiddingEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Habilitar Lances Instantâneos</FormLabel><FormDescription>Permitir que os lances sejam processados instantaneamente sem confirmação.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="biddingSettings.biddingInfoCheckIntervalSeconds" render={({ field }) => (<FormItem><FormLabel>Intervalo de Atualização (Segundos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Intervalo em segundos para verificar novas informações de lances.</FormDescription><FormMessage /></FormItem>)} />
              </section>
         )}
         
         {activeSection === 'variableIncrements' && (
              <section className="space-y-6">
-                 {/* Campos de Incremento de Lance aqui */}
+                 <div className="space-y-2">
+                    {fields.map((field, index) => (
+                        <div key={field.id} className="flex items-end gap-2 p-2 border rounded-md">
+                            <FormField control={form.control} name={`variableIncrementTable.${index}.from`} render={({ field: fromField }) => (<FormItem className="flex-1"><FormLabel className="text-xs">De (R$)</FormLabel><FormControl><Input type="number" {...fromField} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name={`variableIncrementTable.${index}.to`} render={({ field: toField }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Até (R$)</FormLabel><FormControl><Input type="number" placeholder="em diante" {...toField} value={toField.value ?? ''} /></FormControl></FormItem>)} />
+                            <FormField control={form.control} name={`variableIncrementTable.${index}.increment`} render={({ field: incField }) => (<FormItem className="flex-1"><FormLabel className="text-xs">Incremento (R$)</FormLabel><FormControl><Input type="number" {...incField} /></FormControl></FormItem>)} />
+                            <Button type="button" variant="destructive" size="icon" onClick={() => remove(index)} className="h-9 w-9 flex-shrink-0"><Trash2 className="h-4 w-4" /></Button>
+                        </div>
+                    ))}
+                 </div>
+                 <Button type="button" variant="outline" size="sm" onClick={() => append({ from: 0, to: 0, increment: 0 })}><PlusCircle className="mr-2 h-4 w-4"/>Adicionar Faixa</Button>
              </section>
         )}
         
@@ -223,7 +238,8 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         
         {activeSection === 'maps' && (
              <section className="space-y-6">
-                 {/* Campos de Configurações de Mapa aqui */}
+                <FormField control={form.control} name="mapSettings.defaultProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Mapa Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem><SelectItem value="google">Google Maps</SelectItem><SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem></SelectContent></Select></FormItem>)} />
+                <FormField control={form.control} name="mapSettings.googleMapsApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API - Google Maps</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormDescription>Necessário se "Google Maps" for o provedor selecionado.</FormDescription><FormMessage /></FormItem>)} />
              </section>
         )}
 
@@ -237,4 +253,3 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
     </Form>
   );
 }
-
