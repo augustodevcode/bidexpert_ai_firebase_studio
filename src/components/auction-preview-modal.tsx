@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { Lot, Auction, AuctionStage } from '@/types';
@@ -6,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark } from 'lucide-react';
 import Link from 'next/link';
-import AuctionStagesTimeline from './auction/auction-stages-timeline';
+import AuctionStagesTimeline from './auction-stages-timeline';
 import { useMemo } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -20,7 +21,15 @@ interface AuctionPreviewModalProps {
 export default function AuctionPreviewModal({ auction, isOpen, onClose }: AuctionPreviewModalProps) {
   if (!isOpen) return null;
 
-  const auctioneerInitial = auction.auctioneer ? auction.auctioneer.charAt(0).toUpperCase() : 'L';
+  const getAuctioneerInitial = () => {
+    const name = auction.auctioneerName || auction.auctioneer?.name;
+    if (name && typeof name === 'string') {
+      return name.charAt(0).toUpperCase();
+    }
+    return 'L';
+  };
+  
+  const auctioneerInitial = getAuctioneerInitial();
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
   const auctionDates = useMemo(() => {
@@ -62,18 +71,18 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
                     <CardContent className="p-3 pt-0 text-sm space-y-2">
                         <div className="flex items-center gap-2">
                            <Avatar className="h-9 w-9 border">
-                             <AvatarImage src={auction.auctioneerLogoUrl || ''} alt={auction.auctioneerName || ''} data-ai-hint={auction.dataAiHint || 'leiloeiro logo'}/>
+                             <AvatarImage src={auction.auctioneer?.logoUrl || ''} alt={auction.auctioneerName || ''} data-ai-hint={auction.auctioneer?.dataAiHintLogo || 'leiloeiro logo'}/>
                              <AvatarFallback>{auctioneerInitial}</AvatarFallback>
                            </Avatar>
                            <div>
                             <p className="text-xs text-muted-foreground">Leiloeiro</p>
-                            <p className="font-semibold">{auction.auctioneer}</p>
+                            <p className="font-semibold">{auction.auctioneer?.name || auction.auctioneerName}</p>
                            </div>
                         </div>
                          <div className="border-t border-dashed my-1"></div>
                         <div>
                             <p className="text-xs text-muted-foreground">Comitente/Vendedor</p>
-                            <p className="font-semibold">{auction.seller}</p>
+                            <p className="font-semibold">{auction.seller?.name || 'Não informado'}</p>
                         </div>
                     </CardContent>
                 </Card>
