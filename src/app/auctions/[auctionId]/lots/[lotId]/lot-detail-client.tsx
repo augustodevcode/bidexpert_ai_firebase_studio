@@ -379,7 +379,7 @@ export default function LotDetailClientContent({
   };
 
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
-  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length : 0);
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
   const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'');
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
