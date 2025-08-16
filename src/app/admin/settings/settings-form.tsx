@@ -145,7 +145,10 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         
         {activeSection === 'general' && (
              <section className="space-y-6">
-                 {/* Campos de Configurações Gerais aqui */}
+                 <FormField control={form.control} name="platformPublicIdMasks.auctions" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Leilões)</FormLabel><FormControl><Input placeholder="LEIL-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de leilões.</FormDescription><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="platformPublicIdMasks.lots" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Lotes)</FormLabel><FormControl><Input placeholder="LOTE-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de lotes.</FormDescription><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="platformPublicIdMasks.auctioneers" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Leiloeiros)</FormLabel><FormControl><Input placeholder="LEILOE-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de leiloeiros.</FormDescription><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="platformPublicIdMasks.sellers" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Comitentes)</FormLabel><FormControl><Input placeholder="COMI-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de comitentes.</FormDescription><FormMessage /></FormItem>)} />
              </section>
         )}
         
@@ -253,3 +256,4 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
     </Form>
   );
 }
+
