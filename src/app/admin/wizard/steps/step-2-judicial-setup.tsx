@@ -1,4 +1,3 @@
-
 // src/components/admin/wizard/steps/step-2-judicial-setup.tsx
 'use client';
 

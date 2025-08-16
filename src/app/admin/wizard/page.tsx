@@ -1,4 +1,3 @@
-
 // src/app/admin/wizard/page.tsx
 'use client';
 
