@@ -45,4 +45,8 @@
 - **Item 20: Inteligência de Herança de Comitente:**
     - Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote deve ser preenchido automaticamente com o comitente do leilão.
     - Futuramente, ao criar um leilão a partir de uma seleção de lotes, o comitente do leilão deve ser sugerido com base no comitente comum dos lotes.
+- **Item 21: Implementar Incremento de Lance no Lote:**
+    - Adicionar o campo `bidIncrementStep` no formulário de criação/edição de lote.
+    - A lógica de lances deve validar se o novo lance é igual ou superior ao lance atual mais o incremento definido.
+    - Considerar diferentes regras de incremento com base na modalidade do leilão (ex: incremento fixo, variável, etc.).
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
