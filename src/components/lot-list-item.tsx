@@ -1,120 +1,29 @@
+
 // src/components/lot-list-item.tsx
 'use client';
 
 import * as React from 'react'; // Adicionado import do React
-import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
+import type { Auction, Lot, BadgeVisibilitySettings, MentalTriggerSettings, PlatformSettings } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
-import { format, isPast, differenceInSeconds, isValid } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useState, useEffect, useMemo } from 'react';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, ChevronRight, Layers, Pencil, X, Facebook, MessageSquareText, Mail, Building, Car, Truck, Leaf, Info, CalendarDays } from 'lucide-react';
+import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl } from '@/lib/ui-helpers';
+import { useAuth } from '@/contexts/auth-context';
+import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import dynamic from 'next/dynamic';
 import { Loader2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { useAuth } from '@/contexts/auth-context';
-import { hasPermission } from '@/lib/permissions';
-
-const LotMapPreviewModal = dynamic(() => import('./lot-map-preview-modal'), {
-  ssr: false,
-  loading: () => <div className="fixed inset-0 bg-background/50 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div>,
-});
-
-
-interface TimeRemainingBadgeProps {
-  endDate: Date | null;
-  status: Lot['status'];
-  showUrgencyTimer?: boolean;
-  urgencyThresholdDays?: number;
-  urgencyThresholdHours?: number;
-}
-
-const TimeRemainingBadge: React.FC<TimeRemainingBadgeProps> = ({
-  endDate,
-  status,
-  showUrgencyTimer = true,
-  urgencyThresholdDays = 1,
-  urgencyThresholdHours = 0
-}) => {
-  const [remaining, setRemaining] = useState('');
-  const [isUrgent, setIsUrgent] = useState(false);
-
-  useEffect(() => {
-    if (!endDate || !isValid(endDate)) {
-      setRemaining(getAuctionStatusText(status));
-      setIsUrgent(false);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      const end = endDate;
-      if (isPast(end)) {
-        setRemaining('Encerrado');
-        clearInterval(interval);
-        setIsUrgent(false);
-        return;
-      }
-
-      const totalSecondsLeft = differenceInSeconds(end, new Date());
-             if (totalSecondsLeft <= 0) {
-                setRemaining('Encerrado');
-                clearInterval(interval);
-                setIsUrgent(false);
-                return;
-            }
-            
-            const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
-            const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-            setIsUrgent(currentlyUrgent && showUrgencyTimer);
-            
-            if (currentlyUrgent && showUrgencyTimer) {
-                const hours = Math.floor(totalSecondsLeft / 3600);
-                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-                const seconds = totalSecondsLeft % 60;
-                if (hours > 0) {
-                  setRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-                } else {
-                  setRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-                }
-            } else {
-                 const days = Math.floor(totalSecondsLeft / (3600 * 24));
-                const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
-                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-
-                if (days > 0) setRemaining(`${days}d ${hours}h`);
-                else if (hours > 0) setRemaining(`${hours}h ${minutes}m`);
-                else if (minutes > 0) setRemaining(`${minutes}m`);
-                else setRemaining('Encerrando!');
-            }
-
-        }, 1000);
-
-        return () => clearInterval(interval);
-  }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
-
-  return (
-    <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium">
-      <Clock className="h-3 w-3 mr-1" />
-      {remaining}
-    </Badge>
-  );
-};
+import { Skeleton } from './ui/skeleton';
 
 
 interface LotListItemProps {
@@ -126,11 +35,9 @@ interface LotListItemProps {
 }
 
 function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotListItemProps) {
-  const [isFavorite, setIsFavorite] = useState(false);
-  const [isViewed, setIsViewed] = useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-  const [isMapModalOpen, setIsMapModalOpen] = useState(false);
-  const [lotDetailUrl, setLotDetailUrl] = useState<string>(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+  const [isFavorite, setIsFavorite] = React.useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
+  const [isViewed, setIsViewed] = React.useState(false);
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
 
@@ -148,32 +55,15 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
 
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
-  const effectiveEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+
+  React.useEffect(() => {
+    setIsFavorite(isLotFavoriteInStorage(lot.id));
+    setIsViewed(getRecentlyViewedIds().includes(lot.id));
+  }, [lot.id]);
   
-  const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setLotDetailUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-      setIsFavorite(isLotFavoriteInStorage(lot.id));
-      setIsViewed(getRecentlyViewedIds().includes(lot.id));
-    }
-     if (effectiveEndDate && isValid(effectiveEndDate)) {
-      setFormattedEndDate(format(effectiveEndDate, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
-    } else {
-      setFormattedEndDate(null);
-    }
-  }, [lot.id, lot.auctionId, lot.publicId, effectiveEndDate]);
-
-  useEffect(() => {
-    if (lot && lot.id) {
-        setIsFavorite(isLotFavoriteInStorage(lot.id));
-    }
-  }, [lot?.id]);
-
-
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
@@ -193,27 +83,36 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     e.stopPropagation();
     setIsPreviewModalOpen(true);
   };
-
-  const handleMapPreviewOpen = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsMapModalOpen(true);
-  };
-
-  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
-    const encodedUrl = encodeURIComponent(url);
-    const encodedTitle = encodeURIComponent(title);
-    switch(platform) {
-      case 'x':
-        return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
-      case 'facebook':
-        return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      case 'whatsapp':
-        return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
-      case 'email':
-        return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+  
+  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
+  const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
+  
+  const discountPercentage = React.useMemo(() => {
+    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
+      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
     }
-  }
+    return lot.discountPercentage || 0;
+  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
+
+
+  const mentalTriggers = React.useMemo(() => {
+    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
+    const settings = mentalTriggersGlobalSettings;
+
+    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
+      triggers.push('MAIS VISITADO');
+    }
+    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
+      triggers.push('LANCE QUENTE');
+    }
+    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
+        triggers.push('EXCLUSIVO');
+    }
+    return Array.from(new Set(triggers));
+  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
+  
+  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl : `https://placehold.co/600x400.png?text=Lote`;
+  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
 
   const getTypeIcon = (type?: string) => {
     if (!type) {
@@ -232,33 +131,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
     return <Info className="h-3 w-3 text-muted-foreground" />;
   };
 
-  const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
-  
-  const discountPercentage = useMemo(() => {
-    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
-      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
-    }
-    return lot.discountPercentage || 0;
-  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
-
-
-  const mentalTriggers = useMemo(() => {
-    let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
-    const settings = mentalTriggersGlobalSettings;
-
-    if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
-      triggers.push('MAIS VISITADO');
-    }
-    if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
-      triggers.push('LANCE QUENTE');
-    }
-    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
-        triggers.push('EXCLUSIVO');
-    }
-    return Array.from(new Set(triggers));
-  }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
-
-
   return (
     <>
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
@@ -267,30 +139,37 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={lotDetailUrl} className="block h-full w-full">
               <Image
-                src={lot.imageUrl || 'https://placehold.co/600x400.png'}
+                src={mainImageUrl!}
                 alt={lot.title}
                 fill
                 className="object-cover"
                 data-ai-hint={lot.dataAiHint || 'imagem lote lista'}
               />
             </Link>
-            {auction?.seller?.logoUrl && (
+            {sellerLogoUrl && (
               <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                        <Link href={auction?.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={auction.seller.logoUrl} alt={auction.seller.name} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'}/>
-                                <AvatarFallback>{auction.seller.name.charAt(0)}</AvatarFallback>
+                                <AvatarImage src={sellerLogoUrl} alt={auction?.seller?.name || "Logo Comitente"} data-ai-hint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'}/>
+                                <AvatarFallback>{auction?.seller?.name ? auction.seller.name.charAt(0) : 'C'}</AvatarFallback>
                             </Avatar>
                         </Link>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Comitente: {auction.seller.name}</p>
+                        <p>Comitente: {auction?.seller?.name}</p>
                     </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
+             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10">
+                {sectionBadges.showStatusBadge !== false && (
+                <Badge className={`text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)}`}>
+                    {getAuctionStatusText(lot.status)}
+                </Badge>
+                )}
+            </div>
           </div>
 
           {/* Content Column */}
@@ -298,13 +177,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
                  <div className="flex items-center gap-2 mb-1">
-                     <Badge 
-                        className={`text-xs px-1.5 py-0.5 shadow-sm
-                            ${getLotStatusColor(lot.status)}
-                        `}
-                        >
-                        {getAuctionStatusText(lot.status)}
-                    </Badge>
                      {mentalTriggers.map(trigger => (
                         <Badge key={trigger} variant="secondary" className="text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
                            {trigger}
@@ -357,12 +229,6 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
                 <p className={`text-2xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                   R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
-                {formattedEndDate && (
-                  <div className="flex items-center text-xs text-muted-foreground pt-1">
-                    <CalendarDays className="h-3 w-3 mr-1"/>
-                    <span>Prazo: {formattedEndDate}</span>
-                  </div>
-                )}
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">
                     <Link href={lotDetailUrl}>
@@ -380,20 +246,13 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
         isOpen={isPreviewModalOpen}
         onClose={() => setIsPreviewModalOpen(false)}
       />
-       <LotMapPreviewModal
-        lot={lot}
-        platformSettings={platformSettings}
-        isOpen={isMapModalOpen}
-        onClose={() => setIsMapModalOpen(false)}
-      />
     </>
   );
 }
 
-
-export default function LotListItem({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotListItemProps & {onUpdate?: () => void}) {
-    const [isClient, setIsClient] = useState(false);
-    useEffect(() => {
+export default function LotListItem(props: LotListItemProps & {onUpdate?: () => void}) {
+    const [isClient, setIsClient] = React.useState(false);
+    React.useEffect(() => {
       setIsClient(true);
     }, []);
 
@@ -403,22 +262,22 @@ export default function LotListItem({ lot, auction, badgeVisibilityConfig, platf
              <div className="relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0"></div>
              <div className="flex flex-col flex-grow">
                 <CardContent className="p-4 flex-grow space-y-1.5">
-                    <div className="h-5 bg-muted rounded w-3/4 animate-pulse mt-1"></div>
-                    <div className="h-4 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
-                    <div className="h-4 bg-muted rounded w-full animate-pulse mt-1"></div>
-                    <div className="h-4 bg-muted rounded w-2/3 animate-pulse mt-1"></div>
+                    <Skeleton className="h-5 bg-muted rounded w-3/4" />
+                    <Skeleton className="h-4 bg-muted rounded w-1/2" />
+                    <Skeleton className="h-4 bg-muted rounded w-full" />
+                    <Skeleton className="h-4 bg-muted rounded w-2/3" />
                 </CardContent>
                 <CardFooter className="p-4 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-3">
                     <div className="flex-grow">
-                        <div className="h-4 bg-muted rounded w-1/4 animate-pulse"></div>
-                        <div className="h-6 bg-muted rounded w-1/2 animate-pulse mt-1"></div>
+                        <Skeleton className="h-4 bg-muted rounded w-1/4" />
+                        <Skeleton className="h-6 bg-muted rounded w-1/2 mt-1" />
                     </div>
-                    <div className="h-9 bg-muted rounded w-full md:w-auto animate-pulse"></div>
+                    <Skeleton className="h-9 bg-muted rounded w-full md:w-auto" />
                 </CardFooter>
              </div>
         </Card>
       );
     }
 
-    return <LotListItemClientContent lot={lot} auction={auction} badgeVisibilityConfig={badgeVisibilityConfig} platformSettings={platformSettings} onUpdate={onUpdate} />;
+    return <LotListItemClientContent {...props} />;
   }

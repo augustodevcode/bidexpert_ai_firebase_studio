@@ -1,4 +1,4 @@
-
+// src/components/lot-card.tsx
 
 'use client';
 
@@ -14,79 +14,13 @@ import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Skeleton } from './ui/skeleton';
-
-const TimeRemainingBadge: React.FC<{endDate: Date | null, status: Lot['status'], showUrgencyTimer?: boolean, urgencyThresholdDays?: number, urgencyThresholdHours?: number}> = ({ endDate, status, showUrgencyTimer=true, urgencyThresholdDays=1, urgencyThresholdHours=0 }) => {
-    const [remaining, setRemaining] = React.useState('');
-    const [isUrgent, setIsUrgent] = React.useState(false);
-
-    React.useEffect(() => {
-        if (!endDate) {
-            setRemaining(getAuctionStatusText(status));
-            setIsUrgent(false);
-            return;
-        }
-
-        const interval = setInterval(() => {
-            const end = endDate;
-            if (isPast(end)) {
-                setRemaining('Encerrado');
-                clearInterval(interval);
-                setIsUrgent(false);
-                return;
-            }
-
-            const totalSecondsLeft = differenceInSeconds(end, new Date());
-             if (totalSecondsLeft <= 0) {
-                setRemaining('Encerrado');
-                clearInterval(interval);
-                setIsUrgent(false);
-                return;
-            }
-            
-            const thresholdInSeconds = (urgencyThresholdDays * 24 * 60 * 60) + (urgencyThresholdHours * 60 * 60);
-            const currentlyUrgent = totalSecondsLeft <= thresholdInSeconds;
-            setIsUrgent(currentlyUrgent && showUrgencyTimer);
-            
-            if (currentlyUrgent && showUrgencyTimer) {
-                const hours = Math.floor(totalSecondsLeft / 3600);
-                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-                const seconds = totalSecondsLeft % 60;
-                if (hours > 0) {
-                  setRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-                } else {
-                  setRemaining(`${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-                }
-            } else {
-                 const days = Math.floor(totalSecondsLeft / (3600 * 24));
-                const hours = Math.floor((totalSecondsLeft % (3600 * 24)) / 3600);
-                const minutes = Math.floor((totalSecondsLeft % 3600) / 60);
-
-                if (days > 0) setRemaining(`${days}d ${hours}h`);
-                else if (hours > 0) setRemaining(`${hours}h ${minutes}m`);
-                else if (minutes > 0) setRemaining(`${minutes}m`);
-                else setRemaining('Encerrando!');
-            }
-
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [endDate, status, showUrgencyTimer, urgencyThresholdDays, urgencyThresholdHours]);
-
-    return (
-        <Badge variant={isUrgent ? "destructive" : "outline"} className="text-xs font-medium" data-ai-id="lot-card-time-remaining">
-            <Clock className="h-3 w-3 mr-1" />
-            {remaining}
-        </Badge>
-    );
-};
-
 
 interface LotCardProps {
   lot: Lot;
@@ -125,7 +59,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   }, [lot.id]);
   
   const handleFavoriteToggle = (e: React.MouseEvent) => {
-    e.preventDefault();
+    e.preventDefault(); 
     e.stopPropagation();
     const newFavoriteState = !isFavorite;
     setIsFavorite(newFavoriteState);
@@ -179,7 +113,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
               <Image
-                src={lot.imageUrl || 'https://placehold.co/600x400.png'}
+                src={isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : 'https://placehold.co/600x400.png'}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -274,9 +208,6 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
-            {showCountdownOnThisCard && effectiveEndDate && (
-              <TimeRemainingBadge endDate={effectiveEndDate} status={lot.status} showUrgencyTimer={sectionBadges.showUrgencyTimer} urgencyThresholdDays={mentalTriggersGlobalSettings.urgencyTimerThresholdDays} urgencyThresholdHours={mentalTriggersGlobalSettings.urgencyTimerThresholdHours} />
-            )}
           </div>
         </CardFooter>
       </Card>
