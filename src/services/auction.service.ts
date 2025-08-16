@@ -46,7 +46,7 @@ export class AuctionService {
 
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, judicialProcessId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, judicialProcessId, auctioneerName, sellerName, ...restOfData } = data;
 
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
@@ -105,7 +105,7 @@ export class AuctionService {
       const internalId = auctionToUpdate.id;
 
       // Correctly separate form fields from relational/prisma-specific fields
-      const { categoryId, auctioneerId, sellerId, auctionStages, modality, judicialProcessId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, modality, judicialProcessId, auctioneerName, sellerName, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         // Build the update payload for Prisma
