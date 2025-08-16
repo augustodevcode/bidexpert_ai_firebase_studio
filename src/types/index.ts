@@ -165,6 +165,7 @@ export interface Lot {
   mediaItemIds?: string[];
   bemIds?: string[];
   bens?: Bem[]; // Populated on demand
+  inheritedMediaFromBemId?: string | null; // NEW: ID of the Bem to inherit media from
   type: string;
   categoryId?: string;
   subcategoryName?: string;

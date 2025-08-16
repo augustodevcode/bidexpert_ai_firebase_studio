@@ -19,13 +19,16 @@
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização:** Substituídos os campos de texto "Estado" e "Cidade" no formulário de criação/edição de leilões por componentes `EntitySelector` inteligentes.
+- **Item 19:** **Infraestrutura e UI para Marcas/Modelos de Veículos:** Criado todo o backend (Schema, Service, Repo) e as telas de CRUD no Admin para gerenciar Marcas e Modelos de veículos. Adicionados seletores no formulário de Bem. Implementados os filtros na UI da página de busca.
 - **Item 20:** **Inteligência de Herança de Comitente:** Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote é preenchido automaticamente com o comitente do leilão.
 - **Item 21:** **Implementar Incremento de Lance no Lote:** Adicionado o campo `bidIncrementStep` no formulário de lote. A lógica de lances agora valida o incremento mínimo.
-- **Item 19 (Backend & Admin UI):** Adicionadas as tabelas, serviços e telas de CRUD para Marcas (`VehicleMake`) e Modelos (`VehicleModel`) de veículos.
 
 ## DOING
+- **Item 22: Gerenciamento Flexível da Galeria de Imagens:**
+    - **Fase 1 (Concluída):** Implementar a lógica no formulário de Lote para permitir ao usuário escolher entre usar uma galeria customizada ou herdar a galeria de imagens de um `Bem` específico. Salvar essa escolha no banco de dados.
+    - **Fase 2 (Próxima):** Atualizar os componentes visuais (cards, listas, página de detalhes) para exibir a galeria de imagens correta com base na configuração do lote (herdada ou customizada).
 - **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
-- **Item 19 (Frontend):** **Implementar Filtros Avançados de Busca:** Ativar e implementar a lógica de filtro para Marca e Modelo na página de busca (`/search`).
+
 
 ## NEXT
 - **Item 15 (Continuação):** Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
@@ -41,11 +44,4 @@
     - Criar o fluxo de "checkout" para pagamento parcelado (ex: 12 boletos).
     - Adicionar um novo `Role` "Financeiro".
     - Desenvolver um painel financeiro para que o time possa visualizar o status dos pagamentos, comissões e desvalorização de ativos.
-- **Item 22: Gerenciamento Flexível da Galeria de Imagens:**
-    - Implementar uma lógica no momento do loteamento que permita ao usuário escolher a fonte da galeria de imagens do lote.
-    - Opções de escolha:
-        - Herdar a galeria de imagens de um `Bem` específico (quando houver múltiplos bens no lote).
-        - Usar uma galeria de imagens customizada, exclusiva para o lote.
-        - Herdar automaticamente se a relação for 1:1 (Lote para Bem).
-    - O sistema deve salvar essa escolha e usar a galeria correta em todos os componentes visuais (cards, listas, detalhes).
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.

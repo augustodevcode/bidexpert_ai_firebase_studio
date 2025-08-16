@@ -68,6 +68,9 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
+      if (data.inheritedMediaFromBemId) {
+        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+      }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
@@ -123,6 +126,9 @@ export class LotService {
       }
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
+      }
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
+        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
 
       await this.repository.update(id, dataToUpdate, bemIds);
