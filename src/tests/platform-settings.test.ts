@@ -1,8 +1,8 @@
 // tests/platform-settings.test.ts
-import { test, describe, beforeAll, afterAll, expect } from 'vitest';
-import { PlatformSettingsService } from '../services/platform-settings.service';
-import { prisma } from '../lib/prisma';
-import type { PlatformSettings } from '../types';
+import { describe, it, beforeAll, afterAll, expect } from 'vitest';
+import { PlatformSettingsService } from '@/services/platform-settings.service';
+import { prisma } from '@/lib/prisma';
+import type { PlatformSettings } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const settingsService = new PlatformSettingsService();
@@ -14,10 +14,12 @@ describe('Platform Settings Service E2E Tests', () => {
     let originalSettings: PlatformSettings | null;
 
     beforeAll(async () => {
+        // This is a safeguard; actual data is fetched before update.
         originalSettings = await prisma.platformSettings.findFirst();
     });
 
     afterAll(async () => {
+        // Restore original settings after test to not interfere with other tests
         if (originalSettings) {
             await prisma.platformSettings.update({
                 where: { id: 'global' },
@@ -31,7 +33,7 @@ describe('Platform Settings Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should update platform settings via the service and verify changes in the database', async () => {
+    it('should update platform settings via the service and verify changes in the database', async () => {
         // Arrange
         const newSettingsData: Partial<PlatformSettings> = {
             siteTitle: testSiteTitle,
