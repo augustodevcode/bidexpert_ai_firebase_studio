@@ -309,7 +309,7 @@ export default function LotDetailClientContent({
     if (typeof window !== 'undefined') setCurrentUrl(window.location.href);
     
     // Format the date here to avoid hydration mismatch
-    if (auction.endDate && isValid(new Date(auction.endDate))) {
+    if (auction.endDate && isValid(new Date(auction.endDate as string))) {
       setFormattedAuctionEndDate(format(new Date(auction.endDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
     }
     
@@ -379,16 +379,18 @@ export default function LotDetailClientContent({
   };
 
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
-  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length : 0));
+  const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length : 0);
   const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'');
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
-  const handleNewReview = async (rating: number, comment: string) => { /* ... */ return false; };
-  const handleNewQuestion = async (questionText: string) => { /* ... */ return false; };
+  const handleNewReview = async (rating: number, comment: string) => { return false; };
+  const handleNewQuestion = async (questionText: string) => { return false; };
+
   const relatedLots = useMemo(() => {
     if (!auction || !auction.lots || !lot) return [];
     return auction.lots.filter(relatedLot => relatedLot.id !== lot.id).slice(0, platformSettings.relatedLotsCount || 5);
   }, [auction, lot, platformSettings.relatedLotsCount]);
+
   const isJudicialAuction = auction.auctionType === 'JUDICIAL';
   const currentLotHasProcessInfo = hasProcessInfo(lot);
   const showLegalProcessTab = isJudicialAuction && currentLotHasProcessInfo;
