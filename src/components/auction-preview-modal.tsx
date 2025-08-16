@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark } from 'lucide-react';
 import Link from 'next/link';
-import AuctionStagesTimeline from './auction-stages-timeline';
-import { useMemo } from 'react';
+import AuctionStagesTimeline from './auction/auction-stages-timeline';
+import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
