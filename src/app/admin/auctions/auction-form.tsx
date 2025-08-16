@@ -61,6 +61,7 @@ interface AuctionFormProps {
   onCancelEdit?: () => void;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<Auction>) => void;
+  formRef?: React.Ref<any>;
 }
 
 const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
@@ -141,7 +142,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   onUpdateSuccess,
   onCancelEdit,
   isWizardMode = false,
-  onWizardDataChange
+  onWizardDataChange,
+  formRef,
 }, ref) => {
   const { toast } = useToast();
   const router = useRouter();
@@ -200,6 +202,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   
   useImperativeHandle(ref, () => ({
     setValue: form.setValue,
+    requestSubmit: form.handleSubmit(onSubmit)
   }));
 
   const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
@@ -326,7 +329,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                         <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector entityName="state" value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: s.uf }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector entityName="state" value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector entityName="city" value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
                         </div>
                     </div>
