@@ -251,6 +251,8 @@ firebase.google.com
 firebase.blog
 firebase.blog
 ) traz dicas atualizadas sobre funcionalidade de preview e portas públicas.
+### 9. Princípio da Cobertura de Testes Contínua
+**Regra:** Toda nova funcionalidade, alteração de lógica de negócio ou correção de bug implementada a partir do backlog **deve** ser acompanhada pela criação ou atualização dos testes correspondentes (unitários, de integração ou E2E). Isso garante que a base de testes evolua junto com o código e que a cobertura se mantenha alta, prevenindo regressões futuras e documentando o comportamento esperado do sistema.
 Resumo: O objetivo é garantir cobertura completa das funcionalidades de leilão em todas as camadas de teste. Use testes unitários para lógica pura, integração para fluxo servidor/BD e E2E para fluxos críticos. Mantenha schemas Prisma/MySQL e Zod sincronizados via migrations e geradores automáticos
 github.com
 . Adote boas ferramentas (Vitest/Jest, Supertest, Playwright, zod-fixture) e uma infraestrutura de teste sólida (banco isolado, CI, staging). Assim, o desenvolvedor terá orientações claras e exemplos concretos para implementar imediatamente a estratégia de testes.
@@ -438,6 +440,8 @@ firebase.google.com
 firebase.blog
 firebase.blog
 ) traz dicas atualizadas sobre funcionalidade de preview e portas públicas.
+### 9. Princípio da Cobertura de Testes Contínua
+**Regra:** Toda nova funcionalidade, alteração de lógica de negócio ou correção de bug implementada a partir do backlog **deve** ser acompanhada pela criação ou atualização dos testes correspondentes (unitários, de integração ou E2E). Isso garante que a base de testes evolua junto com o código e que a cobertura se mantenha alta, prevenindo regressões futuras e documentando o comportamento esperado do sistema.
 Resumo: O objetivo é garantir cobertura completa das funcionalidades de leilão em todas as camadas de teste. Use testes unitários para lógica pura, integração para fluxo servidor/BD e E2E para fluxos críticos. Mantenha schemas Prisma/MySQL e Zod sincronizados via migrations e geradores automáticos
 github.com
 . Adote boas ferramentas (Vitest/Jest, Supertest, Playwright, zod-fixture) e uma infraestrutura de teste sólida (banco isolado, CI, staging). Assim, o desenvolvedor terá orientações claras e exemplos concretos para implementar imediatamente a estratégia de testes.
