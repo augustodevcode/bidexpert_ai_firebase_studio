@@ -16,7 +16,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { vehicleModelFormSchema, type VehicleModelFormData } from './vehicle-model-form-schema';
+import { vehicleModelFormSchema, type VehicleModelFormData } from './form-schema';
 import type { VehicleModel, VehicleMake } from '@/types';
 import { Loader2, Save, Car } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
