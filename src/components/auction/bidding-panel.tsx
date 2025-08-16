@@ -25,8 +25,8 @@ interface BiddingPanelProps {
   currentLot: Lot;
   auction: Auction;
   onBidSuccess: (updatedLotData: Partial<Lot>, newBid?: BidInfo) => void;
-  isHabilitadoForThisAuction: boolean;
-  onHabilitacaoSuccess: () => void;
+  isHabilitadoForThisAuction?: boolean;
+  onHabilitacaoSuccess?: () => void; // Tornando a prop opcional
 }
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
@@ -86,7 +86,9 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
       const result = await habilitateForAuctionAction(userProfileWithPermissions.uid, auction.id);
       if (result.success) {
           toast({ title: "Sucesso!", description: "Você está habilitado para dar lances neste leilão."});
-          onHabilitacaoSuccess();
+          if (onHabilitacaoSuccess) { // Verificação para segurança
+            onHabilitacaoSuccess();
+          }
       } else {
           toast({ title: "Erro", description: result.message, variant: "destructive"});
       }
@@ -222,5 +224,3 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
     </>
   );
 }
-
-    
