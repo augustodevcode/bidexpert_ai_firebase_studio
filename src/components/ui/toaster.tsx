@@ -16,6 +16,7 @@ import { Copy, Check, BrainCircuit, Loader2, AlertCircle, CheckCircle } from "lu
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
 import { Alert, AlertDescription, AlertTitle } from "./alert"
+import { ScrollArea } from "./scroll-area" // Importando a ScrollArea
 
 // Helper function to recursively extract text content from React nodes
 const getTextContent = (node: React.ReactNode): string => {
@@ -136,40 +137,45 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
 
   return (
     <>
-      <Toast key={id} variant={variant} {...props}>
-        <div className="grid gap-1 flex-grow">
-          {title && <ToastTitle>{title}</ToastTitle>}
-          {description && (
-            <ToastDescription>{description}</ToastDescription>
-          )}
-        </div>
-        <div className="flex flex-col gap-2 self-start">
-          {variant === 'destructive' && (
-             <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-destructive-foreground/80 hover:bg-destructive-foreground/10 hover:text-destructive-foreground"
-                onClick={() => setIsAnalysisModalOpen(true)}
-                aria-label="Analisar com IA"
-              >
-               <BrainCircuit className="h-4 w-4" />
-            </Button>
-          )}
-          <Button
-              size="icon"
-              variant="ghost"
-              className="h-7 w-7 text-muted-foreground hover:bg-secondary"
-              onClick={handleCopy}
-              aria-label="Copiar notificação"
-            >
-              {hasCopied ? (
-                <Check className="h-4 w-4 text-green-500" />
-              ) : (
-                <Copy className="h-4 w-4" />
+      <Toast key={id} variant={variant} {...props} className="flex-col items-start gap-2">
+        <div className="w-full flex justify-between items-start gap-2">
+            <div className="grid gap-1 flex-grow">
+              {title && <ToastTitle>{title}</ToastTitle>}
+            </div>
+            <div className="flex flex-col gap-2 self-start flex-shrink-0">
+              {variant === 'destructive' && (
+                 <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-7 w-7 text-destructive-foreground/80 hover:bg-destructive-foreground/10 hover:text-destructive-foreground"
+                    onClick={() => setIsAnalysisModalOpen(true)}
+                    aria-label="Analisar com IA"
+                  >
+                   <BrainCircuit className="h-4 w-4" />
+                </Button>
               )}
-          </Button>
+              <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7 text-muted-foreground hover:bg-secondary"
+                  onClick={handleCopy}
+                  aria-label="Copiar notificação"
+                >
+                  {hasCopied ? (
+                    <Check className="h-4 w-4 text-green-500" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+              </Button>
+            </div>
+            <ToastClose />
         </div>
-        <ToastClose />
+
+        {description && (
+            <ScrollArea className="w-full max-h-[200px] pr-4">
+                <ToastDescription className="text-xs whitespace-pre-wrap">{description}</ToastDescription>
+            </ScrollArea>
+        )}
       </Toast>
       {variant === 'destructive' && (
          <AIAnalysisModal 
