@@ -42,6 +42,7 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
         </Button>
       </div>
       <EntitySelector
+        entityName="Processo"
         value={selectedProcess?.id}
         onChange={(processId) => {
             const process = processes.find(p => p.id === processId) || undefined;
