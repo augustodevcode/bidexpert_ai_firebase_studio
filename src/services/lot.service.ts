@@ -77,8 +77,23 @@ export class LotService {
 
   async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { bemIds, categoryId, subcategoryId, type, auctionId, sellerId, auctioneerId, ...lotData } = data;
-      const dataToUpdate: Prisma.LotUpdateInput = { ...lotData };
+      const { 
+        bemIds, categoryId, subcategoryId, type, auctionId, 
+        sellerId, auctioneerId, stateId, cityId,
+        ...lotData 
+      } = data;
+
+      const dataToUpdate: Prisma.LotUpdateInput = { 
+          ...lotData,
+          price: lotData.price ? Number(lotData.price) : undefined,
+          initialPrice: lotData.initialPrice ? Number(lotData.initialPrice) : undefined,
+          secondInitialPrice: lotData.secondInitialPrice ? Number(lotData.secondInitialPrice) : undefined,
+          evaluationValue: lotData.evaluationValue ? Number(lotData.evaluationValue) : undefined,
+          reservePrice: lotData.reservePrice ? Number(lotData.reservePrice) : undefined,
+          debtAmount: lotData.debtAmount ? Number(lotData.debtAmount) : undefined,
+          itbiValue: lotData.itbiValue ? Number(lotData.itbiValue) : undefined,
+          bidIncrementStep: lotData.bidIncrementStep ? Number(lotData.bidIncrementStep) : undefined,
+      };
 
       if (lotData.title) {
         dataToUpdate.slug = slugify(lotData.title);
@@ -87,22 +102,27 @@ export class LotService {
       if (finalCategoryId) {
         dataToUpdate.category = { connect: { id: finalCategoryId } };
       }
-       if (auctionId) {
+      if (auctionId) {
         dataToUpdate.auction = { connect: { id: auctionId } };
       }
       if (subcategoryId) {
         dataToUpdate.subcategory = { connect: { id: subcategoryId } };
-      } else if (data.hasOwnProperty('subcategoryId')) { // Allow unsetting the subcategory
+      } else if (data.hasOwnProperty('subcategoryId')) {
         dataToUpdate.subcategory = { disconnect: true };
       }
-
       if (sellerId) {
         dataToUpdate.seller = { connect: { id: sellerId } };
       }
       if (auctioneerId) {
         dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
       }
-      
+      if (cityId) {
+        dataToUpdate.city = { connect: { id: cityId } };
+      }
+      if (stateId) {
+        dataToUpdate.state = { connect: { id: stateId } };
+      }
+
       await this.repository.update(id, dataToUpdate, bemIds);
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {

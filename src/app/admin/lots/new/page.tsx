@@ -7,19 +7,21 @@ import { getCities } from '@/app/admin/cities/actions';
 import { getBens } from '@/app/admin/bens/actions';
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { LotCategory, Auction, StateInfo, CityInfo, Bem } from '@/types';
+import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellers } from '../sellers/actions';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];
   auctions: Auction[];
+  sellers: SellerProfileInfo[];
   states: StateInfo[];
   allCities: CityInfo[];
   availableBens: Bem[];
   auctionIdFromQuery?: string;
 }
 
-function NewLotPageContent({ categories, auctions, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
+function NewLotPageContent({ categories, auctions, sellers, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
   async function handleCreateLot(data: Partial<LotFormData>) {
     'use server';
     return createLot(data);
@@ -27,12 +29,13 @@ function NewLotPageContent({ categories, auctions, states, allCities, availableB
 
   return (
     <LotForm
-      onSubmitAction={handleCreateLot}
       categories={categories}
       auctions={auctions}
+      sellers={sellers}
       states={states}
       allCities={allCities}
       initialAvailableBens={availableBens}
+      onSubmitAction={handleCreateLot}
       formTitle="Novo Lote"
       formDescription="Preencha os detalhes para criar um novo lote."
       submitButtonText="Criar Lote"
@@ -44,12 +47,13 @@ function NewLotPageContent({ categories, auctions, states, allCities, availableB
 export default async function NewLotPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
   const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
   
-  const [categories, auctions, states, allCities, bens] = await Promise.all([
+  const [categories, auctions, states, allCities, bens, sellers] = await Promise.all([
     getLotCategories(),
     getAuctions(),
     getStates(),
     getCities(),
     getBens(), // Fetch all available bens initially
+    getSellers(),
   ]);
 
   return (
@@ -57,6 +61,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
       <NewLotPageContent 
         categories={categories} 
         auctions={auctions} 
+        sellers={sellers}
         states={states}
         allCities={allCities}
         availableBens={bens}

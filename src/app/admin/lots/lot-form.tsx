@@ -20,7 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory } from '@/types';
+import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
@@ -49,6 +49,7 @@ import {
 import { finalizeLot } from './actions';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getLotCategories as refetchCategories } from '../categories/actions';
+import { getSellers } from '../sellers/actions'; // Importar getSellers
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -57,6 +58,7 @@ interface LotFormProps {
   states: StateInfo[];
   allCities: CityInfo[];
   initialAvailableBens: Bem[];
+  sellers: SellerProfileInfo[]; // Adicionar sellers
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -76,6 +78,7 @@ export default function LotForm({
   states,
   allCities,
   initialAvailableBens,
+  sellers: initialSellers, // Receber sellers
   onSubmitAction,
   formTitle,
   formDescription,
@@ -102,9 +105,10 @@ export default function LotForm({
   // States for entity selectors
   const [auctions, setAuctions] = React.useState(initialAuctions);
   const [categories, setCategories] = React.useState(initialCategories);
+  const [sellers, setSellers] = React.useState(initialSellers); // Novo estado
   const [isFetchingAuctions, setIsFetchingAuctions] = React.useState(false);
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
-
+  const [isFetchingSellers, setIsFetchingSellers] = React.useState(false); // Novo estado
 
   // State for linked bens display
   const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
@@ -124,6 +128,9 @@ export default function LotForm({
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
       status: initialData?.status || 'EM_BREVE',
+      sellerId: initialData?.sellerId,
+      stateId: initialData?.stateId,
+      cityId: initialData?.cityId,
     },
   });
   
@@ -143,6 +150,13 @@ export default function LotForm({
     const data = await refetchCategories();
     setCategories(data);
     setIsFetchingCategories(false);
+  }, []);
+
+  const handleRefetchSellers = React.useCallback(async () => {
+    setIsFetchingSellers(true);
+    const data = await getSellers();
+    setSellers(data);
+    setIsFetchingSellers(false);
   }, []);
   
   React.useEffect(() => {
@@ -428,28 +442,6 @@ export default function LotForm({
                 </div>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                  {canFinalize && (
-                     <AlertDialog>
-                       <AlertDialogTrigger asChild>
-                         <Button type="button" variant="secondary" disabled={isFinalizing}>
-                           {isFinalizing ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <CheckCircle className="mr-2 h-4 w-4" />}
-                           Finalizar Lote
-                         </Button>
-                       </AlertDialogTrigger>
-                       <AlertDialogContent>
-                         <AlertDialogHeader>
-                           <AlertDialogTitle>Confirmar Finalização?</AlertDialogTitle>
-                           <AlertDialogDescription>
-                             Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido") e notificar o vencedor. Esta ação não pode ser desfeita.
-                           </AlertDialogDescription>
-                         </AlertDialogHeader>
-                         <AlertDialogFooter>
-                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                           <AlertDialogAction onClick={handleFinalizeLot} className="bg-green-600 hover:bg-green-700">Confirmar</AlertDialogAction>
-                         </AlertDialogFooter>
-                       </AlertDialogContent>
-                     </AlertDialog>
-                  )}
                    <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                       {submitButtonText}
@@ -464,27 +456,14 @@ export default function LotForm({
               <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Detalhes sobre o lote..." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o status do lote" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid md:grid-cols-2 gap-4">
+                 <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Preço (Lance Inicial/Atual)</FormLabel><FormControl><Input type="number" placeholder="Ex: 15000.00" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="initialPrice" render={({ field }) => (<FormItem><FormLabel>Lance Inicial (1ª Praça)</FormLabel><FormControl><Input type="number" placeholder="Ex: 20000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              </div>
+              <div className="grid md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status do lote" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Se diferente do comitente principal do leilão.</FormDescription><FormMessage /></FormItem>)}/>
+              </div>
               <div className="grid md:grid-cols-2 gap-6">
                  <FormField control={form.control} name="type" render={({ field }) => (<FormItem><FormLabel>Categoria do Lote</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={handleRefetchCategories} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
                 {availableSubcategories.length > 0 && (
@@ -542,7 +521,7 @@ export default function LotForm({
                         columns={bemColumns}
                         data={availableBensForTable}
                         rowSelection={bemRowSelection}
-                        setRowSelection={setBemRowSelection}
+                        setRowSelection={setRowSelection}
                         searchPlaceholder="Buscar bem disponível..."
                         searchColumnId="title"
                     />

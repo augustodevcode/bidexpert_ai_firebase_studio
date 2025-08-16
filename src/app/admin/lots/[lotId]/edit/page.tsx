@@ -9,7 +9,7 @@ import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory } from '@/types';
+import type { Lot, Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, FileSignature, Loader2, Gavel } from 'lucide-react';
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import React, { useEffect, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { getSellers } from '@/app/admin/sellers/actions'; // Caminho corrigido
 
 export default function EditLotPage() {
   const params = useParams();
@@ -36,6 +37,7 @@ export default function EditLotPage() {
   const [lot, setLot] = useState<Lot | null>(null);
   const [categories, setCategories] = useState<LotCategory[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]); // Adicionar estado para sellers
   const [states, setStates] = useState<StateInfo[]>([]);
   const [allCities, setAllCities] = useState<CityInfo[]>([]);
   const [availableBens, setAvailableBens] = useState<Bem[]>([]);
@@ -57,17 +59,19 @@ export default function EditLotPage() {
         ? { judicialProcessId: parentAuction.judicialProcessId }
         : (parentAuction?.sellerId ? { sellerId: parentAuction.sellerId } : {});
 
-      const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedBens] = await Promise.all([
+      const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedBens, fetchedSellers] = await Promise.all([
         getLotCategories(),
         getAuctions(),
         getStates(),
         getCities(),
-        getBensForLotting(filterForBens)
+        getBensForLotting(filterForBens),
+        getSellers(), // Buscar sellers
       ]);
       
       setLot(fetchedLot);
       setCategories(fetchedCategories);
       setAuctions(fetchedAuctions);
+      setSellers(fetchedSellers); // Setar sellers
       setStates(fetchedStates);
       setAllCities(fetchedCities);
       setAvailableBens(fetchedBens);
@@ -113,6 +117,7 @@ export default function EditLotPage() {
           initialData={lot}
           categories={categories}
           auctions={auctions}
+          sellers={sellers}
           states={states}
           allCities={allCities}
           initialAvailableBens={availableBens}
