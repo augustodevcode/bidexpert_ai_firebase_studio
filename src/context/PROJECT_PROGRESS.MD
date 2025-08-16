@@ -49,4 +49,11 @@
     - Adicionar o campo `bidIncrementStep` no formulário de criação/edição de lote.
     - A lógica de lances deve validar se o novo lance é igual ou superior ao lance atual mais o incremento definido.
     - Considerar diferentes regras de incremento com base na modalidade do leilão (ex: incremento fixo, variável, etc.).
+- **Item 22: Gerenciamento Flexível da Galeria de Imagens do Lote:**
+    - Implementar uma lógica no momento do loteamento que permita ao usuário escolher a fonte da galeria de imagens do lote.
+    - Opções de escolha:
+        - Herdar a galeria de imagens de um `Bem` específico (quando houver múltiplos bens no lote).
+        - Usar uma galeria de imagens customizada, exclusiva para o lote.
+        - Herdar automaticamente se a relação for 1:1 (Lote para Bem).
+    - O sistema deve salvar essa escolha e usar a galeria correta em todos os componentes visuais (cards, listas, detalhes).
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
