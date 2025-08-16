@@ -42,4 +42,7 @@
     - Ativar e implementar a lógica de filtro para Subcategoria, Marca e Modelo na página de busca (`/search`).
     - Criar as telas de gerenciamento (CRUD) para Marcas (`VehicleMake`) e Modelos (`VehicleModel`) de veículos.
     - Garantir que os filtros sejam aplicados corretamente aos resultados da busca de lotes.
+- **Item 20: Inteligência de Herança de Comitente:**
+    - Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote deve ser preenchido automaticamente com o comitente do leilão.
+    - Futuramente, ao criar um leilão a partir de uma seleção de lotes, o comitente do leilão deve ser sugerido com base no comitente comum dos lotes.
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
