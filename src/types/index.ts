@@ -904,6 +904,23 @@ export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-s
 export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategories/subcategory-form-schema').subcategoryFormSchema>;
 export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').roleFormSchema>;
 export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
+export type VehicleMakeFormData = z.infer<typeof import('@/app/admin/vehicle-makes/form-schema').vehicleMakeFormSchema>;
+export type VehicleModelFormData = z.infer<typeof import('@/app/admin/vehicle-models/form-schema').vehicleModelFormSchema>;
+
+export interface VehicleMake {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+export interface VehicleModel {
+  id: string;
+  name: string;
+  slug: string;
+  makeId: string;
+  makeName?: string;
+}
+
 
 export interface AuctionPerformanceData {
   id: string;

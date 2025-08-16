@@ -15,7 +15,7 @@ import LotCard from '@/components/lot-card';
 import LotListItem from '@/components/lot-list-item';
 import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
 import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
-import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
+import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -31,6 +31,8 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
+import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
@@ -74,6 +76,8 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
+  makes: [],
+  models: [],
   startDate: undefined,
   endDate: undefined,
   status: [],
@@ -95,6 +99,8 @@ export default function SearchPage() {
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
+  const [allMakesForFilter, setAllMakesForFilter] = useState<VehicleMake[]>([]);
+  const [allModelsForFilter, setAllModelsForFilter] = useState<VehicleModel[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   // State for UI and Filters
@@ -113,16 +119,20 @@ export default function SearchPage() {
     async function fetchSharedData() {
       setIsFilterDataLoading(true);
       try {
-        const [categories, sellers, settings] = await Promise.all([
+        const [categories, sellers, settings, makes, models] = await Promise.all([
           getCategories(),
           getSellers(),
-          getPlatformSettings()
+          getPlatformSettings(),
+          getVehicleMakes(),
+          getVehicleModels()
         ]);
         
         setAllCategoriesForFilter(categories);
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());
         setPlatformSettings(settings);
         setItemsPerPage(settings.searchItemsPerPage || 12);
+        setAllMakesForFilter(makes);
+        setAllModelsForFilter(models);
       } catch (error) {
         console.error("Error fetching shared filter data:", error);
       } finally {
@@ -327,7 +337,7 @@ export default function SearchPage() {
             if (item.description) searchableText += ` ${item.description.toLowerCase()}`;
             if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
             if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
-            else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.toLowerCase()}`;
+            else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
             if ('id' in item && item.id) searchableText += ` ${item.id.toLowerCase()}`;
             return searchableText.includes(term);
         });
@@ -336,7 +346,7 @@ export default function SearchPage() {
     // 2. Apply other filters
     let filteredItems = searchedItems.filter(item => {
       if (activeFilters.category !== 'TODAS') {
-        const itemCategoryName = 'type' in item && item.type ? item.type : ('category' in item ? item.category : undefined);
+        const itemCategoryName = 'type' in item && item.type ? item.type : ('category' in item ? item.category?.name : undefined);
         const category = allCategoriesForFilter.find(c => c.slug === activeFilters.category);
         if (!itemCategoryName || !category || (item.categoryId !== category.id && slugify(itemCategoryName) !== category.slug)) return false;
       }
@@ -351,8 +361,14 @@ export default function SearchPage() {
       if (activeFilters.sellers.length > 0) {
         let sellerName: string | undefined = undefined;
         if ('sellerName' in item && item.sellerName) sellerName = item.sellerName;
-        else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!;
+        else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!.name;
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
+      }
+      if (activeFilters.makes && activeFilters.makes.length > 0) {
+          if(!('make' in item) || !item.make || !activeFilters.makes.includes(item.make)) return false;
+      }
+      if (activeFilters.models && activeFilters.models.length > 0) {
+          if(!('model' in item) || !item.model || !activeFilters.models.includes(item.model)) return false;
       }
        if (activeFilters.status && activeFilters.status.length > 0) {
           if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
@@ -511,6 +527,8 @@ export default function SearchPage() {
                         onFilterReset={handleFilterReset}
                         initialFilters={activeFilters as ActiveFilters}
                         filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
+                        makes={allMakesForFilter}
+                        models={allModelsForFilter}
                     />
                 </div>
             </SheetContent>
@@ -528,6 +546,8 @@ export default function SearchPage() {
                 onFilterReset={handleFilterReset}
                 initialFilters={activeFilters as ActiveFilters}
                 filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
+                makes={allMakesForFilter}
+                models={allModelsForFilter}
             />
         </div>
         

@@ -15,7 +15,7 @@ import { Filter, CalendarIcon, RefreshCw, ShoppingCart } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import type { LotCategory, DirectSaleOfferType } from '@/types';
+import type { LotCategory, DirectSaleOfferType, VehicleMake, VehicleModel } from '@/types';
 
 export interface ActiveFilters {
   modality: string; // For auctions
@@ -23,6 +23,8 @@ export interface ActiveFilters {
   priceRange: [number, number];
   locations: string[];
   sellers: string[];
+  makes: string[];
+  models: string[];
   startDate?: Date;
   endDate?: Date;
   status: string[];
@@ -33,13 +35,15 @@ interface SidebarFiltersProps {
   categories?: LotCategory[];
   locations?: string[];
   sellers?: string[];
+  makes?: VehicleMake[];
+  models?: VehicleModel[];
   modalities?: { value: string, label: string }[];
   statuses?: { value: string, label: string }[];
   offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string}[]; // For Direct Sales
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;
-  filterContext?: 'auctions' | 'directSales'; // To show relevant filters
+  filterContext?: 'auctions' | 'directSales' | 'lots';
   disableCategoryFilter?: boolean; // New prop to disable category selection
 }
 
@@ -74,6 +78,8 @@ export default function SidebarFilters({
   categories = [],
   locations = [],
   sellers = [],
+  makes = [],
+  models = [],
   modalities = defaultModalities,
   statuses: providedStatuses, // Renamed to avoid conflict
   offerTypes = defaultOfferTypes,
@@ -91,6 +97,8 @@ export default function SidebarFilters({
   const [priceRange, setPriceRange] = useState<[number, number]>(initialFilters?.priceRange || [0, 500000]);
   const [selectedLocations, setSelectedLocations] = useState<string[]>(initialFilters?.locations || []);
   const [selectedSellers, setSelectedSellers] = useState<string[]>(initialFilters?.sellers || []);
+  const [selectedMakes, setSelectedMakes] = useState<string[]>(initialFilters?.makes || []);
+  const [selectedModels, setSelectedModels] = useState<string[]>(initialFilters?.models || []);
   const [startDate, setStartDate] = useState<Date | undefined>(initialFilters?.startDate);
   const [endDate, setEndDate] = useState<Date | undefined>(initialFilters?.endDate);
   const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
@@ -108,12 +116,13 @@ export default function SidebarFilters({
       setPriceRange(initialFilters.priceRange);
       setSelectedLocations(initialFilters.locations);
       setSelectedSellers(initialFilters.sellers);
+      setSelectedMakes(initialFilters.makes || []);
+      setSelectedModels(initialFilters.models || []);
       setStartDate(initialFilters.startDate);
       setEndDate(initialFilters.endDate);
       setSelectedStatus(initialFilters.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
       setSelectedOfferType(initialFilters.offerType || 'ALL');
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialFilters, filterContext]);
 
   
@@ -133,6 +142,19 @@ export default function SidebarFilters({
     );
   };
 
+  const handleMakeChange = (makeName: string) => {
+    setSelectedMakes(prev =>
+      prev.includes(makeName) ? prev.filter(m => m !== makeName) : [...prev, makeName]
+    );
+  };
+
+  const handleModelChange = (modelName: string) => {
+    setSelectedModels(prev =>
+      prev.includes(modelName) ? prev.filter(m => m !== modelName) : [...prev, modelName]
+    );
+  };
+
+
   const handleStatusChange = (statusValue: string) => {
     setSelectedStatus(prev =>
       prev.includes(statusValue) ? prev.filter(s => s !== statusValue) : [...prev, statusValue]
@@ -146,6 +168,8 @@ export default function SidebarFilters({
       priceRange,
       locations: selectedLocations,
       sellers: selectedSellers,
+      makes: selectedMakes,
+      models: selectedModels,
       startDate,
       endDate,
       status: selectedStatus,
@@ -162,6 +186,8 @@ export default function SidebarFilters({
     setPriceRange([0, 500000]);
     setSelectedLocations([]);
     setSelectedSellers([]);
+    setSelectedMakes([]);
+    setSelectedModels([]);
     setStartDate(undefined);
     setEndDate(undefined);
     setSelectedStatus(filterContext === 'directSales' ? ['ACTIVE'] : []);
@@ -174,21 +200,7 @@ export default function SidebarFilters({
   };
   
   if (!isClient) {
-    return (
-      <aside className="w-full md:w-72 lg:w-80 space-y-6 p-1">
-        <div className="animate-pulse">
-          <div className="h-8 bg-muted rounded mb-4"></div>
-          {[1,2,3,4].map(i => (
-            <div key={i} className="mb-4">
-              <div className="h-6 bg-muted rounded mb-2"></div>
-              <div className="h-4 bg-muted rounded w-3/4 mb-1"></div>
-              <div className="h-4 bg-muted rounded w-1/2"></div>
-            </div>
-          ))}
-          <div className="h-10 bg-primary rounded mt-4"></div>
-        </div>
-      </aside>
-    );
+    return <SidebarFiltersSkeleton />;
   }
 
 
@@ -203,7 +215,7 @@ export default function SidebarFilters({
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={['categories', 'price', 'status']} className="w-full">
+      <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes']} className="w-full">
         
         {filterContext === 'auctions' && (
             <AccordionItem value="modality">
@@ -275,6 +287,35 @@ export default function SidebarFilters({
             </div>
           </AccordionContent>
         </AccordionItem>
+
+        {filterContext === 'lots' && makes && makes.length > 0 && (
+            <AccordionItem value="makes">
+            <AccordionTrigger className="text-md font-medium">Marca</AccordionTrigger>
+            <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                {makes.map(make => (
+                <div key={make.id} className="flex items-center space-x-2">
+                    <Checkbox id={`make-${make.id}`} checked={selectedMakes.includes(make.name)} onCheckedChange={() => handleMakeChange(make.name)} />
+                    <Label htmlFor={`make-${make.id}`} className="text-sm font-normal cursor-pointer">{make.name}</Label>
+                </div>
+                ))}
+            </AccordionContent>
+            </AccordionItem>
+        )}
+        
+        {filterContext === 'lots' && models && models.length > 0 && (
+            <AccordionItem value="models">
+            <AccordionTrigger className="text-md font-medium">Modelo</AccordionTrigger>
+            <AccordionContent className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                {models.map(model => (
+                <div key={model.id} className="flex items-center space-x-2">
+                    <Checkbox id={`model-${model.id}`} checked={selectedModels.includes(model.name)} onCheckedChange={() => handleModelChange(model.name)} />
+                    <Label htmlFor={`model-${model.id}`} className="text-sm font-normal cursor-pointer">{model.name}</Label>
+                </div>
+                ))}
+            </AccordionContent>
+            </AccordionItem>
+        )}
+
 
         {locations.length > 0 && (
             <AccordionItem value="locations">
@@ -365,25 +406,6 @@ export default function SidebarFilters({
                  ))}
             </AccordionContent>
         </AccordionItem>
-
-        {filterContext === 'auctions' && (
-            <>
-                <AccordionItem value="subCategory_placeholder" disabled>
-                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Subcategoria (Em breve)</AccordionTrigger>
-                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por subcategoria será adicionado aqui.</p></AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="brand_placeholder" disabled>
-                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Marca (Em breve)</AccordionTrigger>
-                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por marca será adicionado aqui.</p></AccordionContent>
-                </AccordionItem>
-
-                <AccordionItem value="model_placeholder" disabled>
-                <AccordionTrigger className="text-md font-medium text-muted-foreground/70">Modelo (Em breve)</AccordionTrigger>
-                <AccordionContent><p className="text-xs text-muted-foreground">Filtro por modelo será adicionado aqui.</p></AccordionContent>
-                </AccordionItem>
-            </>
-        )}
 
       </Accordion>
 
