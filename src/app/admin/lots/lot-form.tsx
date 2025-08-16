@@ -138,6 +138,19 @@ export default function LotForm({
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
 
+  // UseEffect to automatically set seller based on selected auction
+  React.useEffect(() => {
+    async function updateSellerFromAuction() {
+      if (watchedAuctionId) {
+        const selectedAuction = await getAuction(watchedAuctionId);
+        if (selectedAuction && selectedAuction.sellerId) {
+          form.setValue('sellerId', selectedAuction.sellerId, { shouldDirty: true });
+        }
+      }
+    }
+    updateSellerFromAuction();
+  }, [watchedAuctionId, form]);
+
   const linkedBensDetails = React.useMemo(() => {
     const allPossibleBens = [...currentAvailableBens, ...(initialData?.bens || [])];
     const uniqueBens = Array.from(new Map(allPossibleBens.map(item => [item.id, item])).values());
@@ -280,6 +293,7 @@ export default function LotForm({
             <CardContent className="space-y-6 p-6 bg-secondary/30">
                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
                <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
+               <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Opcional. Se não for definido, será usado o comitente do leilão.</FormDescription><FormMessage /></FormItem>)} />
                {/* ... outros campos ... */}
             </CardContent>
           </Card>
@@ -336,8 +350,8 @@ export default function LotForm({
                             <div className="flex items-center gap-4">
                                 <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                                 <div className="space-y-2 flex-grow">
-                                    <Button type="button" variant="outline" onClick={() => handleMediaSelect([], 'main')} disabled={!!inheritedMediaFromBemId}>
-                                        {imageUrlPreview ? 'Alterar' : 'Escolher da Biblioteca'}
+                                    <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={!!inheritedMediaFromBemId}>
+                                        {imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}
                                     </Button>
                                     <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} disabled={!!inheritedMediaFromBemId} /></FormControl>)} />
                                 </div>
@@ -345,7 +359,7 @@ export default function LotForm({
                         </FormItem>
                         <FormItem>
                             <FormLabel>Galeria de Imagens Adicionais</FormLabel>
-                            <Button type="button" variant="outline" size="sm" onClick={() => handleMediaSelect([], 'gallery')} disabled={!!inheritedMediaFromBemId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} disabled={!!inheritedMediaFromBemId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button>
                             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
                                 {galleryUrls?.map((url, index) => (
                                     <div key={url} className="relative aspect-square bg-muted rounded overflow-hidden">

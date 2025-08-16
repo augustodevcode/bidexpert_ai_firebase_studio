@@ -47,7 +47,7 @@ export class AuctionService {
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
       // Remover os campos que não existem no schema do Prisma
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, ...restOfData } = data;
 
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
@@ -70,6 +70,12 @@ export class AuctionService {
 
       if (categoryId) {
         auctionData.category = { connect: { id: categoryId } };
+      }
+      if (cityId) {
+        auctionData.city = { connect: { id: cityId } };
+      }
+      if (stateId) {
+        auctionData.state = { connect: { id: stateId } };
       }
       
       if (judicialProcessId) {
@@ -106,7 +112,7 @@ export class AuctionService {
       const internalId = auctionToUpdate.id;
 
       // Correctly separate form fields from relational/prisma-specific fields
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         // Build the update payload for Prisma
@@ -120,6 +126,8 @@ export class AuctionService {
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+        if (cityId) dataToUpdate.city = { connect: {id: cityId }};
+        if (stateId) dataToUpdate.state = { connect: {id: stateId }};
         if (judicialProcessId) {
           dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
         } else if (data.hasOwnProperty('judicialProcessId')) {
