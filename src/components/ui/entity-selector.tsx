@@ -18,11 +18,6 @@ import Link from 'next/link';
 import { DataTable } from './data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 
-// Importando os formulários que poderão ser renderizados no modal
-import SellerForm from '@/app/admin/sellers/seller-form';
-import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
-import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
-
 // Criando uma coluna de seleção padrão que pode ser usada pela DataTable dentro do modal
 export const createEntitySelectorColumns = (onSelect: (value: string) => void): ColumnDef<any>[] => [
     {
@@ -42,94 +37,11 @@ export const createEntitySelectorColumns = (onSelect: (value: string) => void): 
     },
 ];
 
-// Componente para renderizar o formulário correto dentro do modal
-function EditEntityModal({
-  isOpen,
-  onClose,
-  entityName,
-  entityId,
-  onSuccess,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  entityName?: string;
-  entityId: string;
-  onSuccess: () => void;
-}) {
-    // Este componente carregaria os dados necessários para o formulário específico.
-    // Por simplicidade, vamos passar dados mockados ou vazios por enquanto.
-    // Em uma implementação real, faríamos um fetch aqui com base no entityId.
-    const [judicialBranches, setJudicialBranches] = React.useState<any[]>([]);
-
-    React.useEffect(() => {
-        if(entityName === 'seller') {
-            getJudicialBranches().then(setJudicialBranches);
-        }
-    }, [entityName]);
-
-
-    const renderForm = () => {
-        switch (entityName) {
-            case 'seller':
-                return (
-                    <SellerForm
-                        initialData={{ id: entityId }} // Apenas um exemplo
-                        judicialBranches={judicialBranches}
-                        onSubmitAction={async (data) => {
-                            // A lógica de update real estaria aqui
-                            console.log("Updating seller:", entityId, data);
-                            return { success: true, message: "Comitente atualizado com sucesso." };
-                        }}
-                        onUpdateSuccess={() => {
-                            onSuccess();
-                            onClose();
-                        }}
-                        formTitle="Editar Comitente"
-                        formDescription="Altere os dados do comitente"
-                        submitButtonText="Salvar"
-                    />
-                );
-            case 'auctioneer':
-                 return (
-                    <AuctioneerForm
-                        initialData={{ id: entityId }}
-                        onSubmitAction={async (data) => {
-                             console.log("Updating auctioneer:", entityId, data);
-                             return { success: true, message: "Leiloeiro atualizado." };
-                        }}
-                         onUpdateSuccess={() => {
-                            onSuccess();
-                            onClose();
-                        }}
-                         formTitle="Editar Leiloeiro"
-                         formDescription="Altere os dados do leiloeiro"
-                         submitButtonText="Salvar"
-                    />
-                );
-            // Adicionar outros casos para outras entidades
-            default:
-                return <p>Formulário para "{entityName}" não implementado.</p>;
-        }
-    };
-    
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-3xl">
-                <DialogHeader>
-                    <DialogTitle>Editar {entityName}</DialogTitle>
-                </DialogHeader>
-                {renderForm()}
-            </DialogContent>
-        </Dialog>
-    );
-}
-
-
 interface EntitySelectorProps {
   value: string | null | undefined;
   onChange: (value: string | null) => void;
   options: { value: string; label: string; [key: string]: any }[];
-  entityName?: string; // Alterado para opcional, mas fortemente recomendado
+  entityName?: string; 
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
@@ -138,13 +50,14 @@ interface EntitySelectorProps {
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
+  onAddNew?: () => void;
 }
 
 export default function EntitySelector({
   value,
   onChange,
   options,
-  entityName = "registro", // Valor padrão para evitar erros
+  entityName = "registro",
   placeholder,
   searchPlaceholder,
   emptyStateMessage,
@@ -153,9 +66,9 @@ export default function EntitySelector({
   onRefetch,
   isFetching = false,
   disabled = false,
+  onAddNew
 }: EntitySelectorProps) {
   const [isListModalOpen, setIsListModalOpen] = React.useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = React.useState(false);
 
   const selectedOption = options.find((option) => option.value === value);
   
@@ -166,10 +79,15 @@ export default function EntitySelector({
   
   const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
 
-  const handleEditSuccess = () => {
-    setIsEditModalOpen(false);
-    onRefetch?.(); // Atualiza a lista de opções após a edição
-  };
+  const handleAddNewClick = () => {
+    setIsListModalOpen(false); // Fecha o modal de lista
+    if (onAddNew) {
+        onAddNew(); // Chama a função para abrir o formulário de criação
+    } else if (createNewUrl) {
+        // Fallback para abrir em nova aba se onAddNew não for fornecido
+        window.open(createNewUrl, '_blank');
+    }
+  }
 
   return (
     <>
@@ -210,30 +128,32 @@ export default function EntitySelector({
                     />
                 </div>
                 <DialogFooter className="p-4 border-t flex justify-between">
-                    {createNewUrl && (
-                        <Button variant="secondary" asChild>
-                            <Link href={createNewUrl} target="_blank">
-                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                Criar Novo
-                            </Link>
+                    {(createNewUrl || onAddNew) && (
+                        <Button variant="secondary" onClick={handleAddNewClick}>
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Criar Novo
                         </Button>
                     )}
-                    {onRefetch && (
-                    <Button variant="outline" onClick={onRefetch} disabled={isFetching}>
-                        <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
-                        Atualizar Lista
-                    </Button>
-                    )}
-                    <Button variant="outline" onClick={() => setIsListModalOpen(false)}>
-                    Fechar
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {onRefetch && (
+                      <Button variant="outline" onClick={onRefetch} disabled={isFetching}>
+                          <RefreshCw className={`mr-2 h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+                          Atualizar Lista
+                      </Button>
+                      )}
+                      <Button variant="outline" onClick={() => setIsListModalOpen(false)}>
+                      Fechar
+                      </Button>
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
         
         {value && editUrlPrefix && (
-            <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" onClick={() => setIsEditModalOpen(true)} disabled={disabled} title="Editar registro selecionado">
-                <Pencil className="h-4 w-4" />
+             <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" disabled={disabled} title="Editar registro selecionado" asChild>
+                <Link href={`${editUrlPrefix}/${value}/edit`} target="_blank">
+                    <Pencil className="h-4 w-4" />
+                </Link>
             </Button>
         )}
         
@@ -241,16 +161,6 @@ export default function EntitySelector({
             <X className="h-4 w-4" />
         </Button>
       </div>
-      
-      {value && (
-        <EditEntityModal
-            isOpen={isEditModalOpen}
-            onClose={() => setIsEditModalOpen(false)}
-            entityName={entityName}
-            entityId={value}
-            onSuccess={handleEditSuccess}
-        />
-      )}
     </>
   );
 }
