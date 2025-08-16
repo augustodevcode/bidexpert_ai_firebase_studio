@@ -15,12 +15,12 @@ export class LotService {
 
   async getLots(auctionId?: string): Promise<Lot[]> {
     const lots = await this.repository.findAll(auctionId);
+    // O repositório agora retorna a estrutura correta com o `bens` populado
     return lots.map(lot => ({
       ...lot,
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
-      bens: lot.bens.map((lb: any) => lb.bem) || [], // Extract bem from LotBens
     }));
   }
 
@@ -30,10 +30,10 @@ export class LotService {
     return {
       ...lot,
       auctionName: lot.auction?.title,
-      bens: lot.bens?.map((lb: any) => lb.bem) || [],
       auction: lot.auction, // Pass the full auction object
     };
   }
+
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
