@@ -1,4 +1,3 @@
-
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData } from '@/types';
@@ -48,12 +47,12 @@ export class LotService {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
+      // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
         price: Number(lotData.price) || 0,
-        initialPrice: Number(lotData.initialPrice) || Number(lotData.price) || 0,
-        secondInitialPrice: Number(lotData.secondInitialPrice) || undefined,
-        bidIncrementStep: Number(lotData.bidIncrementStep) || undefined,
+        // Os campos abaixo foram movidos para LotAuctionStageDetails e não devem ser salvos diretamente no lote
+        // initialPrice, secondInitialPrice, bidIncrementStep, etc.
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: auctionId } },
@@ -70,7 +69,7 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       if (data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
@@ -86,19 +85,14 @@ export class LotService {
       const { 
         bemIds, categoryId, subcategoryId, type, auctionId, 
         sellerId, auctioneerId, stateId, cityId,
+        // Removendo campos financeiros que agora são por etapa
+        initialPrice, secondInitialPrice, bidIncrementStep, evaluationValue, reservePrice,
         ...lotData 
       } = data;
 
       const dataToUpdate: Prisma.LotUpdateInput = { 
-          ...lotData,
+          ...(lotData as any),
           price: lotData.price ? Number(lotData.price) : undefined,
-          initialPrice: lotData.initialPrice ? Number(lotData.initialPrice) : undefined,
-          secondInitialPrice: lotData.secondInitialPrice ? Number(lotData.secondInitialPrice) : undefined,
-          evaluationValue: lotData.evaluationValue ? Number(lotData.evaluationValue) : undefined,
-          reservePrice: lotData.reservePrice ? Number(lotData.reservePrice) : undefined,
-          debtAmount: lotData.debtAmount ? Number(lotData.debtAmount) : undefined,
-          itbiValue: lotData.itbiValue ? Number(lotData.itbiValue) : undefined,
-          bidIncrementStep: lotData.bidIncrementStep ? Number(lotData.bidIncrementStep) : undefined,
           allowInstallmentBids: data.allowInstallmentBids,
       };
 
@@ -134,6 +128,39 @@ export class LotService {
       }
 
       await this.repository.update(id, dataToUpdate, bemIds);
+      
+      // NOVA LÓGICA: Atualizar os detalhes financeiros por etapa
+      const parentAuction = await prisma.auction.findUnique({ where: { id: auctionId }, include: { auctionStages: true } });
+      if (parentAuction?.auctionStages) {
+          for (const [index, stage] of parentAuction.auctionStages.entries()) {
+             let stagePrice, stageIncrement;
+             // Lógica para pegar os valores corretos para cada praça
+             if (index === 0) { // 1ª Praça
+                 stagePrice = initialPrice;
+                 stageIncrement = bidIncrementStep;
+             } else if (index === 1) { // 2ª Praça
+                 stagePrice = secondInitialPrice ?? initialPrice; // Fallback para o preço da 1ª
+                 stageIncrement = bidIncrementStep;
+             } else { // Praças subsequentes
+                 stagePrice = secondInitialPrice ?? initialPrice;
+                 stageIncrement = bidIncrementStep;
+             }
+
+             if (stagePrice !== undefined && stagePrice !== null) {
+                  await prisma.lotAuctionStageDetails.upsert({
+                     where: { lotId_auctionStageId: { lotId: id, auctionStageId: stage.id } },
+                     update: { initialBid: stagePrice, bidIncrement: stageIncrement },
+                     create: {
+                         lotId: id,
+                         auctionStageId: stage.id,
+                         initialBid: stagePrice,
+                         bidIncrement: stageIncrement,
+                     },
+                  });
+             }
+          }
+      }
+
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in LotService.updateLot for id ${id}:`, error);
