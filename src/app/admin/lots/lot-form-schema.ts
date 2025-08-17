@@ -1,3 +1,5 @@
+
+// src/app/admin/lots/lot-form-schema.ts
 import * as z from 'zod';
 import { lotStatusValues } from '@/lib/zod-enums';
 
@@ -67,6 +69,7 @@ export const lotFormSchema = z.object({
   dataAiHint: z.string().max(100).optional().nullable(),
   sellerId: z.string().optional().nullable(),
   auctioneerId: z.string().optional().nullable(),
+  allowInstallmentBids: z.boolean().default(false).optional(),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;

@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData } from '@/types';
@@ -98,6 +99,7 @@ export class LotService {
           debtAmount: lotData.debtAmount ? Number(lotData.debtAmount) : undefined,
           itbiValue: lotData.itbiValue ? Number(lotData.itbiValue) : undefined,
           bidIncrementStep: lotData.bidIncrementStep ? Number(lotData.bidIncrementStep) : undefined,
+          allowInstallmentBids: data.allowInstallmentBids,
       };
 
       if (lotData.title) {

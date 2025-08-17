@@ -21,14 +21,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
 import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo } from '@/types';
-import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature, Sparkles } from 'lucide-react';
+import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature, Sparkles, DollarSign, Percent, Settings as SettingsIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { format, differenceInMilliseconds } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Separator } from '@/components/ui/separator';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -46,6 +43,8 @@ import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/aucti
 import { getBens } from '@/app/admin/bens/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { DataTable } from '@/components/ui/data-table';
+import { Switch } from '@/components/ui/switch';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 
 interface LotFormProps {
@@ -98,7 +97,6 @@ export default function LotForm({
 
   const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
   const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
-  const [isFinalizing, setIsFinalizing] = React.useState(false);
 
   const [auctions, setAuctions] = React.useState(initialAuctions);
   const [categories, setCategories] = React.useState(initialCategories);
@@ -108,8 +106,6 @@ export default function LotForm({
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false); 
 
   const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
-  const [linkedBensCurrentPage, setLinkedBensCurrentPage] = React.useState(1);
-  const [linkedBensItemsPerPage, setLinkedBensItemsPerPage] = React.useState(6);
   const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(samplePlatformSettings as PlatformSettings);
 
   const form = useForm<LotFormValues>({
@@ -129,13 +125,13 @@ export default function LotForm({
       stateId: initialData?.stateId || undefined,
       cityId: initialData?.cityId || undefined,
       inheritedMediaFromBemId: initialData?.inheritedMediaFromBemId || undefined,
+      allowInstallmentBids: initialData?.allowInstallmentBids || false,
     },
   });
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
   const inheritedMediaFromBemId = useWatch({ control: form.control, name: 'inheritedMediaFromBemId' });
-  const selectedCategoryId = useWatch({ control: form.control, name: 'type' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
 
@@ -287,113 +283,91 @@ export default function LotForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* ... O restante do formulário permanece o mesmo ... */}
-          <Card className="shadow-lg">
-            <CardHeader><CardTitle>Informações do Lote</CardTitle></CardHeader>
-            <CardContent className="space-y-6 p-6 bg-secondary/30">
-               <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
-               <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
-               <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Opcional. Se não for definido, será usado o comitente do leilão.</FormDescription><FormMessage /></FormItem>)} />
-               {/* ... outros campos ... */}
-            </CardContent>
-          </Card>
-          
-           <Card className="shadow-lg mt-6">
-              <CardHeader>
-                  <CardTitle className="flex items-center gap-2"><ImageIcon /> Imagens do Lote</CardTitle>
-                  <CardDescription>Gerencie a galeria de imagens para este lote.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6 bg-secondary/30">
-                  <FormField
-                      control={form.control}
-                      name="inheritedMediaFromBemId"
-                      render={({ field }) => (
-                          <FormItem className="space-y-3">
-                              <FormLabel className="text-base">Fonte da Galeria de Imagens</FormLabel>
-                              <FormControl>
-                                  <RadioGroup
-                                      onValueChange={(value) => field.onChange(value === "custom" ? null : value)}
-                                      value={field.value ? field.value : "custom"}
-                                      className="flex flex-col sm:flex-row gap-4"
-                                  >
-                                      <Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label>
-                                      <Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedBensDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedBensDetails[0]?.id || ''} disabled={linkedBensDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label>
-                                  </RadioGroup>
-                              </FormControl>
-                          </FormItem>
-                      )}
-                  />
-                  {inheritedMediaFromBemId && (
-                      <FormField
-                          control={form.control}
-                          name="inheritedMediaFromBemId"
-                          render={({ field }) => (
-                          <FormItem>
-                              <FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel>
-                               <EntitySelector
-                                  value={field.value}
-                                  onChange={field.onChange}
-                                  options={linkedBensDetails.map(b => ({value: b.id, label: b.title}))}
-                                  placeholder="Selecione um bem"
-                                  searchPlaceholder="Buscar bem..."
-                                  emptyStateMessage="Nenhum bem vinculado para selecionar."
-                                />
-                              <FormMessage />
-                          </FormItem>
-                          )}
-                      />
-                  )}
-                  {/* Seção da galeria customizada */}
-                   <div className={cn("space-y-4", inheritedMediaFromBemId && "opacity-50 pointer-events-none")}>
-                        <FormItem>
-                            <FormLabel>Imagem Principal</FormLabel>
-                            <div className="flex items-center gap-4">
-                                <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
-                                <div className="space-y-2 flex-grow">
-                                    <Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={!!inheritedMediaFromBemId}>
-                                        {imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}
-                                    </Button>
-                                    <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} disabled={!!inheritedMediaFromBemId} /></FormControl>)} />
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="space-y-6">
+                <Card className="shadow-lg">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
+                        <CardDescription>{formDescription}</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                         <Tabs defaultValue="geral" className="w-full">
+                            <TabsList className="grid w-full grid-cols-5">
+                                <TabsTrigger value="geral">Geral</TabsTrigger>
+                                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                                <TabsTrigger value="judicial">Judicial</TabsTrigger>
+                                <TabsTrigger value="midia">Mídia</TabsTrigger>
+                                <TabsTrigger value="avancado">Avançado</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="geral" className="pt-6 space-y-4">
+                                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o lote em detalhes" {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Opcional. Se não for definido, será usado o comitente do leilão.</FormDescription><FormMessage /></FormItem>)} />
                                 </div>
-                            </div>
-                        </FormItem>
-                        <FormItem>
-                            <FormLabel>Galeria de Imagens Adicionais</FormLabel>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} disabled={!!inheritedMediaFromBemId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button>
-                            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
-                                {galleryUrls?.map((url, index) => (
-                                    <div key={url} className="relative aspect-square bg-muted rounded overflow-hidden">
-                                        <Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" />
-                                        <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover" disabled={!!inheritedMediaFromBemId}><Trash2 className="h-3.5 w-3.5" /></Button>
-                                    </div>
-                                ))}
-                            </div>
-                        </FormItem>
-                   </div>
-              </CardContent>
-          </Card>
-
-          <Card className="shadow-lg mt-6">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle>
-                <CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4 p-6 bg-secondary/30">
-                <SearchResultsFrame items={linkedBensDetails} totalItemsCount={linkedBensDetails.length} renderGridItem={renderBemGridItem} renderListItem={renderBemListItem} sortOptions={bemSortOptions} initialSortBy={linkedBensSortBy} onSortChange={setLinkedBensSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
-                <Separator />
-                <div>
-                   <div className="flex justify-between items-center mb-2">
-                        <h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4>
-                         <Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}>
-                           <PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem
-                        </Button>
-                   </div>
-                    <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
-                </div>
-              </CardContent>
-          </Card>
-          <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button></div>
+                                <div className="grid md:grid-cols-3 gap-4">
+                                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Nº do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A-5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="condition" render={({ field }) => (<FormItem><FormLabel>Condição</FormLabel><FormControl><Input placeholder="Ex: Novo, Usado, Sucata" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                            </TabsContent>
+                             <TabsContent value="financeiro" className="pt-6 space-y-4">
+                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Lance Atual/Inicial (R$)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="initialPrice" render={({ field }) => (<FormItem><FormLabel>1ª Praça (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="secondInitialPrice" render={({ field }) => (<FormItem><FormLabel>2ª Praça (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                                 <Separator />
+                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                                    <FormField control={form.control} name="evaluationValue" render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="reservePrice" render={({ field }) => (<FormItem><FormLabel>Preço de Reserva</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="debtAmount" render={({ field }) => (<FormItem><FormLabel>Valor de Dívidas</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="itbiValue" render={({ field }) => (<FormItem><FormLabel>Valor de ITBI</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                </div>
+                            </TabsContent>
+                             <TabsContent value="judicial" className="pt-6 space-y-4">
+                                 <FormField control={form.control} name="judicialProcessNumber" render={({ field }) => (<FormItem><FormLabel>Nº do Processo Judicial</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                 <FormField control={form.control} name="publicProcessUrl" render={({ field }) => (<FormItem><FormLabel>Link para Consulta Pública</FormLabel><FormControl><Input type="url" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                 <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (<FormItem><FormLabel>Matrícula do Imóvel</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                 <FormField control={form.control} name="propertyLiens" render={({ field }) => (<FormItem><FormLabel>Ônus e Gravames</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                                 <FormField control={form.control} name="knownDebts" render={({ field }) => (<FormItem><FormLabel>Dívidas Conhecidas</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                                 <FormField control={form.control} name="additionalDocumentsInfo" render={({ field }) => (<FormItem><FormLabel>Documentos Adicionais (Links/Info)</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                             </TabsContent>
+                              <TabsContent value="midia" className="pt-6 space-y-4">
+                                 <FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedBensDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedBensDetails[0]?.id || ''} disabled={linkedBensDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
+                                  {inheritedMediaFromBemId && (<FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedBensDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)}/>)}
+                                  <div className={cn("space-y-4", inheritedMediaFromBemId && "opacity-50 pointer-events-none")}>
+                                      <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={!!inheritedMediaFromBemId}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>
+                                      <FormItem><FormLabel>Galeria de Imagens Adicionais</FormLabel><Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} disabled={!!inheritedMediaFromBemId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{galleryUrls?.map((url, index) => (<div key={url} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover" disabled={!!inheritedMediaFromBemId}><Trash2 className="h-3.5 w-3.5" /></Button></div>))}</div></FormItem>
+                                 </div>
+                              </TabsContent>
+                              <TabsContent value="avancado" className="pt-6 space-y-4">
+                                <div className="grid md:grid-cols-2 gap-4">
+                                  <FormField control={form.control} name="isFeatured" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Destaque</FormLabel><FormDescription className="text-xs">Exibir este lote na seção de destaques.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                                  <FormField control={form.control} name="isExclusive" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Exclusivo</FormLabel><FormDescription className="text-xs">Marcar como um lote exclusivo ou raro.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                                  <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Permitir Parcelamento</FormLabel><FormDescription className="text-xs">Permite que usuários façam lances parcelados.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                                </div>
+                                <FormField control={form.control} name="dataAiHint" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Imagem)</FormLabel><FormControl><Input placeholder="Ex: carro antigo, relogio ouro" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Palavras-chave para ajudar a IA a gerar uma imagem placeholder.</FormDescription><FormMessage /></FormItem>)} />
+                              </TabsContent>
+                         </Tabs>
+                    </CardContent>
+                </Card>
+                
+                <Card className="shadow-lg mt-6">
+                    <CardHeader><CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle><CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription></CardHeader>
+                    <CardContent className="space-y-4 p-6 bg-secondary/30">
+                        <SearchResultsFrame items={linkedBensDetails} totalItemsCount={linkedBensDetails.length} renderGridItem={renderBemGridItem} renderListItem={renderBemListItem} sortOptions={bemSortOptions} initialSortBy={linkedBensSortBy} onSortChange={setLinkedBensSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                        <Separator />
+                        <div>
+                        <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
+                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                        </div>
+                    </CardContent>
+                </Card>
+                <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button></div>
+            </div>
         </form>
       </Form>
       
