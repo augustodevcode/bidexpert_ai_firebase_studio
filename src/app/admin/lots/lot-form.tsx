@@ -45,6 +45,7 @@ import { createColumns as createBemColumns } from '@/components/admin/lotting/co
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
 import { getBens } from '@/app/admin/bens/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
+import { DataTable } from '@/components/ui/data-table';
 
 
 interface LotFormProps {
