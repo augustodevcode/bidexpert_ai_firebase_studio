@@ -19,18 +19,20 @@
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização:** Substituídos os campos de texto "Estado" e "Cidade" no formulário de criação/edição de leilões por componentes `EntitySelector` inteligentes.
-- **Item 19:** **Infraestrutura e UI para Marcas/Modelos de Veículos:** Criado todo o backend (Schema, Service, Repo) e as telas de CRUD no Admin para gerenciar Marcas e Modelos de veículos. Adicionados seletores no formulário de Bem. Implementados os filtros na UI da página de busca.
+- **Item 19:** **Infraestrutura e UI para Marcas/Modelos de Veículos:** Criado todo o backend (Schema, Service, Repo) e as telas de CRUD no Admin para gerenciar Marcas e Modelos de veículos. Adicionados seletores no formulário de Bem e integrados aos filtros da página de busca.
 - **Item 20:** **Inteligência de Herança de Comitente:** Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote é preenchido automaticamente com o comitente do leilão.
 - **Item 21:** **Implementar Incremento de Lance no Lote:** Adicionado o campo `bidIncrementStep` no formulário de lote. A lógica de lances agora valida o incremento mínimo.
+- **Item 22: Gerenciamento Flexível da Galeria de Imagens:** Implementada a lógica de herança de imagens de um `Bem` específico para um `Lote`, incluindo a UI no formulário de lote e a exibição correta das imagens nos componentes visuais da plataforma.
 
 ## DOING
-- **Item 22: Gerenciamento Flexível da Galeria de Imagens:**
-    - **Fase 1 (Concluída):** Implementar a lógica no formulário de Lote para permitir ao usuário escolher entre usar uma galeria customizada ou herdar a galeria de imagens de um `Bem` específico. Salvar essa escolha no banco de dados.
-    - **Fase 2 (Próxima):** Atualizar os componentes visuais (cards, listas, página de detalhes) para exibir a galeria de imagens correta com base na configuração do lote (herdada ou customizada).
 - **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
 
 
 ## NEXT
+- **Item 23: Implementar Lógica de Precificação por Etapa (Back-end e UI):**
+    - **Fase 1: Refatoração do Back-end:** Atualizar os serviços (`LotService`, `AuctionService`) para ler e escrever os dados financeiros (lance inicial, incremento) na nova tabela `LotAuctionStageDetails` em vez da tabela `Lot`.
+    - **Fase 2: Refatoração da UI:** Modificar os formulários (`lot-form`, `auction-form`) para permitir a configuração de valores por praça/etapa ao vincular um lote.
+    - **Fase 3: Atualização dos Componentes Visuais:** Garantir que a página de detalhes do lote, cards e outras partes da UI exibam o valor correto para a etapa atual do leilão.
 - **Item 15 (Continuação):** Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:**
     - Implementar a funcionalidade para relistar um lote que não foi vendido.

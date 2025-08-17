@@ -33,33 +33,39 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** Maintaining a consistent, layered architecture is crucial for the long-term scalability, maintainability, and testability of the project. This separation of concerns (Presentation, Business Logic, Data Access) makes the codebase cleaner and easier to manage.
 
-## 5. Directory Structure
+## 5. Pricing Logic: Per-Stage Pricing
+
+**Rule:** Financial details specific to a lot's participation in an auction, such as `initialBid` (lance inicial) and `bidIncrement` (incremento), **must not** be stored directly in the `Lot` model. Instead, these values are defined at the intersection of a `Lot` and an `AuctionStage` (etapa/praça). This is managed through the `LotAuctionStageDetails` join model.
+
+**Rationale:** This architecture provides the necessary flexibility for complex auction rules, particularly in judicial auctions where the initial price and increments for a lot can differ between the first and second "praça". It ensures that the `Lot` model remains a clean representation of the asset, while the auction-specific pricing rules are correctly associated with the context in which they apply.
+
+## 6. Directory Structure
 
 **Rule:** The Next.js application structure must follow the `src` directory convention. The main application routes must reside within `src/app`. **Under no circumstances should a nested `app` directory (e.g., `src/app/app`) or a root-level `app` directory be created.** Any such occurrence must be identified and corrected immediately by merging the files into `src/app` and removing the incorrect directory.
 
 **Rationale:** A nested or misplaced `app` directory breaks Next.js's file-based routing system, leading to build failures and runtime errors. Maintaining the correct structure is critical for the application's stability.
 
-## 6. Code Quality and Naming Conventions
+## 7. Code Quality and Naming Conventions
 
-### 6.1. Form Component Standardization
+### 7.1. Form Component Standardization
 
 **Rule:** For all CRUD forms, any field representing a foreign key relationship (e.g., selecting a `seller` for an `auction`) **must** use the custom `EntitySelector` component. This component provides a standardized and enhanced user experience including search, on-the-fly creation, editing, and list refreshing. Direct use of a standard `<Select>` component for entity relationships is disallowed.
 
 **Rationale:** This ensures a consistent, powerful, and user-friendly interface across the entire admin panel, reducing development time for new forms and improving the end-user workflow by preventing the need to navigate away to create prerequisite entities.
 
-### 6.2. JavaScript/TypeScript Naming
+### 7.2. JavaScript/TypeScript Naming
 
 **Rule:** All new or modified functions, variables, and components must have names that are descriptive, human-readable, and contextually relevant, preferably in Portuguese (e.g., `buscarLeiloes`, `SalvarComitenteButton`). This practice applies to all parts of the codebase, from front-end components to back-end services.
 
 **Rationale:** Clear and consistent naming is fundamental for code quality, making the application easier to read, debug, and maintain for all developers involved, including AI assistants.
 
-### 6.3. HTML Element Identification
+### 7.3. HTML Element Identification
 
 **Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, and contextually relevant name. This name should reflect the element's purpose or content. For example, a button to submit a login form should be `<Button data-ai-id="login-submit-button">`, and a container for a user's profile card should be `<div data-ai-id="user-profile-card">`.
 
 **Rationale:** This convention is essential for the AI to reliably identify and manipulate specific UI elements, ensuring that future requests are executed precisely. It also aids in end-to-end testing and debugging.
 
-## 7. Next.js & React Best Practices
+## 8. Next.js & React Best Practices
 
 -   **Default to Server Components:** Components should be Server Components by default. Only use the `'use client'` directive when client-side interactivity (hooks like `useState`, `useEffect`, event listeners) is absolutely necessary. This reduces the amount of JavaScript sent to the client, improving performance.
 -   **Server Actions for Mutations:** All data mutations (create, update, delete) must be handled through Next.js Server Actions. This simplifies the architecture by eliminating the need for separate API routes and provides a secure, built-in mechanism for form submissions and data handling.
@@ -69,13 +75,13 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 -   **Type Safety:** Utilize TypeScript's `import type` for type-only imports to improve build performance and maintain clear separation between type information and runtime code.
 -   **Valid Link Hrefs:** Never allow the `href` prop of a Next.js `<Link>` component to be `undefined`. If a link's path is dynamic (e.g., from an API response or props), always validate it before rendering. Provide a fallback href like `/` or `#`, or conditionally render the `<Link>` only when the `href` is valid.
 
-## 8. Development Environment Information
+## 9. Development Environment Information
 
 **Rule:** During development (`NODE_ENV === 'development'`), the application footer must display key environment information. This includes the currently active database system (e.g., MySQL, PostgreSQL), the logged-in user's email, and the active Firebase Project ID.
 
 **Rationale:** This provides immediate, persistent context about the development environment, preventing confusion and aiding in debugging database or user-specific issues.
 
-## 9. BidExpertOkrs: Análise Estratégica, KPIs e Insights
+## 10. BidExpertOkrs: Análise Estratégica, KPIs e Insights
 
 **Rule:** All entity management sections (CRUDs) must evolve into comprehensive management and analysis modules, providing strategic insights beyond simple data display. This includes:
 
@@ -89,7 +95,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** Esta estratégia transforma o painel de administração de uma ferramenta de entrada de dados em um poderoso centro de Business Intelligence (BI) e suporte à decisão. Ela habilita a gestão baseada em dados, o monitoramento de OKRs, a identificação de oportunidades estratégicas e o alinhamento de toda a empresa em torno de objetivos mensuráveis.
 
-## 10. Gerenciamento de Dependências
+## 11. Gerenciamento de Dependências
 
 **Rule:** Para manter o projeto otimizado e evitar o crescimento excessivo do diretório `node_modules` e dos pacotes de produção, siga estas diretrizes:
 -   **Dependências de Desenvolvimento:** Pacotes usados exclusivamente para desenvolvimento, teste ou processos de build (e.g., `@playwright/test`, `puppeteer` para geração de PDF no servidor) **devem** ser instalados como `devDependencies`. Isso impede que eles sejam incluídos no build de produção.
@@ -99,7 +105,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** Um `node_modules` grande e pacotes de produção inchados podem levar a tempos de instalação mais longos, builds mais lentos e custos de hospedagem mais altos. Manter as dependências limpas e otimizadas é crucial para a saúde do projeto.
 
-## 11. Estratégia de Testes para Aplicação de Leilões Full-Stack
+## 12. Estratégia de Testes para Aplicação de Leilões Full-Stack
 ### 1. Camadas e Tipos de Teste
 Testes Unitários: Validam pequenas unidades de código isoladamente (funções, métodos, validações). São rápidos e não dependem de banco de dados ou rede, focando apenas na lógica interna. Por exemplo, testar uma função que calcula o próximo lance válido ou valida se um campo obrigatório está presente. Esse tipo de teste “isola a lógica garantindo que cada unidade funcione como esperado”
 mendoncadev.com.br
@@ -251,6 +257,8 @@ firebase.google.com
 firebase.blog
 firebase.blog
 ) traz dicas atualizadas sobre funcionalidade de preview e portas públicas.
+### 9. Princípio da Cobertura de Testes Contínua
+**Regra:** Toda nova funcionalidade, alteração de lógica de negócio ou correção de bug implementada a partir do backlog **deve** ser acompanhada pela criação ou atualização dos testes correspondentes (unitários, de integração ou E2E). Isso garante que a base de testes evolua junto com o código e que a cobertura se mantenha alta, prevenindo regressões futuras e documentando o comportamento esperado do sistema.
 Resumo: O objetivo é garantir cobertura completa das funcionalidades de leilão em todas as camadas de teste. Use testes unitários para lógica pura, integração para fluxo servidor/BD e E2E para fluxos críticos. Mantenha schemas Prisma/MySQL e Zod sincronizados via migrations e geradores automáticos
 github.com
 . Adote boas ferramentas (Vitest/Jest, Supertest, Playwright, zod-fixture) e uma infraestrutura de teste sólida (banco isolado, CI, staging). Assim, o desenvolvedor terá orientações claras e exemplos concretos para implementar imediatamente a estratégia de testes.
