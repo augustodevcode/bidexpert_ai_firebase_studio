@@ -33,7 +33,7 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntitySelector from '@/components/ui/entity-selector';
-import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from '../sellers/actions';
+import { getSellers as refetchSellers } from '../sellers/actions';
 import { getLotCategories as refetchCategories } from '../categories/actions';
 import { getStates as refetchStates } from '../states/actions';
 import { getCities as refetchCities } from '../cities/actions';
@@ -389,7 +389,7 @@ export default function LotForm({
                            <PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem
                         </Button>
                    </div>
-                    <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                    <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                 </div>
               </CardContent>
           </Card>
