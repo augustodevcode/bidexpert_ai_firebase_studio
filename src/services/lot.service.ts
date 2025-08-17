@@ -18,6 +18,7 @@ export class LotService {
     // O repositório agora retorna a estrutura correta com o `bens` populado
     return lots.map(lot => ({
       ...lot,
+      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
@@ -29,6 +30,7 @@ export class LotService {
     if (!lot) return null;
     return {
       ...lot,
+      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
       auctionName: lot.auction?.title,
       auction: lot.auction, // Pass the full auction object
     };
@@ -37,7 +39,17 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
-      const { bemIds, categoryId, auctionId, type, sellerId, subcategoryId, ...lotData } = data;
+      const { 
+        bemIds, 
+        categoryId, 
+        auctionId, 
+        type, 
+        sellerId, 
+        subcategoryId,
+        stageDetails, // Captura os detalhes das etapas
+        initialPrice, // Remove from main data
+        ...lotData 
+      } = data;
       const finalCategoryId = categoryId || type;
 
       if (!auctionId) {
@@ -51,14 +63,17 @@ export class LotService {
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
         price: Number(lotData.price) || 0,
-        // Os campos abaixo foram movidos para LotAuctionStageDetails e não devem ser salvos diretamente no lote
-        // initialPrice, secondInitialPrice, bidIncrementStep, etc.
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: auctionId } },
         category: { connect: { id: finalCategoryId } },
+        isRelisted: data.isRelisted || false,
+        relistCount: data.relistCount || 0,
       };
 
+      if (data.originalLotId) {
+        dataToCreate.originalLot = { connect: { id: data.originalLotId } };
+      }
       if (sellerId) {
         dataToCreate.seller = { connect: { id: sellerId } };
       }
@@ -69,10 +84,10 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       if (data.inheritedMediaFromBemId) {
-        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
-      const newLot = await this.repository.create(dataToCreate, bemIds || []);
+      const newLot = await this.repository.create(dataToCreate, bemIds || [], stageDetails || []);
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
     } catch (error: any) {
       console.error("Error in LotService.createLot:", error);
@@ -85,8 +100,8 @@ export class LotService {
       const { 
         bemIds, categoryId, subcategoryId, type, auctionId, 
         sellerId, auctioneerId, stateId, cityId,
-        // Removendo campos financeiros que agora são por etapa
-        initialPrice, secondInitialPrice, bidIncrementStep, evaluationValue, reservePrice,
+        stageDetails, // Capturando os detalhes das etapas
+        initialPrice, // Remove from main data
         ...lotData 
       } = data;
 
@@ -126,40 +141,9 @@ export class LotService {
       if (data.hasOwnProperty('inheritedMediaFromBemId')) {
         dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
-
-      await this.repository.update(id, dataToUpdate, bemIds);
       
-      // NOVA LÓGICA: Atualizar os detalhes financeiros por etapa
-      const parentAuction = await prisma.auction.findUnique({ where: { id: auctionId }, include: { auctionStages: true } });
-      if (parentAuction?.auctionStages) {
-          for (const [index, stage] of parentAuction.auctionStages.entries()) {
-             let stagePrice, stageIncrement;
-             // Lógica para pegar os valores corretos para cada praça
-             if (index === 0) { // 1ª Praça
-                 stagePrice = initialPrice;
-                 stageIncrement = bidIncrementStep;
-             } else if (index === 1) { // 2ª Praça
-                 stagePrice = secondInitialPrice ?? initialPrice; // Fallback para o preço da 1ª
-                 stageIncrement = bidIncrementStep;
-             } else { // Praças subsequentes
-                 stagePrice = secondInitialPrice ?? initialPrice;
-                 stageIncrement = bidIncrementStep;
-             }
-
-             if (stagePrice !== undefined && stagePrice !== null) {
-                  await prisma.lotAuctionStageDetails.upsert({
-                     where: { lotId_auctionStageId: { lotId: id, auctionStageId: stage.id } },
-                     update: { initialBid: stagePrice, bidIncrement: stageIncrement },
-                     create: {
-                         lotId: id,
-                         auctionStageId: stage.id,
-                         initialBid: stagePrice,
-                         bidIncrement: stageIncrement,
-                     },
-                  });
-             }
-          }
-      }
+      // A atualização dos bens vinculados e a atualização dos detalhes das etapas são agora transacionais
+      await this.repository.update(id, dataToUpdate, bemIds, stageDetails);
 
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
