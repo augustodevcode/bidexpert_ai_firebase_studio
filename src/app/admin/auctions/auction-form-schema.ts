@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
 import type { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod } from '@/types';
@@ -32,7 +31,7 @@ const autoRelistSettingsSchema = z.object({
   relistDurationInHours: z.coerce.number().int().min(1).optional().nullable(),
 }).optional();
 
-// Helper to validate URLs but allow them to be empty strings. This prevents saving "https://" alone.
+// Helper to validate URLs but allow them to be empty strings. This prevents saving "https:///" alone.
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
 
 const auctionStageSchema = z.object({
@@ -40,7 +39,7 @@ const auctionStageSchema = z.object({
   name: z.string().min(1, "Nome da praça é obrigatório"),
   startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
   endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
-  initialPrice: z.coerce.number().positive("Lance inicial da praça deve ser positivo").optional().nullable(),
+  evaluationValue: z.coerce.number().positive("Valor de avaliação deve ser positivo.").optional().nullable(),
 });
 
 export const auctionFormSchema = z.object({
@@ -88,7 +87,7 @@ export const auctionFormSchema = z.object({
   auctionStages: z.array(auctionStageSchema)
     .min(1, "O leilão deve ter pelo menos uma praça/etapa.")
     .optional()
-    .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }])
+    .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), evaluationValue: null }])
     .refine((stages) => {
         if (!stages || stages.length <= 1) return true;
         for (let i = 1; i < stages.length; i++) {

@@ -192,7 +192,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       estimatedRevenue: initialData?.estimatedRevenue || undefined,
       isFeaturedOnMarketplace: initialData?.isFeaturedOnMarketplace || false,
       marketplaceAnnouncementTitle: initialData?.marketplaceAnnouncementTitle || '',
-      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date) })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
+      auctionStages: initialData?.auctionStages?.map(stage => ({ ...stage, startDate: new Date(stage.startDate as Date), endDate: new Date(stage.endDate as Date) })) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), evaluationValue: null }],
       decrementAmount: initialData?.decrementAmount || undefined,
       decrementIntervalSeconds: initialData?.decrementIntervalSeconds || undefined,
       floorPrice: initialData?.floorPrice || undefined,
@@ -343,14 +343,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                     {fields.map((field, index) => (
                     <Card key={field.id} className="p-3 bg-background">
                         <div className="flex justify-between items-start mb-2"><h4 className="font-medium">Praça / Etapa {index + 1}</h4>{!isViewMode && fields.length > 1 && (<Button type="button" variant="ghost" size="icon" onClick={() => remove(index)} className="text-destructive hover:text-destructive/80 h-7 w-7"><Trash2 className="h-4 w-4" /></Button>)}</div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
-                        <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
-                        <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode} />
-                        <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                          <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index + 1}ª Praça`} {...stageField} /></FormControl><FormMessage /></FormItem>)} />
+                          <DatePickerWithTime field={{...form.register(`auctionStages.${index}.startDate`), value: form.getValues(`auctionStages.${index}.startDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.startDate`, date!)}} label="Início" disabled={isViewMode} />
+                          <DatePickerWithTime field={{...form.register(`auctionStages.${index}.endDate`), value: form.getValues(`auctionStages.${index}.endDate`), onChange: (date: Date | undefined) => form.setValue(`auctionStages.${index}.endDate`, date!)}} label="Fim" disabled={isViewMode} />
+                          <FormField control={form.control} name={`auctionStages.${index}.evaluationValue`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="1000.00" {...stageField} value={stageField.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                     </Card>
                     ))}
-                    {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, initialPrice: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
+                    {!isViewMode && (<Button type="button" variant="outline" size="sm" onClick={() => { const lastStage = fields[fields.length - 1]; const lastEndDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date(); const nextStartDate = new Date(lastEndDate.getTime() + 60000); const nextEndDate = new Date(nextStartDate.getTime() + 7 * 24 * 60 * 60 * 1000); append({ name: `${fields.length + 1}ª Praça`, startDate: nextStartDate, endDate: nextEndDate, evaluationValue: null }) }} className="text-xs mt-2"><PlusCircle className="mr-2 h-3.5 w-3.5" /> Adicionar Praça/Etapa</Button>)}
                 </div>
                 <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             </div>

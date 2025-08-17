@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm, useWatch, useFieldArray } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -115,8 +115,6 @@ export default function LotForm({
       auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
       type: initialData?.categoryId || initialData?.type || '',
       price: initialData?.price || 0,
-      initialPrice: initialData?.initialPrice || undefined,
-      bidIncrementStep: initialData?.bidIncrementStep || undefined,
       bemIds: initialData?.bemIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
@@ -292,10 +290,9 @@ export default function LotForm({
                     </CardHeader>
                     <CardContent className="p-6">
                          <Tabs defaultValue="geral" className="w-full">
-                            <TabsList className="grid w-full grid-cols-5">
+                            <TabsList className="grid w-full grid-cols-4">
                                 <TabsTrigger value="geral">Geral</TabsTrigger>
                                 <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
-                                <TabsTrigger value="judicial">Judicial</TabsTrigger>
                                 <TabsTrigger value="midia">Mídia</TabsTrigger>
                                 <TabsTrigger value="avancado">Avançado</TabsTrigger>
                             </TabsList>
@@ -313,27 +310,7 @@ export default function LotForm({
                                 </div>
                             </TabsContent>
                              <TabsContent value="financeiro" className="pt-6 space-y-4">
-                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Lance Atual/Inicial (R$)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="initialPrice" render={({ field }) => (<FormItem><FormLabel>1ª Praça (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="secondInitialPrice" render={({ field }) => (<FormItem><FormLabel>2ª Praça (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                                 <Separator />
-                                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <FormField control={form.control} name="evaluationValue" render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="reservePrice" render={({ field }) => (<FormItem><FormLabel>Preço de Reserva</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="debtAmount" render={({ field }) => (<FormItem><FormLabel>Valor de Dívidas</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="itbiValue" render={({ field }) => (<FormItem><FormLabel>Valor de ITBI</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                </div>
-                            </TabsContent>
-                             <TabsContent value="judicial" className="pt-6 space-y-4">
-                                 <FormField control={form.control} name="judicialProcessNumber" render={({ field }) => (<FormItem><FormLabel>Nº do Processo Judicial</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={form.control} name="publicProcessUrl" render={({ field }) => (<FormItem><FormLabel>Link para Consulta Pública</FormLabel><FormControl><Input type="url" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={form.control} name="propertyRegistrationNumber" render={({ field }) => (<FormItem><FormLabel>Matrícula do Imóvel</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={form.control} name="propertyLiens" render={({ field }) => (<FormItem><FormLabel>Ônus e Gravames</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={form.control} name="knownDebts" render={({ field }) => (<FormItem><FormLabel>Dívidas Conhecidas</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
-                                 <FormField control={form.control} name="additionalDocumentsInfo" render={({ field }) => (<FormItem><FormLabel>Documentos Adicionais (Links/Info)</FormLabel><FormControl><Textarea {...field} value={field.value ?? ''} rows={3} /></FormControl><FormMessage /></FormItem>)} />
+                               <p>A configuração de preços agora é feita por etapa do leilão.</p>
                              </TabsContent>
                               <TabsContent value="midia" className="pt-6 space-y-4">
                                  <FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedBensDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedBensDetails[0]?.id || ''} disabled={linkedBensDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
@@ -362,7 +339,7 @@ export default function LotForm({
                         <Separator />
                         <div>
                         <div className="flex justify-between items-center mb-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
-                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                         </div>
                     </CardContent>
                 </Card>
