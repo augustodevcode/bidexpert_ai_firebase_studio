@@ -23,17 +23,16 @@
 - **Item 20:** **Inteligência de Herança de Comitente:** Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote é preenchido automaticamente com o comitente do leilão.
 - **Item 21:** **Implementar Incremento de Lance no Lote:** Adicionado o campo `bidIncrementStep` no formulário de lote. A lógica de lances agora valida o incremento mínimo.
 - **Item 22: Gerenciamento Flexível da Galeria de Imagens:** Implementada a lógica de herança de imagens de um `Bem` específico para um `Lote`, incluindo a UI no formulário de lote e a exibição correta das imagens nos componentes visuais da plataforma.
+- **Item 23: Implementar Lógica de Precificação por Etapa (Back-end e UI):**
+    - **Fase 1: Refatoração do Back-end:** Atualizados os serviços (`LotService`, `AuctionService`) e o schema para ler/escrever os dados financeiros na tabela `LotAuctionStageDetails`.
+    - **Fase 2: Refatoração da UI:** Modificados os formulários para permitir a configuração de valores por praça/etapa.
+    - **Fase 3: Atualização dos Componentes Visuais:** Garantido que a UI exiba o preço correto para a etapa atual do leilão.
 
 ## DOING
+- **Item 15 (Continuação):** Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
 - **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
 
-
 ## NEXT
-- **Item 23: Implementar Lógica de Precificação por Etapa (Back-end e UI):**
-    - **Fase 1: Refatoração do Back-end:** Atualizar os serviços (`LotService`, `AuctionService`) para ler e escrever os dados financeiros (lance inicial, incremento) na nova tabela `LotAuctionStageDetails` em vez da tabela `Lot`.
-    - **Fase 2: Refatoração da UI:** Modificar os formulários (`lot-form`, `auction-form`) para permitir a configuração de valores por praça/etapa ao vincular um lote.
-    - **Fase 3: Atualização dos Componentes Visuais:** Garantir que a página de detalhes do lote, cards e outras partes da UI exibam o valor correto para a etapa atual do leilão.
-- **Item 15 (Continuação):** Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:**
     - Implementar a funcionalidade para relistar um lote que não foi vendido.
     - Permitir a aplicação de descontos automáticos na relistagem (ex: 50%).

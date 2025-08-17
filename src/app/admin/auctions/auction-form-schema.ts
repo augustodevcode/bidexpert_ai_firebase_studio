@@ -1,23 +1,7 @@
 // src/app/admin/auctions/auction-form-schema.ts
 import * as z from 'zod';
 import type { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod } from '@/types';
-
-// Enums from your types
-const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
-  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
-];
-
-const auctionTypeValues: [AuctionType, ...AuctionType[]] = [
-  'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'
-];
-
-const participationValues: [AuctionParticipation, ...AuctionParticipation[]] = [
-  'ONLINE', 'PRESENCIAL', 'HIBRIDO'
-];
-
-const methodValues: [AuctionMethod, ...AuctionMethod[]] = [
-  'STANDARD', 'DUTCH', 'SILENT'
-];
+import { auctionStatusValues, auctionTypeValues, auctionParticipationValues, auctionMethodValues } from '@/lib/zod-enums';
 
 const autoRelistSettingsSchema = z.object({
   enableAutoRelist: z.boolean().optional().default(false),
@@ -56,14 +40,16 @@ export const auctionFormSchema = z.object({
   auctionType: z.enum(auctionTypeValues as [string, ...string[]], {
     errorMap: () => ({ message: "Por favor, selecione uma modalidade válida."}),
   }),
-  auctionMethod: z.enum(methodValues as [string, ...string[]]).default('STANDARD'),
-  participation: z.enum(participationValues as [string, ...string[]]).default('ONLINE'),
+  auctionMethod: z.enum(auctionMethodValues as [string, ...string[]]).default('STANDARD'),
+  participation: z.enum(auctionParticipationValues as [string, ...string[]]).default('ONLINE'),
   
   onlineUrl: optionalUrlSchema,
   address: z.string().max(255).optional().nullable(),
   cityId: z.string().optional().nullable(),
   stateId: z.string().optional().nullable(),
   zipCode: z.string().max(10).optional().nullable(),
+  latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
+  longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
 
   auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
   sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
@@ -91,7 +77,6 @@ export const auctionFormSchema = z.object({
     .refine((stages) => {
         if (!stages || stages.length <= 1) return true;
         for (let i = 1; i < stages.length; i++) {
-            // Check if both dates are valid before comparing
             if (stages[i]?.startDate && stages[i-1]?.endDate && stages[i].startDate! < stages[i-1].endDate!) {
                 return false;
             }

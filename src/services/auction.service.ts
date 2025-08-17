@@ -10,7 +10,7 @@ export class AuctionService {
   private auctionRepository: AuctionRepository;
 
   constructor() {
-    this.auctionRepository = new AuctionRepository();
+    this.auctionRepository = new AuctionService();
   }
 
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
@@ -88,7 +88,7 @@ export class AuctionService {
                 name: stage.name,
                 startDate: new Date(stage.startDate as Date),
                 endDate: new Date(stage.endDate as Date),
-                initialPrice: stage.initialPrice,
+                evaluationValue: stage.evaluationValue,
             })),
         };
       }
@@ -153,7 +153,7 @@ export class AuctionService {
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
                     endDate: new Date(stage.endDate as Date),
-                    initialPrice: stage.initialPrice,
+                    evaluationValue: stage.evaluationValue,
                     auctionId: internalId,
                 })),
             });
