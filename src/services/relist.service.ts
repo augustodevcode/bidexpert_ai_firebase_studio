@@ -26,9 +26,10 @@ export class RelistService {
           return { success: false, message: 'Apenas lotes não vendidos ou encerrados sem venda podem ser relistados.'};
       }
       
+      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, ...restOfLotData } = originalLot;
+
       const newLotData: Partial<Lot> = {
-          ...originalLot,
-          id: undefined, // Let Prisma generate a new ID
+          ...restOfLotData,
           publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`, // Generate new public ID
           status: 'EM_BREVE',
           auctionId: newAuctionId,
@@ -39,8 +40,6 @@ export class RelistService {
           views: 0,
           winnerId: null,
           winningBidTermUrl: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
       };
       
       const evaluationValue = originalLot.evaluationValue ?? originalLot.initialPrice ?? 0;
