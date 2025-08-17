@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { Lot, UserLotMaxBid, BidInfo, Auction } from '@/types';
+import type { Lot, UserLotMaxBid, BidInfo, Auction, AuctionStage } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,11 +27,13 @@ interface BiddingPanelProps {
   onBidSuccess: (updatedLotData: Partial<Lot>, newBid?: BidInfo) => void;
   isHabilitadoForThisAuction?: boolean;
   onHabilitacaoSuccess?: () => void; // Tornando a prop opcional
+  activeStage?: AuctionStage | null;
+  activeLotPrices?: { initialBid?: number | null; bidIncrement?: number | null } | null;
 }
 
 const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
 
-export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess }: BiddingPanelProps) {
+export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuccess, isHabilitadoForThisAuction, onHabilitacaoSuccess, activeStage, activeLotPrices }: BiddingPanelProps) {
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
   
@@ -51,7 +53,7 @@ export default function BiddingPanel({ currentLot: initialLot, auction, onBidSuc
     setCurrentLot(initialLot);
   }, [initialLot]);
 
-  const bidIncrement = currentLot?.bidIncrementStep || ((currentLot?.price || 0) > 10000 ? 500 : ((currentLot?.price || 0) > 1000 ? 100 : 50));
+  const bidIncrement = activeLotPrices?.bidIncrement || 100;
   const nextMinimumBid = (currentLot?.price || 0) + bidIncrement;
 
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;

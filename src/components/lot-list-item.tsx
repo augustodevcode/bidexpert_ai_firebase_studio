@@ -13,7 +13,7 @@ import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,6 +55,8 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
   const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
+  const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
   React.useEffect(() => {
     setIsFavorite(isLotFavoriteInStorage(lot.id));
@@ -87,32 +89,30 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   
   const discountPercentage = React.useMemo(() => {
-    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
-      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
+    if (activeLotPrices?.initialBid && lot.evaluationValue && activeLotPrices.initialBid < lot.evaluationValue) {
+      return Math.round(((lot.evaluationValue - activeLotPrices.initialBid) / lot.evaluationValue) * 100);
     }
     return lot.discountPercentage || 0;
-  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
-
+  }, [activeLotPrices, lot.evaluationValue, lot.discountPercentage]);
 
   const mentalTriggers = React.useMemo(() => {
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
-
+    
     if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
       triggers.push('MAIS VISITADO');
     }
     if (sectionBadges.showHotBidBadge !== false && settings.showHotBidBadge && (lot.bidsCount || 0) > (settings.hotBidThreshold || 10) && lot.status === 'ABERTO_PARA_LANCES') {
       triggers.push('LANCE QUENTE');
     }
-    if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
+     if (sectionBadges.showExclusiveBadge !== false && settings.showExclusiveBadge && lot.isExclusive) {
         triggers.push('EXCLUSIVO');
     }
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
   const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
-  const mainImageUrl = isValidImageUrl(inheritedBem ? inheritedBem.imageUrl : lot.imageUrl) ? (inheritedBem ? inheritedBem.imageUrl : lot.imageUrl) : 'https://placehold.co/120x90.png';
-
+  const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
 
   const getTypeIcon = (type?: string) => {
     if (!type) {
@@ -139,7 +139,7 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={lotDetailUrl} className="block h-full w-full">
               <Image
-                src={mainImageUrl!}
+                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : 'https://placehold.co/600x400.png'}
                 alt={lot.title}
                 fill
                 className="object-cover"
@@ -197,11 +197,13 @@ function LotListItemClientContent({ lot, auction, badgeVisibilityConfig, platfor
               </div>
             </div>
 
+            <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{lot.description}</p>
+
             <div className="mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed">
               <div>
                 <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
                 <p className={`text-2xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
-                  R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
                <Button asChild size="sm" className="w-full md:w-auto mt-2 md:mt-0">

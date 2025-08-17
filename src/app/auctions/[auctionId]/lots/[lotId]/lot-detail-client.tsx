@@ -27,7 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 
 import { getReviewsForLot, createReview, getQuestionsForLot, askQuestionOnLot, getActiveUserLotMaxBid, placeBidOnLot, generateWinningBidTermAction } from './actions';
 import { checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions'; // Corrigido o caminho da importação
@@ -300,6 +300,9 @@ export default function LotDetailClientContent({
     return uniqueUrls.length > 0 ? uniqueUrls : ['https://placehold.co/800x600.png?text=Imagem+Indisponivel'];
   }, [lot]);
 
+  const activeStage = useMemo(() => getActiveStage(auction?.auctionStages), [auction?.auctionStages]);
+  const activeLotPrices = useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
+  
   const { effectiveLotEndDate, effectiveLotStartDate } = useMemo(() => {
     return getEffectiveLotEndDate(lot, auction);
   }, [lot, auction]);
@@ -350,10 +353,10 @@ export default function LotDetailClientContent({
 
   const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === 'admin@bidexpert.com.br'.toLowerCase();
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
-  const isUserHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
+  const isDocHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
 
   const canUserReview = !!userProfileWithPermissions;
-  const canUserAskQuestion = isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isUserHabilitado);
+  const canUserAskQuestion = isEffectivelySuperTestUser || hasAdminRights || (userProfileWithPermissions && isDocHabilitado);
 
   const handleToggleFavorite = () => {
     if (!lot || !lot.id) return;
@@ -445,8 +448,10 @@ export default function LotDetailClientContent({
                     onBidSuccess={handleBidSuccess}
                     isHabilitadoForThisAuction={isHabilitadoForThisAuction}
                     onHabilitacaoSuccess={handleHabilitacaoSuccess}
+                    activeStage={activeStage}
+                    activeLotPrices={activeLotPrices}
                   />
-                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{lot.evaluationValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de Avaliação:</span> <span className="font-semibold text-foreground">R$ {lot.evaluationValue.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{(!lot.evaluationValue && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue) && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
+                  <Card className="shadow-md"><CardHeader><CardTitle className="text-lg font-semibold flex items-center"><Scale className="h-5 w-5 mr-2 text-muted-foreground"/>Valores e Condições Legais</CardTitle></CardHeader><CardContent className="space-y-2 text-sm">{activeLotPrices?.initialBid && <div className="flex justify-between"><span className="text-muted-foreground">Lance Inicial ({activeStage?.name || 'Etapa'}):</span> <span className="font-semibold text-foreground">R$ {activeLotPrices.initialBid.toLocaleString('pt-BR')}</span></div>}{lot.reservePrice && <div className="flex justify-between"><span className="text-muted-foreground">Preço de Reserva:</span> <span className="font-semibold text-foreground">(Confidencial)</span></div>}{lot.debtAmount && <div className="flex justify-between"><span className="text-muted-foreground">Montante da Dívida:</span> <span className="font-semibold text-foreground">R$ {lot.debtAmount.toLocaleString('pt-BR')}</span></div>}{lot.itbiValue && <div className="flex justify-between"><span className="text-muted-foreground">Valor de ITBI:</span> <span className="font-semibold text-foreground">R$ {lot.itbiValue.toLocaleString('pt-BR')}</span></div>}{!activeLotPrices?.initialBid && !lot.reservePrice && !lot.debtAmount && !lot.itbiValue && <p className="text-muted-foreground text-center text-xs py-2">Nenhuma condição de valor especial para este lote.</p>}</CardContent></Card>
                   <LotMapDisplay lot={lot} platformSettings={platformSettings} onOpenMapModal={() => setIsMapModalOpen(true)} />
               </div>
             </div>

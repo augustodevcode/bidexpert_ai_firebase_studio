@@ -13,7 +13,7 @@ import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
-import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl } from '@/lib/ui-helpers';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -51,6 +51,8 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
   const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
+  const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
   React.useEffect(() => {
     setIsFavorite(isLotFavoriteInStorage(lot.id));
@@ -83,11 +85,11 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   
   const discountPercentage = React.useMemo(() => {
-    if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
-      return Math.round(((lot.initialPrice - lot.secondInitialPrice) / lot.initialPrice) * 100);
+    if (activeLotPrices?.initialBid && lot.evaluationValue && activeLotPrices.initialBid < lot.evaluationValue) {
+      return Math.round(((lot.evaluationValue - activeLotPrices.initialBid) / lot.evaluationValue) * 100);
     }
     return lot.discountPercentage || 0;
-  }, [lot.initialPrice, lot.secondInitialPrice, lot.status, lot.discountPercentage]);
+  }, [activeLotPrices, lot.evaluationValue, lot.discountPercentage]);
 
   const mentalTriggers = React.useMemo(() => {
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
