@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData } from '@/types';
@@ -88,6 +89,15 @@ export class LotService {
       }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || [], stageDetails || []);
+      
+      // Update the status of the linked 'bens' to 'LOTEADO'
+      if (bemIds && bemIds.length > 0) {
+        await prisma.bem.updateMany({
+            where: { id: { in: bemIds } },
+            data: { status: 'LOTEADO' },
+        });
+      }
+      
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
     } catch (error: any) {
       console.error("Error in LotService.createLot:", error);
@@ -154,8 +164,29 @@ export class LotService {
 
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // The repository now handles the transactional deletion of Lot and LotBens.
-      await this.repository.delete(id);
+      // Find the lot to get associated bemIds before deleting
+      const lotToDelete = await prisma.lot.findUnique({
+        where: { id },
+        include: { bens: { select: { bemId: true } } },
+      });
+
+      if (lotToDelete) {
+        const bemIdsToRelease = lotToDelete.bens.map(b => b.bemId);
+
+        // The repository handles the transactional deletion of Lot and LotBens.
+        await this.repository.delete(id);
+        
+        // After successful deletion, update the status of the previously linked bens
+        if (bemIdsToRelease.length > 0) {
+          await prisma.bem.updateMany({
+            where: { id: { in: bemIdsToRelease } },
+            data: { status: 'DISPONIVEL' },
+          });
+        }
+      } else {
+         return { success: false, message: 'Lote não encontrado para exclusão.' };
+      }
+
       return { success: true, message: 'Lote excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in LotService.deleteLot for id ${id}:`, error);
@@ -189,13 +220,29 @@ export class LotService {
                   paymentStatus: 'PENDENTE'
               }
           });
+          // After sale, update the associated 'bem' status to 'VENDIDO'
+           if (lot.bemIds && lot.bemIds.length > 0) {
+                await prisma.bem.updateMany({
+                    where: { id: { in: lot.bemIds } },
+                    data: { status: 'VENDIDO' },
+                });
+            }
           return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
       } else {
            await prisma.lot.update({
               where: { id: lot.id },
               data: { status: 'NAO_VENDIDO' },
           });
+          // If not sold, release the 'bens' back to 'DISPONIVEL'
+           if (lot.bemIds && lot.bemIds.length > 0) {
+                await prisma.bem.updateMany({
+                    where: { id: { in: lot.bemIds } },
+                    data: { status: 'DISPONIVEL' },
+                });
+            }
            return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
       }
   }
 }
+
+  

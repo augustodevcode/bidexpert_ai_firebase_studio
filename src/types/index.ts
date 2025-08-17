@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 import { z } from 'zod';
@@ -7,10 +8,10 @@ export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
   'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
 ];
 
-export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'CANCELADO';
+export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'RELISTADO' | 'CANCELADO';
 
 export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
-  'RASCUNHO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'
+  'RASCUNHO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'RELISTADO', 'CANCELADO'
 ];
 
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
@@ -192,6 +193,10 @@ export interface Lot {
   winnerId?: string | null;
   winningBidTermUrl?: string | null;
   allowInstallmentBids?: boolean;
+  isRelisted: boolean;
+  relistCount: number;
+  originalLotId?: string | null;
+  
   // Vehicle specific from Bem
   year?: number;
   make?: string;
@@ -282,6 +287,8 @@ export interface Auction {
   city?: string | null;
   state?: string | null;
   zipCode?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   onlineUrl?: string | null;
   
   auctionStages?: AuctionStage[];
@@ -327,6 +334,7 @@ export interface AuctionStage {
   name: string;
   endDate: string | Date;
   startDate?: string | Date; // Adicionado para timeline
+  evaluationValue?: number | null; // Adicionado para avaliação por praça
   initialPrice?: number | null;
   statusText?: string;
 }
@@ -1032,3 +1040,5 @@ export interface DatabaseAdapter {
 
     close?(): Promise<void>;
 }
+
+  

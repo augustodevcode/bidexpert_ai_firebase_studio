@@ -1,8 +1,10 @@
+
 // src/services/bem.service.ts
 import { BemRepository } from '@/repositories/bem.repository';
 import type { Bem, BemFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
+import { prisma } from '@/lib/prisma'; // Import prisma directly
 
 export class BemService {
   private repository: BemRepository;
@@ -80,7 +82,21 @@ export class BemService {
 
   async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // Note: A real app would check if the 'Bem' is part of an active lot.
+      // Check if the Bem is part of any active or sold lots
+      const linkedLots = await prisma.lotBens.findMany({
+        where: { bemId: id },
+        include: { lot: { select: { status: true } } }
+      });
+
+      const isProtected = linkedLots.some(link => 
+        link.lot.status === 'ABERTO_PARA_LANCES' || 
+        link.lot.status === 'VENDIDO'
+      );
+      
+      if (isProtected) {
+          return { success: false, message: "Este bem está vinculado a um lote ativo ou vendido e não pode ser excluído."};
+      }
+
       await this.repository.delete(id);
       return { success: true, message: 'Bem excluído com sucesso.' };
     } catch (error: any) {
@@ -89,3 +105,5 @@ export class BemService {
     }
   }
 }
+
+  
