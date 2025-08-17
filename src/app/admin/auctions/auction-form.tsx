@@ -44,6 +44,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { consultaCepAction } from '@/lib/actions/cep';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import dynamic from 'next/dynamic';
+
+const MapPicker = dynamic(() => import('@/components/map-picker'), {
+  loading: () => <div className="h-64 w-full bg-muted animate-pulse rounded-md" />,
+  ssr: false,
+});
+
 
 interface AuctionFormProps {
   initialData?: Partial<Auction> | null;
@@ -174,6 +181,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       cityId: initialData?.cityId || undefined,
       stateId: initialData?.stateId || undefined,
       zipCode: initialData?.zipCode || '',
+      latitude: initialData?.latitude,
+      longitude: initialData?.longitude,
       auctioneerId: initialData?.auctioneerId || '',
       sellerId: initialData?.sellerId || '',
       categoryId: initialData?.categoryId || '',
@@ -211,7 +220,9 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   const watchedStages = useWatch({ control: form.control, name: 'auctionStages' });
   const softCloseEnabled = useWatch({ control: form.control, name: 'softCloseEnabled' });
   const selectedStateId = useWatch({ control: form.control, name: 'stateId' });
-  
+  const watchedLatitude = useWatch({ control: form.control, name: 'latitude' });
+  const watchedLongitude = useWatch({ control: form.control, name: 'longitude' });
+
   const filteredCities = useMemo(() => {
     if (!selectedStateId) return [];
     return initialAllCities.filter(city => city.stateId === selectedStateId);
@@ -331,6 +342,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                         <div className="grid md:grid-cols-2 gap-4">
                             <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector entityName="state" value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
                             <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector entityName="city" value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
+                        </div>
+                         <div className="space-y-2 pt-2">
+                            <Label>Localização no Mapa</Label>
+                            <p className="text-xs text-muted-foreground">Clique no mapa para definir um marcador preciso ou preencha a latitude e longitude.</p>
+                            <MapPicker latitude={watchedLatitude} longitude={watchedLongitude} setValue={form.setValue} />
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-4">
+                            <FormField control={form.control} name="latitude" render={({ field }) => ( <FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="longitude" render={({ field }) => ( <FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" {...field} value={field.value ?? ''} onChange={e => field.onChange(parseFloat(e.target.value))} /></FormControl><FormMessage /></FormItem>)} />
                         </div>
                     </div>
                 )}
