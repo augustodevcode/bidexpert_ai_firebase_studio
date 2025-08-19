@@ -1,10 +1,11 @@
-
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { checkoutFormSchema, type CheckoutFormValues } from './checkout-form-schema';
+import { add } from 'date-fns';
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -49,45 +50,69 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
 }
 
 /**
- * Simulates processing a payment for a won lot.
- * In a real application, this would call a payment gateway API.
+ * Processes a payment for a won lot. This can be a one-time payment or create
+ * installment records.
  * @param {string} winId - The ID of the user win record.
- * @param {any} paymentData - The payment form data (e.g., credit card details).
- * @returns {Promise<{success: boolean, message: string}>} The result of the simulated payment.
+ * @param {CheckoutFormValues} paymentData - The validated payment form data.
+ * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
  */
-export async function processPaymentAction(winId: string, paymentData: any): Promise<{success: boolean; message: string}> {
-    console.log(`[Action - processPayment] Simulating payment for win ID: ${winId}`, { paymentData });
+export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
+    console.log(`[Action - processPayment] Processing payment for win ID: ${winId}`, paymentData);
     
     const win = await prisma.userWin.findUnique({ where: { id: winId } });
 
     if (!win) {
         return { success: false, message: 'Registro do arremate não encontrado.' };
     }
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    try {
+        if (paymentData.paymentMethod === 'credit_card') {
+            // Simulate direct payment processing
+            await prisma.userWin.update({
+                where: { id: winId },
+                data: { paymentStatus: 'PAGO' }
+            });
+            revalidatePath(`/dashboard/wins`);
+            revalidatePath(`/checkout/${winId}`);
+            return { success: true, message: "Pagamento à vista processado com sucesso!" };
+        } 
+        
+        if (paymentData.paymentMethod === 'installments') {
+            const installmentCount = paymentData.installments || 1;
+            const interestRate = 0.015; // Simulate interest for installments
+            const totalWithInterest = win.winningBidAmount * (1 + (interestRate * installmentCount));
+            const installmentAmount = totalWithInterest / installmentCount;
+            
+            const installmentsToCreate = Array.from({ length: installmentCount }, (_, i) => ({
+                userWinId: winId,
+                installmentNumber: i + 1,
+                amount: installmentAmount,
+                dueDate: add(new Date(), { months: i + 1 }),
+                status: 'PENDENTE' as const
+            }));
+            
+            await prisma.$transaction([
+                prisma.installmentPayment.createMany({
+                    data: installmentsToCreate,
+                }),
+                prisma.userWin.update({
+                    where: { id: winId },
+                    data: { paymentStatus: 'PROCESSANDO' } // Change status to indicate it's in installments
+                })
+            ]);
+            
+            revalidatePath(`/dashboard/wins`);
+            revalidatePath(`/checkout/${winId}`);
+            return { success: true, message: `${installmentCount} boletos de parcelamento foram gerados com sucesso!` };
+        }
+        
+        return { success: false, message: 'Método de pagamento inválido.' };
 
-    // Simulate payment processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    // In a real app, you would handle success/failure from the payment gateway
-    const paymentSuccessful = true; 
-
-    if (paymentSuccessful) {
-        await prisma.userWin.update({
-            where: { id: winId },
-            data: {
-                paymentStatus: 'PAGO'
-            }
-        });
-        revalidatePath(`/dashboard/wins`);
-        revalidatePath(`/checkout/${winId}`);
-        return { success: true, message: "Pagamento processado com sucesso!" };
-    } else {
-        await prisma.userWin.update({
-            where: { id: winId },
-            data: {
-                paymentStatus: 'FALHOU'
-            }
-        });
-        revalidatePath(`/checkout/${winId}`);
-        return { success: false, message: "O pagamento falhou. Por favor, tente novamente." };
+    } catch (error: any) {
+        console.error(`Error processing payment for win ${winId}:`, error);
+        return { success: false, message: `Erro no servidor ao processar pagamento: ${error.message}` };
     }
 }
