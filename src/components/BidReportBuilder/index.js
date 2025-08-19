@@ -8,6 +8,7 @@ import PropertiesPanel from './components/PropertiesPanel';
 import PreviewPanel from './components/PreviewPanel';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Componente principal do Construtor de Relatórios.
@@ -15,24 +16,29 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
  * o painel de propriedades e a visualização.
  */
 const BidReportBuilder = () => {
-    // Estados para gerenciar a definição do relatório, elementos selecionados, etc.
     const [reportDefinition, setReportDefinition] = React.useState({ elements: [] });
     const [selectedElement, setSelectedElement] = React.useState(null);
 
-    const handleAddElement = (elementType) => {
-        // Lógica para adicionar um novo elemento ao reportDefinition
-        console.log(`Adicionando elemento: ${elementType}`);
+    const handleAddElement = (elementType, x, y) => {
+        console.log(`Adicionando elemento: ${elementType} em (${x}, ${y})`);
+        
+        // Ajustar a posição para considerar o offset do container. 
+        // Esta é uma simplificação. Uma implementação real pode precisar de `ref` e `getBoundingClientRect`.
+        const adjustedX = x - 300; 
+        const adjustedY = y - 100;
+        
         const newElement = {
-            id: `el-${Date.now()}`,
+            id: `el-${uuidv4()}`,
             type: elementType,
             content: `Novo ${elementType}`,
-            x: 50,
-            y: 50,
+            x: adjustedX,
+            y: adjustedY,
             width: 150,
             height: 30
         };
         // @ts-ignore
         setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newElement]}));
+        setSelectedElement(newElement);
     };
     
     const handleElementChange = (elementId, newProps) => {
@@ -43,6 +49,11 @@ const BidReportBuilder = () => {
                 el.id === elementId ? { ...el, ...newProps } : el
             )
         }));
+         // Atualiza o elemento selecionado também, se for o caso
+        if (selectedElement && selectedElement.id === elementId) {
+            // @ts-ignore
+            setSelectedElement(prev => ({...prev, ...newProps}));
+        }
     }
 
     return (
@@ -54,8 +65,8 @@ const BidReportBuilder = () => {
                         <div className="flex-grow border-r border-t relative">
                             <DesignSurface 
                                 elements={reportDefinition.elements} 
+                                onAddElement={handleAddElement}
                                 onSelectElement={setSelectedElement}
-                                onElementChange={handleElementChange}
                             />
                         </div>
                         <div className="h-1/3 border-t bg-background">
