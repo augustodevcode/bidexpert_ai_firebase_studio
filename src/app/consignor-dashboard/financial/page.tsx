@@ -10,7 +10,7 @@ import { getFinancialDataForConsignor } from './actions';
 import type { UserWin, SellerProfileInfo } from '@/types';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getPaymentStatusText } from '@/lib/ui-helpers';
 import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -90,7 +90,7 @@ export default function ConsignorFinancialPage() {
 
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+      .map(status => ({ value: status, label: getPaymentStatusText(status) })),
   [wins]);
 
   const facetedFilterColumns = useMemo(() => [
