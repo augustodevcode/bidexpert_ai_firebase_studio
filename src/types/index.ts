@@ -18,9 +18,9 @@ export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 
 
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 
-export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO';
+export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO' | 'ATRASADO';
 export const paymentStatusValues: [PaymentStatus, ...PaymentStatus[]] = [
-  'PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO'
+  'PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO', 'ATRASADO'
 ];
 
 export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
@@ -149,8 +149,6 @@ export interface Lot {
   title: string;
   description?: string;
   price: number;
-  initialPrice?: number | null;
-  secondInitialPrice?: number | null;
   bidIncrementStep?: number | null;
   status: LotStatus;
   bidsCount?: number;
@@ -196,41 +194,19 @@ export interface Lot {
   isRelisted: boolean;
   relistCount: number;
   originalLotId?: string | null;
+  evaluationValue?: number | null;
   
   // Vehicle specific from Bem
   year?: number;
   make?: string;
   model?: string;
-  version?: string; // Alterado de series para version
+  version?: string; 
   odometer?: number;
   hasKey?: boolean;
   vin?: string;
   fuelType?: string;
   transmissionType?: string;
   
-  // Vehicle condition from Lot
-  primaryDamage?: string;
-  secondaryDamage?: string;
-  lossType?: string;
-  titleBrand?: string;
-  vinStatus?: string;
-  titleInfo?: string;
-  bodyStyle?: string;
-  driveLineType?: string;
-  cylinders?: string;
-  restraintSystem?: string;
-  exteriorInteriorColor?: string;
-  options?: string;
-  manufacturedIn?: string;
-  vehicleClass?: string;
-  vehicleLocationInBranch?: string;
-  laneRunNumber?: string;
-  aisleStall?: string;
-  startCode?: string;
-  airbagsStatus?: string;
-  // Financial from Lot
-  actualCashValue?: number;
-  estimatedRepairCost?: number;
   // Judicial Process from Lot
   judicialProcessNumber?: string;
   courtDistrict?: string;
@@ -240,11 +216,6 @@ export interface Lot {
   propertyLiens?: string;
   knownDebts?: string;
   additionalDocumentsInfo?: string;
-  // Bidding from Lot
-  reservePrice?: number | null;
-  evaluationValue?: number | null;
-  debtAmount?: number | null;
-  itbiValue?: number | null;
   
   // Timestamps
   createdAt: string | Date;
@@ -284,8 +255,8 @@ export interface Auction {
 
   // Location fields for presencial/hibrido
   address?: string | null;
-  city?: string | null;
-  state?: string | null;
+  cityId?: string | null;
+  stateId?: string | null;
   zipCode?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -335,8 +306,6 @@ export interface AuctionStage {
   endDate: string | Date;
   startDate?: string | Date; // Adicionado para timeline
   evaluationValue?: number | null; // Adicionado para avaliação por praça
-  initialPrice?: number | null;
-  statusText?: string;
 }
 
 
@@ -447,7 +416,22 @@ export interface UserWin {
     paymentStatus: PaymentStatus;
     invoiceUrl?: string;
     lot?: Lot;
+    installments?: InstallmentPayment[];
 }
+
+export interface InstallmentPayment {
+  id: string;
+  userWinId: string;
+  userWin?: UserWin;
+  installmentNumber: number;
+  amount: number;
+  dueDate: string | Date;
+  status: PaymentStatus;
+  paymentDate?: string | Date | null;
+  paymentMethod?: string | null;
+  transactionId?: string | null;
+}
+
 
 export interface LotCategory {
   id: string;
@@ -1040,5 +1024,3 @@ export interface DatabaseAdapter {
 
     close?(): Promise<void>;
 }
-
-  

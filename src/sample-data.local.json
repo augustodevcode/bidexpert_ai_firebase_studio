@@ -84,7 +84,8 @@
     { "id": "role-user", "name": "USER", "nameNormalized": "USER", "description": "Usuário padrão com acesso básico.", "permissions": ["view_auctions", "view_lots"]},
     { "id": "role-consignor", "name": "CONSIGNOR", "nameNormalized": "CONSIGNOR", "description": "Comitente com permissões para gerenciar seus itens.", "permissions": ["auctions:manage_own", "lots:manage_own", "view_reports", "media:upload", "consignor_dashboard:view"]},
     { "id": "role-auction-analyst", "name": "AUCTION_ANALYST", "nameNormalized": "AUCTION_ANALYST", "description": "Analista com permissões para visualizar leilões, relatórios e gerenciar habilitações de usuários.", "permissions": ["auctions:read", "lots:read", "view_reports", "users:read", "users:manage_habilitation"]},
-    { "id": "role-bidder", "name": "BIDDER", "nameNormalized": "BIDDER", "description": "Usuário habilitado para dar lances e arrematar itens.", "permissions": ["place_bids", "view_wins"]}
+    { "id": "role-bidder", "name": "BIDDER", "nameNormalized": "BIDDER", "description": "Usuário habilitado para dar lances e arrematar itens.", "permissions": ["place_bids", "view_wins"]},
+    { "id": "role-finance", "name": "FINANCE", "nameNormalized": "FINANCE", "description": "Acesso a relatórios financeiros e de pagamento.", "permissions": ["view_financial_reports"]}
   ],
    "sampleLotCategories": [
     { "id": "cat-imoveis", "name": "Imóveis", "slug": "imoveis", "hasSubcategories": true, "logoUrl": "/assets/icons/building.svg", "coverImageUrl": "/assets/images/cat-imoveis-cover.jpg", "megaMenuImageUrl": "/assets/images/cat-imoveis-megamenu.jpg" },
