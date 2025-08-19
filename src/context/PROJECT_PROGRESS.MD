@@ -18,31 +18,14 @@
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
-- **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização:** Substituídos os campos de texto "Estado" e "Cidade" no formulário de criação/edição de leilões por componentes `EntitySelector` inteligentes.
-- **Item 19:** **Infraestrutura e UI para Marcas/Modelos de Veículos:** Criado todo o backend (Schema, Service, Repo) e as telas de CRUD no Admin para gerenciar Marcas e Modelos de veículos. Adicionados seletores no formulário de Bem e integrados aos filtros da página de busca.
-- **Item 20:** **Inteligência de Herança de Comitente:** Ao criar um novo lote, se um leilão for selecionado, o campo "Comitente" do lote é preenchido automaticamente com o comitente do leilão.
-- **Item 21:** **Implementar Incremento de Lance no Lote:** Adicionado o campo `bidIncrementStep` no formulário de lote. A lógica de lances agora valida o incremento mínimo.
-- **Item 22: Gerenciamento Flexível da Galeria de Imagens:** Implementada a lógica de herança de imagens de um `Bem` específico para um `Lote`, incluindo a UI no formulário de lote e a exibição correta das imagens nos componentes visuais da plataforma.
-- **Item 23: Implementar Lógica de Precificação por Etapa (Back-end e UI):**
-    - **Fase 1: Refatoração do Back-end:** Atualizados os serviços (`LotService`, `AuctionService`) e o schema para ler/escrever os dados financeiros na tabela `LotAuctionStageDetails`.
-    - **Fase 2: Refatoração da UI:** Modificados os formulários para permitir a configuração de valores por praça/etapa.
-    - **Fase 3: Atualização dos Componentes Visuais:** Garantido que a UI exiba o preço correto para a etapa atual do leilão.
+- **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
+- **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
+- **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
+- **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
 
 ## DOING
-- **Item 15 (Continuação):** Integrar um mapa interativo no formulário para definir a localização do leilão visualmente.
 - **Item 3 & 12:** **Full Test Coverage:** Expand the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
 
 ## NEXT
-- **Item 16: Lógica de Relistagem de Lotes:**
-    - Implementar a funcionalidade para relistar um lote que não foi vendido.
-    - Permitir a aplicação de descontos automáticos na relistagem (ex: 50%).
-    - Adicionar um badge de "Super Oferta" ou "2ª Chance" para lotes relistados.
-- **Item 17: Reloteamento de Bens:**
-    - Criar a lógica para desvincular um `Bem` de um lote não vendido.
-    - Permitir que um `Bem` desvinculado seja associado a um novo lote em um novo leilão.
-    - Garantir que o histórico do `Bem` reflita sua participação em múltiplos lotes e leilões.
-- **Item 18: Implementação de Pagamento Parcelado:**
-    - Criar o fluxo de "checkout" para pagamento parcelado (ex: 12 boletos).
-    - Adicionar um novo `Role` "Financeiro".
-    - Desenvolver um painel financeiro para que o time possa visualizar o status dos pagamentos, comissões e desvalorização de ativos.
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
+

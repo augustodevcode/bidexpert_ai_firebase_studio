@@ -1,9 +1,9 @@
 // tests/state.test.ts
-import { test, describe, beforeAll, afterAll, it, expect } from 'vitest';
+import test from 'node:test';
 import assert from 'node:assert';
-import { StateService } from '@/services/state.service';
-import { prisma } from '@/lib/prisma';
-import type { StateFormData } from '@/types';
+import { StateService } from '../services/state.service';
+import { prisma } from '../lib/prisma';
+import type { StateFormData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 
 const stateService = new StateService();
@@ -11,16 +11,16 @@ const testRunId = `state-e2e-${uuidv4().substring(0, 8)}`;
 const testStateName = `Estado de Teste ${testRunId}`;
 const testStateUf = testRunId.substring(0, 2).toUpperCase();
 
-describe('State Service E2E Tests', () => {
+test.describe('State Service E2E Tests', () => {
 
-    beforeAll(async () => {
+    test.beforeEach(async () => {
         // Clean up previous test runs to ensure a clean slate
         await prisma.state.deleteMany({
             where: { OR: [{ uf: testStateUf }, {name: {contains: testRunId}}] }
         });
     });
     
-    afterAll(async () => {
+    test.after(async () => {
         try {
             await prisma.state.deleteMany({
                 where: { OR: [{ uf: testStateUf }, {name: {contains: testRunId}}] }
@@ -31,7 +31,7 @@ describe('State Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    it('should create a new state and verify it in the database', async () => {
+    test('should create a new state and verify it in the database', async () => {
         // Arrange
         const newStateData: StateFormData = {
             name: testStateName,
@@ -59,7 +59,7 @@ describe('State Service E2E Tests', () => {
         assert.ok(createdStateFromDb.slug, 'State slug should be generated');
     });
 
-    it('should prevent creating a state with a duplicate UF', async () => {
+    test('should prevent creating a state with a duplicate UF', async () => {
         // Arrange: Create the first state
         const firstStateUf = `DU${testRunId.substring(0,1)}`;
         await prisma.state.deleteMany({ where: { uf: firstStateUf }}); // Ensure it does not exist
