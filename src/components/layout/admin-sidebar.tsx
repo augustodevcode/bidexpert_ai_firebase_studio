@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, ClipboardCheck, MapPin, PlusCircle } from 'lucide-react';
+import { ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -75,11 +75,9 @@ const judicialManagementItems = [
 const platformManagementItems = [
   { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
   { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
-  { title: 'Novo Template', href: '/admin/document-templates/new', icon: PlusCircle },
+  { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: FileSpreadsheet },
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-  { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: ClipboardCheck },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Novo Perfil', href: '/admin/roles/new', icon: PlusCircle },
   { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart },
   { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
