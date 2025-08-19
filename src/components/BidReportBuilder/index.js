@@ -42,24 +42,27 @@ const BidReportBuilder = () => {
     };
     
     const handleElementChange = (elementId, newProps) => {
-        setReportDefinition(prev => ({
-            ...prev,
-            elements: prev.elements.map(el => 
-                // @ts-ignore
-                el.id === elementId ? { ...el, ...newProps } : el
-            )
-        }));
-         // Atualiza o elemento selecionado também, se for o caso
+        let updatedElement;
+        const newElements = reportDefinition.elements.map(el => {
+            if (el.id === elementId) {
+                updatedElement = { ...el, ...newProps };
+                return updatedElement;
+            }
+            return el;
+        });
+
+        setReportDefinition({ ...reportDefinition, elements: newElements });
+        
+        // Atualiza o elemento selecionado também, para que o painel de propriedades reflita a mudança.
         if (selectedElement && selectedElement.id === elementId) {
-            // @ts-ignore
-            setSelectedElement(prev => ({...prev, ...newProps}));
+            setSelectedElement(updatedElement);
         }
-    }
+    };
 
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="flex flex-col h-[75vh] bg-muted/30 rounded-lg border">
-                <Toolbar onAddElement={handleAddElement} />
+                <Toolbar />
                 <div className="flex flex-grow overflow-hidden">
                     <main className="flex-grow flex flex-col">
                         <div className="flex-grow border-r border-t relative">
@@ -67,6 +70,7 @@ const BidReportBuilder = () => {
                                 elements={reportDefinition.elements} 
                                 onAddElement={handleAddElement}
                                 onSelectElement={setSelectedElement}
+                                selectedElementId={selectedElement?.id}
                             />
                         </div>
                         <div className="h-1/3 border-t bg-background">
