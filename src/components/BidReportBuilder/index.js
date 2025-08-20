@@ -9,6 +9,7 @@ import PreviewPanel from './components/PreviewPanel';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { v4 as uuidv4 } from 'uuid';
+import { useToast } from '@/components/ui/use-toast';
 
 /**
  * Componente principal do Construtor de Relatórios.
@@ -18,21 +19,25 @@ import { v4 as uuidv4 } from 'uuid';
 const BidReportBuilder = () => {
     const [reportDefinition, setReportDefinition] = React.useState({ elements: [] });
     const [selectedElement, setSelectedElement] = React.useState(null);
+    const { toast } = useToast();
 
     const handleAddElement = (elementType, x, y) => {
-        console.log(`Adicionando elemento: ${elementType} em (${x}, ${y})`);
+        const designSurface = document.querySelector('[data-ai-id="report-design-surface"]');
+        let dropX = x;
+        let dropY = y;
         
-        // Ajustar a posição para considerar o offset do container. 
-        // Esta é uma simplificação. Uma implementação real pode precisar de `ref` e `getBoundingClientRect`.
-        const adjustedX = x - 300; 
-        const adjustedY = y - 100;
-        
+        if (designSurface) {
+            const rect = designSurface.getBoundingClientRect();
+            dropX = x - rect.left;
+            dropY = y - rect.top;
+        }
+
         const newElement = {
             id: `el-${uuidv4()}`,
             type: elementType,
             content: `Novo ${elementType}`,
-            x: adjustedX,
-            y: adjustedY,
+            x: dropX,
+            y: dropY,
             width: 150,
             height: 30
         };
@@ -53,16 +58,66 @@ const BidReportBuilder = () => {
 
         setReportDefinition({ ...reportDefinition, elements: newElements });
         
-        // Atualiza o elemento selecionado também, para que o painel de propriedades reflita a mudança.
         if (selectedElement && selectedElement.id === elementId) {
             setSelectedElement(updatedElement);
         }
     };
 
+    const handleSaveReport = () => {
+        try {
+            localStorage.setItem('bidReportBuilder_save', JSON.stringify(reportDefinition));
+            toast({
+                title: "Relatório Salvo!",
+                description: "Seu layout foi salvo no armazenamento local do seu navegador.",
+            });
+        } catch (error) {
+            toast({
+                title: "Erro ao Salvar",
+                description: "Não foi possível salvar o relatório.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleLoadReport = () => {
+        try {
+            const savedReport = localStorage.getItem('bidReportBuilder_save');
+            if (savedReport) {
+                const parsedReport = JSON.parse(savedReport);
+                setReportDefinition(parsedReport);
+                setSelectedElement(null); // Deselecionar qualquer elemento ao carregar
+                toast({
+                    title: "Relatório Carregado!",
+                    description: "Seu layout salvo foi carregado com sucesso.",
+                });
+            } else {
+                 toast({
+                    title: "Nenhum Relatório Salvo",
+                    description: "Não foi encontrado um relatório salvo no seu navegador.",
+                    variant: "default",
+                });
+            }
+        } catch (error) {
+             toast({
+                title: "Erro ao Carregar",
+                description: "O formato do relatório salvo é inválido.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const handleExportReport = () => {
+        // Lógica de exportação para PDF (a ser implementada)
+        toast({
+            title: "Funcionalidade em Desenvolvimento",
+            description: "A exportação para PDF será implementada em breve.",
+        });
+    };
+
     return (
         <DndProvider backend={HTML5Backend}>
             <div className="flex flex-col h-[75vh] bg-muted/30 rounded-lg border">
-                <Toolbar />
+                <Toolbar onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
                 <div className="flex flex-grow overflow-hidden">
                     <main className="flex-grow flex flex-col">
                         <div className="flex-grow border-r border-t relative">
