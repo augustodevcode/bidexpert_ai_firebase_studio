@@ -24,23 +24,13 @@ const BidReportBuilder = () => {
     const [selectedElement, setSelectedElement] = React.useState(null);
     const { toast } = useToast();
 
-    const handleAddElement = (elementType, x, y) => {
-        const designSurface = document.querySelector('[data-ai-id="report-design-surface"]');
-        let dropX = x;
-        let dropY = y;
-        
-        if (designSurface) {
-            const rect = designSurface.getBoundingClientRect();
-            dropX = x - rect.left;
-            dropY = y - rect.top;
-        }
-
+    const handleAddElement = (elementType, x, y, content) => {
         const newElement = {
             id: `el-${uuidv4()}`,
             type: elementType,
-            content: `Novo ${elementType}`,
-            x: dropX,
-            y: dropY,
+            content: content || `Novo ${elementType}`,
+            x: x || 50,
+            y: y || 50,
             width: 150,
             height: 30
         };
@@ -69,16 +59,14 @@ const BidReportBuilder = () => {
     };
 
     const handleSelectImage = (image) => {
-        // Lógica para adicionar um elemento de imagem ao relatório
-        console.log("Imagem selecionada:", image);
         const newImageElement = {
             id: `el-${uuidv4()}`,
             type: 'Image',
             content: image.alt,
             x: 200,
             y: 200,
-            width: image.width || 200,
-            height: image.height || 150,
+            width: 200,
+            height: 150,
             imageUrl: image.src,
         };
          // @ts-ignore
@@ -112,7 +100,7 @@ const BidReportBuilder = () => {
             if (savedReport) {
                 const parsedReport = JSON.parse(savedReport);
                 setReportDefinition(parsedReport);
-                setSelectedElement(null); // Deselecionar qualquer elemento ao carregar
+                setSelectedElement(null);
                 toast({
                     title: "Relatório Carregado!",
                     description: "Seu layout salvo foi carregado com sucesso.",
@@ -134,7 +122,6 @@ const BidReportBuilder = () => {
     };
 
     const handleExportReport = () => {
-        // Lógica de exportação para PDF (a ser implementada)
         toast({
             title: "Funcionalidade em Desenvolvimento",
             description: "A exportação para PDF será implementada em breve.",

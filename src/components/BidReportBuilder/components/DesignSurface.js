@@ -6,31 +6,35 @@ import { cn } from '@/lib/utils';
 
 // Superfície de design onde os elementos do relatório são arrastados.
 const DesignSurface = ({ elements, onAddElement, onSelectElement, selectedElementId }) => {
+  const surfaceRef = React.useRef(null);
 
   const [, drop] = useDrop(() => ({
     accept: 'REPORT_ELEMENT',
     drop: (item, monitor) => {
       const offset = monitor.getClientOffset();
-      if (offset) {
-        // Ajustar a posição para considerar o offset do container.
-        // Esta é uma simplificação. Uma implementação real pode precisar de `ref` e `getBoundingClientRect`.
-        const adjustedX = offset.x - 300; 
-        const adjustedY = y - 100;
-        onAddElement(item.type, adjustedX, adjustedY);
+      if (offset && surfaceRef.current) {
+        // @ts-ignore
+        const surfaceRect = surfaceRef.current.getBoundingClientRect();
+        const x = offset.x - surfaceRect.left;
+        const y = offset.y - surfaceRect.top;
+        onAddElement(item.type, x, y, item.content);
       }
     },
   }));
 
+  // Attach the ref to the drop target
+  drop(surfaceRef);
+
   return (
     <div 
-        ref={drop} 
+        ref={surfaceRef} 
         data-ai-id="report-design-surface"
         className="relative w-full h-full bg-white shadow-inner overflow-auto p-4" 
         style={{ cursor: 'crosshair', backgroundImage: 'radial-gradient(circle, #E5E5E5 1px, transparent 1px)', backgroundSize: '15px 15px' }}
         onClick={() => onSelectElement(null)} // Deseleciona ao clicar fora
     >
       <h2 className="text-center text-sm text-muted-foreground sr-only">Área de Design</h2>
-       {elements.map(el => (
+       {elements.map((el:any) => (
         <div 
           key={el.id}
           onClick={(e) => { e.stopPropagation(); onSelectElement(el); }}

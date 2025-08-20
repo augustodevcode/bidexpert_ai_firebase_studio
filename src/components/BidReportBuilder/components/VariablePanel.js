@@ -30,10 +30,10 @@ const sampleVariables = [
     ]}
 ];
 
-const DraggableVariable = ({ name, value }) => {
+const DraggableVariable = ({ name, value }: { name: string; value: string; }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'REPORT_ELEMENT', // O mesmo tipo que a DesignSurface espera
-    item: { type: 'TextBox', content: value }, // Solta um TextBox com o valor da variável
+    type: 'REPORT_ELEMENT',
+    item: { type: 'TextBox', content: value },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
@@ -44,6 +44,7 @@ const DraggableVariable = ({ name, value }) => {
       ref={drag}
       className="p-2 border rounded-md bg-secondary/60 hover:bg-secondary cursor-grab active:cursor-grabbing text-xs"
       style={{ opacity: isDragging ? 0.5 : 1 }}
+      title={`Arraste para adicionar a variável ${name}`}
     >
       <p className="font-medium text-foreground truncate">{name}</p>
       <p className="text-muted-foreground font-mono truncate">{value}</p>
