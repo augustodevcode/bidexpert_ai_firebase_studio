@@ -6,10 +6,13 @@ import Toolbar from './components/Toolbar';
 import DesignSurface from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
 import PreviewPanel from './components/PreviewPanel';
+import VariablePanel from './components/VariablePanel';
+import MediaLibrary from './components/MediaLibrary';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
  * Componente principal do Construtor de Relatórios.
@@ -49,6 +52,7 @@ const BidReportBuilder = () => {
     const handleElementChange = (elementId, newProps) => {
         let updatedElement;
         const newElements = reportDefinition.elements.map(el => {
+            // @ts-ignore
             if (el.id === elementId) {
                 updatedElement = { ...el, ...newProps };
                 return updatedElement;
@@ -56,11 +60,34 @@ const BidReportBuilder = () => {
             return el;
         });
 
+        // @ts-ignore
         setReportDefinition({ ...reportDefinition, elements: newElements });
         
         if (selectedElement && selectedElement.id === elementId) {
             setSelectedElement(updatedElement);
         }
+    };
+
+    const handleSelectImage = (image) => {
+        // Lógica para adicionar um elemento de imagem ao relatório
+        console.log("Imagem selecionada:", image);
+        const newImageElement = {
+            id: `el-${uuidv4()}`,
+            type: 'Image',
+            content: image.alt,
+            x: 200,
+            y: 200,
+            width: image.width || 200,
+            height: image.height || 150,
+            imageUrl: image.src,
+        };
+         // @ts-ignore
+        setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newImageElement]}));
+        setSelectedElement(newImageElement);
+         toast({
+            title: "Imagem Adicionada!",
+            description: `A imagem "${image.alt}" foi adicionada ao seu relatório.`,
+        });
     };
 
     const handleSaveReport = () => {
@@ -132,11 +159,26 @@ const BidReportBuilder = () => {
                            <PreviewPanel reportDefinition={reportDefinition} />
                         </div>
                     </main>
-                    <aside className="w-72 flex-shrink-0 border-l border-t bg-background">
-                        <PropertiesPanel 
-                            selectedElement={selectedElement} 
-                            onElementChange={handleElementChange}
-                        />
+                    <aside className="w-80 flex-shrink-0 border-l border-t bg-background">
+                         <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
+                            <TabsList className="flex-shrink-0">
+                                <TabsTrigger value="properties">Propriedades</TabsTrigger>
+                                <TabsTrigger value="variables">Variáveis</TabsTrigger>
+                                <TabsTrigger value="media">Mídia</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="properties" className="flex-grow overflow-y-auto">
+                                <PropertiesPanel 
+                                    selectedElement={selectedElement} 
+                                    onElementChange={handleElementChange}
+                                />
+                            </TabsContent>
+                            <TabsContent value="variables" className="flex-grow overflow-y-auto">
+                                <VariablePanel />
+                            </TabsContent>
+                             <TabsContent value="media" className="flex-grow overflow-y-auto">
+                                <MediaLibrary onSelectImage={handleSelectImage} />
+                            </TabsContent>
+                        </Tabs>
                     </aside>
                 </div>
             </div>
