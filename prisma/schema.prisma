@@ -1,32 +1,16 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-generator client {
-  provider = "prisma-client-js"
-}
 
 datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
-// =================================================================
-// ENUMS - Tipos de Dados Reutilizáveis
-// =================================================================
-
-enum AccountType {
-  PHYSICAL
-  LEGAL
-  DIRECT_SALE_CONSIGNOR
+generator client {
+  provider = "prisma-client-js"
 }
 
-enum UserHabilitationStatus {
-  PENDING_DOCUMENTS
-  PENDING_ANALYSIS
-  REJECTED_DOCUMENTS
-  HABILITADO
-  BLOCKED
-}
+// =================================================================
+// ENUMS - Tipos personalizados para a aplicação
+// =================================================================
 
 enum AuctionStatus {
   RASCUNHO
@@ -40,25 +24,6 @@ enum AuctionStatus {
   SUSPENSO
 }
 
-enum AuctionType {
-  JUDICIAL
-  EXTRAJUDICIAL
-  PARTICULAR
-  TOMADA_DE_PRECOS
-}
-
-enum AuctionMethod {
-  STANDARD
-  DUTCH
-  SILENT
-}
-
-enum AuctionParticipation {
-  ONLINE
-  PRESENCIAL
-  HIBRIDO
-}
-
 enum LotStatus {
   RASCUNHO
   EM_BREVE
@@ -70,12 +35,18 @@ enum LotStatus {
   CANCELADO
 }
 
-enum UserDocumentStatus {
-  NOT_SENT
-  SUBMITTED
+enum UserHabilitationStatus {
+  PENDING_DOCUMENTS
   PENDING_ANALYSIS
-  APPROVED
-  REJECTED
+  HABILITADO
+  REJECTED_DOCUMENTS
+  BLOCKED
+}
+
+enum AccountType {
+  PHYSICAL
+  LEGAL
+  DIRECT_SALE_CONSIGNOR
 }
 
 enum PaymentStatus {
@@ -120,15 +91,37 @@ enum ProcessPartyType {
   OUTRO
 }
 
+enum AuctionType {
+  JUDICIAL
+  EXTRAJUDICIAL
+  PARTICULAR
+  TOMADA_DE_PRECOS
+}
+
+enum AuctionMethod {
+  STANDARD
+  DUTCH
+  SILENT
+}
+
+enum AuctionParticipation {
+  ONLINE
+  PRESENCIAL
+  HIBRIDO
+}
+
 // =================================================================
-// MODELS - Representação das Tabelas do Banco de Dados
+// MODELS - Definição das tabelas do banco de dados
 // =================================================================
 
 model User {
   id                  String   @id @default(uuid())
+  uid                 String?  @unique
   email               String   @unique
   password            String?
   fullName            String?
+  roleId              String?
+  sellerId            String?
   habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
   accountType         AccountType          @default(PHYSICAL)
   avatarUrl           String?
@@ -137,76 +130,72 @@ model User {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
   
-  // Detalhes PF
-  cpf                 String? @unique
-  rgNumber            String?
-  rgIssuer            String?
-  rgIssueDate         DateTime?
-  rgState             String?
-  dateOfBirth         DateTime?
-  cellPhone           String?
-  homePhone           String?
-  gender              String?
-  profession          String?
-  nationality         String?
-  maritalStatus       String?
-  propertyRegime      String?
-  spouseName          String?
-  spouseCpf           String?
-  
-  // Detalhes PJ
-  razaoSocial         String?
-  cnpj                String? @unique
-  inscricaoEstadual   String?
-  website             String?
-  responsibleName     String?
-  responsibleCpf      String?
-  
-  // Endereço
-  zipCode             String?
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  city                String?
-  state               String?
+  cpf                String?
+  rgNumber           String?
+  rgIssuer           String?
+  rgIssueDate        DateTime?
+  rgState            String?
+  dateOfBirth        DateTime?
+  cellPhone          String?
+  homePhone          String?
+  gender             String?
+  profession         String?
+  nationality        String?
+  maritalStatus      String?
+  propertyRegime     String?
+  spouseName         String?
+  spouseCpf          String?
 
-  optInMarketing      Boolean? @default(false)
+  razaoSocial        String?
+  cnpj               String?
+  inscricaoEstadual  String?
+  website            String?
+  responsibleName    String?
+  responsibleCpf     String?
 
+  zipCode            String?
+  street             String?
+  number             String?
+  complement         String?
+  neighborhood       String?
+  city               String?
+  state              String?
+  optInMarketing     Boolean? @default(false)
+  
   // Relações
-  roles           UsersOnRoles[]
-  sellerProfile   Seller?
-  auctioneer      Auctioneer?
-  documents       UserDocument[]
-  bids            Bid[]
-  wins            UserWin[]
-  maxBids         UserLotMaxBid[]
-  uploadedMedia   MediaItem[]
-  notifications   Notification[]
-  habilitations   AuctionHabilitation[]
-  wonLots         Lot[]                 @relation("LotWinner")
-}
-
-model Role {
-  id               String   @id @default(uuid())
-  name             String   @unique
-  nameNormalized   String   @unique
-  description      String?
-  permissions      String[]
-  users            UsersOnRoles[]
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  seller               Seller?
+  auctioneer           Auctioneer?
+  roles                UsersOnRoles[]
+  bids                 Bid[]
+  wins                 UserWin[]           @relation("LotWinner")
+  documents            UserDocument[]
+  notifications        Notification[]
+  mediaItems           MediaItem[]
+  maxBids              UserLotMaxBid[]
+  auctionHabilitations AuctionHabilitation[]
 }
 
 model UsersOnRoles {
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
-  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId    String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId     String
   assignedAt DateTime @default(now())
   assignedBy String
 
   @@id([userId, roleId])
+}
+
+
+model Role {
+  id              String   @id @default(uuid())
+  name            String
+  nameNormalized  String   @unique
+  description     String?
+  permissions     String[] @default([])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  users           UsersOnRoles[]
 }
 
 model StateInfo {
@@ -217,148 +206,131 @@ model StateInfo {
   cityCount Int?     @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  cities    CityInfo[]
-  auctions  Auction[]
-  lots      Lot[]
+  
+  // Relações
+  cities           CityInfo[]
+  courts           Court[]
+  judicialDistricts JudicialDistrict[]
+  auctions         Auction[]
+  lots             Lot[]
 }
 
 model CityInfo {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  slug      String?
+  slug      String
   stateId   String
-  stateUf   String?
-  ibgeCode  String?   @unique
-  lotCount  Int?      @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  state     StateInfo @relation(fields: [stateId], references: [id], onDelete: Cascade)
-  auctions  Auction[]
-  lots      Lot[]
+  stateUf   String
+  ibgeCode  String?  @unique
+  lotCount  Int?     @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relações
+  state      StateInfo @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  auctions   Auction[]
+  lots       Lot[]
 }
 
 model LotCategory {
-  id                  String   @id @default(uuid())
-  name                String   @unique
-  slug                String   @unique
-  description         String?  @db.VarChar(500)
-  hasSubcategories    Boolean?
-  logoUrl             String?
-  logoMediaId         String?
-  dataAiHintIcon      String?
-  coverImageUrl       String?
-  coverImageMediaId   String?
-  dataAiHintCover     String?
-  megaMenuImageUrl    String?
+  id                   String   @id @default(uuid())
+  name                 String
+  slug                 String   @unique
+  description          String?
+  hasSubcategories     Boolean
+  iconName             String?
+  logoUrl              String?
+  logoMediaId          String?
+  dataAiHintIcon       String?
+  coverImageUrl        String?
+  coverImageMediaId    String?
+  dataAiHintCover      String?
+  megaMenuImageUrl     String?
   megaMenuImageMediaId String?
-  dataAiHintMegaMenu  String?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  dataAiHintMegaMenu   String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relações
-  subcategories      Subcategory[]
-  lots               Lot[]
-  bens               Bem[]
-  auctions           Auction[]
-  directSaleOffers   DirectSaleOffer[]
+  subcategories        Subcategory[]
+  bens                 Bem[]
+  lots                 Lot[]
+  auctions             Auction[]
+  directSaleOffers     DirectSaleOffer[]
 }
 
 model Subcategory {
-  id                String      @id @default(uuid())
-  name              String
-  slug              String?
-  parentCategoryId  String
-  parentCategory    LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
-  description       String?     @db.VarChar(500)
-  displayOrder      Int?        @default(0)
-  iconUrl           String?
-  iconMediaId       String?
-  dataAiHintIcon    String?
-
+  id                 String      @id @default(uuid())
+  name               String
+  slug               String
+  parentCategoryId   String
+  description        String?
+  displayOrder       Int?        @default(0)
+  iconUrl            String?
+  iconMediaId        String?
+  dataAiHintIcon     String?
+  
   // Relações
-  lots Lot[]
-  bens Bem[]
+  parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
+  bens               Bem[]
+  lots               Lot[]
 }
 
 model Court {
-  id                String              @id @default(uuid())
-  name              String              @unique
-  slug              String?             @unique
-  stateUf           String?
-  website           String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
+  id        String   @id @default(uuid())
+  name      String
+  slug      String
+  stateUf   String
+  website   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
   // Relações
+  state             StateInfo?        @relation(fields: [stateUf], references: [uf])
   judicialDistricts JudicialDistrict[]
   judicialProcesses JudicialProcess[]
+  auctions          Auction[]
 }
 
 model JudicialDistrict {
-  id                String              @id @default(uuid())
-  name              String
-  slug              String              @unique
-  courtId           String?
-  stateId           String?
-  zipCode           String?
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt @default(now())
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  courtId   String?
+  stateId   String
+  zipCode   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
   // Relações
-  court             Court?              @relation(fields: [courtId], references: [id])
-  state             StateInfo?          @relation(fields: [stateId], references: [id])
+  court             Court?           @relation(fields: [courtId], references: [id])
+  state             StateInfo        @relation(fields: [stateId], references: [id])
   judicialBranches  JudicialBranch[]
   judicialProcesses JudicialProcess[]
 }
 
 model JudicialBranch {
-  id                String            @id @default(uuid())
-  name              String
-  slug              String            @unique
-  districtId        String?
-  contactName       String?
-  phone             String?
-  email             String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt @default(now())
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  districtId  String
+  contactName String?
+  phone       String?
+  email       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   // Relações
-  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
+  district          JudicialDistrict   @relation(fields: [districtId], references: [id])
   judicialProcesses JudicialProcess[]
   sellers           Seller[]
-}
-
-model JudicialProcess {
-  id                String           @id @default(uuid())
-  publicId          String           @unique
-  processNumber     String           @unique
-  isElectronic      Boolean          @default(true)
-  courtId           String?
-  districtId        String?
-  branchId          String?
-  sellerId          String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt @default(now())
-  // Relações
-  court             Court?           @relation(fields: [courtId], references: [id])
-  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
-  branch            JudicialBranch?  @relation(fields: [branchId], references: [id])
-  seller            Seller?          @relation(fields: [sellerId], references: [id])
-  parties           JudicialParty[]
-  bens              Bem[]
   auctions          Auction[]
 }
 
-model JudicialParty {
-  id             String          @id @default(uuid())
-  processId      String
-  process        JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
-  name           String
-  documentNumber String?
-  partyType      ProcessPartyType
-}
-
-model Seller {
+model SellerProfileInfo {
   id               String   @id @default(uuid())
-  publicId         String?  @unique
-  slug             String?  @unique
+  publicId         String   @unique
+  slug             String   @unique
   name             String   @unique
   contactName      String?
   email            String?
@@ -373,24 +345,25 @@ model Seller {
   dataAiHintLogo   String?
   description      String?  @db.Text
   userId           String?  @unique
-  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   isJudicial       Boolean  @default(false)
-  judicialBranchId String?  @unique
-  judicialBranch   JudicialBranch? @relation(fields: [judicialBranchId], references: [id])
+  judicialBranchId String?
   createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt @default(now())
+  updatedAt        DateTime @updatedAt
+  
   // Relações
-  auctions         Auction[]
-  lots             Lot[]
-  bens             Bem[]
+  judicialBranch    JudicialBranch?   @relation(fields: [judicialBranchId], references: [id])
+  user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  auctions          Auction[]
+  bens              Bem[]
+  lots              Lot[]
+  directSaleOffers  DirectSaleOffer[]
   judicialProcesses JudicialProcess[]
-  directSaleOffers DirectSaleOffer[]
 }
 
-model Auctioneer {
-  id                 String    @id @default(uuid())
-  publicId           String?   @unique
-  slug               String?   @unique
+model AuctioneerProfileInfo {
+  id                 String   @id @default(uuid())
+  publicId           String   @unique
+  slug               String   @unique
   name               String
   registrationNumber String?
   contactName        String?
@@ -404,467 +377,367 @@ model Auctioneer {
   logoUrl            String?
   logoMediaId        String?
   dataAiHintLogo     String?
-  description        String?   @db.Text
-  userId             String?   @unique
-  user               User?     @relation(fields: [userId], references: [id])
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt @default(now())
+  description        String?  @db.Text
+  userId             String?  @unique
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
   // Relações
+  user               User?      @relation(fields: [userId], references: [id])
   auctions           Auction[]
+  lots               Lot[]
+}
+
+model JudicialProcess {
+  id              String          @id @default(uuid())
+  publicId        String          @unique
+  processNumber   String
+  isElectronic    Boolean         @default(true)
+  courtId         String?
+  districtId      String?
+  branchId        String?
+  sellerId        String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  // Relações
+  court             Court?            @relation(fields: [courtId], references: [id])
+  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
+  branch            JudicialBranch?   @relation(fields: [branchId], references: [id])
+  seller            SellerProfileInfo?         @relation(fields: [sellerId], references: [id])
+  parties           JudicialParty[]
+  bens              Bem[]
+  auctions          Auction[]
+}
+
+model JudicialParty {
+  id             String           @id @default(uuid())
+  processId      String
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType
+  
+  // Relações
+  process        JudicialProcess  @relation(fields: [processId], references: [id], onDelete: Cascade)
 }
 
 model Auction {
-  id                               String        @id @default(uuid())
-  publicId                         String?       @unique
-  slug                             String?       @unique
-  title                            String
-  description                      String?       @db.Text
-  status                           AuctionStatus @default(RASCUNHO)
-  auctionType                      AuctionType?
-  auctionMethod                    AuctionMethod?
-  participation                    AuctionParticipation?
-  onlineUrl                        String?
-  address                          String?
-  zipCode                          String?
-  latitude                         Float?
-  longitude                        Float?
-  auctionDate                      DateTime
-  endDate                          DateTime?
-  auctioneerId                     String?
-  sellerId                         String?
-  categoryId                       String?
-  visits                           Int?          @default(0)
-  totalLots                        Int?          @default(0)
-  initialOffer                     Float?
-  isFavorite                       Boolean?      @default(false)
-  dataAiHint                       String?
-  imageMediaId                     String?
-  imageUrl                         String?
-  documentsUrl                     String?
-  evaluationReportUrl              String?
-  auctionCertificateUrl            String?
-  sellingBranch                    String?
-  automaticBiddingEnabled          Boolean       @default(false)
-  allowInstallmentBids             Boolean       @default(true)
-  silentBiddingEnabled             Boolean       @default(false)
-  allowMultipleBidsPerUser         Boolean       @default(true)
-  softCloseEnabled                 Boolean       @default(false)
-  softCloseMinutes                 Int           @default(2)
-  estimatedRevenue                 Float?
-  achievedRevenue                  Float?
-  totalHabilitatedUsers            Int?
-  isFeaturedOnMarketplace          Boolean       @default(false)
-  marketplaceAnnouncementTitle     String?
-  judicialProcessId                String?
-  additionalTriggers               Json?
-  decrementAmount                  Float?
-  decrementIntervalSeconds         Int?
-  floorPrice                       Float?
-  autoRelistSettings               Json?
-  createdAt                        DateTime      @default(now())
-  updatedAt                        DateTime      @updatedAt
-  cityId                           String?
-  stateId                          String?
-  
+  id                           String                @id @default(uuid())
+  publicId                     String                @unique
+  slug                         String                @unique
+  title                        String
+  description                  String?               @db.Text
+  status                       AuctionStatus         @default(RASCUNHO)
+  auctionDate                  DateTime
+  endDate                      DateTime?
+  totalLots                    Int?                  @default(0)
+  categoryId                   String
+  auctioneerId                 String
+  sellerId                     String
+  imageUrl                     String?
+  imageMediaId                 String?
+  dataAiHint                   String?
+  visits                       Int?                  @default(0)
+  isFavorite                   Boolean?              @default(false)
+  auctionType                  AuctionType
+  auctionMethod                AuctionMethod         @default(STANDARD)
+  participation                AuctionParticipation  @default(ONLINE)
+  address                      String?
+  cityId                       String?
+  stateId                      String?
+  zipCode                      String?
+  latitude                     Float?
+  longitude                    Float?
+  onlineUrl                    String?
+  documentsUrl                 String?
+  evaluationReportUrl          String?
+  auctionCertificateUrl        String?
+  sellingBranch                String?
+  automaticBiddingEnabled      Boolean               @default(false)
+  allowInstallmentBids         Boolean               @default(true)
+  silentBiddingEnabled         Boolean               @default(false)
+  allowMultipleBidsPerUser     Boolean               @default(true)
+  softCloseEnabled             Boolean               @default(false)
+  softCloseMinutes             Int                   @default(2)
+  estimatedRevenue             Float?
+  achievedRevenue              Float?
+  totalHabilitatedUsers        Int?                  @default(0)
+  isFeaturedOnMarketplace      Boolean               @default(false)
+  marketplaceAnnouncementTitle String?
+  judicialProcessId            String?
+  courtId                      String?
+  districtId                   String?
+  branchId                     String?
+  additionalTriggers           Json?
+  decrementAmount              Float?
+  decrementIntervalSeconds     Int?
+  floorPrice                   Float?
+  autoRelistSettings           Json?
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
+
   // Relações
-  auctioneer                       Auctioneer?         @relation(fields: [auctioneerId], references: [id])
-  seller                           Seller?             @relation(fields: [sellerId], references: [id])
-  category                         LotCategory?        @relation(fields: [categoryId], references: [id])
-  judicialProcess                  JudicialProcess?    @relation(fields: [judicialProcessId], references: [id])
-  city                             CityInfo?           @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  state                            StateInfo?          @relation(fields: [stateId], references: [id], onDelete: SetNull)
-  lots                             Lot[]
-  auctionStages                    AuctionStage[]
-  habilitations                    AuctionHabilitation[]
-  bids                             Bid[]
+  auctioneer                   AuctioneerProfileInfo @relation(fields: [auctioneerId], references: [id])
+  seller                       SellerProfileInfo     @relation(fields: [sellerId], references: [id])
+  category                     LotCategory           @relation(fields: [categoryId], references: [id])
+  judicialProcess              JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
+  court                        Court?                @relation(fields: [courtId], references: [id])
+  district                     JudicialDistrict?     @relation(fields: [districtId], references: [id])
+  branch                       JudicialBranch?       @relation(fields: [branchId], references: [id])
+  city                         CityInfo?             @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  state                        StateInfo?            @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  lots                         Lot[]
+  auctionStages                AuctionStage[]
+  bids                         Bid[]
+  auctionHabilitations         AuctionHabilitation[]
 }
 
-model AuctionHabilitation {
-  id        String   @id @default(uuid())
-  userId    String
-  auctionId String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-
-  @@unique([userId, auctionId])
-}
 
 model AuctionStage {
-  id              String    @id @default(uuid())
-  auctionId       String
-  auction         Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  name            String
-  startDate       DateTime
-  endDate         DateTime
-  evaluationValue Float?
-  lots            LotAuctionStageDetails[]
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id                String    @id @default(uuid())
+  auctionId         String
+  name              String
+  startDate         DateTime
+  endDate           DateTime
+  evaluationValue   Float?
+  
+  // Relações
+  auction           Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  lotStageDetails   LotAuctionStageDetails[]
 }
+
 
 model Lot {
-  id                    String        @id @default(uuid())
-  publicId              String        @unique
-  auctionId             String
-  slug                  String?
-  number                String?
-  title                 String
-  description           String?       @db.Text
-  price                 Float
-  initialPrice          Float?
-  secondInitialPrice    Float?
-  bidIncrementStep      Float?
-  status                LotStatus     @default(EM_BREVE)
-  bidsCount             Int?          @default(0)
-  views                 Int?          @default(0)
-  isFeatured            Boolean?      @default(false)
-  isExclusive           Boolean?      @default(false)
-  discountPercentage    Int?
-  additionalTriggers    Json?
-  imageUrl              String?
-  imageMediaId          String?
-  galleryImageUrls      Json?
-  mediaItemIds          Json?
-  type                  String?
-  categoryId            String?
-  subcategoryId         String?
-  auctionName           String?
-  sellerId              String?
-  seller                Seller?       @relation(fields: [sellerId], references: [id])
-  auctioneerId          String?
-  auctioneer            Auctioneer?   @relation(fields: [auctioneerId], references: [id])
-  cityId                String?
-  stateId               String?
-  cityName              String?
-  stateUf               String?
-  latitude              Float?
-  longitude             Float?
-  mapAddress            String?
-  mapEmbedUrl           String?
-  mapStaticImageUrl     String?
-  endDate               DateTime?
-  auctionDate           DateTime?
-  lotSpecificAuctionDate DateTime?
-  secondAuctionDate     DateTime?
-  condition             String?
-  dataAiHint            String?
-  winnerId              String?
-  winner                User?         @relation("LotWinner", fields: [winnerId], references: [id], onDelete: SetNull)
-  winningBidTermUrl     String?
-  allowInstallmentBids  Boolean       @default(false)
-  isRelisted            Boolean       @default(false)
-  relistCount           Int           @default(0)
-  originalLotId         String?       @unique
-  originalLot           Lot?          @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  relistedLot           Lot?          @relation("RelistedLot")
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
-  
-  // Relações
-  auction               Auction       @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  category              LotCategory?  @relation(fields: [categoryId], references: [id])
-  subcategory           Subcategory?  @relation(fields: [subcategory], references: [id])
-  city                  CityInfo?     @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  state                 StateInfo?    @relation(fields: [stateId], references: [id], onDelete: SetNull)
-  bids                  Bid[]
-  userMaxBids           UserLotMaxBid[]
-  wins                  UserWin[]
-  bens                  LotBens[]
-  stageDetails          LotAuctionStageDetails[]
-  inheritedMediaFrom    Bem?          @relation("InheritedMedia", fields: [inheritedMediaFromBemId], references: [id], onDelete: SetNull)
-  inheritedMediaFromBemId String?     @unique
-}
-
-model LotAuctionStageDetails {
-  lotId         String
-  stageId       String
-  initialBid    Float?
-  bidIncrement  Float?
-  
-  lot           Lot         @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  stage         AuctionStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  
-  @@id([lotId, stageId])
-}
-
-model Bem {
-  id                         String   @id @default(uuid())
-  publicId                   String?  @unique
-  title                      String
-  description                String?  @db.Text
-  status                     String   @default("DISPONIVEL")
-  categoryId                 String?
-  subcategoryId              String?
-  judicialProcessId          String?
-  sellerId                   String?
-  evaluationValue            Float?
-  imageUrl                   String?
-  imageMediaId               String?
-  galleryImageUrls           Json?
-  mediaItemIds               Json?
-  dataAiHint                 String?
-  locationCity               String?
-  locationState              String?
-  address                    String?
-  latitude                   Float?
-  longitude                  Float?
-  createdAt                  DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
-
-  // Vehicle-specific fields
-  plate                String?
-  make                 String?
-  model                String?
-  version              String?
-  year                 Int?
-  modelYear            Int?
-  mileage              Int?
-  color                String?
-  fuelType             String?
-  transmissionType     String?
-  bodyType             String?
-  vin                  String?
-  renavam              String?
-  enginePower          String?
-  numberOfDoors        Int?
-  vehicleOptions       String?
-  detranStatus         String?
-  debts                String?
-  runningCondition     String?
-  bodyCondition        String?
-  tiresCondition       String?
-  hasKey               Boolean?
-
-  // Real estate-specific fields
-  propertyRegistrationNumber String?
-  iptuNumber                 String?
-  isOccupied                 Boolean?
-  area                       Float?
-  totalArea                  Float?
-  builtArea                  Float?
-  bedrooms                   Int?
-  suites                     Int?
-  bathrooms                  Int?
-  parkingSpaces              Int?
-  constructionType           String?
-  finishes                   String?  @db.Text
-  infrastructure             String?  @db.Text
-  condoDetails               String?  @db.Text
-  improvements               String?  @db.Text
-  topography                 String?
-  liensAndEncumbrances       String?  @db.Text
-  propertyDebts              String?  @db.Text
-  unregisteredRecords        String?  @db.Text
-  hasHabiteSe                Boolean?
-  zoningRestrictions         String?
-
-  // Electronics
-  brand                        String?
-  serialNumber                 String?
-  itemCondition                String?
-  specifications               String? @db.Text
-  includedAccessories          String? @db.Text
-  batteryCondition             String?
-  hasInvoice                   Boolean?
-  hasWarranty                  Boolean?
-  repairHistory                String? @db.Text
-  
-  // Appliances
-  applianceCapacity            String?
-  voltage                      String?
-  applianceType                String?
-  additionalFunctions          String?
-
-  // Machinery
-  hoursUsed                    Int?
-  engineType                   String?
-  capacityOrPower              String?
-  maintenanceHistory           String? @db.Text
-  installationLocation         String?
-  compliesWithNR               String?
-  operatingLicenses            String?
-
-  // Livestock
-  breed                        String?
-  age                          String?
-  sex                          String? // Consider enum: 'Macho', 'Femea'
-  weight                       String?
-  individualId                 String?
-  purpose                      String?
-  sanitaryCondition            String?
-  vaccinationStatus            String?
-  lineage                      String?
-  isPregnant                   Boolean?
-  specialSkills                String?
-  gtaDocument                  String?
-  breedRegistryDocument        String?
-
-  // Furniture
-  furnitureType                String?
-  material                     String?
-  style                        String?
-  dimensions                   String?
-  pieceCount                   Int?
-
-  // Jewelry
-  jewelryType                  String?
-  metal                        String?
-  gemstones                    String? @db.Text
-  totalWeight                  String?
-  jewelrySize                  String?
-  authenticityCertificate      String?
-
-  // Art & Antiques
-  workType                     String?
-  artist                       String?
-  period                       String?
-  technique                    String?
-  provenance                   String? @db.Text
-
-  // Boats
-  boatType                     String?
-  boatLength                   String?
-  hullMaterial                 String?
-  onboardEquipment             String? @db.Text
-
-  // Food
-  productName                  String?
-  quantity                     String?
-  packagingType                String?
-  expirationDate               DateTime?
-  storageConditions            String?
-
-  // Precious Metals
-  preciousMetalType            String?
-  purity                       String?
-
-  // Forest Goods
-  forestGoodsType              String?
-  volumeOrQuantity             String?
-  species                      String?
-  dofNumber                    String?
+  id                           String                @id @default(uuid())
+  publicId                     String                @unique
+  auctionId                    String
+  slug                         String?
+  number                       String?
+  title                        String
+  description                  String?               @db.Text
+  price                        Float
+  initialPrice                 Float?
+  secondInitialPrice           Float?
+  bidIncrementStep             Float?
+  status                       LotStatus             @default(EM_BREVE)
+  bidsCount                    Int?                  @default(0)
+  views                        Int?                  @default(0)
+  isFeatured                   Boolean?              @default(false)
+  isExclusive                  Boolean?              @default(false)
+  discountPercentage           Int?
+  additionalTriggers           Json?
+  imageUrl                     String?
+  imageMediaId                 String?
+  galleryImageUrls             Json?
+  mediaItemIds                 Json?
+  type                         String
+  categoryId                   String?
+  subcategoryId                String?
+  auctionName                  String?
+  sellerId                     String?
+  sellerName                   String?
+  auctioneerId                 String?
+  cityId                       String?
+  stateId                      String?
+  cityName                     String?
+  stateUf                      String?
+  latitude                     Float?
+  longitude                    Float?
+  mapAddress                   String?
+  mapEmbedUrl                  String?
+  mapStaticImageUrl            String?
+  endDate                      DateTime?
+  auctionDate                  DateTime?
+  lotSpecificAuctionDate       DateTime?
+  secondAuctionDate            DateTime?
+  condition                    String?
+  dataAiHint                   String?
+  winnerId                     String?
+  winningBidTermUrl            String?
+  allowInstallmentBids         Boolean               @default(false)
+  isRelisted                   Boolean               @default(false)
+  relistCount                  Int                   @default(0)
+  originalLotId                String?               @unique
+  inheritedMediaFromBemId      String?
+  createdAt                    DateTime              @default(now())
+  updatedAt                    DateTime              @updatedAt
 
   // Relações
-  category          LotCategory?    @relation(fields: [categoryId], references: [id])
-  subcategory       Subcategory?    @relation(fields: [subcategoryId], references: [id])
-  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  seller            Seller?         @relation(fields: [sellerId], references: [id])
-  lots              LotBens[]
-  inheritedMediaLot Lot?            @relation("InheritedMedia")
+  auction                    Auction               @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  category                   LotCategory?          @relation(fields: [categoryId], references: [id])
+  subcategory                Subcategory?          @relation(fields: [subcategoryId], references: [id])
+  seller                     SellerProfileInfo?    @relation(fields: [sellerId], references: [id])
+  auctioneer                 AuctioneerProfileInfo?@relation(fields: [auctioneerId], references: [id])
+  city                       CityInfo?             @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  state                      StateInfo?            @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  originalLot                Lot?                  @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLot                Lot?                  @relation("RelistedLot")
+  winner                     User?                 @relation("LotWinner", fields: [winnerId], references: [id], onDelete: SetNull)
+  bids                       Bid[]
+  wins                       UserWin[]
+  maxBids                    UserLotMaxBid[]
+  bens                       LotBens[]
+  lotStageDetails            LotAuctionStageDetails[]
 }
 
 model LotBens {
-  lot     Lot    @relation(fields: [lotId], references: [id], onDelete: Cascade)
   lotId   String
-  bem     Bem    @relation(fields: [bemId], references: [id], onDelete: Cascade)
   bemId   String
+  
+  // Relações
+  lot     Lot    @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  bem     Bem    @relation(fields: [bemId], references: [id], onDelete: Cascade)
 
   @@id([lotId, bemId])
 }
 
-model MediaItem {
-  id                   String   @id @default(uuid())
-  fileName             String   @unique
-  storagePath          String
-  title                String
-  altText              String?
-  caption              String?
-  description          String?  @db.Text
-  mimeType             String
-  sizeBytes            Int?
-  urlOriginal          String
-  urlThumbnail         String?
-  urlMedium            String?
-  urlLarge             String?
-  linkedLotIds         Json?
-  dataAiHint           String?
-  uploadedByUserId     String?
-  uploadedByUser       User?    @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
-  judicialProcessId    String?  // Links to a specific judicial process
-  uploadedAt           DateTime @default(now())
-}
-
-model UserDocument {
-  id               String           @id @default(uuid())
-  userId           String
-  user             User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentTypeId   String
-  documentType     DocumentType     @relation(fields: [documentTypeId], references: [id])
-  status           UserDocumentStatus @default(NOT_SENT)
-  fileUrl          String
-  fileName         String?
-  rejectionReason  String?          @db.Text
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  
-  @@unique([userId, documentTypeId])
-}
-
-model DocumentType {
-  id          String   @id @default(uuid())
-  name        String   @unique
-  description String?
-  isRequired  Boolean  @default(true)
-  appliesTo   String   // e.g., 'PHYSICAL,LEGAL' or 'ALL'
-
-  // Relação
-  userDocuments UserDocument[]
-}
-
-
-model Bid {
-  id             String   @id @default(uuid())
-  lotId          String
-  auctionId      String
-  bidderId       String
-  bidderDisplay  String?
-  amount         Float
-  timestamp      DateTime @default(now())
-  // Relações
-  lot            Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  bidder         User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
-  auction        Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-}
-
-model UserWin {
-  id               String             @id @default(uuid())
-  lotId            String             @unique
-  userId           String
-  winningBidAmount Float
-  winDate          DateTime           @default(now())
-  paymentStatus    PaymentStatus      @default(PENDENTE)
-  invoiceUrl       String?
-  installments     InstallmentPayment[]
-  // Relações
-  lot              Lot                @relation(fields: [lotId], references: [id])
-  user             User               @relation(fields: [userId], references: [id])
-}
-
-// Model para armazenar os detalhes de pagamento de cada parcela.
-model InstallmentPayment {
-  id                String        @id @default(uuid())
-  userWinId         String
-  userWin           UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
-  installmentNumber Int
-  amount            Float
-  dueDate           DateTime
-  status            PaymentStatus @default(PENDENTE)
-  paymentDate       DateTime?
-  paymentMethod     String?
-  transactionId     String?
+model Bem {
+    id                           String @id @default(uuid())
+    publicId                     String @unique
+    title                        String
+    description                  String? @db.Text
+    status                       String  @default("DISPONIVEL")
+    categoryId                   String?
+    subcategoryId                String?
+    judicialProcessId            String?
+    sellerId                     String?
+    evaluationValue              Float?
+    imageUrl                     String?
+    imageMediaId                 String?
+    galleryImageUrls             Json?
+    mediaItemIds                 Json?
+    dataAiHint                   String?
+    locationCity                 String?
+    locationState                String?
+    address                      String?
+    latitude                     Float?
+    longitude                    Float?
+    plate                        String?
+    make                         String?
+    model                        String?
+    version                      String?
+    year                         Int?
+    modelYear                    Int?
+    mileage                      Int?
+    color                        String?
+    fuelType                     String?
+    transmissionType             String?
+    bodyType                     String?
+    vin                          String?
+    renavam                      String?
+    enginePower                  String?
+    numberOfDoors                Int?
+    vehicleOptions               String?
+    detranStatus                 String?
+    debts                        String?
+    runningCondition             String?
+    bodyCondition                String?
+    tiresCondition               String?
+    hasKey                       Boolean?
+    propertyRegistrationNumber   String?
+    iptuNumber                   String?
+    isOccupied                   Boolean?
+    totalArea                    Float?
+    builtArea                    Float?
+    bedrooms                     Int?
+    suites                       Int?
+    bathrooms                    Int?
+    parkingSpaces                Int?
+    constructionType             String?
+    finishes                     String?
+    infrastructure               String?
+    condoDetails                 String?
+    improvements                 String?
+    topography                   String?
+    liensAndEncumbrances         String?
+    propertyDebts                String?
+    unregisteredRecords          String?
+    hasHabiteSe                  Boolean?
+    zoningRestrictions           String?
+    brand                        String?
+    serialNumber                 String?
+    itemCondition                String?
+    specifications               String?
+    includedAccessories          String?
+    batteryCondition             String?
+    hasInvoice                   Boolean?
+    hasWarranty                  Boolean?
+    repairHistory                String?
+    applianceCapacity            String?
+    voltage                      String?
+    applianceType                String?
+    additionalFunctions          String?
+    hoursUsed                    Int?
+    engineType                   String?
+    capacityOrPower              String?
+    maintenanceHistory           String?
+    installationLocation         String?
+    compliesWithNR               String?
+    operatingLicenses            String?
+    breed                        String?
+    age                          String?
+    sex                          String?
+    weight                       String?
+    individualId                 String?
+    purpose                      String?
+    sanitaryCondition            String?
+    lineage                      String?
+    isPregnant                   Boolean?
+    specialSkills                String?
+    gtaDocument                  String?
+    breedRegistryDocument        String?
+    furnitureType                String?
+    material                     String?
+    style                        String?
+    dimensions                   String?
+    pieceCount                   Int?
+    jewelryType                  String?
+    metal                        String?
+    gemstones                    String?
+    totalWeight                  String?
+    jewelrySize                  String?
+    authenticityCertificate      String?
+    workType                     String?
+    artist                       String?
+    period                       String?
+    technique                    String?
+    provenance                   String?
+    boatType                     String?
+    boatLength                   String?
+    hullMaterial                 String?
+    onboardEquipment             String?
+    productName                  String?
+    quantity                     String?
+    packagingType                String?
+    expirationDate               DateTime?
+    storageConditions            String?
+    preciousMetalType            String?
+    purity                       String?
+    forestGoodsType              String?
+    volumeOrQuantity             String?
+    species                      String?
+    dofNumber                    String?
+    createdAt                    DateTime @default(now())
+    updatedAt                    DateTime @updatedAt
+    
+    // Relações
+    lots                         LotBens[]
+    category                     LotCategory?      @relation(fields: [categoryId], references: [id])
+    subcategory                  Subcategory?      @relation(fields: [subcategoryId], references: [id])
+    judicialProcess              JudicialProcess?  @relation(fields: [judicialProcessId], references: [id])
+    seller                       SellerProfileInfo?       @relation(fields: [sellerId], references: [id])
 }
 
 model DirectSaleOffer {
-  id                   String                @id @default(uuid())
-  publicId             String?               @unique
+  id                   String              @id @default(uuid())
+  publicId             String              @unique
   title                String
-  description          String?               @db.Text
+  description          String?             @db.Text
   offerType            DirectSaleOfferType
   price                Float?
   minimumOfferPrice    Float?
   status               DirectSaleOfferStatus @default(ACTIVE)
-  category             String
+  categoryId           String
   sellerId             String
   sellerName           String
   sellerLogoUrl        String?
@@ -877,14 +750,71 @@ model DirectSaleOffer {
   galleryImageUrls     Json?
   mediaItemIds         Json?
   itemsIncluded        Json?
-  views                Int?                  @default(0)
+  views                Int?                @default(0)
   expiresAt            DateTime?
-  createdAt            DateTime              @default(now())
-  updatedAt            DateTime              @updatedAt
-  categoryId           String
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  
   // Relações
   category             LotCategory           @relation(fields: [categoryId], references: [id])
-  seller               Seller                @relation(fields: [sellerId], references: [id])
+  seller               SellerProfileInfo   @relation(fields: [sellerId], references: [id])
+}
+
+model LotAuctionStageDetails {
+  id                String   @id @default(uuid())
+  lotId             String
+  auctionStageId    String
+  initialBid        Float?
+  bidIncrement      Float?
+  
+  // Relações
+  lot               Lot          @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auctionStage      AuctionStage @relation(fields: [auctionStageId], references: [id], onDelete: Cascade)
+
+  @@unique([lotId, auctionStageId])
+}
+
+
+model AuctionHabilitation {
+  userId     String
+  auctionId  String
+  createdAt  DateTime @default(now())
+
+  // Relações
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auction    Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, auctionId])
+}
+
+model Bid {
+  id            String   @id @default(uuid())
+  lotId         String
+  auctionId     String
+  bidderId      String
+  bidderDisplay String?
+  amount        Float
+  timestamp     DateTime @default(now())
+
+  // Relações
+  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+}
+
+model UserWin {
+  id               String   @id @default(uuid())
+  lotId            String   @unique
+  userId           String
+  winningBidAmount Float
+  winDate          DateTime @default(now())
+  paymentStatus    PaymentStatus @default(PENDENTE)
+  invoiceUrl       String?
+
+  // Relações
+  lot                Lot                    @relation(fields: [lotId], references: [id])
+  user               User                   @relation(fields: [userId], references: [id])
+  installments       InstallmentPayment[]
 }
 
 model UserLotMaxBid {
@@ -894,6 +824,7 @@ model UserLotMaxBid {
   maxAmount Float
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
+
   // Relações
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
@@ -901,83 +832,164 @@ model UserLotMaxBid {
   @@unique([userId, lotId])
 }
 
+model MediaItem {
+  id              String   @id @default(uuid())
+  fileName        String
+  storagePath     String
+  title           String?
+  altText         String?
+  caption         String?
+  description     String?  @db.Text
+  mimeType        String
+  sizeBytes       Int?
+  urlOriginal     String
+  urlThumbnail    String?
+  urlMedium       String?
+  urlLarge        String?
+  linkedLotIds    Json?
+  dataAiHint      String?
+  uploadedByUserId String?
+  judicialProcessId String?
+  uploadedAt      DateTime @default(now())
+
+  // Relações
+  uploadedBy      User?             @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+}
+
+model DocumentType {
+  id          String         @id @default(uuid())
+  name        String
+  description String?
+  isRequired  Boolean        @default(true)
+  appliesTo   String // Comma separated: PHYSICAL, LEGAL, ALL, etc.
+
+  // Relações
+  userDocuments UserDocument[]
+}
+
+model UserDocument {
+  id              String     @id @default(uuid())
+  userId          String
+  documentTypeId  String
+  status          UserDocumentStatus @default(PENDING_ANALYSIS)
+  fileUrl         String
+  fileName        String?
+  rejectionReason String?    @db.Text
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+
+  // Relações
+  user            User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])
+
+  @@unique([userId, documentTypeId])
+}
+
+model ContactMessage {
+  id       String   @id @default(uuid())
+  name     String
+  email    String
+  subject  String?
+  message  String   @db.Text
+  isRead   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+
 model Notification {
   id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   link      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-}
 
-model ContactMessage {
-  id      String   @id @default(uuid())
-  name    String
-  email   String
-  subject String
-  message String   @db.Text
-  isRead  Boolean  @default(false)
-  createdAt DateTime @default(now())
+  // Relações
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model DocumentTemplate {
-  id      String               @id @default(uuid())
-  name    String               @unique
-  type    DocumentTemplateType
-  content String               @db.Text
-  createdAt DateTime           @default(now())
-  updatedAt DateTime           @updatedAt
+  id         String   @id @default(uuid())
+  name       String
+  type       DocumentTemplateType
+  content    String   @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
+// Modelo para armazenar os detalhes de pagamento de cada parcela.
+model InstallmentPayment {
+  id                String       @id @default(uuid())
+  userWinId         String
+  installmentNumber Int
+  amount            Float
+  dueDate           DateTime
+  status            PaymentStatus @default(PENDENTE)
+  paymentDate       DateTime?
+  paymentMethod     String?
+  transactionId     String?
+
+  // Relações
+  win               UserWin      @relation(fields: [userWinId], references: [id], onDelete: Cascade)
+}
+
+// Modelo para armazenar as configurações da plataforma em um único documento
 model PlatformSettings {
-    id                               String @id @default("global")
-    siteTitle                        String @default("BidExpert")
-    siteTagline                      String?
-    logoUrl                          String?
-    faviconUrl                       String?
-    galleryImageBasePath             String
-    storageProvider                  String
-    firebaseStorageBucket            String?
-    activeThemeName                  String?
-    themes                           Json?
-    platformPublicIdMasks            Json?
-    homepageSections                 Json?
-    mentalTriggerSettings            Json?
-    sectionBadgeVisibility           Json?
-    mapSettings                      Json?
-    biddingSettings                  Json?
-    searchPaginationType             String
-    searchItemsPerPage               Int
-    searchLoadMoreCount              Int
-    showCountdownOnLotDetail         Boolean
-    showCountdownOnCards             Boolean
-    showRelatedLotsOnLotDetail       Boolean
-    relatedLotsCount                 Int
-    defaultUrgencyTimerHours         Int?
-    variableIncrementTable           Json?
-    paymentGatewaySettings           Json?
-    defaultListItemsPerPage          Int?
-    updatedAt                        DateTime @updatedAt
-}
+    id String @id @default("global") // Garante que haja apenas uma entrada
 
-model VehicleMake {
-    id        String @id @default(uuid())
-    name      String @unique
-    slug      String @unique
-    models    VehicleModel[]
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-}
+    // Identidade do Site
+    siteTitle               String?
+    siteTagline             String?
+    logoUrl                 String?
+    faviconUrl              String?
 
-model VehicleModel {
-    id        String      @id @default(uuid())
-    name      String
-    slug      String
-    makeId    String
-    make      VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    // Armazenamento
+    galleryImageBasePath    String?
+    storageProvider         String? // 'local' or 'firebase'
+    firebaseStorageBucket   String?
+
+    // Tema e Aparência
+    activeThemeName         String?
+    themes                  Json?
+    defaultListItemsPerPage Int?     @default(10)
+
+    // IDs Públicos
+    platformPublicIdMasks   Json?
     
-    @@unique([name, makeId])
+    // Configurações da Página Inicial
+    homepageSections        Json?
+
+    // Gatilhos Mentais
+    mentalTriggerSettings   Json?
+    sectionBadgeVisibility  Json?
+
+    // Mapas
+    mapSettings             Json?
+
+    // Busca e Paginação
+    searchPaginationType    String?  // 'loadMore' or 'numberedPages'
+    searchItemsPerPage      Int?
+    searchLoadMoreCount     Int?
+
+    // Contagem Regressiva
+    showCountdownOnLotDetail Boolean?
+    showCountdownOnCards     Boolean?
+
+    // Lotes Relacionados
+    showRelatedLotsOnLotDetail Boolean?
+    relatedLotsCount           Int?
+
+    // Urgência
+    defaultUrgencyTimerHours   Int?
+
+    // Incremento de Lance
+    variableIncrementTable     Json?
+
+    // Lances
+    biddingSettings            Json?
+
+    // Configurações de Pagamento
+    paymentGatewaySettings     Json?
+
+    updatedAt                  DateTime @updatedAt
 }
