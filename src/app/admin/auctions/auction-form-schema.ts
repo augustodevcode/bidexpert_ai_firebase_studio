@@ -23,7 +23,7 @@ const auctionStageSchema = z.object({
   name: z.string().min(1, "Nome da praça é obrigatório"),
   startDate: z.date({ required_error: "Data de início da praça é obrigatória" }),
   endDate: z.date({ required_error: "Data de encerramento da praça é obrigatória" }),
-  evaluationValue: z.coerce.number().positive("Valor de avaliação deve ser positivo.").optional().nullable(),
+  initialPrice: z.coerce.number().positive("Valor de avaliação deve ser positivo.").optional().nullable(),
 });
 
 export const auctionFormSchema = z.object({
@@ -73,7 +73,7 @@ export const auctionFormSchema = z.object({
   auctionStages: z.array(auctionStageSchema)
     .min(1, "O leilão deve ter pelo menos uma praça/etapa.")
     .optional()
-    .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), evaluationValue: null }])
+    .default([{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }])
     .refine((stages) => {
         if (!stages || stages.length <= 1) return true;
         for (let i = 1; i < stages.length; i++) {
