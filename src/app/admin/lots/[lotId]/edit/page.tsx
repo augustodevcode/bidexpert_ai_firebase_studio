@@ -28,6 +28,7 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
 import RelistLotModal from '../../relist-lot-modal'; // Importar o novo modal
+import Link from 'next/link';
 
 export default function EditLotPage() {
   const params = useParams();

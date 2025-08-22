@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import { UserCreationData } from "@/app/admin/users/actions";
 import { z } from 'zod';
@@ -195,6 +194,8 @@ export interface Lot {
   relistCount: number;
   originalLotId?: string | null;
   evaluationValue?: number | null;
+  initialPrice?: number | null;
+  secondInitialPrice?: number | null;
   
   // Vehicle specific from Bem
   year?: number;
@@ -305,7 +306,7 @@ export interface AuctionStage {
   name: string;
   endDate: string | Date;
   startDate?: string | Date; // Adicionado para timeline
-  evaluationValue?: number | null; // Adicionado para avaliação por praça
+  initialPrice?: number | null; // Adicionado para avaliação por praça
 }
 
 
@@ -715,7 +716,7 @@ export interface Bem {
   latitude?: number | null;
   longitude?: number | null;
 
-  // Veículos
+  // Vehicle specific
   plate?: string | null;
   make?: string | null;
   model?: string | null;
