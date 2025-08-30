@@ -8,7 +8,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { ShieldCheck, Loader2, FileText } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { getUserHabilitationStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import type { UserDocument, DocumentType } from '@/types';
 import { getDocumentTypes, getUserDocuments, saveUserDocument } from './actions';
 import { useToast } from '@/hooks/use-toast';

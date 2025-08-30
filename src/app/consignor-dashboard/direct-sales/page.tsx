@@ -12,7 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/app/admin/direct-sales/columns';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -90,6 +90,11 @@ export default function ConsignorDirectSalesPage() {
     { value: 'BUY_NOW', label: 'Compra Imediata'},
     { value: 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
   ], []);
+
+  const sellerOptions = useMemo(() =>
+    [...new Set(offers.map(o => o.sellerName))]
+        .map(seller => ({ value: seller, label: seller })),
+  [offers]);
 
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },

@@ -193,6 +193,8 @@ model User {
   uploadedMedia       MediaItem[]
   auctionHabilitations AuctionHabilitation[]
   roles               UsersOnRoles[]
+
+  Lot Lot[] @relation("LotWinner")
 }
 
 model Role {
@@ -226,6 +228,8 @@ model State {
   courts    Court[]
   districts JudicialDistrict[]
   lots      Lot[]
+
+  Auction Auction[]
 }
 
 model City {
@@ -238,6 +242,8 @@ model City {
   lotCount Int?     @default(0)
   lots     Lot[]
   state    State    @relation(fields: [stateId], references: [id], onDelete: Cascade)
+
+  Auction Auction[]
 }
 
 model LotCategory {
@@ -261,6 +267,8 @@ model LotCategory {
   auctions            Auction[]
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
+
+  DirectSaleOffer DirectSaleOffer[]
 }
 
 model Subcategory {
@@ -405,6 +413,8 @@ model JudicialProcess {
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  Auction Auction[]
 }
 
 model JudicialParty {
@@ -583,6 +593,8 @@ model Lot {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  Auctioneer Auctioneer[]
 }
 
 model LotBens {
