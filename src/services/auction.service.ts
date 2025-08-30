@@ -10,7 +10,7 @@ export class AuctionService {
   private auctionRepository: AuctionRepository;
 
   constructor() {
-    this.auctionRepository = new AuctionService();
+    this.auctionRepository = new AuctionRepository();
   }
 
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
