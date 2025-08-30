@@ -36,6 +36,34 @@ async function seedEssentialData() {
     }
     console.log(`[DB INIT] ✅ SUCCESS: Roles verified/created.`);
 
+    // Seeding Admin User
+    console.log('[DB INIT] LOG: Seeding Admin User...');
+    const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
+    if (adminRole) {
+        const adminEmail = 'admin@bidexpert.com.br';
+        const adminUser = await prisma.user.upsert({
+            where: { email: adminEmail },
+            update: {},
+            create: {
+                email: adminEmail,
+                fullName: 'Administrador BidExpert',
+                password: await bcrypt.hash('Admin@123', 10),
+                habilitationStatus: 'HABILITADO',
+                accountType: 'PHYSICAL',
+            }
+        });
+        // Ensure the join table record exists
+        await prisma.usersOnRoles.upsert({
+            where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
+            update: {},
+            create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'system-init' }
+        });
+        console.log("[DB INIT] ✅ SUCCESS: Admin user created or confirmed.");
+    } else {
+        console.error("[DB INIT] ❌ ERROR: Administrator role not found. Cannot create admin user.");
+    }
+
+
     // Seeding Lot Categories
     console.log('[DB INIT] LOG: Seeding Lot Categories...');
      for (const catData of sampleLotCategories) {
