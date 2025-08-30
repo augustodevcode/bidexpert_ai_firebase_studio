@@ -51,7 +51,7 @@ async function seedEssentialData() {
     console.log('[DB INIT] LOG: Seeding Subcategories...');
      for (const subCatData of sampleSubcategories) {
         await prisma.subcategory.upsert({
-            where: { slug: subCatData.slug },
+            where: { id: subCatData.id },
             update: { name: subCatData.name, parentCategoryId: subCatData.parentCategoryId },
             create: subCatData as any
         });
