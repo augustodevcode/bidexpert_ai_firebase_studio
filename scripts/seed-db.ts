@@ -28,28 +28,27 @@ async function seedFullData() {
         if (adminUserFromSample) {
             const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
             if (adminRole) {
-                const adminUser = await prisma.user.upsert({
-                    where: { email: adminUserFromSample.email },
-                    update: {
-                        fullName: adminUserFromSample.fullName,
-                        habilitationStatus: 'HABILITADO',
-                    },
-                    create: {
-                        email: adminUserFromSample.email,
-                        fullName: adminUserFromSample.fullName,
-                        password: await bcryptjs.hash(adminUserFromSample.password || 'Admin@123', 10),
-                        habilitationStatus: 'HABILITADO',
-                        accountType: 'PHYSICAL',
-                    }
-                });
-                // Ensure the join table record exists
-                await prisma.usersOnRoles.upsert({
-                    where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
-                    update: {},
-                    create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' }
-                });
+                const existingAdmin = await prisma.user.findUnique({ where: { email: adminUserFromSample.email }});
+                if (!existingAdmin) {
+                    const hashedPassword = await bcryptjs.hash(adminUserFromSample.password || 'Admin@123', 10);
+                    const adminUser = await prisma.user.create({
+                        data: {
+                            email: adminUserFromSample.email,
+                            fullName: adminUserFromSample.fullName,
+                            password: hashedPassword, // Use the hashed password
+                            habilitationStatus: 'HABILITADO',
+                            accountType: 'PHYSICAL',
+                        }
+                    });
+                    // Ensure the join table record exists
+                    await prisma.usersOnRoles.create({
+                        data: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' }
+                    });
+                    console.log("[DB SEED] ✅ SUCCESS: Admin user created.");
+                } else {
+                     console.log("[DB SEED] ✅ SUCCESS: Admin user already exists. Skipping creation.");
+                }
 
-                console.log("[DB SEED] ✅ SUCCESS: Admin user created or confirmed.");
             } else {
                  console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
             }
