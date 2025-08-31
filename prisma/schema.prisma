@@ -1,19 +1,24 @@
-// prisma/schema.prisma
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("POSTGRES_DATABASE_URL")
+// }
+// generator client {
+//   provider = "prisma-client-js"
+// }
 
 datasource db {
   provider     = "mysql"
   url          = env("DATABASE_URL")
-  relationMode = "prisma"
+  relationMode = "foreignKeys"
 }
 
 generator client {
   provider = "prisma-client-js"
 }
 
-// ============================================================================
-// ENUM DEFINITIONS
-// ============================================================================
-
+// =================================================================
+// ENUMS
+// =================================================================
 enum AuctionStatus {
   RASCUNHO
   EM_PREPARACAO
@@ -112,20 +117,6 @@ enum AuctionParticipation {
   HIBRIDO
 }
 
-enum BemStatus {
-  CADASTRO
-  DISPONIVEL
-  LOTEADO
-  VENDIDO
-  REMOVIDO
-  INATIVADO
-}
-
-enum Sexo {
-  Macho
-  Femea
-}
-
 enum UserDocumentStatus {
   NOT_SENT
   SUBMITTED
@@ -134,12 +125,11 @@ enum UserDocumentStatus {
   PENDING_ANALYSIS
 }
 
-// ============================================================================
+// =================================================================
 // MODELS
-// ============================================================================
-
+// =================================================================
 model PlatformSettings {
-  id                             String                 @id @default("global")
+  id                             String @id @default("global")
   siteTitle                      String?
   siteTagline                    String?
   galleryImageBasePath           String?
@@ -164,44 +154,29 @@ model PlatformSettings {
   biddingSettings                Json?
   paymentGatewaySettings         Json?
   defaultListItemsPerPage        Int?
-  updatedAt                      DateTime?              @updatedAt @db.DateTime(3)
+  updatedAt                      DateTime? @updatedAt
 }
 
 model Role {
-  id             String         @id @default(uuid())
-  name           String         @unique @db.VarChar(50)
-  nameNormalized String         @unique @db.VarChar(50)
-  description    String?        @db.VarChar(255)
-  permissions    Json
-  createdAt      DateTime       @default(now()) @db.DateTime(3)
-  updatedAt      DateTime       @updatedAt @db.DateTime(3)
-  users          UsersOnRoles[]
+  id               String        @id @default(uuid())
+  name             String        @unique @db.VarChar(50)
+  nameNormalized   String        @unique @db.VarChar(50)
+  description      String?       @db.VarChar(255)
+  permissions      Json
+  users            UsersOnRoles[]
+  createdAt        DateTime      @default(now()) @db.DateTime(3)
+  updatedAt        DateTime      @updatedAt @db.DateTime(3)
 }
 
 model State {
-  id        String             @id @default(uuid())
-  name      String             @db.VarChar(100)
-  uf        String             @unique @db.VarChar(2)
-  slug      String             @unique @db.VarChar(100)
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(100)
+  uf        String   @unique @db.VarChar(2)
+  slug      String   @unique @db.VarChar(100)
   cities    City[]
+  auctions  Auction[]
+  courts    Court[]
   districts JudicialDistrict[]
-  auctions  Auction[]
-
-  @@index([uf])
-}
-
-model City {
-  id      String   @id @default(uuid())
-  name    String   @db.VarChar(150)
-  slug    String   @db.VarChar(150)
-  stateId String
-  stateUf String?  @db.VarChar(2)
-  ibgeCode String?  @unique @db.VarChar(10)
-  state   State    @relation(fields: [stateId], references: [id])
-  lots    Lot[]
-  auctions  Auction[]
-
-  @@index([stateId])
 }
 
 model LotCategory {
@@ -210,118 +185,221 @@ model LotCategory {
   slug                 String        @unique @db.VarChar(191)
   description          String?       @db.VarChar(500)
   hasSubcategories     Boolean?
-  logoUrl              String?
-  logoMediaId          String?
-  dataAiHintLogo       String?
-  coverImageUrl        String?
-  coverImageMediaId    String?
-  dataAiHintCover      String?
-  megaMenuImageUrl     String?
-  megaMenuImageMediaId String?
-  dataAiHintMegaMenu   String?
+  logoUrl              String?       @db.VarChar(191)
+  logoMediaId          String?       @db.VarChar(191)
+  dataAiHintLogo       String?       @db.VarChar(191)
+  coverImageUrl        String?       @db.VarChar(191)
+  coverImageMediaId    String?       @db.VarChar(191)
+  dataAiHintCover      String?       @db.VarChar(191)
+  megaMenuImageUrl     String?       @db.VarChar(191)
+  megaMenuImageMediaId String?       @db.VarChar(191)
+  dataAiHintMegaMenu   String?       @db.VarChar(191)
   createdAt            DateTime      @default(now()) @db.DateTime(3)
   updatedAt            DateTime      @updatedAt @db.DateTime(3)
-  subcategories        Subcategory[]
-  lots                 Lot[]
-  bens                 Bem[]
-  auctions             Auction[]
-  directSaleOffers     DirectSaleOffer[]
-}
-
-model Subcategory {
-  id               String      @id @default(uuid())
-  name             String
-  slug             String
-  parentCategoryId String
-  description      String?     @db.VarChar(500)
-  displayOrder     Int         @default(0)
-  iconUrl          String?
-  iconMediaId      String?
-  dataAiHintIcon   String?
-  parentCategory   LotCategory @relation(fields: [parentCategoryId], references: [id])
-  lots             Lot[]
-  bens             Bem[]
+  subcategories      Subcategory[]
+  lots               Lot[]
+  auctions           Auction[]
+  bens               Bem[]
 }
 
 model DocumentType {
-  id          String         @id @default(uuid())
-  name        String         @db.VarChar(150)
-  description String?        @db.VarChar(255)
-  isRequired  Boolean        @default(true)
-  appliesTo   String? // e.g., 'PHYSICAL,LEGAL'
+  id          String   @id @default(uuid())
+  name        String   @db.VarChar(150)
+  description String?  @db.VarChar(255)
+  isRequired  Boolean  @default(true)
+  appliesTo   String?  @db.VarChar(191) // e.g., "PHYSICAL,LEGAL", "ALL"
   documents   UserDocument[]
 }
 
-model Court {
-  id                String             @id @default(uuid())
-  name              String             @db.VarChar(150)
-  slug              String?            @db.VarChar(150)
-  stateUf           String?            @db.VarChar(2)
-  website           String?
-  createdAt         DateTime           @default(now()) @db.DateTime(3)
-  updatedAt         DateTime           @updatedAt @db.DateTime(3)
-  judicialDistricts JudicialDistrict[]
-  judicialProcesses JudicialProcess[]  @relation("ProcessCourt")
-  auctions          Auction[]          @relation("AuctionCourt")
+model VehicleMake {
+  id     String         @id @default(uuid())
+  name   String         @unique
+  slug   String         @unique
+  models VehicleModel[]
+}
+
+model VehicleModel {
+  id     String      @id @default(uuid())
+  name   String
+  slug   String
+  make   VehicleMake @relation(fields: [makeId], references: [id])
+  makeId String
+
+  @@unique([name, makeId])
+}
+
+model Subcategory {
+  id                 String      @id @default(uuid())
+  name               String      @db.VarChar(191)
+  slug               String      @db.VarChar(191)
+  parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id])
+  parentCategoryId   String      @db.VarChar(191)
+  description        String?     @db.VarChar(500)
+  displayOrder       Int         @default(0)
+  iconUrl            String?     @db.VarChar(191)
+  iconMediaId        String?     @db.VarChar(191)
+  dataAiHintIcon     String?     @db.VarChar(191)
+  lots               Lot[]
+  bens               Bem[]
 }
 
 model User {
-  id                       String                  @id @default(uuid())
-  email                    String                  @unique
-  password                 String?
-  fullName                 String?
-  habilitationStatus     UserHabilitationStatus  @default(PENDING_DOCUMENTS)
-  accountType              AccountType             @default(PHYSICAL)
-  avatarUrl                String?
-  dataAiHint               String?
-  badges                   Json?
-  cpf                      String?                 @unique
-  rgNumber                 String?
-  rgIssuer                 String?
-  rgIssueDate              DateTime?               @db.DateTime(3)
-  rgState                  String?
-  dateOfBirth              DateTime?               @db.DateTime(3)
-  cellPhone                String?
-  homePhone                String?
-  gender                   String?
-  profession               String?
-  nationality              String?
-  maritalStatus            String?
-  propertyRegime           String?
-  spouseName               String?
-  spouseCpf                String?
-  zipCode                  String?
-  street                   String?
-  number                   String?
-  complement               String?
-  neighborhood             String?
-  city                     String?
-  state                    String?
-  optInMarketing           Boolean?                @default(false)
-  razaoSocial              String?
-  cnpj                     String?                 @unique
-  inscricaoEstadual        String?
-  website                  String?
-  responsibleName          String?
-  responsibleCpf           String?
-  createdAt                DateTime                @default(now()) @db.DateTime(3)
-  updatedAt                DateTime                @updatedAt @db.DateTime(3)
-  sellerId                 String?                 @unique
-  seller                   Seller?                 @relation("SellerUser", fields: [sellerId], references: [id], onDelete: SetNull)
-  roles                    UsersOnRoles[]
-  bids                     Bid[]
-  wins                     UserWin[]
-  documents                UserDocument[]
-  notifications            Notification[]
-  habilitations            AuctionHabilitation[]
-  maxBids                  UserLotMaxBid[]
-  uploadedMedia            MediaItem[]             @relation("UploadedBy")
-  auctioneer               Auctioneer?
+  id                   String                 @id @default(uuid())
+  email                String                 @unique @db.VarChar(191)
+  password             String?                @db.VarChar(191)
+  fullName             String?                @db.VarChar(191)
+  habilitationStatus   UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType          AccountType            @default(PHYSICAL)
+  avatarUrl            String?                @db.VarChar(191)
+  dataAiHint           String?                @db.VarChar(191)
+  badges               Json?
+  cpf                  String?                @db.VarChar(191)
+  rgNumber             String?                @db.VarChar(191)
+  rgIssuer             String?                @db.VarChar(191)
+  rgIssueDate          DateTime?              @db.DateTime(3)
+  rgState              String?                @db.VarChar(191)
+  dateOfBirth          DateTime?              @db.DateTime(3)
+  cellPhone            String?                @db.VarChar(191)
+  homePhone            String?                @db.VarChar(191)
+  gender               String?                @db.VarChar(191)
+  profession           String?                @db.VarChar(191)
+  nationality          String?                @db.VarChar(191)
+  maritalStatus        String?                @db.VarChar(191)
+  propertyRegime       String?                @db.VarChar(191)
+  spouseName           String?                @db.VarChar(191)
+  spouseCpf            String?                @db.VarChar(191)
+  zipCode              String?                @db.VarChar(191)
+  street               String?                @db.VarChar(191)
+  number               String?                @db.VarChar(191)
+  complement           String?                @db.VarChar(191)
+  neighborhood         String?                @db.VarChar(191)
+  city                 String?                @db.VarChar(191)
+  state                String?                @db.VarChar(191)
+  optInMarketing       Boolean?               @default(false)
+  razaoSocial          String?                @db.VarChar(191)
+  cnpj                 String?                @db.VarChar(191)
+  inscricaoEstadual    String?                @db.VarChar(191)
+  website              String?                @db.VarChar(191)
+  responsibleName      String?                @db.VarChar(191)
+  responsibleCpf       String?                @db.VarChar(191)
+  createdAt            DateTime               @default(now()) @db.DateTime(3)
+  updatedAt            DateTime               @updatedAt @db.DateTime(3)
+  roles                UsersOnRoles[]
+  bids                 Bid[]
+  wins                 UserWin[]              @relation("WonLots")
+  documents            UserDocument[]
+  notifications        Notification[]
+  habilitations        AuctionHabilitation[]
+  maxBids              UserLotMaxBid[]
+  uploadedMedia        MediaItem[]            @relation("UploadedBy")
+  sellerProfile        Seller?                @relation("SellerUser")
+  auctioneerProfile    Auctioneer?            @relation("AuctioneerUser")
+}
+
+model UsersOnRoles {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId     String
+  assignedAt DateTime @default(now()) @db.DateTime(3)
+  assignedBy String
+  @@id([userId, roleId])
+}
+
+model City {
+  id        String    @id @default(uuid())
+  name      String    @db.VarChar(150)
+  slug      String    @db.VarChar(150)
+  state     State     @relation(fields: [stateId], references: [id])
+  stateId   String
+  stateUf   String?
+  ibgeCode  String?   @unique @db.VarChar(10)
+  lotCount  Int?      @default(0)
+  lots      Lot[]
+  auctions  Auction[]
+}
+
+model Court {
+  id                 String               @id @default(uuid())
+  name               String               @db.VarChar(150)
+  slug               String?              @db.VarChar(150)
+  state              State?               @relation(fields: [stateId], references: [id])
+  stateId            String?
+  stateUf            String?              @db.VarChar(2)
+  website            String?              @db.VarChar(191)
+  createdAt          DateTime             @default(now()) @db.DateTime(3)
+  updatedAt          DateTime             @updatedAt @db.DateTime(3)
+  judicialDistricts  JudicialDistrict[]
+  judicialProcesses  JudicialProcess[]
+  auctions           Auction[]            @relation("AuctionCourt")
+}
+
+model JudicialDistrict {
+  id                String             @id @default(uuid())
+  name              String             @db.VarChar(150)
+  slug              String             @unique @db.VarChar(150)
+  court             Court?             @relation(fields: [courtId], references: [id])
+  courtId           String?
+  state             State              @relation(fields: [stateId], references: [id])
+  stateId           String
+  zipCode           String?            @db.VarChar(10)
+  createdAt         DateTime           @default(now()) @db.DateTime(3)
+  updatedAt         DateTime           @updatedAt @db.DateTime(3)
+  judicialBranches  JudicialBranch[]
+  judicialProcesses JudicialProcess[]
+  auctions          Auction[]          @relation("AuctionDistrict")
+}
+
+model JudicialBranch {
+  id                String               @id @default(uuid())
+  name              String               @db.VarChar(150)
+  slug              String               @unique @db.VarChar(150)
+  district          JudicialDistrict?    @relation(fields: [districtId], references: [id])
+  districtId        String?
+  contactName       String?              @db.VarChar(150)
+  phone             String?              @db.VarChar(20)
+  email             String?              @db.VarChar(150)
+  createdAt         DateTime             @default(now()) @db.DateTime(3)
+  updatedAt         DateTime             @updatedAt @db.DateTime(3)
+  judicialProcesses JudicialProcess[]
+  Seller            Seller[]
+  auctions          Auction[]            @relation("AuctionBranch")
+}
+
+model Seller {
+  id                   String        @id @default(uuid())
+  publicId             String?       @unique @db.VarChar(191)
+  slug                 String?       @unique @db.VarChar(150)
+  name                 String        @unique @db.VarChar(150)
+  contactName          String?       @db.VarChar(150)
+  email                String?       @db.VarChar(150)
+  phone                String?       @db.VarChar(20)
+  address              String?       @db.VarChar(200)
+  city                 String?       @db.VarChar(100)
+  state                String?       @db.VarChar(50)
+  zipCode              String?       @db.VarChar(10)
+  website              String?       @db.VarChar(191)
+  logoUrl              String?       @db.VarChar(191)
+  logoMediaId          String?       @db.VarChar(191)
+  dataAiHintLogo       String?       @db.VarChar(191)
+  description          String?       @db.Text
+  userId               String?       @unique
+  isJudicial           Boolean       @default(false)
+  judicialBranchId     String?       @unique
+  createdAt            DateTime      @default(now()) @db.DateTime(3)
+  updatedAt            DateTime      @updatedAt @db.DateTime(3)
+  user                 User?         @relation("SellerUser", fields: [userId], references: [id], onDelete: SetNull)
+  judicialBranch       JudicialBranch? @relation(fields: [judicialBranchId], references: [id], onDelete: SetNull)
+  auctions             Auction[]
+  bens                 Bem[]
+  directSales          DirectSaleOffer[]
+  judicialProcesses    JudicialProcess[]
+  lots                 Lot[]
 }
 
 model Auctioneer {
   id                   String    @id @default(uuid())
-  publicId             String?   @unique @db.VarChar(100)
+  publicId             String?   @unique @db.VarChar(191)
   slug                 String?   @unique @db.VarChar(150)
   name                 String    @db.VarChar(150)
   registrationNumber   String?   @db.VarChar(50)
@@ -332,63 +410,63 @@ model Auctioneer {
   city                 String?   @db.VarChar(100)
   state                String?   @db.VarChar(50)
   zipCode              String?   @db.VarChar(10)
-  website              String?
-  logoUrl              String?
-  logoMediaId          String?
-  dataAiHintLogo       String?
+  website              String?   @db.VarChar(191)
+  logoUrl              String?   @db.VarChar(191)
+  logoMediaId          String?   @db.VarChar(191)
+  dataAiHintLogo       String?   @db.VarChar(191)
   description          String?   @db.Text
   userId               String?   @unique
   createdAt            DateTime  @default(now()) @db.DateTime(3)
   updatedAt            DateTime  @updatedAt @db.DateTime(3)
-  user                 User?     @relation(fields: [userId], references: [id])
+  user                 User?     @relation("AuctioneerUser", fields: [userId], references: [id])
   auctions             Auction[]
   lots                 Lot[]
 }
 
 model Auction {
-  id                             String                 @id @default(uuid())
-  publicId                       String?                @unique @db.VarChar(100)
-  slug                           String?                @unique @db.VarChar(255)
-  title                          String                 @db.VarChar(255)
-  description                    String?                @db.Text
-  status                         AuctionStatus          @default(RASCUNHO)
-  auctionDate                    DateTime?              @db.DateTime(3)
-  endDate                        DateTime?              @db.DateTime(3)
+  id                             String        @id @default(uuid())
+  publicId                       String?       @unique @db.VarChar(100)
+  slug                           String?       @unique @db.VarChar(255)
+  title                          String        @db.VarChar(255)
+  description                    String?       @db.Text
+  status                         AuctionStatus @default(RASCUNHO)
+  auctionDate                    DateTime?     @db.DateTime(3)
+  endDate                        DateTime?     @db.DateTime(3)
   auctioneerId                   String
   sellerId                       String
   categoryId                     String?
   auctionType                    AuctionType?
   auctionMethod                  AuctionMethod?         @default(STANDARD)
   participation                  AuctionParticipation?  @default(ONLINE)
-  imageUrl                       String?
-  imageMediaId                   String?
-  dataAiHint                     String?
-  documentsUrl                   String?
-  address                        String?
-  zipCode                        String?
+  imageUrl                       String?       @db.VarChar(191)
+  imageMediaId                   String?       @db.VarChar(191)
+  dataAiHint                     String?       @db.VarChar(100)
+  documentsUrl                   String?       @db.VarChar(191)
+  address                        String?       @db.VarChar(191)
+  zipCode                        String?       @db.VarChar(191)
   latitude                       Float?
   longitude                      Float?
-  visits                         Int?                   @default(0)
-  totalLots                      Int?                   @default(0)
-  initialOffer                   Decimal?               @db.Decimal(15, 2)
-  isFavorite                     Boolean?               @default(false)
-  evaluationReportUrl            String?
-  auctionCertificateUrl          String?
-  sellingBranch                  String?                @db.VarChar(100)
-  automaticBiddingEnabled        Boolean                @default(false)
-  allowInstallmentBids           Boolean                @default(true)
-  silentBiddingEnabled           Boolean                @default(false)
-  allowMultipleBidsPerUser       Boolean                @default(true)
-  softCloseEnabled               Boolean                @default(false)
-  softCloseMinutes               Int?                   @default(2)
-  estimatedRevenue               Decimal?               @db.Decimal(15, 2)
-  achievedRevenue                Decimal?               @db.Decimal(15, 2)
-  totalHabilitatedUsers          Int?                   @default(0)
-  isFeaturedOnMarketplace        Boolean                @default(false)
-  marketplaceAnnouncementTitle   String?                @db.VarChar(150)
-  decrementAmount                Decimal?               @db.Decimal(15, 2)
+  visits                         Int?          @default(0)
+  totalLots                      Int?          @default(0)
+  initialOffer                   Decimal?      @db.Decimal(15, 2)
+  isFavorite                     Boolean?      @default(false)
+  evaluationReportUrl            String?       @db.VarChar(191)
+  auctionCertificateUrl          String?       @db.VarChar(191)
+  sellingBranch                  String?       @db.VarChar(100)
+  automaticBiddingEnabled        Boolean       @default(false)
+  allowInstallmentBids           Boolean       @default(true)
+  silentBiddingEnabled           Boolean       @default(false)
+  allowMultipleBidsPerUser       Boolean       @default(true)
+  softCloseEnabled               Boolean       @default(false)
+  softCloseMinutes               Int?          @default(2)
+  estimatedRevenue               Decimal?      @db.Decimal(15, 2)
+  achievedRevenue                Decimal?      @db.Decimal(15, 2)
+  totalHabilitatedUsers          Int?          @default(0)
+  isFeaturedOnMarketplace        Boolean       @default(false)
+  marketplaceAnnouncementTitle   String?       @db.VarChar(150)
+  decrementAmount                Decimal?      @db.Decimal(15, 2)
   decrementIntervalSeconds       Int?
-  floorPrice                     Decimal?               @db.Decimal(15, 2)
+  floorPrice                     Decimal?      @db.Decimal(15, 2)
   autoRelistSettings             Json?
   judicialProcessId              String?
   courtId                        String?
@@ -396,307 +474,315 @@ model Auction {
   branchId                       String?
   cityId                         String?
   stateId                        String?
-  createdAt                      DateTime               @default(now()) @db.DateTime(3)
-  updatedAt                      DateTime               @updatedAt @db.DateTime(3)
-  auctioneer                     Auctioneer             @relation(fields: [auctioneerId], references: [id])
-  seller                         Seller                 @relation(fields: [sellerId], references: [id])
-  category                       LotCategory?           @relation(fields: [categoryId], references: [id])
-  judicialProcess                JudicialProcess?       @relation("ProcessAuctions", fields: [judicialProcessId], references: [id])
-  court                          Court?                 @relation("AuctionCourt", fields: [courtId], references: [id])
-  district                       JudicialDistrict?      @relation("AuctionDistrict", fields: [districtId], references: [id])
-  branch                         JudicialBranch?        @relation("AuctionBranch", fields: [branchId], references: [id])
-  city                           City?                  @relation(fields: [cityId], references: [id])
-  state                          State?                 @relation(fields: [stateId], references: [id])
+  createdAt                      DateTime      @default(now()) @db.DateTime(3)
+  updatedAt                      DateTime      @updatedAt @db.DateTime(3)
+  auctioneer                     Auctioneer    @relation(fields: [auctioneerId], references: [id])
+  seller                         Seller        @relation(fields: [sellerId], references: [id])
+  category                       LotCategory?  @relation(fields: [categoryId], references: [id])
   lots                           Lot[]
-  auctionStages                  AuctionStage[]
   bids                           Bid[]
+  auctionStages                  AuctionStage[]
   habilitations                  AuctionHabilitation[]
-}
-
-model User {
-  id                       String                  @id @default(uuid())
-  email                    String                  @unique
-  password                 String?
-  fullName                 String?
-  habilitationStatus     UserHabilitationStatus  @default(PENDING_DOCUMENTS)
-  accountType              AccountType             @default(PHYSICAL)
-  avatarUrl                String?
-  dataAiHint               String?
-  badges                   Json?
-  cpf                      String?                 @unique
-  rgNumber                 String?
-  rgIssuer                 String?
-  rgIssueDate              DateTime?               @db.DateTime(3)
-  rgState                  String?
-  dateOfBirth              DateTime?               @db.DateTime(3)
-  cellPhone                String?
-  homePhone                String?
-  gender                   String?
-  profession               String?
-  nationality              String?
-  maritalStatus            String?
-  propertyRegime           String?
-  spouseName               String?
-  spouseCpf                String?
-  zipCode                  String?
-  street                   String?
-  number                   String?
-  complement               String?
-  neighborhood             String?
-  city                     String?
-  state                    String?
-  optInMarketing           Boolean?                @default(false)
-  razaoSocial              String?
-  cnpj                     String?                 @unique
-  inscricaoEstadual        String?
-  website                  String?
-  responsibleName          String?
-  responsibleCpf           String?
-  createdAt                DateTime                @default(now()) @db.DateTime(3)
-  updatedAt                DateTime                @updatedAt @db.DateTime(3)
-  sellerId                 String?                 @unique
-  seller                   Seller?                 @relation("SellerUser", fields: [sellerId], references: [id], onDelete: SetNull)
-  roles                    UsersOnRoles[]
-  bids                     Bid[]
-  wins                     UserWin[]               @relation("UserWins")
-  documents                UserDocument[]
-  notifications            Notification[]
-  habilitations            AuctionHabilitation[]
-  maxBids                  UserLotMaxBid[]
-  uploadedMedia            MediaItem[]             @relation("UploadedBy")
-  auctioneer               Auctioneer?
-  wonLots                  Lot[]                   @relation("WonLots")
-}
-
-model Seller {
-  id                   String            @id @default(uuid())
-  publicId             String?           @unique @db.VarChar(191)
-  slug                 String?           @unique @db.VarChar(150)
-  name                 String            @unique @db.VarChar(150)
-  contactName          String?           @db.VarChar(150)
-  email                String?           @db.VarChar(150)
-  phone                String?           @db.VarChar(20)
-  address              String?           @db.VarChar(200)
-  city                 String?           @db.VarChar(100)
-  state                String?           @db.VarChar(50)
-  zipCode              String?           @db.VarChar(10)
-  website              String?
-  logoUrl              String?
-  logoMediaId          String?
-  dataAiHintLogo       String?
-  description          String?           @db.Text
-  userId               String?           @unique
-  isJudicial           Boolean           @default(false)
-  judicialBranchId     String?           @unique
-  createdAt            DateTime          @default(now()) @db.DateTime(3)
-  updatedAt            DateTime          @updatedAt @db.DateTime(3)
-  user                 User?             @relation("SellerUser", fields: [userId], references: [id], onDelete: SetNull)
-  judicialBranch       JudicialBranch?   @relation(fields: [judicialBranchId], references: [id], onDelete: SetNull)
-  auctions             Auction[]
-  lots                 Lot[]
-  bens                 Bem[]
-  directSaleOffers     DirectSaleOffer[]
-  judicialProcesses    JudicialProcess[]
+  judicialProcess                JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
+  court                          Court?                @relation("AuctionCourt", fields: [courtId], references: [id])
+  district                       JudicialDistrict?     @relation("AuctionDistrict", fields: [districtId], references: [id])
+  branch                         JudicialBranch?       @relation("AuctionBranch", fields: [branchId], references: [id])
+  city                           City?                 @relation(fields: [cityId], references: [id])
+  state                          State?                @relation(fields: [stateId], references: [id])
 }
 
 model Lot {
-  id                         String                   @id @default(uuid())
-  publicId                   String?                  @unique @db.VarChar(100)
+  id                         String        @id @default(uuid())
+  publicId                   String?       @unique @db.VarChar(100)
   auctionId                  String
-  slug                       String?                  @db.VarChar(255)
-  number                     String?                  @db.VarChar(20)
-  title                      String                   @db.VarChar(255)
-  description                String?                  @db.Text
-  price                      Decimal                  @db.Decimal(15, 2)
-  initialPrice               Decimal?                 @db.Decimal(15, 2)
-  secondInitialPrice         Decimal?                 @db.Decimal(15, 2)
-  bidIncrementStep           Decimal?                 @db.Decimal(10, 2)
-  status                     LotStatus                @default(EM_BREVE)
-  bidsCount                  Int?                     @default(0)
-  views                      Int?                     @default(0)
-  isFeatured                 Boolean?                 @default(false)
-  isExclusive                Boolean?                 @default(false)
+  slug                       String?       @db.VarChar(255)
+  number                     String?       @db.VarChar(20)
+  title                      String        @db.VarChar(255)
+  description                String?       @db.Text
+  price                      Decimal       @db.Decimal(15, 2)
+  initialPrice               Decimal?      @db.Decimal(15, 2)
+  secondInitialPrice         Decimal?      @db.Decimal(15, 2)
+  bidIncrementStep           Decimal?      @db.Decimal(10, 2)
+  status                     LotStatus     @default(EM_BREVE)
+  bidsCount                  Int?          @default(0)
+  views                      Int?          @default(0)
+  isFeatured                 Boolean?      @default(false)
+  isExclusive                Boolean?      @default(false)
   discountPercentage         Int?
   additionalTriggers         Json?
-  imageUrl                   String?
-  imageMediaId               String?
+  imageUrl                   String?       @db.VarChar(191)
+  imageMediaId               String?       @db.VarChar(191)
   galleryImageUrls           Json?
   mediaItemIds               Json?
-  type                       String                   @db.VarChar(100)
+  type                       String        @db.VarChar(100)
   categoryId                 String?
   subcategoryId              String?
-  auctionName                String?                  @db.VarChar(255)
+  auctionName                String?       @db.VarChar(255)
   sellerId                   String?
-  sellerName                 String?                  @db.VarChar(150)
+  sellerName                 String?       @db.VarChar(150)
   auctioneerId               String?
   cityId                     String?
   stateId                    String?
-  cityName                   String?                  @db.VarChar(100)
-  stateUf                    String?                  @db.VarChar(2)
-  latitude                   Decimal?                 @db.Decimal(10, 8)
-  longitude                  Decimal?                 @db.Decimal(11, 8)
-  mapAddress                 String?                  @db.VarChar(255)
-  mapEmbedUrl                String?                  @db.VarChar(500)
-  mapStaticImageUrl          String?
-  endDate                    DateTime?                @db.DateTime(3)
-  auctionDate                DateTime?                @db.DateTime(3)
-  lotSpecificAuctionDate     DateTime?                @db.DateTime(3)
-  secondAuctionDate          DateTime?                @db.DateTime(3)
-  condition                  String?                  @db.VarChar(100)
-  dataAiHint                 String?                  @db.VarChar(100)
+  cityName                   String?       @db.VarChar(100)
+  stateUf                    String?       @db.VarChar(2)
+  latitude                   Decimal?      @db.Decimal(10, 8)
+  longitude                  Decimal?      @db.Decimal(11, 8)
+  mapAddress                 String?       @db.VarChar(255)
+  mapEmbedUrl                String?       @db.VarChar(500)
+  mapStaticImageUrl          String?       @db.VarChar(191)
+  endDate                    DateTime?     @db.DateTime(3)
+  auctionDate                DateTime?     @db.DateTime(3)
+  lotSpecificAuctionDate     DateTime?     @db.DateTime(3)
+  secondAuctionDate          DateTime?     @db.DateTime(3)
+  condition                  String?       @db.VarChar(100)
+  dataAiHint                 String?       @db.VarChar(100)
   winnerId                   String?
-  winningBidTermUrl          String?
-  allowInstallmentBids       Boolean?                 @default(false)
-  isRelisted                 Boolean                  @default(false)
-  relistCount                Int                      @default(0)
-  originalLotId              String?                  @unique
+  winningBidTermUrl          String?       @db.VarChar(191)
+  allowInstallmentBids       Boolean?      @default(false)
+  isRelisted                 Boolean       @default(false)
+  relistCount                Int           @default(0)
+  originalLotId              String?       @unique
   inheritedMediaFromBemId    String?
-  createdAt                  DateTime                 @default(now()) @db.DateTime(3)
-  updatedAt                  DateTime                 @updatedAt @db.DateTime(3)
-  auction                    Auction                  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  category                   LotCategory?             @relation(fields: [categoryId], references: [id])
-  subcategory                Subcategory?             @relation(fields: [subcategoryId], references: [id])
-  seller                     Seller?                  @relation(fields: [sellerId], references: [id])
-  auctioneer                 Auctioneer?              @relation(fields: [auctioneerId], references: [id])
-  city                       City?                    @relation(fields: [cityId], references: [id])
-  state                      State?                   @relation(fields: [stateId], references: [id])
-  winner                     User?                    @relation("WonLots", fields: [winnerId], references: [id], onDelete: SetNull)
-  originalLot                Lot?                     @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  relistedLot                Lot[]                    @relation("RelistHistory")
+  createdAt                  DateTime      @default(now()) @db.DateTime(3)
+  updatedAt                  DateTime      @updatedAt @db.DateTime(3)
+  auction                    Auction       @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  category                   LotCategory?  @relation(fields: [categoryId], references: [id])
+  subcategory                Subcategory?  @relation(fields: [subcategoryId], references: [id])
+  seller                     Seller?       @relation(fields: [sellerId], references: [id])
+  auctioneer                 Auctioneer?   @relation(fields: [auctioneerId], references: [id])
+  city                       City?         @relation(fields: [cityId], references: [id])
+  state                      State?        @relation(fields: [stateId], references: [id])
+  winner                     User?         @relation("WonLots", fields: [winnerId], references: [id], onDelete: SetNull)
+  originalLot                Lot?          @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLot                Lot?          @relation("RelistHistory")
   bens                       LotBens[]
-  stageDetails               LotAuctionStageDetails[]
   bids                       Bid[]
   wins                       UserWin[]
   maxBids                    UserLotMaxBid[]
+  stages                     LotAuctionStageDetails[]
 }
 
-model Court {
-  id                String             @id @default(uuid())
-  name              String             @db.VarChar(150)
-  slug              String?            @db.VarChar(150)
-  stateId           String?
-  stateUf           String?            @db.VarChar(2)
-  website           String?
-  createdAt         DateTime           @default(now()) @db.DateTime(3)
-  updatedAt         DateTime           @updatedAt @db.DateTime(3)
-  state             State?             @relation(fields: [stateId], references: [id])
-  judicialDistricts JudicialDistrict[]
-  judicialProcesses JudicialProcess[]  @relation("ProcessCourt")
-  auctions          Auction[]          @relation("AuctionCourt")
-
-  @@index([stateId])
+model Bem {
+  id                         String   @id @default(uuid())
+  publicId                   String   @unique @db.VarChar(191)
+  title                      String   @db.VarChar(191)
+  description                String?  @db.Text
+  status                     String   @default("DISPONIVEL")
+  categoryId                 String
+  subcategoryId              String?
+  judicialProcessId          String?
+  sellerId                   String?
+  evaluationValue            Decimal? @db.Decimal(15, 2)
+  imageUrl                   String?  @db.VarChar(191)
+  imageMediaId               String?  @db.VarChar(191)
+  galleryImageUrls           Json?
+  mediaItemIds               Json?
+  dataAiHint                 String?  @db.VarChar(191)
+  locationCity               String?  @db.VarChar(191)
+  locationState              String?  @db.VarChar(191)
+  address                    String?  @db.VarChar(191)
+  latitude                   Decimal? @db.Decimal(10, 8)
+  longitude                  Decimal? @db.Decimal(11, 8)
+  plate                      String?  @db.VarChar(191)
+  make                       String?  @db.VarChar(191)
+  model                      String?  @db.VarChar(191)
+  version                    String?  @db.VarChar(191)
+  year                       Int?
+  modelYear                  Int?
+  mileage                    Int?
+  color                      String?  @db.VarChar(191)
+  fuelType                   String?  @db.VarChar(191)
+  transmissionType           String?  @db.VarChar(191)
+  bodyType                   String?  @db.VarChar(191)
+  vin                        String?  @unique @db.VarChar(191)
+  renavam                    String?  @unique @db.VarChar(191)
+  enginePower                String?  @db.VarChar(191)
+  numberOfDoors              Int?
+  vehicleOptions             String?  @db.Text
+  detranStatus               String?  @db.VarChar(191)
+  debts                      String?  @db.Text
+  runningCondition           String?  @db.VarChar(191)
+  bodyCondition              String?  @db.VarChar(191)
+  tiresCondition             String?  @db.VarChar(191)
+  hasKey                     Boolean?
+  propertyRegistrationNumber String?  @db.VarChar(191)
+  iptuNumber                 String?  @db.VarChar(191)
+  isOccupied                 Boolean?
+  totalArea                  Decimal? @db.Decimal(15, 2)
+  builtArea                  Decimal? @db.Decimal(15, 2)
+  bedrooms                   Int?
+  suites                     Int?
+  bathrooms                  Int?
+  parkingSpaces              Int?
+  constructionType           String?  @db.VarChar(191)
+  finishes                   String?  @db.Text
+  infrastructure             String?  @db.Text
+  condoDetails               String?  @db.Text
+  improvements               String?  @db.Text
+  topography                 String?  @db.VarChar(191)
+  liensAndEncumbrances       String?  @db.Text
+  propertyDebts              String?  @db.Text
+  unregisteredRecords        String?  @db.Text
+  hasHabiteSe                Boolean?
+  zoningRestrictions         String?  @db.VarChar(191)
+  brand                      String?  @db.VarChar(191)
+  serialNumber               String?  @db.VarChar(191)
+  itemCondition              String?  @db.VarChar(191)
+  specifications             String?  @db.Text
+  includedAccessories        String?  @db.Text
+  batteryCondition           String?  @db.VarChar(191)
+  hasInvoice                 Boolean?
+  hasWarranty                Boolean?
+  repairHistory              String?  @db.Text
+  applianceCapacity          String?  @db.VarChar(191)
+  voltage                    String?  @db.VarChar(191)
+  applianceType              String?  @db.VarChar(191)
+  additionalFunctions        String?  @db.VarChar(191)
+  hoursUsed                  Int?
+  engineType                 String?  @db.VarChar(191)
+  capacityOrPower            String?  @db.VarChar(191)
+  maintenanceHistory         String?  @db.Text
+  installationLocation       String?  @db.VarChar(191)
+  compliesWithNR             String?  @db.VarChar(191)
+  operatingLicenses          String?  @db.VarChar(191)
+  breed                      String?  @db.VarChar(191)
+  age                        String?  @db.VarChar(191)
+  sex                        String?  @db.VarChar(191)
+  weight                     String?  @db.VarChar(191)
+  individualId               String?  @db.VarChar(191)
+  purpose                    String?  @db.VarChar(191)
+  sanitaryCondition          String?  @db.VarChar(191)
+  vaccinationStatus          String?  @db.VarChar(191)
+  lineage                    String?  @db.VarChar(191)
+  isPregnant                 Boolean?
+  specialSkills              String?  @db.VarChar(191)
+  gtaDocument                String?  @db.VarChar(191)
+  breedRegistryDocument      String?  @db.VarChar(191)
+  furnitureType              String?  @db.VarChar(191)
+  material                   String?  @db.VarChar(191)
+  style                      String?  @db.VarChar(191)
+  dimensions                 String?  @db.VarChar(191)
+  pieceCount                 Int?
+  jewelryType                String?  @db.VarChar(191)
+  metal                      String?  @db.VarChar(191)
+  gemstones                  String?  @db.VarChar(191)
+  totalWeight                String?  @db.VarChar(191)
+  jewelrySize                String?  @db.VarChar(191)
+  authenticityCertificate    String?  @db.VarChar(191)
+  workType                   String?  @db.VarChar(191)
+  artist                     String?  @db.VarChar(191)
+  period                     String?  @db.VarChar(191)
+  technique                  String?  @db.VarChar(191)
+  provenance                 String?  @db.Text
+  boatType                   String?  @db.VarChar(191)
+  boatLength                 String?  @db.VarChar(191)
+  hullMaterial               String?  @db.VarChar(191)
+  onboardEquipment           String?  @db.Text
+  productName                String?  @db.VarChar(191)
+  quantity                   String?  @db.VarChar(191)
+  packagingType              String?  @db.VarChar(191)
+  expirationDate             DateTime? @db.DateTime(3)
+  storageConditions          String?  @db.VarChar(191)
+  preciousMetalType          String?  @db.VarChar(191)
+  purity                     String?  @db.VarChar(191)
+  forestGoodsType            String?  @db.VarChar(191)
+  volumeOrQuantity           String?  @db.VarChar(191)
+  species                    String?  @db.VarChar(191)
+  dofNumber                  String?  @db.VarChar(191)
+  createdAt                  DateTime @default(now()) @db.DateTime(3)
+  updatedAt                  DateTime @updatedAt @db.DateTime(3)
+  lots                       LotBens[]
+  category                   LotCategory @relation(fields: [categoryId], references: [id])
+  subcategory                Subcategory? @relation(fields: [subcategoryId], references: [id])
+  judicialProcess            JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  seller                     Seller?      @relation(fields: [sellerId], references: [id])
 }
 
-model JudicialDistrict {
-  id                String             @id @default(uuid())
-  name              String             @db.VarChar(150)
-  slug              String             @unique @db.VarChar(150)
-  courtId           String?
-  stateId           String
-  zipCode           String?            @db.VarChar(10)
-  createdAt         DateTime           @default(now()) @db.DateTime(3)
-  updatedAt         DateTime           @updatedAt @db.DateTime(3)
-  court             Court?             @relation(fields: [courtId], references: [id])
-  state             State              @relation(fields: [stateId], references: [id])
-  judicialBranches  JudicialBranch[]
-  judicialProcesses JudicialProcess[]  @relation("ProcessDistrict")
-  auctions          Auction[]          @relation("AuctionDistrict")
+model LotBens {
+  lot   Lot    @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId String
+  bem   Bem    @relation(fields: [bemId], references: [id], onDelete: Cascade)
+  bemId String
 
-  @@index([courtId])
-  @@index([stateId])
-}
-
-model JudicialBranch {
-  id                String            @id @default(uuid())
-  name              String            @db.VarChar(150)
-  slug              String            @unique @db.VarChar(150)
-  districtId        String?
-  contactName       String?           @db.VarChar(150)
-  phone             String?           @db.VarChar(20)
-  email             String?           @db.VarChar(150)
-  createdAt         DateTime          @default(now()) @db.DateTime(3)
-  updatedAt         DateTime          @updatedAt @db.DateTime(3)
-  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
-  sellers           Seller[]
-  judicialProcesses JudicialProcess[] @relation("ProcessBranch")
-  auctions          Auction[]         @relation("AuctionBranch")
-
-  @@index([districtId])
+  @@id([lotId, bemId])
 }
 
 model JudicialProcess {
-  id              String           @id @default(uuid())
-  publicId        String?          @unique @db.VarChar(191)
-  processNumber   String           @db.VarChar(100)
-  isElectronic    Boolean          @default(true)
-  courtId         String?
-  districtId      String?
-  branchId        String?
-  sellerId        String?
-  createdAt       DateTime         @default(now()) @db.DateTime(3)
-  updatedAt       DateTime         @updatedAt @db.DateTime(3)
-  court           Court?           @relation("ProcessCourt", fields: [courtId], references: [id])
-  district        JudicialDistrict?@relation("ProcessDistrict", fields: [districtId], references: [id])
-  branch          JudicialBranch?  @relation("ProcessBranch", fields: [branchId], references: [id])
-  seller          Seller?          @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  parties         JudicialParty[]
-  bens            Bem[]
-  auctions        Auction[]
+  id                String            @id @default(uuid())
+  publicId          String?           @unique @db.VarChar(191)
+  processNumber     String            @db.VarChar(100)
+  isElectronic      Boolean           @default(true)
+  courtId           String?
+  districtId        String?
+  branchId          String?
+  sellerId          String?
+  createdAt         DateTime          @default(now()) @db.DateTime(3)
+  updatedAt         DateTime          @updatedAt @db.DateTime(3)
+  court             Court?            @relation(fields: [courtId], references: [id])
+  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
+  branch            JudicialBranch?   @relation(fields: [branchId], references: [id])
+  seller            Seller?           @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  parties           JudicialParty[]
+  bens              Bem[]
+  auctions          Auction[]
 }
 
 model JudicialParty {
   id             String           @id @default(uuid())
+  process        JudicialProcess  @relation(fields: [processId], references: [id], onDelete: Cascade)
   processId      String
-  name           String
+  name           String           @db.VarChar(191)
   documentNumber String?          @db.VarChar(50)
   partyType      ProcessPartyType
-  process        JudicialProcess  @relation(fields: [processId], references: [id], onDelete: Cascade)
-
-  @@index([processId])
 }
 
 model UserDocument {
-  id              String             @id @default(uuid())
-  userId          String
-  documentTypeId  String
-  status          UserDocumentStatus @default(PENDING_ANALYSIS)
-  fileUrl         String
-  fileName        String?
-  rejectionReason String?            @db.Text
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentType    DocumentType       @relation(fields: [documentTypeId], references: [id])
-
+  id                String             @id @default(uuid())
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String
+  documentType      DocumentType       @relation(fields: [documentTypeId], references: [id])
+  documentTypeId    String
+  status            UserDocumentStatus @default(PENDING_ANALYSIS)
+  fileUrl           String             @db.VarChar(191)
+  fileName          String?            @db.VarChar(191)
+  rejectionReason   String?            @db.Text
   @@unique([userId, documentTypeId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String   @db.VarChar(191)
+  link      String?  @db.VarChar(191)
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model InstallmentPayment {
   id                String        @id @default(uuid())
+  userWin           UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
   userWinId         String
   installmentNumber Int
   amount            Decimal       @db.Decimal(15, 2)
   dueDate           DateTime      @db.DateTime(3)
   status            PaymentStatus @default(PENDENTE)
   paymentDate       DateTime?     @db.DateTime(3)
-  paymentMethod     String?
-  transactionId     String?
-  win               UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
-
-  @@index([userWinId])
+  paymentMethod     String?       @db.VarChar(191)
+  transactionId     String?       @db.VarChar(191)
 }
 
 model UserWin {
-  id               String                 @id @default(uuid())
-  lotId            String                 @unique
+  id               String               @id @default(uuid())
+  lotId            String               @unique
   userId           String
-  winningBidAmount Decimal                @db.Decimal(15, 2)
-  winDate          DateTime               @default(now()) @db.DateTime(3)
-  paymentStatus    PaymentStatus          @default(PENDENTE)
-  invoiceUrl       String?
-  lot              Lot                    @relation(fields: [lotId], references: [id])
-  user             User                   @relation("UserWins", fields: [userId], references: [id])
+  winningBidAmount Decimal              @db.Decimal(15, 2)
+  winDate          DateTime             @default(now()) @db.DateTime(3)
+  paymentStatus    PaymentStatus        @default(PENDENTE)
+  invoiceUrl       String?              @db.VarChar(191)
+  lot              Lot                  @relation(fields: [lotId], references: [id])
+  user             User                 @relation("WonLots", fields: [userId], references: [id])
   installments     InstallmentPayment[]
-
-  @@index([userId])
 }
 
 model UserLotMaxBid {
@@ -710,41 +796,77 @@ model UserLotMaxBid {
   lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lotId])
-  @@index([userId])
-  @@index([lotId])
+}
+
+model AuctionHabilitation {
+  id        String   @id @default(uuid())
+  userId    String
+  auctionId String
+  createdAt DateTime @default(now()) @db.DateTime(3)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  @@unique([userId, auctionId])
 }
 
 model MediaItem {
   id                  String           @id @default(uuid())
-  fileName            String
-  storagePath         String
-  title               String?
-  altText             String?
+  fileName            String           @db.VarChar(191)
+  storagePath         String           @db.VarChar(191)
+  title               String?          @db.VarChar(191)
+  altText             String?          @db.VarChar(191)
   caption             String?          @db.VarChar(500)
   description         String?          @db.Text
   mimeType            String           @db.VarChar(100)
   sizeBytes           Int?
-  urlOriginal         String
-  urlThumbnail        String?
-  urlMedium           String?
-  urlLarge            String?
+  urlOriginal         String           @db.VarChar(191)
+  urlThumbnail        String?          @db.VarChar(191)
+  urlMedium           String?          @db.VarChar(191)
+  urlLarge            String?          @db.VarChar(191)
   linkedLotIds        Json?
-  judicialProcessId   String?
   dataAiHint          String?          @db.VarChar(100)
   uploadedByUserId    String
+  judicialProcessId   String?
   uploadedAt          DateTime         @default(now()) @db.DateTime(3)
   uploadedBy          User             @relation("UploadedBy", fields: [uploadedByUserId], references: [id])
-  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+}
 
-  @@index([uploadedByUserId])
-  @@index([judicialProcessId])
+model DirectSaleOffer {
+  id                   String                @id @default(uuid())
+  publicId             String?               @unique @db.VarChar(100)
+  title                String                @db.VarChar(255)
+  description          String?               @db.Text
+  offerType            DirectSaleOfferType
+  price                Decimal?              @db.Decimal(15, 2)
+  minimumOfferPrice    Decimal?              @db.Decimal(15, 2)
+  status               DirectSaleOfferStatus @default(ACTIVE)
+  categoryName         String?               @db.VarChar(100)
+  categoryId           String
+  sellerId             String
+  sellerName           String?               @db.VarChar(150)
+  sellerLogoUrl        String?               @db.VarChar(191)
+  dataAiHintSellerLogo String?               @db.VarChar(100)
+  locationCity         String?               @db.VarChar(100)
+  locationState        String?               @db.VarChar(100)
+  imageUrl             String?               @db.VarChar(191)
+  imageMediaId         String?               @db.VarChar(191)
+  dataAiHint           String?               @db.VarChar(100)
+  galleryImageUrls     Json?
+  mediaItemIds         Json?
+  itemsIncluded        Json?
+  views                Int?                  @default(0)
+  expiresAt            DateTime?             @db.DateTime(3)
+  createdAt            DateTime              @default(now()) @db.DateTime(3)
+  updatedAt            DateTime              @updatedAt @db.DateTime(3)
+  category             LotCategory           @relation(fields: [categoryId], references: [id])
+  seller               Seller                @relation(fields: [sellerId], references: [id])
 }
 
 model ContactMessage {
   id        String   @id @default(uuid())
   name      String   @db.VarChar(150)
   email     String   @db.VarChar(150)
-  subject   String?
+  subject   String?  @db.VarChar(191)
   message   String   @db.Text
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now()) @db.DateTime(3)
@@ -758,239 +880,1217 @@ model DocumentTemplate {
   createdAt DateTime             @default(now()) @db.DateTime(3)
   updatedAt DateTime             @updatedAt @db.DateTime(3)
 }
+```
+- src/tests/judicial-process.test.ts:
+```ts
+// tests/judicial-process.test.ts
+import { describe, test, beforeAll, afterAll, it } from 'vitest';
+import assert from 'node:assert';
+import { JudicialProcessService } from '@/services/judicial-process.service';
+import { prisma } from '@/lib/prisma';
+import type { JudicialProcessFormData, Court, StateInfo, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
 
-model AuctionHabilitation {
-  id        String   @id @default(uuid())
-  userId    String
-  auctionId String
-  createdAt DateTime @default(now()) @db.DateTime(3)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+const processService = new JudicialProcessService();
+const testRunId = `proc-e2e-${uuidv4().substring(0, 8)}`;
+const testProcessNumber = `0000123-45.${new Date().getFullYear()}.${testRunId}`;
 
-  @@unique([userId, auctionId])
-  @@index([auctionId])
+let testCourt: Court;
+let testState: StateInfo;
+let testDistrict: JudicialDistrict;
+let testBranch: JudicialBranch;
+let testSeller: SellerProfileInfo;
+let createdProcessId: string;
+
+describe('Judicial Process Service E2E Tests', () => {
+
+    beforeAll(async () => {
+        // Create dependency records
+        const uf = testRunId.substring(0, 2).toUpperCase();
+        testState = await prisma.state.create({ data: { name: `Estado Proc ${testRunId}`, uf: uf, slug: `estado-proc-${testRunId}` } });
+        testCourt = await prisma.court.create({ data: { name: `Tribunal Proc ${testRunId}`, stateUf: uf, slug: `tribunal-proc-${testRunId}`, website: 'http://test.com' } });
+        testDistrict = await prisma.judicialDistrict.create({ data: { name: `Comarca Proc ${testRunId}`, slug: `comarca-proc-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
+        testBranch = await prisma.judicialBranch.create({ data: { name: `Vara Proc ${testRunId}`, slug: `vara-proc-${testRunId}`, districtId: testDistrict.id } });
+        testSeller = await prisma.seller.create({ data: { name: `Vara ${testRunId}`, publicId: `seller-pub-proc-${testRunId}`, slug: `vara-proc-${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id } });
+    });
+    
+    afterAll(async () => {
+        try {
+            if (createdProcessId) {
+                await processService.deleteJudicialProcess(createdProcessId);
+            }
+            await prisma.seller.deleteMany({ where: { name: `Vara ${testRunId}` } });
+            await prisma.judicialBranch.deleteMany({ where: { name: `Vara Proc ${testRunId}` } });
+            await prisma.judicialDistrict.deleteMany({ where: { name: `Comarca Proc ${testRunId}` } });
+            await prisma.court.deleteMany({ where: { name: `Tribunal Proc ${testRunId}` } });
+            await prisma.state.deleteMany({ where: { uf: testRunId.substring(0,2).toUpperCase() } });
+        } catch (error) {
+             console.error(`[JUDICIAL PROCESS TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create a new judicial process with parties', async () => {
+        // Arrange
+        const newProcessData: JudicialProcessFormData = {
+            processNumber: testProcessNumber,
+            isElectronic: true,
+            courtId: testCourt.id,
+            districtId: testDistrict.id,
+            branchId: testBranch.id,
+            sellerId: testSeller.id,
+            parties: [
+                { name: `Autor Teste ${testRunId}`, partyType: 'AUTOR' },
+                { name: `Réu Teste ${testRunId}`, partyType: 'REU' },
+            ]
+        };
+
+        // Act
+        const result = await processService.createJudicialProcess(newProcessData);
+        if (result.processId) createdProcessId = result.processId;
+
+        // Assert
+        assert.strictEqual(result.success, true, 'Service should return success: true');
+        assert.ok(result.processId, 'Service should return a processId');
+
+        const createdProcessFromDb = await prisma.judicialProcess.findUnique({
+            where: { id: result.processId },
+            include: { parties: true },
+        });
+
+        console.log('--- Judicial Process Record Found in DB ---');
+        console.log(createdProcessFromDb);
+        console.log('-------------------------------------------');
+        
+        assert.ok(createdProcessFromDb, 'Process should be found in the database');
+        assert.strictEqual(createdProcessFromDb.processNumber, newProcessData.processNumber, 'Process number should match');
+        assert.strictEqual(createdProcessFromDb.branchId, newProcessData.branchId, 'Process branchId should match');
+        assert.strictEqual(createdProcessFromDb.parties.length, 2, 'Should have 2 parties');
+        assert.strictEqual(createdProcessFromDb.parties[0].name, `Autor Teste ${testRunId}`, 'First party name should match');
+    });
+});
+
+```
+- tests/lot.test.ts:
+```ts
+// tests/lot.test.ts
+import { describe, test, beforeAll, afterAll, it } from 'vitest';
+import assert from 'node:assert';
+import { LotService } from '@/services/lot.service';
+import { prisma } from '@/lib/prisma';
+import type { LotFormData, Auction, Bem, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const lotService = new LotService();
+const testRunId = uuidv4().substring(0, 8); // Unique ID for this test run
+
+const testLotTitle = `Lote de Teste E2E ${testRunId}`;
+let testAuction: any;
+let testBem: any;
+let testSeller: SellerProfileInfo;
+let testAuctioneer: AuctioneerProfileInfo;
+let testCategory: LotCategory;
+let createdLotId: string | undefined;
+
+describe('Lot Service E2E Tests', () => {
+
+    beforeAll(async () => {
+        // Use the unique testRunId to ensure data does not conflict with other tests
+        testCategory = await prisma.lotCategory.create({
+            data: { name: `Categoria Teste Lotes ${testRunId}`, slug: `cat-lotes-${testRunId}`, hasSubcategories: false }
+        });
+        testAuctioneer = await prisma.auctioneer.create({
+            data: { name: `Leiloeiro Teste Lotes ${testRunId}`, publicId: `leiloeiro-lotes-${testRunId}`, slug: `leiloeiro-lotes-${testRunId}` }
+        });
+        testSeller = await prisma.seller.create({
+            data: { name: `Comitente Teste Lotes ${testRunId}`, publicId: `seller-lotes-${testRunId}`, slug: `comitente-lotes-${testRunId}`, isJudicial: false }
+        });
+        
+        testAuction = await prisma.auction.create({
+            data: { 
+                title: `Leilão de Teste para Lotes ${testRunId}`,
+                publicId: `auc-lotes-${testRunId}`,
+                slug: `leilao-teste-lotes-${testRunId}`,
+                auctioneerId: testAuctioneer.id,
+                sellerId: testSeller.id,
+                status: 'ABERTO_PARA_LANCES',
+                auctionDate: new Date(),
+            }
+        });
+        
+        testBem = await prisma.bem.create({
+            data: {
+                title: `Bem de Teste para Lote E2E ${testRunId}`,
+                publicId: `bem-lotes-${testRunId}`,
+                status: 'DISPONIVEL',
+                categoryId: testCategory.id,
+                sellerId: testSeller.id,
+                evaluationValue: 1500.00
+            }
+        });
+    });
+
+    afterAll(async () => {
+        try {
+             if (createdLotId) {
+                // The repository now handles the cascade deletion within a transaction
+                await lotService.deleteLot(createdLotId);
+            }
+            // Clean up dependencies in reverse order of creation
+            if (testBem) await prisma.bem.delete({ where: { id: testBem.id } });
+            if (testAuction) await prisma.auction.delete({ where: { id: testAuction.id } });
+            if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+            if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
+            if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
+        } catch (error) {
+            console.error("Cleanup error:", error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create a new lot with a bem and verify it in the database', async () => {
+        // Arrange
+        const newLotData: Partial<LotFormData> = {
+            title: testLotTitle,
+            number: '001-TEST',
+            description: 'Um lote criado para o teste E2E, contendo um bem.',
+            status: 'ABERTO_PARA_LANCES',
+            auctionId: testAuction.id,
+            price: 2000,
+            initialPrice: 1500,
+            type: testCategory.id, // 'type' no form é o nosso 'categoryId'
+            bemIds: [testBem.id], // Link the bem
+            stageDetails: [ // Adicionado para testar a nova lógica de praças
+                { stageId: testAuction.auctionStages[0]?.id, stageName: '1ª Praça', initialBid: 2000, bidIncrement: 100 },
+                { stageId: testAuction.auctionStages[1]?.id, stageName: '2ª Praça', initialBid: 1500, bidIncrement: 50 },
+            ]
+        };
+
+        // Act
+        const result = await lotService.createLot(newLotData);
+        createdLotId = result.lotId; // Store for cleanup
+
+        // Assert: Check the service method result
+        assert.strictEqual(result.success, true, 'LotService.createLot should return success: true');
+        assert.ok(result.lotId, 'LotService.createLot should return a lotId');
+
+        // Assert: Verify directly in the database
+        const createdLotFromDb = await prisma.lot.findUnique({
+            where: { id: result.lotId },
+            include: { bens: true, stages: true }
+        });
+
+        console.log('--- Lot Record Found in DB ---');
+        console.log(createdLotFromDb);
+        console.log('------------------------------');
+
+        assert.ok(createdLotFromDb, 'Lot should be found in the database after creation');
+        assert.ok(createdLotFromDb.publicId, 'Lot should have a publicId generated');
+        assert.strictEqual(createdLotFromDb.title, newLotData.title, 'Lot title should match');
+        assert.strictEqual(createdLotFromDb.auctionId, testAuction.id, 'Lot auctionId should match');
+        assert.strictEqual(createdLotFromDb.bens.length, 1, 'Lot should be linked to 1 bem');
+        
+        const joinRecord = await prisma.lotBens.findFirst({
+            where: {
+                lotId: createdLotFromDb.id,
+                bemId: testBem.id
+            }
+        });
+        assert.ok(joinRecord, 'A record should exist in the LotBens join table');
+
+        // Assert: Verify stage details
+        assert.strictEqual(createdLotFromDb.stages.length, 2, 'Should have 2 stage detail records');
+        assert.strictEqual(createdLotFromDb.stages[0].initialBid, 2000);
+        assert.strictEqual(createdLotFromDb.stages[1].bidIncrement, 50);
+    });
+});
+
+```
+- tests/media.test.ts:
+```ts
+// tests/media.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { MediaService } from '@/services/media.service';
+import { prisma } from '@/lib/prisma';
+import type { UserProfileData, MediaItem } from '@/types';
+import { POST as uploadApiRoute } from '@/app/api/upload/route';
+import { NextRequest } from 'next/server';
+import fs from 'fs/promises';
+import path from 'path';
+
+const mediaService = new MediaService();
+const testFileName = 'e2e-test-image.png';
+const UPLOAD_DIR = path.join(process.cwd(), 'public', 'uploads', 'media');
+
+let testUser: UserProfileData;
+let createdMediaItem: MediaItem | undefined;
+let createdFilePath: string | undefined;
+
+// Helper to create a mock file for upload
+async function createMockFile(fileName: string, content: string): Promise<Buffer> {
+    const buffer = Buffer.from(content, 'base64');
+    return buffer;
 }
 
-model Bid {
-  id            String   @id @default(uuid())
-  lotId         String
-  auctionId     String
-  bidderId      String
-  bidderDisplay String?
-  amount        Decimal  @db.Decimal(15, 2)
-  timestamp     DateTime @default(now()) @db.DateTime(3)
-  lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+describe('Media Library E2E Upload Test', () => {
 
-  @@index([lotId])
-  @@index([bidderId])
+    beforeAll(async () => {
+        // Media items require an uploader (user)
+        testUser = await prisma.user.create({
+            data: {
+                fullName: 'Media Upload Test User',
+                email: 'media.upload.test@example.com',
+                password: 'password',
+                habilitationStatus: 'HABILITADO',
+                accountType: 'PHYSICAL',
+            }
+        });
+        // Ensure upload directory exists
+        await fs.mkdir(UPLOAD_DIR, { recursive: true });
+    });
+    
+    afterAll(async () => {
+        try {
+            // Clean up database records
+            if (createdMediaItem) {
+                 await prisma.mediaItem.deleteMany({ where: { uploadedByUserId: testUser.id } });
+            }
+            if (testUser) {
+                await prisma.user.delete({ where: { id: testUser.id } });
+            }
+            // Clean up physical file
+            if (createdFilePath && await fs.stat(createdFilePath).catch(() => false)) {
+                await fs.unlink(createdFilePath);
+            }
+        } catch (error) {
+            console.error("Cleanup error in media test:", error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should upload a file via API, create a media item record, and save the file', async () => {
+        // Arrange
+        const imageContentBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 black PNG
+        const imageBuffer = await createMockFile(testFileName, imageContentBase64);
+        const file = new File([imageBuffer], testFileName, { type: 'image/png' });
+
+        const formData = new FormData();
+        formData.append('files', file);
+        formData.append('userId', testUser.id);
+        formData.append('path', 'media');
+        
+        // Mock NextRequest
+        const request = new NextRequest('http://localhost/api/upload', {
+            method: 'POST',
+            body: formData,
+        });
+
+        // Act
+        const response = await uploadApiRoute(request);
+        const result = await response.json();
+
+        // Assert: API Response
+        assert.strictEqual(response.status, 200, 'API should respond with status 200');
+        assert.strictEqual(result.success, true, 'API response success should be true');
+        assert.ok(result.items && result.items.length > 0, 'API should return the created items');
+        assert.ok(result.urls && result.urls.length > 0, 'API should return the public URL');
+        
+        createdMediaItem = result.items[0];
+        createdFilePath = path.join(process.cwd(), result.urls[0]); // O path retornado pela API já é relativo a 'public'
+
+
+        // Assert: Verify directly in the database
+        const createdItemFromDb = await prisma.mediaItem.findUnique({
+            where: { id: createdMediaItem!.id },
+        });
+        
+        console.log('--- MediaItem Record Found in DB after API Upload ---');
+        console.log(createdItemFromDb);
+        console.log('----------------------------------------------------');
+        
+        assert.ok(createdItemFromDb, 'Media item should be found in the database');
+        assert.strictEqual(createdItemFromDb.fileName, testFileName, 'File name should match');
+        assert.strictEqual(createdItemFromDb.uploadedByUserId, testUser.id, 'UploadedByUserId should match the user ID');
+        
+        // Assert: Verify physical file creation
+        const fileExists = await fs.stat(createdFilePath).catch(() => false);
+        assert.ok(fileExists, `File should exist at path: ${createdFilePath}`);
+    });
+});
+
+```
+- tests/payment.service.test.ts:
+```ts
+// tests/payment.service.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
+import type { UserProfileWithPermissions, Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, UserWin } from '@/types';
+import { UserService } from '@/services/user.service';
+import { RoleRepository } from '@/repositories/role.repository';
+import { processPaymentAction } from '@/app/checkout/[winId]/actions';
+import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
+import { LotService } from '@/services/lot.service';
+
+const userService = new UserService();
+const lotService = new LotService();
+
+const testRunId = `payment-e2e-${uuidv4().substring(0, 8)}`;
+let testUser: UserProfileWithPermissions;
+let testWin: UserWin;
+let testLot: Lot;
+
+describe('Payment Service E2E Tests', () => {
+
+    beforeAll(async () => {
+        const userRole = await prisma.role.findFirst({where: {name: 'USER'}});
+        assert.ok(userRole, "USER role must exist");
+        
+        const userRes = await userService.createUser({
+            fullName: `Pagador ${testRunId}`,
+            email: `pagador-${testRunId}@test.com`,
+            password: 'password123',
+            roleIds: [userRole.id],
+            habilitationStatus: 'HABILITADO'
+        });
+        assert.ok(userRes.success && userRes.userId);
+        testUser = (await userService.getUserById(userRes.userId))!;
+        
+        // Create dummy Lot/Auction for the win
+        const seller = await prisma.seller.create({ data: { name: `Seller Pay ${testRunId}`, publicId: `pub-seller-pay-${testRunId}`, slug: `seller-pay-${testRunId}`, isJudicial: false } });
+        const auctioneer = await prisma.auctioneer.create({ data: { name: `Auct Pay ${testRunId}`, publicId: `pub-auct-pay-${testRunId}`, slug: `auct-pay-${testRunId}` } });
+        const auction = await prisma.auction.create({ data: { title: `Auction Pay ${testRunId}`, publicId: `pub-auc-pay-${testRunId}`, slug: `auc-pay-${testRunId}`, auctioneerId: auctioneer.id, sellerId: seller.id, status: 'FINALIZADO', auctionDate: new Date() } });
+        const lotRes = await lotService.createLot({ title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id } as any);
+        assert.ok(lotRes.success && lotRes.lotId);
+        testLot = (await lotService.getLotById(lotRes.lotId))!;
+
+        testWin = await prisma.userWin.create({
+            data: {
+                userId: testUser.id,
+                lotId: testLot.id,
+                winningBidAmount: 1200.00,
+                paymentStatus: 'PENDENTE'
+            }
+        });
+    });
+    
+    afterAll(async () => {
+        try {
+            await prisma.installmentPayment.deleteMany({ where: { userWinId: testWin.id } });
+            await prisma.userWin.deleteMany({ where: { id: testWin.id } });
+            await prisma.lot.deleteMany({ where: { id: testLot.id } });
+            const auction = await prisma.auction.findFirst({ where: { title: { contains: `Auction Pay ${testRunId}`}}});
+            if(auction) await prisma.auction.delete({ where: { id: auction.id } });
+            const seller = await prisma.seller.findFirst({ where: { name: { contains: `Seller Pay ${testRunId}`}}});
+            if(seller) await prisma.seller.delete({ where: { id: seller.id } });
+            const auctioneer = await prisma.auctioneer.findFirst({ where: { name: { contains: `Auct Pay ${testRunId}`}}});
+            if(auctioneer) await prisma.auctioneer.delete({ where: { id: auctioneer.id } });
+            await userService.deleteUser(testUser.id);
+        } catch (e) {
+             console.error(`[PAYMENT TEST CLEANUP] Error during cleanup for run ${testRunId}:`, e);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create installment records for a win', async () => {
+        // Arrange
+        const paymentData: CheckoutFormValues = {
+            paymentMethod: 'installments',
+            installments: 12
+        };
+
+        // Act
+        const result = await processPaymentAction(testWin.id, paymentData);
+
+        // Assert
+        assert.ok(result.success, `Installment processing should succeed. Message: ${result.message}`);
+
+        const installments = await prisma.installmentPayment.findMany({
+            where: { userWinId: testWin.id },
+            orderBy: { installmentNumber: 'asc' },
+        });
+
+        assert.strictEqual(installments.length, 12, 'Should create 12 installment records');
+        assert.strictEqual(installments[0].installmentNumber, 1, 'First installment number should be 1');
+        assert.strictEqual(installments[11].installmentNumber, 12, 'Last installment number should be 12');
+        
+        const updatedWin = await prisma.userWin.findUnique({ where: { id: testWin.id }});
+        assert.strictEqual(updatedWin?.paymentStatus, 'PROCESSANDO', 'Win status should be updated to PROCESSANDO');
+    });
+});
+
+```
+- tests/relist.service.test.ts:
+```ts
+// tests/relist.service.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
+import { RelistService } from '@/services/relist.service';
+import { LotService } from '@/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+import type { Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '@/types';
+
+const relistService = new RelistService();
+const lotService = new LotService();
+const auctionService = new AuctionService();
+
+const testRunId = `relist-e2e-${uuidv4().substring(0, 8)}`;
+let testSeller: SellerProfileInfo;
+let testAuctioneer: AuctioneerProfileInfo;
+let testCategory: LotCategory;
+let originalAuction: Auction;
+let newAuction: Auction;
+let originalLot: Lot;
+
+describe('Lot Relisting Service E2E Tests', () => {
+
+    beforeAll(async () => {
+        console.log(`--- [Relist E2E Setup - ${testRunId}] Starting... ---`);
+        // Create shared entities
+        testCategory = await prisma.lotCategory.create({ data: { name: `Cat Relist ${testRunId}`, slug: `cat-relist-${testRunId}`, hasSubcategories: false } });
+        testAuctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Relist ${testRunId}`, publicId: `leiloeiro-relist-${testRunId}`, slug: `leiloeiro-relist-${testRunId}` } });
+        testSeller = await prisma.seller.create({ data: { name: `Seller Relist ${testRunId}`, publicId: `seller-relist-${testRunId}`, slug: `comitente-relist-${testRunId}`, isJudicial: false } });
+        
+        // Create two auctions
+        const [res1, res2] = await Promise.all([
+            auctionService.createAuction({ title: `Original Auction ${testRunId}`, sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES' } as any),
+            auctionService.createAuction({ title: `New Auction ${testRunId}`, sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'EM_BREVE' } as any)
+        ]);
+        assert.ok(res1.success && res1.auctionId, "Original auction setup failed");
+        assert.ok(res2.success && res2.auctionId, "New auction setup failed");
+        originalAuction = (await auctionService.getAuctionById(res1.auctionId))!;
+        newAuction = (await auctionService.getAuctionById(res2.auctionId))!;
+
+        // Create the initial lot
+        const lotRes = await lotService.createLot({ 
+            title: `Lot to be Relisted ${testRunId}`, 
+            auctionId: originalAuction.id, 
+            price: 1000, 
+            initialPrice: 1000,
+            evaluationValue: 1000,
+            type: testCategory.id, 
+            status: 'NAO_VENDIDO' // Set status as if it didn't sell
+        });
+        assert.ok(lotRes.success && lotRes.lotId);
+        originalLot = (await lotService.getLotById(lotRes.lotId))!;
+    });
+    
+    afterAll(async () => {
+        console.log(`--- [Relist E2E Teardown - ${testRunId}] Cleaning up... ---`);
+        try {
+            await prisma.lot.deleteMany({ where: { originalLotId: originalLot.id } }); // Delete relisted lot
+            await prisma.lot.deleteMany({ where: { id: originalLot.id } });
+            await prisma.auction.deleteMany({ where: { id: { in: [originalAuction.id, newAuction.id] } } });
+            await prisma.seller.deleteMany({ where: { id: testSeller.id } });
+            await prisma.auctioneer.deleteMany({ where: { id: testAuctioneer.id } });
+            await prisma.lotCategory.deleteMany({ where: { id: testCategory.id } });
+        } catch (error) {
+            console.error(`[Relist TEST CLEANUP] Error during cleanup:`, error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should successfully relist an unsold lot with a discount', async () => {
+        // Arrange
+        const discountPercentage = 50;
+
+        // Act
+        const result = await relistService.relistLot(originalLot.id, newAuction.id, discountPercentage);
+        
+        // Assert
+        assert.ok(result.success, `Relisting should succeed. Message: ${result.message}`);
+        assert.ok(result.newLotId, 'A new lot ID should be returned');
+
+        // Verify original lot status
+        const updatedOriginalLot = await lotService.getLotById(originalLot.id);
+        assert.strictEqual(updatedOriginalLot?.status, 'RELISTADO', 'Original lot status should be updated to RELISTADO');
+        
+        // Verify new lot details
+        const newLot = await lotService.getLotById(result.newLotId!);
+        assert.ok(newLot, 'The new lot should exist');
+        assert.strictEqual(newLot.isRelisted, true, 'isRelisted flag should be true');
+        assert.strictEqual(newLot.originalLotId, originalLot.id, 'Should have a reference to the original lot');
+        assert.strictEqual(newLot.auctionId, newAuction.id, 'Should be in the new auction');
+        assert.strictEqual(newLot.price, 500, 'Price should be discounted by 50% from evaluation value');
+    });
+
+});
+
+```
+- tests/role.test.ts:
+```ts
+// tests/role.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { RoleService } from '../src/services/role.service';
+import { prisma } from '../src/lib/prisma';
+import type { RoleFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const roleService = new RoleService();
+const testRunId = `role-e2e-${uuidv4().substring(0, 8)}`;
+const testRoleName = `Perfil de Teste ${testRunId}`;
+const testRoleNameNormalized = `PERFIL_DE_TESTE_${testRunId.toUpperCase()}`;
+
+test.describe('Role Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        await prisma.role.deleteMany({
+            where: { name: testRoleName }
+        });
+    });
+    
+    test.after(async () => {
+        try {
+            await prisma.role.deleteMany({
+                where: { name: testRoleName }
+            });
+        } catch (error) {
+            // Ignore cleanup errors
+        }
+        await prisma.$disconnect();
+    });
+
+    test('should create a new role and verify it in the database', async () => {
+        // Arrange
+        const newRoleData: RoleFormData = {
+            name: testRoleName,
+            description: 'Um perfil de teste criado via teste E2E.',
+            permissions: ['auctions:read', 'lots:read']
+        };
+
+        // Act
+        const result = await roleService.createRole(newRoleData);
+
+        // Assert: Check the service method result
+        assert.strictEqual(result.success, true, 'RoleService.createRole should return success: true');
+        assert.ok(result.roleId, 'RoleService.createRole should return a roleId');
+
+        // Assert: Verify directly in the database
+        const createdRoleFromDb = await prisma.role.findUnique({
+            where: { id: result.roleId },
+        });
+
+        console.log('--- Role Record Found in DB ---');
+        console.log(createdRoleFromDb);
+        console.log('-----------------------------');
+        
+        assert.ok(createdRoleFromDb, 'Role should be found in the database after creation');
+        assert.strictEqual(createdRoleFromDb.name, newRoleData.name, 'Role name should match');
+        assert.strictEqual(createdRoleFromDb.nameNormalized, testRoleName.toUpperCase().replace(/\s/g, '_'), 'Role nameNormalized should be correct');
+        assert.deepStrictEqual(createdRoleFromDb.permissions, newRoleData.permissions, 'Role permissions should match');
+    });
+
+});
+
+```
+- tests/seller.test.ts:
+```ts
+// tests/seller.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { SellerService } from '@/services/seller.service';
+import { prisma } from '@/lib/prisma';
+import type { SellerFormData } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const sellerService = new SellerService();
+const testRunId = `seller-e2e-${uuidv4().substring(0, 8)}`;
+const testSellerEmail = `seller.teste.${testRunId}@example.com`;
+
+describe('Seller Service E2E Tests', () => {
+    
+    afterAll(async () => {
+        try {
+            await prisma.seller.deleteMany({
+                where: { email: testSellerEmail }
+            });
+        } catch (error) {
+            // Ignore errors during cleanup
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create a new seller and verify it in the database', async () => {
+        // Arrange
+        const newSellerData: SellerFormData = {
+            name: `Test Seller ${testRunId}`,
+            contactName: 'Jane Doe',
+            email: testSellerEmail,
+            phone: '9876543210',
+            address: '456 Test Ave',
+            city: 'Testburg',
+            state: 'TS',
+            zipCode: '54321',
+            website: 'https://testserviceseller.example.com',
+            isJudicial: false,
+        };
+
+        // Act
+        const result = await sellerService.createSeller(newSellerData);
+
+        // Assert
+        assert.strictEqual(result.success, true, 'SellerService.createSeller should return success: true');
+        assert.ok(result.sellerId, 'SellerService.createSeller should return a sellerId');
+
+        const createdSellerFromDb = await prisma.seller.findUnique({
+            where: { id: result.sellerId },
+        });
+
+        assert.ok(createdSellerFromDb, 'Seller should be found in the database after creation');
+        
+        console.log('--- Seller Record Found in DB ---');
+        console.log(createdSellerFromDb);
+        console.log('---------------------------------');
+
+        assert.ok(createdSellerFromDb.publicId, 'Seller should have a publicId generated');
+        assert.strictEqual(createdSellerFromDb.name, newSellerData.name, 'Seller name should match');
+        assert.strictEqual(createdSellerFromDb.email, newSellerData.email, 'Seller email should match');
+        assert.strictEqual(createdSellerFromDb.isJudicial, newSellerData.isJudicial, 'Seller isJudicial flag should match');
+    });
+
+});
+
+```
+- tests/state.test.ts:
+```ts
+// tests/state.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { StateService } from '../src/services/state.service';
+import { prisma } from '../src/lib/prisma';
+import type { StateFormData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const stateService = new StateService();
+const testRunId = `state-e2e-${uuidv4().substring(0, 8)}`;
+const testStateName = `Estado de Teste ${testRunId}`;
+const testStateUf = testRunId.substring(0, 2).toUpperCase();
+
+test.describe('State Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        // Clean up previous test runs to ensure a clean slate
+        await prisma.state.deleteMany({
+            where: { uf: testStateUf }
+        });
+    });
+    
+    test.after(async () => {
+        try {
+            await prisma.state.deleteMany({
+                where: { uf: testStateUf }
+            });
+        } catch (error) {
+            // Ignore cleanup errors
+        }
+        await prisma.$disconnect();
+    });
+
+    test('should create a new state and verify it in the database', async () => {
+        // Arrange
+        const newStateData: StateFormData = {
+            name: testStateName,
+            uf: testStateUf,
+        };
+
+        // Act
+        const result = await stateService.createState(newStateData);
+
+        // Assert
+        assert.strictEqual(result.success, true, 'StateService.createState should return success: true');
+        assert.ok(result.stateId, 'StateService.createState should return a stateId');
+
+        const createdStateFromDb = await prisma.state.findUnique({
+            where: { id: result.stateId },
+        });
+        
+        console.log('--- State Record Found in DB ---');
+        console.log(createdStateFromDb);
+        console.log('--------------------------------');
+
+        assert.ok(createdStateFromDb, 'State should be found in the database after creation');
+        assert.strictEqual(createdStateFromDb.name, newStateData.name, 'State name should match');
+        assert.strictEqual(createdStateFromDb.uf, newStateData.uf.toUpperCase(), 'State UF should match and be uppercase');
+        assert.ok(createdStateFromDb.slug, 'State slug should be generated');
+    });
+
+    test('should prevent creating a state with a duplicate UF', async () => {
+        // Arrange: Create the first state
+        const firstStateData: StateFormData = {
+            name: `${testStateName} Original`,
+            uf: testStateUf,
+        };
+        await stateService.createState(firstStateData);
+
+        // Arrange: Prepare data for the second state with the same UF
+        const duplicateStateData: StateFormData = {
+            name: `${testStateName} Duplicado`,
+            uf: testStateUf,
+        };
+
+        // Act: Attempt to create the second state
+        const result = await stateService.createState(duplicateStateData);
+
+        // Assert
+        assert.strictEqual(result.success, false, 'Should fail to create a state with a duplicate UF');
+        assert.strictEqual(result.message, `Já existe um estado com a UF '${testStateUf}'.`);
+    });
+});
+
+```
+- tests/subcategory.test.ts:
+```ts
+// tests/subcategory.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { SubcategoryService } from '../src/services/subcategory.service';
+import { prisma } from '../src/lib/prisma';
+import type { SubcategoryFormData, LotCategory } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const subcategoryService = new SubcategoryService();
+const testRunId = `subcat-e2e-${uuidv4().substring(0, 8)}`;
+const testCategoryName = `Categoria Pai ${testRunId}`;
+const testSubcategoryName = `Subcategoria ${testRunId}`;
+let testParentCategory: LotCategory;
+
+test.describe('Subcategory Service E2E Tests', () => {
+
+    test.before(async () => {
+        // Create the parent category
+        testParentCategory = await prisma.lotCategory.create({
+            data: { 
+                name: testCategoryName, 
+                slug: `cat-pai-${testRunId}`, 
+                hasSubcategories: false 
+            }
+        });
+    });
+    
+    test.after(async () => {
+        try {
+            await prisma.subcategory.deleteMany({ where: { name: testSubcategoryName } });
+            await prisma.lotCategory.delete({ where: { id: testParentCategory.id } });
+        } catch (error) {
+            console.error(`[SUBCATEGORY TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
+        }
+        await prisma.$disconnect();
+    });
+
+    test('should create a new subcategory and verify it', async () => {
+        // Arrange
+        const newSubcategoryData: SubcategoryFormData = {
+            name: testSubcategoryName,
+            parentCategoryId: testParentCategory.id,
+            description: 'Subcategoria para teste E2E.',
+            displayOrder: 1,
+        };
+
+        // Act
+        const result = await subcategoryService.createSubcategory(newSubcategoryData);
+
+        // Assert
+        assert.strictEqual(result.success, true, 'Service should return success: true');
+        assert.ok(result.subcategoryId, 'Service should return a subcategoryId');
+
+        const createdSubcategoryFromDb = await prisma.subcategory.findUnique({
+            where: { id: result.subcategoryId },
+        });
+
+        console.log('--- Subcategory Record Found in DB ---');
+        console.log(createdSubcategoryFromDb);
+        console.log('------------------------------------');
+        
+        assert.ok(createdSubcategoryFromDb, 'Subcategory should be found in the database');
+        assert.strictEqual(createdSubcategoryFromDb.name, newSubcategoryData.name, 'Subcategory name should match');
+        assert.strictEqual(createdSubcategoryFromDb.parentCategoryId, testParentCategory.id, 'Subcategory parentCategoryId should match');
+
+        const parentCategoryAfter = await prisma.lotCategory.findUnique({
+            where: { id: testParentCategory.id }
+        });
+        assert.strictEqual(parentCategoryAfter?.hasSubcategories, true, 'Parent category hasSubcategories should be updated to true');
+    });
+});
+
+```
+- tests/user.test.ts:
+```ts
+// tests/user.test.ts
+import test from 'node:test';
+import assert from 'node:assert';
+import { UserService } from '../src/services/user.service';
+import { prisma } from '../src/lib/prisma';
+import type { UserCreationData } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
+
+const userService = new UserService();
+const testRunId = `user-e2e-${uuidv4().substring(0, 8)}`;
+const testUserEmail = `teste.usuario.${testRunId}@example.com`;
+
+test.describe('User Service E2E Tests', () => {
+
+    test.beforeEach(async () => {
+        await prisma.user.deleteMany({
+            where: { email: testUserEmail }
+        });
+    });
+    
+    test.after(async () => {
+        try {
+            await prisma.user.deleteMany({
+                where: { email: testUserEmail }
+            });
+        } catch (error) {
+            // Ignore cleanup errors
+        }
+        await prisma.$disconnect();
+    });
+
+    test('should create a new user and assign the default USER role', async () => {
+        // Arrange
+        const newUser: UserCreationData = {
+            fullName: `Usuário de Teste ${testRunId}`,
+            email: testUserEmail,
+            password: 'aSecurePassword123',
+        };
+
+        // Act
+        const result = await userService.createUser(newUser);
+
+        // Assert
+        assert.strictEqual(result.success, true, 'UserService.createUser should return success: true');
+        assert.ok(result.userId, 'UserService.createUser should return a userId');
+
+        const createdUserFromDb = await prisma.user.findUnique({
+            where: { id: result.userId },
+            include: { roles: { include: { role: true } } },
+        });
+
+        console.log('--- User Record Found in DB ---');
+        console.log(createdUserFromDb);
+        console.log('-------------------------------');
+        
+        assert.ok(createdUserFromDb, 'User should be found in the database');
+        assert.strictEqual(createdUserFromDb.email, testUserEmail, 'User email should match');
+        assert.ok(createdUserFromDb.password, 'User password should be set (hashed)');
+        assert.notStrictEqual(createdUserFromDb.password, newUser.password, 'User password should be hashed, not plaintext');
+        
+        assert.strictEqual(createdUserFromDb.roles.length, 1, 'User should have exactly one role assigned');
+        assert.strictEqual(createdUserFromDb.roles[0].role.name, 'USER', 'The assigned role should be USER');
+    });
+
+});
+
+```
+- tests/vehicle-make.test.ts:
+```ts
+// tests/vehicle-make.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
+import { VehicleMakeService } from '@/services/vehicle-make.service';
+import type { VehicleMakeFormData } from '@/app/admin/vehicle-makes/form-schema';
+
+const makeService = new VehicleMakeService();
+const testRunId = `make-e2e-${uuidv4().substring(0, 8)}`;
+const testMakeName = `Marca Teste ${testRunId}`;
+
+describe('VehicleMake Service E2E Tests', () => {
+    
+    afterAll(async () => {
+        try {
+            await prisma.vehicleMake.deleteMany({ where: { name: { contains: testRunId } } });
+        } catch (error) {
+            console.error(`[VehicleMake TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create a new vehicle make and verify it in the database', async () => {
+        // Arrange
+        const newMakeData: VehicleMakeFormData = {
+            name: testMakeName,
+        };
+
+        // Act
+        const result = await makeService.createVehicleMake(newMakeData);
+
+        // Assert
+        assert.ok(result.success, 'createVehicleMake should return success: true');
+        assert.ok(result.makeId, 'createVehicleMake should return a makeId');
+
+        const createdMakeFromDb = await prisma.vehicleMake.findUnique({
+            where: { id: result.makeId },
+        });
+
+        assert.ok(createdMakeFromDb, 'Make should be found in the database');
+        assert.strictEqual(createdMakeFromDb.name, newMakeData.name, 'Make name should match');
+        assert.ok(createdMakeFromDb.slug, 'Slug should be generated');
+    });
+});
+
+```
+- tests/vehicle-model.test.ts:
+```ts
+// tests/vehicle-model.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { prisma } from '@/lib/prisma';
+import { v4 as uuidv4 } from 'uuid';
+import { VehicleMakeService } from '@/services/vehicle-make.service';
+import { VehicleModelService } from '@/services/vehicle-model.service';
+import type { VehicleModelFormData } from '@/app/admin/vehicle-models/form-schema';
+import type { VehicleMake } from '@/types';
+
+const modelService = new VehicleModelService();
+const makeService = new VehicleMakeService();
+const testRunId = `model-e2e-${uuidv4().substring(0, 8)}`;
+const testModelName = `Modelo Teste ${testRunId}`;
+let testMake: VehicleMake;
+
+describe('VehicleModel Service E2E Tests', () => {
+
+    beforeAll(async () => {
+        const makeRes = await makeService.createVehicleMake({ name: `Marca para Modelo ${testRunId}`});
+        assert.ok(makeRes.success && makeRes.makeId);
+        testMake = (await makeService.getVehicleMakeById(makeRes.makeId))!;
+    });
+    
+    afterAll(async () => {
+        try {
+            await prisma.vehicleModel.deleteMany({ where: { name: { contains: testRunId } } });
+            if (testMake) {
+                await prisma.vehicleMake.delete({ where: { id: testMake.id } });
+            }
+        } catch (error) {
+            console.error(`[VehicleModel TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
+        }
+        await prisma.$disconnect();
+    });
+
+    it('should create a new vehicle model linked to a make', async () => {
+        // Arrange
+        const newModelData: VehicleModelFormData = {
+            name: testModelName,
+            makeId: testMake.id,
+        };
+
+        // Act
+        const result = await modelService.createVehicleModel(newModelData);
+
+        // Assert
+        assert.ok(result.success, 'createVehicleModel should return success: true');
+        assert.ok(result.modelId, 'createVehicleModel should return a modelId');
+
+        const createdModelFromDb = await prisma.vehicleModel.findUnique({
+            where: { id: result.modelId },
+            include: { make: true }
+        });
+
+        assert.ok(createdModelFromDb, 'Model should be found in the database');
+        assert.strictEqual(createdModelFromDb.name, newModelData.name, 'Model name should match');
+        assert.strictEqual(createdModelFromDb.makeId, testMake.id, 'Model makeId should match');
+        assert.strictEqual(createdModelFromDb.make.name, testMake.name, 'Associated make name should be correct');
+    });
+});
+
+```
+- tests/wizard-e2e.test.ts:
+```ts
+// tests/wizard-e2e.test.ts
+import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import assert from 'node:assert';
+import { prisma } from '@/lib/prisma';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData } from '@/types';
+import { v4 as uuidv4 } from 'uuid';
+
+import { getWizardInitialData, createAuctionFromWizard } from '@/app/admin/wizard/actions';
+import { SellerService } from '@/services/seller.service';
+import { JudicialProcessService } from '@/services/judicial-process.service';
+import { BemService } from '@/services/bem.service';
+
+const testRunId = `wizard-e2e-${uuidv4().substring(0, 8)}`;
+
+// Test Data Holders
+let testAuctioneer: AuctioneerProfileInfo;
+let testCategory: LotCategory;
+let testJudicialSeller: SellerProfileInfo;
+let testState: StateInfo;
+let testCourt: Court;
+let testDistrict: JudicialDistrict;
+let testBranch: JudicialBranch;
+let testJudicialProcess: JudicialProcess;
+let testBem: Bem;
+
+// Helper to ensure cleanup happens
+async function cleanup() {
+    console.log(`--- [Wizard E2E Teardown - ${testRunId}] Cleaning up... ---`);
+    try {
+        const auctions = await prisma.auction.findMany({ where: { title: { contains: testRunId } } });
+        if (auctions.length > 0) {
+            const auctionIds = auctions.map(a => a.id);
+            await prisma.auctionStage.deleteMany({ where: { auctionId: { in: auctionIds } } });
+            await prisma.lotBens.deleteMany({ where: { lot: { auctionId: { in: auctionIds } } } });
+            await prisma.lot.deleteMany({ where: { auctionId: { in: auctionIds } } });
+            await prisma.auction.deleteMany({ where: { id: { in: auctionIds } } });
+        }
+        
+        await prisma.bem.deleteMany({ where: { title: { contains: testRunId } } });
+        await prisma.judicialProcess.deleteMany({ where: { processNumber: { contains: testRunId } } });
+        await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.judicialBranch.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.judicialDistrict.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.court.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.state.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+        await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+    } catch (error) {
+        console.error(`[Wizard E2E Teardown] Error during cleanup for run ${testRunId}:`, error);
+    }
 }
 
-model LotBens {
-  lotId String
-  bemId String
-  lot   Lot    @relation(fields: [lotId], references: [id])
-  bem   Bem    @relation(fields: [bemId], references: [id])
+describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
+    const sellerService = new SellerService();
+    const judicialProcessService = new JudicialProcessService();
+    const bemService = new BemService();
 
-  @@id([lotId, bemId])
-  @@index([bemId])
-}
+    beforeAll(async () => {
+        await cleanup(); // Ensure a clean slate before starting
+        console.log(`--- [Wizard E2E Setup - ${testRunId}] Starting... ---`);
+        
+        const uniqueUf = `W${testRunId.substring(0, 1)}`;
+        
+        testCategory = await prisma.lotCategory.create({ data: { name: `Cat Wizard ${testRunId}`, slug: `cat-wiz-${testRunId}`, hasSubcategories: false } });
+        testAuctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Wiz ${testRunId}`, slug: `auct-wiz-${testRunId}`, publicId: `auct-pub-wiz-${testRunId}` } });
+        testState = await prisma.state.create({ data: { name: `State Wiz ${testRunId}`, uf: uniqueUf, slug: `st-wiz-${testRunId}` } });
+        testCourt = await prisma.court.create({ data: { name: `Court Wiz ${testRunId}`, stateUf: testState.uf, slug: `court-wiz-${testRunId}` } });
+        testDistrict = await prisma.judicialDistrict.create({ data: { name: `District Wiz ${testRunId}`, slug: `dist-wiz-${testRunId}`, courtId: testCourt.id, stateId: testState.id } });
+        testBranch = await prisma.judicialBranch.create({ data: { name: `Branch Wiz ${testRunId}`, slug: `branch-wiz-${testRunId}`, districtId: testDistrict.id } });
+        
+        const judicialSellerRes = await sellerService.createSeller({ name: `Vara Wiz ${testRunId}`, isJudicial: true, judicialBranchId: testBranch.id, publicId: `seller-pub-judicial-wiz-${testRunId}`, slug: `vara-wiz-${testRunId}` } as any);
+        assert.ok(judicialSellerRes.success && judicialSellerRes.sellerId);
+        testJudicialSeller = (await sellerService.getSellerById(judicialSellerRes.sellerId!))!;
+        
+        const procRes = await judicialProcessService.createJudicialProcess({ processNumber: `500-${testRunId}`, isElectronic: true, courtId: testCourt.id, districtId: testDistrict.id, branchId: testBranch.id, sellerId: testJudicialSeller.id, parties: [{ name: `Autor ${testRunId}`, partyType: 'AUTOR' }] });
+        assert.ok(procRes.success && procRes.processId, 'Judicial process should be created');
+        testJudicialProcess = (await judicialProcessService.getJudicialProcessById(procRes.processId!))!;
+        
+        const bemRes = await bemService.createBem({
+            title: `Bem para Wizard ${testRunId}`,
+            judicialProcessId: testJudicialProcess.id,
+            categoryId: testCategory.id,
+            status: 'DISPONIVEL',
+            evaluationValue: 50000.00
+        } as any);
+        assert.ok(bemRes.success && bemRes.bemId);
+        testBem = (await bemService.getBemById(bemRes.bemId!))!;
+        
+        console.log(`--- [Wizard E2E Setup - ${testRunId}] Complete. ---`);
+    });
 
-model LotAuctionStageDetails {
-  id           String   @id @default(uuid())
-  lotId        String
-  stageId      String
-  initialBid   Decimal? @db.Decimal(15, 2)
-  bidIncrement Decimal? @db.Decimal(10, 2)
-  lot          Lot      @relation(fields: [lotId], references: [id])
-  stage        AuctionStage @relation(fields: [stageId], references: [id])
+    afterAll(async () => {
+        await cleanup();
+        await prisma.$disconnect();
+        console.log(`--- [Wizard E2E Teardown - ${testRunId}] Final cleanup complete. ---`);
+    });
 
-  @@unique([lotId, stageId])
-  @@index([stageId])
-}
+    it('should simulate the entire wizard flow and create a complete auction', async () => {
+        console.log('\n--- Test: Full Wizard Flow Simulation ---');
 
-model AuctionStage {
-  id              String                   @id @default(uuid())
-  name            String
-  startDate       DateTime                 @db.DateTime(3)
-  endDate         DateTime                 @db.DateTime(3)
-  evaluationValue Decimal?                 @db.Decimal(15, 2)
-  auctionId       String
-  auction         Auction                  @relation(fields: [auctionId], references: [id])
-  lotDetails      LotAuctionStageDetails[]
+        // Step 1: Fetch initial data
+        console.log('- Step 1: Fetching initial data...');
+        const initialDataResult = await getWizardInitialData();
+        assert.ok(initialDataResult.success, `Should fetch initial wizard data successfully. Error: ${initialDataResult.message}`);
+        const wizardFetchedData = initialDataResult.data as any;
+        assert.ok(wizardFetchedData.judicialProcesses.some((p:any) => p.id === testJudicialProcess.id), 'Test judicial process should be in the initial data.');
+        console.log('- PASSED: Initial data fetched.');
+        
+        // Step 2: Simulate filling the WizardData object step-by-step
+        console.log('- Step 2: Simulating user input through the wizard...');
+        let wizardData: WizardData = {
+            createdLots: []
+        };
+        
+        // Step 2.1: Select auction type
+        wizardData.auctionType = 'JUDICIAL';
+        
+        // Step 2.2: Select Judicial Process
+        wizardData.judicialProcess = testJudicialProcess as JudicialProcess;
 
-  @@index([auctionId])
-}
+        // Step 2.3: Fill Auction Details
+        const auctionStartDate = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        const auctionEndDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
+        wizardData.auctionDetails = {
+            title: `Leilão do Wizard ${testRunId}`,
+            auctionType: 'JUDICIAL',
+            auctioneerId: testAuctioneer.id,
+            sellerId: testJudicialSeller.id,
+            categoryId: testCategory.id,
+            judicialProcessId: testJudicialProcess.id, // Correctly link the process
+            auctionStages: [{ name: '1ª Praça', startDate: auctionStartDate, endDate: auctionEndDate, initialPrice: 50000 }]
+        };
+        
+        // Step 2.4: Create a Lot
+        wizardData.createdLots = [{
+            id: `temp-lot-${uuidv4()}`,
+            number: '101-WIZ',
+            title: `Lote do Bem ${testRunId}`,
+            price: 50000,
+            initialPrice: 50000,
+            status: 'EM_BREVE',
+            bemIds: [testBem.id],
+            categoryId: testCategory.id,
+            auctionId: '', // Will be assigned on creation
+        } as Lot];
+        console.log('- PASSED: Wizard data simulation complete.');
 
-model UsersOnRoles {
-  userId     String
-  roleId     String
-  assignedAt DateTime @default(now())
-  assignedBy String
-  user       User     @relation(fields: [userId], references: [id])
-  role       Role     @relation(fields: [roleId], references: [id])
+        // Step 3: Publish the auction using the final action
+        console.log('- Step 3: Publishing the auction via server action...');
+        const creationResult = await createAuctionFromWizard(wizardData);
+        assert.ok(creationResult.success, `Auction creation from wizard failed: ${creationResult.message}`);
+        assert.ok(creationResult.auctionId, 'createAuctionFromWizard should return the new auction ID.');
+        console.log(`- PASSED: Auction created with ID: ${creationResult.auctionId}`);
 
-  @@id([userId, roleId])
-  @@index([roleId])
-}
+        // Step 4: Verify the created data in the database
+        console.log('- Step 4: Verifying created data in the database...');
+        const createdAuction = await prisma.auction.findUnique({
+            where: { id: creationResult.auctionId },
+            include: { lots: { include: { bens: true } } }
+        });
+        
+        assert.ok(createdAuction, 'The final auction should exist in the database.');
+        assert.strictEqual(createdAuction?.title, wizardData.auctionDetails.title, 'Auction title should match.');
+        assert.strictEqual(createdAuction?.sellerId, testJudicialSeller.id, 'Auction seller should be correct.');
+        assert.strictEqual(createdAuction?.judicialProcessId, testJudicialProcess.id, 'Auction should be linked to the judicial process.');
+        assert.strictEqual(createdAuction?.lots.length, 1, 'Auction should have one lot.');
 
-model VehicleMake {
-  id      String         @id @default(uuid())
-  name    String         @unique
-  slug    String         @unique
-  models  VehicleModel[]
-}
+        const createdLot = createdAuction?.lots[0];
+        assert.strictEqual(createdLot?.title, wizardData.createdLots[0].title, 'Lot title should match.');
+        assert.strictEqual(createdLot?.bens.length, 1, 'Lot should have one bem linked.');
+        assert.strictEqual(createdLot?.bens[0].bemId, testBem.id, 'The correct bem should be linked to the lot.');
+        
+        console.log('- PASSED: Database verification successful.');
+    });
+});
 
-model VehicleModel {
-  id     String      @id @default(uuid())
-  name   String
-  slug   String
-  makeId String
-  make   VehicleMake @relation(fields: [makeId], references: [id])
+```
+- vitest.config.ts:
+```ts
+import { defineConfig } from 'vitest/config'
+import react from '@vitejs/plugin-react'
+import tsconfigPaths from 'vite-tsconfig-paths'
 
-  @@unique([name, makeId])
-  @@index([makeId])
-}
-
-model Bem {
-  id                         String   @id @default(uuid())
-  publicId                   String   @unique
-  title                      String
-  description                String?  @db.Text
-  status                     BemStatus @default(DISPONIVEL)
-  categoryId                 String
-  subcategoryId              String?
-  judicialProcessId          String?
-  sellerId                   String?
-  evaluationValue            Decimal? @db.Decimal(15, 2)
-  imageUrl                   String?
-  imageMediaId               String?
-  galleryImageUrls           Json?
-  mediaItemIds               Json?
-  dataAiHint                 String?
-  locationCity               String?
-  locationState              String?
-  address                    String?
-  latitude                   Decimal? @db.Decimal(10, 8)
-  longitude                  Decimal? @db.Decimal(11, 8)
-  plate                      String?  @unique
-  make                       String?
-  model                      String?
-  version                    String?
-  year                       Int?
-  modelYear                  Int?
-  mileage                    Int?
-  color                      String?
-  fuelType                   String?
-  transmissionType           String?
-  bodyType                   String?
-  vin                        String?  @unique
-  renavam                    String?  @unique
-  enginePower                String?
-  numberOfDoors              Int?
-  vehicleOptions             String?  @db.Text
-  detranStatus               String?
-  debts                      String?  @db.Text
-  runningCondition           String?
-  bodyCondition              String?
-  tiresCondition             String?
-  hasKey                     Boolean?
-  propertyRegistrationNumber String?
-  iptuNumber                 String?
-  isOccupied                 Boolean?
-  totalArea                  Decimal? @db.Decimal(15, 2)
-  builtArea                  Decimal? @db.Decimal(15, 2)
-  bedrooms                   Int?
-  suites                     Int?
-  bathrooms                  Int?
-  parkingSpaces              Int?
-  constructionType           String?
-  finishes                   String?  @db.Text
-  infrastructure             String?  @db.Text
-  condoDetails               String?  @db.Text
-  improvements               String?  @db.Text
-  topography                 String?
-  liensAndEncumbrances       String?  @db.Text
-  propertyDebts              String?  @db.Text
-  unregisteredRecords        String?  @db.Text
-  hasHabiteSe                Boolean?
-  zoningRestrictions         String?
-  brand                      String?
-  serialNumber               String?
-  itemCondition              String?
-  specifications             String?  @db.Text
-  includedAccessories        String?  @db.Text
-  batteryCondition           String?
-  hasInvoice                 Boolean?
-  hasWarranty                Boolean?
-  repairHistory              String?  @db.Text
-  applianceCapacity          String?
-  voltage                    String?
-  applianceType              String?
-  additionalFunctions        String?
-  hoursUsed                  Int?
-  engineType                 String?
-  capacityOrPower            String?
-  maintenanceHistory         String?  @db.Text
-  installationLocation       String?
-  compliesWithNR             String?
-  operatingLicenses          String?
-  breed                      String?
-  age                        String?
-  sex                        Sexo?
-  weight                     String?
-  individualId               String?
-  purpose                    String?
-  sanitaryCondition          String?
-  vaccinationStatus          String?
-  lineage                    String?
-  isPregnant                 Boolean?
-  specialSkills              String?
-  gtaDocument                String?
-  breedRegistryDocument      String?
-  furnitureType              String?
-  material                   String?
-  style                      String?
-  dimensions                 String?
-  pieceCount                 Int?
-  jewelryType                String?
-  metal                      String?
-  gemstones                  String?
-  totalWeight                String?
-  jewelrySize                String?
-  authenticityCertificate    String?
-  workType                   String?
-  artist                     String?
-  period                     String?
-  technique                  String?
-  provenance                 String?  @db.Text
-  boatType                   String?
-  boatLength                 String?
-  hullMaterial               String?
-  onboardEquipment           String?  @db.Text
-  productName                String?
-  quantity                   String?
-  packagingType              String?
-  expirationDate             DateTime? @db.DateTime(3)
-  storageConditions          String?
-  preciousMetalType          String?
-  purity                     String?
-  forestGoodsType            String?
-  volumeOrQuantity           String?
-  species                    String?
-  dofNumber                  String?
-  createdAt                  DateTime @default(now()) @db.DateTime(3)
-  updatedAt                  DateTime @updatedAt @db.DateTime(3)
-
-  category        LotCategory?     @relation(fields: [categoryId], references: [id])
-  subcategory     Subcategory?     @relation(fields: [subcategoryId], references: [id])
-  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  seller          Seller?          @relation(fields: [sellerId], references: [id])
-  lots            LotBens[]
-
-  @@index([categoryId])
-  @@index([subcategoryId])
-  @@index([judicialProcessId])
-  @@index([sellerId])
-}
+export default defineConfig({
+  plugins: [tsconfigPaths(), react()],
+  test: {
+    environment: 'jsdom',
+    globals: true,
+  },
+})
+```
