@@ -12,7 +12,7 @@ export class AuctionRepository {
         seller: true, // Include full seller object
         auctioneer: true, // Include full auctioneer object
         category: { select: { name: true } },
-        auctionStages: true, // Include stages here as well for consistency
+        stages: true, // Include stages here as well for consistency
       },
     });
   }
@@ -25,7 +25,7 @@ export class AuctionRepository {
         auctioneer: true,
         seller: true, // Full seller object
         category: true,
-        auctionStages: true, // Correctly include the related auction stages
+        stages: true, // Correctly include the related auction stages
       },
     });
   }

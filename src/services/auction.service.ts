@@ -23,7 +23,7 @@ export class AuctionService {
       sellerName: a.seller?.name, 
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      auctionStages: a.auctionStages || [], // Ensure auctionStages is always an array
+      stages: a.stages || [], // Ensure stages is always an array
     }));
   }
 
@@ -47,13 +47,13 @@ export class AuctionService {
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
       // Remover os campos que não existem no schema do Prisma
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, cityId, stateId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, stages, judicialProcessId, cityId, stateId, ...restOfData } = data;
 
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!sellerId) throw new Error("O ID do comitente é obrigatório.");
       
-      const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : new Date();
+      const derivedAuctionDate = (stages && stages.length > 0 && stages[0].startDate) ? stages[0].startDate : new Date();
 
       const auctionData: Prisma.AuctionCreateInput = {
         ...(restOfData as any),
@@ -82,9 +82,9 @@ export class AuctionService {
         auctionData.judicialProcess = { connect: { id: judicialProcessId } };
       }
       
-      if (auctionStages && auctionStages.length > 0) {
-        auctionData.auctionStages = {
-            create: auctionStages.map(stage => ({
+      if (stages && stages.length > 0) {
+        auctionData.stages = {
+            create: stages.map(stage => ({
                 name: stage.name,
                 startDate: new Date(stage.startDate as Date),
                 endDate: new Date(stage.endDate as Date),
@@ -112,7 +112,7 @@ export class AuctionService {
       const internalId = auctionToUpdate.id;
 
       // Correctly separate form fields from relational/prisma-specific fields
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, stages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
       
       await prisma.$transaction(async (tx) => {
         // Build the update payload for Prisma
@@ -137,7 +137,7 @@ export class AuctionService {
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
         // Ensure auctionDate is derived correctly from stages if they exist
-        const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
+        const derivedAuctionDate = (stages && stages.length > 0 && stages[0].startDate) ? stages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
@@ -146,10 +146,10 @@ export class AuctionService {
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
         // Sync auction stages if they are provided in the data
-        if (auctionStages) {
+        if (stages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
-                data: auctionStages.map(stage => ({
+                data: stages.map(stage => ({
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
                     endDate: new Date(stage.endDate as Date),
