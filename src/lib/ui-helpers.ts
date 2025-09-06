@@ -1,7 +1,7 @@
 // src/lib/ui-helpers.ts
 import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@/types';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
-import { isPast } from 'date-fns';
+import { isPast, isFuture } from 'date-fns';
 
 // ============================================================================
 // PURE HELPER FUNCTIONS (CLIENT & SERVER SAFE)
@@ -196,41 +196,92 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
   return Array.from(locations).sort();
 };
 
-export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } {
-    if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
+export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): Date | null {
+    if (!lot) return null;
 
-    const relevantAuction = auction || { auctionStages: [], endDate: null, auctionDate: null };
-    let finalEndDate: Date | null = null;
-    let finalStartDate: Date | null = null;
+    // 1. Specific date on the lot always wins
+    if (lot.endDate) {
+        return new Date(lot.endDate);
+    }
 
-    if (relevantAuction.auctionStages && relevantAuction.auctionStages.length > 0) {
+    // 2. Fallback to auction stages
+    if (auction?.auctionStages && auction.auctionStages.length > 0) {
         const now = new Date();
-        const futureStages = relevantAuction.auctionStages.filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)));
-        const sortedFutureStages = futureStages.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
-
-        let relevantStage: AuctionStage | undefined = sortedFutureStages[0];
-
-        if (!relevantStage) {
-            const sortedPastStages = [...relevantAuction.auctionStages].sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
-            relevantStage = sortedPastStages[0];
+        // Find the first stage that hasn't ended yet
+        const upcomingOrActiveStage = auction.auctionStages
+            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
+            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+        
+        if (upcomingOrActiveStage?.endDate) {
+            return new Date(upcomingOrActiveStage.endDate);
         }
 
-        if (relevantStage?.endDate) {
-            finalEndDate = new Date(relevantStage.endDate as string);
-            const stageIndex = relevantAuction.auctionStages.findIndex(s => s.name === relevantStage?.name);
-            if (stageIndex > 0 && relevantAuction.auctionStages[stageIndex - 1].endDate) {
-                finalStartDate = new Date(relevantAuction.auctionStages[stageIndex - 1].endDate as string);
-            } else {
-                finalStartDate = relevantAuction.auctionDate ? new Date(relevantAuction.auctionDate as string) : null;
-            }
+        // If all stages are in the past, get the end date of the last stage
+        const lastStage = auction.auctionStages
+            .filter(stage => stage.endDate)
+            .sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
+        
+        if (lastStage?.endDate) {
+            return new Date(lastStage.endDate);
         }
     }
 
-    if (!finalEndDate) finalEndDate = relevantAuction.endDate ? new Date(relevantAuction.endDate as string) : null;
-    if (!finalStartDate) finalStartDate = relevantAuction.auctionDate ? new Date(relevantAuction.auctionDate as string) : null;
-    
-    if (lot.endDate) finalEndDate = new Date(lot.endDate as string);
-    if (lot.lotSpecificAuctionDate) finalStartDate = new Date(lot.lotSpecificAuctionDate as string);
+    // 3. Fallback to the main auction end date
+    if (auction?.endDate) {
+        return new Date(auction.endDate);
+    }
 
-    return { effectiveLotEndDate: finalEndDate, effectiveLotStartDate: finalStartDate };
+    return null;
 }
+
+/**
+ * Gets the currently active stage from a list of auction stages.
+ * @param stages An array of AuctionStage objects.
+ * @returns The active AuctionStage, or null if no stage is currently active.
+ */
+export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => {
+  if (!stages || stages.length === 0) {
+    return null;
+  }
+
+  const now = new Date();
+  const activeStages = stages.filter(stage => {
+    const startDate = new Date(stage.startDate);
+    const endDate = new Date(stage.endDate);
+    return !isFuture(startDate) && isFuture(endDate);
+  });
+  
+  // If multiple stages are active, return the one that started most recently
+  if (activeStages.length > 1) {
+    return activeStages.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
+  }
+
+  return activeStages[0] || null;
+};
+
+/**
+ * Gets the applicable prices for a lot based on the active auction stage.
+ * @param lot The lot object.
+ * @param activeStageId The ID of the currently active auction stage.
+ * @returns An object with initialBid and increment or null.
+ */
+export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number; increment: number } | null => {
+    if (!lot) return null;
+
+    // If there's a specific price for the active stage, use it
+    if (activeStageId && lot.stagePrices) {
+        const stagePrice = lot.stagePrices.find(p => p.auctionStageId === activeStageId);
+        if (stagePrice) {
+            return {
+                initialBid: stagePrice.initialBid,
+                increment: stagePrice.increment,
+            };
+        }
+    }
+    
+    // Fallback to the lot's main price details
+    return {
+        initialBid: lot.initialPrice,
+        increment: lot.increment,
+    };
+};
