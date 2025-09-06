@@ -32,13 +32,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(true);
       // ========== MODIFICAÇÃO PARA DESENVOLVIMENTO ==========
       if (process.env.NODE_ENV === 'development') {
-        console.log("[DEV MODE] Attempting to auto-login admin user...");
-        const adminUser = await getAdminUserForDev();
-        if (adminUser) {
-          setUserProfileWithPermissions(adminUser);
-          console.log("[DEV MODE] Admin user auto-logged in.");
-        } else {
-          console.warn("[DEV MODE] Admin user not found for auto-login. Falling back to session.");
+        try {
+          console.log("[DEV MODE] Attempting to auto-login admin user...");
+          const adminUser = await getAdminUserForDev();
+          if (adminUser) {
+            setUserProfileWithPermissions(adminUser);
+            console.log("[DEV MODE] Admin user auto-logged in.");
+          } else {
+            // Fallback to normal session if admin not found
+            const user = await getCurrentUser();
+            setUserProfileWithPermissions(user);
+          }
+        } catch (devError) {
+          console.error("[DEV MODE] Failed to auto-login admin user. Falling back to normal session.", devError);
           const user = await getCurrentUser();
           setUserProfileWithPermissions(user);
         }
