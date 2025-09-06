@@ -24,11 +24,35 @@
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
 - **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refatorada a base de dados (Prisma), serviços e a interface de usuário (formulários, páginas de detalhe) para suportar a definição de preços (lance inicial, incremento) por etapa/praça do leilão, em vez de um valor fixo no lote.
+- **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
 
 ## DOING
 - **(Nenhum item em andamento no momento)**
 
 ## NEXT
+- **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**
+    - **1. Visão Geral Executiva**
+        - **1.1. Objetivo e Escopo:** Detalhar o plano de arquitetura e migração para transformar a plataforma de leilões em um sistema híbrido robusto. O objetivo principal é proteger a propriedade intelectual (PI) crítica e aumentar a segurança, separando a lógica de negócio sensível em um microserviço seguro e blindando outros ativos de código através de compilação e ofuscação.
+        - **1.2. Benefícios, Riscos e Trade-offs:**
+            - **Benefícios:** Proteção de IP, Segurança Aumentada, Manutenibilidade, Escalabilidade.
+            - **Riscos:** Aumento da Complexidade (Mitigação: Turborepo), Latência (Mitigação: Co-localização), Segurança da Configuração (Mitigação: Gestores de segredos).
+        - **1.3. Plano de Migração em Fases:**
+            - Fase 1: Estruturação (M)
+            - Fase 2: Extração do Core (L)
+            - Fase 3: Extração da UI (M)
+            - Fase 4: Microserviço (XL)
+            - Fase 5: Integração (L)
+            - Fase 6: Go-live & Limpeza (S)
+    - **2. Arquitetura Alvo**
+        - **2.1. Diagrama:** `Cliente -> apps/web (Next.js/Vercel com BFF) -> apps/microservice (Node.js/Cloud Run)`
+        - **2.2. Justificativas e Segurança:** Detalha o porquê de usar um microserviço e pacotes ofuscados, e descreve as camadas de segurança (BFF, Allowlist de IP, Tokens, CORS).
+    - **3. Mapa do Estado Atual -> Estado Alvo:** Mapeia a lógica de negócio atual (ex: cálculo de comissão no frontend) para seu destino na nova arquitetura (ex: microserviço).
+    - **4. Estrutura do Monorepo (pnpm + Turborepo):** Propõe uma nova estrutura de diretórios com `apps/` e `packages/` e fornece arquivos de configuração de exemplo (`turbo.json`, `package.json` raiz, `.npmrc`).
+    - **5. Configurações de Build e Ofuscação:** Detalha as configurações de `tsconfig.json`, `javascript-obfuscator` e `rollup.config.mjs` para os pacotes seguros.
+    - **6. Microserviço (apps/microservice):** Fornece um exemplo de implementação com Fastify, incluindo autenticação de serviço, rate limiting, CORS e uma rota de exemplo.
+    - **7. BFF no Next.js (apps/web):** Mostra um exemplo de como uma API Route no Next.js atuará como um proxy seguro para o microserviço.
+    - **8. SDK Fino (packages/sdk-secure):** Define a estrutura de um SDK para ser consumido pelo frontend, abstraindo as chamadas ao BFF.
+    - **9. CI/CD (GitHub Actions):** Apresenta workflows de exemplo para publicar os pacotes privados e fazer o deploy da aplicação e do microserviço.
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**
     - **Relatório de Análise:**
         - **Componente Genérico de Tabela de Dados (<ResourceDataTable />):** A estrutura de administração em `src/app/admin/` é altamente repetitiva. A lógica para renderizar a tabela, paginação, filtros e ações é duplicada em cada página de listagem. A solução é criar um componente `<ResourceDataTable />` reutilizável que abstrai essa lógica.
