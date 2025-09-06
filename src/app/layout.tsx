@@ -6,8 +6,6 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
 
-console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
-
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
   description: 'Seu parceiro especialista em leilões online.',
