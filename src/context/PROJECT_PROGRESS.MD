@@ -24,7 +24,6 @@
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
 - **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refatorada a base de dados (Prisma), serviços e a interface de usuário (formulários, páginas de detalhe) para suportar a definição de preços (lance inicial, incremento) por etapa/praça do leilão, em vez de um valor fixo no lote.
-- **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
 
 ## DOING
 - **(Nenhum item em andamento no momento)**
