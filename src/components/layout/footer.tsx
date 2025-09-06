@@ -1,6 +1,4 @@
 
-'use client';
-
 import Link from 'next/link';
 import { Coins, Facebook, Twitter, Instagram, Linkedin, Youtube, ShieldCheck } from 'lucide-react';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
