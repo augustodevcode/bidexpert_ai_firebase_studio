@@ -29,4 +29,16 @@
 - **(Nenhum item em andamento no momento)**
 
 ## NEXT
+- **Item 19: Padronização de Identificadores `data-ai-id`:**
+    - **Objetivo:** Adicionar atributos `data-ai-id` únicos, legíveis e funcionais a todos os contêineres e componentes estruturais da interface do usuário que ainda não os possuem.
+    - **Racional:** A prática atual depende de classes de CSS ou do atributo `data-ai-hint`, que não são seletores estáveis. Um `data-ai-id` padronizado (ex: `[contexto]-[funcao]-[tipo]`) irá:
+        1. Facilitar a criação de testes E2E robustos (com Playwright/Cypress) que não quebram com mudanças de estilo.
+        2. Permitir que assistentes de IA (como eu) manipulem a UI de forma precisa e confiável.
+        3. Simplificar o debugging ao inspecionar elementos no navegador.
+    - **Exemplos Críticos a serem Mapeados:**
+        - Contêineres de página (`checkout-page-container`).
+        - Layouts de grid (`checkout-layout-grid`).
+        - Cards principais (`checkout-order-summary-card`, `lot-card-container`).
+        - Componentes complexos (`admin-auctions-data-table`).
+        - Menus de ação em tabelas (`data-table-row-actions-menu`).
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
