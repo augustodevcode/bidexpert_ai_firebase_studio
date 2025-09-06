@@ -16,6 +16,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { LotCategory, DirectSaleOfferType, VehicleMake, VehicleModel } from '@/types';
+import SidebarFiltersSkeleton from './sidebar-filters-skeleton';
 
 export interface ActiveFilters {
   modality: string; // For auctions
