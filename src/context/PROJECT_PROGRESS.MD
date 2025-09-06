@@ -29,12 +29,23 @@
 - **(Nenhum item em andamento no momento)**
 
 ## NEXT
+- **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**
+    - **Relatório de Análise:**
+        - **Componente Genérico de Tabela de Dados (<ResourceDataTable />):** A estrutura de administração em `src/app/admin/` é altamente repetitiva. A lógica para renderizar a tabela, paginação, filtros e ações é duplicada em cada página de listagem. A solução é criar um componente `<ResourceDataTable />` reutilizável que abstrai essa lógica.
+        - **Wrapper Genérico de Formulário de Recurso (<ResourceForm />):** Os formulários de criação e edição em `src/app/admin/*/new` e `src/app/admin/*/[id]/edit` repetem a lógica de busca de dados, configuração de formulário (react-hook-form, Zod), estado de submissão e exibição de toasts. A solução é criar um componente wrapper `<ResourceForm />` que gerencia o estado e a lógica de submissão.
+        - **Abstração para Server Actions CRUD (createCrudActions):** Cada arquivo `actions.ts` repete a estrutura básica para operações CRUD (create, update, delete, fetch). A solução é criar uma função de fábrica (`createCrudActions`) que gera essas ações com base em um modelo Prisma e schemas Zod, reduzindo a repetição e padronizando o comportamento.
+        - **Pacote de Componentes de UI de Domínio (@suaorg/domain-ui):** Componentes específicos do domínio de leilões (ex: `AuctionStatusBadge`, `LotCard`, `CountdownTimer`) estão espalhados. A solução é agrupá-los em um pacote interno para garantir consistência e reutilização.
+- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**
+    - **Objetivo:** Corrigir as lacunas entre as regras de arquitetura definidas e a implementação atual do código.
+    - **Relatório de Análise:**
+        - **Arquitetura de Dados (Não Conforme):** Chamadas diretas ao `prisma` foram encontradas em Server Actions. É necessário refatorar para que todas as chamadas passem pelas classes de Repositório.
+        - **Padrão Controller-Service-Repository (Não Conforme):** A separação de camadas não é rigorosa. As Server Actions (Controllers) pulam a camada de Serviço e/ou Repositório. É preciso auditar e corrigir os fluxos de dados.
+        - **Nomenclatura (Parcialmente Conforme):** O código mistura português e inglês. É preciso padronizar para português em todo novo código.
+        - **Atributos de Teste/IA (Não Conforme):** Falta padronização e aplicação consistente do atributo `data-ai-id` em elementos estruturais.
+        - **Uso do EntitySelector (Não Verificado):** É preciso auditar todos os formulários de admin para garantir que o componente `EntitySelector` está sendo usado para todos os relacionamentos, em vez de um `<select>` padrão.
 - **Item 19: Padronização de Identificadores `data-ai-id`:**
     - **Objetivo:** Adicionar atributos `data-ai-id` únicos, legíveis e funcionais a todos os contêineres e componentes estruturais da interface do usuário que ainda não os possuem.
-    - **Racional:** A prática atual depende de classes de CSS ou do atributo `data-ai-hint`, que não são seletores estáveis. Um `data-ai-id` padronizado (ex: `[contexto]-[funcao]-[tipo]`) irá:
-        1. Facilitar a criação de testes E2E robustos (com Playwright/Cypress) que não quebram com mudanças de estilo.
-        2. Permitir que assistentes de IA (como eu) manipulem a UI de forma precisa e confiável.
-        3. Simplificar o debugging ao inspecionar elementos no navegador.
+    - **Racional:** A prática atual depende de classes de CSS ou do atributo `data-ai-hint`, que não são seletores estáveis. Um `data-ai-id` padronizado (ex: `[contexto]-[funcao]-[tipo]`) irá facilitar a criação de testes E2E robustos, permitir que assistentes de IA manipulem a UI de forma precisa e simplificar o debugging.
     - **Exemplos Críticos a serem Mapeados:**
         - Contêineres de página (`checkout-page-container`).
         - Layouts de grid (`checkout-layout-grid`).
