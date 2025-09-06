@@ -5,7 +5,7 @@
     "scripts": {
         "dev": "npm run db:push && npm run db:init && next dev --port 9002 --hostname 0.0.0.0",
         "start": "npm run db:push && npm run db:init && next start --port 9002 --hostname 0.0.0.0",
-        "build": "npm ci && npx prisma generate && next build",
+        "build": "npm ci && npx --node-options=--experimental-fetch tsx --env-file=.env ./node_modules/.bin/prisma generate && next build",
         "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
         "lint": "next lint",
         "db:init": "npx tsx --env-file=.env scripts/init-db.ts",
@@ -13,7 +13,7 @@
         "db:push": "npx prisma db push",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",
-        "postinstall": "npx prisma generate"
+        "postinstall": "npx --node-options=--experimental-fetch tsx --env-file=.env ./node_modules/.bin/prisma generate"
     },
     "dependencies": {
         "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",
