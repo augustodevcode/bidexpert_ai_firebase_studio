@@ -18,7 +18,21 @@ export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   const settings = await prisma.platformSettings.findFirst();
   if (!settings) {
     console.warn("Platform settings not found in DB, returning default sample settings.");
-    return samplePlatformSettings as PlatformSettings;
+    // Assegura que o objeto retornado tenha a estrutura completa de PlatformSettings
+    return {
+      id: 'global', // Adiciona um ID padrão
+      ...samplePlatformSettings,
+      themes: samplePlatformSettings.themes || [],
+      platformPublicIdMasks: samplePlatformSettings.platformPublicIdMasks || {},
+      homepageSections: samplePlatformSettings.homepageSections || [],
+      mentalTriggerSettings: samplePlatformSettings.mentalTriggerSettings || {},
+      sectionBadgeVisibility: samplePlatformSettings.sectionBadgeVisibility || {},
+      mapSettings: samplePlatformSettings.mapSettings || { defaultProvider: 'openstreetmap', staticImageMapZoom: 15, staticImageMapMarkerColor: 'blue'},
+      variableIncrementTable: samplePlatformSettings.variableIncrementTable || [],
+      biddingSettings: samplePlatformSettings.biddingSettings || { instantBiddingEnabled: true, getBidInfoInstantly: true, biddingInfoCheckIntervalSeconds: 5},
+      paymentGatewaySettings: samplePlatformSettings.paymentGatewaySettings || { defaultGateway: 'Manual', platformCommissionPercentage: 5 },
+      updatedAt: new Date(), // Adiciona um timestamp válido
+    } as PlatformSettings;
   }
   // Assegura que o tipo retornado corresponde à interface PlatformSettings, mesmo que o DB retorne campos opcionais
   return settings as PlatformSettings;
@@ -87,7 +101,10 @@ export async function fetchAuctionsByIds(ids: string[]): Promise<Auction[]> {
   if (ids.length === 0) return [];
   return prisma.auction.findMany({
     where: { OR: [{id: {in: ids}}, {publicId: {in: ids}}] },
-    include: { lots: true }
+    include: { 
+        lots: { select: { id: true } },
+        seller: true
+    }
   });
 }
 
@@ -111,7 +128,7 @@ export async function fetchSubcategoriesByParent(parentCategoryId: string): Prom
 }
 
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-  return prisma.auction.findMany({
+   return prisma.auction.findMany({
     where: {
       seller: {
         OR: [
@@ -121,7 +138,7 @@ export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): P
         ]
       }
     },
-    include: { lots: true }
+    include: { lots: true, seller: true }
   });
 }
 
@@ -136,6 +153,6 @@ export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Pro
         ]
       }
     },
-    include: { lots: true }
+    include: { lots: true, seller: true }
   });
 }
