@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 
-console.log("[next.config.mjs] LOG: Reading Next.js configuration.");
+console.log(`[next.config.mjs] LOG: Reading Next.js configuration for NODE_ENV: ${process.env.NODE_ENV}`);
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
