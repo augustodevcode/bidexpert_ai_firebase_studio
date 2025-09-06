@@ -1,3 +1,4 @@
+
 // src/contexts/auth-context.tsx
 'use client';
 
@@ -5,7 +6,6 @@ import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
 import { getCurrentUser, logout as logoutAction } from '@/app/auth/actions';
-import { getAdminUserForDev } from '@/app/admin/users/actions'; // Importar a nova função
 import type { UserProfileWithPermissions } from '@/types';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
@@ -30,29 +30,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const fetchUser = useCallback(async () => {
     try {
       setLoading(true);
-      // ========== MODIFICAÇÃO PARA DESENVOLVIMENTO ==========
-      if (process.env.NODE_ENV === 'development') {
-        try {
-          console.log("[DEV MODE] Attempting to auto-login admin user...");
-          const adminUser = await getAdminUserForDev();
-          if (adminUser) {
-            setUserProfileWithPermissions(adminUser);
-            console.log("[DEV MODE] Admin user auto-logged in.");
-          } else {
-            // Fallback to normal session if admin not found
-            const user = await getCurrentUser();
-            setUserProfileWithPermissions(user);
-          }
-        } catch (devError) {
-          console.error("[DEV MODE] Failed to auto-login admin user. Falling back to normal session.", devError);
-          const user = await getCurrentUser();
-          setUserProfileWithPermissions(user);
-        }
-      } else {
-        const user = await getCurrentUser();
-        setUserProfileWithPermissions(user);
-      }
-      // =======================================================
+      const user = await getCurrentUser();
+      setUserProfileWithPermissions(user);
     } catch (error) {
       console.error("Failed to fetch user session:", error);
       setUserProfileWithPermissions(null);
