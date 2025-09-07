@@ -1,4 +1,7 @@
 // src/app/admin/lots/new/page.tsx
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -6,10 +9,13 @@ import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { getBens } from '@/app/admin/bens/actions';
 import { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Package } from 'lucide-react';
 import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '../sellers/actions';
+import FormPageLayout from '@/components/admin/form-page-layout';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];
@@ -22,53 +28,68 @@ interface NewLotPageContentProps {
 }
 
 function NewLotPageContent({ categories, auctions, sellers, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const formRef = useRef<any>(null);
+  
+  const handleSave = () => {
+    formRef.current?.requestSubmit();
+  }
+
   async function handleCreateLot(data: Partial<LotFormData>) {
-    'use server';
-    return createLot(data);
+    const result = await createLot(data);
+    if (result.success) {
+        toast({ title: 'Sucesso!', description: 'Lote criado. Você será redirecionado.' });
+        router.push(result.lotId ? `/admin/lots/${result.lotId}/edit` : '/admin/lots');
+    } else {
+        toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+    }
   }
 
   return (
-     <div data-ai-id="admin-lot-form-card">
+     <FormPageLayout
+        formTitle="Novo Lote"
+        formDescription="Preencha os detalhes para criar um novo lote e associe-o a um leilão."
+        icon={Package}
+        isViewMode={false}
+        onSave={handleSave}
+        onCancel={() => router.back()}
+    >
         <LotForm
-          categories={categories}
-          auctions={auctions}
-          sellers={sellers}
-          states={states}
-          allCities={allCities}
-          initialAvailableBens={availableBens}
-          onSubmitAction={handleCreateLot}
-          formTitle="Novo Lote"
-          formDescription="Preencha os detalhes para criar um novo lote."
-          submitButtonText="Criar Lote"
-          defaultAuctionId={auctionIdFromQuery}
+            ref={formRef}
+            categories={categories}
+            auctions={auctions}
+            sellers={sellers}
+            states={states}
+            allCities={allCities}
+            initialAvailableBens={availableBens}
+            onSubmitAction={handleCreateLot}
+            defaultAuctionId={auctionIdFromQuery}
         />
-     </div>
+     </FormPageLayout>
   );
 }
 
-export default async function NewLotPage({ searchParams }: { searchParams?: { [key: string]: string | string[] | undefined } }) {
-  const auctionIdFromQuery = (searchParams && typeof searchParams.auctionId === 'string') ? searchParams.auctionId : undefined;
-  
-  const [categories, auctions, states, allCities, bens, sellers] = await Promise.all([
-    getLotCategories(),
-    getAuctions(),
-    getStates(),
-    getCities(),
-    getBens(), // Fetch all available bens initially
-    getSellers(),
-  ]);
+export default function NewLotPage() {
+    const searchParams = useSearchParams();
+    const [isLoading, setIsLoading] = useState(true);
+    const [pageData, setPageData] = useState<NewLotPageContentProps | null>(null);
 
-  return (
-    <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-      <NewLotPageContent 
-        categories={categories} 
-        auctions={auctions} 
-        sellers={sellers}
-        states={states}
-        allCities={allCities}
-        availableBens={bens}
-        auctionIdFromQuery={auctionIdFromQuery} 
-      />
-    </Suspense>
-  );
+    useEffect(() => {
+        async function loadData() {
+            const auctionIdFromQuery = searchParams.get('auctionId') || undefined;
+            const [categories, auctions, states, allCities, bens, sellers] = await Promise.all([
+                getLotCategories(), getAuctions(), getStates(), getCities(), getBens(), getSellers(),
+            ]);
+            setPageData({ categories, auctions, states, allCities, availableBens: bens, sellers, auctionIdFromQuery });
+            setIsLoading(false);
+        }
+        loadData();
+    }, [searchParams]);
+
+  if (isLoading || !pageData) {
+     return <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
+  }
+  
+  return <NewLotPageContent {...pageData} />;
 }

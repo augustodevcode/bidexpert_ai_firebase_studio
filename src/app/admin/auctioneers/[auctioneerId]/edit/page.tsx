@@ -5,26 +5,14 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Edit, Trash2, Loader2, XCircle, BarChart3, Gavel, ListChecks, DollarSign, TrendingUp, Users } from 'lucide-react';
+import { Loader2, Gavel, BarChart3, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
 import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout';
+import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">

@@ -5,46 +5,32 @@ import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
-import { notFound, useRouter, useParams } from 'next/navigation'; 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { notFound, useRouter, useParams } from 'next/navigation';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3 } from 'lucide-react';
-import { format, differenceInDays, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { PlusCircle, Info, Settings, BarChart3, Layers, Gavel, Lightbulb, BarChart3 as BarChartIcon } from 'lucide-react';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
-import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
+import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useAuth } from '@/contexts/auth-context';
-import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 import FormPageLayout from '@/components/admin/form-page-layout';
+import { Loader2 } from 'lucide-react';
+
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -57,7 +43,6 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
         </CardContent>
     </Card>
 );
-
 
 function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
     const [dashboardData, setDashboardData] = useState<AuctionDashboardData | null>(null);
@@ -143,165 +128,6 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
     )
 }
 
-function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
-  const [isDeleting, setIsDeleting] = React.useState(false);
-  const { toast } = useToast();
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    const result = await deleteLot(lotId, auctionId); 
-    if (!result.success) {
-        console.error("Failed to delete lot:", result.message);
-        toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
-    } else {
-        toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
-        onDeleteSuccess(); 
-    }
-    setIsDeleting(false);
-  };
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-7 w-7" disabled={isDeleting}>
-          {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-          <span className="sr-only">Excluir Lote</span>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão do Lote</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja excluir o lote "{lotTitle}" (ID: {lotId}) deste leilão? Esta ação não pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Excluir Lote
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-function AuctionInfoDisplay({ auction }: { auction: Auction }) {
-    const auctionTypeLabels: Record<string, string> = {
-        JUDICIAL: 'Judicial',
-        EXTRAJUDICIAL: 'Extrajudicial',
-        PARTICULAR: 'Particular',
-        TOMADA_DE_PRECOS: 'Tomada de Preços',
-    };
-
-    const getDaysRemaining = (endDate: string | Date | null | undefined) => {
-        if (!endDate) return null;
-        const diff = differenceInDays(new Date(endDate), new Date());
-        if (diff < 0) return "Encerrado";
-        if (diff === 0) return "Encerra Hoje";
-        return `${diff} dia(s) restante(s)`;
-    };
-
-    return (
-        <div className="space-y-4">
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" /> Resumo do Leilão</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>ID do Leilão:</strong> {auction.publicId}</p>
-                    <div className="flex items-center"><strong>Status:</strong><Badge variant="outline" className={`ml-2 ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}`}>{getAuctionStatusText(auction.status)}</Badge></div>
-                    <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
-                    <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
-                    {auction.endDate && !isPast(new Date(auction.endDate as string)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
-                    <p><strong>Leiloeiro:</strong> {auction.auctioneerName}</p>
-                    <p><strong>Comitente:</strong> {auction.seller?.name || 'N/A'}</p>
-                </CardContent>
-            </Card>
-
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" /> Configurações de Venda e Marketplace</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>Modalidade:</strong> {auctionTypeLabels[auction.auctionType || ''] || 'Não especificada'}</p>
-                    <p><strong>Robô de Lances:</strong> {auction.automaticBiddingEnabled ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.automaticBiddingEnabled ? 'Ativado' : 'Desativado'}</p>
-                    <p><strong>Permite Lance Parcelado:</strong> {auction.allowInstallmentBids ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.allowInstallmentBids ? 'Sim' : 'Não'}</p>
-                    <p><strong>Destaque no Marketplace:</strong> {auction.isFeaturedOnMarketplace ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.isFeaturedOnMarketplace ? 'Sim' : 'Não'}</p>
-                    {auction.isFeaturedOnMarketplace && <p><strong>Título do Anúncio:</strong> {auction.marketplaceAnnouncementTitle || 'Não definido'}</p>}
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-function DeleteAuctionButton({ auction, onAction }: { auction: Auction; onAction: () => void; }) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const canDelete = auction.status === 'RASCUNHO';
-  const tooltipContent = canDelete 
-    ? "Excluir este leilão" 
-    : "Não é possível excluir um leilão que já foi iniciado ou possui lotes. Altere o status para 'Rascunho' e remova os lotes primeiro.";
-
-  const handleDelete = async () => {
-    if (!canDelete) return;
-    setIsDeleting(true);
-    const result = await deleteAuction(auction.id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/admin/auctions');
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-    setIsDeleting(false);
-  };
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div> {/* Wrapper div to allow tooltip on disabled button */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting || !canDelete}>
-                  {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                  Excluir
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusão?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação é permanente e não pode ser desfeita. Tem certeza que deseja excluir o leilão "{auction.title}"?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                    {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
-                    Confirmar Exclusão
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-
 export default function EditAuctionPage() {
   const paramsHook = useParams(); 
   const auctionId = paramsHook.auctionId as string; 
@@ -319,6 +145,7 @@ export default function EditAuctionPage() {
   const { userProfileWithPermissions } = useAuth();
   
   const [isAISuggestionModalOpen, setIsAISuggestionModalOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const formRef = React.useRef<any>(null);
 
@@ -361,9 +188,34 @@ export default function EditAuctionPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
+  
+  const handleSave = async () => {
+    if (formRef.current) {
+        await formRef.current.requestSubmit();
+    }
+  }
 
   async function handleUpdateAuction(data: Partial<AuctionFormData>) {
-    return updateAuction(auctionId, data);
+    setIsSubmitting(true);
+    const result = await updateAuction(auctionId, data);
+    setIsSubmitting(false);
+    if (result.success) {
+        toast({title: 'Sucesso!', description: 'Leilão atualizado.'})
+        fetchPageData();
+        setIsViewMode(true);
+    } else {
+        toast({title: 'Erro', description: result.message, variant: 'destructive'});
+    }
+  }
+
+  const handleDeleteAuction = async () => {
+     const result = await deleteAuction(auction.id);
+      if(result.success) {
+        toast({title: "Sucesso", description: result.message});
+        router.push('/admin/auctions');
+      } else {
+        toast({title: "Erro", description: result.message, variant: "destructive"});
+      }
   }
 
   const handleDeleteLot = useCallback(
@@ -395,36 +247,25 @@ export default function EditAuctionPage() {
           icon={Gavel}
           isViewMode={isViewMode}
           isLoading={isLoading}
-          isSubmitting={formRef.current?.formState.isSubmitting}
+          isSubmitting={isSubmitting}
           onEnterEditMode={() => setIsViewMode(false)}
           onCancel={() => setIsViewMode(true)}
-          onSave={() => formRef.current?.requestSubmit()}
-          onDelete={() => deleteAuction(auction.id).then(res => {
-            if(res.success) {
-              toast({title: "Sucesso", description: res.message});
-              router.push('/admin/auctions');
-            } else {
-              toast({title: "Erro", description: res.message, variant: "destructive"});
-            }
-          })}
+          onSave={handleSave}
+          onDelete={handleDeleteAuction}
         >
           <AuctionForm
-              formRef={formRef}
+              ref={formRef}
               initialData={auction}
               categories={categories}
               auctioneers={auctioneers}
               sellers={sellers}
               states={states}
               allCities={allCities}
-              onSubmitAction={handleUpdateAuction}
-              formTitle="" // Title is handled by layout
-              formDescription="" // Description is handled by layout
-              isViewMode={isViewMode}
-              onUpdateSuccess={() => {
+              onSubmitAction={handleUpdateAuction as any}
+              onSuccessCallback={() => {
                   fetchPageData();
                   setIsViewMode(true);
               }}
-              onCancelEdit={() => setIsViewMode(true)}
             />
         </FormPageLayout>
 
@@ -434,10 +275,6 @@ export default function EditAuctionPage() {
             </Button>
         </div>
         
-        <div className="lg:col-span-1 space-y-6">
-            <AuctionInfoDisplay auction={auction} />
-        </div>
-
         <Separator className="my-8"/>
 
         <Card>
@@ -469,7 +306,7 @@ export default function EditAuctionPage() {
         <Card>
           <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
+                  <BarChartIcon className="mr-2 h-5 w-5 text-primary"/> Análise de Performance do Leilão
               </CardTitle>
               <CardDescription>
                   KPIs e métricas de desempenho para este leilão específico.
@@ -500,4 +337,3 @@ export default function EditAuctionPage() {
     </>
   );
 }
-    
