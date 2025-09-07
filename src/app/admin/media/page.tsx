@@ -1,7 +1,7 @@
 // src/app/admin/media/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,74 +9,14 @@ import { getMediaItems, deleteMediaItem, updateMediaItemMetadata } from './actio
 import type { MediaItem } from '@/types';
 import { UploadCloud, ImageIcon as LibraryIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 import EditMediaDialog from '@/components/admin/media/edit-media-dialog';
 
 export default function MediaLibraryPage() {
-  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-  
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
-
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const items = await getMediaItems();
-      setMediaItems(items);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar itens de mídia.";
-      console.error("Error fetching media items:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-
-  useEffect(() => {
-    fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteMediaItem(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        fetchPageData();
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast, fetchPageData]
-  );
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: MediaItem[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteMediaItem(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.fileName}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} item(ns) de mídia excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
 
   const handleEdit = (item: MediaItem) => {
     setEditingItem(item);
@@ -89,13 +29,13 @@ export default function MediaLibraryPage() {
       toast({ title: 'Sucesso', description: 'Metadados atualizados.'});
       setIsEditDialogOpen(false);
       setEditingItem(null);
-      fetchPageData();
+      // O ResourceDataTable se encarregará de refetch
     } else {
       toast({ title: 'Erro', description: result.message, variant: 'destructive'});
     }
   };
   
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEdit }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete: deleteMediaItem, onEdit: handleEdit }), []);
 
   return (
     <>
@@ -118,14 +58,12 @@ export default function MediaLibraryPage() {
             </Button>
           </CardHeader>
           <CardContent>
-             <DataTable
-              columns={columns}
-              data={mediaItems}
-              isLoading={isLoading}
-              error={error}
-              searchColumnId="title"
-              searchPlaceholder="Buscar por título ou nome do arquivo..."
-              onDeleteSelected={handleDeleteSelected}
+             <ResourceDataTable<MediaItem>
+                columns={columns}
+                fetchAction={getMediaItems}
+                deleteAction={deleteMediaItem}
+                searchColumnId="title"
+                searchPlaceholder="Buscar por título ou nome do arquivo..."
             />
           </CardContent>
         </Card>

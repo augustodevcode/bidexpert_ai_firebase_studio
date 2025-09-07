@@ -1,70 +1,14 @@
-
 // src/app/admin/document-templates/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlusCircle, Files } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getDocumentTemplates, deleteDocumentTemplate } from './actions';
-import type { DocumentTemplate } from '@/types';
-import { PlusCircle, Files } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import type { DocumentTemplate } from '@/types';
 
 export default function AdminDocumentTemplatesPage() {
-  const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  useEffect(() => {
-    let isMounted = true;
-    
-    const fetchTemplates = async () => {
-      if (!isMounted) return;
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedTemplates = await getDocumentTemplates();
-        if (isMounted) {
-          setTemplates(fetchedTemplates);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar templates.";
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-    
-    fetchTemplates();
-
-    return () => { isMounted = false; };
-  }, [toast, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteDocumentTemplate(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
-  
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -85,11 +29,10 @@ export default function AdminDocumentTemplatesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={templates}
-            isLoading={isLoading}
-            error={error}
+           <ResourceDataTable<DocumentTemplate>
+            columns={createColumns}
+            fetchAction={getDocumentTemplates}
+            deleteAction={deleteDocumentTemplate}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do template..."
           />
