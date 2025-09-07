@@ -4,55 +4,19 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { JudicialDistrictService, type DistrictPerformanceData } from '@/services/judicial-district.service';
 
-export interface DistrictPerformanceData {
-  id: string;
-  name: string;
-  totalProcesses: number;
-  totalAuctions: number;
-  totalLotsSold: number;
-  totalRevenue: number;
-  averageTicket: number;
-}
+const districtService = new JudicialDistrictService();
+
+export type { DistrictPerformanceData };
 
 /**
  * Fetches and aggregates performance data for all judicial districts.
+ * @returns {Promise<DistrictPerformanceData[]>} A promise that resolves to an array of district performance objects.
  */
 export async function getDistrictsPerformanceAction(): Promise<DistrictPerformanceData[]> {
   try {
-    const districts = await prisma.judicialDistrict.findMany({
-      include: {
-        _count: {
-          select: { judicialProcesses: true, auctions: true },
-        },
-        auctions: {
-          include: {
-            lots: {
-              where: { status: 'VENDIDO' },
-              select: { price: true },
-            },
-          },
-        },
-      },
-    });
-
-    return districts.map(district => {
-      const allLotsFromAuctions = district.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
-      const totalLotsSold = allLotsFromAuctions.length;
-      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
-
-      return {
-        id: district.id,
-        name: district.name,
-        totalProcesses: district._count.judicialProcesses,
-        totalAuctions: district._count.auctions,
-        totalLotsSold,
-        totalRevenue,
-        averageTicket,
-      };
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+    return districtService.getDistrictsPerformance();
   } catch (error: any) {
     console.error("[Action - getDistrictsPerformanceAction] Error fetching district performance:", error);
     throw new Error("Falha ao buscar dados de performance das comarcas.");

@@ -3,6 +3,17 @@ import { CourtRepository } from '@/repositories/court.repository';
 import type { Court, CourtFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma'; // Import prisma for complex queries
+
+export interface CourtPerformanceData {
+  id: string;
+  name: string;
+  totalProcesses: number;
+  totalAuctions: number;
+  totalLotsSold: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
 
 export class CourtService {
   private courtRepository: CourtRepository;
@@ -56,5 +67,40 @@ export class CourtService {
       console.error(`Error in CourtService.deleteCourt for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir tribunal: ${error.message}` };
     }
+  }
+
+  async getCourtsPerformance(): Promise<CourtPerformanceData[]> {
+    const courts = await prisma.court.findMany({
+      include: {
+        _count: {
+          select: { judicialProcesses: true, auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO' },
+              select: { price: true },
+            },
+          },
+        },
+      },
+    });
+
+    return courts.map(court => {
+      const allLotsFromAuctions = court.auctions.flatMap(auc => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalLotsSold = allLotsFromAuctions.length;
+      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
+
+      return {
+        id: court.id,
+        name: court.name,
+        totalProcesses: court._count.judicialProcesses,
+        totalAuctions: court._count.auctions,
+        totalLotsSold,
+        totalRevenue,
+        averageTicket,
+      };
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
   }
 }

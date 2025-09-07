@@ -3,6 +3,17 @@ import { JudicialDistrictRepository } from '@/repositories/judicial-district.rep
 import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma'; // Import prisma for complex queries
+
+export interface DistrictPerformanceData {
+  id: string;
+  name: string;
+  totalProcesses: number;
+  totalAuctions: number;
+  totalLotsSold: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
 
 export class JudicialDistrictService {
   private repository: JudicialDistrictRepository;
@@ -78,5 +89,40 @@ export class JudicialDistrictService {
       console.error(`Error in JudicialDistrictService.delete for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir comarca: ${error.message}` };
     }
+  }
+  
+  async getDistrictsPerformance(): Promise<DistrictPerformanceData[]> {
+    const districts = await prisma.judicialDistrict.findMany({
+      include: {
+        _count: {
+          select: { judicialProcesses: true, auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO' },
+              select: { price: true },
+            },
+          },
+        },
+      },
+    });
+
+    return districts.map(district => {
+      const allLotsFromAuctions = district.auctions.flatMap(auc => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalLotsSold = allLotsFromAuctions.length;
+      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
+
+      return {
+        id: district.id,
+        name: district.name,
+        totalProcesses: district._count.judicialProcesses,
+        totalAuctions: district._count.auctions,
+        totalLotsSold,
+        totalRevenue,
+        averageTicket,
+      };
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
   }
 }

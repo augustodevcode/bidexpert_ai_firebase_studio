@@ -3,6 +3,17 @@ import { JudicialBranchRepository } from '@/repositories/judicial-branch.reposit
 import type { JudicialBranch, JudicialBranchFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma'; // Import prisma for complex queries
+
+export interface BranchPerformanceData {
+  id: string;
+  name: string;
+  totalProcesses: number;
+  totalAuctions: number;
+  totalLotsSold: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
 
 export class JudicialBranchService {
   private repository: JudicialBranchRepository;
@@ -78,5 +89,40 @@ export class JudicialBranchService {
       console.error(`Error in JudicialBranchService.delete for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir vara: ${error.message}` };
     }
+  }
+
+  async getBranchesPerformance(): Promise<BranchPerformanceData[]> {
+    const branches = await prisma.judicialBranch.findMany({
+      include: {
+        _count: {
+          select: { judicialProcesses: true, auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO' },
+              select: { price: true },
+            },
+          },
+        },
+      },
+    });
+
+    return branches.map(branch => {
+      const allLotsFromAuctions = branch.auctions.flatMap(auc => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalLotsSold = allLotsFromAuctions.length;
+      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
+
+      return {
+        id: branch.id,
+        name: branch.name,
+        totalProcesses: branch._count.judicialProcesses,
+        totalAuctions: branch._count.auctions,
+        totalLotsSold,
+        totalRevenue,
+        averageTicket,
+      };
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
   }
 }
