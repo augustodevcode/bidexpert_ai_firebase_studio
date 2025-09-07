@@ -1,31 +1,27 @@
 // src/app/admin/contact-messages/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getContactMessages, deleteContactMessage, toggleMessageReadStatus } from './actions';
 import type { ContactMessage } from '@/types';
-import { Mail, Trash2, Check, Eye } from 'lucide-react';
+import { Mail, Check, Eye, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 
-/**
- * Defines the columns for the contact messages data table.
- * @param {object} props - Properties including action handlers.
- * @returns {ColumnDef<ContactMessage>[]} An array of column definitions.
- */
+
 const createColumns = ({
   handleDelete,
   handleToggleRead
 }: {
-  handleDelete: (id: string) => void;
-  handleToggleRead: (id: string, isRead: boolean) => void;
+  handleDelete: (id: string) => Promise<{ success: boolean; message: string; }>;
+  handleToggleRead: (id: string, isRead: boolean) => Promise<{ success: boolean; message: string; }>;
 }): ColumnDef<ContactMessage>[] => [
   {
     accessorKey: 'isRead',
@@ -83,52 +79,30 @@ const createColumns = ({
   },
 ];
 
-/**
- * Admin page for viewing and managing messages sent through the contact form.
- */
-export default function AdminContactMessagesPage() {
-  const [messages, setMessages] = useState<ContactMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  useEffect(() => {
-    async function fetchMessages() {
-      setIsLoading(true);
-      try {
-        const result = await getContactMessages();
-        setMessages(result);
-      } catch (e: any) {
-        setError(e.message);
-        toast({ title: "Erro", description: e.message, variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchMessages();
-  }, [refetchTrigger, toast]);
+export default function AdminContactMessagesPage() {
+  const { toast } = useToast();
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteContactMessage(id);
     if (result.success) {
       toast({ title: "Sucesso", description: result.message });
-      setRefetchTrigger(c => c + 1);
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
+    return result;
   }, [toast]);
 
   const handleToggleRead = useCallback(async (id: string, currentStatus: boolean) => {
     const result = await toggleMessageReadStatus(id, !currentStatus);
     if (result.success) {
         toast({ title: "Status alterado", description: result.message });
-        setRefetchTrigger(c => c + 1);
     } else {
         toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
+    return result;
   }, [toast]);
-
+  
   const columns = useMemo(() => createColumns({ handleDelete, handleToggleRead }), [handleDelete, handleToggleRead]);
 
   const facetedFilterOptions = [
@@ -151,11 +125,10 @@ export default function AdminContactMessagesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <DataTable
+          <ResourceDataTable
             columns={columns}
-            data={messages}
-            isLoading={isLoading}
-            error={error}
+            fetchAction={getContactMessages}
+            deleteAction={handleDelete}
             searchColumnId="subject"
             searchPlaceholder="Buscar por assunto ou email..."
             facetedFilterColumns={facetedFilterOptions}

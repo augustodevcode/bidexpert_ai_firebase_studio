@@ -1,5 +1,6 @@
 // src/app/admin/document-templates/page.tsx
-import { PlusCircle, Files } from 'lucide-react';
+'use client';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +8,11 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getDocumentTemplates, deleteDocumentTemplate } from './actions';
 import { createColumns } from './columns';
 import type { DocumentTemplate } from '@/types';
+import { PlusCircle, Files } from 'lucide-react';
 
 export default function AdminDocumentTemplatesPage() {
+  const columns = useMemo(() => createColumns({ handleDelete: deleteDocumentTemplate }), []);
+
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -30,7 +34,7 @@ export default function AdminDocumentTemplatesPage() {
         </CardHeader>
         <CardContent>
            <ResourceDataTable<DocumentTemplate>
-            columns={createColumns}
+            columns={columns}
             fetchAction={getDocumentTemplates}
             deleteAction={deleteDocumentTemplate}
             searchColumnId="name"
