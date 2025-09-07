@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getPlatformSettings } from '../settings/actions';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -73,12 +73,13 @@ export default function AdminLotsPage() {
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
-            currentPage={1}
+            // facetedFilterColumns={facetedFilterColumns}
             itemsPerPage={platformSettings.defaultListItemsPerPage || 100} // Show all in tabs
             onPageChange={() => {}}
             onItemsPerPageChange={() => {}}
+            currentPage={1}
             emptyStateMessage="Nenhum lote encontrado nesta categoria."
-        />
+          />
       );
   };
   
