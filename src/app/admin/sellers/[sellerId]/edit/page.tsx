@@ -1,7 +1,7 @@
 // src/app/admin/sellers/[sellerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import SellerForm from '../../seller-form';
 import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
@@ -121,7 +121,7 @@ export default function EditSellerPage() {
   }
 
   return (
-     <div className="space-y-6">
+     <div className="space-y-6" data-ai-id="admin-seller-form-card">
         <FormPageLayout
             formTitle={isViewMode ? `Visualizar Comitente` : `Editar Comitente`}
             formDescription={seller?.name || 'Carregando...'}

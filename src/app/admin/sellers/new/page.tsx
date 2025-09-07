@@ -13,13 +13,15 @@ export default async function NewSellerPage() {
   }
 
   return (
-    <SellerForm
-      judicialBranches={judicialBranches}
-      onSubmitAction={handleCreateSeller}
-      formTitle="Novo Comitente"
-      formDescription="Preencha os detalhes para cadastrar um novo comitente/vendedor."
-      submitButtonText="Criar Comitente"
-    />
+    <div data-ai-id="admin-seller-form-card">
+        <SellerForm
+          judicialBranches={judicialBranches}
+          onSubmitAction={handleCreateSeller}
+          formTitle="Novo Comitente"
+          formDescription="Preencha os detalhes para cadastrar um novo comitente/vendedor."
+          submitButtonText="Criar Comitente"
+        />
+    </div>
   );
 }
 

@@ -28,19 +28,21 @@ function NewLotPageContent({ categories, auctions, sellers, states, allCities, a
   }
 
   return (
-    <LotForm
-      categories={categories}
-      auctions={auctions}
-      sellers={sellers}
-      states={states}
-      allCities={allCities}
-      initialAvailableBens={availableBens}
-      onSubmitAction={handleCreateLot}
-      formTitle="Novo Lote"
-      formDescription="Preencha os detalhes para criar um novo lote."
-      submitButtonText="Criar Lote"
-      defaultAuctionId={auctionIdFromQuery}
-    />
+     <div data-ai-id="admin-lot-form-card">
+        <LotForm
+          categories={categories}
+          auctions={auctions}
+          sellers={sellers}
+          states={states}
+          allCities={allCities}
+          initialAvailableBens={availableBens}
+          onSubmitAction={handleCreateLot}
+          formTitle="Novo Lote"
+          formDescription="Preencha os detalhes para criar um novo lote."
+          submitButtonText="Criar Lote"
+          defaultAuctionId={auctionIdFromQuery}
+        />
+     </div>
   );
 }
 

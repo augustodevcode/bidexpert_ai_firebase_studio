@@ -19,14 +19,16 @@ export default async function NewBemPage() {
   }
 
   return (
-    <BemForm
-      processes={processes}
-      categories={categories}
-      sellers={sellers}
-      onSubmitAction={handleCreateBem}
-      formTitle="Novo Bem"
-      formDescription="Cadastre um novo bem para que possa ser posteriormente loteado em um leilão."
-      submitButtonText="Criar Bem"
-    />
+    <div data-ai-id="admin-bem-form-card">
+        <BemForm
+          processes={processes}
+          categories={categories}
+          sellers={sellers}
+          onSubmitAction={handleCreateBem}
+          formTitle="Novo Bem"
+          formDescription="Cadastre um novo bem para que possa ser posteriormente loteado em um leilão."
+          submitButtonText="Criar Bem"
+        />
+    </div>
   );
 }
