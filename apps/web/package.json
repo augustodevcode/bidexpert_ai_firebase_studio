@@ -13,6 +13,7 @@
         "postinstall": "npx --node-options=--experimental-fetch tsx --env-file=../../.env ./node_modules/.bin/prisma generate"
     },
     "dependencies": {
+        "@bidexpert/core": "workspace:*",
         "@firebasegen/default-connector": "file:../../dataconnect-generated/js/default-connector",
         "@genkit-ai/googleai": "^1.1.0",
         "@google/generative-ai": "^0.2.1",

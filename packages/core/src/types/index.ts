@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 import { z } from 'zod';
 
@@ -890,11 +889,6 @@ export interface ConsignorDashboardStats {
     totalSalesValue: number;
     salesRate: number;
     salesData: { name: string; sales: number }[];
-}
-
-export interface UserCreationData extends Omit<UserProfileData, 'id' | 'uid' | 'createdAt' | 'updatedAt' | 'roleName' | 'roleNames' | 'permissions' | 'habilitationStatus'> {
-  roleIds?: string[];
-  habilitationStatus?: UserHabilitationStatus;
 }
 
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'roleNames' | 'permissions'>>;
