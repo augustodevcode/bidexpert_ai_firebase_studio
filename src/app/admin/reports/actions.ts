@@ -5,7 +5,7 @@
  */
 'use server';
 
-import type { AdminReportData } from '@/types';
+import type { AdminReportData } from '@bidexpert/core';
 import { ReportsService } from '@bidexpert/services';
 
 const reportsService = new ReportsService();

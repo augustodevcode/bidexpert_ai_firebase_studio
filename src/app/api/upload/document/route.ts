@@ -2,10 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { prisma } from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
-import { saveUserDocument } from '@/app/dashboard/documents/actions'; // Import the server action
+import { HabilitationService } from '@/services/habilitation.service';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf', 'image/svg+xml'];
 const MAX_FILE_SIZE_MB = 5;
@@ -14,6 +13,8 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+  const habilitationService = new HabilitationService();
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -52,7 +53,7 @@ export async function POST(request: NextRequest) {
     await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
 
     // Use the Server Action to save the document record
-    const result = await saveUserDocument(userId, documentTypeId, publicUrl, file.name);
+    const result = await habilitationService.saveUserDocument(userId, documentTypeId, publicUrl, file.name);
 
     if (!result.success) {
         // If the DB operation fails, we should ideally delete the just-uploaded file.
