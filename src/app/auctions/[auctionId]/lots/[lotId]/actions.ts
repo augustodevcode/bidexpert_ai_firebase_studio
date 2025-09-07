@@ -8,17 +8,16 @@
 
 import { BidService } from '@bidexpert/services';
 import { SellerService } from '@bidexpert/services';
+import { HabilitationService } from '@bidexpert/services';
 import type { BidInfo, Lot, SellerProfileInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { LotService } from '@bidexpert/services';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { prisma } from '@/lib/prisma';
 
 const bidService = new BidService();
 const sellerService = new SellerService();
 const lotService = new LotService();
-
+const habilitationService = new HabilitationService();
 
 export async function placeBidOnLot(
   lotIdOrPublicId: string,
@@ -43,7 +42,6 @@ export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>
 }
 
 export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-  // Logic remains simple, can be moved to a ReviewService later if it grows.
   const lot = await lotService.getLotById(lotIdOrPublicId);
   if (!lot) return [];
   // @ts-ignore - Assuming Review model exists
@@ -57,7 +55,6 @@ export async function createReview(
   rating: number,
   comment: string
 ): Promise<{ success: boolean; message: string; reviewId?: string }> {
-  // This logic is simple enough to stay here for now, or move to a dedicated ReviewService.
   const lot = await lotService.getLotById(lotIdOrPublicId);
   if (!lot) return { success: false, message: "Lote não encontrado." };
 
@@ -122,52 +119,13 @@ export async function answerQuestionOnLot(
 
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicIdOrSlug) return null;
-    try {
-        return sellerService.getSellerBySlug(sellerIdOrPublicIdOrSlug);
-    } catch(error) {
-        console.error("Error fetching seller details:", error);
-        return null;
-    }
+    return sellerService.getSellerBySlug(sellerIdOrPublicIdOrSlug);
 }
 
 export async function generateWinningBidTermAction(lotId: string): Promise<{ success: boolean; message: string; pdfBase64?: string; fileName?: string; }> {
-    const lot = await lotService.getLotById(lotId);
-    if (!lot || !lot.winnerId || !lot.auction) {
-        return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
-    }
-    
-    // This logic is complex and involves multiple entities, so it remains here for now,
-    // but could be moved to a "DocumentGenerationService" in the future.
-    const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
-    if (!winner) {
-        return { success: false, message: 'Arrematante não encontrado.'};
-    }
+    return lotService.generateWinningBidTerm(lotId);
+}
 
-    const { auction } = lot;
-    const auctioneer = auction.auctioneer;
-    const seller = auction.seller;
-
-    try {
-        const result = await generateDocument({
-        documentType: 'WINNING_BID_TERM',
-        data: {
-            lot: lot,
-            auction: auction,
-            winner: winner,
-            auctioneer: auctioneer,
-            seller: seller,
-            currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
-        },
-        });
-
-        if (result.pdfBase64 && result.fileName) {
-            await lotService.updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); // Placeholder URL
-            return { ...result, success: true, message: 'Documento gerado com sucesso!' };
-        } else {
-            throw new Error("A geração do PDF não retornou os dados esperados.");
-        }
-    } catch (error: any) {
-        console.error("Error generating winning bid term PDF:", error);
-        return { success: false, message: `Falha ao gerar documento: ${error.message}` };
-    }
+export async function checkHabilitationForAuctionAction(userId: string, auctionId: string): Promise<boolean> {
+  return habilitationService.isUserHabilitatedForAuction(userId, auctionId);
 }

@@ -46,7 +46,10 @@ export class UserWinService {
     
     try {
         if (paymentData.paymentMethod === 'credit_card') {
-            await this.repository.update(winId, { paymentStatus: 'PAGO' });
+            await prisma.userWin.update({
+                where: { id: winId },
+                data: { paymentStatus: 'PAGO' }
+            });
             if (process.env.NODE_ENV !== 'test') {
                 revalidatePath(`/dashboard/wins`);
                 revalidatePath(`/checkout/${winId}`);
@@ -69,8 +72,11 @@ export class UserWinService {
             }));
             
             await prisma.$transaction([
-                this.repository.createInstallments({data: installmentsToCreate}),
-                this.repository.update(winId, { paymentStatus: 'PROCESSANDO' })
+                prisma.installmentPayment.createMany({data: installmentsToCreate}),
+                prisma.userWin.update({
+                    where: { id: winId },
+                    data: { paymentStatus: 'PROCESSANDO' }
+                })
             ]);
             
             if (process.env.NODE_ENV !== 'test') {

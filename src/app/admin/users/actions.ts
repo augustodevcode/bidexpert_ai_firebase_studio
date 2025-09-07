@@ -1,8 +1,7 @@
 // src/app/admin/users/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserProfileData, UserFormData } from '@/types';
+import type { EditableUserProfileData, UserCreationData, UserProfileWithPermissions } from '@/types';
 import { UserService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
@@ -33,19 +32,9 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
 }
 
 export async function updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
-  const result = await userService.updateUserProfile(userId, data);
-   if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/users');
-        revalidatePath(`/admin/users/${userId}/edit`);
-    }
-  return result;
+  return userService.updateUserProfile(userId, data);
 }
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
-  const result = await userService.updateUserRoles(userId, roleIds);
-   if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/users');
-        revalidatePath(`/admin/users/${userId}/edit`);
-    }
-  return result;
+  return userService.updateUserRoles(userId, roleIds);
 }

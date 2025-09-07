@@ -5,6 +5,9 @@ import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
+import { generateDocument } from '@/ai/flows/generate-document-flow';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export class LotService {
   private repository: LotRepository;
@@ -31,7 +34,6 @@ export class LotService {
     return {
       ...lot,
       bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
-      auctionName: lot.auction?.title,
       auction: lot.auction, // Pass the full auction object
     };
   }
@@ -88,8 +90,8 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
-      if (data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
+        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       const newLot = await this.repository.create(dataToCreate, bemIds || []);
@@ -115,14 +117,12 @@ export class LotService {
         bemIds, categoryId, subcategoryId, type, auctionId, 
         sellerId, auctioneerId, stateId, cityId,
         stageDetails, // Capturando os detalhes das etapas
-        initialPrice, // Remove from main data
         ...lotData 
       } = data;
 
       const dataToUpdate: Prisma.LotUpdateInput = { 
           ...(lotData as any),
           price: lotData.price ? Number(lotData.price) : undefined,
-          allowInstallmentBids: data.allowInstallmentBids,
       };
 
       if (lotData.title) {
@@ -246,5 +246,45 @@ export class LotService {
             }
            return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
       }
+  }
+
+  async generateWinningBidTerm(lotId: string): Promise<{ success: boolean; message: string; pdfBase64?: string; fileName?: string; }> {
+    const lot = await this.getLotById(lotId);
+    if (!lot || !lot.winnerId || !lot.auction) {
+      return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
+    }
+    
+    const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
+    if (!winner) {
+      return { success: false, message: 'Arrematante não encontrado.' };
+    }
+
+    const { auction } = lot;
+    const auctioneer = auction.auctioneer;
+    const seller = auction.seller;
+
+    try {
+      const result = await generateDocument({
+        documentType: 'WINNING_BID_TERM',
+        data: {
+          lot: lot,
+          auction: auction,
+          winner: winner,
+          auctioneer: auctioneer,
+          seller: seller,
+          currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
+        },
+      });
+
+      if (result.pdfBase64 && result.fileName) {
+        await this.updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); // Placeholder URL
+        return { ...result, success: true, message: 'Documento gerado com sucesso!' };
+      } else {
+        throw new Error("A geração do PDF não retornou os dados esperados.");
+      }
+    } catch (error: any) {
+      console.error("Error generating winning bid term PDF:", error);
+      return { success: false, message: `Falha ao gerar documento: ${error.message}` };
+    }
   }
 }
