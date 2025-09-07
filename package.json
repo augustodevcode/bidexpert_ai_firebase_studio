@@ -3,10 +3,10 @@
   "name": "bidexpert-monorepo",
   "private": true,
   "scripts": {
-    "dev": "turbo dev -- --port 9002 --hostname 0.0.0.0",
-    "build": "turbo build",
+    "dev": "pnpm --filter web dev",
+    "build": "pnpm --filter web build",
     "start": "pnpm --filter web start",
-    "lint": "turbo lint",
+    "lint": "pnpm --filter web lint",
     "db:push": "pnpm --filter web db:push",
     "db:seed": "pnpm --filter web db:seed",
     "db:init": "pnpm --filter web db:init",
