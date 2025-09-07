@@ -1,79 +1,14 @@
 // src/app/admin/states/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlusCircle, Map } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getStates, deleteState } from './actions';
-import type { StateInfo } from '@/types';
-import { PlusCircle, Map } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
-import { useRouter } from 'next/navigation';
+import type { StateInfo } from '@/types';
 
 export default function AdminStatesPage() {
-  const [states, setStates] = useState<StateInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  const fetchPageData = useCallback(async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedStates = await getStates();
-        setStates(fetchedStates);
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar estados.";
-        console.error("Error fetching states:", e);
-        setError(errorMessage);
-        toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteState(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      setRefetchTrigger(c => c + 1);
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: StateInfo[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteState(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} estado(s) excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
-
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -94,15 +29,13 @@ export default function AdminStatesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={states}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome ou UF..."
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <ResourceDataTable<StateInfo>
+              columns={createColumns}
+              fetchAction={getStates}
+              deleteAction={deleteState}
+              searchColumnId="name"
+              searchPlaceholder="Buscar por nome ou UF..."
+           />
         </CardContent>
       </Card>
     </div>
