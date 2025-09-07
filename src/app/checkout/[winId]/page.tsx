@@ -2,7 +2,7 @@
 import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { getWinDetailsForCheckoutAction } from './actions';
+import { getWinDetailsForCheckoutAction, getCheckoutTotalsAction } from './actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -14,12 +14,13 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 export default async function CheckoutPage({ params }: { params: { winId: string } }) {
   const winId = params.winId;
-  const [winDetails, platformSettings] = await Promise.all([
+  
+  const [winDetails, checkoutTotals] = await Promise.all([
     getWinDetailsForCheckoutAction(winId),
-    getPlatformSettings(),
+    getCheckoutTotalsAction(winId)
   ]);
 
-  if (!winDetails) {
+  if (!winDetails || !checkoutTotals) {
     notFound();
   }
   
@@ -40,9 +41,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
     );
   }
 
-  const commissionRate = (platformSettings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
-  const commissionValue = winDetails.winningBidAmount * commissionRate;
-  const totalDue = winDetails.winningBidAmount + commissionValue;
+  const { winningBidAmount, commissionValue, totalDue } = checkoutTotals;
 
   return (
     <div className="container mx-auto max-w-5xl py-8" data-ai-id="checkout-page-container">
@@ -75,10 +74,10 @@ export default async function CheckoutPage({ params }: { params: { winId: string
              <div className="space-y-2 text-sm" data-ai-id="order-summary-price-breakdown">
                 <div className="flex justify-between">
                     <span className="text-muted-foreground">Valor do Arremate</span>
-                    <span className="font-medium text-foreground">R$ {winDetails.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                    <span className="font-medium text-foreground">R$ {winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Comissão do Leiloeiro ({commissionRate * 100}%)</span>
+                    <span className="text-muted-foreground">Comissão do Leiloeiro ({checkoutTotals.commissionRate * 100}%)</span>
                     <span className="font-medium text-foreground">R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between">

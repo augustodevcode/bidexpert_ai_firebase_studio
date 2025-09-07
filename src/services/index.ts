@@ -20,7 +20,6 @@ export * from './bid.service';
 export * from './user-win.service';
 export * from './contact-message.service';
 export * from './document-template.service';
-export *.ts
 export * from './document-type.service';
 export * from './habilitation.service';
 export * from './reports.service';

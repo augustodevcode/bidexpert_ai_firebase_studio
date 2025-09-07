@@ -15,12 +15,21 @@ import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Res
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
+import type { SellerDashboardData } from '@/types';
 
-const initialStats = {
+const initialStats: SellerDashboardData = {
   totalRevenue: 0,
+  totalAuctions: 0,
+  totalLots: 0,
+  lotsSoldCount: 0,
+  salesRate: 0,
+  averageTicket: 0,
+  salesByMonth: [],
   totalCommission: 0,
   netValue: 0,
   paidCount: 0,
+  platformCommissionPercentage: 0,
 };
 
 export default function ConsignorFinancialPage() {
@@ -30,6 +39,7 @@ export default function ConsignorFinancialPage() {
   const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState<SellerDashboardData>(initialStats);
   const [error, setError] = useState<string | null>(null);
 
   const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
@@ -49,8 +59,12 @@ export default function ConsignorFinancialPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const userWins = await getFinancialDataForConsignor(sellerId);
+      const [userWins, dashboardStats] = await Promise.all([
+        getFinancialDataForConsignor(sellerId),
+        getSellerDashboardDataAction(sellerId)
+      ]);
       setWins(userWins);
+      setStats(dashboardStats || initialStats);
     } catch (err) {
       console.error("Error fetching consignor financials:", err);
       toast({ title: "Erro ao buscar dados financeiros", variant: "destructive" });
@@ -72,22 +86,8 @@ export default function ConsignorFinancialPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchFinancials, isUserAdmin, selectedSellerId, allSellers.length]);
 
-  const columns = useMemo(() => createFinancialColumns(), []);
-
-  const { totalRevenue, totalCommission, netValue, paidCount } = useMemo(() => {
-    let totalRevenue = 0;
-    let paidCount = 0;
-    wins.forEach(win => {
-      if (win.paymentStatus === 'PAGO') {
-        totalRevenue += win.winningBidAmount;
-        paidCount++;
-      }
-    });
-    const totalCommission = totalRevenue * 0.05; // Assuming a flat 5% commission
-    const netValue = totalRevenue - totalCommission;
-    return { totalRevenue, totalCommission, netValue, paidCount };
-  }, [wins]);
-
+  const columns = useMemo(() => createFinancialColumns({ commissionRate: stats.platformCommissionPercentage || 5 }), [stats.platformCommissionPercentage]);
+  
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]
       .map(status => ({ value: status, label: getPaymentStatusText(status) })),
@@ -134,19 +134,19 @@ export default function ConsignorFinancialPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto (Pago)</CardTitle><BarChart3 className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{(stats.totalRevenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Comissão da Plataforma</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{totalCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{(stats.totalCommission || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Valor Líquido a Receber</CardTitle><CircleDollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold text-primary">{netValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold text-primary">{(stats.netValue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Lotes Pagos</CardTitle><Gavel className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{paidCount}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{stats.paidCount || 0}</div></CardContent>
           </Card>
       </div>
 

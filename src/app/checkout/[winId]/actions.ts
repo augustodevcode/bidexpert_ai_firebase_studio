@@ -3,9 +3,10 @@
 
 import type { UserWin } from '@/types';
 import { type CheckoutFormValues } from './checkout-form-schema';
-import { UserWinService } from '@bidexpert/services';
+import { UserWinService, CheckoutService } from '@bidexpert/services';
 
 const userWinService = new UserWinService();
+const checkoutService = new CheckoutService();
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -18,6 +19,15 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
 }
 
 /**
+ * Calculates the final totals for a given win, including commission.
+ * @param {string} winId - The ID of the user win record.
+ * @returns An object with the calculated totals.
+ */
+export async function getCheckoutTotalsAction(winId: string) {
+    return checkoutService.calculateTotals(winId);
+}
+
+/**
  * Processes a payment for a won lot. This can be a one-time payment or create
  * installment records.
  * @param {string} winId - The ID of the user win record.
@@ -25,5 +35,5 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
-    return userWinService.processPayment(winId, paymentData);
+    return checkoutService.processPayment(winId, paymentData);
 }

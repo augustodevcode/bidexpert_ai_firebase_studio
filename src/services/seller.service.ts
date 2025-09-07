@@ -1,29 +1,24 @@
 // src/services/seller.service.ts
 import { SellerRepository } from '@/repositories/seller.repository';
-import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
+import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma'; // Import prisma directly for complex queries
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-
-export interface SellerDashboardData {
-  totalRevenue: number;
-  totalAuctions: number;
-  totalLots: number;
-  lotsSoldCount: number;
-  salesRate: number;
-  averageTicket: number;
-  salesByMonth: { name: string; Faturamento: number }[];
-}
-
+import { PlatformSettingsService } from './platform-settings.service';
+import { UserWinService } from './user-win.service';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
+  private settingsService: PlatformSettingsService;
+  private userWinService: UserWinService;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
+    this.settingsService = new PlatformSettingsService();
+    this.userWinService = new UserWinService();
   }
 
   async getSellers(): Promise<SellerProfileInfo[]> {
@@ -103,23 +98,26 @@ export class SellerService {
   }
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
-    const sellerData = await prisma.seller.findUnique({
-      where: { id: sellerId },
-      include: {
-        _count: {
-          select: { auctions: true, lots: true },
-        },
-        lots: {
-          where: { status: 'VENDIDO' },
-          select: { price: true, updatedAt: true },
-        },
-      },
-    });
+    const [sellerData, platformSettings, sellerWins] = await Promise.all([
+        prisma.seller.findUnique({
+            where: { id: sellerId },
+            include: {
+                _count: { select: { auctions: true, lots: true } },
+            },
+        }),
+        this.settingsService.getSettings(),
+        this.userWinService.getWinsForConsignor(sellerId)
+    ]);
 
     if (!sellerData) return null;
 
-    const totalRevenue = sellerData.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-    const lotsSoldCount = sellerData.lots.length;
+    const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
+    const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);
+    const commissionRate = (platformSettings.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
+    const totalCommission = totalRevenue * commissionRate;
+    const netValue = totalRevenue - totalCommission;
+
+    const lotsSoldCount = sellerWins.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
     const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
 
@@ -131,10 +129,10 @@ export class SellerService {
       salesByMonthMap.set(monthKey, 0);
     }
 
-    sellerData.lots.forEach(lot => {
-      const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
+    paidWins.forEach(win => {
+      const monthKey = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
       if (salesByMonthMap.has(monthKey)) {
-        salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+        salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + win.winningBidAmount);
       }
     });
     
@@ -142,12 +140,16 @@ export class SellerService {
 
     return {
       totalRevenue,
+      totalCommission,
+      netValue,
       totalAuctions: sellerData._count.auctions,
       totalLots: sellerData._count.lots,
       lotsSoldCount,
+      paidCount: paidWins.length,
       salesRate,
       averageTicket,
       salesByMonth,
+      platformCommissionPercentage: commissionRate * 100,
     };
   }
 }

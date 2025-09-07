@@ -6,8 +6,9 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { SellerService, type SellerDashboardData } from '@/services/seller.service';
+import { SellerService } from '@bidexpert/services';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
+import type { SellerDashboardData } from '@/types';
 
 
 export interface SellerPerformanceData {
