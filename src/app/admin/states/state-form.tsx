@@ -1,4 +1,4 @@
-// src/app/admin/states/state-form.tsx
+// src/components/admin/states/state-form.tsx
 'use client';
 
 import * as React from 'react';
@@ -15,7 +15,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { stateFormSchema, type StateFormValues } from './state-form-schema';
+import { stateFormSchema, type StateFormValues } from '@/app/admin/states/state-form-schema';
 import type { StateInfo } from '@/types';
 
 interface StateFormProps {
@@ -46,7 +46,7 @@ const StateForm = React.forwardRef<any, StateFormProps>(({ initialData, onSubmit
 
   return (
     <Form {...form}>
-      <form data-ai-id="admin-state-form-card" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"
