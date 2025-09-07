@@ -1,16 +1,15 @@
-
 // src/app/admin/lots/actions.ts
 'use server';
 
 import type { Lot, Bem, LotFormData, UserWin } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
-import { BemRepository } from '@/repositories/bem.repository';
+import { BemService } from '@/services/bem.service'; // Use BemService
 import { prisma } from '@/lib/prisma';
 // Importação de generateDocument foi removida daqui
 
 const lotService = new LotService();
-const bemRepository = new BemRepository();
+const bemService = new BemService(); // Instantiate BemService
 
 export async function getLots(auctionId?: string): Promise<Lot[]> {
   return lotService.getLots(auctionId);
@@ -59,13 +58,11 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  return bemRepository.findByIds(ids);
+  return bemService.getBensByIds(ids); // Use the service method
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  if (ids.length === 0) return [];
-  // @ts-ignore
-  return prisma.lot.findMany({ where: { id: { in: ids } }, include: { auction: true } });
+  return lotService.getLotsByIds(ids); // Use the service method
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {

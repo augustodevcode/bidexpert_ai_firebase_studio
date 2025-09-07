@@ -28,6 +28,14 @@ export class LotRepository {
     });
   }
 
+  async findByIds(ids: string[]): Promise<any[]> {
+    if (ids.length === 0) return [];
+    return prisma.lot.findMany({
+      where: { id: { in: ids } },
+      include: { auction: true }
+    });
+  }
+
   async create(lotData: Prisma.LotCreateInput, bemIds: string[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
       // 1. Create the Lot without the bens relation
@@ -49,7 +57,7 @@ export class LotRepository {
     });
   }
 
-  async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[]): Promise<Lot> {
+  async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[], stageDetails?: any[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
         // 1. Update the scalar fields and direct relations of the Lot
         const updatedLot = await tx.lot.update({
@@ -73,6 +81,22 @@ export class LotRepository {
                 });
             }
         }
+        
+        // 3. Sync stage prices if provided
+        if (stageDetails) {
+            await tx.lotStagePrice.deleteMany({ where: { lotId: id }});
+            if (stageDetails.length > 0) {
+                await tx.lotStagePrice.createMany({
+                    data: stageDetails.map(detail => ({
+                        lotId: id,
+                        auctionStageId: detail.stageId,
+                        initialBid: detail.initialBid,
+                        bidIncrement: detail.bidIncrement,
+                    }))
+                });
+            }
+        }
+        
         return updatedLot as Lot;
     });
   }
@@ -82,6 +106,10 @@ export class LotRepository {
         // Delete from the join table first to respect foreign key constraints
         await tx.lotBens.deleteMany({
             where: { lotId: id },
+        });
+        // Delete stage-specific prices
+        await tx.lotStagePrice.deleteMany({
+            where: { lotId: id }
         });
         // Then delete the lot itself
         await tx.lot.delete({ where: { id } });

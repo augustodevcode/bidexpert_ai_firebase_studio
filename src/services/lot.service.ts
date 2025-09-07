@@ -1,4 +1,3 @@
-
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData } from '@/types';
@@ -37,6 +36,12 @@ export class LotService {
     };
   }
 
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    const lots = await this.repository.findByIds(ids);
+    // Não precisa mapear aqui pois o repositório já inclui o leilão
+    return lots as Lot[];
+  }
+
 
   async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
@@ -48,7 +53,6 @@ export class LotService {
         sellerId, 
         subcategoryId,
         stageDetails, // Captura os detalhes das etapas
-        initialPrice, // Remove from main data
         ...lotData 
       } = data;
       const finalCategoryId = categoryId || type;
@@ -63,7 +67,7 @@ export class LotService {
       // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
-        price: Number(lotData.price) || 0,
+        price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: auctionId } },
@@ -88,7 +92,7 @@ export class LotService {
         dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
-      const newLot = await this.repository.create(dataToCreate, bemIds || [], stageDetails || []);
+      const newLot = await this.repository.create(dataToCreate, bemIds || []);
       
       // Update the status of the linked 'bens' to 'LOTEADO'
       if (bemIds && bemIds.length > 0) {
@@ -244,5 +248,3 @@ export class LotService {
       }
   }
 }
-
-  
