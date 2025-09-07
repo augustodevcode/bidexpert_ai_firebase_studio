@@ -58,7 +58,7 @@ export default function AdminAuctionsPage() {
     } else {
       toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
     }
-  }, [toast]);
+  }, [toast, fetchPageData]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
     if (selectedItems.length === 0) return;
@@ -131,6 +131,7 @@ export default function AdminAuctionsPage() {
               {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
+                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -140,6 +141,10 @@ export default function AdminAuctionsPage() {
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
                     facetedFilterColumns={facetedFilterColumns}
+                    itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
+                    onPageChange={() => {}}
+                    onItemsPerPageChange={() => {}}
+                    currentPage={1}
                   />
               )}
             </TabsContent>
@@ -147,6 +152,7 @@ export default function AdminAuctionsPage() {
                {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
+                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -156,6 +162,10 @@ export default function AdminAuctionsPage() {
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
                     facetedFilterColumns={facetedFilterColumns}
+                    itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
+                    onPageChange={() => {}}
+                    onItemsPerPageChange={() => {}}
+                    currentPage={1}
                   />
               )}
             </TabsContent>

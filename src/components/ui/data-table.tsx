@@ -218,5 +218,3 @@ export function DataTable<TData, TValue>({
     </div>
   );
 }
-
-DataTable.displayName = "BidExpertDataGrid";

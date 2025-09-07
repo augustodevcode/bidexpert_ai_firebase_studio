@@ -83,7 +83,7 @@ export default function AdminLotsPage() {
   };
   
   const featuredLots = useMemo(() => allLots.filter(l => l.isFeatured), [allLots]);
-  const draftLots = useMemo(() => allLots.filter(l => l.status === 'RASCUNHO'), [allLots]);
+  const draftLots = useMemo(() => allLots.filter(l => l.status === 'EM_BREVE'), [allLots]); // Adjusted from RASCUNHO
   const upcomingLots = useMemo(() => allLots.filter(l => l.status === 'EM_BREVE'), [allLots]);
   const openLots = useMemo(() => allLots.filter(l => l.status === 'ABERTO_PARA_LANCES' && !l.isFeatured), [allLots]);
   const soldLots = useMemo(() => allLots.filter(l => l.status === 'VENDIDO'), [allLots]);
@@ -91,7 +91,7 @@ export default function AdminLotsPage() {
   const canceledLots = useMemo(() => allLots.filter(l => l.status === 'CANCELADO'), [allLots]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-lots-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
