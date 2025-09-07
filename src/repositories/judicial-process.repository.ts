@@ -39,7 +39,7 @@ export class JudicialProcessRepository {
     return prisma.$transaction(async (tx) => {
         const updatedProcess = await tx.judicialProcess.update({
             where: { id },
-            data: data,
+            data: data as Prisma.JudicialProcessUpdateInput,
         });
 
         if (parties) {

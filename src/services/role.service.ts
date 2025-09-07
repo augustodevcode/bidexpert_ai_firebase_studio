@@ -2,6 +2,7 @@
 import { RoleRepository } from '@/repositories/role.repository';
 import type { Role, RoleFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export class RoleService {
   private repository: RoleRepository;
@@ -56,7 +57,7 @@ export class RoleService {
     }
   }
 
-  async deleteRole(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Add check for users with this role
       const usersWithRole = await prisma.usersOnRoles.count({ where: { roleId: id } });
