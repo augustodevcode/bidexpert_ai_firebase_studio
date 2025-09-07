@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -13,20 +12,21 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import { getPlatformSettings } from '../settings/actions';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import AuctionCard from '@/components/auction-card';
 import AuctionListItem from '@/components/auction-list-item';
+import ResourceDataTable from '@/components/admin/resource-data-table';
+import { createColumns } from './columns';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  // O <ResourceDataTable> cuidará do seu próprio fetch e estado.
+  // Este fetch agora é principalmente para as visualizações de card/lista.
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -41,50 +41,24 @@ export default function AdminAuctionsPage() {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
       setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteAuction(id);
-    if (result.success) {
-      toast({ title: 'Sucesso!', description: result.message });
-      setRefetchTrigger(prev => prev + 1);
-    } else {
-      toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
-    }
-  }, [toast]);
-
-  const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteAuction(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leilão(ões) excluído(s) com sucesso.` });
-    }
-    fetchPageData(); // Re-fetch data after operation
-  }, [toast, fetchPageData]);
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  
+  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+
+  const sortOptions = [
+    { value: 'auctionDate_desc', label: 'Mais Recentes' },
+    { value: 'endDate_asc', label: 'Encerramento Próximo' },
+    { value: 'visits_desc', label: 'Mais Visitados' },
+  ];
+
   const statusOptions = useMemo(() => 
     [...new Set(allAuctions.map(a => a.status))]
       .map(status => ({ value: status, label: getAuctionStatusText(status) })),
@@ -93,14 +67,6 @@ export default function AdminAuctionsPage() {
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
   ], [statusOptions]);
-  
-  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
-  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
-  const sortOptions = [
-    { value: 'auctionDate_desc', label: 'Mais Recentes' },
-    { value: 'endDate_asc', label: 'Encerramento Próximo' },
-    { value: 'visits_desc', label: 'Mais Visitados' },
-  ];
 
   return (
     <div className="space-y-6" data-ai-id="admin-auctions-page-container">
@@ -170,16 +136,16 @@ export default function AdminAuctionsPage() {
                   />
               )}
             </TabsContent>
-             <TabsContent value="table" className="mt-4" data-ai-id="admin-auctions-data-table">
-               <DataTable
-                columns={columns}
-                data={allAuctions}
-                isLoading={isLoading}
-                error={error}
+            <TabsContent value="table" className="mt-4" data-ai-id="admin-auctions-data-table">
+               <ResourceDataTable<Auction>
+                columns={createColumns}
+                fetchAction={getAuctions}
+                deleteAction={deleteAuction}
                 searchColumnId="title"
                 searchPlaceholder="Buscar por título..."
                 facetedFilterColumns={facetedFilterColumns}
-                onDeleteSelected={handleDeleteSelected}
+                deleteConfirmation={(item) => (item.status === 'RASCUNHO' || item.status === 'CANCELADO' || item._count?.lots === 0)}
+                deleteConfirmationMessage={(item) => `Este leilão não pode ser excluído pois tem ${item._count?.lots} lote(s) associado(s).`}
               />
             </TabsContent>
           </Tabs>
