@@ -23,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { ImageIcon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 
 interface CategoryFormProps {
@@ -82,6 +83,10 @@ const CategoryForm = React.forwardRef<any, CategoryFormProps>(({
   const coverImageUrlPreview = form.watch('coverImageUrl');
   const megaMenuImageUrlPreview = form.watch('megaMenuImageUrl');
   const logoUrlPreview = form.watch('logoUrl');
+  
+  const validCoverUrl = isValidImageUrl(coverImageUrlPreview) ? coverImageUrlPreview : null;
+  const validMegaMenuUrl = isValidImageUrl(megaMenuImageUrlPreview) ? megaMenuImageUrlPreview : null;
+  const validLogoUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   const openMediaDialog = (target: DialogTarget) => {
     setDialogTarget(target);
@@ -181,7 +186,7 @@ const CategoryForm = React.forwardRef<any, CategoryFormProps>(({
               )}
             />
 
-            {renderImageInput('logoUrl', 'Logo da Categoria', 'Ícone que representa a categoria, exibido em listas.', logoUrlPreview, 'logoUrl')}
+            {renderImageInput('logoUrl', 'Logo da Categoria', 'Ícone que representa a categoria, exibido em listas.', validLogoUrl, 'logoUrl')}
 
             <Separator />
             <div className="space-y-1">
@@ -190,9 +195,9 @@ const CategoryForm = React.forwardRef<any, CategoryFormProps>(({
             </div>
             
             <div className="space-y-6 rounded-md border p-4 bg-background">
-              {renderImageInput('coverImageUrl', 'Imagem de Capa (Banner)', 'Esta imagem será usada como banner principal na página da categoria.', coverImageUrlPreview, 'coverImageUrl')}
+              {renderImageInput('coverImageUrl', 'Imagem de Capa (Banner)', 'Esta imagem será usada como banner principal na página da categoria.', validCoverUrl, 'coverImageUrl')}
               <Separator />
-              {renderImageInput('megaMenuImageUrl', 'Imagem do Mega Menu', 'Imagem promocional a ser exibida no mega menu.', megaMenuImageUrlPreview, 'megaMenuImageUrl')}
+              {renderImageInput('megaMenuImageUrl', 'Imagem do Mega Menu', 'Imagem promocional a ser exibida no mega menu.', validMegaMenuUrl, 'megaMenuImageUrl')}
             </div>
         </form>
       </Form>

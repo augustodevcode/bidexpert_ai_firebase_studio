@@ -32,7 +32,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
         }
         setIsSubmitting(false);
     }
-
+    
     return (
          <FormPageLayout
             formTitle="Novo Comitente"

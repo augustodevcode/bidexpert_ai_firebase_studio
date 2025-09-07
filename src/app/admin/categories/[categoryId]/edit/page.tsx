@@ -8,6 +8,7 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Tag } from 'lucide-react';
+import type { LotCategory } from '@/types';
 
 export default function EditCategoryPage() {
   const params = useParams();
@@ -15,7 +16,7 @@ export default function EditCategoryPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [category, setCategory] = useState<any | null>(null);
+  const [category, setCategory] = useState<LotCategory | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isViewMode, setIsViewMode] = useState(true);
@@ -44,7 +45,7 @@ export default function EditCategoryPage() {
   
   const handleFormSubmit = async (data: CategoryFormData) => {
     setIsSubmitting(true);
-    const result = await updateLotCategory(categoryId, data as Partial<Pick<any, "name" | "description">>);
+    const result = await updateLotCategory(categoryId, data as Partial<Pick<LotCategory, "name" | "description">>);
     if (result.success) {
         toast({ title: 'Sucesso!', description: 'Categoria atualizada.' });
         fetchPageData();

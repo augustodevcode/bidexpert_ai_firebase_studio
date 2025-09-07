@@ -2,12 +2,14 @@
 'use client';
 
 import CategoryForm from '../category-form';
-import { createLotCategory } from '../actions';
+import { createLotCategory, type CategoryFormData } from '../actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Tag } from 'lucide-react';
 import React, { useRef, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import type { LotCategory } from '@/types';
+
 
 export default function NewCategoryPage() {
   const router = useRouter();
@@ -19,16 +21,16 @@ export default function NewCategoryPage() {
     formRef.current?.requestSubmit();
   }
 
-  async function handleCreateCategory(data: any) {
+  async function handleCreateCategory(data: CategoryFormData) {
     setIsSubmitting(true);
-    const result = await createLotCategory(data);
+    const result = await createLotCategory(data as Pick<LotCategory, "name" | "description">);
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Categoria criada.' });
       router.push('/admin/categories');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
-      setIsSubmitting(false);
     }
+     setIsSubmitting(false);
   }
 
   return (
