@@ -26,4 +26,4 @@ export * from './reports.service';
 export * from './relist.service';
 export * from './vehicle-make.service';
 export * from './vehicle-model.service';
-export * from './checkout.service'; // Exportando o novo serviço
+export * from './checkout.service';

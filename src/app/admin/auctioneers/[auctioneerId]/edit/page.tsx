@@ -2,18 +2,19 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
+import SellerForm from '@/app/admin/sellers/seller-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { Loader2, Gavel, BarChart3, Users, DollarSign, TrendingUp, ListChecks } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { SellerDashboardData as AuctioneerDashboardData } from '@bidexpert/services';
+import type { AuctioneerDashboardData } from '@bidexpert/services';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { getAuctioneerDashboardDataAction } from '@/app/admin/auctioneers/analysis/actions';
 import type { AuctioneerFormData } from '@bidexpert/core';
+import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">

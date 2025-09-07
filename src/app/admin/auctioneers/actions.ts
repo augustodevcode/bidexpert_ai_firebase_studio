@@ -25,7 +25,3 @@ export const {
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string) {
     return auctioneerService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }
-
-export async function getAuctioneerDashboardDataAction(auctioneerId: string) {
-    return auctioneerService.getAuctioneerDashboardData(auctioneerId);
-}

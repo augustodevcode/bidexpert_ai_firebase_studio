@@ -1,40 +1,35 @@
 // src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import { AuctionRepository } from '@/repositories/auction.repository';
-import type { AuctioneerFormData, AuctioneerProfileInfo, Auction } from '@/types';
+import type { AuctioneerFormData, AuctioneerProfileInfo, Auction, SellerDashboardData as AuctioneerDashboardData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { PlatformSettingsService } from './platform-settings.service';
 
-export interface AuctioneerDashboardData {
-  totalRevenue: number;
-  totalAuctions: number;
-  totalLots: number;
-  lotsSoldCount: number;
-  salesRate: number;
-  averageTicket: number;
-  salesByMonth: { name: string; Faturamento: number }[];
-}
+export type { AuctioneerDashboardData };
 
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
   private auctionRepository: AuctionRepository;
+  private settingsService: PlatformSettingsService;
 
   constructor() {
     this.auctioneerRepository = new AuctioneerRepository();
     this.auctionRepository = new AuctionRepository();
+    this.settingsService = new PlatformSettingsService();
   }
 
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
     return auctions.map(a => ({
       ...a,
       totalLots: a._count?.lots ?? a.lots?.length ?? 0,
-      seller: a.seller,
-      auctioneer: a.auctioneer,
-      category: a.category,
+      seller: a.seller, // Pass the full seller object
+      auctioneer: a.auctioneer, // Pass the full auctioneer object
+      category: a.category, // Pass the full category object
       sellerName: a.seller?.name, 
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
@@ -103,25 +98,29 @@ export class AuctioneerService {
   }
 
   async getAuctioneerDashboardData(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
-    const auctioneerData = await prisma.auctioneer.findUnique({
-      where: { id: auctioneerId },
-      include: {
-        _count: {
-          select: { auctions: true },
-        },
-        auctions: {
-          include: {
-            lots: {
-              where: { status: 'VENDIDO' },
-              select: { price: true, updatedAt: true }
-            },
-            _count: {
-              select: { lots: true },
-            },
-          }
-        }
-      }
-    });
+    const [auctioneerData, platformSettings] = await Promise.all([
+        prisma.auctioneer.findUnique({
+            where: { id: auctioneerId },
+            include: {
+                _count: {
+                  select: { auctions: true },
+                },
+                auctions: {
+                  include: {
+                    lots: {
+                      where: { status: 'VENDIDO' },
+                      select: { price: true, updatedAt: true }
+                    },
+                    _count: {
+                      select: { lots: true },
+                    },
+                  }
+                }
+            }
+        }),
+        this.settingsService.getSettings()
+    ]);
+
 
     if (!auctioneerData) return null;
 

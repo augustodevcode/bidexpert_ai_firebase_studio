@@ -7,7 +7,8 @@
 
 import { prisma } from '@/lib/prisma';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import { AuctioneerService, type AuctioneerDashboardData } from '@/services/auctioneer.service';
+import { AuctioneerService } from '@bidexpert/services';
+import type { AuctioneerDashboardData } from '@bidexpert/services';
 
 export interface AuctioneerPerformanceData {
   id: string;
