@@ -8,7 +8,7 @@ import { getRoles, deleteRole } from './actions';
 import { createColumns } from './columns';
 import type { Role } from '@/types';
 
-const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'FINANCE'];
 
 export default function AdminRolesPage() {
   return (
@@ -38,7 +38,7 @@ export default function AdminRolesPage() {
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do perfil..."
             deleteConfirmation={(item) => !PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)}
-            deleteConfirmationMessage={(item) => `O perfil "${item.name}" é protegido e não pode ser excluído.`}
+            deleteConfirmationMessage={(item) => `O perfil "${item.name}" é um perfil de sistema e não pode ser excluído.`}
           />
         </CardContent>
       </Card>

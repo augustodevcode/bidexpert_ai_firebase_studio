@@ -11,10 +11,10 @@ import type { UserProfileWithPermissions } from '@/types';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 
 export default async function AdminUsersPage() {
+  // Fetching roles on the server to build the filter options
   const roles = await getRoles();
   const roleOptions = roles.map(role => ({ value: role.name, label: role.name }));
 
-  // This is a temporary solution for the filter options, since we can't dynamically get all statuses from the client component anymore.
   const habilitationOptions = [
     { value: 'HABILITADO', label: getUserHabilitationStatusInfo('HABILITADO').text },
     { value: 'PENDING_ANALYSIS', label: getUserHabilitationStatusInfo('PENDING_ANALYSIS').text },
