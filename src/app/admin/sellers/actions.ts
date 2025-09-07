@@ -1,49 +1,30 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import type { SellerProfileInfo, SellerFormData, Lot } from '@/types';
+import type { SellerFormData } from '@/types';
 import { SellerService } from '@/services/seller.service';
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();
+const sellerActions = createCrudActions({
+  service: sellerService,
+  entityName: 'Seller',
+  entityNamePlural: 'Sellers',
+  routeBase: '/admin/sellers',
+});
 
-export async function getSellers(): Promise<SellerProfileInfo[]> {
-    return sellerService.getSellers();
-}
+// Export a função getSellers com o nome original para manter compatibilidade
+export const getSellers = sellerActions.getAll;
 
-export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
-    return sellerService.getSellerById(id);
-}
+export const {
+  getById: getSeller,
+  getBySlug: getSellerBySlug,
+  create: createSeller,
+  update: updateSeller,
+  delete: deleteSeller
+} = sellerActions;
 
-export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
-    return sellerService.getSellerBySlug(slugOrId);
-}
-
-export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
+// Funções específicas que não se encaixam no CRUD padrão permanecem aqui
+export async function getLotsBySellerSlug(sellerSlugOrId: string) {
     return sellerService.getLotsBySellerSlug(sellerSlugOrId);
-}
-
-export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    const result = await sellerService.createSeller(data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/sellers');
-    }
-    return result;
-}
-
-export async function updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }> {
-    const result = await sellerService.updateSeller(id, data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/sellers');
-        revalidatePath(`/admin/sellers/${id}/edit`);
-    }
-    return result;
-}
-
-export async function deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
-    const result = await sellerService.deleteSeller(id);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/sellers');
-    }
-    return result;
 }
