@@ -39,9 +39,12 @@ interface JudicialProcessFormProps {
   allDistricts: JudicialDistrict[];
   allBranches: JudicialBranch[];
   sellers: SellerProfileInfo[];
-  onSubmitAction: (data: JudicialProcessFormValues) => Promise<any>;
+  onSubmitAction: (data: JudicialProcessFormValues) => Promise<{ success: boolean; message: string; processId?: string; }>;
   onSuccess?: (processId?: string) => void;
   onCancel?: () => void;
+  formTitle?: string; // Tornar opcional
+  formDescription?: string; // Tornar opcional
+  submitButtonText?: string; // Tornar opcional
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
@@ -73,7 +76,10 @@ async function toDataUri(url: string): Promise<string> {
 
 const JudicialProcessForm = React.forwardRef<any, JudicialProcessFormProps>(({
   initialData, courts: initialCourts, allDistricts: initialAllDistricts, allBranches: initialAllBranches, sellers: initialSellers,
-  onSubmitAction
+  onSubmitAction, onSuccess, onCancel,
+  formTitle = "Formulário de Processo Judicial",
+  formDescription = "Preencha as informações do processo.",
+  submitButtonText = "Salvar"
 }, ref) => {
   const { toast } = useToast();
   const router = useRouter();
@@ -113,7 +119,7 @@ const JudicialProcessForm = React.forwardRef<any, JudicialProcessFormProps>(({
   });
   
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
+    requestSubmit: form.handleSubmit(onSubmit),
   }));
 
   const fetchProcessDocuments = React.useCallback(async () => {
@@ -277,67 +283,102 @@ const JudicialProcessForm = React.forwardRef<any, JudicialProcessFormProps>(({
     setIsValidationModalOpen(false);
   };
   
-  return (
-    <>
-      <Form {...form}>
-        <form data-ai-id="admin-judicial-process-form" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
-          <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo*</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-          
-          <Separator />
-          <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>
-          <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
-          <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" createNewUrl="/admin/judicial-districts/new" editUrlPrefix="/admin/judicial-districts" onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
-          <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
-          
-          <FormField control={form.control} name="sellerId" render={({ field }) => (
-              <FormItem>
-                <FormLabel>Comitente Principal</FormLabel>
-                 <div className="flex items-center gap-2">
-                    <EntitySelector 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      options={judicialSellers.map(s => ({ value: s.id, label: s.name }))} 
-                      placeholder="Selecione ou crie um comitente" 
-                      searchPlaceholder="Buscar comitente..." 
-                      emptyStateMessage="Nenhum comitente judicial." 
-                      createNewUrl="/admin/sellers/new" 
-                      editUrlPrefix="/admin/sellers"
-                      onRefetch={() => handleRefetch('sellers')}
-                      isFetching={isFetchingSellers}
-                      disabled={isCreatingSeller}
-                    />
-                     {showCreateSellerButton && (
-                        <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
-                            {isCreatingSeller ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Building className="mr-2 h-4 w-4" />}
-                            Criar Comitente da Vara
-                        </Button>
-                    )}
-                 </div>
-                <FormDescription>O comitente será preenchido automaticamente se houver um vinculado à vara selecionada.</FormDescription>
-                <FormMessage />
-              </FormItem>
-          )} />
+  async function onSubmit(data: JudicialProcessFormValues) {
+    setIsSubmitting(true);
+    const result = await onSubmitAction(data);
+    setIsSubmitting(false);
 
-          <Separator />
-          <div className="flex justify-between items-center pt-2">
-            <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas*</h3>
-            <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', partyType: 'OUTRO' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Parte</Button>
-          </div>
-          {fields.map((field, index) => (
-            <Card key={field.id} className="p-3 bg-background">
-              <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                  <FormField control={form.control} name={`parties.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input placeholder="Nome da Parte/Advogado" {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
-                  <FormField control={form.control} name={`parties.${index}.partyType`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Tipo</FormLabel><Select onValueChange={stageField.onChange} defaultValue={stageField.value}><FormControl><SelectTrigger className="text-xs h-9"><SelectValue placeholder="Tipo" /></SelectTrigger></FormControl><SelectContent>{partyTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage className="text-xs"/></FormItem>)}/>
-                  <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive/80" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-              </div>
-            </Card>
-          ))}
+    if (result.success) {
+      if (onSuccess) onSuccess(result.processId);
+      else {
+        router.push('/admin/judicial-processes');
+        router.refresh();
+      }
+    } else {
+      toast({
+        title: 'Erro ao Salvar',
+        description: result.message,
+        variant: 'destructive',
+      });
+    }
+  }
+
+  return (
+    <Card className="shadow-lg">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+            <Gavel className="h-6 w-6 text-primary"/> {formTitle}
+        </CardTitle>
+        <CardDescription>{formDescription}</CardDescription>
+      </CardHeader>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
+            <CardContent className="space-y-6">
+                 {/* Conteúdo do formulário existente */}
+                <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo*</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                
+                <Separator />
+                <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>
+                <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" createNewUrl="/admin/judicial-districts/new" editUrlPrefix="/admin/judicial-districts" onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
+                <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
+                
+                <FormField control={form.control} name="sellerId" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Comitente Principal</FormLabel>
+                        <div className="flex items-center gap-2">
+                            <EntitySelector 
+                            value={field.value} 
+                            onChange={field.onChange} 
+                            options={judicialSellers.map(s => ({ value: s.id, label: s.name }))} 
+                            placeholder="Selecione ou crie um comitente" 
+                            searchPlaceholder="Buscar comitente..." 
+                            emptyStateMessage="Nenhum comitente judicial." 
+                            createNewUrl="/admin/sellers/new" 
+                            editUrlPrefix="/admin/sellers"
+                            onRefetch={() => handleRefetch('sellers')}
+                            isFetching={isFetchingSellers}
+                            disabled={isCreatingSeller}
+                            />
+                            {showCreateSellerButton && (
+                                <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
+                                    {isCreatingSeller ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Building className="mr-2 h-4 w-4" />}
+                                    Criar Comitente da Vara
+                                </Button>
+                            )}
+                        </div>
+                        <FormDescription>O comitente será preenchido automaticamente se houver um vinculado à vara selecionada.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                )} />
+
+                <Separator />
+                <div className="flex justify-between items-center pt-2">
+                    <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas*</h3>
+                    <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', partyType: 'OUTRO' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Parte</Button>
+                </div>
+                {fields.map((field, index) => (
+                    <Card key={field.id} className="p-3 bg-background">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
+                        <FormField control={form.control} name={`parties.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome</FormLabel><FormControl><Input placeholder="Nome da Parte/Advogado" {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
+                        <FormField control={form.control} name={`parties.${index}.partyType`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Tipo</FormLabel><Select onValueChange={stageField.onChange} defaultValue={stageField.value}><FormControl><SelectTrigger className="text-xs h-9"><SelectValue placeholder="Tipo" /></SelectTrigger></FormControl><SelectContent>{partyTypeOptions.map(opt => <SelectItem key={opt.value} value={opt.value} className="text-xs">{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage className="text-xs"/></FormItem>)}/>
+                        <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive/80" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                    </Card>
+                ))}
+            </CardContent>
+            <CardFooter className="flex justify-end gap-2 p-6 border-t">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {submitButtonText}
+                </Button>
+            </CardFooter>
         </form>
       </Form>
-       <DataValidationModal isOpen={isValidationModalOpen} onClose={() => setIsValidationModalOpen(false)} extractedData={extractedData} onApply={handleApplyValidatedData} />
-    </>
+    </Card>
   );
 });
-JudicialProcessForm.displayName = "JudicialProcessForm";
+JudicialProcessForm.displayName = 'JudicialProcessForm';
 export default JudicialProcessForm;

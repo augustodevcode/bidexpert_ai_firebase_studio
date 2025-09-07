@@ -114,7 +114,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id="lot-card-container" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id={`lot-card-container-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
@@ -124,11 +124,11 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
-                data-ai-id="lot-card-main-image"
+                data-ai-id={`lot-card-main-image-${lot.id}`}
               />
             </div>
           </Link>
-          <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id="lot-card-status-badges">
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id={`lot-card-status-badges-${lot.id}`}>
             {sectionBadges.showStatusBadge !== false && (
               <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
                 {getAuctionStatusText(lot.status)}
@@ -140,7 +140,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 </Badge>
             )}
           </div>
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id="lot-card-mental-triggers">
+          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id={`lot-card-mental-triggers-${lot.id}`}>
             {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
                 <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
             )}
@@ -186,29 +186,29 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
         </div>
         <CardContent className="p-3 flex-grow space-y-1.5">
           <div className="flex justify-between items-center text-xs text-muted-foreground">
-             <div className="flex items-center gap-1" data-ai-id="lot-card-category">
+             <div className="flex items-center gap-1" data-ai-id={`lot-card-category-${lot.id}`}>
                 <Tag className="h-3 w-3" />
                 <span>{lot.type}</span>
             </div>
-            <div className="flex items-center gap-1" data-ai-id="lot-card-bid-count">
+            <div className="flex items-center gap-1" data-ai-id={`lot-card-bid-count-${lot.id}`}>
                 <Gavel className="h-3 w-3" />
                 <span>{lot.bidsCount || 0} Lances</span>
             </div>
           </div>
           <Link href={lotDetailUrl}>
-            <h3 data-ai-id="lot-card-title" className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
+            <h3 data-ai-id={`lot-card-title-${lot.id}`} className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
               Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
             </h3>
           </Link>
-          <div className="flex items-center text-xs text-muted-foreground" data-ai-id="lot-card-location">
+          <div className="flex items-center text-xs text-muted-foreground" data-ai-id={`lot-card-location-${lot.id}`}>
             <MapPin className="h-3 w-3 mr-1" />
             <span>{displayLocation}</span>
           </div>
         </CardContent>
 
-        <CardFooter className="p-3 border-t flex-col items-start space-y-1.5" data-ai-id="lot-card-footer">
-          <div className="w-full flex justify-between items-end" data-ai-id="lot-card-price-section">
-            <div data-ai-id="lot-card-price-info">
+        <CardFooter className="p-3 border-t flex-col items-start space-y-1.5" data-ai-id={`lot-card-footer-${lot.id}`}>
+          <div className="w-full flex justify-between items-end" data-ai-id={`lot-card-price-section-${lot.id}`}>
+            <div data-ai-id={`lot-card-price-info-${lot.id}`}>
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
               <p className={`text-xl font-bold ${effectiveEndDate?.effectiveLotEndDate && isPast(effectiveEndDate.effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                 R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -239,7 +239,7 @@ export function LotCard(props: LotCardProps) {
 
   if (!isClient) {
     return (
-        <Card data-ai-id="lot-card-skeleton" className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
+        <Card data-ai-id={`lot-card-skeleton-${props.lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
             <div className="aspect-video relative bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
                 <Skeleton className="h-5 bg-muted rounded w-3/4" />

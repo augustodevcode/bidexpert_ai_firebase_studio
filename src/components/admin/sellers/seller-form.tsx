@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
-import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
+import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@bidexpert/core';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -20,20 +20,18 @@ import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
 
-
 interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
   judicialBranches: JudicialBranch[];
   onSubmitAction: (data: SellerFormValues) => Promise<any>;
-  onUpdateSuccess?: () => void; // Callback para quando a atualização for bem-sucedida
+  onSuccessCallback?: () => void;
 }
 
-// Tornando o formulário um forwardRef para que o FormPageLayout possa acessá-lo
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
   initialData,
   judicialBranches: initialBranches,
   onSubmitAction,
-  onUpdateSuccess,
+  onSuccessCallback
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -63,9 +61,16 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     },
   });
 
+  const onSubmit = async (data: SellerFormValues) => {
+      const result = await onSubmitAction(data);
+      if (result.success && onSuccessCallback) {
+          onSuccessCallback();
+      }
+  }
+
   // Expor o método de submit do formulário via ref
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
+    requestSubmit: form.handleSubmit(onSubmit),
   }));
   
   React.useEffect(() => {
@@ -91,6 +96,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
   const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   const handleRefetchBranches = React.useCallback(async () => {
     setIsFetchingBranches(true);
@@ -127,12 +133,10 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsCepLoading(false);
   }
 
-  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
-
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
            <FormField control={form.control} name="name" render={({ field }) => (
                 <FormItem><FormLabel>Nome do Comitente/Empresa</FormLabel><FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
               )} />

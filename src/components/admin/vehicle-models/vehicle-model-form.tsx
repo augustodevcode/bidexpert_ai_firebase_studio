@@ -14,25 +14,21 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { vehicleModelFormSchema, type VehicleModelFormData } from '@/app/admin/vehicle-models/form-schema';
 import type { VehicleModel, VehicleMake } from '@/types';
-import { Loader2, Save, Car } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 
 interface VehicleModelFormProps {
   initialData?: VehicleModel | null;
   makes: VehicleMake[];
-  onSubmitAction: (data: VehicleModelFormData) => Promise<{ success: boolean; message: string; modelId?: string }>;
+  onSubmitAction: (data: VehicleModelFormData) => Promise<any>;
 }
 
 const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
   initialData,
   makes: initialMakes,
-  onSubmitAction
+  onSubmitAction,
 }, ref) => {
   const [makes, setMakes] = React.useState(initialMakes);
   const [isFetchingMakes, setIsFetchingMakes] = React.useState(false);
@@ -45,7 +41,7 @@ const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
     },
   });
   
-  React.useEffect(() => {
+   React.useEffect(() => {
     form.reset({
       name: initialData?.name || '',
       makeId: initialData?.makeId || '',
