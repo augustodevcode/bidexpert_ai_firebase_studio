@@ -1,3 +1,4 @@
+
 // src/repositories/state.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { StateInfo } from '@/types';
