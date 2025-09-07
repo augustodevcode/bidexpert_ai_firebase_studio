@@ -1,20 +1,24 @@
 // src/services/reports.service.ts
-import { prisma } from '@/lib/prisma';
+import { ReportsRepository } from '@/repositories/reports.repository';
 import type { AdminReportData, AdminDashboardStats } from '@/types';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export class ReportsService {
+  private repository: ReportsRepository;
+
+  constructor() {
+    this.repository = new ReportsRepository();
+  }
 
   async getAdminDashboardStats(): Promise<AdminDashboardStats> {
     try {
       const [users, auctions, lots, sellers] = await Promise.all([
-        prisma.user.count(),
-        prisma.auction.count(),
-        prisma.lot.count(),
-        prisma.seller.count(),
+        this.repository.countUsers(),
+        this.repository.countAuctions(),
+        this.repository.countLots(),
+        this.repository.countSellers(),
       ]);
-
       return { users, auctions, lots, sellers };
     } catch (error) {
       console.error("[Service - getAdminDashboardStats] Error fetching admin stats:", error);
@@ -29,31 +33,31 @@ export class ReportsService {
             auctionCount,
             lotCount,
             sellerCount,
-            totalRevenueResult,
+            totalRevenue,
             newUsersCount,
             activeAuctionsCount,
             lotsSoldCount,
             bids,
             auctionsWithLots,
             soldLotsForCategories,
+            soldLotsForSales,
+            allCategories,
         ] = await Promise.all([
-            prisma.user.count(),
-            prisma.auction.count(),
-            prisma.lot.count(),
-            prisma.seller.count(),
-            prisma.lot.aggregate({ _sum: { price: true }, where: { status: 'VENDIDO' } }),
-            prisma.user.count({ where: { createdAt: { gte: subDays(new Date(), 30) } } }),
-            prisma.auction.count({ where: { status: 'ABERTO_PARA_LANCES' } }),
-            prisma.lot.count({ where: { status: 'VENDIDO' } }),
-            prisma.bid.findMany({ select: { amount: true } }),
-            prisma.auction.findMany({ include: { _count: { select: { lots: true } } } }),
-            prisma.lot.findMany({
-            where: { status: 'VENDIDO', categoryId: { not: null } },
-            select: { categoryId: true, price: true },
-            }),
+            this.repository.countUsers(),
+            this.repository.countAuctions(),
+            this.repository.countLots(),
+            this.repository.countSellers(),
+            this.repository.getTotalRevenue(),
+            this.repository.getNewUsersCount(30),
+            this.repository.countActiveAuctions(),
+            this.repository.countSoldLots(),
+            this.repository.getAllBids(),
+            this.repository.getAuctionsWithLotCounts(),
+            this.repository.getSoldLotsByCategory(),
+            this.repository.getSoldLotsForSalesData(),
+            this.repository.getAllCategories(),
         ]);
-
-        const totalRevenue = totalRevenueResult._sum.price || 0;
+        
         const totalBids = bids.length;
         const averageBidValue = totalBids > 0 ? bids.reduce((sum, bid) => sum + bid.amount, 0) / totalBids : 0;
         const successfulAuctions = auctionsWithLots.filter(a => a._count.lots > 0).length;
@@ -63,8 +67,6 @@ export class ReportsService {
 
         // Aggregate monthly sales
         const salesByMonthMap = new Map<string, number>();
-        const soldLotsForSales = await prisma.lot.findMany({ where: { status: 'VENDIDO' }, select: { price: true, updatedAt: true } });
-        
         soldLotsForSales.forEach(lot => {
             const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
             salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
@@ -73,11 +75,10 @@ export class ReportsService {
         
         // Aggregate sales by category
         const categoryCountMap = new Map<string, number>();
-        const categoryIds = [...new Set(soldLotsForCategories.map(lot => lot.categoryId))];
-        const categories = await prisma.lotCategory.findMany({ where: { id: { in: categoryIds as string[] } }});
+        const categoryMap = new Map(allCategories.map(c => [c.id, c.name]));
         
         soldLotsForCategories.forEach(lot => {
-            const categoryName = categories.find(c => c.id === lot.categoryId)?.name || 'Outros';
+            const categoryName = categoryMap.get(lot.categoryId!) || 'Outros';
             categoryCountMap.set(categoryName, (categoryCountMap.get(categoryName) || 0) + 1);
         });
 
@@ -100,7 +101,7 @@ export class ReportsService {
         };
     } catch (error) {
         console.error("[Service - getAdminReportDataAction] Error fetching admin report data:", error);
-        throw error; // Re-throw to be caught by the action
+        throw error;
     }
   }
 }
