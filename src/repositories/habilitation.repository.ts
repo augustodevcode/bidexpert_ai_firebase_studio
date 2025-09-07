@@ -50,4 +50,28 @@ export class HabilitationRepository {
           data: { status, rejectionReason }
       });
   }
+
+  async createOrUpdateUserDocument(userId: string, documentTypeId: string, fileUrl: string, fileName: string) {
+      return prisma.userDocument.upsert({
+        where: {
+            userId_documentTypeId: {
+                userId,
+                documentTypeId
+            }
+        },
+        update: {
+            fileUrl,
+            fileName,
+            status: 'PENDING_ANALYSIS',
+            rejectionReason: null
+        },
+        create: {
+            userId,
+            documentTypeId,
+            fileUrl,
+            fileName,
+            status: 'PENDING_ANALYSIS'
+        }
+    });
+  }
 }

@@ -3,6 +3,7 @@ import { HabilitationRepository } from '@/repositories/habilitation.repository';
 import { UserService } from './user.service';
 import type { UserProfileData, UserDocument } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { prisma } from '@/lib/prisma'; // Import prisma directly for transactions or specific checks
 
 export class HabilitationService {
   private repository: HabilitationRepository;
@@ -35,6 +36,33 @@ export class HabilitationService {
   async getUserDocuments(userId: string): Promise<UserDocument[]> {
     return this.repository.findUserDocuments(userId);
   }
+  
+  async saveUserDocument(
+    userId: string,
+    documentTypeId: string,
+    fileUrl: string,
+    fileName: string,
+  ): Promise<{ success: boolean; message: string }> {
+    if (!userId || !documentTypeId || !fileUrl) {
+      return { success: false, message: "Dados insuficientes para salvar o documento." };
+    }
+    try {
+      await this.repository.createOrUpdateUserDocument(userId, documentTypeId, fileUrl, fileName);
+
+      // After saving, check if the user status should be updated
+      await this.userService.checkAndHabilitateUser(userId);
+      
+      if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/dashboard/documents');
+        revalidatePath(`/admin/habilitations/${userId}`);
+      }
+
+      return { success: true, message: "Documento salvo com sucesso." };
+    } catch (error: any) {
+      console.error("Error saving user document:", error);
+      return { success: false, message: `Falha ao salvar documento: ${error.message}`};
+    }
+  }
 
   async approveDocument(documentId: string, analystId: string): Promise<{ success: boolean; message: string }> {
     try {
@@ -49,6 +77,7 @@ export class HabilitationService {
       await this.userService.checkAndHabilitateUser(docToUpdate.userId);
 
       if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/admin/habilitations');
         revalidatePath(`/admin/habilitations/${docToUpdate.userId}`);
       }
       return { success: true, message: 'Documento aprovado.' };
@@ -72,6 +101,7 @@ export class HabilitationService {
       await this.userService.updateHabilitationStatus(docToUpdate.userId, 'REJECTED_DOCUMENTS');
 
       if (process.env.NODE_ENV !== 'test') {
+        revalidatePath('/admin/habilitations');
         revalidatePath(`/admin/habilitations/${docToUpdate.userId}`);
       }
       return { success: true, message: 'Documento rejeitado.' };
