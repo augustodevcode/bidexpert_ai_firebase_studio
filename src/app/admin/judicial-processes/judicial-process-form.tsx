@@ -42,9 +42,6 @@ interface JudicialProcessFormProps {
   onSubmitAction: (data: JudicialProcessFormValues) => Promise<any>;
   onSuccess?: (processId?: string) => void;
   onCancel?: () => void;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
