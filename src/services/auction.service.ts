@@ -40,6 +40,12 @@ export class AuctionService {
     return this.mapAuctionsWithDetails([auction])[0];
   }
   
+  async getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+    if (ids.length === 0) return [];
+    const auctions = await this.auctionRepository.findByIds(ids);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
   async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
     return this.mapAuctionsWithDetails(auctions);

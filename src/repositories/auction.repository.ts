@@ -30,6 +30,24 @@ export class AuctionRepository {
     });
   }
   
+  async findByIds(ids: string[]): Promise<any[]> {
+    return prisma.auction.findMany({
+        where: {
+            OR: [
+                { id: { in: ids } },
+                { publicId: { in: ids } }
+            ]
+        },
+        include: {
+            _count: { select: { lots: true } },
+            seller: true,
+            auctioneer: true,
+            category: { select: { name: true } },
+            stages: true,
+        }
+    });
+  }
+
   async create(data: Prisma.AuctionCreateInput): Promise<Auction> {
     // @ts-ignore
     return prisma.auction.create({ data });

@@ -69,9 +69,7 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
-    // Esta função pode ser otimizada no serviço se necessário
-    const auctions = await Promise.all(ids.map(id => auctionService.getAuctionById(id)));
-    return auctions.filter(Boolean) as Auction[];
+    return auctionService.getAuctionsByIds(ids);
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
