@@ -2,9 +2,10 @@
 'use client'; 
 
 import AuctionForm from '../../auction-form';
-import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
+import { getAuction, updateAuction, deleteAuction } from '../../actions'; 
+import type { AuctionFormData } from '@bidexpert/core';
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@bidexpert/core';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -169,9 +170,9 @@ export default function EditAuctionPage() {
             return;
         }
         setPlatformSettings(settings as PlatformSettings);
-        setAuction(fetchedAuction);
+        setAuction(fetchedAuction as Auction);
         setCategories(fetchedCategories);
-        setLotsInAuction(fetchedLots);
+        setLotsInAuction(fetchedLots as Lot[]);
         setAuctioneersList(fetchedAuctioneers);
         setSellersList(fetchedSellers);
         setStates(fetchedStates);

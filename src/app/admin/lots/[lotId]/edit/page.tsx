@@ -2,15 +2,15 @@
 'use client';
 
 import LotForm from '../../lot-form';
-import { getLot, updateLot, type LotFormData, finalizeLot, deleteLot } from '../../actions';
-import { getBens as getBensForLotting } from '@/app/admin/bens/actions';
+import { getLot, updateLot, type LotFormData, finalizeLot, deleteLot } from '../../actions'; 
+import { getBens as getBensForLotting } from '@/app/admin/bens/actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo } from '@/types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import type { Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@bidexpert/core';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, FileSignature, Loader2, Gavel, Repeat, Layers, PlusCircle, BarChart3, Lightbulb } from 'lucide-react';
 import {
@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import React, { useEffect, useCallback, useState, useRef } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
 import RelistLotModal from '../../relist-lot-modal'; // Importar o novo modal
@@ -43,7 +43,7 @@ export default function EditLotPage() {
   const lotId = params.lotId as string;
   const router = useRouter();
   const { toast } = useToast();
-  const formRef = useRef<any>(null);
+  const formRef = React.useRef<any>(null);
 
   const [lot, setLot] = useState<Lot | null>(null);
   const [categories, setCategories] = useState<LotCategory[]>([]);
@@ -85,14 +85,14 @@ export default function EditLotPage() {
         getPlatformSettings(),
       ]);
       
-      setLot(fetchedLot);
+      setLot(fetchedLot as Lot);
       setCategories(fetchedCategories);
       setAuctions(fetchedAuctions);
       setSellers(fetchedSellers);
       setStates(fetchedStates);
       setAllCities(fetchedCities);
       setAvailableBens(fetchedBens);
-      setPlatformSettings(settings);
+      setPlatformSettings(settings as PlatformSettings);
 
     } catch (error) {
       console.error("Error fetching lot data:", error);
@@ -107,21 +107,23 @@ export default function EditLotPage() {
   }, [fetchPageData]);
   
   const handleSave = () => {
-    formRef.current?.requestSubmit();
-  };
+    if (formRef.current) {
+        formRef.current.requestSubmit();
+    }
+  }
 
-  const handleUpdateLot = async (data: Partial<LotFormData>) => {
+  async function handleUpdateLot(data: Partial<LotFormData>) {
     setIsSubmitting(true);
     const result = await updateLot(lotId, data);
     setIsSubmitting(false);
     if (result.success) {
-      toast({ title: "Sucesso!", description: "Lote atualizado." });
-      fetchPageData();
-      setIsViewMode(true);
+        toast({ title: "Sucesso!", description: "Lote atualizado." });
+        fetchPageData();
+        setIsViewMode(true);
     } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
+        toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
-  };
+  }
   
   const handleDeleteLot = async () => {
     const result = await deleteLot(lotId, lot?.auctionId);
@@ -164,7 +166,7 @@ export default function EditLotPage() {
   const canRelist = lot && lot.status === 'NAO_VENDIDO';
 
   if (isLoading || !lot || !platformSettings) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
 
   return (
