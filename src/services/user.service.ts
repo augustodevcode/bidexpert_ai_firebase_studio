@@ -1,7 +1,7 @@
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
-import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData } from '@/types';
+import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData, UserHabilitationStatus } from '@/types';
 import bcrypt from 'bcryptjs';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -110,13 +110,15 @@ export class UserService {
       await prisma.usersOnRoles.deleteMany({ where: { userId }});
 
       // Then, add the new roles
-      await prisma.usersOnRoles.createMany({
-        data: roleIds.map(roleId => ({
-            userId,
-            roleId,
-            assignedBy: 'admin-panel', 
-        })),
-      });
+      if (roleIds && roleIds.length > 0) {
+        await prisma.usersOnRoles.createMany({
+            data: roleIds.map(roleId => ({
+                userId,
+                roleId,
+                assignedBy: 'admin-panel', 
+            })),
+        });
+      }
 
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
@@ -143,6 +145,13 @@ export class UserService {
         console.error(`Error in UserService.deleteUser for id ${id}:`, error);
         return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
     }
+  }
+
+  async updateHabilitationStatus(userId: string, status: UserHabilitationStatus): Promise<void> {
+    await prisma.user.update({
+        where: { id: userId },
+        data: { habilitationStatus: status }
+    });
   }
 
   /**
@@ -182,10 +191,7 @@ export class UserService {
     );
 
     if (allRequiredDocsApproved) {
-      await prisma.user.update({
-        where: { id: userId },
-        data: { habilitationStatus: 'HABILITADO' }
-      });
+      await this.updateHabilitationStatus(userId, 'HABILITADO');
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
       if(bidderRole) {
         await prisma.usersOnRoles.createMany({
@@ -195,10 +201,7 @@ export class UserService {
       }
     } else if (user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
        // **NEW LOGIC**: If any document is submitted and status is PENDING_DOCUMENTS, update to PENDING_ANALYSIS
-      await prisma.user.update({
-        where: { id: userId },
-        data: { habilitationStatus: 'PENDING_ANALYSIS' }
-      });
+      await this.updateHabilitationStatus(userId, 'PENDING_ANALYSIS');
     }
   }
 }

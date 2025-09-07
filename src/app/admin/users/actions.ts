@@ -60,8 +60,3 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
     }
   return result;
 }
-
-export async function getRoles(): Promise<Role[]> {
-    // Chamada agora é delegada para o serviço correto.
-    return roleService.getRoles();
-}

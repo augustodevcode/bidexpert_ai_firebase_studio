@@ -1,4 +1,3 @@
-
 // src/repositories/user.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { Prisma, User } from '@prisma/client';
@@ -57,24 +56,6 @@ export class UserRepository {
       where: { id: userId },
       data: data as Prisma.UserUpdateInput,
     });
-  }
-
-  async updateUserRoles(userId: string, roleIds: string[]) {
-    if (!userId) return;
-    
-    // First, clear existing roles for the user
-    await prisma.usersOnRoles.deleteMany({ where: { userId }});
-
-    // Then, add the new roles
-    if (roleIds.length > 0) {
-      await prisma.usersOnRoles.createMany({
-        data: roleIds.map(roleId => ({
-          userId,
-          roleId,
-          assignedBy: 'admin-panel', 
-        })),
-      });
-    }
   }
 
   async delete(id: string): Promise<void> {
