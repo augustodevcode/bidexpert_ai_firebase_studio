@@ -2,22 +2,14 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { MoreHorizontal, Pencil, ShieldAlert, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, ShieldAlert, Trash2, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { Role } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { Checkbox } from '@/components/ui/checkbox';
 
-const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'FINANCE'];
 
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Role>[] => [
@@ -44,7 +36,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome do Perfil" />,
     cell: ({ row }) => {
-      const isProtected = PROTECTED_ROLES.includes(row.original.nameNormalized);
+      const isProtected = PROTECTED_ROLES_NORMALIZED.includes(row.original.nameNormalized);
       return (
         <div className="font-medium flex items-center">
             <Link href={`/admin/roles/${row.original.id}/edit`} className="hover:text-primary">
@@ -76,8 +68,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     id: "actions",
     cell: ({ row }) => {
       const role = row.original;
-      const isProtected = PROTECTED_ROLES.includes(role.name_normalized);
-
+      const isProtected = PROTECTED_ROLES_NORMALIZED.includes(role.nameNormalized);
       return (
         <div className="flex items-center justify-end gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>

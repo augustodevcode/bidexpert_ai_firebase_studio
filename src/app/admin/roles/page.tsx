@@ -1,85 +1,16 @@
 // src/app/admin/roles/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlusCircle, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getRoles, deleteRole } from './actions';
-import type { Role } from '@/types';
-import { PlusCircle, ShieldCheck } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import type { Role } from '@/types';
 
 const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
 
 export default function AdminRolesPage() {
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedRoles = await getRoles();
-      setRoles(fetchedRoles);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
-      console.error("Error fetching roles:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteRole(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      fetchPageData();
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-  }, [toast, fetchPageData]);
-
-  const handleDeleteSelected = useCallback(async (selectedItems: Role[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      if (PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)) {
-        toast({ title: `Ação não Permitida`, description: `O perfil "${item.name}" é protegido e não pode ser excluído.`, variant: "destructive", duration: 5000 });
-        errorCount++;
-        continue;
-      }
-      const result = await deleteRole(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} perfil(s) excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
-
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -100,14 +31,14 @@ export default function AdminRolesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={roles}
-            isLoading={isLoading}
-            error={error}
+          <ResourceDataTable<Role>
+            columns={createColumns}
+            fetchAction={getRoles}
+            deleteAction={deleteRole}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do perfil..."
-            onDeleteSelected={handleDeleteSelected}
+            deleteConfirmation={(item) => !PROTECTED_ROLES_NORMALIZED.includes(item.nameNormalized)}
+            deleteConfirmationMessage={(item) => `O perfil "${item.name}" é protegido e não pode ser excluído.`}
           />
         </CardContent>
       </Card>

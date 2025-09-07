@@ -27,7 +27,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-
 interface DataTableToolbarProps<TData> {
   table: Table<TData>
   searchColumnId?: string;
@@ -42,6 +41,8 @@ interface DataTableToolbarProps<TData> {
     }[];
   }[];
   onDeleteSelected?: (selectedRows: TData[]) => Promise<void>;
+  deleteConfirmation?: (item: TData) => boolean;
+  deleteConfirmationMessage?: (item: TData) => string;
 }
 
 export function DataTableToolbar<TData>({
@@ -50,6 +51,8 @@ export function DataTableToolbar<TData>({
   searchPlaceholder = "Buscar...",
   facetedFilterColumns = [],
   onDeleteSelected,
+  deleteConfirmation,
+  deleteConfirmationMessage,
 }: DataTableToolbarProps<TData>) {
   const isFiltered = table.getState().columnFilters.length > 0
   const groupableColumns = table.getAllColumns().filter(c => c.getCanGroup());
@@ -59,17 +62,14 @@ export function DataTableToolbar<TData>({
   const handleDelete = () => {
     if (onDeleteSelected) {
       onDeleteSelected(table.getFilteredSelectedRowModel().rows.map(r => r.original));
+      table.resetRowSelection();
     }
   }
 
   // Helper function to extract a readable header name
   const getColumnHeader = (column: any): string => {
     if (typeof column.columnDef.header === 'function') {
-      // Attempt to find the 'title' prop passed to DataTableColumnHeader
-      const headerProps = column.columnDef.header?.({
-        column,
-        header: {} // Mock header object
-      } as any)?.props;
+      const headerProps = column.columnDef.header?.({ column, header: {} } as any)?.props;
       return headerProps?.title || column.id;
     }
     return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
@@ -143,7 +143,7 @@ export function DataTableToolbar<TData>({
                 <AlertDialogHeader>
                   <AlertDialogTitle>Confirmar Exclusão em Massa?</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Esta ação é permanente e não pode ser desfeita. Você tem certeza que deseja excluir os {selectedRowsCount} itens selecionados? Itens que possuem vínculos (ex: leilões com lotes) não serão excluídos.
+                    Esta ação é permanente e não pode ser desfeita. Você tem certeza que deseja excluir os {selectedRowsCount} itens selecionados? Itens que possuem vínculos (ex: leilões com lotes) ou são protegidos não serão excluídos.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

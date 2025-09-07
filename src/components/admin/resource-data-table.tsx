@@ -21,6 +21,8 @@ interface ResourceDataTableProps<TData> {
         icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  deleteConfirmation?: (item: TData) => boolean;
+  deleteConfirmationMessage?: (item: TData) => string;
 }
 
 export default function ResourceDataTable<TData extends { id: string, name?: string | null }>({
@@ -30,6 +32,8 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
   searchColumnId,
   searchPlaceholder,
   facetedFilterColumns = [],
+  deleteConfirmation,
+  deleteConfirmationMessage,
 }: ResourceDataTableProps<TData>) {
   const [data, setData] = useState<TData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -58,6 +62,15 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
   }, [fetchData, refetchTrigger]);
 
   const handleDelete = useCallback(async (id: string) => {
+    const itemToDelete = data.find(item => item.id === id);
+    if (deleteConfirmation && itemToDelete && !deleteConfirmation(itemToDelete)) {
+      toast({
+        title: "Ação não Permitida",
+        description: deleteConfirmationMessage ? deleteConfirmationMessage(itemToDelete) : "Este item não pode ser excluído.",
+        variant: "destructive"
+      });
+      return;
+    }
     const result = await deleteAction(id);
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
@@ -65,7 +78,7 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
     } else {
       toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
     }
-  }, [deleteAction, toast]);
+  }, [deleteAction, toast, data, deleteConfirmation, deleteConfirmationMessage]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: TData[]) => {
     if (selectedItems.length === 0) return;
@@ -74,6 +87,11 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
     let errorCount = 0;
     
     for (const item of selectedItems) {
+       if (deleteConfirmation && !deleteConfirmation(item)) {
+        toast({ title: `Ação não Permitida`, description: deleteConfirmationMessage ? deleteConfirmationMessage(item) : `O item "${item.name || item.id}" não pode ser excluído.`, variant: "destructive", duration: 5000 });
+        errorCount++;
+        continue;
+      }
       const result = await deleteAction(item.id);
       if (result.success) {
         successCount++;
@@ -87,7 +105,7 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
       toast({ title: "Exclusão em Massa Concluída", description: `${successCount} item(s) excluído(s) com sucesso.` });
     }
     setRefetchTrigger(c => c + 1); // Trigger refetch
-  }, [deleteAction, toast]);
+  }, [deleteAction, toast, deleteConfirmation, deleteConfirmationMessage]);
 
   const tableColumns = useMemo(() => columns({ handleDelete }), [columns, handleDelete]);
 

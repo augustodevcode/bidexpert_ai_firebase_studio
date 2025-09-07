@@ -1,78 +1,14 @@
 // src/app/admin/judicial-districts/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlusCircle, Map } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getJudicialDistricts, deleteJudicialDistrict } from './actions';
-import type { JudicialDistrict } from '@/types';
-import { PlusCircle, Map } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import type { JudicialDistrict } from '@/types';
 
 export default function AdminJudicialDistrictsPage() {
-  const [districts, setDistricts] = useState<JudicialDistrict[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedItems = await getJudicialDistricts();
-      setDistricts(fetchedItems);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comarcas.";
-      console.error("Error fetching judicial districts:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteJudicialDistrict(id);
-    if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
-      setRefetchTrigger(c => c + 1);
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: JudicialDistrict[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteJudicialDistrict(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} comarca(s) excluída(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
-
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -93,14 +29,12 @@ export default function AdminJudicialDistrictsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={districts}
-            isLoading={isLoading}
-            error={error}
+           <ResourceDataTable<JudicialDistrict>
+            columns={createColumns}
+            fetchAction={getJudicialDistricts}
+            deleteAction={deleteJudicialDistrict}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome da comarca..."
-            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>

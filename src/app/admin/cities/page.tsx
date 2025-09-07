@@ -1,87 +1,22 @@
 // src/app/admin/cities/page.tsx
-'use client';
-
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { PlusCircle, Building2 } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getCities, deleteCity } from './actions';
-import type { CityInfo } from '@/types';
-import { PlusCircle, Building2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import { getStates } from '@/app/admin/states/actions';
 import { createColumns } from './columns';
+import type { CityInfo } from '@/types';
 
-export default function AdminCitiesPage() {
-  const [cities, setCities] = useState<CityInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+export default async function AdminCitiesPage() {
+  // Fetching states here to build the filter options, as it's a specific requirement for this page.
+  const states = await getStates();
+  const stateOptions = states.map(s => ({ value: s.uf, label: s.name }));
 
-  const fetchPageData = useCallback(async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const fetchedCities = await getCities();
-        setCities(fetchedCities);
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar cidades.";
-        console.error("Error fetching cities:", e);
-        setError(errorMessage);
-        toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-      } finally {
-        setIsLoading(false);
-      }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [refetchTrigger, fetchPageData]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteCity(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      setRefetchTrigger(c => c + 1);
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: CityInfo[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteCity(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} cidade(s) excluída(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
-
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  
-  const stateOptions = useMemo(() => 
-    [...new Set(cities.map(c => c.stateUf))]
-      .map(uf => ({ value: uf, label: uf })),
-  [cities]);
-
-  const facetedFilterColumns = useMemo(() => [
+  const facetedFilterColumns = [
     { id: 'stateUf', title: 'UF', options: stateOptions },
-  ], [stateOptions]);
-
+  ];
 
   return (
     <div className="space-y-6">
@@ -103,15 +38,13 @@ export default function AdminCitiesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={cities}
-            isLoading={isLoading}
-            error={error}
+           <ResourceDataTable<CityInfo>
+            columns={createColumns}
+            fetchAction={getCities}
+            deleteAction={deleteCity}
             searchColumnId="name"
             searchPlaceholder="Buscar por cidade..."
             facetedFilterColumns={facetedFilterColumns}
-            onDeleteSelected={handleDeleteSelected}
           />
         </CardContent>
       </Card>
