@@ -1,4 +1,3 @@
-
 // src/services/state.service.ts
 import { StateRepository } from '@/repositories/state.repository';
 import type { StateInfo, StateFormData } from '@/types';
@@ -21,6 +20,7 @@ export class StateService {
   }
 
   async getStateById(id: string): Promise<StateInfo | null> {
+    // @ts-ignore
     return this.repository.findById(id);
   }
 

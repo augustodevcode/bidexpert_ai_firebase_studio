@@ -1,7 +1,7 @@
 // src/app/admin/states/analysis/page.tsx
 'use client';
 
-import { BarChart as BarChartIcon, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getStatesPerformanceAction, type StatePerformanceData } from './actions';
 import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
 import { useState, useEffect, useMemo } from 'react';
@@ -142,14 +142,14 @@ export default function StateAnalysisPage() {
         </CardHeader>
         <CardContent className="h-96">
             <ResponsiveContainer width="100%" height="100%">
-            <BarChartIcon data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="name" />
                 <YAxis tickFormatter={(value) => `R$${Number(value)/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
                 <Legend />
                 <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
-            </BarChartIcon>
+            </BarChart>
             </ResponsiveContainer>
         </CardContent>
        </Card>
