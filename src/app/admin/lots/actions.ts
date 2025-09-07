@@ -6,7 +6,9 @@ import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { BemService } from '@/services/bem.service'; // Use BemService
 import { prisma } from '@/lib/prisma';
-// Importação de generateDocument foi removida daqui
+import { generateDocument } from '@/ai/flows/generate-document-flow';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const lotService = new LotService();
 const bemService = new BemService(); // Instantiate BemService

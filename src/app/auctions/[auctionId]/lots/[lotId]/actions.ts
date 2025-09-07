@@ -376,7 +376,7 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
             throw new Error("A geração do PDF não retornou os dados esperados.");
         }
     } catch (error: any) {
-        console.error("Error generating winning bid term:", error);
+        console.error("Error generating winning bid term PDF:", error);
         return { success: false, message: `Falha ao gerar documento: ${error.message}` };
     }
 }
