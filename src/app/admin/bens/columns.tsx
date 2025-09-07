@@ -10,6 +10,14 @@ import type { Bem } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 const getStatusVariant = (status: Bem['status']) => {
     switch (status) {
@@ -97,24 +105,31 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
     cell: ({ row }) => {
       const bem = row.original;
       return (
-        <div className="flex items-center justify-end gap-1">
-          {onOpenDetails && (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenDetails(bem)}>
-              <Eye className="h-4 w-4" />
-              <span className="sr-only">Visualizar Detalhes</span>
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/bens/${bem.id}/edit`}>
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Editar</span>
-            </Link>
-          </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(bem.id)}>
-            <Trash2 className="h-4 w-4 text-destructive" />
-            <span className="sr-only">Excluir</span>
-          </Button>
-        </div>
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                {onOpenDetails && (
+                    <DropdownMenuItem onClick={() => onOpenDetails(bem)}>
+                        <Eye className="mr-2 h-4 w-4"/> Visualizar Detalhes
+                    </DropdownMenuItem>
+                )}
+                <DropdownMenuItem asChild>
+                    <Link href={`/admin/bens/${bem.id}/edit`}>
+                        <Pencil className="mr-2 h-4 w-4"/> Editar Bem
+                    </Link>
+                </DropdownMenuItem>
+                 <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleDelete(bem.id)} className="text-destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />Excluir
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
       );
     },
   },

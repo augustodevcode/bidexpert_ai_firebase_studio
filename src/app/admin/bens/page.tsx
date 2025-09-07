@@ -1,85 +1,31 @@
 // src/app/admin/bens/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getBens, deleteBem } from './actions';
 import type { Bem } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import ResourceDataTable from '@/components/admin/resource-data-table';
 
 export default function AdminBensPage() {
-  const [bens, setBens] = useState<Bem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBem, setSelectedBem] = useState<Bem | null>(null);
-
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const fetchedBens = await getBens();
-      setBens(fetchedBens);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar bens.";
-      console.error("Error fetching bens:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData, refetchTrigger]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteBem(id);
-    if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
-      setRefetchTrigger(c => c + 1);
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: Bem[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteBem(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} bem(ns) excluído(s) com sucesso.` });
-    }
-    fetchPageData(); // Always re-fetch data
-  }, [toast, fetchPageData]);
 
   const handleOpenDetails = useCallback((bem: Bem) => {
     setSelectedBem(bem);
     setIsModalOpen(true);
   }, []);
-  
-  const columns = useMemo(() => createColumns({ handleDelete, onOpenDetails: handleOpenDetails }), [handleDelete, handleOpenDetails]);
+
+  const columns = useMemo(() => createColumns({
+    // A ação de delete será passada para o ResourceDataTable, mas a coluna pode precisar de um handler para o modal.
+    handleDelete: async () => {}, // Ação vazia, pois o ResourceDataTable cuida disso.
+    onOpenDetails: handleOpenDetails 
+  }), [handleOpenDetails]);
 
   return (
     <>
@@ -102,14 +48,14 @@ export default function AdminBensPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <DataTable
-              columns={columns}
-              data={bens}
-              isLoading={isLoading}
-              error={error}
-              searchColumnId="title"
-              searchPlaceholder="Buscar por título ou ID do processo..."
-              onDeleteSelected={handleDeleteSelected}
+             <ResourceDataTable<Bem>
+                columns={columns}
+                fetchAction={getBens}
+                deleteAction={deleteBem}
+                searchColumnId="title"
+                searchPlaceholder="Buscar por título..."
+                deleteConfirmation={(item) => item.status === 'DISPONIVEL' || item.status === 'CADASTRO'}
+                deleteConfirmationMessage={(item) => `Este bem está no status "${item.status}" e não pode ser excluído.`}
             />
           </CardContent>
         </Card>
