@@ -27,7 +27,7 @@ export class DirectSaleOfferService {
       const dataToCreate: Prisma.DirectSaleOfferCreateInput = {
         ...(offerData as any),
         publicId: `VD-${uuidv4().substring(0, 8)}`,
-        category: { connect: { id: categoryId } },
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
         seller: { connect: { id: sellerId } },
       };
 
@@ -61,7 +61,6 @@ export class DirectSaleOfferService {
 
   async deleteDirectSaleOffer(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // Add checks here if needed, e.g., if there are active proposals.
       await this.repository.delete(id);
       return { success: true, message: 'Oferta excluída com sucesso.' };
     } catch (error: any) {

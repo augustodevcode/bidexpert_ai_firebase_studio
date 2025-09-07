@@ -1,6 +1,6 @@
 // src/repositories/direct-sale-offer.repository.ts
 import { prisma } from '@/lib/prisma';
-import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
+import type { DirectSaleOffer } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class DirectSaleOfferRepository {
