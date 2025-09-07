@@ -45,6 +45,8 @@ export default async function AdminCitiesPage() {
             searchColumnId="name"
             searchPlaceholder="Buscar por cidade..."
             facetedFilterColumns={facetedFilterColumns}
+            deleteConfirmation={(item) => (item.lotCount || 0) === 0}
+            deleteConfirmationMessage={(item) => `Esta cidade possui ${item.lotCount} lote(s) e não pode ser excluída.`}
           />
         </CardContent>
       </Card>

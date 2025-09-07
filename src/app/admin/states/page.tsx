@@ -35,6 +35,8 @@ export default function AdminStatesPage() {
               deleteAction={deleteState}
               searchColumnId="name"
               searchPlaceholder="Buscar por nome ou UF..."
+              deleteConfirmation={(item) => (item.cityCount || 0) === 0}
+              deleteConfirmationMessage={(item) => `Este estado possui ${item.cityCount} cidade(s) e não pode ser excluído.`}
            />
         </CardContent>
       </Card>
