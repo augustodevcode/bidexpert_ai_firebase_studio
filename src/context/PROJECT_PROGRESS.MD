@@ -57,7 +57,7 @@
         - **Componente Genérico de Tabela de Dados (<ResourceDataTable />):** A estrutura de administração em `src/app/admin/` é altamente repetitiva. A lógica para renderizar a tabela, paginação, filtros e ações é duplicada em cada página de listagem. A solução é criar um componente `<ResourceDataTable />` reutilizável que abstrai essa lógica.
         - **Wrapper Genérico de Formulário de Recurso (<ResourceForm />):** Os formulários de criação e edição em `src/app/admin/*/new` e `src/app/admin/*/[id]/edit` repetem a lógica de busca de dados, configuração de formulário (react-hook-form, Zod), estado de submissão e exibição de toasts. A solução é criar um componente wrapper `<ResourceForm />` que gerencia o estado e a lógica de submissão.
         - **Abstração para Server Actions CRUD (createCrudActions):** Cada arquivo `actions.ts` repete a estrutura básica para operações CRUD (create, update, delete, fetch). A solução é criar uma função de fábrica (`createCrudActions`) que gera essas ações com base em um modelo Prisma e schemas Zod, reduzindo a repetição e padronizando o comportamento.
-        - **Pacote de Componentes de UI de Domínio (@suaorg/domain-ui):** Componentes específicos do domínio de leilões (ex: `AuctionStatusBadge`, `LotCard`, `CountdownTimer`) estão espalhados. A solução é agrupá-los em um pacote interno para garantir consistência e reutilização.
+        - **Pacote de Componentes de UI de Domínio (@suaorg/domain-ui):** Componentes específicos do domínio de leilões (ex: `AuctionStatusBadge`, `LotCard`, `AuctionCard`, `CountdownTimer`) estão espalhados. A solução é agrupá-los em um pacote interno para garantir consistência e reutilização.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**
     - **Objetivo:** Corrigir as lacunas entre as regras de arquitetura definidas e a implementação atual do código.
     - **Relatório de Análise:**
@@ -66,13 +66,46 @@
         - **Nomenclatura (Parcialmente Conforme):** O código mistura português e inglês. É preciso padronizar para português em todo novo código.
         - **Atributos de Teste/IA (Não Conforme):** Falta padronização e aplicação consistente do atributo `data-ai-id` em elementos estruturais.
         - **Uso do EntitySelector (Não Verificado):** É preciso auditar todos os formulários de admin para garantir que o componente `EntitySelector` está sendo usado para todos os relacionamentos, em vez de um `<select>` padrão.
-- **Item 19: Padronização de Identificadores `data-ai-id`:**
-    - **Objetivo:** Adicionar atributos `data-ai-id` únicos, legíveis e funcionais a todos os contêineres e componentes estruturais da interface do usuário que ainda não os possuem.
-    - **Racional:** A prática atual depende de classes de CSS ou do atributo `data-ai-hint`, que não são seletores estáveis. Um `data-ai-id` padronizado (ex: `[contexto]-[funcao]-[tipo]`) irá facilitar a criação de testes E2E robustos, permitir que assistentes de IA manipulem a UI de forma precisa e simplificar o debugging.
-    - **Exemplos Críticos a serem Mapeados:**
-        - Contêineres de página (`checkout-page-container`).
-        - Layouts de grid (`checkout-layout-grid`).
-        - Cards principais (`checkout-order-summary-card`, `lot-card-container`).
-        - Componentes complexos (`admin-auctions-data-table`).
-        - Menus de ação em tabelas (`data-table-row-actions-menu`).
+- **Item 19: Padronização de Identificadores `data-ai-id` (Expandido)**
+    - **Objetivo:** Adicionar atributos `data-ai-id` únicos, legíveis e funcionais a todos os elementos de UI que ainda não os possuem, seguindo o padrão `[contexto]-[funcao]-[tipo]`.
+    - **19.1. Fluxo de Checkout:**
+        - `checkout-page-container`: Contêiner principal da página.
+        - `checkout-layout-grid`: Grid que divide a página em resumo e formulário.
+        - `checkout-order-summary-card`: Card com o resumo do arremate.
+        - `order-summary-lot-details`: Seção com imagem e nome do lote.
+        - `order-summary-price-breakdown`: Seção com os valores detalhados (lance, comissão).
+        - `order-summary-total-due`: Linha do valor total a pagar.
+        - `checkout-payment-form`: Componente do formulário de pagamento.
+    - **19.2. Painel de Admin - Páginas de Listagem (CRUDs):**
+        - `admin-[recurso]-page-container`: Contêiner principal da página (ex: `admin-auctions-page-container`).
+        - `admin-[recurso]-data-table`: Componente `DataTable` de cada recurso.
+        - `data-table-toolbar`: Barra de ferramentas da tabela (busca, filtros).
+        - `data-table-search-input`: Campo de busca principal da tabela.
+        - `data-table-view-options-button`: Botão de "Visualização" para ocultar/exibir colunas.
+        - `data-table-row-actions-menu`: Menu de ações (dropdown) para cada linha da tabela.
+    - **19.3. Painel de Admin - Páginas de Formulário:**
+        - `admin-[recurso]-form-card`: Card principal que envolve os formulários de criação/edição.
+        - Aplicar a cada `FormItem` ou grupo de campos (ex: `form-section-main-details`, `form-section-contact-info`).
+    - **19.4. Componentes de Card Reutilizáveis:**
+        - `lot-card-container`: Contêiner principal do componente `LotCard`.
+        - `lot-card-main-image`: Imagem principal do lote no card.
+        - `lot-card-title`: O título clicável do lote.
+        - `lot-card-location`: O contêiner da localização.
+        - `lot-card-bid-count`: O contêiner do número de lances.
+        - `lot-card-price-section`: A seção de preço/lance atual.
+        - `auction-card-container`: Contêiner principal do `AuctionCard`.
+        - `auction-card-main-image`: Imagem do `AuctionCard`.
+        - `auction-card-title`: Título do `AuctionCard`.
+        - `auction-card-public-id`: ID público do leilão.
+        - `auction-card-type`: Tipo do leilão.
+        - `auction-card-counters`: Contadores de lotes, visitas, etc.
+        - `auction-card-timeline`: Contêiner da timeline de etapas.
+        - `auction-card-initial-offer`: Seção do lance inicial.
+    - **19.5. Painel do Construtor de Relatórios:**
+        - `report-builder-container`: O contêiner principal do construtor.
+        - `report-toolbar`: A barra de ferramentas com os botões de ação e elementos.
+        - `report-design-surface`: A área de design onde os elementos são arrastados.
+        - `report-properties-panel`: O painel lateral de propriedades.
+        - `report-variable-panel`: O painel lateral de variáveis.
+        - `report-preview-panel`: O painel inferior de pré-visualização.
 - **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
