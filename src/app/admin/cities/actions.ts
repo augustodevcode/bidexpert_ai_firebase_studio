@@ -1,8 +1,6 @@
-
 // src/app/admin/cities/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import type { CityInfo, CityFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { CityService } from '@/services/city.service';

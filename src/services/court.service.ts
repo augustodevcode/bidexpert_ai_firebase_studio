@@ -45,7 +45,7 @@ export class CourtService {
     }
   }
 
-  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string }> {
+  async updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const dataToUpdate: Partial<Prisma.CourtUpdateInput> = { ...data };
       if (data.name) {
@@ -73,13 +73,16 @@ export class CourtService {
     const courts = await prisma.court.findMany({
       include: {
         _count: {
-          select: { judicialProcesses: true, auctions: true },
+          select: { judicialProcesses: true },
         },
         auctions: {
           include: {
             lots: {
               where: { status: 'VENDIDO' },
               select: { price: true },
+            },
+            _count: {
+              select: { lots: true },
             },
           },
         },
@@ -91,12 +94,13 @@ export class CourtService {
       const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
       const totalLotsSold = allLotsFromAuctions.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
+      const totalAuctions = court.auctions.length;
 
       return {
         id: court.id,
         name: court.name,
         totalProcesses: court._count.judicialProcesses,
-        totalAuctions: court._count.auctions,
+        totalAuctions,
         totalLotsSold,
         totalRevenue,
         averageTicket,

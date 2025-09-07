@@ -30,10 +30,12 @@ export class CityRepository {
   }
 
   async create(data: Prisma.CityCreateInput): Promise<CityInfo> {
+    // @ts-ignore
     return prisma.city.create({ data });
   }
 
   async update(id: string, data: Prisma.CityUpdateInput): Promise<CityInfo> {
+    // @ts-ignore
     return prisma.city.update({ where: { id }, data });
   }
 

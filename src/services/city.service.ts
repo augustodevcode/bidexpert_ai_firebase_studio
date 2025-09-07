@@ -64,8 +64,11 @@ export class CityService {
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const dataToUpdate: Prisma.CityUpdateInput = {};
-      if (data.name) dataToUpdate.name = data.name; dataToUpdate.slug = slugify(data.name);
-      if (data.ibgeCode) dataToUpdate.ibgeCode = data.ibgeCode;
+      if (data.name) {
+        dataToUpdate.name = data.name;
+        dataToUpdate.slug = slugify(data.name);
+      }
+      if (data.ibgeCode !== undefined) dataToUpdate.ibgeCode = data.ibgeCode;
 
       if (data.stateId) {
         const parentState = await this.stateRepository.findById(data.stateId);
