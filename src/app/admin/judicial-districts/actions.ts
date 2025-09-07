@@ -1,41 +1,22 @@
 // src/app/admin/judicial-districts/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
-import { JudicialDistrictService } from '@/services/judicial-district.service';
+import { JudicialDistrictService } from '@bidexpert/services';
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const districtService = new JudicialDistrictService();
+const districtActions = createCrudActions({
+    service: districtService,
+    entityName: 'JudicialDistrict',
+    entityNamePlural: 'JudicialDistricts',
+    routeBase: '/admin/judicial-districts'
+});
 
-export async function getJudicialDistricts(): Promise<JudicialDistrict[]> {
-    return districtService.getJudicialDistricts();
-}
 
-export async function getJudicialDistrict(id: string): Promise<JudicialDistrict | null> {
-    return districtService.getJudicialDistrictById(id);
-}
-
-export async function createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
-    const result = await districtService.createJudicialDistrict(data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/judicial-districts');
-    }
-    return result;
-}
-
-export async function updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
-    const result = await districtService.updateJudicialDistrict(id, data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/judicial-districts');
-        revalidatePath(`/admin/judicial-districts/${id}/edit`);
-    }
-    return result;
-}
-
-export async function deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
-    const result = await districtService.deleteJudicialDistrict(id);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/judicial-districts');
-    }
-    return result;
-}
+export const {
+    getAll: getJudicialDistricts,
+    getById: getJudicialDistrict,
+    create: createJudicialDistrict,
+    update: updateJudicialDistrict,
+    delete: deleteJudicialDistrict
+} = districtActions;

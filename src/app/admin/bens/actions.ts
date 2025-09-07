@@ -1,45 +1,26 @@
 // src/app/admin/bens/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
-import type { Bem, BemFormData } from '@/types';
 import { BemService } from '@bidexpert/services';
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const bemService = new BemService();
+const bemActions = createCrudActions({
+  service: bemService,
+  entityName: 'Bem',
+  entityNamePlural: 'Bens',
+  routeBase: '/admin/bens',
+});
 
-export async function getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-    return bemService.getBens(filter);
-}
+export const {
+    getAll: getBens,
+    getById: getBem,
+    create: createBem,
+    update: updateBem,
+    delete: deleteBem,
+} = bemActions;
 
-export async function getBem(id: string): Promise<Bem | null> {
-    return bemService.getBemById(id);
-}
 
-export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    const result = await bemService.createBem(data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/bens');
-    }
-    return result;
-}
-
-export async function updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
-    const result = await bemService.updateBem(id, data);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/bens');
-        revalidatePath(`/admin/bens/${id}/edit`);
-    }
-    return result;
-}
-
-export async function deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
-    const result = await bemService.deleteBem(id);
-    if (result.success && process.env.NODE_ENV !== 'test') {
-        revalidatePath('/admin/bens');
-    }
-    return result;
-}
-
-export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
+export async function getBensByIdsAction(ids: string[]) {
     return bemService.getBensByIds(ids);
 }
