@@ -83,19 +83,19 @@ export default function EditSellerPage() {
   const params = useParams();
   const sellerId = params.sellerId as string;
   const router = useRouter();
-  const { toast } = useToast();
   
   const [seller, setSeller] = useState<SellerFormData | null>(null);
   const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const formRef = React.useRef<any>(null); // Ref para o formulário
-
+  const { toast } = useToast();
+  const formRef = useRef<any>(null);
+  
   const fetchPageData = useCallback(async () => {
-      if (!sellerId) return;
-      setIsLoading(true);
-      try {
+    if (!sellerId) return;
+    setIsLoading(true);
+    try {
         const [sellerData, branchesData] = await Promise.all([
             getSeller(sellerId),
             getJudicialBranches()
@@ -107,17 +107,29 @@ export default function EditSellerPage() {
         }
         setSeller(sellerData);
         setJudicialBranches(branchesData);
-      } catch (e) {
-          console.error("Error fetching seller data", e);
-          notFound();
-      } finally {
-        setIsLoading(false);
-      }
-  }, [sellerId]);
+    } catch(e) {
+        console.error("Failed to fetch seller data", e);
+        toast({title: "Erro", description: "Falha ao buscar dados do comitente.", variant: "destructive"})
+    }
+    setIsLoading(false);
+  }, [sellerId, toast]);
 
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData]);
+  
+  const handleFormSubmit = async (data: SellerFormData) => {
+    setIsSubmitting(true);
+    const result = await updateSeller(sellerId, data);
+    if (result.success) {
+        toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
+        fetchPageData();
+        setIsViewMode(true);
+    } else {
+        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
+    }
+    setIsSubmitting(false);
+  };
   
   const handleDelete = async () => {
     const result = await deleteSeller(sellerId);
@@ -129,63 +141,46 @@ export default function EditSellerPage() {
     }
   };
 
-  const handleSave = async () => {
-      if (formRef.current) {
-          await formRef.current.requestSubmit();
-      }
+  const handleSave = () => {
+    formRef.current?.requestSubmit();
   };
 
-  // Esta função será passada para o SellerForm
-  const handleFormSubmit = async (data: SellerFormData) => {
-    setIsSubmitting(true);
-    const result = await updateSeller(sellerId, data);
-    if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
-        fetchPageData(); // Re-fetch data
-        setIsViewMode(true); // Return to view mode on success
-    } else {
-        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
-    }
-    setIsSubmitting(false);
-  }
-
   return (
-     <div className="space-y-6" data-ai-id="admin-seller-form-card">
-        <FormPageLayout
-            formTitle={isViewMode ? `Visualizar Comitente` : `Editar Comitente`}
-            formDescription={seller?.name || 'Carregando...'}
-            icon={Users}
-            isViewMode={isViewMode}
-            isLoading={isLoading}
-            isSubmitting={isSubmitting}
-            onEnterEditMode={() => setIsViewMode(false)}
-            onCancel={() => setIsViewMode(true)}
-            onSave={handleSave}
-            onDelete={handleDelete}
-        >
-            <SellerForm
-                ref={formRef} // Passando a ref para o formulário
-                initialData={seller}
-                judicialBranches={judicialBranches}
-                onSubmitAction={handleFormSubmit}
-            />
-        </FormPageLayout>
+    <div className="space-y-6" data-ai-id="admin-seller-form-card">
+      <FormPageLayout
+        formTitle={isViewMode ? "Visualizar Comitente" : "Editar Comitente"}
+        formDescription={seller?.name || 'Carregando...'}
+        icon={Users}
+        isViewMode={isViewMode}
+        isLoading={isLoading}
+        isSubmitting={isSubmitting}
+        onEnterEditMode={() => setIsViewMode(false)}
+        onCancel={() => setIsViewMode(true)}
+        onSave={handleSave}
+        onDelete={handleDelete}
+      >
+          <SellerForm
+            ref={formRef}
+            initialData={seller}
+            judicialBranches={judicialBranches}
+            onSubmitAction={handleFormSubmit}
+          />
+      </FormPageLayout>
 
-        <Separator className="my-8" />
-        
-        <Card>
-            <CardHeader>
-                <CardTitle className="text-xl font-semibold flex items-center">
-                    <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance
-                </CardTitle>
-                <CardDescription>
-                    KPIs e métricas de desempenho para este comitente.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                <SellerDashboardSection sellerId={sellerId} />
-            </CardContent>
-        </Card>
-     </div>
+      <Separator className="my-8" />
+       <Card>
+          <CardHeader>
+              <CardTitle className="text-xl font-semibold flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance
+              </CardTitle>
+              <CardDescription>
+                  KPIs e métricas de desempenho para este comitente.
+              </CardDescription>
+          </CardHeader>
+          <CardContent>
+              <SellerDashboardSection sellerId={sellerId} />
+          </CardContent>
+      </Card>
+    </div>
   );
 }
