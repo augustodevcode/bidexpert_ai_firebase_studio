@@ -1,59 +1,27 @@
+// src/app/consignor-dashboard/reports/actions.ts
 /**
  * @fileoverview Server Action for the Consignor Dashboard's reports/overview page.
  * Aggregates statistics for a specific consignor's sales performance.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import type { ConsignorDashboardStats } from '@/types';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { startOfMonth, subMonths } from 'date-fns';
+import { SellerService } from '@/services/seller.service';
+
+const sellerService = new SellerService();
 
 /**
  * Fetches and calculates key performance indicators for a consignor's dashboard.
- * This includes total lots, sold lots, sales value, and sales rate.
  * @param {string} sellerId - The ID of the seller/consignor.
- * @returns {Promise<ConsignorDashboardStats>} A promise resolving to the aggregated stats object.
+ * @returns {Promise<ConsignorDashboardStats | null>} A promise resolving to the aggregated stats object or null if not found.
  */
-export async function getConsignorDashboardStatsAction(sellerId: string): Promise<ConsignorDashboardStats> {
-    if (!sellerId) return { totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesData: [] };
-
-    const allLots = await prisma.lot.findMany({
-        where: { sellerId: sellerId },
-        select: { status: true, price: true, createdAt: true }
-    });
-
-    const totalLotsConsigned = allLots.length;
-    const activeLots = allLots.filter(l => l.status === 'ABERTO_PARA_LANCES').length;
-    const soldLots = allLots.filter(l => l.status === 'VENDIDO');
-    const totalSalesValue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-    const salesRate = totalLotsConsigned > 0 ? (soldLots.length / totalLotsConsigned) * 100 : 0;
-    
-    // Monthly sales data for the last 12 months
-    const salesByMonthMap = new Map<string, number>();
-    const now = new Date();
-    for (let i = 11; i >= 0; i--) {
-        const date = subMonths(now, i);
-        const monthKey = format(date, 'MMM/yy', { locale: ptBR });
-        salesByMonthMap.set(monthKey, 0);
+export async function getConsignorDashboardStatsAction(sellerId: string): Promise<ConsignorDashboardStats | null> {
+    if (!sellerId) {
+        console.warn("[Action - getConsignorDashboardStatsAction] No sellerId provided.");
+        return null;
     }
-    
-    soldLots.forEach(lot => {
-        const monthKey = format(new Date(lot.createdAt), 'MMM/yy', { locale: ptBR });
-        if (salesByMonthMap.has(monthKey)) {
-            salesByMonthMap.set(monthKey, salesByMonthMap.get(monthKey)! + (lot.price || 0));
-        }
-    });
-
-    const salesData = Array.from(salesByMonthMap, ([name, sales]) => ({ name, sales }));
-
-    return {
-        totalLotsConsigned,
-        activeLots,
-        soldLots: soldLots.length,
-        totalSalesValue,
-        salesRate,
-        salesData,
-    };
+    // The service returns a more detailed object, we can adapt it here if needed, or use it directly.
+    // For now, let's assume the SellerDashboardData is compatible enough or we adapt the frontend.
+    // @ts-ignore
+    return sellerService.getSellerDashboardData(sellerId);
 }

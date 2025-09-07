@@ -27,6 +27,10 @@ export class UserWinService {
     // @ts-ignore
     return { ...win, lot: lotWithAuctionName };
   }
+  
+  async getWinsForConsignor(sellerId: string): Promise<UserWin[]> {
+    return this.repository.findWinsBySellerId(sellerId);
+  }
 
   async processPayment(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
     console.log(`[SERVICE - processPayment] Processing payment for win ID: ${winId}`, paymentData);

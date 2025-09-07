@@ -25,6 +25,26 @@ export class UserWinRepository {
     return prisma.userWin.findUnique({ where: { id } });
   }
 
+  async findWinsBySellerId(sellerId: string): Promise<any[]> {
+     return prisma.userWin.findMany({
+      where: {
+          lot: {
+              sellerId: sellerId
+          }
+      },
+      include: {
+          lot: {
+            include: {
+              auction: { select: { title: true } }
+            }
+          },
+      },
+      orderBy: {
+          winDate: 'desc'
+      }
+  });
+  }
+
   async update(id: string, data: Prisma.UserWinUpdateInput): Promise<UserWin> {
     return prisma.userWin.update({
       where: { id },

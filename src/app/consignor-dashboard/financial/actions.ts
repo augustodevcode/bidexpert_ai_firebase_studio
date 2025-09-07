@@ -6,8 +6,10 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { UserWinService } from '@/services/user-win.service';
 import type { UserWin } from '@/types';
+
+const userWinService = new UserWinService();
 
 /**
  * Fetches all UserWin records for a specific consignor by their seller ID.
@@ -22,30 +24,5 @@ export async function getFinancialDataForConsignor(sellerId: string): Promise<Us
     return [];
   }
   
-  const wins = await prisma.userWin.findMany({
-      where: {
-          lot: {
-              sellerId: sellerId
-          }
-      },
-      include: {
-          lot: {
-            include: {
-              auction: { select: { title: true } }
-            }
-          },
-      },
-      orderBy: {
-          winDate: 'desc'
-      }
-  });
-  
-  // @ts-ignore
-  return wins.map(win => ({
-      ...win,
-      lot: {
-        ...win.lot,
-        auctionName: win.lot.auction?.title
-      }
-  }));
+  return userWinService.getWinsForConsignor(sellerId);
 }
