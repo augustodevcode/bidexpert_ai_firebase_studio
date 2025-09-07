@@ -1,10 +1,9 @@
-
+// src/app/admin/categories/category-form.tsx
 'use client';
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -16,37 +15,28 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { categoryFormSchema, type CategoryFormValues } from './category-form-schema';
 import type { LotCategory, MediaItem } from '@/types';
-import { Loader2, Save, Image as ImageIcon, Tag, Sparkles } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { categoryFormSchema, type CategoryFormValues } from './category-form-schema';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
-import IconPicker from '@/components/icon-picker';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { ImageIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+
 
 interface CategoryFormProps {
   initialData?: LotCategory | null;
-  onSubmitAction: (data: CategoryFormValues) => Promise<{ success: boolean; message: string; categoryId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSubmitAction: (data: CategoryFormValues) => Promise<any>;
 }
 
 type DialogTarget = 'coverImageUrl' | 'megaMenuImageUrl' | 'logoUrl';
 
-export default function CategoryForm({
+const CategoryForm = React.forwardRef<any, CategoryFormProps>(({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: CategoryFormProps) {
+}, ref) => {
   const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [dialogTarget, setDialogTarget] = React.useState<DialogTarget | null>(null);
 
@@ -67,6 +57,27 @@ export default function CategoryForm({
       dataAiHintMegaMenu: initialData?.dataAiHintMegaMenu || '',
     },
   });
+  
+  React.useEffect(() => {
+    form.reset({
+      name: initialData?.name || '',
+      description: initialData?.description || '',
+      iconName: initialData?.iconName || '',
+      logoUrl: initialData?.logoUrl || '',
+      logoMediaId: initialData?.logoMediaId || null,
+      dataAiHintIcon: initialData?.dataAiHintIcon || '',
+      coverImageUrl: initialData?.coverImageUrl || '',
+      coverImageMediaId: initialData?.coverImageMediaId || null,
+      dataAiHintCover: initialData?.dataAiHintCover || '',
+      megaMenuImageUrl: initialData?.megaMenuImageUrl || '',
+      megaMenuImageMediaId: initialData?.megaMenuImageMediaId || null,
+      dataAiHintMegaMenu: initialData?.dataAiHintMegaMenu || '',
+    });
+  }, [initialData, form]);
+
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+  }));
 
   const coverImageUrlPreview = form.watch('coverImageUrl');
   const megaMenuImageUrlPreview = form.watch('megaMenuImageUrl');
@@ -90,37 +101,7 @@ export default function CategoryForm({
     }
     setIsMediaDialogOpen(false);
   };
-
-  async function onSubmit(values: CategoryFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/categories');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in category form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
+  
   const renderImageInput = (
     field: keyof CategoryFormValues,
     label: string,
@@ -162,14 +143,8 @@ export default function CategoryForm({
 
   return (
     <>
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle>{formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -219,20 +194,8 @@ export default function CategoryForm({
               <Separator />
               {renderImageInput('megaMenuImageUrl', 'Imagem do Mega Menu', 'Imagem promocional a ser exibida no mega menu.', megaMenuImageUrlPreview, 'megaMenuImageUrl')}
             </div>
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/categories')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
         </form>
       </Form>
-    </Card>
 
     <ChooseMediaDialog
       isOpen={isMediaDialogOpen}
@@ -242,4 +205,7 @@ export default function CategoryForm({
     />
     </>
   );
-}
+});
+
+CategoryForm.displayName = 'CategoryForm';
+export default CategoryForm;
