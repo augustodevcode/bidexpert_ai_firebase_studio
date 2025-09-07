@@ -4,7 +4,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import SubcategoryForm from '../../subcategory-form';
-import { getSubcategoryByIdAction, updateSubcategoryAction, deleteSubcategoryAction, type SubcategoryFormData } from '../../actions';
+import { getSubcategoryByIdAction, updateSubcategoryAction, deleteSubcategoryAction } from '../../actions';
+import type { SubcategoryFormData } from '../../subcategory-form-schema';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { useToast } from '@/hooks/use-toast';
