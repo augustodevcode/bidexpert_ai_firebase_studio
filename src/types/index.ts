@@ -138,6 +138,13 @@ export interface PlatformSettings {
     updatedAt: string | Date;
 }
 
+export interface LotStagePrice {
+    id: string;
+    auctionStageId: string;
+    initialBid: number;
+    increment: number;
+}
+
 
 export interface Lot {
   id: string;
@@ -166,6 +173,7 @@ export interface Lot {
   inheritedMediaFromBemId?: string | null; // NEW: ID of the Bem to inherit media from
   type: string;
   categoryId?: string;
+  categoryName?: string;
   subcategoryName?: string;
   subcategoryId?: string;
   auctionName?: string; // Denormalized for display
@@ -218,6 +226,8 @@ export interface Lot {
   knownDebts?: string;
   additionalDocumentsInfo?: string;
   
+  stageDetails?: LotStagePrice[];
+
   // Timestamps
   createdAt: string | Date;
   updatedAt: string | Date;
@@ -302,11 +312,11 @@ export interface Auction {
 }
 
 export interface AuctionStage {
-  id?: string;
+  id: string;
   name: string;
   endDate: string | Date;
-  startDate?: string | Date; // Adicionado para timeline
-  initialPrice?: number | null; // Adicionado para avaliação por praça
+  startDate: string | Date; // Adicionado para timeline
+  evaluationValue?: number | null; // Adicionado para avaliação por praça
 }
 
 

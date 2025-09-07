@@ -13,7 +13,7 @@ export class LotRepository {
             auction: { select: { title: true } },
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
-            stagePrices: true,
+            stageDetails: true,
         },
         orderBy: { number: 'asc' }
     });
@@ -25,7 +25,7 @@ export class LotRepository {
       include: {
         bens: { include: { bem: true } }, // Include the Bem through LotBens
         auction: { include: { stages: true, seller: true } }, // Include auction stages
-        stagePrices: true,
+        stageDetails: true,
       },
     });
   }
@@ -36,7 +36,7 @@ export class LotRepository {
       where: { id: { in: ids } },
       include: { 
         auction: { include: { stages: true, seller: true } },
-        stagePrices: true,
+        stageDetails: true,
       }
     });
   }
