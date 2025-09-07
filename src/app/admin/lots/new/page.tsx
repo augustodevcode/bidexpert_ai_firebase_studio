@@ -31,29 +31,33 @@ function NewLotPageContent({ categories, auctions, sellers, states, allCities, a
   const router = useRouter();
   const { toast } = useToast();
   const formRef = useRef<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSave = () => {
     formRef.current?.requestSubmit();
   }
 
   async function handleCreateLot(data: Partial<LotFormData>) {
+    setIsSubmitting(true);
     const result = await createLot(data);
     if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Lote criado. Você será redirecionado.' });
-        router.push(result.lotId ? `/admin/lots/${result.lotId}/edit` : '/admin/lots');
+      toast({ title: 'Sucesso!', description: 'Lote criado. Você será redirecionado.' });
+      router.push(result.lotId ? `/admin/lots/${result.lotId}/edit` : '/admin/lots');
     } else {
-        toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+      toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
     }
+    setIsSubmitting(false);
   }
 
   return (
-     <FormPageLayout
+    <FormPageLayout
         formTitle="Novo Lote"
         formDescription="Preencha os detalhes para criar um novo lote e associe-o a um leilão."
         icon={Package}
         isViewMode={false}
+        isSubmitting={isSubmitting}
         onSave={handleSave}
-        onCancel={() => router.back()}
+        onCancel={() => router.push('/admin/lots')}
     >
         <LotForm
             ref={formRef}
@@ -66,9 +70,10 @@ function NewLotPageContent({ categories, auctions, sellers, states, allCities, a
             onSubmitAction={handleCreateLot}
             defaultAuctionId={auctionIdFromQuery}
         />
-     </FormPageLayout>
+    </FormPageLayout>
   );
 }
+
 
 export default function NewLotPage() {
     const searchParams = useSearchParams();

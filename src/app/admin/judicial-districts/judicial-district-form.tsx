@@ -70,7 +70,7 @@ const JudicialDistrictForm = React.forwardRef<any, JudicialDistrictFormProps>(({
 
   return (
     <Form {...form}>
-      <form data-ai-id="admin-judicial-district-form-card" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
         <FormField control={form.control} name="name" render={({ field }) => (
           <FormItem><FormLabel>Nome da Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
         )} />

@@ -25,12 +25,14 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
   const router = useRouter();
   const { toast } = useToast();
   const formRef = useRef<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const handleSave = () => {
     formRef.current?.requestSubmit();
   }
 
   async function handleCreateBem(data: BemFormData) {
+    setIsSubmitting(true);
     const result = await createBem(data);
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Bem criado.' });
@@ -38,6 +40,7 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
     }
+    setIsSubmitting(false);
   }
 
   return (
@@ -46,6 +49,7 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
         formDescription="Cadastre um novo bem para que possa ser posteriormente loteado."
         icon={Package}
         isViewMode={false}
+        isSubmitting={isSubmitting}
         onSave={handleSave}
         onCancel={() => router.push('/admin/bens')}
     >
@@ -80,6 +84,6 @@ export default function NewBemPage() {
     if (isLoading || !pageData) {
         return <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
     }
-
+    
     return <NewBemPageContent {...pageData} />;
 }
