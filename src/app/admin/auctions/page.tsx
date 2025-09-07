@@ -136,7 +136,7 @@ export default function AdminAuctionsPage() {
                   />
               )}
             </TabsContent>
-            <TabsContent value="table" className="mt-4" data-ai-id="admin-auctions-data-table">
+            <TabsContent value="table" className="mt-4">
                <ResourceDataTable<Auction>
                 columns={createColumns}
                 fetchAction={getAuctions}

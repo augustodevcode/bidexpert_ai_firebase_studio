@@ -112,7 +112,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-container-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id="lot-card-container" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
@@ -237,7 +237,7 @@ export default function LotCard(props: LotCardProps) {
 
   if (!isClient) {
     return (
-        <Card data-ai-id={`lot-card-skeleton-${props.lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
+        <Card data-ai-id="lot-card-skeleton" className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
             <div className="aspect-video relative bg-muted animate-pulse"></div>
              <CardContent className="p-3 flex-grow space-y-1.5">
                 <Skeleton className="h-5 bg-muted rounded w-3/4" />

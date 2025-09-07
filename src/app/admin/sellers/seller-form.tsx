@@ -18,6 +18,8 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep'; 
 import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '../judicial-branches/actions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
+
 
 interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
@@ -116,6 +118,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
+        // O campo 'neighborhood' não existe no schema do comitente, então não o preenchemos.
         form.setValue('city', result.data.localidade);
         form.setValue('state', result.data.uf);
     } else {
@@ -124,8 +127,10 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsCepLoading(false);
   }
 
+  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
+
   return (
-    <>
+    <div data-ai-id="admin-seller-form-card">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
            <FormField control={form.control} name="name" render={({ field }) => (
@@ -176,10 +181,10 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
               <FormLabel>Logo do Comitente</FormLabel>
               <div className="flex items-center gap-4">
                 <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                  {logoUrlPreview ? ( <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
+                  {validLogoPreviewUrl ? ( <Image src={validLogoPreviewUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
                 </div>
                 <div className="flex-grow space-y-2">
-                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{validLogoPreviewUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
                   <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                   <FormMessage />
                 </div>
@@ -191,7 +196,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
         </form>
       </Form>
      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
-    </>
+    </div>
   );
 });
 

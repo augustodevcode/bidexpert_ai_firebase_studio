@@ -110,15 +110,17 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
   const tableColumns = useMemo(() => columns({ handleDelete }), [columns, handleDelete]);
 
   return (
-    <DataTable
-      columns={tableColumns}
-      data={data}
-      isLoading={isLoading}
-      error={error}
-      searchColumnId={searchColumnId}
-      searchPlaceholder={searchPlaceholder}
-      facetedFilterColumns={facetedFilterColumns}
-      onDeleteSelected={handleDeleteSelected}
-    />
+    <div data-ai-id={`admin-${searchColumnId}-data-table`}>
+        <DataTable
+        columns={tableColumns}
+        data={data}
+        isLoading={isLoading}
+        error={error}
+        searchColumnId={searchColumnId}
+        searchPlaceholder={searchPlaceholder}
+        facetedFilterColumns={facetedFilterColumns}
+        onDeleteSelected={handleDeleteSelected}
+        />
+    </div>
   );
 }

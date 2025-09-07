@@ -1,4 +1,3 @@
-
 // src/components/ui/data-table.tsx
 "use client";
 
@@ -109,7 +108,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4" data-ai-id="bid-expert-data-grid">
+    <div className="space-y-4" data-ai-id="data-table-container">
       <DataTableToolbar 
         table={table}
         searchColumnId={searchColumnId}

@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/columns.tsx
 'use client';
 

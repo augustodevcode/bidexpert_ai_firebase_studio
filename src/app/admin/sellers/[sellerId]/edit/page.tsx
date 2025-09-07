@@ -146,7 +146,7 @@ export default function EditSellerPage() {
   };
 
   return (
-    <div className="space-y-6" data-ai-id="admin-seller-form-card">
+    <div className="space-y-6">
       <FormPageLayout
         formTitle={isViewMode ? "Visualizar Comitente" : "Editar Comitente"}
         formDescription={seller?.name || 'Carregando...'}

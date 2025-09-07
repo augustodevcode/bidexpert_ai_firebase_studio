@@ -89,7 +89,7 @@ export default function UserForm({
   }
 
   return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
+    <Card className="max-w-2xl mx-auto shadow-lg" data-ai-id="admin-user-form-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserPlus className="h-6 w-6 text-primary" /> {formTitle}
