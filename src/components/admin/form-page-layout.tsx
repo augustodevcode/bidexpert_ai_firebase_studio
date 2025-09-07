@@ -6,6 +6,18 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Loader2, Save, XCircle, ChevronLeft, ChevronRight, Copy, PlusCircle, Trash2, Edit, Printer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 interface FormPageLayoutProps {
   formTitle: string;
@@ -57,9 +69,31 @@ function FormToolbar({
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={isSubmitting}><Copy className="mr-2 h-4 w-4" /> Clonar</Button>
-        {onDelete && <Button variant="destructive" size="sm" disabled={isSubmitting} onClick={onDelete}><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>}
-        <Button variant="outline" size="sm" disabled={isSubmitting}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
+        <Button variant="outline" size="sm" disabled={true}><Copy className="mr-2 h-4 w-4" /> Clonar</Button>
+        {onDelete && (
+             <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isSubmitting}>
+                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Isso irá excluir permanentemente este registro.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
+                    Confirmar Exclusão
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+        )}
+        <Button variant="outline" size="sm" disabled={true}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
       </div>
       <div className="flex items-center gap-2">
         <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting}>
@@ -137,7 +171,7 @@ export default function FormPageLayout({
             {children}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t">
-             {/* Toolbar para mobile */}
+             {/* Toolbar for mobile */}
              <div className="sm:hidden w-full">
                  <FormToolbar 
                     isViewMode={isViewMode} 
