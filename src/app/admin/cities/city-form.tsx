@@ -33,14 +33,14 @@ interface CityFormProps {
   submitButtonText: string;
 }
 
-export default function CityForm({
+const CityForm = React.forwardRef<any, CityFormProps>(({
   initialData,
   states: initialStates,
   onSubmitAction,
   formTitle,
   formDescription,
   submitButtonText,
-}: CityFormProps) {
+}, ref) => {
   const { toast } = useToast();
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -55,6 +55,10 @@ export default function CityForm({
       ibgeCode: initialData?.ibgeCode || '',
     },
   });
+
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmit),
+  }));
 
   const handleRefetchStates = React.useCallback(async () => {
     setIsFetchingStates(true);
@@ -94,7 +98,7 @@ export default function CityForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
+    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="admin-city-form-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
@@ -166,4 +170,7 @@ export default function CityForm({
       </Form>
     </Card>
   );
-}
+});
+
+CityForm.displayName = "CityForm";
+export default CityForm;

@@ -56,7 +56,7 @@ const CourtForm = React.forwardRef<any, CourtFormProps>(({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+      <form data-ai-id="admin-court-form-card" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
         <FormField
           control={form.control}
           name="name"

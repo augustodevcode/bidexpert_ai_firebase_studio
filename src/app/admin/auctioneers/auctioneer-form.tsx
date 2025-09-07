@@ -120,7 +120,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   return (
     <>
       <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+          <form data-ai-id="admin-auctioneer-form-card" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
               <FormField
                 control={form.control}
                 name="name"
