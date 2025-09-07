@@ -1,4 +1,3 @@
-
 // src/app/admin/auctioneers/actions.ts
 'use server';
 
@@ -18,12 +17,7 @@ export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo |
 }
 
 export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
-    // This logic might be better inside the service/repository, but keeping here for simplicity for now
-    return prisma.auctioneer.findFirst({
-        where: {
-            OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
-        }
-    });
+    return auctioneerService.getAuctioneerBySlug(slugOrId);
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {

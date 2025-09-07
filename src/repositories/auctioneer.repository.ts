@@ -12,6 +12,14 @@ export class AuctioneerRepository {
     return prisma.auctioneer.findFirst({ where: { OR: [{id}, {publicId: id}]} });
   }
 
+  async findBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+    return prisma.auctioneer.findFirst({
+        where: {
+            OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
+        }
+    });
+  }
+
   async create(data: Prisma.AuctioneerCreateInput): Promise<AuctioneerProfileInfo> {
     return prisma.auctioneer.create({ data });
   }

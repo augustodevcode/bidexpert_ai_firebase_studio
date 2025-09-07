@@ -33,12 +33,16 @@ export class AuctioneerService {
     return this.auctioneerRepository.findById(id);
   }
 
+  async getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+    return this.auctioneerRepository.findBySlug(slugOrId);
+  }
+
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
       const dataToCreate: Prisma.AuctioneerCreateInput = {
         ...data,
         slug: slugify(data.name),
-        publicId: `LEIL-${uuidv4()}`,
+        publicId: `LEILOE-${uuidv4()}`,
       };
       
       const newAuctioneer = await this.auctioneerRepository.create(dataToCreate);
