@@ -1,12 +1,13 @@
-
 // src/app/admin/users/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserProfileData, UserFormData } from '@/types';
 import { UserService } from '@/services/user.service';
+import { RoleService } from '@/services/role.service'; // Importar o RoleService
 
 const userService = new UserService();
+const roleService = new RoleService(); // Instanciar o RoleService
 
 export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]> {
   return userService.getUsers();
@@ -61,9 +62,6 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
 }
 
 export async function getRoles(): Promise<Role[]> {
-    // This is a bit of a cross-concern, but for simplicity in the UI we get it here.
-    // In a larger app, this might come from a dedicated RoleService call.
-    const { prisma } = await import('@/lib/prisma');
-    // @ts-ignore
-    return prisma.role.findMany();
+    // Chamada agora é delegada para o serviço correto.
+    return roleService.getRoles();
 }
