@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
