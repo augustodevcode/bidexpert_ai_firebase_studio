@@ -1,89 +1,60 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import type { Lot, Bem, LotFormData, UserWin } from '@/types';
-import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
-import { BemService } from '@/services/bem.service'; // Use BemService
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import type { Lot, LotFormData } from '@/types';
+import { revalidatePath } from 'next/cache';
 
 const lotService = new LotService();
-const bemService = new BemService(); // Instantiate BemService
+const lotActions = createCrudActions({
+  service: lotService,
+  entityName: 'Lot',
+  entityNamePlural: 'Lots',
+  routeBase: '/admin/lots',
+});
 
-export async function getLots(auctionId?: string): Promise<Lot[]> {
-  return lotService.getLots(auctionId);
-}
+export const {
+  getAll: getLots,
+  getById: getLot,
+  create: createLot,
+  update: updateLot,
+  delete: deleteLot,
+} = lotActions;
 
-export async function getLot(id: string): Promise<Lot | null> {
-  return lotService.getLotById(id);
-}
-
-export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
-  const result = await lotService.createLot(data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/lots');
-    if (data.auctionId) {
-      revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
-    }
-  }
-  return result;
-}
-
-export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
-  const result = await lotService.updateLot(id, data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-      revalidatePath('/admin/lots');
-      revalidatePath(`/admin/lots/${id}/edit`);
-      if (data.auctionId) {
-        revalidatePath(`/admin/auctions/${data.auctionId}/edit`);
-      }
-  }
-  return result;
-}
-
-export async function deleteLot(id: string, auctionId?: string): Promise<{ success: boolean, message: string }> {
-  const lotToDelete = await lotService.getLotById(id);
-  const finalAuctionId = auctionId || lotToDelete?.auctionId;
-
-  const result = await lotService.deleteLot(id);
-  
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/lots');
-    if (finalAuctionId) {
-      revalidatePath(`/admin/auctions/${finalAuctionId}/edit`);
-    }
-  }
-  return result;
-}
-
-export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  return bemService.getBensByIds(ids); // Use the service method
-}
+// --- Ações Específicas que não se encaixam no CRUD padrão ---
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  return lotService.getLotsByIds(ids); // Use the service method
+  return lotService.getLotsByIds(ids);
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
-  const result = await lotService.finalizeLot(lotId);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    const lot = await lotService.getLotById(lotId);
-    if(lot) {
-      revalidatePath(`/admin/lots/${lotId}/edit`);
-      revalidatePath(`/admin/auctions/${lot.auctionId}/edit`);
-    }
-  }
-  return result;
+  return lotService.finalizeLot(lotId);
 }
 
-
 export async function updateLotFeaturedStatus(id: string, isFeatured: boolean): Promise<{ success: boolean, message: string }> {
-  return updateLot(id, { isFeatured });
+  const result = await lotService.updateLot(id, { isFeatured });
+    if (result.success) {
+        revalidatePath('/admin/lots');
+        revalidatePath(`/admin/lots/${id}/edit`);
+    }
+    return result;
 }
 
 export async function updateLotTitle(id: string, title: string): Promise<{ success: boolean, message: string }> {
-  return updateLot(id, { title });
+  const result = await lotService.updateLot(id, { title });
+    if (result.success) {
+        revalidatePath('/admin/lots');
+        revalidatePath(`/admin/lots/${id}/edit`);
+    }
+    return result;
 }
 
 export async function updateLotImage(id: string, mediaItemId: string, imageUrl: string): Promise<{ success: boolean, message: string }> {
-  return updateLot(id, { imageMediaId: mediaItemId, imageUrl });
+  const result = await lotService.updateLot(id, { imageMediaId: mediaItemId, imageUrl });
+    if (result.success) {
+        revalidatePath('/admin/lots');
+        revalidatePath(`/admin/lots/${id}/edit`);
+    }
+    return result;
 }

@@ -2,40 +2,21 @@
 'use server';
 
 import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
-import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
-import { revalidatePath } from 'next/cache';
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const offerService = new DirectSaleOfferService();
+const offerActions = createCrudActions({
+  service: offerService,
+  entityName: 'DirectSaleOffer',
+  entityNamePlural: 'DirectSaleOffers',
+  routeBase: '/admin/direct-sales',
+});
 
-export async function getDirectSaleOffers(): Promise<DirectSaleOffer[]> {
-    return offerService.getDirectSaleOffers();
-}
 
-export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | null> {
-    return offerService.getDirectSaleOfferById(id);
-}
-
-export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
-  const result = await offerService.createDirectSaleOffer(data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/direct-sales');
-  }
-  return result;
-}
-
-export async function updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean, message: string }> {
-  const result = await offerService.updateDirectSaleOffer(id, data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/direct-sales');
-    revalidatePath(`/admin/direct-sales/${id}/edit`);
-  }
-  return result;
-}
-
-export async function deleteDirectSaleOffer(id: string): Promise<{ success: boolean, message: string }> {
-  const result = await offerService.deleteDirectSaleOffer(id);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/direct-sales');
-  }
-  return result;
-}
+export const {
+  getAll: getDirectSaleOffers,
+  getById: getDirectSaleOffer,
+  create: createDirectSaleOffer,
+  update: updateDirectSaleOffer,
+  delete: deleteDirectSaleOffer,
+} = offerActions;
