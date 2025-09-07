@@ -1,4 +1,4 @@
-
+// src/components/lot-card.tsx
 'use client';
 
 import * as React from 'react';
@@ -112,7 +112,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id="lot-card-container" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id={`lot-card-container-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
@@ -209,7 +209,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             <div data-ai-id="lot-card-price-info">
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
               <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
-                R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>

@@ -35,7 +35,7 @@ export default function AdminAuctionsPage() {
         getPlatformSettings(),
       ]);
       setAllAuctions(fetchedAuctions);
-      setPlatformSettings(fetchedSettings);
+      setPlatformSettings(fetchedSettings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
@@ -58,7 +58,7 @@ export default function AdminAuctionsPage() {
     } else {
       toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
     }
-  }, [toast, fetchPageData]);
+  }, [toast]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
     if (selectedItems.length === 0) return;
