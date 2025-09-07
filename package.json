@@ -3,7 +3,7 @@
   "name": "bidexpert-monorepo",
   "private": true,
   "scripts": {
-    "dev": "turbo dev -- --port 9002 --hostname 0.0.0.0",
+    "dev": "pnpm --filter web dev",
     "build": "turbo build",
     "start": "pnpm --filter web start",
     "lint": "turbo lint",
@@ -13,11 +13,8 @@
     "test": "pnpm --filter web test"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.4",
-    "prisma": "5.17.0",
-    "tsx": "^4.16.2",
-    "turbo": "^2.0.9"
+    "turbo": "^2.0.9",
+    "typescript": "^5.5.4"
   },
   "packageManager": "pnpm@9.6.0"
 }
