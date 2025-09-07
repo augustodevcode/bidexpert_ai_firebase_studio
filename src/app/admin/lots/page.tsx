@@ -11,85 +11,35 @@ import { getPlatformSettings } from '../settings/actions';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SearchResultsFrame from '@/components/search-results-frame';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
+import ResourceDataTable from '@/components/admin/resource-data-table';
+import { createColumns } from './columns';
+
 
 export default function AdminLotsPage() {
-  const [allLots, setAllLots] = useState<Lot[]>([]);
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
-
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [fetchedLots, fetchedAuctions, fetchedSettings] = await Promise.all([
-        getLots(),
-        getAuctions(),
-        getPlatformSettings(),
-      ]);
-      setAllLots(fetchedLots);
-      setAllAuctions(fetchedAuctions);
-      setPlatformSettings(fetchedSettings);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
-      console.error("Error fetching lots:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [toast]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [isLoadingAuctions, setIsLoadingAuctions] = useState(true);
 
   useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData, refetchTrigger]);
+    getAuctions().then(data => {
+      setAuctions(data);
+      setIsLoadingAuctions(false);
+    });
+  }, []);
 
-  const sortOptions = [
-    { value: 'endDate_asc', label: 'Encerramento Próximo' },
-    { value: 'price_desc', label: 'Maior Valor' },
-    { value: 'price_asc', label: 'Menor Valor' },
-    { value: 'bidsCount_desc', label: 'Mais Lances' },
-    { value: 'views_desc', label: 'Mais Vistos' },
-  ];
+  const lotStatusOptions = useMemo(() => 
+    [...new Set(['EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO', 'RASCUNHO'])]
+      .map(status => ({ value: status, label: getAuctionStatusText(status as any) })),
+  []);
 
-  const renderLotList = (lots: Lot[]) => {
-      if (!platformSettings) return null;
-      return (
-        <SearchResultsFrame
-            items={lots}
-            totalItemsCount={lots.length}
-            renderGridItem={(item) => <LotCard lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
-            renderListItem={(item) => <LotListItem lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
-            sortOptions={sortOptions}
-            initialSortBy="endDate_asc"
-            onSortChange={() => {}} // Sorting is handled locally if needed, or can be passed
-            platformSettings={platformSettings}
-            isLoading={isLoading}
-            searchTypeLabel="lotes"
-            // facetedFilterColumns={facetedFilterColumns}
-            itemsPerPage={platformSettings.defaultListItemsPerPage || 100} // Show all in tabs
-            onPageChange={() => {}}
-            onItemsPerPageChange={() => {}}
-            currentPage={1}
-            emptyStateMessage="Nenhum lote encontrado nesta categoria."
-          />
-      );
-  };
-  
-  const featuredLots = useMemo(() => allLots.filter(l => l.isFeatured), [allLots]);
-  const draftLots = useMemo(() => allLots.filter(l => l.status === 'EM_BREVE'), [allLots]); // Adjusted from RASCUNHO
-  const upcomingLots = useMemo(() => allLots.filter(l => l.status === 'EM_BREVE'), [allLots]);
-  const openLots = useMemo(() => allLots.filter(l => l.status === 'ABERTO_PARA_LANCES' && !l.isFeatured), [allLots]);
-  const soldLots = useMemo(() => allLots.filter(l => l.status === 'VENDIDO'), [allLots]);
-  const notSoldLots = useMemo(() => allLots.filter(l => l.status === 'NAO_VENDIDO'), [allLots]);
-  const canceledLots = useMemo(() => allLots.filter(l => l.status === 'CANCELADO'), [allLots]);
+  const auctionOptions = useMemo(() => 
+    auctions.map(auc => ({ value: auc.title, label: auc.title })),
+  [auctions]);
+
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'status', title: 'Status', options: lotStatusOptions },
+    { id: 'auctionName', title: 'Leilão', options: auctionOptions },
+  ], [lotStatusOptions, auctionOptions]);
 
   return (
     <div className="space-y-6" data-ai-id="admin-lots-page-container">
@@ -101,7 +51,7 @@ export default function AdminLotsPage() {
               Gerenciar Lotes
             </CardTitle>
             <CardDescription>
-              Visualize, adicione e edite os lotes da plataforma, organizados por status.
+              Visualize, adicione e edite todos os lotes da plataforma.
             </CardDescription>
           </div>
           <Button asChild>
@@ -111,24 +61,14 @@ export default function AdminLotsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="open">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 h-auto">
-              <TabsTrigger value="open">Abertos ({openLots.length})</TabsTrigger>
-              <TabsTrigger value="featured">Destaques ({featuredLots.length})</TabsTrigger>
-              <TabsTrigger value="upcoming">Em Breve ({upcomingLots.length})</TabsTrigger>
-              <TabsTrigger value="sold">Vendidos ({soldLots.length})</TabsTrigger>
-              <TabsTrigger value="not_sold">Não Vendidos ({notSoldLots.length})</TabsTrigger>
-              <TabsTrigger value="drafts">Rascunhos ({draftLots.length})</TabsTrigger>
-              <TabsTrigger value="canceled">Cancelados ({canceledLots.length})</TabsTrigger>
-            </TabsList>
-            <TabsContent value="open" className="mt-4">{renderLotList(openLots)}</TabsContent>
-            <TabsContent value="featured" className="mt-4">{renderLotList(featuredLots)}</TabsContent>
-            <TabsContent value="upcoming" className="mt-4">{renderLotList(upcomingLots)}</TabsContent>
-            <TabsContent value="sold" className="mt-4">{renderLotList(soldLots)}</TabsContent>
-            <TabsContent value="not_sold" className="mt-4">{renderLotList(notSoldLots)}</TabsContent>
-            <TabsContent value="drafts" className="mt-4">{renderLotList(draftLots)}</TabsContent>
-            <TabsContent value="canceled" className="mt-4">{renderLotList(canceledLots)}</TabsContent>
-          </Tabs>
+           <ResourceDataTable<Lot>
+            columns={createColumns}
+            fetchAction={getLots}
+            deleteAction={(id: string) => deleteLot(id)}
+            searchColumnId="title"
+            searchPlaceholder="Buscar por título do lote..."
+            facetedFilterColumns={facetedFilterColumns}
+          />
         </CardContent>
       </Card>
     </div>
