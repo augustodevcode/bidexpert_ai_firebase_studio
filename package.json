@@ -3,10 +3,10 @@
   "name": "bidexpert-monorepo",
   "private": true,
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
+    "dev": "turbo dev",
+    "build": "turbo build",
     "start": "pnpm --filter web start",
-    "lint": "pnpm --filter web lint",
+    "lint": "turbo lint",
     "db:push": "pnpm --filter web db:push",
     "db:seed": "pnpm --filter web db:seed",
     "db:init": "pnpm --filter web db:init",
@@ -16,7 +16,8 @@
     "typescript": "^5.5.4",
     "vitest": "^2.0.4",
     "prisma": "5.17.0",
-    "tsx": "^4.16.2"
+    "tsx": "^4.16.2",
+    "turbo": "^2.0.9"
   },
   "packageManager": "pnpm@9.6.0"
 }
