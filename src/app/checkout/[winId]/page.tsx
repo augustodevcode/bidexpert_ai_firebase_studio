@@ -100,7 +100,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
         </Card>
 
         {/* Payment Form */}
-        <div data-ai-id="checkout-payment-form">
+        <div data-ai-id="checkout-payment-form-container">
           <CheckoutForm winId={winId} totalAmount={totalDue} />
         </div>
       </div>

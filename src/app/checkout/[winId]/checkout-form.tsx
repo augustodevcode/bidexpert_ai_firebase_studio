@@ -71,7 +71,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
   }
 
   return (
-    <Card className="w-full max-w-lg shadow-lg">
+    <Card className="w-full max-w-lg shadow-lg" data-ai-id="checkout-payment-form">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardHeader>
