@@ -71,11 +71,3 @@ export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
     return auctionService.getAuctionsByIds(ids);
 }
-
-export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-   return auctionService.getAuctionsBySellerSlug(sellerSlugOrPublicId);
-}
-
-export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
-}

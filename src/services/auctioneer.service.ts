@@ -1,6 +1,7 @@
 // src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
-import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
+import { AuctionRepository } from '@/repositories/auction.repository';
+import type { AuctioneerFormData, AuctioneerProfileInfo, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -20,9 +21,25 @@ export interface AuctioneerDashboardData {
 
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
+  private auctionRepository: AuctionRepository;
 
   constructor() {
     this.auctioneerRepository = new AuctioneerRepository();
+    this.auctionRepository = new AuctionRepository();
+  }
+
+  private mapAuctionsWithDetails(auctions: any[]): Auction[] {
+    return auctions.map(a => ({
+      ...a,
+      totalLots: a._count?.lots ?? a.lots?.length ?? 0,
+      seller: a.seller,
+      auctioneer: a.auctioneer,
+      category: a.category,
+      sellerName: a.seller?.name, 
+      auctioneerName: a.auctioneer?.name,
+      categoryName: a.category?.name,
+      auctionStages: a.stages || a.auctionStages || [],
+    }));
   }
 
   async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
@@ -35,6 +52,11 @@ export class AuctioneerService {
 
   async getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
     return this.auctioneerRepository.findBySlug(slugOrId);
+  }
+  
+  async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
+    return this.mapAuctionsWithDetails(auctions);
   }
 
   async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {

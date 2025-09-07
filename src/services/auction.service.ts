@@ -46,16 +46,6 @@ export class AuctionService {
     return this.mapAuctionsWithDetails(auctions);
   }
 
-  async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
-    return this.mapAuctionsWithDetails(auctions);
-  }
-
-  async getAuctionsBySellerSlug(sellerSlugOrId: string): Promise<Auction[]> {
-    const auctions = await this.auctionRepository.findBySellerSlug(sellerSlugOrId);
-    return this.mapAuctionsWithDetails(auctions);
-  }
-
   async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
       // Remover os campos que não existem no schema do Prisma

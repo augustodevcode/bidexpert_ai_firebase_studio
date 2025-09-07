@@ -4,10 +4,8 @@
 import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { AuctioneerService } from '@/services/auctioneer.service';
-import { AuctionService } from '@/services/auction.service'; // Import AuctionService
 
 const auctioneerService = new AuctioneerService();
-const auctionService = new AuctionService();
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
   return auctioneerService.getAuctioneers();
@@ -22,7 +20,7 @@ export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerP
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
+    return auctioneerService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {
