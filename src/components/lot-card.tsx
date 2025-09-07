@@ -204,9 +204,9 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           </div>
         </CardContent>
 
-        <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
-          <div className="w-full flex justify-between items-end" data-ai-id="lot-card-footer">
-            <div data-ai-id="lot-card-price-section">
+        <CardFooter className="p-3 border-t flex-col items-start space-y-1.5" data-ai-id="lot-card-footer">
+          <div className="w-full flex justify-between items-end" data-ai-id="lot-card-price-section">
+            <div data-ai-id="lot-card-price-info">
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
               <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                 R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
