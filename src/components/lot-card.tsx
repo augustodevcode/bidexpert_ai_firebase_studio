@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock } from 'lucide-react';
 import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
@@ -112,7 +112,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id="lot-card-container" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">

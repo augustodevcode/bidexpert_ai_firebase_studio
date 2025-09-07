@@ -102,7 +102,7 @@ export default function AdminAuctionsPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-auctions-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -159,7 +159,7 @@ export default function AdminAuctionsPage() {
                   />
               )}
             </TabsContent>
-             <TabsContent value="table" className="mt-4">
+             <TabsContent value="table" className="mt-4" data-ai-id="admin-auctions-data-table">
                <DataTable
                 columns={columns}
                 data={allAuctions}

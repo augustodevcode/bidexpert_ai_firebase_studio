@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare, Info } from 'lucide-react';
+import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AuctionPreviewModal from './auction-preview-modal';
@@ -145,7 +145,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   return (
     <TooltipProvider>
       <>
-        <Card data-ai-id={`auction-card-${auction.id}`} className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+        <Card data-ai-id="auction-card-container" className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
           <div className="relative">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
               <div className="aspect-[16/10] relative bg-muted">

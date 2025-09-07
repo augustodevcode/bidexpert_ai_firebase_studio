@@ -6,6 +6,7 @@ import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
+import { Card } from '@/components/ui/card';
 
 export default async function NewAuctionPage() {
   const [categories, auctioneers, sellers, states, cities] = await Promise.all([
@@ -22,16 +23,18 @@ export default async function NewAuctionPage() {
   }
 
   return (
-    <AuctionForm
-      categories={categories}
-      auctioneers={auctioneers}
-      sellers={sellers}
-      states={states}
-      allCities={cities}
-      onSubmitAction={handleCreateAuction}
-      formTitle="Novo Leilão"
-      formDescription="Preencha os detalhes para criar um novo leilão."
-      submitButtonText="Criar Leilão"
-    />
+    <div data-ai-id="admin-auction-form-card">
+      <AuctionForm
+        categories={categories}
+        auctioneers={auctioneers}
+        sellers={sellers}
+        states={states}
+        allCities={cities}
+        onSubmitAction={handleCreateAuction}
+        formTitle="Novo Leilão"
+        formDescription="Preencha os detalhes para criar um novo leilão."
+        submitButtonText="Criar Leilão"
+      />
+    </div>
   );
 }

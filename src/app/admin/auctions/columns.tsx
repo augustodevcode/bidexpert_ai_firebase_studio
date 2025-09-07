@@ -95,7 +95,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
+            <Button variant="ghost" className="h-8 w-8 p-0" data-ai-id="data-table-row-actions-menu">
               <span className="sr-only">Abrir menu</span>
               <MoreHorizontal className="h-4 w-4" />
             </Button>
