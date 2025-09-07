@@ -4,8 +4,10 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { ReportsService } from '@/services/reports.service';
 import type { AdminDashboardStats } from '@/types';
+
+const reportsService = new ReportsService();
 
 /**
  * Fetches key statistics for the admin dashboard.
@@ -13,28 +15,6 @@ import type { AdminDashboardStats } from '@/types';
  * @returns {Promise<AdminDashboardStats>} A promise that resolves to an object with platform statistics.
  */
 export async function getAdminDashboardStatsAction(): Promise<AdminDashboardStats> {
-  try {
-    const [users, auctions, lots, sellers] = await Promise.all([
-      prisma.user.count(),
-      prisma.auction.count(),
-      prisma.lot.count(),
-      prisma.seller.count(),
-    ]);
-
-    return {
-      users,
-      auctions,
-      lots,
-      sellers,
-    };
-  } catch (error) {
-    console.error("[Action - getAdminDashboardStatsAction] Error fetching admin stats:", error);
-    // Return zeroed stats on error to prevent crashing the page.
-    return {
-      users: 0,
-      auctions: 0,
-      lots: 0,
-      sellers: 0,
-    };
-  }
+    // A lógica foi movida para o ReportsService para manter a consistência arquitetural
+    return reportsService.getAdminDashboardStats();
 }
