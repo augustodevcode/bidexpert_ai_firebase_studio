@@ -16,7 +16,7 @@ interface Element {
 
 interface DesignSurfaceProps {
   elements: Element[];
-  onAddElement: (type: string, x: number, y: number, content: string) => void;
+  onAddElement: (type: string, x: number, y: number, content?: string) => void;
   onSelectElement: (element: Element | null) => void;
   selectedElementId: string | null;
 }
@@ -27,7 +27,7 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({ elements, onAddElement, o
 
   const [, drop] = useDrop(() => ({
     accept: 'REPORT_ELEMENT',
-    drop: (item: { type: string; content: string }, monitor) => {
+    drop: (item: { type: string; content?: string }, monitor) => {
       const offset = monitor.getClientOffset();
       if (offset && surfaceRef.current) {
         const surfaceRect = surfaceRef.current.getBoundingClientRect();
@@ -49,7 +49,7 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({ elements, onAddElement, o
         style={{ cursor: 'crosshair', backgroundImage: 'radial-gradient(circle, #E5E5E5 1px, transparent 1px)', backgroundSize: '15px 15px' }}
         onClick={() => onSelectElement(null)} // Deselect when clicking outside
     >
-      <h2 className="text-center text-sm text-muted-foreground sr-only">Design Area</h2>
+      <h2 className="text-center text-sm text-muted-foreground sr-only">Área de Design</h2>
        {elements.map((el) => (
         <div 
           key={el.id}
