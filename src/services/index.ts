@@ -1,0 +1,30 @@
+// src/services/index.ts
+
+export * from './auction.service';
+export * from './lot.service';
+export * from './user.service';
+export * from './seller.service';
+export * from './auctioneer.service';
+export * from './category.service';
+export * from './subcategory.service';
+export * from './state.service';
+export * from './city.service';
+export * from './court.service';
+export * from './judicial-district.service';
+export * from './judicial-branch.service';
+export * from './judicial-process.service';
+export * from './bem.service';
+export * from './media.service';
+export * from './platform-settings.service';
+export * from './bid.service';
+export * from './user-win.service';
+export * from './contact-message.service';
+export * from './document-template.service';
+export *.ts
+export * from './document-type.service';
+export * from './habilitation.service';
+export * from './reports.service';
+export * from './relist.service';
+export * from './vehicle-make.service';
+export * from './vehicle-model.service';
+export * from './checkout.service'; // Exportando o novo serviço

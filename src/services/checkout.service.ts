@@ -1,0 +1,107 @@
+// src/services/checkout.service.ts
+import { prisma } from '@/lib/prisma';
+import { PlatformSettingsService } from './platform-settings.service';
+import { UserWinService } from './user-win.service';
+import { type CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
+import { revalidatePath } from 'next/cache';
+import { add } from 'date-fns';
+
+export class CheckoutService {
+  private userWinService: UserWinService;
+  private settingsService: PlatformSettingsService;
+
+  constructor() {
+    this.userWinService = new UserWinService();
+    this.settingsService = new PlatformSettingsService();
+  }
+
+  async calculateTotals(winId: string): Promise<{
+    winningBidAmount: number;
+    commissionRate: number;
+    commissionValue: number;
+    totalDue: number;
+  }> {
+    const win = await this.userWinService.getWinDetails(winId);
+    if (!win) {
+      throw new Error('Registro de arremate não encontrado.');
+    }
+    const settings = await this.settingsService.getSettings();
+    const commissionRate = (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
+    const commissionValue = win.winningBidAmount * commissionRate;
+    const totalDue = win.winningBidAmount + commissionValue;
+
+    return {
+      winningBidAmount: win.winningBidAmount,
+      commissionRate,
+      commissionValue,
+      totalDue,
+    };
+  }
+
+  async processPayment(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
+    const win = await this.userWinService.getWinDetails(winId);
+
+    if (!win) {
+        return { success: false, message: 'Registro do arremate não encontrado.' };
+    }
+    
+    if (win.paymentStatus === 'PAGO') {
+        return { success: false, message: 'Este arremate já foi pago.'};
+    }
+    
+    const totals = await this.calculateTotals(winId);
+
+    // In a real scenario, you would integrate with a payment gateway here using the totals.
+    // For this simulation, we'll just update the status.
+    console.log(`[SERVICE - processPayment] Processing payment for win ID: ${winId}`, {paymentData, totals});
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    try {
+        if (paymentData.paymentMethod === 'credit_card') {
+            await prisma.userWin.update({
+                where: { id: winId },
+                data: { paymentStatus: 'PAGO' }
+            });
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/dashboard/wins`);
+                revalidatePath(`/checkout/${winId}`);
+            }
+            return { success: true, message: "Pagamento à vista processado com sucesso!" };
+        } 
+        
+        if (paymentData.paymentMethod === 'installments') {
+            const installmentCount = paymentData.installments || 1;
+            const installmentAmount = totals.totalDue / installmentCount; // Simple division for simulation
+            
+            const installmentsToCreate = Array.from({ length: installmentCount }, (_, i) => ({
+                userWinId: winId,
+                installmentNumber: i + 1,
+                amount: installmentAmount,
+                dueDate: add(new Date(), { months: i + 1 }),
+                status: 'PENDENTE' as const
+            }));
+            
+            await prisma.$transaction([
+                prisma.installmentPayment.createMany({data: installmentsToCreate}),
+                prisma.userWin.update({
+                    where: { id: winId },
+                    data: { paymentStatus: 'PROCESSANDO' }
+                })
+            ]);
+            
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/dashboard/wins`);
+                revalidatePath(`/checkout/${winId}`);
+            }
+            
+            return { success: true, message: `${installmentCount} boletos de parcelamento foram gerados com sucesso!` };
+        }
+        
+        return { success: false, message: 'Método de pagamento inválido.' };
+
+    } catch (error: any) {
+        console.error(`Error processing payment for win ${winId}:`, error);
+        return { success: false, message: `Erro no servidor ao processar pagamento: ${error.message}` };
+    }
+  }
+}
