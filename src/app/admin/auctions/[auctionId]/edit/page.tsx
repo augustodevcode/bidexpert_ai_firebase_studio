@@ -9,7 +9,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Info, Settings, BarChart3, Layers, Gavel, Lightbulb, BarChart3 as BarChartIcon } from 'lucide-react';
+import { PlusCircle, Info, Settings, BarChart3, Layers, Gavel, Lightbulb, BarChart3 as BarChartIcon, TrendingUp, ListChecks, Users } from 'lucide-react';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Badge } from '@/components/ui/badge';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
@@ -209,7 +209,8 @@ export default function EditAuctionPage() {
   }
 
   const handleDeleteAuction = async () => {
-     const result = await deleteAuction(auction.id);
+    if (!auction) return;
+    const result = await deleteAuction(auction.id);
       if(result.success) {
         toast({title: "Sucesso", description: result.message});
         router.push('/admin/auctions');
@@ -220,8 +221,8 @@ export default function EditAuctionPage() {
 
   const handleDeleteLot = useCallback(
     async (lotId: string) => {
-      const auctionId = auction?.id;
-      const result = await deleteLot(lotId, auctionId);
+      if (!auction) return;
+      const result = await deleteLot(lotId, auction.id);
       if (result.success) {
         toast({ title: 'Sucesso', description: 'Lote excluído com sucesso.' });
         fetchPageData();
@@ -229,7 +230,7 @@ export default function EditAuctionPage() {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
     },
-    [auction?.id, fetchPageData, toast]
+    [auction, fetchPageData, toast]
   );
   
   const lotColumns = useMemo(() => createLotColumns({ handleDelete: handleDeleteLot }), [handleDeleteLot]);

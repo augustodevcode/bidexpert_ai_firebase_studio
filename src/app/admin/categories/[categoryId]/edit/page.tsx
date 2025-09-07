@@ -2,7 +2,7 @@
 'use client';
 
 import CategoryForm from '../../category-form';
-import { getLotCategory, updateLotCategory, type CategoryFormData } from '../../actions';
+import { getLotCategory, updateLotCategory, deleteLotCategory, type CategoryFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
@@ -54,6 +54,16 @@ export default function EditCategoryPage() {
     }
     setIsSubmitting(false);
   };
+  
+  const handleDelete = async () => {
+    const result = await deleteLotCategory(categoryId);
+     if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      router.push('/admin/categories');
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  }
 
   const handleSave = () => {
     formRef.current?.requestSubmit();
@@ -70,6 +80,7 @@ export default function EditCategoryPage() {
         onEnterEditMode={() => setIsViewMode(false)}
         onCancel={() => setIsViewMode(true)}
         onSave={handleSave}
+        onDelete={handleDelete}
     >
         <CategoryForm
             ref={formRef}
