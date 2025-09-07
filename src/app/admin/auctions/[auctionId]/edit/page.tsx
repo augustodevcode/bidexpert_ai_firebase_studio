@@ -1,11 +1,9 @@
-
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -34,7 +32,6 @@ import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
-import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -47,6 +44,7 @@ import { getAuctionDashboardDataAction } from '../../analysis/actions';
 import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
+import FormPageLayout from '@/components/admin/form-page-layout';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -145,7 +143,6 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
     )
 }
 
-
 function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const { toast } = useToast();
@@ -194,57 +191,6 @@ function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotI
   );
 }
 
-function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; userProfile: any }) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
-    
-    const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
-    const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
-    
-    return (
-        <Card className="shadow-md">
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center"><FileSignature className="mr-2 h-5 w-5 text-primary"/> Ações Pós-Leilão e Documentação</CardTitle>
-                <CardDescription>Gere laudos e certificados para este leilão.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button className="w-full justify-start" disabled>
-                                    <FileText className="mr-2 h-4 w-4"/> Gerar Laudo de Avaliação (PDF)
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button className="w-full justify-start" disabled>
-                                    <CheckCircle className="mr-2 h-4 w-4"/> Gerar Relatório de Arremates (PDF)
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button variant="secondary" className="w-full justify-start" disabled>
-                                    <Users className="mr-2 h-4 w-4"/> Enviar Comunicação aos Arrematantes
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                 </TooltipProvider>
-            </CardContent>
-        </Card>
-    );
-}
-
 function AuctionInfoDisplay({ auction }: { auction: Auction }) {
     const auctionTypeLabels: Record<string, string> = {
         JUDICIAL: 'Judicial',
@@ -288,19 +234,6 @@ function AuctionInfoDisplay({ auction }: { auction: Auction }) {
                     <p><strong>Permite Lance Parcelado:</strong> {auction.allowInstallmentBids ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.allowInstallmentBids ? 'Sim' : 'Não'}</p>
                     <p><strong>Destaque no Marketplace:</strong> {auction.isFeaturedOnMarketplace ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.isFeaturedOnMarketplace ? 'Sim' : 'Não'}</p>
                     {auction.isFeaturedOnMarketplace && <p><strong>Título do Anúncio:</strong> {auction.marketplaceAnnouncementTitle || 'Não definido'}</p>}
-                </CardContent>
-            </Card>
-            
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" /> Estatísticas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>Visitas:</strong> {auction.visits || 0}</p>
-                    <p><strong>Total de Lotes:</strong> {auction.totalLots || 0}</p>
-                    <p><strong>Faturamento Estimado:</strong> R$ {(auction.estimatedRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p><strong>Faturamento Realizado:</strong> R$ {(auction.achievedRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p><strong>Usuários Habilitados:</strong> {auction.totalHabilitatedUsers || 0}</p>
                 </CardContent>
             </Card>
         </div>
@@ -456,46 +389,55 @@ export default function EditAuctionPage() {
   return (
     <>
       <div className="space-y-8">
-        <div className="flex justify-between items-center gap-2">
-            <Button variant="secondary" onClick={() => setIsAISuggestionModalOpen(true)}>
+        <FormPageLayout
+          formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
+          formDescription={auction?.title || 'Carregando...'}
+          icon={Gavel}
+          isViewMode={isViewMode}
+          isLoading={isLoading}
+          isSubmitting={formRef.current?.formState.isSubmitting}
+          onEnterEditMode={() => setIsViewMode(false)}
+          onCancel={() => setIsViewMode(true)}
+          onSave={() => formRef.current?.requestSubmit()}
+          onDelete={() => deleteAuction(auction.id).then(res => {
+            if(res.success) {
+              toast({title: "Sucesso", description: res.message});
+              router.push('/admin/auctions');
+            } else {
+              toast({title: "Erro", description: res.message, variant: "destructive"});
+            }
+          })}
+        >
+          <AuctionForm
+              formRef={formRef}
+              initialData={auction}
+              categories={categories}
+              auctioneers={auctioneers}
+              sellers={sellers}
+              states={states}
+              allCities={allCities}
+              onSubmitAction={handleUpdateAuction}
+              formTitle="" // Title is handled by layout
+              formDescription="" // Description is handled by layout
+              isViewMode={isViewMode}
+              onUpdateSuccess={() => {
+                  fetchPageData();
+                  setIsViewMode(true);
+              }}
+              onCancelEdit={() => setIsViewMode(true)}
+            />
+        </FormPageLayout>
+
+        <div className="flex justify-end">
+             <Button variant="secondary" onClick={() => setIsAISuggestionModalOpen(true)}>
                 <Lightbulb className="mr-2 h-4 w-4" /> Otimizar com IA
             </Button>
-            <div className="flex gap-2">
-              {isViewMode ? (
-                  <Button onClick={() => setIsViewMode(false)}>
-                  <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
-                  </Button>
-              ) : null}
-                  <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
-            </div>
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2">
-              <AuctionForm
-                formRef={formRef}
-                initialData={auction}
-                categories={categories}
-                auctioneers={auctioneers}
-                sellers={sellers}
-                states={states}
-                allCities={allCities}
-                onSubmitAction={handleUpdateAuction}
-                formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
-                formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
-                submitButtonText="Salvar Alterações"
-                isViewMode={isViewMode}
-                onUpdateSuccess={() => {
-                    fetchPageData();
-                    setIsViewMode(true);
-                }}
-                onCancelEdit={() => setIsViewMode(true)}
-              />
-            </div>
-            <div className="lg:col-span-1 space-y-6 sticky top-24">
-                <AuctionInfoDisplay auction={auction} />
-                <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
-            </div>
+        
+        <div className="lg:col-span-1 space-y-6">
+            <AuctionInfoDisplay auction={auction} />
         </div>
+
         <Separator className="my-8"/>
 
         <Card>

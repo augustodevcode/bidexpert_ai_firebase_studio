@@ -1,10 +1,12 @@
 // src/services/auction.service.ts
 import { AuctionRepository } from '@/repositories/auction.repository';
-import type { Auction, AuctionFormData, LotCategory } from '@/types';
+import type { Auction, AuctionFormData, LotCategory, AuctionDashboardData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma'; // Import prisma directly for transactions
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export class AuctionService {
   private auctionRepository: AuctionRepository;
@@ -23,7 +25,7 @@ export class AuctionService {
       sellerName: a.seller?.name, 
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      stages: a.stages || [], // Ensure stages is always an array
+      auctionStages: a.stages || [], // Ensure stages is always an array
     }));
   }
 
@@ -186,6 +188,57 @@ export class AuctionService {
     } catch (error: any) {
       console.error(`Error in AuctionService.deleteAuction for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir leilão: ${error.message}` };
+    }
+  }
+
+  async getAuctionDashboardData(auctionId: string): Promise<AuctionDashboardData | null> {
+    try {
+        const auction = await this.findById(auctionId);
+
+        if (!auction) {
+            return null;
+        }
+
+        const soldLots = (auction.lots || []).filter(lot => lot.status === 'VENDIDO');
+        const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+        
+        const allBids = await prisma.bid.findMany({ where: { auctionId: auction.id }, orderBy: { timestamp: 'asc' } });
+        const totalBids = allBids.length;
+        const uniqueBidders = new Set(allBids.map(bid => bid.bidderId)).size;
+        
+        const salesRate = auction.totalLots && auction.totalLots > 0 ? (soldLots.length / auction.totalLots) * 100 : 0;
+
+        // Revenue by Category
+        const revenueByCategoryMap = new Map<string, number>();
+        soldLots.forEach(lot => {
+            const categoryName = lot.categoryName || 'Sem Categoria';
+            const currentRevenue = revenueByCategoryMap.get(categoryName) || 0;
+            revenueByCategoryMap.set(categoryName, currentRevenue + (lot.price || 0));
+        });
+        const revenueByCategory = Array.from(revenueByCategoryMap, ([name, Faturamento]) => ({ name, Faturamento }))
+            .sort((a,b) => b.Faturamento - a.Faturamento);
+
+        // Bids over Time
+        const bidsOverTimeMap = new Map<string, number>();
+        allBids.forEach(bid => {
+            const dayKey = format(new Date(bid.timestamp as Date), 'dd/MM', { locale: ptBR });
+            bidsOverTimeMap.set(dayKey, (bidsOverTimeMap.get(dayKey) || 0) + 1);
+        });
+        const bidsOverTime = Array.from(bidsOverTimeMap, ([name, Lances]) => ({ name, Lances }))
+             .sort((a, b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime());
+
+        return {
+            totalRevenue,
+            totalBids,
+            uniqueBidders,
+            salesRate,
+            revenueByCategory,
+            bidsOverTime,
+        };
+
+    } catch (error: any) {
+        console.error(`[Service - getAuctionDashboardData] Error for auction ${auctionId}:`, error);
+        throw new Error("Falha ao buscar dados de performance do leilão.");
     }
   }
 }
