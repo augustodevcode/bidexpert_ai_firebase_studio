@@ -19,22 +19,21 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctioneerFormSchema, type AuctioneerFormValues } from './auctioneer-form-schema';
-import type { AuctioneerProfileInfo, MediaItem } from '@/types';
+import type { AuctioneerProfileInfo, MediaItem } from '@bidexpert/core';
 import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 interface AuctioneerFormProps {
-  initialData?: AuctioneerProfileInfo | null;
+  initialData?: Partial<AuctioneerProfileInfo> | null;
   onSubmitAction: (data: AuctioneerFormValues) => Promise<any>;
-  onUpdateSuccess?: () => void;
 }
 
 const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   initialData,
-  onSubmitAction,
-  onUpdateSuccess,
+  onSubmitAction
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -89,6 +88,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   }));
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+  const validLogoUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
+
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
@@ -278,8 +279,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                   <FormLabel>Logo do Leiloeiro</FormLabel>
                   <div className="flex items-center gap-4">
                     <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                      {logoUrlPreview ? (
-                        <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo leiloeiro" />
+                      {validLogoUrl ? (
+                        <Image src={validLogoUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo leiloeiro" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
                           <ImageIcon className="h-8 w-8" />
@@ -288,7 +289,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                     </div>
                     <div className="flex-grow space-y-2">
                       <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
-                        {logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}
+                        {validLogoUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}
                       </Button>
                       <FormField
                         control={form.control}

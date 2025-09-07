@@ -5,7 +5,7 @@ import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
 import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
-import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
+import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@bidexpert/core';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
@@ -25,7 +25,6 @@ interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
   judicialBranches: JudicialBranch[];
   onSubmitAction: (data: SellerFormValues) => Promise<any>;
-  onUpdateSuccess?: () => void; // Callback para quando a atualização for bem-sucedida
 }
 
 // Tornando o formulário um forwardRef para que o FormPageLayout possa acessá-lo
@@ -33,7 +32,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   initialData,
   judicialBranches: initialBranches,
   onSubmitAction,
-  onUpdateSuccess,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -91,6 +89,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
   const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   const handleRefetchBranches = React.useCallback(async () => {
     setIsFetchingBranches(true);
@@ -126,8 +125,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     }
     setIsCepLoading(false);
   }
-
-  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   return (
     <div data-ai-id="admin-seller-form-card">
@@ -196,7 +193,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
         </form>
       </Form>
      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
-    </div>
+    </>
   );
 });
 

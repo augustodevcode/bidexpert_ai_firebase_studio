@@ -1,4 +1,4 @@
-
+// src/app/admin/sellers/seller-form-schema.ts
 import * as z from 'zod';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();

@@ -1,28 +1,72 @@
+// src/app/admin/sellers/new/page.tsx
+'use client';
 
-
+import React, { useRef, useState, useEffect } from 'react';
 import SellerForm from '../seller-form';
 import { createSeller, type SellerFormData } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import FormPageLayout from '@/components/admin/form-page-layout';
+import { Users, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import type { JudicialBranch } from '@bidexpert/core';
 
-export default async function NewSellerPage() {
-  const judicialBranches = await getJudicialBranches();
+function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
+    const router = useRouter();
+    const { toast } = useToast();
+    const formRef = useRef<any>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
-  async function handleCreateSeller(data: SellerFormData) {
-    'use server';
-    return createSeller(data);
-  }
+    const handleSave = () => {
+        formRef.current?.requestSubmit();
+    };
 
-  return (
-    <div data-ai-id="admin-seller-form-card">
-        <SellerForm
-          judicialBranches={judicialBranches}
-          onSubmitAction={handleCreateSeller}
-          formTitle="Novo Comitente"
-          formDescription="Preencha os detalhes para cadastrar um novo comitente/vendedor."
-          submitButtonText="Criar Comitente"
-        />
-    </div>
-  );
+    async function handleCreateSeller(data: SellerFormData) {
+        setIsSubmitting(true);
+        const result = await createSeller(data);
+        if (result.success) {
+            toast({ title: 'Sucesso!', description: 'Comitente criado com sucesso.' });
+            router.push('/admin/sellers');
+        } else {
+            toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+        }
+        setIsSubmitting(false);
+    }
+
+    return (
+         <FormPageLayout
+            formTitle="Novo Comitente"
+            formDescription="Preencha os detalhes para cadastrar um novo comitente/vendedor."
+            icon={Users}
+            isViewMode={false} // Always in edit mode for new page
+            isSubmitting={isSubmitting}
+            onSave={handleSave}
+            onCancel={() => router.push('/admin/sellers')}
+        >
+            <SellerForm
+                ref={formRef}
+                judicialBranches={branches}
+                onSubmitAction={handleCreateSeller}
+            />
+        </FormPageLayout>
+    );
 }
 
+
+export default function NewSellerPage() {
+    const [branches, setBranches] = useState<JudicialBranch[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        getJudicialBranches().then(data => {
+            setBranches(data);
+            setIsLoading(false);
+        });
+    }, []);
+
+    if (isLoading) {
+        return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>
+    }
     
+    return <NewSellerPageContent branches={branches} />;
+}

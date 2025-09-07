@@ -14,7 +14,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { AuctioneerProfileInfo } from '@/types';
+import type { AuctioneerProfileInfo } from '@bidexpert/core';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 

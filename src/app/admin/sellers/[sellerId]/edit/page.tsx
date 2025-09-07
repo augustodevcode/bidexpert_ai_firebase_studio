@@ -2,19 +2,20 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import SellerForm from '../../seller-form';
-import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../../actions';
+import SellerForm from '@/app/admin/sellers/seller-form';
+import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Users, Loader2, Gavel, ListChecks, DollarSign, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { getSellerDashboardDataAction } from '../../analysis/actions';
-import type { SellerDashboardData } from '@/services/seller.service';
+import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
+import type { SellerDashboardData } from '@bidexpert/services';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout'; // Importar o novo layout
+import type { SellerFormData } from '@bidexpert/core';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -105,7 +106,7 @@ export default function EditSellerPage() {
             notFound();
             return;
         }
-        setSeller(sellerData);
+        setSeller(sellerData as SellerFormData);
         setJudicialBranches(branchesData);
     } catch(e) {
         console.error("Failed to fetch seller data", e);

@@ -6,7 +6,8 @@ import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
-import type { SellerProfileInfo } from '@/types';
+import type { SellerProfileInfo } from '@bidexpert/core';
+import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<SellerProfileInfo>[] => [

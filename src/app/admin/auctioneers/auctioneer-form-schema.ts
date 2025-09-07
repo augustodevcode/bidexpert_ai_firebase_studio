@@ -1,4 +1,4 @@
-
+// src/app/admin/auctioneers/auctioneer-form-schema.ts
 import * as z from 'zod';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();
@@ -29,4 +29,4 @@ export const auctioneerFormSchema = z.object({
   userId: z.string().optional().nullable(), // Se o leiloeiro pode ser um usuário da plataforma
 });
 
-export type AuctioneerFormValues = z.infer<typeof auctioneerFormSchema>;
+export type AuctioneerFormData = z.infer<typeof auctioneerFormSchema>;
