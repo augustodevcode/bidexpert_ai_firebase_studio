@@ -1,4 +1,3 @@
-
 // src/repositories/seller.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
