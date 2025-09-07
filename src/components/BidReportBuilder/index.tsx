@@ -154,9 +154,9 @@ const BidReportBuilder = () => {
                 <aside className="w-80 flex-shrink-0 flex flex-col bg-card border-l">
                      <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
                         <TabsList className="flex-shrink-0 mx-2 mt-2">
-                            <TabsTrigger value="properties" className="flex-1">Propriedades</TabsTrigger>
-                            <TabsTrigger value="variables" className="flex-1">Dados</TabsTrigger>
-                            <TabsTrigger value="media" className="flex-1">Mídia</TabsTrigger>
+                            <TabsTrigger value="properties">Propriedades</TabsTrigger>
+                            <TabsTrigger value="variables">Dados</TabsTrigger>
+                            <TabsTrigger value="media">Mídia</TabsTrigger>
                         </TabsList>
                         <TabsContent value="properties" className="flex-grow overflow-y-auto">
                             <PropertiesPanel 

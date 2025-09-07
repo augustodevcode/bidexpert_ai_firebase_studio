@@ -24,7 +24,7 @@ interface PropertiesPanelProps {
 const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedElement, onElementChange }) => {
   if (!selectedElement) {
     return (
-      <div className="p-4 text-sm text-muted-foreground h-full flex items-center justify-center text-center" data-ai-id="report-properties-panel">
+      <div className="p-4 text-sm text-muted-foreground h-full flex items-center justify-center text-center" data-ai-id="report-properties-panel-empty">
         Selecione um elemento na área de design para ver suas propriedades.
       </div>
     );
