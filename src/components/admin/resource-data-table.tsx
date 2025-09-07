@@ -7,7 +7,7 @@ import { DataTable } from '@/components/ui/data-table';
 import type { ColumnDef } from '@tanstack/react-table';
 
 interface ResourceDataTableProps<TData> {
-  columns: (options: { handleDelete: (id: string) => void; onOpenDetails?: (item: TData) => void }) => ColumnDef<TData>[];
+  columns: (options: { handleDelete: (id: string) => void; [key: string]: any }) => ColumnDef<TData>[];
   fetchAction: () => Promise<TData[]>;
   deleteAction: (id: string) => Promise<{ success: boolean; message: string }>;
   searchColumnId: string;
@@ -23,6 +23,7 @@ interface ResourceDataTableProps<TData> {
   }[];
   deleteConfirmation?: (item: TData) => boolean;
   deleteConfirmationMessage?: (item: TData) => string;
+  onOpenDetails?: (item: TData) => void; // Optional handler for viewing details
 }
 
 export default function ResourceDataTable<TData extends { id: string, name?: string | null }>({
@@ -34,6 +35,7 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
   facetedFilterColumns = [],
   deleteConfirmation,
   deleteConfirmationMessage,
+  onOpenDetails,
 }: ResourceDataTableProps<TData>) {
   const [data, setData] = useState<TData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -107,7 +109,7 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
     setRefetchTrigger(c => c + 1); // Trigger refetch
   }, [deleteAction, toast, deleteConfirmation, deleteConfirmationMessage]);
 
-  const tableColumns = useMemo(() => columns({ handleDelete }), [columns, handleDelete]);
+  const tableColumns = useMemo(() => columns({ handleDelete, onOpenDetails }), [columns, handleDelete, onOpenDetails]);
 
   return (
     <div data-ai-id={`admin-${searchColumnId}-data-table`}>

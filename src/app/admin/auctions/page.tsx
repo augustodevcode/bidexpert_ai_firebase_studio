@@ -19,14 +19,14 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminAuctionsPage() {
+  // A maior parte da lógica de estado foi movida para dentro do ResourceDataTable
+  // A lógica de busca de plataforma e leilões para as visualizações de card/lista permanece
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  // O <ResourceDataTable> cuidará do seu próprio fetch e estado.
-  // Este fetch agora é principalmente para as visualizações de card/lista.
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -66,6 +66,7 @@ export default function AdminAuctionsPage() {
 
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
+    // Adicionar filtro por leiloeiro e comitente se necessário no futuro
   ], [statusOptions]);
 
   return (
@@ -103,7 +104,7 @@ export default function AdminAuctionsPage() {
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
                     initialSortBy="auctionDate_desc"
-                    onSortChange={() => {}} // Sorting is now handled inside SearchResultsFrame
+                    onSortChange={() => {}} // Sorting is handled inside
                     platformSettings={platformSettings}
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
@@ -144,8 +145,8 @@ export default function AdminAuctionsPage() {
                 searchColumnId="title"
                 searchPlaceholder="Buscar por título..."
                 facetedFilterColumns={facetedFilterColumns}
-                deleteConfirmation={(item) => (item.status === 'RASCUNHO' || item.status === 'CANCELADO' || item._count?.lots === 0)}
-                deleteConfirmationMessage={(item) => `Este leilão não pode ser excluído pois tem ${item._count?.lots} lote(s) associado(s).`}
+                deleteConfirmation={(item) => (item.totalLots || 0) === 0}
+                deleteConfirmationMessage={(item) => `Este leilão não pode ser excluído pois tem ${item.totalLots} lote(s) associado(s).`}
               />
             </TabsContent>
           </Tabs>

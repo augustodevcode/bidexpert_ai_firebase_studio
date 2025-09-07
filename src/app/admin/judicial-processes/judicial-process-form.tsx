@@ -40,6 +40,11 @@ interface JudicialProcessFormProps {
   allBranches: JudicialBranch[];
   sellers: SellerProfileInfo[];
   onSubmitAction: (data: JudicialProcessFormValues) => Promise<any>;
+  onSuccess?: (processId?: string) => void;
+  onCancel?: () => void;
+  formTitle: string;
+  formDescription: string;
+  submitButtonText: string;
 }
 
 const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
@@ -278,7 +283,7 @@ const JudicialProcessForm = React.forwardRef<any, JudicialProcessFormProps>(({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+        <form data-ai-id="admin-judicial-process-form" onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
           <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo*</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
           <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
           
