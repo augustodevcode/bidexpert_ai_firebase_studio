@@ -1,7 +1,7 @@
 // src/app/dashboard/reports/actions.ts
 'use server';
 
-import { UserWinService } from '@/services/user-win.service';
+import { UserWinService } from '@bidexpert/services';
 import type { UserReportData } from '@/types';
 
 const userWinService = new UserWinService();

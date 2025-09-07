@@ -1,8 +1,7 @@
-
 // src/app/direct-sales/actions.ts
 'use server';
 
-import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
+import { DirectSaleOfferService } from '@bidexpert/services';
 import type { DirectSaleOffer } from '@/types';
 
 const offerService = new DirectSaleOfferService();

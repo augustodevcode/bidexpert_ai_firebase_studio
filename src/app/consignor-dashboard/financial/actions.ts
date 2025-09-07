@@ -6,7 +6,7 @@
  */
 'use server';
 
-import { UserWinService } from '@/services/user-win.service';
+import { UserWinService } from '@bidexpert/services';
 import type { UserWin } from '@/types';
 
 const userWinService = new UserWinService();

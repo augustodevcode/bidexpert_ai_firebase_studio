@@ -1,10 +1,9 @@
-
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { ContactMessage } from '@/types';
-import { ContactMessageService } from '@/services/contact-message.service';
+import { ContactMessageService } from '@bidexpert/services';
 
 const contactMessageService = new ContactMessageService();
 

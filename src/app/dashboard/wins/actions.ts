@@ -1,3 +1,4 @@
+// src/app/dashboard/wins/actions.ts
 /**
  * @fileoverview Server Action for fetching lots a user has won.
  */

@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { AuctionService } from '@/services/auction.service';
+import { AuctionService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 

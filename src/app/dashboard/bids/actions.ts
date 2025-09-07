@@ -6,7 +6,7 @@
 'use server';
 
 import type { UserBid } from '@/types';
-import { BidService } from '@/services/bid.service';
+import { BidService } from '@bidexpert/services';
 
 const bidService = new BidService();
 

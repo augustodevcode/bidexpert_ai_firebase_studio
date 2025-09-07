@@ -1,7 +1,7 @@
 // src/app/admin/states/actions.ts
 'use server';
 
-import { StateService } from '@/services/state.service';
+import { StateService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const stateService = new StateService();

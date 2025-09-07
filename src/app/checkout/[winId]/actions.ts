@@ -3,7 +3,7 @@
 
 import type { UserWin } from '@/types';
 import { type CheckoutFormValues } from './checkout-form-schema';
-import { UserWinService } from '@/services/user-win.service';
+import { UserWinService } from '@bidexpert/services';
 
 const userWinService = new UserWinService();
 

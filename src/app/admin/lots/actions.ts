@@ -1,7 +1,7 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import { LotService } from '@/services/lot.service';
+import { LotService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 import type { Lot, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';

@@ -6,13 +6,14 @@
  */
 'use server';
 
-import { BidService } from '@/services/bid.service';
-import { SellerService } from '@/services/seller.service';
+import { BidService } from '@bidexpert/services';
+import { SellerService } from '@bidexpert/services';
 import type { BidInfo, Lot, SellerProfileInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
-import { LotService } from '@/services/lot.service';
+import { LotService } from '@bidexpert/services';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { prisma } from '@/lib/prisma';
 
 const bidService = new BidService();
 const sellerService = new SellerService();
@@ -137,7 +138,6 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
     
     // This logic is complex and involves multiple entities, so it remains here for now,
     // but could be moved to a "DocumentGenerationService" in the future.
-    const {prisma} = await import('@/lib/prisma');
     const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
     if (!winner) {
         return { success: false, message: 'Arrematante não encontrado.'};

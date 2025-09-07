@@ -4,7 +4,7 @@
 import { revalidatePath } from 'next/cache';
 import type { DocumentTemplate } from '@/types';
 import type { DocumentTemplateFormData } from './document-template-form-schema';
-import { DocumentTemplateService } from '@/services/document-template.service';
+import { DocumentTemplateService } from '@bidexpert/services';
 
 const documentTemplateService = new DocumentTemplateService();
 

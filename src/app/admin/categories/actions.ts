@@ -1,10 +1,9 @@
-
 // src/app/admin/categories/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { LotCategory } from '@/types';
-import { CategoryService } from '@/services/category.service';
+import { CategoryService } from '@bidexpert/services';
 
 const categoryService = new CategoryService();
 

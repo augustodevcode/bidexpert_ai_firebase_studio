@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserProfileData, UserFormData } from '@/types';
-import { UserService } from '@/services/user.service';
+import { UserService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const userService = new UserService();

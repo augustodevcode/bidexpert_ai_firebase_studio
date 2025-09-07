@@ -3,7 +3,7 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Court, CourtFormData } from '@/types';
-import { CourtService } from '@/services/court.service';
+import { CourtService } from '@bidexpert/services';
 
 const courtService = new CourtService();
 

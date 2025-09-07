@@ -1,10 +1,9 @@
-
 // src/app/admin/subcategories/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { Subcategory, SubcategoryFormData } from '@/types';
-import { SubcategoryService } from '@/services/subcategory.service';
+import { SubcategoryService } from '@bidexpert/services';
 
 const subcategoryService = new SubcategoryService();
 

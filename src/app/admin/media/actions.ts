@@ -1,10 +1,9 @@
-
 // src/app/admin/media/actions.ts
 'use server';
 
 import type { MediaItem } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { MediaService } from '@/services/media.service';
+import { MediaService } from '@bidexpert/services';
 
 const mediaService = new MediaService();
 

@@ -6,7 +6,7 @@
 'use server';
 
 import type { ConsignorDashboardStats } from '@/types';
-import { SellerService } from '@/services/seller.service';
+import { SellerService } from '@bidexpert/services';
 
 const sellerService = new SellerService();
 

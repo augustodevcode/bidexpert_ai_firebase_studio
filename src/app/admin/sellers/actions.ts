@@ -2,7 +2,7 @@
 'use server';
 
 import type { SellerFormData } from '@/types';
-import { SellerService } from '@/services/seller.service';
+import { SellerService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();

@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { SellerService } from '@/services/seller.service';
+import { SellerService } from '@bidexpert/services';
 import type { Auction } from '@/types';
 
 /**

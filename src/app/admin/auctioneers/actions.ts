@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/actions.ts
 'use server';
 
-import { AuctioneerService } from '@/services/auctioneer.service';
+import { AuctioneerService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const auctioneerService = new AuctioneerService();

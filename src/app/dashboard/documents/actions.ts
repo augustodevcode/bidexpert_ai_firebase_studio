@@ -5,8 +5,8 @@
 'use server';
 
 import type { UserDocument, DocumentType } from '@/types';
-import { HabilitationService } from '@/services/habilitation.service';
-import { DocumentTypeService } from '@/services/document-type.service';
+import { HabilitationService } from '@bidexpert/services';
+import { DocumentTypeService } from '@bidexpert/services';
 
 const habilitationService = new HabilitationService();
 const documentTypeService = new DocumentTypeService();

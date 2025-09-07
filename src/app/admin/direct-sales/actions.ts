@@ -1,7 +1,7 @@
 // src/app/admin/direct-sales/actions.ts
 'use server';
 
-import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
+import { DirectSaleOfferService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const offerService = new DirectSaleOfferService();

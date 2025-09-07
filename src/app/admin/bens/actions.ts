@@ -1,10 +1,9 @@
-
 // src/app/admin/bens/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { Bem, BemFormData } from '@/types';
-import { BemService } from '@/services/bem.service';
+import { BemService } from '@bidexpert/services';
 
 const bemService = new BemService();
 

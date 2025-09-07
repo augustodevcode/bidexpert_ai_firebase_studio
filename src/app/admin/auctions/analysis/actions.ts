@@ -8,7 +8,7 @@
 import { prisma } from '@/lib/prisma';
 import type { AuctionPerformanceData, AuctionDashboardData } from '@/types';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import { AuctionService } from '@/services/auction.service'; // Importar o serviço
+import { AuctionService } from '@bidexpert/services'; 
 
 const auctionService = new AuctionService();
 
@@ -27,7 +27,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
-        auctionStages: true,
+        stages: true, // Corrigido de auctionStages para stages
       },
     });
 
@@ -47,8 +47,8 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
         totalRevenue,
         averageTicket,
         salesRate,
-        auctionDate: auction.auctionDate, // Passando a data para o Gantt
-        auctionStages: auction.auctionStages, // Passando as etapas para o Gantt
+        auctionDate: auction.auctionDate,
+        auctionStages: auction.stages, 
       };
     });
   } catch (error: any) {
