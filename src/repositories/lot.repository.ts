@@ -13,6 +13,7 @@ export class LotRepository {
             auction: { select: { title: true } },
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
+            stagePrices: true,
         },
         orderBy: { number: 'asc' }
     });
@@ -23,7 +24,8 @@ export class LotRepository {
       where: { OR: [{ id }, { publicId: id }] },
       include: {
         bens: { include: { bem: true } }, // Include the Bem through LotBens
-        auction: true,
+        auction: { include: { stages: true, seller: true } }, // Include auction stages
+        stagePrices: true,
       },
     });
   }
@@ -32,7 +34,10 @@ export class LotRepository {
     if (ids.length === 0) return [];
     return prisma.lot.findMany({
       where: { id: { in: ids } },
-      include: { auction: true }
+      include: { 
+        auction: { include: { stages: true, seller: true } },
+        stagePrices: true,
+      }
     });
   }
 

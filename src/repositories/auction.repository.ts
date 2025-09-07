@@ -21,7 +21,7 @@ export class AuctionRepository {
     return prisma.auction.findFirst({
       where: { OR: [{ id }, { publicId: id }] },
       include: {
-        lots: { include: { bens: true } },
+        lots: { include: { bens: { include: { bem: true } } } },
         auctioneer: true,
         seller: true, // Full seller object
         category: true,
@@ -62,6 +62,14 @@ export class AuctionRepository {
       include: {
         _count: { select: { lots: true } },
         seller: true,
+        auctioneer: true,
+        category: true,
+        stages: true,
+        lots: {
+          include: {
+            bens: { include: { bem: true } },
+          },
+        },
       },
       orderBy: { auctionDate: 'desc' },
     });
@@ -79,6 +87,12 @@ export class AuctionRepository {
             seller: true,
             auctioneer: true,
             category: true,
+            stages: true,
+            lots: {
+                include: {
+                    bens: { include: { bem: true } },
+                },
+            },
         }
     });
   }

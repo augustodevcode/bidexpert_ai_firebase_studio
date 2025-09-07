@@ -5,7 +5,7 @@ import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma'; // Import prisma directly for transactions
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export class AuctionService {
@@ -25,7 +25,7 @@ export class AuctionService {
       sellerName: a.seller?.name, 
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      auctionStages: a.stages || [], // Ensure stages is always an array
+      auctionStages: a.stages || a.auctionStages || [], // Handle both 'stages' and 'auctionStages' from includes
     }));
   }
 
@@ -132,8 +132,12 @@ export class AuctionService {
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
         if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-        if (cityId) dataToUpdate.city = { connect: {id: cityId }};
-        if (stateId) dataToUpdate.state = { connect: {id: stateId }};
+        if (cityId) {
+          dataToUpdate.city = { connect: {id: cityId }};
+        }
+        if (stateId) {
+          dataToUpdate.state = { connect: {id: stateId }};
+        }
         if (judicialProcessId) {
           dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
         } else if (data.hasOwnProperty('judicialProcessId')) {
