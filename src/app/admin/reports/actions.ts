@@ -1,3 +1,4 @@
+// src/app/admin/reports/actions.ts
 /**
  * @fileoverview Server Actions for the main admin reports page.
  * Provides functions to aggregate key statistics for the platform overview.

@@ -1,6 +1,6 @@
 // src/services/user-win.service.ts
 import { UserWinRepository } from '@/repositories/user-win.repository';
-import type { UserWin, CheckoutFormValues } from '@/types';
+import type { UserWin, CheckoutFormValues, UserReportData } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { add } from 'date-fns';
 import { revalidatePath } from 'next/cache';
@@ -47,6 +47,10 @@ export class UserWinService {
     try {
         if (paymentData.paymentMethod === 'credit_card') {
             await this.repository.update(winId, { paymentStatus: 'PAGO' });
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/dashboard/wins`);
+                revalidatePath(`/checkout/${winId}`);
+            }
             return { success: true, message: "Pagamento à vista processado com sucesso!" };
         } 
         
@@ -69,6 +73,11 @@ export class UserWinService {
                 this.repository.update(winId, { paymentStatus: 'PROCESSANDO' })
             ]);
             
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/dashboard/wins`);
+                revalidatePath(`/checkout/${winId}`);
+            }
+            
             return { success: true, message: `${installmentCount} boletos de parcelamento foram gerados com sucesso!` };
         }
         
@@ -78,5 +87,41 @@ export class UserWinService {
         console.error(`Error processing payment for win ${winId}:`, error);
         return { success: false, message: `Erro no servidor ao processar pagamento: ${error.message}` };
     }
+  }
+
+  async getUserReportData(userId: string): Promise<UserReportData> {
+    if (!userId) {
+      throw new Error("User ID is required to generate a report.");
+    }
+    
+    const wins = await this.repository.findWinsByUserId(userId);
+    const totalLotsWon = wins.length;
+    const totalAmountSpent = wins.reduce((sum, win) => sum + win.winningBidAmount, 0);
+
+    const totalBidsPlaced = await prisma.bid.count({
+      where: { bidderId: userId },
+    });
+
+    const categorySpendingMap = new Map<string, number>();
+    const allCategories = await prisma.lotCategory.findMany({ select: { id: true, name: true }});
+    const categoryNameMap = new Map(allCategories.map(c => [c.id, c.name]));
+    
+    wins.forEach(win => {
+        const categoryId = win.lot?.categoryId;
+        if (categoryId) {
+            const categoryName = categoryNameMap.get(categoryId) || 'Outros';
+            const currentAmount = categorySpendingMap.get(categoryName) || 0;
+            categorySpendingMap.set(categoryName, currentAmount + win.winningBidAmount);
+        }
+    });
+
+    const spendingByCategory = Array.from(categorySpendingMap, ([name, value]) => ({ name, value }));
+
+    return {
+      totalLotsWon,
+      totalAmountSpent,
+      totalBidsPlaced,
+      spendingByCategory,
+    };
   }
 }

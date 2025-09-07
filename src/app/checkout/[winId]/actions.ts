@@ -2,7 +2,6 @@
 'use server';
 
 import type { UserWin } from '@/types';
-import { revalidatePath } from 'next/cache';
 import { type CheckoutFormValues } from './checkout-form-schema';
 import { UserWinService } from '@/services/user-win.service';
 
@@ -15,12 +14,7 @@ const userWinService = new UserWinService();
  * @returns {Promise<UserWin | null>} The detailed user win object, or null if not found.
  */
 export async function getWinDetailsForCheckoutAction(winId: string): Promise<UserWin | null> {
-  try {
-    return await userWinService.getWinDetails(winId);
-  } catch (error) {
-    console.error(`Error fetching win details for checkout (winId: ${winId}):`, error);
-    return null;
-  }
+  return userWinService.getWinDetails(winId);
 }
 
 /**
@@ -31,12 +25,5 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
-    const result = await userWinService.processPayment(winId, paymentData);
-
-    if (result.success) {
-        revalidatePath(`/dashboard/wins`);
-        revalidatePath(`/checkout/${winId}`);
-    }
-    
-    return result;
+    return userWinService.processPayment(winId, paymentData);
 }

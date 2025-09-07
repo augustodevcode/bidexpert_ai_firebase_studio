@@ -21,10 +21,30 @@ export class UserWinRepository {
     });
   }
 
+  async findByIds(ids: string[]): Promise<UserWin[]> {
+    return prisma.userWin.findMany({
+      where: { id: { in: ids } },
+    });
+  }
+
   async findByIdSimple(id: string): Promise<UserWin | null> {
     return prisma.userWin.findUnique({ where: { id } });
   }
 
+  async findWinsByUserId(userId: string): Promise<any[]> {
+    return prisma.userWin.findMany({
+      where: { userId },
+      include: {
+        lot: {
+          include: {
+            auction: { select: { title: true } },
+          },
+        },
+      },
+      orderBy: { winDate: 'desc' },
+    });
+  }
+  
   async findWinsBySellerId(sellerId: string): Promise<any[]> {
      return prisma.userWin.findMany({
       where: {
