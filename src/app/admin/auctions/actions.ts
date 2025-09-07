@@ -3,24 +3,23 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { prisma } from '@/lib/prisma';
 import { AuctionService } from '@/services/auction.service';
 import { AuctioneerService } from '@/services/auctioneer.service'; // Import AuctioneerService
 import { SellerService } from '@/services/seller.service'; // Import SellerService
 
 const auctionService = new AuctionService();
+const auctioneerService = new AuctioneerService();
+const sellerService = new SellerService();
 
 export async function getAuctions(): Promise<Auction[]> {
     return auctionService.getAuctions();
 }
 
 export async function getAuctioneers() {
-    const auctioneerService = new AuctioneerService();
     return auctioneerService.getAuctioneers();
 }
 
 export async function getSellers() {
-    const sellerService = new SellerService();
     return sellerService.getSellers();
 }
 
@@ -70,35 +69,15 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
     if (ids.length === 0) return [];
-    // This is now a simplified version. The service should be used for complex data.
-    const auctions = await prisma.auction.findMany({
-        where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
-        include: { 
-            lots: { select: { id: true } },
-            seller: true
-        }
-    });
-    // @ts-ignore
-    return auctions.map(a => ({...a, totalLots: a.lots.length}));
+    // Esta função pode ser otimizada no serviço se necessário
+    const auctions = await Promise.all(ids.map(id => auctionService.getAuctionById(id)));
+    return auctions.filter(Boolean) as Auction[];
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-   return auctionService.mapAuctionsWithDetails(
-     await prisma.auction.findMany({
-        where: {
-            seller: {
-                OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
-            }
-        },
-        include: { 
-            lots: { select: { id: true } }, 
-            seller: true 
-        }
-    })
-   );
+   return auctionService.getAuctionsBySellerSlug(sellerSlugOrPublicId);
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    // @ts-ignore
     return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }

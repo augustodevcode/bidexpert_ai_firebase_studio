@@ -66,4 +66,20 @@ export class AuctionRepository {
       orderBy: { auctionDate: 'desc' },
     });
   }
+
+  async findBySellerSlug(sellerSlugOrId: string): Promise<any[]> {
+    return prisma.auction.findMany({
+        where: {
+            seller: {
+                OR: [{ slug: sellerSlugOrId }, { id: sellerSlugOrId }, { publicId: sellerSlugOrId }]
+            }
+        },
+        include: { 
+            _count: { select: { lots: true } }, 
+            seller: true,
+            auctioneer: true,
+            category: true,
+        }
+    });
+  }
 }

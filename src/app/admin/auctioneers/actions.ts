@@ -3,10 +3,11 @@
 
 import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma';
 import { AuctioneerService } from '@/services/auctioneer.service';
+import { AuctionService } from '@/services/auction.service'; // Import AuctionService
 
 const auctioneerService = new AuctioneerService();
+const auctionService = new AuctionService();
 
 export async function getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
   return auctioneerService.getAuctioneers();
@@ -21,15 +22,7 @@ export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerP
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    // @ts-ignore
-    return prisma.auction.findMany({
-        where: {
-            auctioneer: {
-                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
-            }
-        },
-        include: { lots: true, seller: true }
-    });
+    return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {

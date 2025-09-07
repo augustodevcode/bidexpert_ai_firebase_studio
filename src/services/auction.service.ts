@@ -39,8 +39,12 @@ export class AuctionService {
   }
   
   async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    // @ts-ignore
     const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
+  async getAuctionsBySellerSlug(sellerSlugOrId: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findBySellerSlug(sellerSlugOrId);
     return this.mapAuctionsWithDetails(auctions);
   }
 
