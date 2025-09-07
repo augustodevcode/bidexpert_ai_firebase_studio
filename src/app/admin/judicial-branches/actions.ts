@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-branches/actions.ts
 'use server';
 

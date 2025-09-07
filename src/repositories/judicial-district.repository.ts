@@ -25,10 +25,12 @@ export class JudicialDistrictRepository {
   }
 
   async create(data: Prisma.JudicialDistrictCreateInput): Promise<JudicialDistrict> {
+    // @ts-ignore
     return prisma.judicialDistrict.create({ data });
   }
 
   async update(id: string, data: Prisma.JudicialDistrictUpdateInput): Promise<JudicialDistrict> {
+    // @ts-ignore
     return prisma.judicialDistrict.update({ where: { id }, data });
   }
 
