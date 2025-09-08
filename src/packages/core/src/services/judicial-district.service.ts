@@ -1,0 +1,127 @@
+// packages/core/src/services/judicial-district.service.ts
+import { JudicialDistrictRepository } from '../repositories/judicial-district.repository';
+import type { JudicialDistrict, JudicialDistrictFormData } from '../types';
+import { slugify } from '../lib/ui-helpers';
+import type { Prisma } from '@prisma/client';
+import { prisma } from '../lib/prisma';
+
+export interface DistrictPerformanceData {
+  id: string;
+  name: string;
+  totalProcesses: number;
+  totalAuctions: number;
+  totalLotsSold: number;
+  totalRevenue: number;
+  averageTicket: number;
+}
+
+export class JudicialDistrictService {
+  private repository: JudicialDistrictRepository;
+
+  constructor() {
+    this.repository = new JudicialDistrictRepository();
+  }
+
+  async getJudicialDistricts(): Promise<JudicialDistrict[]> {
+    const districts = await this.repository.findAll();
+    return districts.map(d => ({
+        ...d,
+        courtName: d.court?.name,
+        stateUf: d.state?.uf,
+    }));
+  }
+
+  async getJudicialDistrictById(id: string): Promise<JudicialDistrict | null> {
+    const district = await this.repository.findById(id);
+     if (!district) return null;
+    return {
+        ...district,
+        courtName: district.court?.name,
+        stateUf: district.state?.uf,
+    }
+  }
+
+  async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
+    try {
+      const dataToCreate: Prisma.JudicialDistrictCreateInput = {
+        name: data.name,
+        slug: slugify(data.name),
+        zipCode: data.zipCode,
+        court: { connect: { id: data.courtId } },
+        state: { connect: { id: data.stateId } }
+      };
+      
+      const newDistrict = await this.repository.create(dataToCreate);
+      return { success: true, message: 'Comarca criada com sucesso.', districtId: newDistrict.id };
+    } catch (error: any) {
+      console.error("Error in JudicialDistrictService.create:", error);
+      return { success: false, message: `Falha ao criar comarca: ${error.message}` };
+    }
+  }
+
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string }> {
+    try {
+      const dataToUpdate: Prisma.JudicialDistrictUpdateInput = { ...data };
+      if (data.name) {
+        dataToUpdate.slug = slugify(data.name);
+      }
+      if (data.courtId) {
+          dataToUpdate.court = { connect: { id: data.courtId } };
+      }
+      if (data.stateId) {
+          dataToUpdate.state = { connect: { id: data.stateId } };
+      }
+      
+      await this.repository.update(id, dataToUpdate);
+      return { success: true, message: 'Comarca atualizada com sucesso.' };
+    } catch (error: any) {
+      console.error(`Error in JudicialDistrictService.update for id ${id}:`, error);
+      return { success: false, message: `Falha ao atualizar comarca: ${error.message}` };
+    }
+  }
+
+  async deleteJudicialDistrict(id: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.delete(id);
+      return { success: true, message: 'Comarca excluída com sucesso.' };
+    } catch (error: any) {
+      console.error(`Error in JudicialDistrictService.delete for id ${id}:`, error);
+      return { success: false, message: `Falha ao excluir comarca: ${error.message}` };
+    }
+  }
+  
+  async getDistrictsPerformance(): Promise<DistrictPerformanceData[]> {
+    const districts = await prisma.judicialDistrict.findMany({
+      include: {
+        _count: {
+          select: { judicialProcesses: true, auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO' },
+              select: { price: true },
+            },
+          },
+        },
+      },
+    });
+
+    return districts.map(district => {
+      const allLotsFromAuctions = district.auctions.flatMap(auc => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalLotsSold = allLotsFromAuctions.length;
+      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
+
+      return {
+        id: district.id,
+        name: district.name,
+        totalProcesses: district._count.judicialProcesses,
+        totalAuctions: district._count.auctions,
+        totalLotsSold,
+        totalRevenue,
+        averageTicket,
+      };
+    }).sort((a, b) => b.totalRevenue - a.totalRevenue);
+  }
+}
