@@ -43,7 +43,7 @@ const BidReportBuilder = () => {
             x: x || 50,
             y: y || 50,
             width: elementType === 'Image' ? 200 : 150,
-            height: elementType === 'Image' ? 150 : 40, // Aumentado altura padrão
+            height: elementType === 'Image' ? 150 : 40,
         };
         setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newElement]}));
         setSelectedElement(newElement);
