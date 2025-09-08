@@ -23,18 +23,16 @@
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
+- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**: Added `data-ai-id` attributes to all critical layout containers and interactive components to improve reliability for future modifications and automated testing.
 
 ## DOING
-- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
-  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
+- **Item 28: Estabilização Pós-Refatoração**
+  - **Objetivo**: Corrigir erros de inicialização e de tempo de execução decorrentes da nova arquitetura monorepo, garantindo que a aplicação volte a funcionar perfeitamente sem perda de funcionalidades.
   - **Status**:
-    - [x] Adicionado `data-ai-id` às páginas de edição de Leiloeiro e Comitente.
-    - [x] Instrumentado o `FormPageLayout`.
-    - [x] Instrumentadas as páginas de listagem (`/admin/lots`, `/admin/sellers`), colunas de tabela e componentes de `DataTable`.
-    - [ ] **A FAZER:** Revisar outras páginas críticas (Dashboard, Wizard, etc.) e componentes compartilhados.
+    - [ ] Diagnosticar e corrigir erros de inicialização reportados.
+    - [ ] Validar a comunicação entre `apps/web` e os pacotes `@bidexpert/core` e `@bidexpert/ui`.
+    - [ ] Garantir que todas as `server actions` e rotas de API funcionem como esperado após a refatoração.
 
 ## NEXT
-- **Item 27: Padronizar Idioma (Prioridade 3)**
-  - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
+    - **Status:** Pausado temporariamente para focar na estabilização da aplicação. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
