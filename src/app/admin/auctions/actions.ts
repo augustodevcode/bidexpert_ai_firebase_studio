@@ -1,27 +1,26 @@
 // src/app/admin/auctions/actions.ts
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@bidexpert/core';
 import { AuctionService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 
 const auctionService = new AuctionService();
-const auctionActions = createCrudActions({
+const {
+  obterTodos: getAuctions,
+  obterPorId: getAuction,
+  criar: createAuction,
+  atualizar: updateAuction,
+  excluir: deleteAuction,
+} = createCrudActions({
   service: auctionService,
-  entityName: 'Auction',
-  entityNamePlural: 'Auctions',
+  entityName: 'Leilão',
+  entityNamePlural: 'Leilões',
   routeBase: '/admin/auctions',
 });
 
-export const {
-  getAll: getAuctions,
-  getById: getAuction,
-  create: createAuction,
-  update: updateAuction,
-  delete: deleteAuction,
-} = auctionActions;
+export { getAuctions, getAuction, createAuction, updateAuction, deleteAuction };
 
 // --- Ações Específicas que não se encaixam no CRUD padrão ---
 
@@ -30,18 +29,15 @@ export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string) {
 }
 
 export async function updateAuctionTitle(id: string, newTitle: string): Promise<{ success: boolean; message: string; }> {
-    if (!newTitle || newTitle.trim().length < 5) {
-        return { success: false, message: "Título deve ter pelo menos 5 caracteres." };
-    }
-    return auctionService.updateAuction(id, { title: newTitle });
+    return auctionService.updateAuctionTitle(id, newTitle);
 }
 
 export async function updateAuctionImage(auctionId: string, mediaItemId: string, imageUrl: string): Promise<{ success: boolean; message: string; }> {
-    return auctionService.updateAuction(auctionId, { imageMediaId: mediaItemId, imageUrl: imageUrl });
+    return auctionService.updateAuctionImage(auctionId, mediaItemId, imageUrl);
 }
 
 export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean): Promise<{ success: boolean; message: string; }> {
-    return auctionService.updateAuction(id, { isFeaturedOnMarketplace: newStatus });
+    return auctionService.updateAuctionFeaturedStatus(id, newStatus);
 }
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {

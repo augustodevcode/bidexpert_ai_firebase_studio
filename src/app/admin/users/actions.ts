@@ -6,7 +6,6 @@ import { UserService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const userService = new UserService();
-
 const {
     obterTodos: getUsersWithRoles,
     obterPorId: getUserProfileData,

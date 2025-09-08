@@ -1,27 +1,27 @@
 // src/app/admin/document-templates/actions.ts
 'use server';
 
-import type { DocumentTemplate } from '@bidexpert/core';
-import type { DocumentTemplateFormData } from './document-template-form-schema';
+import type { DocumentTemplate, DocumentTemplateFormData } from '@bidexpert/core';
 import { DocumentTemplateService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const documentTemplateService = new DocumentTemplateService();
 
-const documentTemplateActions = createCrudActions({
+const {
+    obterTodos: getDocumentTemplates,
+    obterPorId: getDocumentTemplate,
+    criar: createDocumentTemplate,
+    atualizar: updateDocumentTemplate,
+    excluir: deleteDocumentTemplate
+} = createCrudActions({
     service: documentTemplateService,
-    entityName: 'DocumentTemplate',
-    entityNamePlural: 'DocumentTemplates',
+    entityName: 'Template de Documento',
+    entityNamePlural: 'Templates de Documentos',
     routeBase: '/admin/document-templates'
 });
 
-export const {
-    getAll: getDocumentTemplates,
-    getById: getDocumentTemplate,
-    create: createDocumentTemplate,
-    update: updateDocumentTemplate,
-    delete: deleteDocumentTemplate
-} = documentTemplateActions;
+export { getDocumentTemplates, getDocumentTemplate, createDocumentTemplate, updateDocumentTemplate, deleteDocumentTemplate };
+
 
 // getDocumentTemplateAction is an alias for getDocumentTemplate, can be removed if not used elsewhere,
 // but kept for now to avoid breaking potential external usages.

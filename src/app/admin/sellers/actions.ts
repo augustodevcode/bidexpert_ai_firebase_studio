@@ -6,25 +6,31 @@ import { SellerService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();
-const sellerActions = createCrudActions({
+
+const { 
+  obterTodos: getComitentes, 
+  obterPorId: getComitente,
+  obterPorSlug: getComitentePorSlug, 
+  criar: criarComitente, 
+  atualizar: atualizarComitente, 
+  excluir: deletarComitente 
+} = createCrudActions({
   service: sellerService,
-  entityName: 'Seller',
-  entityNamePlural: 'Sellers',
+  entityName: 'Comitente',
   routeBase: '/admin/sellers',
 });
 
-// Export a função getSellers com o nome original para manter compatibilidade
-export const getSellers = sellerActions.getAll;
+export { 
+  getComitentes, 
+  getComitente,
+  getComitentePorSlug, 
+  criarComitente, 
+  atualizarComitente, 
+  deletarComitente 
+};
 
-export const {
-  getById: getSeller,
-  getBySlug: getSellerBySlug,
-  create: createSeller,
-  update: updateSeller,
-  delete: deleteSeller
-} = sellerActions;
 
 // Funções específicas que não se encaixam no CRUD padrão permanecem aqui
-export async function getLotsBySellerSlug(sellerSlugOrId: string) {
+export async function getLotesPorComitenteSlug(sellerSlugOrId: string) {
     return sellerService.getLotsBySellerSlug(sellerSlugOrId);
 }
