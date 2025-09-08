@@ -5,8 +5,10 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { Lot } from '@/types';
+import { LotService } from '@bidexpert/services';
+import type { Lot } from '@bidexpert/core';
+
+const lotService = new LotService();
 
 /**
  * Fetches all lots associated with a specific consignor's auctions.
@@ -19,12 +21,5 @@ export async function getLotsForConsignorAction(sellerId: string): Promise<Lot[]
     return [];
   }
   
-  const lots = await prisma.lot.findMany({
-    where: { sellerId: sellerId },
-    include: { auction: { select: { title: true } } },
-    orderBy: { createdAt: 'desc' }
-  });
-
-  // @ts-ignore
-  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
+  return lotService.getLotsForConsignor(sellerId);
 }

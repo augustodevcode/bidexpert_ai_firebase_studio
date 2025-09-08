@@ -34,4 +34,5 @@ export {
 
 // Funções específicas que não se encaixam no CRUD padrão permanecem aqui
 export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
-    return lotService.getLotsForConsignor(sellerSlugOr
+    return lotService.getLotsForConsignor(sellerSlugOrId);
+}

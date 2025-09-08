@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { LotCategory } from '@bidexpert/core';
+import type { LotCategory, CategoryFormData } from '@bidexpert/core';
 import { CategoryService } from '@bidexpert/services';
 
 const categoryService = new CategoryService();
@@ -15,7 +15,7 @@ export async function getLotCategory(id: string): Promise<LotCategory | null> {
     return categoryService.getCategoryById(id);
 }
 
-export async function updateLotCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description' | 'hasSubcategories' | 'slug'>>): Promise<{ success: boolean, message: string }> {
+export async function updateLotCategory(id: string, data: Partial<CategoryFormData>): Promise<{ success: boolean, message: string }> {
     const result = await categoryService.updateCategory(id, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/categories');
@@ -24,7 +24,7 @@ export async function updateLotCategory(id: string, data: Partial<Pick<LotCatego
     return result;
 }
 
-export async function createLotCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean, message: string }> {
+export async function createLotCategory(data: CategoryFormData): Promise<{ success: boolean, message: string }> {
     const result = await categoryService.createCategory(data);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/categories');
