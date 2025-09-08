@@ -9,7 +9,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { Separator } from '@/components/ui/separator';
 import type { AuctioneerDashboardData, AuctioneerFormData } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';
-import { getAuctioneer, updateAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
+import { obterLeiloeiro, atualizarLeiloeiro, excluirLeiloeiro } from '@/app/admin/auctioneers/actions';
 import { getAuctioneerDashboardDataAction } from '@/app/admin/auctioneers/analysis/actions';
 import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
 
@@ -85,21 +85,22 @@ function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) 
 export default function EditAuctioneerPage({ params }: { params: { auctioneerId: string } }) {
 
   const handleUpdate = useCallback(async (id: string, data: AuctioneerFormData) => {
-    return updateAuctioneer(id, data);
+    return atualizarLeiloeiro(id, data);
   }, []);
 
   return (
     <div className="space-y-6" data-ai-id={`admin-auctioneer-edit-page-${params.auctioneerId}`}>
       <FormPageLayout
         pageTitle="Leiloeiro"
-        fetchAction={() => getAuctioneer(params.auctioneerId)}
-        deleteAction={() => deleteAuctioneer(params.auctioneerId)}
+        fetchAction={() => obterLeiloeiro(params.auctioneerId)}
+        deleteAction={() => excluirLeiloeiro(params.auctioneerId)}
         entityId={params.auctioneerId}
         entityName="Leiloeiro"
         routeBase="/admin/auctioneers"
         icon={Gavel}
+        isEdit={true}
       >
-        {(formRef, initialData, handleSubmit) => (
+        {(initialData, formRef, handleSubmit) => (
           <AuctioneerForm
             ref={formRef}
             initialData={initialData}

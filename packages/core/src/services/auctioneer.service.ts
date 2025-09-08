@@ -1,7 +1,7 @@
 // packages/core/src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '../repositories/auctioneer.repository';
 import { AuctionRepository } from '../repositories/auction.repository';
-import type { AuctioneerFormData, AuctioneerProfileInfo, Auction, AuctioneerDashboardData } from '../types';
+import type { AuctioneerFormData, AuctioneerProfileInfo, Auction, SellerDashboardData as AuctioneerDashboardData } from '../types';
 import { slugify } from '../lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -37,24 +37,24 @@ export class AuctioneerService {
     }));
   }
 
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
+  async obterLeiloeiros(): Promise<AuctioneerProfileInfo[]> {
     return this.auctioneerRepository.findAll();
   }
 
-  async getAuctioneerById(id: string): Promise<AuctioneerProfileInfo | null> {
+  async obterLeiloeiroPorId(id: string): Promise<AuctioneerProfileInfo | null> {
     return this.auctioneerRepository.findById(id);
   }
 
-  async getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+  async obterLeiloeiroPorSlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
     return this.auctioneerRepository.findBySlug(slugOrId);
   }
   
-  async getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
+  async obterLeiloesPorLeiloeiroSlug(auctioneerSlug: string): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findByAuctioneerSlug(auctioneerSlug);
     return this.mapAuctionsWithDetails(auctions);
   }
 
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+  async criarLeiloeiro(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
       const dataToCreate: Prisma.AuctioneerCreateInput = {
         ...data,
@@ -73,7 +73,7 @@ export class AuctioneerService {
     }
   }
 
-  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
+  async atualizarLeiloeiro(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
       await this.auctioneerRepository.update(id, dataWithSlug);
@@ -84,7 +84,7 @@ export class AuctioneerService {
     }
   }
   
-  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+  async excluirLeiloeiro(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       const linkedAuctions = await this.auctionRepository.findByAuctioneerSlug(id);
       if (linkedAuctions.length > 0) {
@@ -98,7 +98,7 @@ export class AuctioneerService {
     }
   }
 
-  async getAuctioneerDashboardData(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
+  async obterDadosDashboardLeiloeiro(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
     const [auctioneerData, platformSettings] = await Promise.all([
         prisma.auctioneer.findUnique({
             where: { id: auctioneerId },
@@ -161,11 +161,11 @@ export class AuctioneerService {
     };
   }
 
-  async getAuctioneersPerformance(): Promise<any[]> {
+  async obterPerformanceLeiloeiros(): Promise<any[]> {
     const auctioneers = await this.auctioneerRepository.findAll();
     const performanceData = await Promise.all(
         auctioneers.map(async (auctioneer) => {
-            const dashboardData = await this.getAuctioneerDashboardData(auctioneer.id);
+            const dashboardData = await this.obterDadosDashboardLeiloeiro(auctioneer.id);
             return {
                 id: auctioneer.id,
                 name: auctioneer.name,

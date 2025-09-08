@@ -5,14 +5,14 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctioneers, deleteAuctioneer } from './actions';
+import { obterLeiloeiros, excluirLeiloeiro } from './actions';
 import type { AuctioneerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, Landmark } from 'lucide-react';
 import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminAuctioneersPage() {
-  const columns = useMemo(() => createColumns({ handleDelete: deleteAuctioneer }), [deleteAuctioneer]);
+  const columns = useMemo(() => createColumns({ handleDelete: excluirLeiloeiro }), []);
 
   return (
     <div className="space-y-6" data-ai-id="admin-auctioneers-page">
@@ -36,8 +36,8 @@ export default function AdminAuctioneersPage() {
         <CardContent>
            <ResourceDataTable<AuctioneerProfileInfo>
             columns={columns}
-            fetchAction={getAuctioneers}
-            deleteAction={deleteAuctioneer}
+            fetchAction={obterLeiloeiros}
+            deleteAction={excluirLeiloeiro}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
           />

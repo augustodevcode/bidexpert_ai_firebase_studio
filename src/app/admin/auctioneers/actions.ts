@@ -7,12 +7,12 @@ import { createCrudActions } from '@/lib/actions/create-crud-actions';
 const auctioneerService = new AuctioneerService();
 
 const { 
-  obterTodos: getAuctioneers, 
-  obterPorId: getAuctioneer,
-  obterPorSlug: getAuctioneerBySlug, 
-  criar: createAuctioneer, 
-  atualizar: updateAuctioneer, 
-  excluir: deleteAuctioneer 
+  obterTodos: obterLeiloeiros, 
+  obterPorId: obterLeiloeiro,
+  obterPorSlug: obterLeiloeiroPorSlug, 
+  criar: criarLeiloeiro, 
+  atualizar: atualizarLeiloeiro, 
+  excluir: excluirLeiloeiro 
 } = createCrudActions({
   service: auctioneerService,
   entityName: 'Leiloeiro',
@@ -20,16 +20,16 @@ const {
 });
 
 export { 
-  getAuctioneers, 
-  getAuctioneer,
-  getAuctioneerBySlug, 
-  createAuctioneer, 
-  updateAuctioneer, 
-  deleteAuctioneer 
+  obterLeiloeiros, 
+  obterLeiloeiro,
+  obterLeiloeiroPorSlug, 
+  criarLeiloeiro, 
+  atualizarLeiloeiro, 
+  excluirLeiloeiro 
 };
 
 
 // Funções específicas que não se encaixam no CRUD padrão permanecem aqui
-export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string) {
-    return auctioneerService.getAuctionsByAuctioneerSlug(auctioneerSlug);
+export async function obterLeiloesPorLeiloeiroSlug(auctioneerSlug: string) {
+    return auctioneerService.obterLeiloesPorLeiloeiroSlug(auctioneerSlug);
 }

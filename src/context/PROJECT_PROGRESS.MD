@@ -25,22 +25,15 @@
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
-  - **Status**:
-    - [x] Adicionado `data-ai-id` às páginas de edição de Leiloeiro e Comitente.
-    - [x] Instrumentado o `FormPageLayout`.
-    - [x] Instrumentadas as páginas de listagem (`/admin/lots`, `/admin/sellers`), colunas de tabela e componentes de `DataTable`.
-    - [x] Instrumentado os cards de `Lot` e `Auction` no pacote `@bidexpert/ui`.
-    - [x] Instrumentada a página de Checkout e seus componentes.
-    - [x] Instrumentado o Wizard e seus componentes de fluxo.
-    - [x] Instrumentado o formulário de Comitentes.
-    - [x] **CONCLUÍDO**
+  - **Status**: **CONCLUÍDO**.
 
 ## DOING
 - **Item 27: Padronizar Idioma (Prioridade 3)**
   - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
   - **Status**:
     - [x] Refatorado `CheckoutService` e suas actions.
-    - [ ] **A FAZER:** Renomear métodos no `SellerService` e `AuctioneerService`.
+    - [x] Refatorado `SellerService` e suas actions.
+    - [x] Refatorado `AuctioneerService` e suas actions.
     - [ ] **A FAZER:** Renomear métodos nos demais serviços (Lot, User, etc.).
     - [ ] **A FAZER:** Revisar e traduzir o texto da UI nos componentes.
 

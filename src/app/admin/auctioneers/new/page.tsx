@@ -1,11 +1,11 @@
 // apps/web/src/app/admin/auctioneers/new/page.tsx
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import AuctioneerForm from '../auctioneer-form';
-import { createAuctioneer } from '../actions';
+import { criarLeiloeiro } from '../actions';
 import type { AuctioneerFormData } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Gavel } from 'lucide-react';
@@ -15,7 +15,7 @@ export default function NewAuctioneerPage() {
   const { toast } = useToast();
   
   const handleCreate = async (data: AuctioneerFormData) => {
-    const result = await createAuctioneer(data);
+    const result = await criarLeiloeiro(data);
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Leiloeiro criado com sucesso.' });
       router.push('/admin/auctioneers');
@@ -32,7 +32,7 @@ export default function NewAuctioneerPage() {
         icon={Gavel}
         isEdit={false}
     >
-        {(formRef, initialData, handleSubmit) => (
+        {(initialData, formRef, handleSubmit) => (
             <AuctioneerForm
                 ref={formRef}
                 onSubmitAction={(data) => handleSubmit(async () => handleCreate(data))}
