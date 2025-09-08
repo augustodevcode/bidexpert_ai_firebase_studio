@@ -1,21 +1,17 @@
 // apps/web/src/app/admin/sellers/[sellerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useCallback } from 'react';
 import SellerForm from '@/app/admin/sellers/seller-form';
 import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
-import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
-import { Button } from '@/components/ui/button';
-import { BarChart3, Users, Loader2, Gavel, ListChecks, DollarSign, TrendingUp } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
-import type { SellerDashboardData } from '@bidexpert/core';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import FormPageLayout from '@/components/admin/form-page-layout';
+import { Users, BarChart3, Loader2, DollarSign, TrendingUp, Gavel, ListChecks } from 'lucide-react';
+import type { SellerDashboardData, SellerFormData, JudicialBranch } from '@bidexpert/core';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import FormPageLayout from '@/components/admin/form-page-layout'; 
-import type { SellerFormData } from '@bidexpert/core';
+import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -30,15 +26,20 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
 );
 
 function SellerDashboardSection({ sellerId }: { sellerId: string }) {
-    const [dashboardData, setDashboardData] = useState<SellerDashboardData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [dashboardData, setDashboardData] = React.useState<SellerDashboardData | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    useEffect(() => {
+    React.useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
-            const data = await getSellerDashboardDataAction(sellerId);
-            setDashboardData(data);
-            setIsLoading(false);
+            try {
+                const data = await getSellerDashboardDataAction(sellerId);
+                setDashboardData(data);
+            } catch (error) {
+                console.error("Failed to fetch seller dashboard data:", error);
+            } finally {
+                setIsLoading(false);
+            }
         }
         fetchData();
     }, [sellerId]);
@@ -51,13 +52,15 @@ function SellerDashboardSection({ sellerId }: { sellerId: string }) {
         return <p>Não foi possível carregar os dados de performance.</p>;
     }
     
+    const { totalRevenue, salesRate, totalAuctions, totalLots, salesByMonth } = dashboardData;
+    
     return (
         <div className="space-y-4">
              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                 <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} />
-                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={TrendingUp} />
-                <StatCard title="Total de Leilões" value={dashboardData.totalAuctions} icon={Gavel} />
-                <StatCard title="Total de Lotes" value={dashboardData.totalLots} icon={ListChecks} />
+                 <StatCard title="Faturamento Bruto" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} />
+                <StatCard title="Taxa de Venda" value={`${salesRate.toFixed(1)}%`} icon={TrendingUp} />
+                <StatCard title="Total de Leilões" value={totalAuctions} icon={Gavel} />
+                <StatCard title="Total de Lotes" value={totalLots} icon={ListChecks} />
             </div>
             <Card>
                 <CardHeader>
@@ -65,7 +68,7 @@ function SellerDashboardSection({ sellerId }: { sellerId: string }) {
                 </CardHeader>
                 <CardContent className="h-72">
                      <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={dashboardData.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                      <LineChart data={salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
                         <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
@@ -80,92 +83,36 @@ function SellerDashboardSection({ sellerId }: { sellerId: string }) {
     )
 }
 
-export default function EditSellerPage() {
-  const params = useParams();
-  const sellerId = params.sellerId as string;
-  const router = useRouter();
-  
-  const [seller, setSeller] = useState<SellerFormData | null>(null);
-  const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isViewMode, setIsViewMode] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const formRef = useRef<any>(null);
-  
-  const fetchPageData = useCallback(async () => {
-    if (!sellerId) return;
-    setIsLoading(true);
-    try {
-        const [sellerData, branchesData] = await Promise.all([
-            getSeller(sellerId),
-            getJudicialBranches()
-        ]);
 
-        if (!sellerData) {
-            notFound();
-            return;
-        }
-        setSeller(sellerData as SellerFormData);
-        setJudicialBranches(branchesData);
-    } catch(e) {
-        console.error("Failed to fetch seller data", e);
-        toast({title: "Erro", description: "Falha ao buscar dados do comitente.", variant: "destructive"})
-    }
-    setIsLoading(false);
-  }, [sellerId, toast]);
+export default function EditSellerPage({ params }: { params: { sellerId: string } }) {
+  const [judicialBranches, setJudicialBranches] = React.useState<JudicialBranch[]>([]);
 
-  useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData]);
-  
-  const handleFormSubmit = async (data: SellerFormData) => {
-    setIsSubmitting(true);
-    const result = await updateSeller(sellerId, data);
-    if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
-        fetchPageData();
-        setIsViewMode(true);
-    } else {
-        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
-    }
-    setIsSubmitting(false);
-  };
-  
-  const handleDelete = async () => {
-    const result = await deleteSeller(sellerId);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/admin/sellers');
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-  };
+  React.useEffect(() => {
+    getJudicialBranches().then(setJudicialBranches);
+  }, []);
 
-  const handleSave = () => {
-    formRef.current?.requestSubmit();
-  };
+  const handleUpdate = useCallback(async (id: string, data: SellerFormData) => {
+    return updateSeller(id, data);
+  }, []);
 
   return (
-    <div className="space-y-6" data-ai-id={`admin-seller-edit-page-${sellerId}`}>
+    <div className="space-y-6" data-ai-id={`admin-seller-edit-page-${params.sellerId}`}>
       <FormPageLayout
-        formTitle={isViewMode ? "Visualizar Comitente" : "Editar Comitente"}
-        formDescription={seller?.name || 'Carregando...'}
+        pageTitle="Comitente"
+        fetchAction={() => getSeller(params.sellerId)}
+        deleteAction={deleteSeller}
+        entityId={params.sellerId}
+        entityName="Comitente"
+        routeBase="/admin/sellers"
         icon={Users}
-        isViewMode={isViewMode}
-        isLoading={isLoading}
-        isSubmitting={isSubmitting}
-        onEnterEditMode={() => setIsViewMode(false)}
-        onCancel={() => setIsViewMode(true)}
-        onSave={handleSave}
-        onDelete={handleDelete}
       >
-          <SellerForm
-            ref={formRef}
-            initialData={seller}
-            judicialBranches={judicialBranches}
-            onSubmitAction={handleFormSubmit}
-          />
+        {(initialData) => (
+            <SellerForm
+                initialData={initialData}
+                judicialBranches={judicialBranches}
+                onSubmitAction={(data) => handleUpdate(params.sellerId, data)}
+            />
+        )}
       </FormPageLayout>
 
       <Separator className="my-8" />
@@ -179,7 +126,7 @@ export default function EditSellerPage() {
               </CardDescription>
           </CardHeader>
           <CardContent>
-              <SellerDashboardSection sellerId={sellerId} />
+              <SellerDashboardSection sellerId={params.sellerId} />
           </CardContent>
       </Card>
     </div>

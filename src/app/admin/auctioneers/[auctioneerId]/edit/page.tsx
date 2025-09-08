@@ -1,10 +1,9 @@
 // src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { notFound, useRouter, useParams } from 'next/navigation';
+import React, { useCallback } from 'react';
+import { useParams } from 'next/navigation';
 import { Loader2, Gavel, BarChart3, Users, DollarSign, TrendingUp, ListChecks } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
@@ -27,10 +26,10 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
 );
 
 function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) {
-    const [dashboardData, setDashboardData] = useState<AuctioneerDashboardData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [dashboardData, setDashboardData] = React.useState<AuctioneerDashboardData | null>(null);
+    const [isLoading, setIsLoading] = React.useState(true);
 
-    useEffect(() => {
+    React.useEffect(() => {
         async function fetchData() {
             setIsLoading(true);
             try {
@@ -83,85 +82,29 @@ function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) 
     )
 }
 
-export default function EditAuctioneerPage() {
-  const params = useParams();
-  const auctioneerId = params.auctioneerId as string;
-  const router = useRouter();
-  
-  const [auctioneer, setAuctioneer] = useState<AuctioneerFormData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isViewMode, setIsViewMode] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-  const formRef = useRef<any>(null);
-  
-  const fetchPageData = useCallback(async () => {
-    if (!auctioneerId) return;
-    setIsLoading(true);
-    try {
-        const fetchedAuctioneer = await getAuctioneer(auctioneerId);
-        if (!fetchedAuctioneer) {
-            notFound();
-            return;
-        }
-        setAuctioneer(fetchedAuctioneer as AuctioneerFormData);
-    } catch(e) {
-        console.error("Failed to fetch auctioneer", e);
-        toast({title: "Erro", description: "Falha ao buscar dados do leiloeiro.", variant: "destructive"})
-    }
-    setIsLoading(false);
-  }, [auctioneerId, toast]);
+export default function EditAuctioneerPage({ params }: { params: { auctioneerId: string } }) {
 
-  useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData]);
-  
-  const handleFormSubmit = async (data: AuctioneerFormData) => {
-    setIsSubmitting(true);
-    const result = await updateAuctioneer(auctioneerId, data);
-    if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Leiloeiro atualizado.' });
-        fetchPageData();
-        setIsViewMode(true);
-    } else {
-        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
-    }
-    setIsSubmitting(false);
-  };
-  
-  const handleDelete = async () => {
-    const result = await deleteAuctioneer(auctioneerId);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/admin/auctioneers');
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-  };
-
-  const handleSave = () => {
-    formRef.current?.requestSubmit();
-  };
+  const handleUpdate = useCallback(async (id: string, data: AuctioneerFormData) => {
+    return updateAuctioneer(id, data);
+  }, []);
 
   return (
-    <div className="space-y-6" data-ai-id={`admin-auctioneer-edit-page-${auctioneerId}`}>
+    <div className="space-y-6" data-ai-id={`admin-auctioneer-edit-page-${params.auctioneerId}`}>
       <FormPageLayout
-        formTitle={isViewMode ? "Visualizar Leiloeiro" : "Editar Leiloeiro"}
-        formDescription={auctioneer?.name || 'Carregando...'}
+        pageTitle="Leiloeiro"
+        fetchAction={() => getAuctioneer(params.auctioneerId)}
+        deleteAction={deleteAuctioneer}
+        entityId={params.auctioneerId}
+        entityName="Leiloeiro"
+        routeBase="/admin/auctioneers"
         icon={Gavel}
-        isViewMode={isViewMode}
-        isLoading={isLoading}
-        isSubmitting={isSubmitting}
-        onEnterEditMode={() => setIsViewMode(false)}
-        onCancel={() => setIsViewMode(true)}
-        onSave={handleSave}
-        onDelete={handleDelete}
       >
+        {(initialData) => (
           <AuctioneerForm
-            ref={formRef}
-            initialData={auctioneer}
-            onSubmitAction={handleFormSubmit}
+            initialData={initialData}
+            onSubmitAction={(data) => handleUpdate(params.auctioneerId, data)}
           />
+        )}
       </FormPageLayout>
 
       <Separator className="my-8" />
@@ -175,7 +118,7 @@ export default function EditAuctioneerPage() {
               </CardDescription>
           </CardHeader>
           <CardContent>
-              <AuctioneerDashboardSection auctioneerId={auctioneerId} />
+              <AuctioneerDashboardSection auctioneerId={params.auctioneerId} />
           </CardContent>
       </Card>
     </div>
