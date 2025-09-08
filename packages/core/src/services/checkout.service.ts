@@ -1,8 +1,7 @@
-
 // packages/core/src/services/checkout.service.ts
 import { UserWinRepository } from '../repositories/user-win.repository';
 import { CheckoutRepository } from '../repositories/checkout.repository';
-import { PlatformSettingsService } from './platform-settings.service'; // Importar o serviço de settings
+import { PlatformSettingsService } from './platform-settings.service';
 import type { CheckoutFormValues } from '../lib/zod-schemas';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
@@ -11,20 +10,20 @@ import { add } from 'date-fns';
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
   private checkoutRepository: CheckoutRepository;
-  private settingsService: PlatformSettingsService; // Adicionar o serviço de settings
+  private settingsService: PlatformSettingsService;
   
   constructor() {
     this.userWinRepository = new UserWinRepository();
     this.checkoutRepository = new CheckoutRepository();
-    this.settingsService = new PlatformSettingsService(); // Instanciar
+    this.settingsService = new PlatformSettingsService();
   }
 
-  private async getCommissionRate(): Promise<number> {
+  private async obterTaxaComissao(): Promise<number> {
     const settings = await this.settingsService.getSettings();
     return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
   }
 
-  async calculateTotals(winId: string): Promise<{
+  async calcularTotais(winId: string): Promise<{
     winningBidAmount: number;
     commissionRate: number;
     commissionValue: number;
@@ -35,7 +34,7 @@ export class CheckoutService {
       throw new Error('Registro de arremate não encontrado.');
     }
     
-    const commissionRate = await this.getCommissionRate();
+    const commissionRate = await this.obterTaxaComissao();
     const commissionValue = win.winningBidAmount * commissionRate;
     const totalDue = win.winningBidAmount + commissionValue;
 
@@ -47,7 +46,7 @@ export class CheckoutService {
     };
   }
 
-  async processPayment(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
+  async processarPagamento(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
     const win = await this.userWinRepository.findByIdSimple(winId);
 
     if (!win) {
@@ -58,7 +57,7 @@ export class CheckoutService {
         return { success: false, message: 'Este arremate já foi pago.'};
     }
     
-    const totals = await this.calculateTotals(winId);
+    const totals = await this.calcularTotais(winId);
 
     // In a real scenario, you would integrate with a payment gateway here using the totals.
     // For this simulation, we'll just update the status.

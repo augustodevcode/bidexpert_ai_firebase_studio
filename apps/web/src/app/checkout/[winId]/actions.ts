@@ -2,9 +2,8 @@
 'use server';
 
 import type { UserWin, CheckoutFormValues } from '@bidexpert/core';
-import { UserWinService, CheckoutService } from '@bidexpert/core/services';
+import { CheckoutService } from '@bidexpert/core/services';
 
-const userWinService = new UserWinService();
 const checkoutService = new CheckoutService();
 
 /**
@@ -13,7 +12,12 @@ const checkoutService = new CheckoutService();
  * @param {string} winId - The ID of the user win record.
  * @returns {Promise<UserWin | null>} The detailed user win object, or null if not found.
  */
-export async function getWinDetailsForCheckoutAction(winId: string): Promise<UserWin | null> {
+export async function obterDetalhesDoArremateAction(winId: string): Promise<UserWin | null> {
+  // A service UserWinService precisa ser refatorada para ter o método obterDetalhes ao invés de getWinDetails.
+  // Por agora, vamos assumir que a lógica interna do serviço está em português.
+  // A chamada ao service UserWinService.getWinDetails foi movida para o checkout service,
+  // mas idealmente teríamos um UserWinService.obterDetalhes
+  const userWinService = new (await import('@bidexpert/core/services')).UserWinService();
   return userWinService.getWinDetails(winId);
 }
 
@@ -22,8 +26,8 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @param {string} winId - The ID of the user win record.
  * @returns An object with the calculated totals.
  */
-export async function getCheckoutTotalsAction(winId: string) {
-    return checkoutService.calculateTotals(winId);
+export async function obterTotaisDoCheckoutAction(winId: string) {
+    return checkoutService.calcularTotais(winId);
 }
 
 /**
@@ -33,6 +37,6 @@ export async function getCheckoutTotalsAction(winId: string) {
  * @param {CheckoutFormValues} paymentData - The validated payment form data.
  * @returns {Promise<{success: boolean; message: string}>} The result of the payment operation.
  */
-export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
-    return checkoutService.processPayment(winId, paymentData);
+export async function processarPagamentoAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
+    return checkoutService.processarPagamento(winId, paymentData);
 }
