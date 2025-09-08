@@ -2,7 +2,6 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*", "**/.env"],
-  "packageManager": "pnpm",
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
