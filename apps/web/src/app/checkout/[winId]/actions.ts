@@ -2,7 +2,7 @@
 'use server';
 
 import type { UserWin, CheckoutFormValues } from '@bidexpert/core';
-import { UserWinService, CheckoutService } from '@bidexpert/core';
+import { UserWinService, CheckoutService } from '@bidexpert/core/services';
 
 const userWinService = new UserWinService();
 const checkoutService = new CheckoutService();

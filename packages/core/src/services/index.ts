@@ -27,3 +27,4 @@ export * from './relist.service';
 export * from './vehicle-make.service';
 export * from './vehicle-model.service';
 export * from './checkout.service';
+export * from './notification.service';
