@@ -1,11 +1,12 @@
-
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
 import type { UserWin, CheckoutFormValues } from '@bidexpert/core';
 import { CheckoutService } from '@bidexpert/core/services';
+import { UserWinService } from '@bidexpert/services'; // Mantido para obter detalhes
 
 const checkoutService = new CheckoutService();
+const userWinService = new UserWinService();
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -14,11 +15,6 @@ const checkoutService = new CheckoutService();
  * @returns {Promise<UserWin | null>} The detailed user win object, or null if not found.
  */
 export async function getWinDetailsForCheckoutAction(winId: string): Promise<UserWin | null> {
-  // A service UserWinService precisa ser refatorada para ter o método obterDetalhes ao invés de getWinDetails.
-  // Por agora, vamos assumir que a lógica interna do serviço está em português.
-  // A chamada ao service UserWinService.getWinDetails foi movida para o checkout service,
-  // mas idealmente teríamos um UserWinService.obterDetalhes
-  const userWinService = new (await import('@bidexpert/core/services')).UserWinService();
   return userWinService.getWinDetails(winId);
 }
 
@@ -28,7 +24,7 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @returns An object with the calculated totals.
  */
 export async function getCheckoutTotalsAction(winId: string) {
-    return checkoutService.calcularTotais(winId);
+    return checkoutService.calculateTotals(winId);
 }
 
 /**
@@ -39,5 +35,5 @@ export async function getCheckoutTotalsAction(winId: string) {
  * @returns {Promise<{success: boolean; message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
-    return checkoutService.processarPagamento(winId, paymentData);
+    return checkoutService.processPayment(winId, paymentData);
 }

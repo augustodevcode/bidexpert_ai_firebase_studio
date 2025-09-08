@@ -1,4 +1,3 @@
-
 // src/app/checkout/[winId]/page.tsx
 import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';

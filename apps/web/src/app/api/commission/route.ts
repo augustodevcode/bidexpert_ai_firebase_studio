@@ -1,4 +1,3 @@
-
 // src/app/api/commission/route.ts
 import { NextResponse } from 'next/server';
 

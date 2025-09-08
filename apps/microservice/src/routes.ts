@@ -1,4 +1,3 @@
-
 // apps/microservice/src/routes.ts
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 import { PlatformSettingsService } from '@bidexpert/services'; // Importar o serviço

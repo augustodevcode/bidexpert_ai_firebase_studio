@@ -1,4 +1,3 @@
-
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import appRoutes from './routes';

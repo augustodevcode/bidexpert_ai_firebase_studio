@@ -18,12 +18,12 @@ export class CheckoutService {
     this.settingsService = new PlatformSettingsService();
   }
 
-  private async obterTaxaComissao(): Promise<number> {
+  async getCommissionRate(): Promise<number> {
     const settings = await this.settingsService.getSettings();
     return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
   }
 
-  async calcularTotais(winId: string): Promise<{
+  async calculateTotals(winId: string): Promise<{
     winningBidAmount: number;
     commissionRate: number;
     commissionValue: number;
@@ -34,7 +34,7 @@ export class CheckoutService {
       throw new Error('Registro de arremate não encontrado.');
     }
     
-    const commissionRate = await this.obterTaxaComissao();
+    const commissionRate = await this.getCommissionRate();
     const commissionValue = win.winningBidAmount * commissionRate;
     const totalDue = win.winningBidAmount + commissionValue;
 
@@ -46,7 +46,7 @@ export class CheckoutService {
     };
   }
 
-  async processarPagamento(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
+  async processPayment(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
     const win = await this.userWinRepository.findByIdSimple(winId);
 
     if (!win) {
@@ -57,7 +57,7 @@ export class CheckoutService {
         return { success: false, message: 'Este arremate já foi pago.'};
     }
     
-    const totals = await this.calcularTotais(winId);
+    const totals = await this.calculateTotals(winId);
 
     // In a real scenario, you would integrate with a payment gateway here using the totals.
     // For this simulation, we'll just update the status.
