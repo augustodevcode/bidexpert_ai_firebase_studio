@@ -1,4 +1,3 @@
-
 // packages/ui/src/components/lot-card.tsx
 'use client';
 
@@ -53,7 +52,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
-  const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
   const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
   const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
@@ -211,7 +210,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <div className="w-full flex justify-between items-end" data-ai-id={`lot-card-price-section-${lot.id}`}>
             <div data-ai-id={`lot-card-price-info-${lot.id}`}>
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-              <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+              <p className={`text-xl font-bold ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
                 R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>

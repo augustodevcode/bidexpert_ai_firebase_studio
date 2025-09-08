@@ -1,4 +1,3 @@
-
 // packages/ui/src/components/auction-card.tsx
 'use client';
 
@@ -8,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from './ui/card';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import type { Auction, AuctionStage as AuctionStageType } from '@bidexpert/core';
+import type { Auction } from '@bidexpert/core';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';

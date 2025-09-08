@@ -8,6 +8,7 @@ export * from './components/entity-edit-menu';
 export * from './components/lot-list-item';
 export * from './components/auction/auction-stages-timeline';
 export * from './components/auction/auction-preview-modal';
+export * from './components/lot-preview-modal';
 
 
 // Lib
