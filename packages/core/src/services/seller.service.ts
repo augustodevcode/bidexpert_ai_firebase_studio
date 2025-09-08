@@ -1,5 +1,6 @@
 // packages/core/src/services/seller.service.ts
 import { SellerRepository } from '../repositories/seller.repository';
+import { LotService } from './lot.service';
 import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from '../types';
 import { slugify } from '../lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
@@ -30,10 +31,12 @@ async function getCommissionRate(): Promise<number> {
 
 export class SellerService {
   private sellerRepository: SellerRepository;
+  private lotService: LotService;
   private userWinService: UserWinService;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
+    this.lotService = new LotService();
     this.userWinService = new UserWinService();
   }
 
@@ -56,7 +59,7 @@ export class SellerService {
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
-      return this.sellerRepository.findLotsBySellerId(seller.id);
+      return this.lotService.getLotsBySellerId(seller.id);
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
@@ -101,7 +104,7 @@ export class SellerService {
   
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const lots = await this.sellerRepository.findLotsBySellerId(id);
+      const lots = await this.lotService.getLotsBySellerId(id);
       if (lots.length > 0) {
         return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
       }
@@ -165,6 +168,7 @@ export class SellerService {
       salesRate,
       averageTicket,
       salesByMonth,
+      platformCommissionPercentage: commissionRate * 100,
     };
   }
 }
