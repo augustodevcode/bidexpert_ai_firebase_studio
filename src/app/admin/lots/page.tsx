@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getPlatformSettings } from '../settings/actions';
-import type { Lot, Auction, PlatformSettings } from '@/types';
+import type { Lot, Auction } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
@@ -41,6 +40,14 @@ export default function AdminLotsPage() {
     { id: 'auctionName', title: 'Leilão', options: auctionOptions },
   ], [lotStatusOptions, auctionOptions]);
 
+  const handleDelete = useCallback(async (id: string) => {
+      // O deleteLot no backend não precisa mais do auctionId
+      return deleteLot(id);
+  }, []);
+
+
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
   return (
     <div className="space-y-6" data-ai-id="admin-lots-page-container">
       <Card className="shadow-lg">
@@ -62,9 +69,9 @@ export default function AdminLotsPage() {
         </CardHeader>
         <CardContent>
            <ResourceDataTable<Lot>
-            columns={createColumns}
+            columns={columns}
             fetchAction={getLots}
-            deleteAction={(id: string) => deleteLot(id)}
+            deleteAction={handleDelete}
             searchColumnId="title"
             searchPlaceholder="Buscar por título do lote..."
             facetedFilterColumns={facetedFilterColumns}

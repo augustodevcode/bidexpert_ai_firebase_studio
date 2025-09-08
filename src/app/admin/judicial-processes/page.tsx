@@ -1,5 +1,7 @@
 // src/app/admin/judicial-processes/page.tsx
-import { PlusCircle, Gavel } from 'lucide-react';
+'use client';
+
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,8 +9,11 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { getJudicialProcesses, deleteJudicialProcess } from './actions';
 import { createColumns } from './columns';
 import type { JudicialProcess } from '@/types';
+import { PlusCircle, Gavel, FileUp } from 'lucide-react';
 
 export default function AdminJudicialProcessesPage() {
+  const columns = useMemo(() => createColumns({ handleDelete: deleteJudicialProcess }), []);
+  
   return (
     <div className="space-y-6">
       <Card className="shadow-lg">
@@ -22,15 +27,22 @@ export default function AdminJudicialProcessesPage() {
               Adicione, edite ou remova os processos judiciais.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/judicial-processes/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Processo
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+              <Button asChild variant="secondary">
+                <Link href="/admin/import/cnj">
+                    <FileUp className="mr-2 h-4 w-4" /> Importar do CNJ
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/admin/judicial-processes/new">
+                  <PlusCircle className="mr-2 h-4 w-4" /> Novo Processo
+                </Link>
+              </Button>
+          </div>
         </CardHeader>
         <CardContent>
            <ResourceDataTable<JudicialProcess>
-            columns={createColumns}
+            columns={columns}
             fetchAction={getJudicialProcesses}
             deleteAction={deleteJudicialProcess}
             searchColumnId="processNumber"
