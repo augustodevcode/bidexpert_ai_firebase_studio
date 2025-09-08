@@ -10,7 +10,7 @@ import {
     CategoryService,
     SubcategoryService,
     BemService
-} from '@bidexpert/services';
+} from '@bidexpert/core/services';
 
 import type { 
     Lot, Auction, UserProfileWithPermissions, Role, LotCategory, AuctioneerProfileInfo, 

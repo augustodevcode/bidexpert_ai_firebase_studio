@@ -4,7 +4,7 @@ import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, Fi
 import { isPast, isFuture } from 'date-fns';
 
 // A função slugify foi movida para @bidexpert/core
-export { slugify } from '@bidexpert/core';
+export { slugify } from '@bidexpert/core/lib/ui-helpers';
 
 /**
  * Validates if a given URL string is a valid, absolute URL for use in next/image.
@@ -200,13 +200,13 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
         const now = new Date();
         // Find the first stage that hasn't ended yet
         const upcomingOrActiveStage = auction.auctionStages
-            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)))
-            .sort((a, b) => new Date(a.startDate as string).getTime() - new Date(b.startDate as string).getTime())[0];
+            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
+            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
         
         if (upcomingOrActiveStage?.endDate) {
             return { 
                 effectiveLotEndDate: new Date(upcomingOrActiveStage.endDate), 
-                effectiveLotStartDate: new Date(upcomingOrActiveStage.startDate as string)
+                effectiveLotStartDate: new Date(upcomingOrActiveStage.startDate)
             };
         }
 
@@ -218,7 +218,7 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
         if (lastStage?.endDate) {
             return { 
                 effectiveLotEndDate: new Date(lastStage.endDate),
-                effectiveLotStartDate: new Date(lastStage.startDate as string)
+                effectiveLotStartDate: new Date(lastStage.startDate)
              };
         }
     }

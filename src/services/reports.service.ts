@@ -1,7 +1,7 @@
 // src/services/reports.service.ts
 import { ReportsRepository } from '@/repositories/reports.repository';
 import { prisma } from '@/lib/prisma';
-import type { AdminReportData, AdminDashboardStats, DashboardOverviewData } from '@/types';
+import type { AdminReportData, AdminDashboardStats, DashboardOverviewData } from '@bidexpert/core';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 

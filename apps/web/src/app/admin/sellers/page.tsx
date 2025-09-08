@@ -5,17 +5,17 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getComitentes, deletarComitente } from './actions';
+import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, Users } from 'lucide-react';
 import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminSellersPage() {
-  const columns = useMemo(() => createColumns({ handleDelete: deletarComitente }), []);
+  const columns = useMemo(() => createColumns(), []);
 
   return (
-    <div className="space-y-6" data-ai-id="admin-sellers-page-container">
+    <div className="space-y-6" data-ai-id="admin-sellers-page">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -36,8 +36,8 @@ export default function AdminSellersPage() {
         <CardContent>
            <ResourceDataTable<SellerProfileInfo>
             columns={columns}
-            fetchAction={getComitentes}
-            deleteAction={deletarComitente}
+            fetchAction={getSellers}
+            deleteAction={deleteSeller}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
           />
