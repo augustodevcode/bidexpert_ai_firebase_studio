@@ -2,14 +2,14 @@
 'use client';
 
 import CourtForm from '../../court-form';
-import { getCourt, updateCourt, deleteCourt, type CourtFormData } from '../../actions';
+import { getCourt, updateCourt, deleteCourt } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Scale } from 'lucide-react';
-import type { Court, StateInfo } from '@/types';
+import type { Court, StateInfo, CourtFormData } from '@bidexpert/core';
 
 export default function EditCourtPage() {
   const params = useParams();

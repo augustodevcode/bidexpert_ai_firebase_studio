@@ -10,7 +10,7 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { useToast } from '@/hooks/use-toast';
 import { Layers } from 'lucide-react';
-import type { Subcategory, LotCategory } from '@/types';
+import type { Subcategory, LotCategory } from '@bidexpert/core';
 
 export default function EditSubcategoryPage() {
   const params = useParams();

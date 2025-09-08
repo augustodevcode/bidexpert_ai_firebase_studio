@@ -2,7 +2,7 @@
 'use client';
 
 import JudicialDistrictForm from '../../judicial-district-form';
-import { getJudicialDistrict, updateJudicialDistrict, deleteJudicialDistrict, type JudicialDistrictFormData } from '../../actions';
+import { getJudicialDistrict, updateJudicialDistrict, deleteJudicialDistrict } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCourts } from '@/app/admin/courts/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
@@ -10,7 +10,7 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Map } from 'lucide-react';
-import type { JudicialDistrict, Court, StateInfo } from '@/types';
+import type { JudicialDistrict, Court, StateInfo, JudicialDistrictFormData } from '@bidexpert/core';
 
 
 export default function EditJudicialDistrictPage() {

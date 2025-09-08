@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import SubcategoryForm from '../subcategory-form';
 import { createSubcategoryAction, type SubcategoryFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import type { LotCategory } from '@/types';
+import type { LotCategory } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Layers, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';

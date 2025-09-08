@@ -9,7 +9,7 @@ import { getStates } from '@/app/admin/states/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Scale, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { StateInfo } from '@/types';
+import type { StateInfo } from '@bidexpert/core';
 
 function NewCourtPageContent({ states }: { states: StateInfo[]}) {
     const router = useRouter();
