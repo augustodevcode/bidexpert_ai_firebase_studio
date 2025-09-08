@@ -29,7 +29,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
 
   if (!winDetails.lot) {
      return (
-      <div className="text-center py-12">
+      <div className="text-center py-12" data-ai-id="checkout-lot-error">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Erro nos Dados do Lote</h1>
         <p className="text-muted-foreground">Não foi possível carregar os detalhes do lote associado a este arremate.</p>
@@ -76,7 +76,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
                     <span className="font-medium text-foreground">R$ {winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between">
-                    <span className="text-muted-foreground">Comissão do Leiloeiro ({checkoutTotals.commissionRate * 100}%)</span>
+                    <span className="text-muted-foreground">Comissão da Plataforma ({checkoutTotals.commissionRate * 100}%)</span>
                     <span className="font-medium text-foreground">R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                 </div>
                  <div className="flex justify-between">

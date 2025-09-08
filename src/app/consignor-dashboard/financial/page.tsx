@@ -16,7 +16,7 @@ import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
-import type { SellerDashboardData } from '@/types';
+import type { SellerDashboardData } from '@bidexpert/core';
 
 const initialStats: SellerDashboardData = {
   totalRevenue: 0,
@@ -29,7 +29,6 @@ const initialStats: SellerDashboardData = {
   totalCommission: 0,
   netValue: 0,
   paidCount: 0,
-  platformCommissionPercentage: 0,
 };
 
 export default function ConsignorFinancialPage() {
@@ -86,7 +85,7 @@ export default function ConsignorFinancialPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchFinancials, isUserAdmin, selectedSellerId, allSellers.length]);
 
-  const columns = useMemo(() => createFinancialColumns({ commissionRate: stats.platformCommissionPercentage || 5 }), [stats.platformCommissionPercentage]);
+  const columns = useMemo(() => createFinancialColumns({ commissionRate: 5 }), []);
   
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]

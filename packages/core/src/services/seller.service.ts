@@ -165,7 +165,6 @@ export class SellerService {
       salesRate,
       averageTicket,
       salesByMonth,
-      platformCommissionPercentage: commissionRate * 100,
     };
   }
 }
