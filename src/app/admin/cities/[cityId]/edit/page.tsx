@@ -9,7 +9,7 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Building } from 'lucide-react';
-import type { CityInfo, StateInfo } from '@/types';
+import type { CityInfo, StateInfo } from '@bidexpert/core';
 
 export default function EditCityPage() {
   const params = useParams();

@@ -2,13 +2,13 @@
 'use client';
 
 import CategoryForm from '../../category-form';
-import { getLotCategory, updateLotCategory, deleteLotCategory, type CategoryFormData } from '../../actions';
+import { getLotCategory, updateLotCategory, deleteLotCategory } from '../../actions';
+import type { LotCategory, CategoryFormData } from '@/types'; // Adicionado CategoryFormData
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Tag } from 'lucide-react';
-import type { LotCategory } from '@/types';
 
 export default function EditCategoryPage() {
   const params = useParams();
@@ -45,7 +45,7 @@ export default function EditCategoryPage() {
   
   const handleFormSubmit = async (data: CategoryFormData) => {
     setIsSubmitting(true);
-    const result = await updateLotCategory(categoryId, data as Partial<Pick<LotCategory, "name" | "description">>);
+    const result = await updateLotCategory(categoryId, data);
     if (result.success) {
         toast({ title: 'Sucesso!', description: 'Categoria atualizada.' });
         fetchPageData();

@@ -27,8 +27,8 @@ export default function NewStatePage() {
       router.push('/admin/states');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   }
 
   return (

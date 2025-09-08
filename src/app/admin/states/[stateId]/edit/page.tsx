@@ -8,6 +8,7 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { MapPin } from 'lucide-react';
+import type { StateInfo } from '@/types';
 
 export default function EditStatePage() {
   const params = useParams();
@@ -15,7 +16,7 @@ export default function EditStatePage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [stateData, setStateData] = useState<any | null>(null);
+  const [stateData, setStateData] = useState<StateInfo | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isViewMode, setIsViewMode] = useState(true);
@@ -81,6 +82,8 @@ export default function EditStatePage() {
         onCancel={() => setIsViewMode(true)}
         onSave={handleSave}
         onDelete={handleDelete}
+        deleteConfirmationMessage={(item: any) => `Este estado possui ${item.cityCount || 0} cidade(s) e elas também serão afetadas.`}
+        deleteConfirmation={(item: any) => (item.cityCount || 0) === 0}
     >
         <StateForm
             ref={formRef}
