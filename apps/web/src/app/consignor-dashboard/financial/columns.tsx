@@ -9,14 +9,14 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 
-export const createFinancialColumns = ({ commissionRate = 5 }: { commissionRate?: number }): ColumnDef<UserWin>[] => [
+export const createFinancialColumns = ({ commissionRate = 0.05 }: { commissionRate?: number }): ColumnDef<UserWin>[] => [
   {
     accessorKey: 'lot.title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Arrematado" />,
     cell: ({ row }) => (
       <div>
-        <p className="font-medium">{row.original.lot.title}</p>
-        <p className="text-xs text-muted-foreground">Lote #{row.original.lot.number}</p>
+        <p className="font-medium">{row.original.lot?.title || 'Lote não encontrado'}</p>
+        <p className="text-xs text-muted-foreground">Lote #{row.original.lot?.number}</p>
       </div>
     ),
   },
@@ -40,18 +40,18 @@ export const createFinancialColumns = ({ commissionRate = 5 }: { commissionRate?
     filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
   },
   {
-    accessorKey: 'commission',
-    header: () => <div className="text-right">Comissão ({commissionRate}%)</div>,
+    id: 'commission',
+    header: () => <div className="text-right">Comissão ({(commissionRate * 100).toFixed(1)}%)</div>,
     cell: ({ row }) => {
-      const amount = row.original.winningBidAmount * (commissionRate / 100);
+      const amount = row.original.winningBidAmount * commissionRate;
       return <div className="text-right">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
     },
   },
   {
-    accessorKey: 'netValue',
+    id: 'netValue',
     header: () => <div className="text-right">Valor a Receber</div>,
     cell: ({ row }) => {
-      const commission = row.original.winningBidAmount * (commissionRate / 100);
+      const commission = row.original.winningBidAmount * commissionRate;
       const amount = row.original.winningBidAmount - commission;
       return <div className="text-right font-bold">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
     },

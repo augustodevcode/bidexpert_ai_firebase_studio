@@ -6,13 +6,33 @@ import { type CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-sc
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
+// Helper function to fetch commission rate from the BFF
+async function getCommissionRate(): Promise<number> {
+  try {
+    // In a deployed environment, this URL should be absolute and internal.
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    const response = await fetch(`${baseUrl}/api/commission`);
+    
+    if (!response.ok) {
+        console.error(`Failed to fetch commission rate, status: ${response.status}`);
+        // Fallback to a default value if the service fails
+        return 0.05; 
+    }
+    const data = await response.json();
+    return data.default_commission_rate || 0.05;
+  } catch (error) {
+    console.error("Error fetching commission rate from BFF:", error);
+    // Fallback to a default value in case of network errors
+    return 0.05;
+  }
+}
+
+
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
-  private settingsService: PlatformSettingsService;
-
+  
   constructor() {
     this.userWinRepository = new UserWinRepository();
-    this.settingsService = new PlatformSettingsService();
   }
 
   async calculateTotals(winId: string): Promise<{
@@ -25,8 +45,8 @@ export class CheckoutService {
     if (!win) {
       throw new Error('Registro de arremate não encontrado.');
     }
-    const settings = await this.settingsService.getSettings();
-    const commissionRate = (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
+    
+    const commissionRate = await getCommissionRate();
     const commissionValue = win.winningBidAmount * commissionRate;
     const totalDue = win.winningBidAmount + commissionValue;
 

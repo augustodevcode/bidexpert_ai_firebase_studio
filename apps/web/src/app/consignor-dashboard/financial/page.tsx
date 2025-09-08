@@ -16,7 +16,7 @@ import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
-import type { SellerDashboardData } from '@bidexpert/services';
+import type { SellerDashboardData } from '@bidexpert/core';
 
 const initialStats: SellerDashboardData = {
   totalRevenue: 0,
@@ -26,6 +26,10 @@ const initialStats: SellerDashboardData = {
   salesRate: 0,
   averageTicket: 0,
   salesByMonth: [],
+  totalCommission: 0,
+  netValue: 0,
+  paidCount: 0,
+  platformCommissionPercentage: 0.05, // Default to 5%
 };
 
 export default function ConsignorFinancialPage() {
@@ -82,7 +86,7 @@ export default function ConsignorFinancialPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchFinancials, isUserAdmin, selectedSellerId, allSellers.length]);
 
-  const columns = useMemo(() => createFinancialColumns({ commissionRate: stats.platformCommissionPercentage || 5 }), [stats.platformCommissionPercentage]);
+  const columns = useMemo(() => createFinancialColumns({ commissionRate: (stats.platformCommissionPercentage || 5) / 100 }), [stats.platformCommissionPercentage]);
   
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]
@@ -130,19 +134,19 @@ export default function ConsignorFinancialPage() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto (Pago)</CardTitle><BarChart3 className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{(stats.totalRevenue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Comissão da Plataforma</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{stats.totalCommission.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{(stats.totalCommission || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
            <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Valor Líquido a Receber</CardTitle><CircleDollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold text-primary">{stats.netValue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold text-primary">{(stats.netValue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
           </Card>
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Lotes Pagos</CardTitle><Gavel className="h-4 w-4 text-muted-foreground" /></CardHeader>
-              <CardContent><div className="text-2xl font-bold">{stats.paidCount}</div></CardContent>
+              <CardContent><div className="text-2xl font-bold">{stats.paidCount || 0}</div></CardContent>
           </Card>
       </div>
 
