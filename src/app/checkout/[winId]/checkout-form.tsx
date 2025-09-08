@@ -6,7 +6,7 @@ import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { checkoutFormSchema, type CheckoutFormValues } from './checkout-form-schema';
+import { checkoutFormSchema, type CheckoutFormValues } from '@bidexpert/core';
 import { processPaymentAction } from './actions';
 
 import { Button } from '@/components/ui/button';

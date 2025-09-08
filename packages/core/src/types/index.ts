@@ -265,8 +265,6 @@ export interface Auction {
 
   // Location fields for presencial/hibrido
   address?: string | null;
-  city?: string | null; // Adicionado para compatibilidade
-  state?: string | null; // Adicionado para compatibilidade
   cityId?: string | null;
   stateId?: string | null;
   zipCode?: string | null;
@@ -901,6 +899,14 @@ export interface AdminDashboardStats {
     sellers: number;
 }
 
+export interface UserReportData {
+  totalLotsWon: number;
+  totalAmountSpent: number;
+  totalBidsPlaced: number;
+  spendingByCategory: { name: string; value: number; }[];
+}
+
+
 export interface SellerDashboardData {
   totalRevenue: number;
   totalAuctions: number;
@@ -909,19 +915,10 @@ export interface SellerDashboardData {
   salesRate: number;
   averageTicket: number;
   salesByMonth: { name: string; Faturamento: number }[];
-  totalCommission?: number;
+  platformCommissionPercentage?: number; 
+  totalCommission?: number; 
   netValue?: number;
   paidCount?: number;
-}
-
-export interface AuctioneerDashboardData {
-  totalRevenue: number;
-  totalAuctions: number;
-  totalLots: number;
-  lotsSoldCount: number;
-  salesRate: number;
-  averageTicket: number;
-  salesByMonth: { name: string; Faturamento: number }[];
 }
 
 
@@ -945,96 +942,7 @@ export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-sc
 export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
 export type VehicleMakeFormData = z.infer<typeof import('@/app/admin/vehicle-makes/form-schema').vehicleMakeFormSchema>;
 export type VehicleModelFormData = z.infer<typeof import('@/app/admin/vehicle-models/form-schema').vehicleModelFormSchema>;
-export type CheckoutFormValues = z.infer<typeof import('@/app/checkout/[winId]/checkout-form-schema').checkoutFormSchema>;
 export type DocumentTemplateFormData = z.infer<typeof import('@/app/admin/document-templates/document-template-form-schema').documentTemplateFormSchema>;
 export type PlatformSettingsFormData = z.infer<typeof import('@/app/admin/settings/settings-form-schema').platformSettingsFormSchema>;
 export type RegistrationFormValues = z.infer<typeof import('@/app/auth/register/form-schema').registrationFormSchema>;
-
-
-// ============================================================================
-// DATABASE ADAPTER INTERFACE
-// ============================================================================
-export interface DatabaseAdapter {
-    getLots(auctionId?: string): Promise<Lot[]>;
-    getLot(id: string): Promise<Lot | null>;
-    createLot(lotData: Partial<Lot>): Promise<{ success: boolean; message: string; lotId?: string; }>;
-    updateLot(id: string, updates: Partial<LotFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteLot(id: string): Promise<{ success: boolean; message: string; }>;
-    
-    getAuctions(): Promise<Auction[]>;
-    getAuction(id: string): Promise<Auction | null>;
-    createAuction(auctionData: Partial<Auction>): Promise<{ success: boolean; message: string; auctionId?: string; }>;
-    updateAuction(id: string, updates: Partial<Auction>): Promise<{ success: boolean; message: string; }>;
-    deleteAuction(id: string): Promise<{ success: boolean, message: string }>;
-
-    getLotsByIds(ids: string[]): Promise<Lot[]>;
-    getLotCategories(): Promise<LotCategory[]>;
-    
-    getSubcategoriesByParent(parentCategoryId?: string): Promise<Subcategory[]>;
-    getSubcategory(id: string): Promise<Subcategory | null>;
-    createLotCategory(data: Partial<LotCategory>): Promise<{ success: boolean, message: string }>;
-    createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string, subcategoryId?: string }>;
-    updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }>;
-    
-    getStates(): Promise<StateInfo[]>;
-    getCities(stateId?: string): Promise<CityInfo[]>;
-    createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string; }>;
-    updateState(id: string, data: Partial<StateFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteState(id: string): Promise<{ success: boolean; message: string; }>;
-    createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }>;
-    updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteCity(id: string): Promise<{ success: boolean; message: string; }>;
-
-    getSellers(): Promise<SellerProfileInfo[]>;
-    getSeller(id: string): Promise<SellerProfileInfo | null>;
-    createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }>;
-    updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteSeller(id: string): Promise<{ success: boolean; message: string; }>;
-
-    getAuctioneers(): Promise<AuctioneerProfileInfo[]>;
-    getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>;
-    createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }>;
-    updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }>;
-
-    getCourts(): Promise<Court[]>;
-    getJudicialDistricts(): Promise<JudicialDistrict[]>;
-    getJudicialBranches(): Promise<JudicialBranch[]>;
-    getJudicialProcesses(): Promise<JudicialProcess[]>;
-    getBem(id: string): Promise<Bem | null>;
-    getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]>;
-    getBensByIds(ids: string[]): Promise<Bem[]>;
-    createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }>;
-    updateCourt(id: string, data: Partial<CourtFormData>): Promise<{ success: boolean; message: string; }>;
-    createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }>;
-    createJudicialBranch(data: JudicialBranchFormData): Promise<{ success: boolean; message: string; branchId?: string; }>;
-    createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }>;
-    createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }>;
-    updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }>;
-    deleteBem(id: string): Promise<{ success: boolean, message: string }>;
-
-    getUsersWithRoles(): Promise<UserProfileWithPermissions[]>;
-    getUserProfileData(userIdOrEmail: string): Promise<UserProfileWithPermissions | null>;
-    createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }>;
-    getRoles(): Promise<Role[]>;
-    createRole(role: Omit<Role, 'id' | 'createdAt' | 'updatedAt'>): Promise<{success: boolean;message: string;}>;
-    updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string; }>;
-
-    getMediaItems(): Promise<MediaItem[]>;
-    createMediaItem(item: Partial<Omit<MediaItem, 'id'>>, url: string, userId: string): Promise<{ success: boolean; message: string; item?: MediaItem; }>;
-
-    getPlatformSettings(): Promise<PlatformSettings | null>;
-    createPlatformSettings(data: PlatformSettings): Promise<{ success: boolean; message: string; }>;
-    updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }>;
-    
-    saveContactMessage(message: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string }>;
-
-    // Optional methods that may not be on all adapters
-    getDirectSaleOffers?(): Promise<DirectSaleOffer[]>;
-    getDocumentTemplates?(): Promise<DocumentTemplate[]>;
-    getDocumentTemplate?(id: string): Promise<DocumentTemplate | null>;
-    saveUserDocument?(userId: string, documentTypeId: string, fileUrl: string, fileName: string): Promise<{ success: boolean, message: string }>;
-
-    close?(): Promise<void>;
-}
+export type CheckoutFormValues = z.infer<typeof import('./lib/zod-schemas').checkoutFormSchema>;

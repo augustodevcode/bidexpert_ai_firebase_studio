@@ -1,5 +1,5 @@
 // packages/core/src/services/checkout.service.ts
-import { UserWinRepository } from '../repositories/user-win.repository';
+import { UserWinRepository } from './../repositories/user-win.repository';
 import { CheckoutRepository } from '../repositories/checkout.repository';
 import type { CheckoutFormValues } from '../lib/zod-schemas';
 import { revalidatePath } from 'next/cache';
