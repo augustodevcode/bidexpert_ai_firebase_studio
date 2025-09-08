@@ -1,7 +1,7 @@
 // src/app/admin/subcategories/new/page.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import SubcategoryForm from '../subcategory-form';
 import { createSubcategoryAction, type SubcategoryFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -14,15 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 function NewSubcategoryPageContent({ categories }: { categories: LotCategory[] }) {
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<any>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-
-    const handleSave = () => {
-        formRef.current?.requestSubmit();
-    };
 
     async function handleCreateSubcategory(data: SubcategoryFormData) {
-        setIsSubmitting(true);
         const result = await createSubcategoryAction(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Subcategoria criada.' });
@@ -30,24 +23,23 @@ function NewSubcategoryPageContent({ categories }: { categories: LotCategory[] }
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
         }
-        setIsSubmitting(false);
+        return result;
     }
     
     return (
         <FormPageLayout
-            formTitle="Nova Subcategoria"
-            formDescription="Crie uma nova subcategoria e associe-a a uma categoria principal."
+            pageTitle="Nova Subcategoria"
+            pageDescription="Crie uma nova subcategoria e associe-a a uma categoria principal."
             icon={Layers}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/subcategories')}
+            isEdit={false}
         >
-            <SubcategoryForm
-                ref={formRef}
-                parentCategories={categories}
-                onSubmitAction={handleCreateSubcategory}
-            />
+            {(formRef) => (
+                 <SubcategoryForm
+                    ref={formRef}
+                    parentCategories={categories}
+                    onSubmitAction={handleCreateSubcategory}
+                />
+            )}
         </FormPageLayout>
     );
 }
@@ -65,7 +57,7 @@ export default function NewSubcategoryPage() {
     }, []);
 
     if (isLoading) {
-        return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>
+        return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>
     }
     
     return <NewSubcategoryPageContent categories={categories} />;

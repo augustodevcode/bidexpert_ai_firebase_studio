@@ -1,7 +1,7 @@
 // src/app/admin/judicial-districts/new/page.tsx
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import JudicialDistrictForm from '../judicial-district-form';
 import { createJudicialDistrict, type JudicialDistrictFormData } from '../actions';
 import { getStates } from '@/app/admin/states/actions';
@@ -15,15 +15,8 @@ import type { Court, StateInfo } from '@/types';
 function NewJudicialDistrictPageContent({ courts, states }: { courts: Court[], states: StateInfo[]}) {
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<any>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     
-    const handleSave = () => {
-        formRef.current?.requestSubmit();
-    };
-
     async function handleCreate(data: JudicialDistrictFormData) {
-        setIsSubmitting(true);
         const result = await createJudicialDistrict(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Comarca criada.' });
@@ -31,25 +24,24 @@ function NewJudicialDistrictPageContent({ courts, states }: { courts: Court[], s
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
         }
-        setIsSubmitting(false);
+        return result;
     }
     
     return (
          <FormPageLayout
-            formTitle="Nova Comarca"
-            formDescription="Preencha os detalhes para cadastrar uma nova comarca."
+            pageTitle="Nova Comarca"
+            pageDescription="Preencha os detalhes para cadastrar uma nova comarca."
             icon={MapPin}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/judicial-districts')}
+            isEdit={false}
         >
-            <JudicialDistrictForm
-                ref={formRef}
-                states={states}
-                courts={courts}
-                onSubmitAction={handleCreate}
-            />
+            {(formRef) => (
+                <JudicialDistrictForm
+                    ref={formRef}
+                    states={states}
+                    courts={courts}
+                    onSubmitAction={handleCreate}
+                />
+            )}
         </FormPageLayout>
     );
 }

@@ -1,28 +1,21 @@
 // src/app/admin/judicial-branches/new/page.tsx
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import JudicialBranchForm from '../judicial-branch-form';
 import { createJudicialBranch, type JudicialBranchFormData } from '../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Building2, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import type { JudicialDistrict } from '@bidexpert/core';
 
 function NewJudicialBranchPageContent({ districts }: { districts: JudicialDistrict[] }) {
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<any>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const handleSave = () => {
-        formRef.current?.requestSubmit();
-    };
 
     async function handleCreate(data: JudicialBranchFormData) {
-        setIsSubmitting(true);
         const result = await createJudicialBranch(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Vara judicial criada.' });
@@ -30,24 +23,23 @@ function NewJudicialBranchPageContent({ districts }: { districts: JudicialDistri
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
         }
-        setIsSubmitting(false);
+        return result;
     }
     
     return (
         <FormPageLayout
-            formTitle="Nova Vara Judicial"
-            formDescription="Preencha os detalhes para cadastrar uma nova vara e associe-a a uma comarca."
+            pageTitle="Nova Vara Judicial"
+            pageDescription="Preencha os detalhes para cadastrar uma nova vara e associe-a a uma comarca."
             icon={Building2}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/judicial-branches')}
+            isEdit={false}
         >
-            <JudicialBranchForm
-                ref={formRef}
-                districts={districts}
-                onSubmitAction={handleCreate}
-            />
+             {(formRef) => (
+                <JudicialBranchForm
+                    ref={formRef}
+                    districts={districts}
+                    onSubmitAction={handleCreate}
+                />
+            )}
         </FormPageLayout>
     );
 }

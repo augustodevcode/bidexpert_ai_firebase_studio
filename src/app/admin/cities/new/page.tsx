@@ -9,45 +9,37 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import { Building, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import type { StateInfo } from '@/types';
+import type { StateInfo } from '@bidexpert/core';
 
 function NewCityPageContent({ states }: { states: StateInfo[] }) {
   const router = useRouter();
   const { toast } = useToast();
-  const formRef = useRef<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = () => {
-    formRef.current?.requestSubmit();
-  };
-
-  async function handleCreateCity(data: CityFormData) {
-    setIsSubmitting(true);
+  async function handleCreate(data: CityFormData) {
     const result = await createCity(data);
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Cidade criada com sucesso.' });
       router.push('/admin/cities');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
-      setIsSubmitting(false); // Only stop loading on error
     }
+    return result;
   }
 
   return (
     <FormPageLayout
-      formTitle="Nova Cidade"
-      formDescription="Preencha os detalhes para cadastrar uma nova cidade."
+      pageTitle="Nova Cidade"
+      pageDescription="Preencha os detalhes para cadastrar uma nova cidade."
       icon={Building}
-      isViewMode={false} // Always in edit mode for new page
-      isSubmitting={isSubmitting}
-      onSave={handleSave}
-      onCancel={() => router.push('/admin/cities')}
+      isEdit={false}
     >
-      <CityForm
-        ref={formRef}
-        states={states}
-        onSubmitAction={handleCreateCity}
-      />
+      {(formRef) => (
+        <CityForm
+          ref={formRef}
+          states={states}
+          onSubmitAction={handleCreate}
+        />
+      )}
     </FormPageLayout>
   );
 }
@@ -64,7 +56,7 @@ export default function NewCityPage() {
   }, []);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /></div>;
+    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>;
   }
 
   return <NewCityPageContent states={states} />;

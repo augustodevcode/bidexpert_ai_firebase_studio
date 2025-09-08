@@ -1,7 +1,7 @@
 // src/app/admin/courts/new/page.tsx
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import CourtForm from '../court-form';
 import { createCourt, type CourtFormData } from '../actions';
@@ -14,15 +14,8 @@ import type { StateInfo } from '@bidexpert/core';
 function NewCourtPageContent({ states }: { states: StateInfo[]}) {
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<any>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const handleSave = () => {
-        formRef.current?.requestSubmit();
-    };
 
     async function handleCreate(data: CourtFormData) {
-        setIsSubmitting(true);
         const result = await createCourt(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Tribunal criado.' });
@@ -30,24 +23,23 @@ function NewCourtPageContent({ states }: { states: StateInfo[]}) {
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
         }
-        setIsSubmitting(false);
+        return result;
     }
     
     return (
          <FormPageLayout
-            formTitle="Novo Tribunal"
-            formDescription="Preencha os detalhes para cadastrar um novo tribunal de justiça."
+            pageTitle="Novo Tribunal"
+            pageDescription="Preencha os detalhes para cadastrar um novo tribunal de justiça."
             icon={Scale}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/courts')}
+            isEdit={false}
         >
-            <CourtForm
-                ref={formRef}
-                states={states}
-                onSubmitAction={handleCreate}
-            />
+            {(formRef) => (
+                <CourtForm
+                    ref={formRef}
+                    states={states}
+                    onSubmitAction={handleCreate}
+                />
+            )}
         </FormPageLayout>
     );
 }

@@ -1,8 +1,7 @@
 // src/app/admin/judicial-processes/new/page.tsx
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect } from 'react';
 import JudicialProcessForm from '../judicial-process-form';
 import { createJudicialProcessAction, type JudicialProcessFormValues } from '../actions';
 import { getCourts } from '@/app/admin/courts/actions';
@@ -11,6 +10,7 @@ import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Gavel, Loader2 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import type { Court, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '@/types';
 
@@ -23,15 +23,8 @@ function NewJudicialProcessPageContent({ courts, allDistricts, allBranches, sell
 }) {
     const router = useRouter();
     const { toast } = useToast();
-    const formRef = useRef<any>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
-    
-    const handleSave = () => {
-        formRef.current?.requestSubmit();
-    };
 
     async function handleCreate(data: JudicialProcessFormValues) {
-        setIsSubmitting(true);
         const result = await createJudicialProcessAction(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Processo judicial criado.' });
@@ -39,27 +32,26 @@ function NewJudicialProcessPageContent({ courts, allDistricts, allBranches, sell
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
         }
-        setIsSubmitting(false);
+        return result;
     }
     
     return (
          <FormPageLayout
-            formTitle="Novo Processo Judicial"
-            formDescription="Cadastre um novo processo e suas partes para vincular a bens e lotes."
+            pageTitle="Novo Processo Judicial"
+            pageDescription="Cadastre um novo processo e suas partes para vincular a bens e lotes."
             icon={Gavel}
-            isViewMode={false}
-            isSubmitting={isSubmitting}
-            onSave={handleSave}
-            onCancel={() => router.push('/admin/judicial-processes')}
+            isEdit={false}
         >
-            <JudicialProcessForm
-                ref={formRef}
-                courts={courts}
-                allDistricts={allDistricts}
-                allBranches={allBranches}
-                sellers={sellers}
-                onSubmitAction={handleCreate}
-            />
+            {(formRef) => (
+                <JudicialProcessForm
+                    ref={formRef}
+                    courts={courts}
+                    allDistricts={allDistricts}
+                    allBranches={allBranches}
+                    sellers={sellers}
+                    onSubmitAction={handleCreate}
+                />
+            )}
         </FormPageLayout>
     );
 }

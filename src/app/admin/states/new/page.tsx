@@ -1,7 +1,7 @@
 // src/app/admin/states/new/page.tsx
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React from 'react';
 import { useRouter } from 'next/navigation';
 import StateForm from '../state-form';
 import { createState, type StateFormData } from '../actions';
@@ -12,39 +12,31 @@ import { useToast } from '@/hooks/use-toast';
 export default function NewStatePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const formRef = useRef<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  const handleSave = () => {
-    formRef.current?.requestSubmit();
-  };
   
   async function handleCreateState(data: StateFormData) {
-    setIsSubmitting(true);
     const result = await createState(data);
     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Estado criado.' });
       router.push('/admin/states');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
-      setIsSubmitting(false);
     }
+    return result;
   }
 
   return (
     <FormPageLayout
-        formTitle="Novo Estado"
-        formDescription="Preencha os detalhes para cadastrar um novo estado."
+        pageTitle="Novo Estado"
+        pageDescription="Preencha os detalhes para cadastrar um novo estado."
         icon={MapPin}
-        isViewMode={false}
-        isSubmitting={isSubmitting}
-        onSave={handleSave}
-        onCancel={() => router.push('/admin/states')}
+        isEdit={false}
     >
-        <StateForm
-            ref={formRef}
-            onSubmitAction={handleCreateState}
-        />
+        {(formRef) => (
+            <StateForm
+                ref={formRef}
+                onSubmitAction={handleCreateState}
+            />
+        )}
     </FormPageLayout>
   );
 }
