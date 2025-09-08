@@ -27,13 +27,15 @@
 ## DOING
 - **Item 25: Refatorar Acesso a Dados (Prioridade 1)**
   - **Objetivo**: Mover todas as chamadas diretas ao `prisma` das `actions.ts` e `services` para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
-  - **Status**: Iniciando com a criação dos repositórios para o fluxo de checkout (`UserWinRepository`, `CheckoutRepository`).
+  - **Status**:
+    - [x] Repositórios de Checkout (`UserWinRepository`, `CheckoutRepository`) implementados.
+    - [ ] Repositórios de Leiloeiros (`AuctioneerRepository`).
 
 ## NEXT
+- **Item 25 (Continuação):** Concluir a refatoração para todas as entidades restantes (`Auction`, `Lot`, `User`, `Seller`, etc.).
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
 - **Item 27: Padronizar Idioma (Prioridade 3)**
   - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
     - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. Próximo passo é conectar a fontes de dados reais.
-

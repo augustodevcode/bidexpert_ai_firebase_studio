@@ -154,3 +154,29 @@ export class AuctioneerService {
       totalAuctions: auctioneerData._count.auctions,
       totalLots,
       lotsSoldCount,
+      salesRate,
+      averageTicket,
+      salesByMonth,
+    };
+  }
+
+  async getAuctioneersPerformance(): Promise<any[]> {
+    const auctioneers = await this.auctioneerRepository.findAll();
+    const performanceData = await Promise.all(
+        auctioneers.map(async (auctioneer) => {
+            const dashboardData = await this.getAuctioneerDashboardData(auctioneer.id);
+            return {
+                id: auctioneer.id,
+                name: auctioneer.name,
+                totalAuctions: dashboardData?.totalAuctions || 0,
+                totalLots: dashboardData?.totalLots || 0,
+                lotsSoldCount: dashboardData?.lotsSoldCount || 0,
+                totalRevenue: dashboardData?.totalRevenue || 0,
+                averageTicket: dashboardData?.averageTicket || 0,
+                salesRate: dashboardData?.salesRate || 0,
+            };
+        })
+    );
+    return performanceData.sort((a,b) => b.totalRevenue - a.totalRevenue);
+  }
+}
