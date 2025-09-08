@@ -17,183 +17,167 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import type { LucideIcon } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-
-interface FormPageLayoutProps {
-  formTitle: string;
-  formDescription: string;
-  icon?: React.ElementType;
-  children: React.ReactNode;
-  isViewMode?: boolean;
-  isLoading?: boolean;
-  isSubmitting?: boolean;
-  onSave?: () => void;
-  onSaveAndNew?: () => void;
-  onDelete?: () => Promise<void>;
-  onCancel?: () => void;
-  onEnterEditMode?: () => void;
-  // Props for navigation
-  onNavigateNext?: () => void;
-  onNavigatePrev?: () => void;
-  hasNext?: boolean;
-  hasPrev?: boolean;
+interface FormPageLayoutProps<T> {
+  pageTitle: string;
+  fetchAction: (id: string) => Promise<T | null>;
+  deleteAction?: (id: string) => Promise<{ success: boolean; message: string; }>;
+  entityId?: string;
+  entityName?: string;
+  routeBase?: string;
+  icon?: LucideIcon;
+  children: (initialData: T, formRef: React.RefObject<any>, handleSubmit: (submitFn: () => Promise<any>) => void) => React.ReactNode;
+  isEdit: boolean;
+  pageDescription?: string;
+  deleteConfirmation?: (item: T) => boolean;
+  deleteConfirmationMessage?: (item: T) => string;
 }
 
-function FormToolbar({
-  isViewMode,
-  isSubmitting,
-  onSave,
-  onSaveAndNew,
-  onDelete,
-  onEnterEditMode,
-  onNavigateNext,
-  onNavigatePrev,
-  hasNext,
-  hasPrev,
-}: Pick<FormPageLayoutProps, 'isViewMode' | 'isSubmitting' | 'onSave' | 'onSaveAndNew' | 'onDelete' | 'onEnterEditMode' | 'onNavigateNext' | 'onNavigatePrev' | 'hasNext' | 'hasPrev'>) {
-  
-  if (isViewMode) {
-    return (
-        <div className="flex justify-between items-center w-full">
-             <div className="flex items-center gap-1">
-                <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext}><ChevronRight className="h-4 w-4" /></Button>
-             </div>
-             <Button onClick={onEnterEditMode}>
-                <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
-             </Button>
-        </div>
-    )
-  }
-
-  return (
-    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2">
-      <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={true}><Copy className="mr-2 h-4 w-4" /> Clonar</Button>
-        {onDelete && (
-             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isSubmitting}>
-                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. Isso irá excluir permanentemente este registro.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">
-                    Confirmar Exclusão
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-        )}
-        <Button variant="outline" size="sm" disabled={true}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
-      </div>
-      <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-            Salvar e Novo
-        </Button>
-        <Button onClick={onSave} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-            Salvar
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-export default function FormPageLayout({
-  formTitle,
-  formDescription,
+export default function FormPageLayout<T extends { id: string, name?: string | null, title?: string | null }>({
+  pageTitle,
+  pageDescription,
   icon: Icon,
   children,
-  isViewMode = false,
-  isLoading = false,
-  isSubmitting = false,
-  onSave,
-  onSaveAndNew,
-  onDelete,
-  onCancel,
-  onEnterEditMode,
-  onNavigateNext,
-  onNavigatePrev,
-  hasNext,
-  hasPrev,
-}: FormPageLayoutProps) {
+  fetchAction,
+  deleteAction,
+  deleteConfirmation,
+  deleteConfirmationMessage,
+  isEdit,
+  entityId,
+  entityName,
+  routeBase,
+}: FormPageLayoutProps<T>) {
   const router = useRouter();
+  const formRef = React.useRef<any>(null);
+  const { toast } = useToast();
 
-  const handleCancel = onCancel || (() => router.back());
+  const [initialData, setInitialData] = React.useState<T | null>(null);
+  const [isViewMode, setIsViewMode] = React.useState(isEdit);
+  const [isLoading, setIsLoading] = React.useState(isEdit);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
+  const fetchData = React.useCallback(async () => {
+    if (isEdit && entityId) {
+      setIsLoading(true);
+      try {
+        const data = await fetchAction(entityId);
+        if (data) {
+          setInitialData(data);
+        } else {
+          router.push(routeBase || '/admin/dashboard');
+          toast({ title: "Erro", description: `${entityName} não encontrado.`, variant: "destructive" });
+        }
+      } catch (e: any) {
+        console.error(`Failed to fetch ${entityName}:`, e);
+        toast({ title: "Erro", description: `Falha ao buscar dados d${entityName === 'Cidade' || entityName === 'Comarca' ? 'a' : 'o'} ${entityName}.`, variant: "destructive" });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  }, [isEdit, entityId, fetchAction, router, toast, entityName, routeBase]);
+
+  React.useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleSubmit = async (submitFn: () => Promise<any>) => {
+    setIsSubmitting(true);
+    const result = await submitFn();
+    setIsSubmitting(false);
+    if (result && result.success) {
+      toast({ title: 'Sucesso!', description: `${entityName} salvo com sucesso.` });
+      fetchData(); // Refetch data to show latest updates
+      setIsViewMode(true); // Return to view mode on success
+    } else if(result) {
+      toast({ title: `Erro ao Salvar ${entityName}`, description: result.message, variant: 'destructive' });
+    }
+  };
+  
+  const handleSave = () => {
+    formRef.current?.requestSubmit();
+  }
+
+  const handleDelete = async () => {
+    if (deleteAction && entityId) {
+        const itemToDelete = initialData;
+        if (deleteConfirmation && itemToDelete && !deleteConfirmation(itemToDelete)) {
+            toast({ title: "Ação não permitida", description: deleteConfirmationMessage ? deleteConfirmationMessage(itemToDelete) : `Este item não pode ser excluído.`, variant: "destructive" });
+            return;
+        }
+
+        const result = await deleteAction(entityId);
+        if (result.success) {
+            toast({ title: "Sucesso!", description: result.message });
+            router.push(routeBase || '/admin/dashboard');
+            router.refresh(); // Ensure the list page is updated
+        } else {
+            toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+        }
+    }
+  };
+
+  const finalTitle = isEdit ? (isViewMode ? 'Visualizar' : 'Editar') : pageTitle;
+  const finalDescription = isEdit ? (initialData?.name || initialData?.title || 'Carregando...') : pageDescription || '';
+  
   if (isLoading) {
     return (
-        <div className="flex justify-center items-center h-full">
-            <Loader2 className="h-8 w-8 animate-spin" />
+        <div className="flex justify-center items-center h-full min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
   }
+  
+  if (isEdit && !initialData) {
+     return <div className="text-center py-10">Não foi possível carregar os dados para este registro.</div>;
+  }
 
   return (
-    <Card className="shadow-lg w-full">
+    <Card className="shadow-lg w-full" data-ai-id={`form-page-layout-${entityId || 'new'}`}>
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <div className="flex items-center gap-3">
               {Icon && <Icon className="h-8 w-8 text-primary" />}
               <div>
-                <CardTitle className="text-2xl font-bold font-headline">{formTitle}</CardTitle>
-                <CardDescription>{formDescription}</CardDescription>
+                <CardTitle className="text-2xl font-bold font-headline">{finalTitle}</CardTitle>
+                <CardDescription>{finalDescription}</CardDescription>
               </div>
             </div>
-            <div className="hidden sm:block">
-                 <FormToolbar 
-                    isViewMode={isViewMode} 
-                    isSubmitting={isSubmitting}
-                    onSave={onSave}
-                    onSaveAndNew={onSaveAndNew}
-                    onDelete={onDelete}
-                    onEnterEditMode={onEnterEditMode}
-                    onNavigateNext={onNavigateNext}
-                    onNavigatePrev={onNavigatePrev}
-                    hasNext={hasNext}
-                    hasPrev={hasPrev}
-                />
-            </div>
+            {isEdit && (
+                 <div className="flex items-center gap-2">
+                    {isViewMode ? (
+                        <Button onClick={() => setIsViewMode(false)}>
+                            <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
+                        </Button>
+                    ) : (
+                         <>
+                            <Button variant="outline" onClick={() => setIsViewMode(true)} disabled={isSubmitting}>
+                                <XCircle className="mr-2 h-4 w-4" /> Cancelar Edição
+                            </Button>
+                            <Button onClick={handleSave} disabled={isSubmitting}>
+                                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                                Salvar Alterações
+                            </Button>
+                        </>
+                    )}
+                 </div>
+            )}
         </div>
       </CardHeader>
       <fieldset disabled={isViewMode || isSubmitting} className="group">
         <CardContent className="p-6 bg-secondary/20 group-disabled:bg-muted/10 group-disabled:cursor-not-allowed">
-            {children}
+            {initialData ? children(initialData, formRef, handleSubmit) : children(null, formRef, handleSubmit)}
         </CardContent>
-        <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t">
-             {/* Toolbar for mobile */}
-             <div className="sm:hidden w-full">
-                 <FormToolbar 
-                    isViewMode={isViewMode} 
-                    isSubmitting={isSubmitting}
-                    onSave={onSave}
-                    onSaveAndNew={onSaveAndNew}
-                    onDelete={onDelete}
-                    onEnterEditMode={onEnterEditMode}
-                    onNavigateNext={onNavigateNext}
-                    onNavigatePrev={onNavigatePrev}
-                    hasNext={hasNext}
-                    hasPrev={hasPrev}
-                 />
-            </div>
-            {!isViewMode && (
-                <div className="w-full flex justify-end">
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
-                        <XCircle className="mr-2 h-4 w-4"/> Cancelar
-                    </Button>
-                </div>
-            )}
-        </CardFooter>
+        {!isEdit && ( // Footer with actions only for NEW pages
+            <CardFooter className="flex justify-end p-6 border-t">
+                 <Button onClick={handleSave} disabled={isSubmitting}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                    Criar Registro
+                </Button>
+            </CardFooter>
+        )}
       </fieldset>
     </Card>
   );

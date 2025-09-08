@@ -19,25 +19,19 @@
 - **Item 17: Reloteamento de Bens:** Created logic to unlink assets from unsold lots.
 - **Item 18: Implementação de Pagamento Parcelado:** Created the installment payment flow and financial panel.
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refactored the database, services, and UI to support pricing by auction stage.
-- **Item 19: Padronização de Identificadores `data-ai-id`:** Added `data-ai-id` attributes to all UI containers and structural components.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**: Completed the correction of architectural gaps, including standardizing nomenclature and repository usage.
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
+- **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
 
 ## DOING
-- **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**
-  - **Objetivo**: Mover todas as chamadas diretas ao `prisma` das `services` restantes para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
-  - **Status**:
-    - [x] Repositórios de Checkout (`UserWinRepository`, `CheckoutRepository`) implementados.
-    - [x] Repositórios de Leiloeiros (`AuctioneerRepository`).
-    - [x] Repositórios de Leilões (`AuctionRepository`).
-    - [x] Repositórios de Bens e Entidades Judiciais (`BemRepository`, `CourtRepository`, `JudicialBranchRepository`, `JudicialDistrictRepository`, `JudicialProcessRepository`).
-    - [x] Repositórios de Entidades-Chave (`Lot`, `Seller`, `Category`, `State`, `City`, `User`, etc.).
-    - [ ] **A FAZER:** Implementar Repositórios para `Bid`, `UserWin`, `Notification` e `Habilitation` e refatorar os serviços correspondentes.
-
-## NEXT
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
+  - **Status**:
+    - [x] Adicionado `data-ai-id` às páginas de edição de Leiloeiro e Comitente.
+    - [ ] **A FAZER:** Instrumentar as páginas de listagem (`/admin/lots`, etc.) e outras páginas críticas.
+
+## NEXT
 - **Item 27: Padronizar Idioma (Prioridade 3)**
   - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
