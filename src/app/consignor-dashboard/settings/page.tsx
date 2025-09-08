@@ -4,9 +4,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { getSeller, getSellers } from '@/app/admin/sellers/actions';
-import { updateConsignorProfile } from '../actions';
+import { atualizarPerfilComitente } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
-import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@/types';
+import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@bidexpert/core';
 import { Loader2, Users } from 'lucide-react';
 import SellerForm from '@/app/admin/sellers/seller-form';
 import { useToast } from '@/hooks/use-toast';
@@ -97,7 +97,7 @@ export default function ConsignorSettingsPage() {
     if (!sellerIdToUpdate) {
       return { success: false, message: 'ID do comitente não encontrado. Não é possível salvar.' };
     }
-    return updateConsignorProfile(sellerIdToUpdate, data);
+    return atualizarPerfilComitente(sellerIdToUpdate, data);
   };
   
   // Render loading state
@@ -158,10 +158,6 @@ export default function ConsignorSettingsPage() {
           initialData={sellerProfile}
           judicialBranches={judicialBranches}
           onSubmitAction={handleUpdate}
-          formTitle="Minhas Configurações de Comitente"
-          formDescription="Atualize os detalhes do seu perfil público de vendedor."
-          submitButtonText="Salvar Alterações"
-          successRedirectPath="/consignor-dashboard/overview"
         />
       ) : (
         // Show a loader while the selected seller's profile is being fetched

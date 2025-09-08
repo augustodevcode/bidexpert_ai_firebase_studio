@@ -1,3 +1,4 @@
+
 // src/app/admin/sellers/analysis/actions.ts
 /**
  * @fileoverview Server Actions for the Seller Analysis Dashboard.
@@ -7,7 +8,7 @@
 
 import { SellerService } from '@bidexpert/services';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import type { SellerDashboardData } from '@/types';
+import type { SellerDashboardData } from '@bidexpert/core';
 
 export interface SellerPerformanceData {
   id: string;
@@ -25,8 +26,19 @@ const sellerService = new SellerService();
  */
 export async function getSellersPerformanceAction(): Promise<SellerPerformanceData[]> {
     try {
-        // A lógica de agregação foi movida para o SellerService
-        return await sellerService.getSellersPerformance();
+        const sellers = await sellerService.getSellers();
+        const performanceData = await Promise.all(sellers.map(async (seller) => {
+            const dashboardData = await sellerService.getSellerDashboardData(seller.id);
+            return {
+                id: seller.id,
+                name: seller.name,
+                totalAuctions: dashboardData?.totalAuctions || 0,
+                totalLots: dashboardData?.totalLots || 0,
+                totalRevenue: dashboardData?.totalRevenue || 0,
+                averageTicket: dashboardData?.averageTicket || 0,
+            };
+        }));
+        return performanceData.sort((a,b) => b.totalRevenue - a.totalRevenue);
     } catch (error: any) {
         console.error("[Action - getSellersPerformanceAction] Error fetching seller performance:", error);
         throw new Error("Falha ao buscar dados de performance dos comitentes.");
@@ -54,7 +66,4 @@ export async function analyzeSellerDataAction(input: { performanceData: any[] })
         const analysis = await analyzeAuctionData(input);
         return analysis.analysis;
     } catch (error: any) {
-        console.error("[Action - analyzeSellerDataAction] Error calling AI flow:", error);
-        throw new Error("Falha ao gerar análise de IA para comitentes.");
-    }
-}
+        console.error("[Action - analyzeSellerDataAction] Error calling AI flow:",

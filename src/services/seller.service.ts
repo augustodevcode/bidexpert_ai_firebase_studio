@@ -1,6 +1,5 @@
-// packages/core/src/services/seller.service.ts
+// src/services/seller.service.ts
 import { SellerRepository } from '@/repositories/seller.repository';
-import { LotService } from './lot.service';
 import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
@@ -9,35 +8,20 @@ import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWinService } from './user-win.service';
-
-
-// Helper function to fetch commission rate from the BFF
-async function getCommissionRate(): Promise<number> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const response = await fetch(`${baseUrl}/api/commission`);
-    
-    if (!response.ok) {
-        console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
-        return 0.05; // Fallback
-    }
-    const data = await response.json();
-    return data.default_commission_rate || 0.05;
-  } catch (error) {
-    console.error("[SellerService] Error fetching commission rate from BFF:", error);
-    return 0.05; // Fallback
-  }
-}
+import { CheckoutService } from './checkout.service'; // Importar CheckoutService
+import { LotService } from './lot.service';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
   private lotService: LotService;
   private userWinService: UserWinService;
+  private checkoutService: CheckoutService; // Adicionado
 
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.lotService = new LotService();
     this.userWinService = new UserWinService();
+    this.checkoutService = new CheckoutService(); // Instanciado
   }
 
   async getSellers(): Promise<SellerProfileInfo[]> {
@@ -59,7 +43,7 @@ export class SellerService {
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
-      return this.lotService.getLotsBySellerId(seller.id);
+      return this.lotService.getLotsForConsignor(seller.id);
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
@@ -104,7 +88,7 @@ export class SellerService {
   
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const lots = await this.lotService.getLotsBySellerId(id);
+      const lots = await this.lotService.getLotsForConsignor(id);
       if (lots.length > 0) {
         return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
       }
@@ -117,13 +101,14 @@ export class SellerService {
   }
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
-    const [sellerData, commissionRate, sellerWins] = await Promise.all([
+    const [sellerData, sellerWins] = await Promise.all([
         this.sellerRepository.findById(sellerId),
-        getCommissionRate(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
 
     if (!sellerData) return null;
+
+    const commissionRate = await this.checkoutService.getCommissionRate();
 
     const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
     const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);

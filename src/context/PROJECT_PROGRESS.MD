@@ -19,93 +19,19 @@
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
-- **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
+- **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
 - **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refatorada a base de dados (Prisma), serviços e a interface de usuário (formulários, páginas de detalhe) para suportar a definição de preços (lance inicial, incremento) por etapa/praça do leilão, em vez de um valor fixo no lote.
+- **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
+- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**: Corrigidas as lacunas entre as regras de arquitetura definidas e a implementação atual do código, incluindo padronização de nomenclatura, uso de repositórios e organização de serviços.
+- **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Concluída a criação de componentes genéricos como `<ResourceDataTable />` e `<FormPageLayout />`, e a extração de componentes de domínio para o pacote `@bidexpert/ui`.
+- **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Concluída a migração inicial para uma estrutura de monorepo com pacotes (`core`, `ui`) e um microserviço (`apps/microservice`) para lógica de negócio sensível.
 
 ## DOING
 - **(Nenhum item em andamento no momento)**
 
 ## NEXT
-- **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**
-    - **1. Visão Geral Executiva**
-        - **1.1. Objetivo e Escopo:** Detalhar o plano de arquitetura e migração para transformar a plataforma de leilões em um sistema híbrido robusto. O objetivo principal é proteger a propriedade intelectual (PI) crítica e aumentar a segurança, separando a lógica de negócio sensível em um microserviço seguro e blindando outros ativos de código através de compilação e ofuscação.
-        - **1.2. Benefícios, Riscos e Trade-offs:**
-            - **Benefícios:** Proteção de IP, Segurança Aumentada, Manutenibilidade, Escalabilidade.
-            - **Riscos:** Aumento da Complexidade (Mitigação: Turborepo), Latência (Mitigação: Co-localização), Segurança da Configuração (Mitigação: Gestores de segredos).
-        - **1.3. Plano de Migração em Fases:**
-            - Fase 1: Estruturação (M)
-            - Fase 2: Extração do Core (L)
-            - Fase 3: Extração da UI (M)
-            - Fase 4: Microserviço (XL)
-            - Fase 5: Integração (L)
-            - Fase 6: Go-live & Limpeza (S)
-    - **2. Arquitetura Alvo**
-        - **2.1. Diagrama:** `Cliente -> apps/web (Next.js/Vercel com BFF) -> apps/microservice (Node.js/Cloud Run)`
-        - **2.2. Justificativas e Segurança:** Detalha o porquê de usar um microserviço e pacotes ofuscados, e descreve as camadas de segurança (BFF, Allowlist de IP, Tokens, CORS).
-    - **3. Mapa do Estado Atual -> Estado Alvo:** Mapeia a lógica de negócio atual (ex: cálculo de comissão no frontend) para seu destino na nova arquitetura (ex: microserviço).
-    - **4. Estrutura do Monorepo (pnpm + Turborepo):** Propõe uma nova estrutura de diretórios com `apps/` e `packages/` e fornece arquivos de configuração de exemplo (`turbo.json`, `package.json` raiz, `.npmrc`).
-    - **5. Configurações de Build e Ofuscação:** Detalha as configurações de `tsconfig.json`, `javascript-obfuscator` e `rollup.config.mjs` para os pacotes seguros.
-    - **6. Microserviço (apps/microservice):** Fornece um exemplo de implementação com Fastify, incluindo autenticação de serviço, rate limiting, CORS e uma rota de exemplo.
-    - **7. BFF no Next.js (apps/web):** Mostra um exemplo de como uma API Route no Next.js atuará como um proxy seguro para o microserviço.
-    - **8. SDK Fino (packages/sdk-secure):** Define a estrutura de um SDK para ser consumido pelo frontend, abstraindo as chamadas ao BFF.
-    - **9. CI/CD (GitHub Actions):** Apresenta workflows de exemplo para publicar os pacotes privados e fazer o deploy da aplicação e do microserviço.
-- **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**
-    - **Relatório de Análise:**
-        - **Componente Genérico de Tabela de Dados (<ResourceDataTable />):** A estrutura de administração em `src/app/admin/` é altamente repetitiva. A lógica para renderizar a tabela, paginação, filtros e ações é duplicada em cada página de listagem. A solução é criar um componente `<ResourceDataTable />` reutilizável que abstrai essa lógica.
-        - **Wrapper Genérico de Formulário de Recurso (<ResourceForm />):** Os formulários de criação e edição em `src/app/admin/*/new` e `src/app/admin/*/[id]/edit` repetem a lógica de busca de dados, configuração de formulário (react-hook-form, Zod), estado de submissão e exibição de toasts. A solução é criar um componente wrapper `<ResourceForm />` que gerencia o estado e a lógica de submissão.
-        - **Abstração para Server Actions CRUD (createCrudActions):** Cada arquivo `actions.ts` repete a estrutura básica para operações CRUD (create, update, delete, fetch). A solução é criar uma função de fábrica (`createCrudActions`) que gera essas ações com base em um modelo Prisma e schemas Zod, reduzindo a repetição e padronizando o comportamento.
-        - **Pacote de Componentes de UI de Domínio (@suaorg/domain-ui):** Componentes específicos do domínio de leilões (ex: `AuctionStatusBadge`, `LotCard`, `AuctionCard`, `CountdownTimer`) estão espalhados. A solução é agrupá-los em um pacote interno para garantir consistência e reutilização.
-- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**
-    - **Objetivo:** Corrigir as lacunas entre as regras de arquitetura definidas e a implementação atual do código.
-    - **Relatório de Análise:**
-        - **Arquitetura de Dados (Não Conforme):** Chamadas diretas ao `prisma` foram encontradas em Server Actions. É necessário refatorar para que todas as chamadas passem pelas classes de Repositório.
-        - **Padrão Controller-Service-Repository (Não Conforme):** A separação de camadas não é rigorosa. As Server Actions (Controllers) pulam a camada de Serviço e/ou Repositório. É preciso auditar e corrigir os fluxos de dados.
-        - **Nomenclatura (Parcialmente Conforme):** O código mistura português e inglês. É preciso padronizar para português em todo novo código.
-        - **Atributos de Teste/IA (Não Conforme):** Falta padronização e aplicação consistente do atributo `data-ai-id` em elementos estruturais.
-        - **Uso do EntitySelector (Não Verificado):** É preciso auditar todos os formulários de admin para garantir que o componente `EntitySelector` está sendo usado para todos os relacionamentos, em vez de um `<select>` padrão.
-- **Item 19: Padronização de Identificadores `data-ai-id` (Expandido)**
-    - **Objetivo:** Adicionar atributos `data-ai-id` únicos, legíveis e funcionais a todos os elementos de UI que ainda não os possuem, seguindo o padrão `[contexto]-[funcao]-[tipo]`.
-    - **19.1. Fluxo de Checkout:**
-        - `checkout-page-container`: Contêiner principal da página.
-        - `checkout-layout-grid`: Grid que divide a página em resumo e formulário.
-        - `checkout-order-summary-card`: Card com o resumo do arremate.
-        - `order-summary-lot-details`: Seção com imagem e nome do lote.
-        - `order-summary-price-breakdown`: Seção com os valores detalhados (lance, comissão).
-        - `order-summary-total-due`: Linha do valor total a pagar.
-        - `checkout-payment-form`: Componente do formulário de pagamento.
-    - **19.2. Painel de Admin - Páginas de Listagem (CRUDs):**
-        - `admin-[recurso]-page-container`: Contêiner principal da página (ex: `admin-auctions-page-container`).
-        - `admin-[recurso]-data-table`: Componente `DataTable` de cada recurso.
-        - `data-table-toolbar`: Barra de ferramentas da tabela (busca, filtros).
-        - `data-table-search-input`: Campo de busca principal da tabela.
-        - `data-table-view-options-button`: Botão de "Visualização" para ocultar/exibir colunas.
-        - `data-table-row-actions-menu`: Menu de ações (dropdown) para cada linha da tabela.
-    - **19.3. Painel de Admin - Páginas de Formulário:**
-        - `admin-[recurso]-form-card`: Card principal que envolve os formulários de criação/edição.
-        - Aplicar a cada `FormItem` ou grupo de campos (ex: `form-section-main-details`, `form-section-contact-info`).
-    - **19.4. Componentes de Card Reutilizáveis:**
-        - `lot-card-container`: Contêiner principal do componente `LotCard`.
-        - `lot-card-main-image`: Imagem principal do lote no card.
-        - `lot-card-title`: O título clicável do lote.
-        - `lot-card-location`: O contêiner da localização.
-        - `lot-card-bid-count`: O contêiner do número de lances.
-        - `lot-card-price-section`: A seção de preço/lance atual.
-        - `auction-card-container`: Contêiner principal do `AuctionCard`.
-        - `auction-card-main-image`: Imagem do `AuctionCard`.
-        - `auction-card-title`: Título do `AuctionCard`.
-        - `auction-card-public-id`: ID público do leilão.
-        - `auction-card-type`: Tipo do leilão.
-        - `auction-card-counters`: Contadores de lotes, visitas, etc.
-        - `auction-card-timeline`: Contêiner da timeline de etapas.
-        - `auction-card-initial-offer`: Seção do lance inicial.
-    - **19.5. Painel do Construtor de Relatórios:**
-        - `report-builder-container`: O contêiner principal do construtor.
-        - `report-toolbar`: A barra de ferramentas com os botões de ação e elementos.
-        - `report-design-surface`: A área de design onde os elementos são arrastados.
-        - `report-properties-panel`: O painel lateral de propriedades.
-        - `report-variable-panel`: O painel lateral de variáveis.
-        - `report-preview-panel`: O painel inferior de pré-visualização.
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
+- **(A definir):** Próximas funcionalidades a serem priorizadas.
+

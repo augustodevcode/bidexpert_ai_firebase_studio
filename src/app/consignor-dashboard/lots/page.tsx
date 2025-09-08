@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/lots/page.tsx
 'use client';
 
@@ -6,17 +7,18 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotsForConsignorAction } from './actions';
-import type { Lot, Auction, SellerProfileInfo } from '@/types';
+import type { Auction, SellerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, ListChecks, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorLotColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getAuctionStatusText } from '@bidexpert/core';
 import { getAuctionsForConsignorAction } from '../auctions/actions';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import type { Lot } from '@bidexpert/core';
 
 export default function ConsignorLotsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
@@ -135,6 +137,4 @@ export default function ConsignorLotsPage() {
           />
         </CardContent>
       </Card>
-    </div>
-  );
-}
+    

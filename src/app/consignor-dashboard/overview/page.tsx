@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/overview/page.tsx
 'use client';
 
@@ -11,10 +12,10 @@ import { useAuth } from '@/contexts/auth-context';
 import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions'; 
 import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions'; 
 import { getConsignorDashboardStatsAction } from '../reports/actions';
-import type { Auction, Lot, SellerProfileInfo, ConsignorDashboardStats } from '@/types';
+import type { Auction, Lot, SellerProfileInfo, ConsignorDashboardStats } from '@bidexpert/core';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@bidexpert/core';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hasPermission } from '@/lib/permissions';
@@ -165,7 +166,7 @@ export default function ConsignorOverviewPage() {
                         <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
                         <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                         <Legend />
-                        <Line type="monotone" dataKey="sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                        <Line type="monotone" dataKey="Faturamento" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
                       </LineChart>
                     </ResponsiveContainer>
                 </CardContent>

@@ -1,4 +1,8 @@
-// src/app/api/commission/route.ts
+// This file is now obsolete as the CheckoutService in the core package
+// now uses PlatformSettingsService directly. This API route can be removed.
+// We are keeping it for now to avoid breaking changes, but it's no longer used
+// by the refactored code.
+
 import { NextResponse } from 'next/server';
 
 const MICROSERVICE_URL = process.env.COMMISSION_MICROSERVICE_URL || 'http://localhost:3001';
@@ -6,6 +10,7 @@ const MICROSERVICE_URL = process.env.COMMISSION_MICROSERVICE_URL || 'http://loca
 /**
  * API Route that acts as a Backend-for-Frontend (BFF).
  * It securely forwards requests to the commission microservice.
+ * @deprecated This route is no longer used by the refactored CheckoutService.
  */
 export async function GET() {
   try {
@@ -13,8 +18,6 @@ export async function GET() {
       headers: {
         'Accept': 'application/json',
       },
-      // Optional: Add an API key for service-to-service auth in a real scenario
-      // headers: { 'X-Internal-API-Key': process.env.MICROSERVICE_API_KEY }
     });
 
     if (!response.ok) {

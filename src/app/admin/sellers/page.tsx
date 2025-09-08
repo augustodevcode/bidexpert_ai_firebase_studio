@@ -1,3 +1,4 @@
+
 // src/app/admin/sellers/page.tsx
 'use client';
 
@@ -12,7 +13,7 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminSellersPage() {
-  const columns = useMemo(() => createColumns({ handleDelete: deleteSeller }), [deleteSeller]);
+  const columns = useMemo(() => createColumns(), []);
 
   return (
     <div className="space-y-6" data-ai-id="admin-sellers-page">
@@ -41,8 +42,4 @@ export default function AdminSellersPage() {
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
           />
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+        </Card

@@ -35,6 +35,16 @@ export class LotService {
       subcategoryName: lot.subcategory?.name,
     }));
   }
+  
+  async getLotsForConsignor(sellerId: string): Promise<Lot[]> {
+    const lots = await prisma.lot.findMany({ 
+        where: { sellerId },
+        include: { auction: { select: { title: true } } },
+        orderBy: { createdAt: 'desc' }
+    });
+    // @ts-ignore
+    return lots.map(lot => ({...lot, auctionName: lot.auction.title}));
+  }
 
   async getLotById(id: string): Promise<Lot | null> {
     const lot = await this.lotRepository.findById(id);
@@ -168,7 +178,6 @@ export class LotService {
       return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
     }
     
-    // This is a direct DB access that should be moved to a repository
     const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
     if (!winner) {
       return { success: false, message: 'Arrematante não encontrado.' };

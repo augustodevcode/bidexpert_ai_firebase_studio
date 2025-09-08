@@ -1,39 +1,27 @@
+
 // packages/core/src/services/checkout.service.ts
-import { UserWinRepository } from './../repositories/user-win.repository';
+import { UserWinRepository } from '../repositories/user-win.repository';
 import { CheckoutRepository } from '../repositories/checkout.repository';
+import { PlatformSettingsService } from './platform-settings.service';
 import type { CheckoutFormValues } from '../lib/zod-schemas';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
-
-// Helper function to fetch commission rate from the BFF
-async function getCommissionRate(): Promise<number> {
-  try {
-    // In a deployed environment, this URL should be absolute and internal.
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const response = await fetch(`${baseUrl}/api/commission`);
-    
-    if (!response.ok) {
-        console.error(`Failed to fetch commission rate, status: ${response.status}`);
-        // Fallback to a default value if the service fails
-        return 0.05; 
-    }
-    const data = await response.json();
-    return data.default_commission_rate || 0.05;
-  } catch (error) {
-    console.error("Error fetching commission rate from BFF:", error);
-    // Fallback to a default value in case of network errors
-    return 0.05;
-  }
-}
 
 
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
   private checkoutRepository: CheckoutRepository;
+  private settingsService: PlatformSettingsService;
   
   constructor() {
     this.userWinRepository = new UserWinRepository();
     this.checkoutRepository = new CheckoutRepository();
+    this.settingsService = new PlatformSettingsService();
+  }
+
+  async getCommissionRate(): Promise<number> {
+    const settings = await this.settingsService.getSettings();
+    return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
   }
 
   async calculateTotals(winId: string): Promise<{
@@ -47,7 +35,7 @@ export class CheckoutService {
       throw new Error('Registro de arremate não encontrado.');
     }
     
-    const commissionRate = await getCommissionRate();
+    const commissionRate = await this.getCommissionRate();
     const commissionValue = win.winningBidAmount * commissionRate;
     const totalDue = win.winningBidAmount + commissionValue;
 
@@ -116,5 +104,3 @@ export class CheckoutService {
         console.error(`Error processing payment for win ${winId}:`, error);
         return { success: false, message: `Erro no servidor ao processar pagamento: ${error.message}` };
     }
-  }
-}

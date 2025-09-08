@@ -1,4 +1,3 @@
-
 // src/app/consignor-dashboard/financial/page.tsx
 'use client';
 
@@ -11,7 +10,7 @@ import { getFinancialDataForConsignor } from './actions';
 import type { UserWin, SellerProfileInfo } from '@bidexpert/core';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
-import { getPaymentStatusText } from '@/lib/ui-helpers';
+import { getPaymentStatusText } from '@bidexpert/core';
 import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';

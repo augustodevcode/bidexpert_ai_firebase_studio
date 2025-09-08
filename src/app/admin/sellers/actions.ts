@@ -1,19 +1,21 @@
+
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import type { SellerFormData } from '@bidexpert/core';
-import { SellerService } from '@bidexpert/services';
+import type { SellerFormData, SellerProfileInfo, Lot } from '@bidexpert/core';
+import { SellerService, LotService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();
+const lotService = new LotService();
 
 const { 
-  obterTodos: getComitentes, 
-  obterPorId: getComitente,
-  obterPorSlug: getComitentePorSlug, 
-  criar: criarComitente, 
-  atualizar: atualizarComitente, 
-  excluir: deletarComitente 
+  obterTodos: getSellers, 
+  obterPorId: getSeller,
+  obterPorSlug: getSellerBySlug, 
+  criar: createSeller, 
+  atualizar: updateSeller, 
+  excluir: deleteSeller 
 } = createCrudActions({
   service: sellerService,
   entityName: 'Comitente',
@@ -21,16 +23,15 @@ const {
 });
 
 export { 
-  getComitentes, 
-  getComitente,
-  getComitentePorSlug, 
-  criarComitente, 
-  atualizarComitente, 
-  deletarComitente 
+  getSellers, 
+  getSeller,
+  getSellerBySlug, 
+  createSeller, 
+  updateSeller, 
+  deleteSeller 
 };
 
 
 // Funções específicas que não se encaixam no CRUD padrão permanecem aqui
-export async function getLotesPorComitenteSlug(sellerSlugOrId: string) {
-    return sellerService.getLotsBySellerSlug(sellerSlugOrId);
-}
+export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
+    return lotService.getLotsForConsignor(sellerSlugOr
