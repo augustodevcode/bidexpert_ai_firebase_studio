@@ -1,23 +1,24 @@
+
 // src/app/admin/media/actions.ts
 'use server';
 
 import type { MediaItem } from '@bidexpert/core';
-import { MediaService } from '@bidexpert/core';
+import { MediaService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const mediaService = new MediaService();
-const mediaActions = createCrudActions({
+const {
+  obterTodos: getMediaItems,
+  criar: createMediaItem,
+  excluir: deleteMediaItem,
+} = createCrudActions({
   service: mediaService,
   entityName: 'MediaItem',
   entityNamePlural: 'MediaItems',
   routeBase: '/admin/media',
 });
 
-export const {
-  getAll: getMediaItems,
-  create: createMediaItem,
-  delete: deleteMediaItem,
-} = mediaActions;
+export { getMediaItems, createMediaItem, deleteMediaItem };
 
 
 // Custom actions that don't fit the CRUD pattern

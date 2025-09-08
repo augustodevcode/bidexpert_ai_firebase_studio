@@ -1,21 +1,22 @@
+
 // src/app/admin/roles/actions.ts
 'use server';
 
-import { RoleService } from '@bidexpert/core';
+import { RoleService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const roleService = new RoleService();
-const roleActions = createCrudActions({
+
+const { 
+  obterTodos: getRoles, 
+  obterPorId: getRole, 
+  criar: createRole, 
+  atualizar: updateRole, 
+  excluir: deleteRole 
+} = createCrudActions({
   service: roleService,
-  entityName: 'Role',
-  entityNamePlural: 'Roles',
+  entityName: 'Perfil',
   routeBase: '/admin/roles',
 });
 
-export const {
-  getAll: getRoles,
-  getById: getRole,
-  create: createRole,
-  update: updateRole,
-  delete: deleteRole,
-} = roleActions;
+export { getRoles, getRole, createRole, updateRole, deleteRole };

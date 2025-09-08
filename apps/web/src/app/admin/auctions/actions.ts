@@ -1,26 +1,27 @@
+
 // src/app/admin/auctions/actions.ts
 'use server';
 
 import type { Auction, AuctionFormData } from '@bidexpert/core';
-import { AuctionService } from '@bidexpert/core';
+import { AuctionService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 
 const auctionService = new AuctionService();
-const auctionActions = createCrudActions({
+const {
+  obterTodos: getAuctions,
+  obterPorId: getAuction,
+  criar: createAuction,
+  atualizar: updateAuction,
+  excluir: deleteAuction,
+} = createCrudActions({
   service: auctionService,
-  entityName: 'Auction',
-  entityNamePlural: 'Auctions',
+  entityName: 'Leilão',
+  entityNamePlural: 'Leilões',
   routeBase: '/admin/auctions',
 });
 
-export const {
-  getAll: getAuctions,
-  getById: getAuction,
-  create: createAuction,
-  update: updateAuction,
-  delete: deleteAuction,
-} = auctionActions;
+export { getAuctions, getAuction, createAuction, updateAuction, deleteAuction };
 
 // --- Ações Específicas que não se encaixam no CRUD padrão ---
 

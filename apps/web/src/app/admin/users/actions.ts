@@ -1,25 +1,25 @@
+
 // src/app/admin/users/actions.ts
 'use server';
 
 import type { EditableUserProfileData, UserCreationData, UserProfileWithPermissions } from '@bidexpert/core';
-import { UserService } from '@bidexpert/core';
+import { UserService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const userService = new UserService();
-const userActions = createCrudActions({
+const {
+    obterTodos: getUsersWithRoles,
+    obterPorId: getUserProfileData,
+    criar: createUser,
+    atualizar: updateUser,
+    excluir: deleteUser,
+} = createCrudActions({
     service: userService,
-    entityName: 'User',
-    entityNamePlural: 'Users',
+    entityName: 'Usuário',
     routeBase: '/admin/users'
 });
 
-export const {
-    getAll: getUsersWithRoles,
-    getById: getUserProfileData,
-    create: createUser,
-    update: updateUser,
-    delete: deleteUser,
-} = userActions;
+export { getUsersWithRoles, getUserProfileData, createUser, updateUser, deleteUser };
 
 
 // --- Ações Específicas ---

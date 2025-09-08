@@ -1,22 +1,23 @@
+
 // src/app/admin/direct-sales/actions.ts
 'use server';
 
-import { DirectSaleOfferService } from '@bidexpert/core';
+import { DirectSaleOfferService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const offerService = new DirectSaleOfferService();
-const offerActions = createCrudActions({
+
+const { 
+  obterTodos: getDirectSaleOffers, 
+  obterPorId: getDirectSaleOffer, 
+  criar: createDirectSaleOffer, 
+  atualizar: updateDirectSaleOffer, 
+  excluir: deleteDirectSaleOffer 
+} = createCrudActions({
   service: offerService,
-  entityName: 'DirectSaleOffer',
-  entityNamePlural: 'DirectSaleOffers',
+  entityName: 'Oferta de Venda Direta',
   routeBase: '/admin/direct-sales',
 });
 
 
-export const {
-  getAll: getDirectSaleOffers,
-  getById: getDirectSaleOffer,
-  create: createDirectSaleOffer,
-  update: updateDirectSaleOffer,
-  delete: deleteDirectSaleOffer,
-} = offerActions;
+export { getDirectSaleOffers, getDirectSaleOffer, createDirectSaleOffer, updateDirectSaleOffer, deleteDirectSaleOffer };

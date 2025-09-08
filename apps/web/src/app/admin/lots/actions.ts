@@ -1,27 +1,34 @@
+
 // src/app/admin/lots/actions.ts
 'use server';
 
-import { LotService } from '@bidexpert/core';
+import { LotService, BemService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 import type { Lot, LotFormData } from '@bidexpert/core';
 
 const lotService = new LotService();
-const lotActions = createCrudActions({
+const bemService = new BemService();
+
+const {
+  obterTodos: getLots,
+  obterPorId: getLot,
+  criar: createLot,
+  atualizar: updateLot,
+  excluir: deleteLot,
+} = createCrudActions({
   service: lotService,
-  entityName: 'Lot',
-  entityNamePlural: 'Lots',
+  entityName: 'Lote',
+  entityNamePlural: 'Lotes',
   routeBase: '/admin/lots',
 });
 
-export const {
-  getAll: getLots,
-  getById: getLot,
-  create: createLot,
-  update: updateLot,
-  delete: deleteLot,
-} = lotActions;
+export { getLots, getLot, createLot, updateLot, deleteLot };
+
 
 // --- Ações Específicas que não se encaixam no CRUD padrão ---
+export async function getBensByIdsAction(ids: string[]) {
+    return bemService.getBensByIds(ids);
+}
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
   return lotService.getLotsByIds(ids);

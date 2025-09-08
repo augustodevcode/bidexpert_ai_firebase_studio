@@ -1,3 +1,4 @@
+
 // packages/core/src/services/seller.service.ts
 import { SellerRepository } from '../repositories/seller.repository';
 import { LotService } from './lot.service';
@@ -9,35 +10,24 @@ import { prisma } from '../lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWinService } from './user-win.service';
-
-
-// Helper function to fetch commission rate from the BFF
-async function getCommissionRate(): Promise<number> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const response = await fetch(`${baseUrl}/api/commission`);
-    
-    if (!response.ok) {
-        console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
-        return 0.05; // Fallback
-    }
-    const data = await response.json();
-    return data.default_commission_rate || 0.05;
-  } catch (error) {
-    console.error("[SellerService] Error fetching commission rate from BFF:", error);
-    return 0.05; // Fallback
-  }
-}
+import { PlatformSettingsService } from './platform-settings.service';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
   private lotService: LotService;
   private userWinService: UserWinService;
+  private settingsService: PlatformSettingsService;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.lotService = new LotService();
     this.userWinService = new UserWinService();
+    this.settingsService = new PlatformSettingsService();
+  }
+
+  private async getCommissionRate(): Promise<number> {
+    const settings = await this.settingsService.getSettings();
+    return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
   }
 
   async getSellers(): Promise<SellerProfileInfo[]> {
@@ -59,12 +49,13 @@ export class SellerService {
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
-      return this.lotService.getLotsBySellerId(seller.id);
+      const lots = await prisma.lot.findMany({ where: { sellerId: seller.id } });
+      return lots as Lot[];
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
-      const existingSeller = await this.sellerRepository.findByName(data.name);
+      const existingSeller = await this.findByName(data.name);
       if (existingSeller) {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
@@ -118,13 +109,8 @@ export class SellerService {
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
     const [sellerData, commissionRate, sellerWins] = await Promise.all([
-        prisma.seller.findUnique({
-            where: { id: sellerId },
-            include: {
-                _count: { select: { auctions: true, lots: true } },
-            },
-        }),
-        getCommissionRate(),
+        this.sellerRepository.findById(sellerId),
+        this.getCommissionRate(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
 
@@ -137,7 +123,13 @@ export class SellerService {
 
     const lotsSoldCount = sellerWins.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
-    const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
+    
+    // @ts-ignore
+    const totalLots = await prisma.lot.count({ where: { sellerId }});
+    const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
+    
+    // @ts-ignore
+    const totalAuctions = await prisma.auction.count({ where: { sellerId }});
 
     const salesByMonthMap = new Map<string, number>();
     const now = new Date();
@@ -148,6 +140,7 @@ export class SellerService {
     }
 
     paidWins.forEach(win => {
+      // @ts-ignore
       const winDate = win.paymentDate ? new Date(win.paymentDate) : new Date(win.winDate);
       const monthKey = format(winDate, 'MMM/yy', { locale: ptBR });
       if (salesByMonthMap.has(monthKey)) {
@@ -161,8 +154,8 @@ export class SellerService {
       totalRevenue,
       totalCommission,
       netValue,
-      totalAuctions: sellerData._count.auctions,
-      totalLots: sellerData._count.lots,
+      totalAuctions,
+      totalLots,
       lotsSoldCount,
       paidCount: paidWins.length,
       salesRate,
