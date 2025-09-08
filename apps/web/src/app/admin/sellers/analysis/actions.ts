@@ -26,7 +26,6 @@ const sellerService = new SellerService();
 export async function getSellersPerformanceAction(): Promise<SellerPerformanceData[]> {
     try {
         // A lógica de agregação foi movida para o SellerService
-        // @ts-ignore
         return await sellerService.getSellersPerformance();
     } catch (error: any) {
         console.error("[Action - getSellersPerformanceAction] Error fetching seller performance:", error);

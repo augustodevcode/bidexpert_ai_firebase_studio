@@ -23,14 +23,23 @@
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**: Completed the correction of architectural gaps, including standardizing nomenclature and repository usage.
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
-- **Item 25: Refatoração Completa do Acesso a Dados (Prioridade 1)**: Todas as chamadas diretas ao `prisma` foram movidas dos `services` para classes de `Repository` dedicadas.
-- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**: Adicionados os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais para melhorar a testabilidade e a manipulação pela IA.
 
 ## DOING
-- **Item 27: Padronizar Idioma (Prioridade 3)**
-  - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
-  - **Status**: Em andamento.
+- **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**
+  - **Objetivo**: Mover todas as chamadas diretas ao `prisma` das `services` restantes para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
+  - **Status**:
+    - [x] Repositórios de Checkout (`UserWinRepository`, `CheckoutRepository`) implementados.
+    - [x] Repositórios de Leiloeiros e Leilões (`AuctioneerRepository`, `AuctionRepository`).
+    - [x] Repositórios de Bens e Entidades Judiciais (`BemRepository`, `CourtRepository`, `JudicialBranchRepository`, `JudicialDistrictRepository`, `JudicialProcessRepository`).
+    - [x] Repositórios de Entidades-Chave (`Lot`, `Seller`, `Category`, `State`, `City`, `User`, `VehicleMake`, `VehicleModel`, etc.).
+    - [x] Repositório para `Bid`, `UserWin`, `Notification` e `Habilitation` implementado e serviços refatorados.
+    - [x] Correção final no `BidService` para usar o repositório.
+    - [x] **A FAZER:** Centralizar a lógica de análise de performance (dashboards) nos respectivos serviços, removendo-a das `actions`.
 
 ## NEXT
+- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
+  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
+- **Item 27: Padronizar Idioma (Prioridade 3)**
+  - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Status:** Pausado. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
+    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.

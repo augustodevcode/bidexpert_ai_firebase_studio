@@ -27,11 +27,11 @@ export class SellerService {
     this.auctionRepository = new AuctionRepository();
   }
 
-  async obterComitentes(): Promise<SellerProfileInfo[]> {
+  async getSellers(): Promise<SellerProfileInfo[]> {
     return this.sellerRepository.findAll();
   }
 
-  async obterComitentePorId(id: string): Promise<SellerProfileInfo | null> {
+  async getSellerById(id: string): Promise<SellerProfileInfo | null> {
     return this.sellerRepository.findById(id);
   }
   
@@ -39,11 +39,11 @@ export class SellerService {
     return this.sellerRepository.findByName(name);
   }
 
-  async obterComitentePorSlug(slugOrId: string): Promise<SellerProfileInfo | null> {
+  async getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
       return this.sellerRepository.findBySlug(slugOrId);
   }
   
-  async obterLotesPorComitenteSlug(sellerSlugOrId: string): Promise<Lot[]> {
+  async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
       return this.lotService.getLotsForConsignor(seller.id);
@@ -53,7 +53,7 @@ export class SellerService {
     return this.auctionRepository.findBySellerSlug(sellerSlugOrId);
   }
 
-  async criarComitente(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
       const existingSeller = await this.findByName(data.name);
       if (existingSeller) {
@@ -80,7 +80,7 @@ export class SellerService {
     }
   }
 
-  async atualizarComitente(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
+  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
       await this.sellerRepository.update(id, dataWithSlug);
@@ -91,7 +91,7 @@ export class SellerService {
     }
   }
   
-  async deletarComitente(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       const lots = await this.lotService.getLotsForConsignor(id);
       if (lots.length > 0) {
@@ -162,5 +162,23 @@ export class SellerService {
       salesByMonth,
       platformCommissionPercentage: commissionRate * 100,
     };
+  }
+
+  async getSellersPerformance(): Promise<any[]> {
+    const sellers = await this.sellerRepository.findAll();
+    const performanceData = await Promise.all(
+        sellers.map(async (seller) => {
+            const dashboardData = await this.getSellerDashboardData(seller.id);
+            return {
+                id: seller.id,
+                name: seller.name,
+                totalAuctions: dashboardData?.totalAuctions || 0,
+                totalLots: dashboardData?.totalLots || 0,
+                totalRevenue: dashboardData?.totalRevenue || 0,
+                averageTicket: dashboardData?.averageTicket || 0,
+            };
+        })
+    );
+    return performanceData.sort((a,b) => b.totalRevenue - a.totalRevenue);
   }
 }

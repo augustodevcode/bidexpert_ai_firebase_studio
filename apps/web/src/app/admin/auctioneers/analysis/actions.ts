@@ -7,7 +7,7 @@
 
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
 import { AuctioneerService } from '@bidexpert/services';
-import type { AuctioneerDashboardData } from '@bidexpert/core';
+import type { AuctioneerDashboardData } from '@bidexpert/services';
 
 export interface AuctioneerPerformanceData {
   id: string;
@@ -28,7 +28,6 @@ const auctioneerService = new AuctioneerService();
  */
 export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerformanceData[]> {
   try {
-    // @ts-ignore
     return await auctioneerService.getAuctioneersPerformance();
   } catch (error: any) {
     console.error("[Action - getAuctioneersPerformanceAction] Error fetching auctioneer performance:", error);
