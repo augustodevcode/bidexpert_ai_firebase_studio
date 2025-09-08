@@ -1,7 +1,7 @@
-
+// packages/core/src/services/checkout.service.ts
 import { prisma } from '../lib/prisma';
 import { UserWinRepository } from '../repositories/user-win.repository';
-import { type CheckoutFormValues } from '../types';
+import type { CheckoutFormValues } from '../types';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
