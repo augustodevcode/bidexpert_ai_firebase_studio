@@ -6,12 +6,11 @@ import { useRouter, useParams } from 'next/navigation';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-import UserRoleForm from '../../user-role-form';
-import { getUserProfileData, updateUserProfile, updateUserRoles } from '../../actions';
+import UserRoleForm from '../user-role-form';
+import { getUserProfileData, updateUserProfile, updateUserRoles } from '../actions';
 import { getRoles } from '@/app/admin/roles/actions';
 
 import FormPageLayout from '@/components/admin/form-page-layout';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import ProfileForm from '@/components/profile/profile-form';
 
@@ -65,21 +64,37 @@ export default function EditUserPage() {
   // Handler para salvar ambos os formulários
   const handleSaveAll = async () => {
     setIsSubmitting(true);
+    let profileSuccess = false;
+    let rolesSuccess = false;
 
-    const profilePromise = profileFormRef.current?.requestSubmit();
-    const rolePromise = roleFormRef.current?.requestSubmit();
+    // Trigger profile form submission if it exists and has a submit handler
+    if (profileFormRef.current?.requestSubmit) {
+      const profileResult = await profileFormRef.current.requestSubmit();
+      if (profileResult && profileResult.success) {
+        profileSuccess = true;
+      }
+    } else {
+        profileSuccess = true; // No form to submit, consider it a success
+    }
 
-    try {
-        // As ações internas dos formulários já lidam com o toast
-        await Promise.all([profilePromise, rolePromise]);
-        toast({title: "Sucesso!", description: "Dados do usuário e perfis salvos."});
-        await fetchUserData(); // Re-fetch all data
-        setIsViewMode(true);
-    } catch (error) {
-        console.error("Error saving user data:", error);
-        toast({title: "Erro", description: "Ocorreu um erro ao salvar um dos formulários.", variant: "destructive"});
-    } finally {
-        setIsSubmitting(false);
+    // Trigger role form submission if it exists and has a submit handler
+    if (roleFormRef.current?.requestSubmit) {
+       const rolesResult = await roleFormRef.current.requestSubmit();
+       if (rolesResult && rolesResult.success) {
+           rolesSuccess = true;
+       }
+    } else {
+        rolesSuccess = true;
+    }
+    
+    setIsSubmitting(false);
+
+    if (profileSuccess && rolesSuccess) {
+      toast({ title: "Sucesso!", description: "Dados do usuário e perfis salvos." });
+      fetchUserData();
+      setIsViewMode(true);
+    } else {
+      toast({ title: "Erro", description: "Ocorreu um erro ao salvar. Verifique os campos.", variant: "destructive" });
     }
   };
   
@@ -87,8 +102,8 @@ export default function EditUserPage() {
     return updateUserProfile(userId, data);
   };
   
-  const handleUpdateRoles = async (uid: string, roleIds: string[]) => {
-      return updateUserRoles(uid, roleIds);
+  const handleUpdateRoles = async (data: { roleIds: string[] }) => {
+      return updateUserRoles(userId, data.roleIds);
   };
 
   return (
@@ -122,7 +137,7 @@ export default function EditUserPage() {
               ref={roleFormRef}
               user={userProfile}
               roles={roles}
-              onSubmitAction={handleUpdateRoles}
+              onSubmitAction={(roleIds) => handleUpdateRoles(userProfile.id, roleIds)}
             />
           </div>
         </fieldset>

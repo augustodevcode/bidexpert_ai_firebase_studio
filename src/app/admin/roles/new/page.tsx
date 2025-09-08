@@ -4,14 +4,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import RoleForm from '../role-form';
-import { createRole, type RoleFormData } from '../actions';
-import { getRoles } from '@/app/admin/roles/actions';
+import { createRole } from '../actions';
+import type { RoleFormData } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Role } from '@/types';
 
-function NewRolePageContent({ roles }: { roles: Role[] }) {
+export default function NewRolePage() {
   const router = useRouter();
   const { toast } = useToast();
   const formRef = useRef<any>(null);
@@ -19,8 +18,8 @@ function NewRolePageContent({ roles }: { roles: Role[] }) {
   
   const handleSave = () => {
     formRef.current?.requestSubmit();
-  }
-
+  };
+  
   async function handleCreateRole(data: RoleFormData) {
     setIsSubmitting(true);
     const result = await createRole(data);
@@ -49,23 +48,4 @@ function NewRolePageContent({ roles }: { roles: Role[] }) {
         />
     </FormPageLayout>
   );
-}
-
-
-export default function NewRolePage() {
-    const [roles, setRoles] = useState<Role[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        getRoles().then(data => {
-            setRoles(data);
-            setIsLoading(false);
-        })
-    }, []);
-
-    if (isLoading) {
-        return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin"/></div>
-    }
-
-    return <NewRolePageContent roles={roles} />;
 }

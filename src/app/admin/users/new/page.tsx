@@ -29,8 +29,8 @@ function NewUserPageContent({ roles }: { roles: Role[] }) {
             router.push('/admin/users');
         } else {
             toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+            setIsSubmitting(false); // Only stop loading on error, success will navigate away
         }
-        setIsSubmitting(false);
     }
     
     return (
