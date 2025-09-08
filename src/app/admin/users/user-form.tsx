@@ -16,37 +16,25 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { userFormSchema, type UserFormValues } from './user-form-schema';
 import type { UserProfileData, Role } from '@/types';
-import { Loader2, Save, UserPlus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+
 
 interface UserFormProps {
   initialData?: UserProfileData | null;
   roles: Role[];
   onSubmitAction: (data: UserFormValues) => Promise<{ success: boolean; message: string; userId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
 }
 
-export default function UserForm({
+const UserForm = React.forwardRef<any, UserFormProps>(({
   initialData, 
   roles,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: UserFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+}, ref) => {
 
   // Remapeia a estrutura de roles do usuário inicial para um array de IDs
-  const initialRoleIds = initialData?.roles?.map(r => r.role.id) || [];
+  const initialRoleIds = initialData?.roles?.map((r: any) => r.role.id) || [];
 
   const form = useForm<UserFormValues>({
     resolver: zodResolver(userFormSchema),
@@ -58,47 +46,14 @@ export default function UserForm({
     },
   });
 
-  async function onSubmit(values: UserFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/users');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in user form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  // Expor o método de submit do formulário via ref para o FormPageLayout
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+  }));
 
   return (
-    <Card className="max-w-2xl mx-auto shadow-lg" data-ai-id="admin-user-form-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
             <FormField
               control={form.control}
               name="fullName"
@@ -172,18 +127,11 @@ export default function UserForm({
                 </FormItem>
               )}
             />
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
         </form>
       </Form>
-    </Card>
   );
-}
+});
+
+UserForm.displayName = 'UserForm';
+export default UserForm;
+
