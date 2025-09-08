@@ -11,7 +11,7 @@
 - **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
 - **Item 9:** **PDF Document Generation:** Implemented the server-side logic using Puppeteer to generate PDF documents for winning bid terms, accessible from both the admin and user dashboards.
 - **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
-- **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
+- **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments, including checkout page, form validation, and status updates.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
 - **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Completed all phases of the strategic analysis dashboards.
 - **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Integrated `EntitySelector` and an interactive map into the auction form.
@@ -25,9 +25,15 @@
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 
 ## DOING
-- **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Objetivo:** Implementar um construtor de relatórios interativo, permitindo que os usuários criem e personalizem relatórios com uma interface de arrastar e soltar.
-    - **Status:** Refatorando a estrutura do componente para usar TypeScript, melhorando o layout e adicionando os painéis de dados e mídia.
+- **Item 25: Refatorar Acesso a Dados (Prioridade 1)**
+  - **Objetivo**: Mover todas as chamadas diretas ao `prisma` das `actions.ts` e `services` para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
+  - **Status**: Iniciando com a criação dos repositórios para o fluxo de checkout (`UserWinRepository`, `CheckoutRepository`).
 
 ## NEXT
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão do `BidReportBuilder`.
+- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
+  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
+- **Item 27: Padronizar Idioma (Prioridade 3)**
+  - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
+- **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
+    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. Próximo passo é conectar a fontes de dados reais.
+
