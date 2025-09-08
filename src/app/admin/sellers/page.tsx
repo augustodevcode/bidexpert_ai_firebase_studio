@@ -1,4 +1,3 @@
-
 // src/app/admin/sellers/page.tsx
 'use client';
 
@@ -42,4 +41,8 @@ export default function AdminSellersPage() {
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
           />
-        </Card
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

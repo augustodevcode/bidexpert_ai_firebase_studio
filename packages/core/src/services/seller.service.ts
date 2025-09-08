@@ -27,15 +27,11 @@ export class SellerService {
     this.auctionRepository = new AuctionRepository();
   }
 
-  private async getCommissionRate(): Promise<number> {
-    return this.checkoutService.getCommissionRate();
-  }
-
-  async getSellers(): Promise<SellerProfileInfo[]> {
+  async obterComitentes(): Promise<SellerProfileInfo[]> {
     return this.sellerRepository.findAll();
   }
 
-  async getSellerById(id: string): Promise<SellerProfileInfo | null> {
+  async obterComitentePorId(id: string): Promise<SellerProfileInfo | null> {
     return this.sellerRepository.findById(id);
   }
   
@@ -43,11 +39,11 @@ export class SellerService {
     return this.sellerRepository.findByName(name);
   }
 
-  async getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
+  async obterComitentePorSlug(slugOrId: string): Promise<SellerProfileInfo | null> {
       return this.sellerRepository.findBySlug(slugOrId);
   }
   
-  async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
+  async obterLotesPorComitenteSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
       return this.lotService.getLotsForConsignor(seller.id);
@@ -57,7 +53,7 @@ export class SellerService {
     return this.auctionRepository.findBySellerSlug(sellerSlugOrId);
   }
 
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+  async criarComitente(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
       const existingSeller = await this.findByName(data.name);
       if (existingSeller) {
@@ -84,7 +80,7 @@ export class SellerService {
     }
   }
 
-  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
+  async atualizarComitente(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
       await this.sellerRepository.update(id, dataWithSlug);
@@ -95,7 +91,7 @@ export class SellerService {
     }
   }
   
-  async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
+  async deletarComitente(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       const lots = await this.lotService.getLotsForConsignor(id);
       if (lots.length > 0) {

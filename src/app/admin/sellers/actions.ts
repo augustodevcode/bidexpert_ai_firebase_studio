@@ -22,13 +22,21 @@ const {
   routeBase: '/admin/sellers',
 });
 
+// Renomeando para consistência em português, mas mantendo a funcionalidade.
+const obterComitentes = getSellers;
+const obterComitente = getSeller;
+const obterComitentePorSlug = getSellerBySlug;
+const criarComitente = createSeller;
+const atualizarComitente = updateSeller;
+const deletarComitente = deleteSeller;
+
 export { 
-  getSellers, 
-  getSeller,
-  getSellerBySlug, 
-  createSeller, 
-  updateSeller, 
-  deleteSeller 
+  obterComitentes, 
+  obterComitente,
+  obterComitentePorSlug, 
+  criarComitente, 
+  atualizarComitente, 
+  deletarComitente 
 };
 
 

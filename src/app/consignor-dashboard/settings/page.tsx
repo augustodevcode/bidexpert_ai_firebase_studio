@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { getSeller, getSellers } from '@/app/admin/sellers/actions';
+import { obterComitente, obterComitentes } from '@/app/admin/sellers/actions';
 import { atualizarPerfilComitente } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@bidexpert/core';
@@ -36,7 +36,7 @@ export default function ConsignorSettingsPage() {
   // Fetch all sellers if the user is an admin
   useEffect(() => {
     if (isUserAdmin) {
-      getSellers().then(sellers => {
+      obterComitentes().then(sellers => {
         setAllSellers(sellers);
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);
@@ -57,7 +57,7 @@ export default function ConsignorSettingsPage() {
     setError(null);
     try {
       const [sellerData, branchesData] = await Promise.all([
-        getSeller(sellerIdToFetch),
+        obterComitente(sellerIdToFetch),
         getJudicialBranches()
       ]);
 

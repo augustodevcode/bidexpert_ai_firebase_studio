@@ -3,7 +3,7 @@
 
 import React, { useCallback } from 'react';
 import SellerForm from '@/app/admin/sellers/seller-form';
-import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
+import { getSeller as obterComitente, updateSeller as atualizarComitente, deleteSeller as deletarComitente } from '@/app/admin/sellers/actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Users, BarChart3, Loader2, DollarSign, TrendingUp, Gavel, ListChecks } from 'lucide-react';
@@ -92,22 +92,23 @@ export default function EditSellerPage({ params }: { params: { sellerId: string 
   }, []);
 
   const handleUpdate = useCallback(async (id: string, data: SellerFormData) => {
-    return updateSeller(id, data);
+    return atualizarComitente(id, data);
   }, []);
 
   return (
     <div className="space-y-6" data-ai-id={`admin-seller-edit-page-${params.sellerId}`}>
       <FormPageLayout
         pageTitle="Comitente"
-        fetchAction={() => getSeller(params.sellerId)}
-        deleteAction={deleteSeller}
+        fetchAction={() => obterComitente(params.sellerId)}
+        deleteAction={() => deletarComitente(params.sellerId)}
         entityId={params.sellerId}
         entityName="Comitente"
         routeBase="/admin/sellers"
         icon={Users}
       >
-        {(initialData) => (
+        {(initialData, formRef) => (
             <SellerForm
+                ref={formRef}
                 initialData={initialData}
                 judicialBranches={judicialBranches}
                 onSubmitAction={(data) => handleUpdate(params.sellerId, data)}
