@@ -32,10 +32,10 @@ export default function NewAuctioneerPage() {
         icon={Gavel}
         isEdit={false}
     >
-        {(formRef) => (
+        {(formRef, initialData, handleSubmit) => (
             <AuctioneerForm
                 ref={formRef}
-                onSubmitAction={handleCreate}
+                onSubmitAction={(data) => handleSubmit(async () => handleCreate(data))}
             />
         )}
     </FormPageLayout>

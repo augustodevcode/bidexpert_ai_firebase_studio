@@ -99,9 +99,13 @@ export default function EditAuctioneerPage({ params }: { params: { auctioneerId:
         routeBase="/admin/auctioneers"
         icon={Gavel}
       >
+        {(formRef, initialData, handleSubmit) => (
           <AuctioneerForm
-            onSubmitAction={(data) => handleUpdate(params.auctioneerId, data)}
+            ref={formRef}
+            initialData={initialData}
+            onSubmitAction={(data) => handleSubmit(async () => handleUpdate(params.auctioneerId, data))}
           />
+        )}
       </FormPageLayout>
 
       <Separator className="my-8" />
