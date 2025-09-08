@@ -1,8 +1,9 @@
+
 // src/app/checkout/[winId]/page.tsx
 import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import { obterDetalhesDoArremateAction, obterTotaisDoCheckoutAction } from './actions';
+import { getWinDetailsForCheckoutAction, getCheckoutTotalsAction } from './actions';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -15,8 +16,8 @@ export default async function CheckoutPage({ params }: { params: { winId: string
   const winId = params.winId;
   
   const [winDetails, checkoutTotals] = await Promise.all([
-    obterDetalhesDoArremateAction(winId),
-    obterTotaisDoCheckoutAction(winId)
+    getWinDetailsForCheckoutAction(winId),
+    getCheckoutTotalsAction(winId)
   ]);
 
   if (!winDetails || !checkoutTotals) {

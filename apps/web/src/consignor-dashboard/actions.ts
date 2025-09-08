@@ -2,7 +2,7 @@
 // src/app/consignor-dashboard/actions.ts
 'use server';
 
-import { atualizarComitente } from '@/app/admin/sellers/actions';
+import { atualizarComitente as updateSellerAction } from '@/app/admin/sellers/actions';
 import type { SellerFormData } from '@bidexpert/core';
 
 /**
@@ -17,5 +17,5 @@ export async function updateConsignorProfile(sellerId: string, data: Partial<Sel
         return { success: false, message: "ID do comitente não encontrado. Não é possível salvar." };
     }
     // Reutiliza a ação principal de atualização de comitente
-    return atualizarComitente(sellerId, data);
+    return updateSellerAction(sellerId, data);
 }

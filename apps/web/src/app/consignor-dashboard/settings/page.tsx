@@ -1,10 +1,11 @@
+
 // src/app/consignor-dashboard/settings/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { getComitente, getComitentes } from '@/app/admin/sellers/actions';
-import { atualizarPerfilComitente } from '../actions';
+import { getSellers, getSeller } from '@/app/admin/sellers/actions';
+import { updateConsignorProfile } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@bidexpert/core';
 import { Loader2, Users } from 'lucide-react';
@@ -36,7 +37,7 @@ export default function ConsignorSettingsPage() {
   // Fetch all sellers if the user is an admin
   useEffect(() => {
     if (isUserAdmin) {
-      getComitentes().then(sellers => {
+      getSellers().then(sellers => {
         setAllSellers(sellers);
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);
@@ -57,7 +58,7 @@ export default function ConsignorSettingsPage() {
     setError(null);
     try {
       const [sellerData, branchesData] = await Promise.all([
-        getComitente(sellerIdToFetch),
+        getSeller(sellerIdToFetch),
         getJudicialBranches()
       ]);
 
@@ -97,7 +98,7 @@ export default function ConsignorSettingsPage() {
     if (!sellerIdToUpdate) {
       return { success: false, message: 'ID do comitente não encontrado. Não é possível salvar.' };
     }
-    return atualizarPerfilComitente(sellerIdToUpdate, data);
+    return updateConsignorProfile(sellerIdToUpdate, data);
   };
   
   // Render loading state
