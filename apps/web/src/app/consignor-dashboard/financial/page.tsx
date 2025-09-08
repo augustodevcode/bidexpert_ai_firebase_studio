@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/financial/page.tsx
 'use client';
 
@@ -29,7 +30,7 @@ const initialStats: SellerDashboardData = {
   totalCommission: 0,
   netValue: 0,
   paidCount: 0,
-  platformCommissionPercentage: 0.05, // Default to 5%
+  platformCommissionPercentage: 0,
 };
 
 export default function ConsignorFinancialPage() {
@@ -86,7 +87,7 @@ export default function ConsignorFinancialPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchFinancials, isUserAdmin, selectedSellerId, allSellers.length]);
 
-  const columns = useMemo(() => createFinancialColumns({ commissionRate: (stats.platformCommissionPercentage || 5) / 100 }), [stats.platformCommissionPercentage]);
+  const columns = useMemo(() => createFinancialColumns({ commissionRate: stats.platformCommissionPercentage || 5 }), [stats.platformCommissionPercentage]);
   
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]

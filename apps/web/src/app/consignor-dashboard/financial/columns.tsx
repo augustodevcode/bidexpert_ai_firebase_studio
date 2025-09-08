@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/financial/columns.tsx
 'use client';
 
@@ -9,7 +10,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 
-export const createFinancialColumns = ({ commissionRate = 0.05 }: { commissionRate?: number }): ColumnDef<UserWin>[] => [
+export const createFinancialColumns = ({ commissionRate }: { commissionRate: number }): ColumnDef<UserWin>[] => [
   {
     accessorKey: 'lot.title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Arrematado" />,
@@ -41,9 +42,9 @@ export const createFinancialColumns = ({ commissionRate = 0.05 }: { commissionRa
   },
   {
     id: 'commission',
-    header: () => <div className="text-right">Comissão ({(commissionRate * 100).toFixed(1)}%)</div>,
+    header: () => <div className="text-right">Comissão ({commissionRate}%)</div>,
     cell: ({ row }) => {
-      const amount = row.original.winningBidAmount * commissionRate;
+      const amount = row.original.winningBidAmount * (commissionRate / 100);
       return <div className="text-right">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
     },
   },
@@ -51,7 +52,7 @@ export const createFinancialColumns = ({ commissionRate = 0.05 }: { commissionRa
     id: 'netValue',
     header: () => <div className="text-right">Valor a Receber</div>,
     cell: ({ row }) => {
-      const commission = row.original.winningBidAmount * commissionRate;
+      const commission = row.original.winningBidAmount * (commissionRate / 100);
       const amount = row.original.winningBidAmount - commission;
       return <div className="text-right font-bold">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
     },

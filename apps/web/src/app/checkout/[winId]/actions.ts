@@ -1,9 +1,10 @@
+
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
 import type { UserWin } from '@/types';
 import { type CheckoutFormValues } from './checkout-form-schema';
-import { UserWinService, CheckoutService } from '@bidexpert/services';
+import { UserWinService, CheckoutService } from '@bidexpert/core';
 
 const userWinService = new UserWinService();
 const checkoutService = new CheckoutService();
@@ -32,7 +33,7 @@ export async function getCheckoutTotalsAction(winId: string) {
  * installment records.
  * @param {string} winId - The ID of the user win record.
  * @param {CheckoutFormValues} paymentData - The validated payment form data.
- * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
+ * @returns {Promise<{success: boolean; message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
     return checkoutService.processPayment(winId, paymentData);
