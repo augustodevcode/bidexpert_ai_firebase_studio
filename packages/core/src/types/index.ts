@@ -891,7 +891,24 @@ export interface ConsignorDashboardStats {
     salesData: { name: string; sales: number }[];
 }
 
+export interface SellerDashboardData {
+  totalRevenue: number;
+  totalAuctions: number;
+  totalLots: number;
+  lotsSoldCount: number;
+  salesRate: number;
+  averageTicket: number;
+  salesByMonth: { name: string; Faturamento: number }[];
+  platformCommissionPercentage?: number; // Adicionado
+  totalCommission?: number; // Adicionado
+  netValue?: number; // Adicionado
+  paidCount?: number; // Adicionado
+}
+
+
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'roleNames' | 'permissions'>>;
+export type UserCreationData = Pick<UserProfileData, 'email' | 'password' | 'fullName' | 'accountType' | 'habilitationStatus'> & Partial<Omit<UserProfileData, 'id' | 'email' | 'password' | 'fullName' | 'accountType' | 'habilitationStatus' | 'roleName' | 'roleNames' | 'permissions'>> & { roleIds?: string[] };
+
 
 export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
 export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;
@@ -909,43 +926,11 @@ export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-sc
 export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
 export type VehicleMakeFormData = z.infer<typeof import('@/app/admin/vehicle-makes/form-schema').vehicleMakeFormSchema>;
 export type VehicleModelFormData = z.infer<typeof import('@/app/admin/vehicle-models/form-schema').vehicleModelFormSchema>;
+export type CheckoutFormValues = z.infer<typeof import('@/app/checkout/[winId]/checkout-form-schema').checkoutFormSchema>;
+export type DocumentTemplateFormData = z.infer<typeof import('@/app/admin/document-templates/document-template-form-schema').documentTemplateFormSchema>;
+export type PlatformSettingsFormData = z.infer<typeof import('@/app/admin/settings/settings-form-schema').platformSettingsFormSchema>;
+export type RegistrationFormValues = z.infer<typeof import('@/app/auth/register/form-schema').registrationFormSchema>;
 
-export interface VehicleMake {
-  id: string;
-  name: string;
-  slug: string;
-}
-
-export interface VehicleModel {
-  id: string;
-  name: string;
-  slug: string;
-  makeId: string;
-  makeName?: string;
-}
-
-
-export interface AuctionPerformanceData {
-  id: string;
-  title: string;
-  status: AuctionStatus;
-  totalLots: number;
-  lotsSoldCount: number;
-  totalRevenue: number;
-  averageTicket: number;
-  salesRate: number;
-  auctionDate: Date | string;
-  auctionStages: AuctionStage[];
-}
-
-export interface AuctionDashboardData {
-  totalRevenue: number;
-  totalBids: number;
-  uniqueBidders: number;
-  salesRate: number;
-  revenueByCategory: { name: string, Faturamento: number }[];
-  bidsOverTime: { name: string, Lances: number }[];
-}
 
 // ============================================================================
 // DATABASE ADAPTER INTERFACE
