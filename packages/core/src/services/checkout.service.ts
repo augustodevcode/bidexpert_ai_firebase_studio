@@ -9,6 +9,7 @@ import { add } from 'date-fns';
 async function getCommissionRate(): Promise<number> {
   try {
     // In a deployed environment, this URL should be absolute and internal.
+    // NEXT_PUBLIC_BASE_URL should point to the deployed web app URL.
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     const response = await fetch(`${baseUrl}/api/commission`);
     
