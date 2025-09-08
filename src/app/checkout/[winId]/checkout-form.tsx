@@ -156,7 +156,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                 )}
             </CardContent>
             <CardFooter className="flex-col gap-4">
-                <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading} data-ai-id="checkout-submit-button">
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
                     {isLoading ? 'Processando...' : `Confirmar Pagamento (${installmentCount}x de R$ ${installmentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
                 </Button>

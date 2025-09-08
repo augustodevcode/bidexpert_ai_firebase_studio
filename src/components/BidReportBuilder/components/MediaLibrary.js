@@ -34,7 +34,7 @@ const MediaLibrary = ({ onSelectImage }) => {
     }, [searchTerm]);
 
     return (
-        <div className="p-4 h-full flex flex-col">
+        <div className="p-4 h-full flex flex-col" data-ai-id="report-media-library-panel">
             <h3 className="text-md font-semibold border-b pb-2 mb-2">Biblioteca de Mídia</h3>
              <Input 
                 placeholder="Buscar imagem..." 
