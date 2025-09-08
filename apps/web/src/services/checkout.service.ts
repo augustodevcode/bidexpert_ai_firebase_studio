@@ -1,7 +1,6 @@
-// packages/core/src/services/checkout.service.ts
-import { UserWinRepository } from '../repositories/user-win.repository';
-import { CheckoutRepository } from '../repositories/checkout.repository';
-import type { CheckoutFormValues } from '@bidexpert/core';
+// src/services/checkout.service.ts
+import { UserWinRepository } from '@/repositories/user-win.repository';
+import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
@@ -9,6 +8,7 @@ import { add } from 'date-fns';
 async function getCommissionRate(): Promise<number> {
   try {
     // In a deployed environment, this URL should be absolute and internal.
+    // NEXT_PUBLIC_BASE_URL should point to the deployed web app URL.
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     const response = await fetch(`${baseUrl}/api/commission`);
     
@@ -29,11 +29,9 @@ async function getCommissionRate(): Promise<number> {
 
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
-  private checkoutRepository: CheckoutRepository;
   
   constructor() {
     this.userWinRepository = new UserWinRepository();
-    this.checkoutRepository = new CheckoutRepository();
   }
 
   async calculateTotals(winId: string): Promise<{
@@ -99,7 +97,7 @@ export class CheckoutService {
                 status: 'PENDENTE' as const
             }));
             
-            await this.checkoutRepository.createInstallments({data: installmentsToCreate});
+            await this.userWinRepository.createInstallments({data: installmentsToCreate});
             await this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' });
             
             if (process.env.NODE_ENV !== 'test') {

@@ -1,9 +1,9 @@
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
-import type { UserWin } from '@/types';
+import type { UserWin } from '@bidexpert/core';
 import { type CheckoutFormValues } from './checkout-form-schema';
-import { UserWinService, CheckoutService } from '@bidexpert/core';
+import { UserWinService, CheckoutService } from '@bidexpert/services';
 
 const userWinService = new UserWinService();
 const checkoutService = new CheckoutService();

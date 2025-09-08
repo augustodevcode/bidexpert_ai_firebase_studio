@@ -1,4 +1,4 @@
-// apps/web/src/lib/prisma.ts
+// src/lib/prisma.ts
 
 // This file now re-exports the prisma instance from the central core package
 // to maintain backward compatibility with any existing direct imports in the web app,
