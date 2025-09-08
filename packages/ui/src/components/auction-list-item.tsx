@@ -5,16 +5,16 @@ import * as React from 'react';
 import type { Auction } from '@bidexpert/core';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Card } from './ui/card';
+import { Badge } from './ui/badge';
+import { Button } from './ui/button';
 import { Eye, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, MapPin, Tag, Users } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
 import { getAuctionStatusText, isValidImageUrl } from '../lib/ui-helpers';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import EntityEditMenu from './entity-edit-menu';
-import AuctionStagesTimeline from './auction-stages-timeline';
+import AuctionStagesTimeline from './auction/auction-stages-timeline';
 
 
 interface AuctionListItemProps {
