@@ -3,7 +3,7 @@ import { HabilitationRepository } from '@/repositories/habilitation.repository';
 import { UserService } from './user.service';
 import type { UserProfileData, UserDocument } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma'; // Import prisma directly for transactions or specific checks
+import { prisma } from '@/lib/prisma'; // Import prisma directly for specific checks not in repo
 
 export class HabilitationService {
   private repository: HabilitationRepository;
@@ -21,6 +21,9 @@ export class HabilitationService {
   async habilitateForAuction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {
     try {
       await this.repository.createOrUpdateAuctionHabilitation(userId, auctionId);
+      if (process.env.NODE_ENV !== 'test') {
+        revalidatePath(`/auctions/${auctionId}`);
+      }
       return { success: true, message: 'Você foi habilitado para este leilão com sucesso!' };
     } catch (e: any) {
       console.error(`Failed to habilitate user ${userId} for auction ${auctionId}:`, e);

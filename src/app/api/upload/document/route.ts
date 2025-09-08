@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, Buffer.from(await file.arrayBuffer()));
 
-    // Use the Server Action to save the document record
+    // Use the Service to save the document record
     const result = await habilitationService.saveUserDocument(userId, documentTypeId, publicUrl, file.name);
 
     if (!result.success) {

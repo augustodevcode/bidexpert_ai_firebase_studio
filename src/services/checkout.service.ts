@@ -1,17 +1,17 @@
 // src/services/checkout.service.ts
 import { prisma } from '@/lib/prisma';
 import { PlatformSettingsService } from './platform-settings.service';
-import { UserWinService } from './user-win.service';
+import { UserWinRepository } from '@/repositories/user-win.repository';
 import { type CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
 export class CheckoutService {
-  private userWinService: UserWinService;
+  private userWinRepository: UserWinRepository;
   private settingsService: PlatformSettingsService;
 
   constructor() {
-    this.userWinService = new UserWinService();
+    this.userWinRepository = new UserWinRepository();
     this.settingsService = new PlatformSettingsService();
   }
 
@@ -21,7 +21,7 @@ export class CheckoutService {
     commissionValue: number;
     totalDue: number;
   }> {
-    const win = await this.userWinService.getWinDetails(winId);
+    const win = await this.userWinRepository.findByIdSimple(winId);
     if (!win) {
       throw new Error('Registro de arremate não encontrado.');
     }
@@ -39,7 +39,7 @@ export class CheckoutService {
   }
 
   async processPayment(winId: string, paymentData: CheckoutFormValues): Promise<{ success: boolean; message: string }> {
-    const win = await this.userWinService.getWinDetails(winId);
+    const win = await this.userWinRepository.findByIdSimple(winId);
 
     if (!win) {
         return { success: false, message: 'Registro do arremate não encontrado.' };
@@ -58,10 +58,7 @@ export class CheckoutService {
     
     try {
         if (paymentData.paymentMethod === 'credit_card') {
-            await prisma.userWin.update({
-                where: { id: winId },
-                data: { paymentStatus: 'PAGO' }
-            });
+            await this.userWinRepository.update(winId, { paymentStatus: 'PAGO' });
             if (process.env.NODE_ENV !== 'test') {
                 revalidatePath(`/dashboard/wins`);
                 revalidatePath(`/checkout/${winId}`);
@@ -81,13 +78,8 @@ export class CheckoutService {
                 status: 'PENDENTE' as const
             }));
             
-            await prisma.$transaction([
-                prisma.installmentPayment.createMany({data: installmentsToCreate}),
-                prisma.userWin.update({
-                    where: { id: winId },
-                    data: { paymentStatus: 'PROCESSANDO' }
-                })
-            ]);
+            await this.userWinRepository.createInstallments({data: installmentsToCreate});
+            await this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' });
             
             if (process.env.NODE_ENV !== 'test') {
                 revalidatePath(`/dashboard/wins`);
