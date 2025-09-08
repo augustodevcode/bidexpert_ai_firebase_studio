@@ -8,33 +8,18 @@ import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWinService } from './user-win.service';
+import { PlatformSettingsService } from './platform-settings.service';
 
-
-// Helper function to fetch commission rate from the BFF
-async function getCommissionRate(): Promise<number> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const response = await fetch(`${baseUrl}/api/commission`);
-    
-    if (!response.ok) {
-        console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
-        return 0.05; // Fallback
-    }
-    const data = await response.json();
-    return data.default_commission_rate || 0.05;
-  } catch (error) {
-    console.error("[SellerService] Error fetching commission rate from BFF:", error);
-    return 0.05; // Fallback
-  }
-}
 
 export class SellerService {
   private sellerRepository: SellerRepository;
   private userWinService: UserWinService;
+  private settingsService: PlatformSettingsService;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.userWinService = new UserWinService();
+    this.settingsService = new PlatformSettingsService();
   }
 
   async getSellers(): Promise<SellerProfileInfo[]> {
@@ -114,13 +99,15 @@ export class SellerService {
   }
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
-    const [sellerData, commissionRate, sellerWins] = await Promise.all([
+    const [sellerData, settings, sellerWins] = await Promise.all([
         this.sellerRepository.findById(sellerId), // Usando o repositório
-        getCommissionRate(),
+        this.settingsService.getSettings(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
 
     if (!sellerData) return null;
+    
+    const commissionRate = (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
 
     const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
     const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);

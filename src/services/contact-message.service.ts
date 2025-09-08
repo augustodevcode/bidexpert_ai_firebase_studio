@@ -1,6 +1,6 @@
 // src/services/contact-message.service.ts
 import { ContactMessageRepository } from '@/repositories/contact-message.repository';
-import type { ContactMessage } from '@/types';
+import type { ContactMessage } from '@bidexpert/core';
 
 export class ContactMessageService {
   private repository: ContactMessageRepository;

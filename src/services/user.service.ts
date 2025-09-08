@@ -6,15 +6,18 @@ import bcrypt from 'bcryptjs';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
+import { RoleService } from './role.service';
 
 
 export class UserService {
   private userRepository: UserRepository;
   private roleRepository: RoleRepository;
+  private roleService: RoleService;
 
   constructor() {
     this.userRepository = new UserRepository();
     this.roleRepository = new RoleRepository();
+    this.roleService = new RoleService();
   }
   
   private formatUser(user: any): UserProfileWithPermissions | null {
@@ -80,9 +83,13 @@ export class UserService {
         if (roleIdsToAssign.length === 0) {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {
-              throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
+              await this.roleService.createRole({name: 'USER', nameNormalized: 'USER', description: 'Usuário Padrão', permissions: ['view_auctions', 'view_lots']});
+              const newUserRole = await this.roleRepository.findByNormalizedName('USER');
+              if(!newUserRole) throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
+              roleIdsToAssign.push(newUserRole.id);
+          } else {
+              roleIdsToAssign.push(userRole.id);
           }
-          roleIdsToAssign.push(userRole.id);
         }
 
         const { roleIds, ...userData } = data;
@@ -152,6 +159,18 @@ export class UserService {
         where: { id: userId },
         data: { habilitationStatus: status }
     });
+  }
+  
+  async authenticateUser(email: string, password: string):Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
+    const user = await this.findUserByEmail(email);
+    if (!user || !user.password) {
+      return { success: false, message: 'Email ou senha inválidos.' };
+    }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return { success: false, message: 'Email ou senha inválidos.' };
+    }
+    return { success: true, message: 'Login bem-sucedido.', user };
   }
 
   /**

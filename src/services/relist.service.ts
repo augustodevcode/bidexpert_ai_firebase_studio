@@ -1,6 +1,6 @@
 // src/services/relist.service.ts
 import { LotService } from './lot.service';
-import type { Lot } from '@/types';
+import type { Lot, LotFormData } from '@bidexpert/core';
 
 export class RelistService {
   private lotService: LotService;
@@ -24,9 +24,9 @@ export class RelistService {
           return { success: false, message: 'Apenas lotes não vendidos ou encerrados sem venda podem ser relistados.'};
       }
       
-      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, ...restOfLotData } = originalLot;
+      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, stageDetails, ...restOfLotData } = originalLot;
 
-      const newLotData: Partial<Lot> = {
+      const newLotData: Partial<LotFormData> = {
           ...restOfLotData,
           status: 'EM_BREVE',
           auctionId: newAuctionId,

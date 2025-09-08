@@ -1,14 +1,14 @@
-// src/app/admin/sellers/new/page.tsx
+// apps/web/src/app/admin/sellers/new/page.tsx
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import SellerForm from '../seller-form';
 import { createSeller, type SellerFormData } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Users, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import type { JudicialBranch } from '@bidexpert/core';
 
 function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
@@ -16,7 +16,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
     const { toast } = useToast();
     const formRef = useRef<any>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-
+    
     const handleSave = () => {
         formRef.current?.requestSubmit();
     };

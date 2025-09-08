@@ -1,6 +1,6 @@
 // src/services/vehicle-model.service.ts
 import { VehicleModelRepository } from '@/repositories/vehicle-model.repository';
-import type { VehicleModel, VehicleModelFormData } from '@/types';
+import type { VehicleModel, VehicleModelFormData } from '@bidexpert/core';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 

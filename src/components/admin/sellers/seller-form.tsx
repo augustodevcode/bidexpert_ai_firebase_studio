@@ -161,6 +161,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                             emptyStateMessage="Nenhuma vara encontrada."
                             entityName="judicialBranch"
                             createNewUrl="/admin/judicial-branches/new"
+                            editUrlPrefix="/admin/judicial-branches"
                             onRefetch={handleRefetchBranches}
                             isFetching={isFetchingBranches}
                         />

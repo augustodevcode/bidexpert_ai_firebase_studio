@@ -28,13 +28,112 @@ import {
 import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
-import RelistLotModal from '../../relist-lot-modal';
+import RelistLotModal from '../relist-lot-modal';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Separator } from '@/components/ui/separator';
 import { Loader2 } from 'lucide-react';
+import type { AuctionDashboardData } from '@/app/admin/auctions/analysis/actions';
+import { getAuctionDashboardDataAction } from '@/app/admin/auctions/analysis/actions';
+import { Bar, Line, ResponsiveContainer, LineChart, BarChart as RechartsBarChart, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+    <Card className="bg-secondary/40">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
+
+function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
+    const [dashboardData, setDashboardData] = useState<AuctionDashboardData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setIsLoading(true);
+            try {
+                const data = await getAuctionDashboardDataAction(auctionId);
+                setDashboardData(data);
+            } catch (e) {
+                console.error("Failed to fetch auction dashboard data:", e);
+                setDashboardData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
+    }, [auctionId]);
+
+    if (isLoading) {
+        return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;
+    }
+    
+    if (!dashboardData) {
+        return <p>Não foi possível carregar os dados de performance para este leilão.</p>;
+    }
+    
+    return (
+        <div className="space-y-4">
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={Gavel} />
+                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={TrendingUp} />
+                <StatCard title="Total de Lances" value={dashboardData.totalBids} icon={ListChecks} />
+                <StatCard title="Licitantes Únicos" value={dashboardData.uniqueBidders} icon={Users} />
+            </div>
+             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Faturamento por Categoria</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-72">
+                        {dashboardData.revenueByCategory && dashboardData.revenueByCategory.length > 0 ? (
+                            <ResponsiveContainer width="100%" height="100%">
+                            <RechartsBarChart
+                                data={dashboardData.revenueByCategory}
+                                layout="vertical"
+                                margin={{ top: 5, right: 20, left: 60, bottom: 5 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis type="number" stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                                <YAxis type="category" dataKey="name" stroke="#888888" fontSize={10} width={80} />
+                                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                                <Legend />
+                                <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                            </RechartsBarChart>
+                            </ResponsiveContainer>
+                        ) : (
+                            <div className="flex items-center justify-center h-full text-muted-foreground">Nenhum dado de faturamento por categoria.</div>
+                        )}
+                    </CardContent>
+                </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Atividade de Lances</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-72">
+                         <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={dashboardData.bidsOverTime} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis dataKey="name" stroke="#888888" fontSize={10} />
+                                <YAxis stroke="#888888" fontSize={10} />
+                                <Tooltip />
+                                <Legend />
+                                <Line type="monotone" dataKey="Lances" stroke="hsl(var(--primary))" strokeWidth={2} activeDot={{ r: 8 }} />
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+            </div>
+        </div>
+    )
+}
 
 export default function EditLotPage() {
   const params = useParams();
@@ -106,7 +205,7 @@ export default function EditLotPage() {
   
   const handleSave = async () => {
     if (formRef.current) {
-        formRef.current.requestSubmit();
+        await formRef.current.requestSubmit();
     }
   }
 
@@ -169,7 +268,7 @@ export default function EditLotPage() {
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <FormPageLayout
             formTitle={isViewMode ? "Visualizar Lote" : "Editar Lote"}
             formDescription={lot.title}

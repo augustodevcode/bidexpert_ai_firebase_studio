@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -14,19 +13,15 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { vehicleModelFormSchema, type VehicleModelFormData } from './form-schema';
-import type { VehicleModel, VehicleMake } from '@/types';
-import { Loader2, Save, Car } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { vehicleModelFormSchema } from './form-schema';
+import type { VehicleModelFormData, VehicleModel, VehicleMake } from '@bidexpert/core';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getVehicleMakes } from '../vehicle-makes/actions';
 
 interface VehicleModelFormProps {
   initialData?: VehicleModel | null;
   makes: VehicleMake[];
-  onSubmitAction: (data: VehicleModelFormData) => Promise<{ success: boolean; message: string; modelId?: string }>;
+  onSubmitAction: (data: VehicleModelFormData) => Promise<any>;
 }
 
 const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
@@ -45,12 +40,13 @@ const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
     },
   });
   
-  React.useEffect(() => {
+   React.useEffect(() => {
     form.reset({
       name: initialData?.name || '',
       makeId: initialData?.makeId || '',
     });
   }, [initialData, form]);
+
 
   React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
@@ -64,8 +60,8 @@ const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
   }, []);
 
   return (
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
           <FormField
             control={form.control}
             name="makeId"
@@ -101,8 +97,8 @@ const VehicleModelForm = React.forwardRef<any, VehicleModelFormProps>(({
               </FormItem>
             )}
           />
-        </form>
-      </Form>
+      </form>
+    </Form>
   );
 });
 

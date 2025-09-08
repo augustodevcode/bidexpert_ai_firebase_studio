@@ -1,7 +1,7 @@
 // src/app/admin/lots/relist-lot-action.ts
 'use server';
 
-import { RelistService } from '@/services/relist.service';
+import { RelistService } from '@bidexpert/services';
 
 /**
  * Server Action to relist a lot.
