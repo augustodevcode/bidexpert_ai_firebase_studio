@@ -29,7 +29,11 @@
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
   - **Status**:
     - [x] Adicionado `data-ai-id` às páginas de edição de Leiloeiro e Comitente.
-    - [ ] **A FAZER:** Instrumentar as páginas de listagem (`/admin/lots`, etc.) e outras páginas críticas.
+    - [x] Instrumentado o `FormPageLayout`.
+    - [x] Instrumentadas as páginas de listagem (`/admin/lots`, `/admin/sellers`), colunas de tabela e componentes de `DataTable`.
+    - [x] Instrumentado os cards de `Lot` e `Auction` no pacote `@bidexpert/ui`.
+    - [x] Instrumentada a página de Checkout e seus componentes.
+    - [ ] **A FAZER:** Revisar outras páginas críticas (Dashboard, Wizard, etc.) e componentes compartilhados.
 
 ## NEXT
 - **Item 27: Padronizar Idioma (Prioridade 3)**
