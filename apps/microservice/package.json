@@ -15,7 +15,9 @@
     "@fastify/helmet": "^11.1.1",
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
-    "fastify-plugin": "^4.5.1"
+    "fastify-plugin": "^4.5.1",
+    "@bidexpert/core": "workspace:*",
+    "@bidexpert/services": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",

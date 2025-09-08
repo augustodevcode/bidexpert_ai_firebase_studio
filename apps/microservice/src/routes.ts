@@ -1,3 +1,4 @@
+
 // apps/microservice/src/routes.ts
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 import { PlatformSettingsService } from '@bidexpert/services'; // Importar o serviço
@@ -17,7 +18,7 @@ async function appRoutes(server: FastifyInstance, options: FastifyPluginOptions)
         const settings = await settingsService.getSettings();
         const commissionRate = (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
         
-        // No futuro, poderíamos ter regras mais complexas aqui
+        // No futuro, poderíamos ter regras mais complexas aqui (ex: por categoria, por valor)
         const rules = [
             { for: 'all', rate: commissionRate }
         ];
