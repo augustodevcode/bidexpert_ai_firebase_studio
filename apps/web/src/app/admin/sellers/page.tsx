@@ -15,7 +15,7 @@ export default function AdminSellersPage() {
   const columns = useMemo(() => createColumns(), []);
 
   return (
-    <div className="space-y-6" data-ai-id="admin-sellers-page">
+    <div className="space-y-6" data-ai-id="admin-sellers-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

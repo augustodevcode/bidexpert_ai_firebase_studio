@@ -64,7 +64,7 @@ export const createColumns = (): ColumnDef<SellerProfileInfo>[] => [
     cell: ({ row }) => {
       const seller = row.original;
       return (
-        <div className="flex items-center justify-end gap-1">
+        <div className="flex items-center justify-end gap-1" data-ai-id={`actions-menu-seller-${seller.id}`}>
             <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                 <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`} target="_blank">
                     <Eye className="h-4 w-4" />

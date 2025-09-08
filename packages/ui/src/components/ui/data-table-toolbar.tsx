@@ -1,3 +1,4 @@
+// packages/ui/src/components/ui/data-table-toolbar.tsx
 "use client"
 
 import { X, ListTree, Trash2 } from "lucide-react"
@@ -133,7 +134,7 @@ export function DataTableToolbar<TData>({
         {selectedRowsCount > 0 && onDeleteSelected && (
            <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="h-8">
+                <Button variant="destructive" size="sm" className="h-8" data-ai-id="data-table-delete-selected-button">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Excluir ({selectedRowsCount})
                 </Button>
