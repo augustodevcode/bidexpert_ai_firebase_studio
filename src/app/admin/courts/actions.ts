@@ -5,17 +5,17 @@ import { CourtService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const courtService = new CourtService();
-const courtActions = createCrudActions({
+
+const { 
+  obterTodos: getCourts, 
+  obterPorId: getCourt, 
+  criar: createCourt, 
+  atualizar: updateCourt, 
+  excluir: deleteCourt 
+} = createCrudActions({
   service: courtService,
-  entityName: 'Court',
-  entityNamePlural: 'Courts',
+  entityName: 'Tribunal',
   routeBase: '/admin/courts',
 });
 
-export const {
-  getAll: getCourts,
-  getById: getCourt,
-  create: createCourt,
-  update: updateCourt,
-  delete: deleteCourt,
-} = courtActions;
+export { getCourts, getCourt, createCourt, updateCourt, deleteCourt };

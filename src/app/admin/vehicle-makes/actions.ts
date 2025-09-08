@@ -6,17 +6,16 @@ import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const vehicleMakeService = new VehicleMakeService();
 
-const vehicleMakeActions = createCrudActions({
+const { 
+  obterTodos: getVehicleMakes, 
+  obterPorId: getVehicleMake, 
+  criar: createVehicleMake, 
+  atualizar: updateVehicleMake, 
+  excluir: deleteVehicleMake 
+} = createCrudActions({
   service: vehicleMakeService,
-  entityName: 'VehicleMake',
-  entityNamePlural: 'VehicleMakes',
+  entityName: 'Marca de Veículo',
   routeBase: '/admin/vehicle-makes',
 });
 
-export const {
-  getAll: getVehicleMakes,
-  getById: getVehicleMake,
-  create: createVehicleMake,
-  update: updateVehicleMake,
-  delete: deleteVehicleMake,
-} = vehicleMakeActions;
+export { getVehicleMakes, getVehicleMake, createVehicleMake, updateVehicleMake, deleteVehicleMake };

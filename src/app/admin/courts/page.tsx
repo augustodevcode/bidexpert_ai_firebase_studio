@@ -30,7 +30,7 @@ export default function AdminCourtsPage() {
         </CardHeader>
         <CardContent>
            <ResourceDataTable<Court>
-            columns={createColumns}
+            columns={createColumns()}
             fetchAction={getCourts}
             deleteAction={deleteCourt}
             searchColumnId="name"

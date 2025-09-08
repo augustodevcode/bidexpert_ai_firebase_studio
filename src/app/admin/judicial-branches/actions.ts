@@ -5,17 +5,17 @@ import { JudicialBranchService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const judicialBranchService = new JudicialBranchService();
-const judicialBranchActions = createCrudActions({
+
+const { 
+  obterTodos: getJudicialBranches, 
+  obterPorId: getJudicialBranch, 
+  criar: createJudicialBranch, 
+  atualizar: updateJudicialBranch, 
+  excluir: deleteJudicialBranch 
+} = createCrudActions({
     service: judicialBranchService,
-    entityName: 'JudicialBranch',
-    entityNamePlural: 'JudicialBranches',
+    entityName: 'Vara Judicial',
     routeBase: '/admin/judicial-branches'
 });
 
-export const {
-    getAll: getJudicialBranches,
-    getById: getJudicialBranch,
-    create: createJudicialBranch,
-    update: updateJudicialBranch,
-    delete: deleteJudicialBranch
-} = judicialBranchActions;
+export { getJudicialBranches, getJudicialBranch, createJudicialBranch, updateJudicialBranch, deleteJudicialBranch };

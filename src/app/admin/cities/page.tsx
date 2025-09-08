@@ -1,22 +1,33 @@
 // src/app/admin/cities/page.tsx
-import { PlusCircle, Building2 } from 'lucide-react';
-import Link from 'next/link';
+'use client';
+
+import ResourceDataTable from '@/components/admin/resource-data-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import ResourceDataTable from '@/components/admin/resource-data-table';
-import { getCities, deleteCity } from './actions';
-import { getStates } from '@/app/admin/states/actions';
-import { createColumns } from './columns';
 import type { CityInfo } from '@/types';
+import { Building2, PlusCircle } from 'lucide-react';
+import Link from 'next/link';
+import { useMemo } from 'react';
+import { getCities, deleteCity } from './actions';
+import { createColumns } from './columns';
+import { getStates } from '@/app/admin/states/actions';
 
-export default async function AdminCitiesPage() {
-  // Fetching states here to build the filter options, as it's a specific requirement for this page.
-  const states = await getStates();
-  const stateOptions = states.map(s => ({ value: s.uf, label: s.name }));
+export default function AdminCitiesPage() {
+  const columns = useMemo(() => createColumns(), []);
+  
+  // States are fetched client-side for filter initialization
+  const [stateOptions, setStateOptions] = React.useState<{value: string, label: string}[]>([]);
+  
+  React.useEffect(() => {
+    getStates().then(states => {
+      const options = states.map(s => ({ value: s.uf, label: s.name }));
+      setStateOptions(options);
+    });
+  }, []);
 
-  const facetedFilterColumns = [
+  const facetedFilterColumns = useMemo(() => [
     { id: 'stateUf', title: 'UF', options: stateOptions },
-  ];
+  ], [stateOptions]);
 
   return (
     <div className="space-y-6">
@@ -39,7 +50,7 @@ export default async function AdminCitiesPage() {
         </CardHeader>
         <CardContent>
            <ResourceDataTable<CityInfo>
-            columns={createColumns}
+            columns={columns}
             fetchAction={getCities}
             deleteAction={deleteCity}
             searchColumnId="name"

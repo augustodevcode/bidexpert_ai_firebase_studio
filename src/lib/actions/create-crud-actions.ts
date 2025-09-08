@@ -17,7 +17,6 @@ interface CrudService<T, TCreate, TUpdate> {
 interface CrudActionsOptions<T, TCreate, TUpdate> {
   service: CrudService<T, TCreate, TUpdate>;
   entityName: string;
-  entityNamePlural: string;
   routeBase: string;
 }
 
@@ -29,29 +28,28 @@ interface CrudActionsOptions<T, TCreate, TUpdate> {
 export function createCrudActions<T, TCreate, TUpdate>({
   service,
   entityName,
-  entityNamePlural,
   routeBase,
 }: CrudActionsOptions<T, TCreate, TUpdate>) {
   
-  const getAll = service.findAll
+  const obterTodos = service.findAll
     ? async (...args: any[]): Promise<T[]> => {
         return service.findAll!(...args);
       }
     : undefined;
 
-  const getById = service.findById
+  const obterPorId = service.findById
     ? async (id: string): Promise<T | null> => {
         return service.findById!(id);
       }
     : undefined;
     
-  const getBySlug = service.findBySlug
+  const obterPorSlug = service.findBySlug
     ? async (slug: string): Promise<T | null> => {
         return service.findBySlug!(slug);
       }
     : undefined;
 
-  const create = service.create
+  const criar = service.create
     ? async (data: TCreate) => {
         const result = await service.create!(data);
         if (result.success && process.env.NODE_ENV !== 'test') {
@@ -61,7 +59,7 @@ export function createCrudActions<T, TCreate, TUpdate>({
       }
     : undefined;
 
-  const update = service.update
+  const atualizar = service.update
     ? async (id: string, data: TUpdate) => {
         const result = await service.update!(id, data);
         if (result.success && process.env.NODE_ENV !== 'test') {
@@ -72,7 +70,7 @@ export function createCrudActions<T, TCreate, TUpdate>({
       }
     : undefined;
 
-  const deleteAction = service.delete
+  const excluir = service.delete
     ? async (id: string) => {
         const result = await service.delete!(id);
         if (result.success && process.env.NODE_ENV !== 'test') {
@@ -84,11 +82,11 @@ export function createCrudActions<T, TCreate, TUpdate>({
 
   // Retorna apenas as funções que foram definidas
   return {
-    ...(getAll && { getAll }),
-    ...(getById && { getById }),
-    ...(getBySlug && { getBySlug }),
-    ...(create && { create }),
-    ...(update && { update }),
-    ...(deleteAction && { delete: deleteAction }),
+    ...(obterTodos && { obterTodos }),
+    ...(obterPorId && { obterPorId }),
+    ...(obterPorSlug && { obterPorSlug }),
+    ...(criar && { criar }),
+    ...(atualizar && { atualizar }),
+    ...(excluir && { excluir }),
   };
 }

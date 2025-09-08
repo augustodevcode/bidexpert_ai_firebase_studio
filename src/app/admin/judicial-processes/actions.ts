@@ -7,24 +7,16 @@ import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const judicialProcessService = new JudicialProcessService();
 
-const processActions = createCrudActions({
+const { 
+  obterTodos: getJudicialProcesses, 
+  obterPorId: getJudicialProcess, 
+  excluir: deleteJudicialProcess,
+  criar: createJudicialProcessAction,
+  atualizar: updateJudicialProcessAction,
+} = createCrudActions({
     service: judicialProcessService,
-    entityName: 'JudicialProcess',
-    entityNamePlural: 'JudicialProcesses',
+    entityName: 'Processo Judicial',
     routeBase: '/admin/judicial-processes'
 });
 
-export const {
-    getAll: getJudicialProcesses,
-    getById: getJudicialProcess,
-    delete: deleteJudicialProcess,
-} = processActions;
-
-// Manter as actions de create e update que possuem lógica customizada
-export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
-    return judicialProcessService.createJudicialProcess(data);
-}
-
-export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
-    return judicialProcessService.updateJudicialProcess(id, data);
-}
+export { getJudicialProcesses, getJudicialProcess, deleteJudicialProcess, createJudicialProcessAction, updateJudicialProcessAction };

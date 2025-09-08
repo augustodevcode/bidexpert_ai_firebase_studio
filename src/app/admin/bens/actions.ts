@@ -5,20 +5,20 @@ import { BemService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const bemService = new BemService();
-const bemActions = createCrudActions({
+
+const { 
+  obterTodos: getBens, 
+  obterPorId: getBem, 
+  criar: createBem, 
+  atualizar: updateBem, 
+  excluir: deleteBem 
+} = createCrudActions({
   service: bemService,
   entityName: 'Bem',
-  entityNamePlural: 'Bens',
   routeBase: '/admin/bens',
 });
 
-export const {
-    getAll: getBens,
-    getById: getBem,
-    create: createBem,
-    update: updateBem,
-    delete: deleteBem,
-} = bemActions;
+export { getBens, getBem, createBem, updateBem, deleteBem };
 
 
 export async function getBensByIdsAction(ids: string[]) {

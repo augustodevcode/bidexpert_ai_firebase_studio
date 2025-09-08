@@ -12,7 +12,7 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminAuctioneersPage() {
-  const columns = useMemo(() => createColumns({ handleDelete: deleteAuctioneer }), []);
+  const columns = useMemo(() => createColumns(), []);
 
   return (
     <div className="space-y-6">
