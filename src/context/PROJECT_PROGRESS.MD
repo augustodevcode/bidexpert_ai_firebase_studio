@@ -24,10 +24,17 @@
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**: Added `data-ai-id` attributes to all critical layout containers and interactive components to improve reliability for future modifications and automated testing.
-
-## DOING
 - **(Reverted) Item 27: Padronizar Idioma**: Esta tarefa foi revertida. O padrão do código será mantido em inglês para consistência técnica. A tradução para o português será aplicada apenas na camada de UI e em comentários, conforme necessário.
 
-## NEXT
+## DOING
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados e instrumentação. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
+  - **Objetivo**: Criar um construtor de relatórios "arrasta e solta" para que usuários administradores possam criar e exportar relatórios customizados.
+  - **Status**:
+    - [x] Estrutura inicial e interatividade básica (drag-and-drop, painéis) implementada.
+    - [ ] **A FAZER:** Implementar painéis de "Dados" e "Mídia".
+    - [ ] Conectar a fontes de dados reais via API.
+    - [ ] Implementar a lógica de exportação (PDF, etc.).
+    - [ ] Integrar assistência de IA.
+
+## NEXT
+- **Aguardando novas tarefas.**
