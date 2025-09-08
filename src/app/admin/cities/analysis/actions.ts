@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { CityService } from '@bidexpert/services';
 
 export interface CityPerformanceData {
   id: string;
@@ -18,6 +18,7 @@ export interface CityPerformanceData {
   latitude: number | null;
   longitude: number | null;
 }
+const cityService = new CityService();
 
 /**
  * Fetches and aggregates performance data for all cities with lots.
@@ -25,42 +26,7 @@ export interface CityPerformanceData {
  */
 export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[]> {
   try {
-    const citiesWithLots = await prisma.city.findMany({
-      where: {
-        lots: {
-          some: {}, // Ensure the city has at least one lot
-        },
-      },
-      include: {
-        _count: {
-          select: { lots: true },
-        },
-        lots: {
-          where: { status: 'VENDIDO' },
-          select: { price: true },
-        },
-      },
-    });
-
-    return citiesWithLots.map(city => {
-      const lotsSoldCount = city.lots.length;
-      const totalRevenue = city.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-      const totalLots = city._count.lots;
-      const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
-
-      return {
-        id: city.id,
-        name: city.name,
-        stateUf: city.stateUf || 'N/A',
-        totalLots,
-        lotsSoldCount,
-        totalRevenue,
-        salesRate,
-        latitude: city.latitude,
-        longitude: city.longitude,
-      };
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue); // Sort by revenue descending
-    
+    return await cityService.getCitiesPerformance();
   } catch (error: any) {
     console.error("[Action - getCitiesPerformanceAction] Error fetching city performance:", error);
     throw new Error("Falha ao buscar dados de performance das cidades.");

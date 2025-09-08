@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 
-export const createFinancialColumns = ({ commissionRate = 5 }: { commissionRate?: number }): ColumnDef<UserWin>[] => [
+export const createFinancialColumns = ({ commissionRate }: { commissionRate: number }): ColumnDef<UserWin>[] => [
   {
     accessorKey: 'lot.title',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Arrematado" />,

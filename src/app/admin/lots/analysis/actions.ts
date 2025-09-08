@@ -5,7 +5,7 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { LotService } from '@bidexpert/services';
 import type { Lot } from '@/types';
 
 export interface LotPerformanceData extends Lot {
@@ -14,6 +14,7 @@ export interface LotPerformanceData extends Lot {
   sellerName: string;
   bidsCount: number;
 }
+const lotService = new LotService();
 
 /**
  * Fetches and aggregates performance data for all lots.
@@ -21,34 +22,7 @@ export interface LotPerformanceData extends Lot {
  */
 export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> {
   try {
-    const lots = await prisma.lot.findMany({
-      include: {
-        auction: { select: { title: true } },
-        category: { select: { name: true } },
-        seller: { select: { name: true } },
-        _count: {
-          select: { bids: true },
-        },
-      },
-      orderBy: [
-        {
-          bids: {
-            _count: 'desc',
-          },
-        },
-        {
-          price: 'desc'
-        }
-      ]
-    });
-
-    return lots.map(lot => ({
-      ...lot,
-      auctionName: lot.auction?.title || 'N/A',
-      categoryName: lot.category?.name || 'N/A',
-      sellerName: lot.seller?.name || 'N/A',
-      bidsCount: lot._count.bids,
-    })) as LotPerformanceData[];
+    return await lotService.getLotsPerformance();
   } catch (error: any) {
     console.error("[Action - getLotsPerformanceAction] Error fetching lot performance:", error);
     throw new Error("Falha ao buscar dados de performance dos lotes.");

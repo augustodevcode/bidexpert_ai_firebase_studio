@@ -92,7 +92,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                         <FormLabel>Método de Pagamento</FormLabel>
                         <FormControl>
                             <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="grid grid-cols-2 gap-4">
-                                <FormItem>
+                                <FormItem data-ai-id="checkout-payment-method-cc">
                                     <Label htmlFor="pm-card" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground has-[div>input:checked]:border-primary">
                                         <FormControl>
                                             <RadioGroupItem value="credit_card" id="pm-card" className="sr-only" />
@@ -101,7 +101,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                                         Cartão de Crédito
                                     </Label>
                                 </FormItem>
-                                <FormItem>
+                                <FormItem data-ai-id="checkout-payment-method-installments">
                                     <Label htmlFor="pm-installments" className="flex flex-col items-center justify-center rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground has-[div>input:checked]:border-primary">
                                          <FormControl>
                                             <RadioGroupItem value="installments" id="pm-installments" className="sr-only" />
@@ -118,7 +118,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                 />
 
                 {paymentMethod === 'credit_card' && (
-                    <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-4 pt-4 border-t" data-ai-id="checkout-cc-details-section">
                         <FormField control={form.control} name="cardDetails.cardholderName" render={({ field }) => (<FormItem><FormLabel>Nome no Cartão</FormLabel><FormControl><Input placeholder="Nome como aparece no cartão" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="cardDetails.cardNumber" render={({ field }) => (<FormItem><FormLabel>Número do Cartão</FormLabel><FormControl><Input placeholder="0000 0000 0000 0000" {...field} disabled={isLoading} /></FormControl><FormMessage /></FormItem>)}/>
                         <div className="grid grid-cols-2 gap-4">
@@ -128,7 +128,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                     </div>
                 )}
                 {paymentMethod === 'installments' && (
-                    <div className="space-y-4 pt-4 border-t">
+                    <div className="space-y-4 pt-4 border-t" data-ai-id="checkout-installments-section">
                          <FormField
                             control={form.control}
                             name="installments"

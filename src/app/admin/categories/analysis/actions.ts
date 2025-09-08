@@ -4,8 +4,7 @@
  * Provides functions to aggregate key statistics for lot category performance.
  */
 'use server';
-
-import { prisma } from '@/lib/prisma';
+import { CategoryService } from '@bidexpert/services';
 
 export interface CategoryPerformanceData {
   id: string;
@@ -14,6 +13,7 @@ export interface CategoryPerformanceData {
   totalRevenue: number;
   averageTicket: number;
 }
+const categoryService = new CategoryService();
 
 /**
  * Fetches and aggregates performance data for all lot categories.
@@ -21,28 +21,7 @@ export interface CategoryPerformanceData {
  */
 export async function getCategoriesPerformanceAction(): Promise<CategoryPerformanceData[]> {
   try {
-    const categories = await prisma.lotCategory.findMany({
-      include: {
-        lots: {
-          where: { status: 'VENDIDO' },
-          select: { price: true },
-        },
-      },
-    });
-
-    return categories.map(category => {
-      const totalRevenue = category.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-      const totalLotsSold = category.lots.length;
-      const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
-
-      return {
-        id: category.id,
-        name: category.name,
-        totalLotsSold,
-        totalRevenue,
-        averageTicket,
-      };
-    }).sort((a, b) => b.totalRevenue - a.totalRevenue); // Sort by revenue descending
+    return await categoryService.getCategoriesPerformance();
   } catch (error: any) {
     console.error("[Action - getCategoriesPerformanceAction] Error fetching category performance:", error);
     throw new Error("Falha ao buscar dados de performance das categorias.");
