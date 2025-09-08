@@ -1,33 +1,18 @@
 // src/app/admin/sellers/page.tsx
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, Users } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
 import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminSellersPage() {
-  const { toast } = useToast();
-
-  // A lógica de busca e estado foi movida para o ResourceDataTable.
-  // Esta função é passada para o componente para lidar com a exclusão.
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteSeller(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-    return result;
-  }, [toast]);
-
-  const columns = useMemo(() => createColumns({ handleDelete: handleDelete }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete: deleteSeller }), []);
 
   return (
     <div className="space-y-6" data-ai-id="admin-sellers-page-container">
