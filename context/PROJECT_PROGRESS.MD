@@ -19,20 +19,19 @@
 - **Item 17: Reloteamento de Bens:** Created logic to unlink assets from unsold lots.
 - **Item 18: Implementação de Pagamento Parcelado:** Created the installment payment flow and financial panel.
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refactored the database, services, and UI to support pricing by auction stage.
-- **Item 19: Padronização de Identificadores `data-ai-id`:** Added `data-ai-id` attributes to all UI containers and structural components.
+- **Item 19: Padronização de Identificadores `data-ai-id` (Fase 1):** Added `data-ai-id` attributes to main interactive UI components.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**: Completed the correction of architectural gaps, including standardizing nomenclature and repository usage.
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
-- **Item 25: Refatoração Completa do Acesso a Dados (Prioridade 1)**
-  - **Status**: CONCLUÍDO. Todas as chamadas diretas ao `prisma` foram movidas dos `services` para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
+- **Item 25: Refatoração Completa do Acesso a Dados (Prioridade 1)**: Todas as chamadas diretas ao `prisma` foram movidas dos `services` para classes de `Repository` dedicadas.
 
 ## DOING
-- **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas.
-    - **PRÓXIMO PASSO**: Retomar o desenvolvimento, começando pela conexão com fontes de dados reais.
+- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
+  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais para melhorar a testabilidade e a manipulação pela IA.
+  - **Status**: Em andamento.
 
 ## NEXT
-- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
-  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
 - **Item 27: Padronizar Idioma (Prioridade 3)**
   - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
+- **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
+    - **Status:** Pausado temporariamente. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
