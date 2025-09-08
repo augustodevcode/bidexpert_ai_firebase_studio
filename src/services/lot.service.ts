@@ -1,12 +1,14 @@
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import { BidRepository } from '@/repositories/bid.repository'; // Import BidRepository
-import type { Lot, LotFormData } from '@/types';
+import type { Lot, LotFormData, Review, LotQuestion, UserProfileWithPermissions } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { prisma } from '@/lib/prisma'; // For specific queries not in a repository yet
+import { revalidatePath } from 'next/cache';
 
 export class LotService {
   private lotRepository: LotRepository;
@@ -127,7 +129,13 @@ export class LotService {
   }
 
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
-    return this.lotRepository.delete(id);
+     const lotToDelete = await this.getLotById(id);
+     if (!lotToDelete) {
+         return { success: false, message: "Lote não encontrado." };
+     }
+    // O repository já lida com a transação para deletar as relações
+    await this.lotRepository.delete(lotToDelete.id);
+    return { success: true, message: "Lote excluído com sucesso." };
   }
   
   async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
@@ -188,4 +196,81 @@ export class LotService {
       return { success: false, message: `Falha ao gerar documento: ${error.message}` };
     }
   }
+  
+    async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
+        const lot = await this.getLotById(lotIdOrPublicId);
+        if (!lot) return [];
+        // @ts-ignore - Assuming Review model exists
+        return prisma.review.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+    }
+    
+    async createReview(lotIdOrPublicId: string, userId: string, userDisplayName: string, rating: number, comment: string): Promise<{ success: boolean; message: string; reviewId?: string }> {
+        const lot = await this.getLotById(lotIdOrPublicId);
+        if (!lot) return { success: false, message: "Lote não encontrado." };
+
+        try {
+            // @ts-ignore
+            const newReview = await prisma.review.create({
+                data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
+            });
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+            }
+            return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
+        } catch(error) {
+            console.error("Error creating review:", error);
+            return { success: false, message: "Falha ao enviar avaliação." };
+        }
+    }
+
+    async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
+        const lot = await this.getLotById(lotIdOrPublicId);
+        if (!lot) return [];
+        // @ts-ignore
+        return prisma.lotQuestion.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+    }
+
+    async askQuestionOnLot(lotIdOrPublicId: string, userId: string, userDisplayName: string, questionText: string): Promise<{ success: boolean; message: string; questionId?: string }> {
+        const lot = await this.getLotById(lotIdOrPublicId);
+        if (!lot) return { success: false, message: "Lote não encontrado." };
+
+        try {
+            // @ts-ignore
+            const newQuestion = await prisma.lotQuestion.create({
+                data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
+            });
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+            }
+            return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
+        } catch(error) {
+            console.error("Error creating question:", error);
+            return { success: false, message: "Falha ao enviar pergunta." };
+        }
+    }
+    
+    async answerQuestionOnLot(questionId: string, answerText: string, answeredByUser: UserProfileWithPermissions): Promise<{ success: boolean; message: string }> {
+        const question = await prisma.lotQuestion.findUnique({where: {id: questionId}, include: {lot: true}});
+        if(!question) return {success: false, message: "Pergunta não encontrada."};
+        
+        // Aqui você pode adicionar lógica de permissão, ex:
+        // if(answeredByUser.id !== question.lot.sellerId && !hasPermission(answeredByUser, 'manage_all')) {
+        //     return { success: false, message: "Você não tem permissão para responder a esta pergunta."};
+        // }
+        
+        try {
+            // @ts-ignore
+            await prisma.lotQuestion.update({
+                where: { id: questionId },
+                data: { answerText, answeredByUserId: answeredByUser.id, answeredByUserDisplayName: answeredByUser.fullName, answeredAt: new Date() }
+            });
+            if (process.env.NODE_ENV !== 'test') {
+                revalidatePath(`/auctions/${question.lot.auctionId}/lots/${question.lot.publicId || question.lot.id}`);
+            }
+            return { success: true, message: "Resposta enviada com sucesso." };
+        } catch (error) {
+            console.error("Error answering question:", error);
+            return { success: false, message: "Falha ao enviar resposta."};
+        }
+    }
 }

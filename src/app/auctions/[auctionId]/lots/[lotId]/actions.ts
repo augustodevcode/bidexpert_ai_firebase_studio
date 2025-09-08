@@ -6,18 +6,14 @@
  */
 'use server';
 
-import { BidService } from '@bidexpert/services';
-import { SellerService } from '@bidexpert/services';
-import { HabilitationService } from '@bidexpert/services';
-import type { BidInfo, Lot, SellerProfileInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
-import { generateDocument } from '@/ai/flows/generate-document-flow';
-import { LotService } from '@bidexpert/services';
-import { prisma } from '@/lib/prisma';
+import { BidService, SellerService, HabilitationService, LotService, DocumentTemplateService } from '@bidexpert/services';
+import type { BidInfo, UserLotMaxBid, Review, LotQuestion, SellerProfileInfo, UserProfileWithPermissions } from '@bidexpert/core';
 
 const bidService = new BidService();
 const sellerService = new SellerService();
 const lotService = new LotService();
 const habilitationService = new HabilitationService();
+const documentTemplateService = new DocumentTemplateService();
 
 export async function placeBidOnLot(
   lotIdOrPublicId: string,
@@ -42,10 +38,7 @@ export async function getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]>
 }
 
 export async function getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-  const lot = await lotService.getLotById(lotIdOrPublicId);
-  if (!lot) return [];
-  // @ts-ignore - Assuming Review model exists
-  return prisma.review.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+  return lotService.getReviewsForLot(lotIdOrPublicId);
 }
 
 export async function createReview(
@@ -55,26 +48,11 @@ export async function createReview(
   rating: number,
   comment: string
 ): Promise<{ success: boolean; message: string; reviewId?: string }> {
-  const lot = await lotService.getLotById(lotIdOrPublicId);
-  if (!lot) return { success: false, message: "Lote não encontrado." };
-
-  try {
-    // @ts-ignore
-    const newReview = await prisma.review.create({
-        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
-    });
-    return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
-  } catch(error) {
-    console.error("Error creating review:", error);
-    return { success: false, message: "Falha ao enviar avaliação." };
-  }
+  return lotService.createReview(lotIdOrPublicId, userId, userDisplayName, rating, comment);
 }
 
 export async function getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
-  const lot = await lotService.getLotById(lotIdOrPublicId);
-  if (!lot) return [];
-  // @ts-ignore
-  return prisma.lotQuestion.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+  return lotService.getQuestionsForLot(lotIdOrPublicId);
 }
 
 export async function askQuestionOnLot(
@@ -83,38 +61,15 @@ export async function askQuestionOnLot(
   userDisplayName: string,
   questionText: string
 ): Promise<{ success: boolean; message: string; questionId?: string }> {
-  const lot = await lotService.getLotById(lotIdOrPublicId);
-  if (!lot) return { success: false, message: "Lote não encontrado." };
-
-  try {
-    // @ts-ignore
-    const newQuestion = await prisma.lotQuestion.create({
-        data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
-    });
-    return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
-  } catch(error) {
-    console.error("Error creating question:", error);
-    return { success: false, message: "Falha ao enviar pergunta." };
-  }
+  return lotService.askQuestionOnLot(lotIdOrPublicId, userId, userDisplayName, questionText);
 }
 
 export async function answerQuestionOnLot(
   questionId: string, 
   answerText: string,
-  answeredByUserId: string,
-  answeredByUserDisplayName: string,
+  answeredByUser: UserProfileWithPermissions
 ): Promise<{ success: boolean; message: string }> {
-  try {
-    // @ts-ignore
-    await prisma.lotQuestion.update({
-        where: { id: questionId },
-        data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: new Date() }
-    });
-    return { success: true, message: "Resposta enviada com sucesso." };
-  } catch (error) {
-    console.error("Error answering question:", error);
-    return { success: false, message: "Falha ao enviar resposta."};
-  }
+ return lotService.answerQuestionOnLot(questionId, answerText, answeredByUser);
 }
 
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {

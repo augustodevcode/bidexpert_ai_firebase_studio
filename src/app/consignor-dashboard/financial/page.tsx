@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/financial/page.tsx
 'use client';
 
@@ -7,7 +8,7 @@ import { DollarSign, BarChart3, TrendingUp, CircleDollarSign, Loader2, AlertCirc
 import { DataTable } from '@/components/ui/data-table';
 import { createFinancialColumns } from './columns';
 import { getFinancialDataForConsignor } from './actions';
-import type { UserWin, SellerProfileInfo } from '@/types';
+import type { UserWin, SellerProfileInfo } from '@bidexpert/core';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
@@ -29,6 +30,7 @@ const initialStats: SellerDashboardData = {
   totalCommission: 0,
   netValue: 0,
   paidCount: 0,
+  platformCommissionPercentage: 0,
 };
 
 export default function ConsignorFinancialPage() {
@@ -85,7 +87,7 @@ export default function ConsignorFinancialPage() {
     }
   }, [userProfileWithPermissions, authLoading, fetchFinancials, isUserAdmin, selectedSellerId, allSellers.length]);
 
-  const columns = useMemo(() => createFinancialColumns({ commissionRate: 5 }), []);
+  const columns = useMemo(() => createFinancialColumns({ commissionRate: stats.platformCommissionPercentage || 5 }), [stats.platformCommissionPercentage]);
   
   const statusOptions = useMemo(() => 
     [...new Set(wins.map(w => w.paymentStatus))]
