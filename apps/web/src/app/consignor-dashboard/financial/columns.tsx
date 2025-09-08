@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/financial/columns.tsx
 'use client';
 

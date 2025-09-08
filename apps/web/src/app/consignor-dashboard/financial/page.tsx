@@ -1,3 +1,4 @@
+
 // src/app/consignor-dashboard/financial/page.tsx
 'use client';
 
