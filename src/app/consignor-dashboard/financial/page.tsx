@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getPaymentStatusText } from '@bidexpert/core';
 import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { hasPermission } from '@/lib/permissions';
-import { obterComitentes } from '@/app/admin/sellers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
 import type { SellerDashboardData } from '@bidexpert/core';
@@ -46,7 +46,7 @@ export default function ConsignorFinancialPage() {
 
   useEffect(() => {
     if (isUserAdmin) {
-      obterComitentes().then(sellers => {
+      getSellers().then(sellers => {
         setAllSellers(sellers);
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);

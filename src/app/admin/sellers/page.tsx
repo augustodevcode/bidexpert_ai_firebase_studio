@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { obterComitentes, deletarComitente } from './actions';
+import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, Users } from 'lucide-react';
 import ResourceDataTable from '@/components/admin/resource-data-table';
@@ -36,8 +36,8 @@ export default function AdminSellersPage() {
         <CardContent>
            <ResourceDataTable<SellerProfileInfo>
             columns={columns}
-            fetchAction={obterComitentes}
-            deleteAction={deletarComitente}
+            fetchAction={getSellers}
+            deleteAction={deleteSeller}
             searchColumnId="name"
             searchPlaceholder="Buscar por nome..."
           />

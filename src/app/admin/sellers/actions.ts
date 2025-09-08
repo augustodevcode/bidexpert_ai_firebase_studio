@@ -7,7 +7,6 @@ import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();
 const lotService = new LotService();
-
 const { 
   obterTodos: getSellers, 
   obterPorId: getSeller,
@@ -20,7 +19,6 @@ const {
   entityName: 'Comitente',
   routeBase: '/admin/sellers',
 });
-
 
 export { 
   getSellers, 

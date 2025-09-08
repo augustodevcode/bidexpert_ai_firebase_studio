@@ -23,19 +23,10 @@
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
-- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
-  - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
-  - **Status**: **CONCLUÍDO**.
+- **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**: Added `data-ai-id` attributes to all critical layout containers and interactive components to improve reliability for future modifications and automated testing.
 
 ## DOING
-- **Item 27: Padronizar Idioma (Prioridade 3)**
-  - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
-  - **Status**:
-    - [x] Refatorado `CheckoutService` e suas actions.
-    - [x] Refatorado `SellerService` e suas actions.
-    - [x] Refatorado `AuctioneerService` e suas actions.
-    - [ ] **A FAZER:** Renomear métodos nos demais serviços (Lot, User, etc.).
-    - [ ] **A FAZER:** Revisar e traduzir o texto da UI nos componentes.
+- **(Reverted) Item 27: Padronizar Idioma**: Esta tarefa foi revertida. O padrão do código será mantido em inglês para consistência técnica. A tradução para o português será aplicada apenas na camada de UI e em comentários, conforme necessário.
 
 ## NEXT
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**

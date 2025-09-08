@@ -1,7 +1,7 @@
 // src/app/consignor-dashboard/actions.ts
 'use server';
 
-import { atualizarComitente as updateSellerAction } from '@/app/admin/sellers/actions';
+import { updateSeller as updateSellerAction } from '@/app/admin/sellers/actions';
 import type { SellerFormData } from '@bidexpert/core';
 
 /**
@@ -11,7 +11,7 @@ import type { SellerFormData } from '@bidexpert/core';
  * @param data Os dados a serem atualizados.
  * @returns O resultado da operação de atualização.
  */
-export async function atualizarPerfilComitente(sellerId: string, data: Partial<SellerFormData>) {
+export async function updateConsignorProfile(sellerId: string, data: Partial<SellerFormData>) {
     if (!sellerId) {
         return { success: false, message: "ID do comitente não encontrado. Não é possível salvar." };
     }
