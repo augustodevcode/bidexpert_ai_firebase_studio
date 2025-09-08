@@ -3,7 +3,7 @@
 
 import React, { useCallback } from 'react';
 import SellerForm from '@/app/admin/sellers/seller-form';
-import { obterComitente, atualizarComitente, deletarComitente } from '@/app/admin/sellers/actions';
+import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Users, BarChart3, Loader2, DollarSign, TrendingUp, Gavel, ListChecks } from 'lucide-react';
@@ -55,7 +55,7 @@ function SellerDashboardSection({ sellerId }: { sellerId: string }) {
     const { totalRevenue, salesRate, totalAuctions, totalLots, salesByMonth } = dashboardData;
     
     return (
-        <div className="space-y-4">
+        <div className="space-y-4" data-ai-id="seller-dashboard-section">
              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                  <StatCard title="Faturamento Bruto" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} />
                 <StatCard title="Taxa de Venda" value={`${salesRate.toFixed(1)}%`} icon={TrendingUp} />
@@ -92,19 +92,25 @@ export default function EditSellerPage({ params }: { params: { sellerId: string 
   }, []);
 
   const handleUpdate = useCallback(async (id: string, data: SellerFormData) => {
-    return atualizarComitente(id, data);
+    return updateSeller(id, data);
   }, []);
+
+  const handleDelete = useCallback(async (id: string) => {
+    return deleteSeller(id);
+  }, []);
+
 
   return (
     <div className="space-y-6" data-ai-id={`admin-seller-edit-page-${params.sellerId}`}>
       <FormPageLayout
         pageTitle="Comitente"
-        fetchAction={() => obterComitente(params.sellerId)}
-        deleteAction={() => deletarComitente(params.sellerId)}
+        fetchAction={() => getSeller(params.sellerId)}
+        deleteAction={() => handleDelete(params.sellerId)}
         entityId={params.sellerId}
         entityName="Comitente"
         routeBase="/admin/sellers"
         icon={Users}
+        isEdit={true}
       >
         {(initialData, formRef, handleSubmit) => (
             <SellerForm
@@ -117,7 +123,7 @@ export default function EditSellerPage({ params }: { params: { sellerId: string 
       </FormPageLayout>
 
       <Separator className="my-8" />
-       <Card>
+       <Card data-ai-id="seller-performance-analysis-card">
           <CardHeader>
               <CardTitle className="text-xl font-semibold flex items-center">
                   <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance

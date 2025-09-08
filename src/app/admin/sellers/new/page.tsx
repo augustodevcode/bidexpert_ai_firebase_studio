@@ -1,10 +1,10 @@
 // apps/web/src/app/admin/sellers/new/page.tsx
 'use client';
 
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SellerForm from '../seller-form';
-import { criarComitente } from '../actions';
+import { createSeller } from '../actions';
 import type { SellerFormData } from '@bidexpert/core';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
@@ -17,7 +17,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
     const { toast } = useToast();
     
     const handleCreate = async (data: SellerFormData) => {
-        const result = await criarComitente(data);
+        const result = await createSeller(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Comitente criado com sucesso.' });
             router.push('/admin/sellers');
@@ -34,7 +34,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
             icon={Users}
             isEdit={false}
         >
-            {(formRef, initialData, handleSubmit) => (
+            {(initialData, formRef, handleSubmit) => (
                 <SellerForm
                     ref={formRef}
                     judicialBranches={branches}

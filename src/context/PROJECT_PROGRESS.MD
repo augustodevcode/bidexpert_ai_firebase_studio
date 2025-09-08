@@ -23,8 +23,6 @@
 - **Item 21: Refatoração e Abstração de Componentes e Lógica (Análise de Padrões)**: Completed the creation of generic components, extraction of domain components into the `@bidexpert/ui` package, and standardization of all admin forms using `FormPageLayout`.
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
-
-## DOING
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
   - **Status**:
@@ -33,10 +31,19 @@
     - [x] Instrumentadas as páginas de listagem (`/admin/lots`, `/admin/sellers`), colunas de tabela e componentes de `DataTable`.
     - [x] Instrumentado os cards de `Lot` e `Auction` no pacote `@bidexpert/ui`.
     - [x] Instrumentada a página de Checkout e seus componentes.
-    - [ ] **A FAZER:** Revisar outras páginas críticas (Dashboard, Wizard, etc.) e componentes compartilhados.
+    - [x] Instrumentado o Wizard e seus componentes de fluxo.
+    - [x] Instrumentado o formulário de Comitentes.
+    - [x] **CONCLUÍDO**
 
-## NEXT
+## DOING
 - **Item 27: Padronizar Idioma (Prioridade 3)**
   - **Objetivo**: Adotar o português como padrão para todas as novas variáveis, funções e arquivos.
+  - **Status**:
+    - [x] Refatorado `CheckoutService` e suas actions.
+    - [ ] **A FAZER:** Renomear métodos no `SellerService` e `AuctioneerService`.
+    - [ ] **A FAZER:** Renomear métodos nos demais serviços (Lot, User, etc.).
+    - [ ] **A FAZER:** Revisar e traduzir o texto da UI nos componentes.
+
+## NEXT
 - **Item 24: `BidReportBuilder` - Construtor de Relatórios Self-Service**
-    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.
+    - **Status:** Pausado temporariamente para focar na refatoração da camada de dados e instrumentação. A estrutura inicial e a interatividade básica (drag-and-drop, painéis) foram implementadas. Próximo passo é conectar a fontes de dados reais.

@@ -1,4 +1,3 @@
-
 // src/app/admin/sellers/actions.ts
 'use server';
 
@@ -22,21 +21,14 @@ const {
   routeBase: '/admin/sellers',
 });
 
-// Renomeando para consistência em português, mas mantendo a funcionalidade.
-const obterComitentes = getSellers;
-const obterComitente = getSeller;
-const obterComitentePorSlug = getSellerBySlug;
-const criarComitente = createSeller;
-const atualizarComitente = updateSeller;
-const deletarComitente = deleteSeller;
 
 export { 
-  obterComitentes, 
-  obterComitente,
-  obterComitentePorSlug, 
-  criarComitente, 
-  atualizarComitente, 
-  deletarComitente 
+  getSellers, 
+  getSeller,
+  getSellerBySlug, 
+  createSeller, 
+  updateSeller, 
+  deleteSeller 
 };
 
 
