@@ -127,7 +127,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   }
 
   return (
-    <div data-ai-id="admin-seller-form-card">
+    <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
            <FormField control={form.control} name="name" render={({ field }) => (
@@ -151,6 +151,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                             emptyStateMessage="Nenhuma vara encontrada."
                             entityName="judicialBranch"
                             createNewUrl="/admin/judicial-branches/new"
+                            editUrlPrefix="/admin/judicial-branches"
                             onRefetch={handleRefetchBranches}
                             isFetching={isFetchingBranches}
                         />

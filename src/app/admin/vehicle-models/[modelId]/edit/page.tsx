@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import VehicleModelForm from '../../vehicle-model-form';
-import { getVehicleModel, updateVehicleModel, deleteVehicleModel, type VehicleModelFormData } from '../../actions';
+import VehicleModelForm from '../vehicle-model-form';
+import { getVehicleModel, updateVehicleModel, deleteVehicleModel } from '../actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { useToast } from '@/hooks/use-toast';
 import { Car } from 'lucide-react';
-import type { VehicleModel, VehicleMake } from '@/types';
+import type { VehicleModel, VehicleMake, VehicleModelFormData } from '@/types';
 
 
 export default function EditVehicleModelPage() {

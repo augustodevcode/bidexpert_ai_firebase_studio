@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -15,10 +14,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { userFormSchema, type UserFormValues } from './user-form-schema';
 import type { UserProfileData, Role } from '@/types';
-import { Checkbox } from '@/components/ui/checkbox';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getRoles } from '../roles/actions';
 
 
 interface UserFormProps {
@@ -29,11 +28,12 @@ interface UserFormProps {
 
 const UserForm = React.forwardRef<any, UserFormProps>(({
   initialData, 
-  roles,
+  roles: initialRoles,
   onSubmitAction,
 }, ref) => {
-
-  // Remapeia a estrutura de roles do usuário inicial para um array de IDs
+  const [roles, setRoles] = React.useState(initialRoles);
+  const [isFetchingRoles, setIsFetchingRoles] = React.useState(false);
+  
   const initialRoleIds = initialData?.roles?.map((r: any) => r.role.id) || [];
 
   const form = useForm<UserFormValues>({
@@ -41,15 +41,21 @@ const UserForm = React.forwardRef<any, UserFormProps>(({
     defaultValues: {
       fullName: initialData?.fullName || '',
       email: initialData?.email || '',
-      password: '', // Senha sempre vazia no formulário de admin por segurança
-      roleId: initialRoleIds.length > 0 ? initialRoleIds[0] : null, // Apenas para compatibilidade
+      password: '',
+      roleId: initialRoleIds.length > 0 ? initialRoleIds[0] : null,
     },
   });
 
-  // Expor o método de submit do formulário via ref para o FormPageLayout
   React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
   }));
+
+  const handleRefetchRoles = React.useCallback(async () => {
+    setIsFetchingRoles(true);
+    const data = await getRoles();
+    setRoles(data);
+    setIsFetchingRoles(false);
+  }, []);
 
   return (
       <Form {...form}>
@@ -90,7 +96,7 @@ const UserForm = React.forwardRef<any, UserFormProps>(({
                     <Input type="password" placeholder="Defina uma senha inicial" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Se deixado em branco, o usuário pode precisar redefinir a senha no primeiro login ou um email será enviado.
+                    Deixe em branco para não alterar.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -102,24 +108,18 @@ const UserForm = React.forwardRef<any, UserFormProps>(({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Perfil Principal do Usuário</FormLabel>
-                   <Select
-                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)}
-                    value={field.value || "---NONE---"}
-                   >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um perfil" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="---NONE---">Nenhum Perfil</SelectItem>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                   <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={roles.map(r => ({ value: r.id, label: r.name }))}
+                      placeholder="Selecione o perfil"
+                      searchPlaceholder="Buscar perfil..."
+                      emptyStateMessage="Nenhum perfil encontrado."
+                      createNewUrl="/admin/roles/new"
+                      editUrlPrefix="/admin/roles"
+                      onRefetch={handleRefetchRoles}
+                      isFetching={isFetchingRoles}
+                    />
                   <FormDescription>
                     Atribua o perfil principal. Perfis adicionais podem ser gerenciados na página de edição do usuário.
                   </FormDescription>
@@ -134,4 +134,3 @@ const UserForm = React.forwardRef<any, UserFormProps>(({
 
 UserForm.displayName = 'UserForm';
 export default UserForm;
-

@@ -19,12 +19,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctioneerFormSchema, type AuctioneerFormValues } from './auctioneer-form-schema';
-import type { AuctioneerProfileInfo, MediaItem } from '@bidexpert/core';
+import type { AuctioneerProfileInfo, MediaItem, UserProfileData } from '@bidexpert/core';
 import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getUsersWithRoles } from '../users/actions';
 
 interface AuctioneerFormProps {
   initialData?: Partial<AuctioneerProfileInfo> | null;
@@ -38,6 +40,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [isCepLoading, setIsCepLoading] = React.useState(false);
+  const [users, setUsers] = React.useState<UserProfileData[]>([]);
+  const [isFetchingUsers, setIsFetchingUsers] = React.useState(false);
 
   const form = useForm<AuctioneerFormValues>({
     resolver: zodResolver(auctioneerFormSchema),
@@ -56,9 +60,13 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
       logoMediaId: initialData?.logoMediaId || null,
       dataAiHintLogo: initialData?.dataAiHintLogo || '',
       description: initialData?.description || '',
-      userId: initialData?.userId || '',
+      userId: initialData?.userId || null,
     },
   });
+  
+  React.useEffect(() => {
+    handleRefetchUsers();
+  }, []);
 
   React.useEffect(() => {
     if (initialData) {
@@ -77,7 +85,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
         logoMediaId: initialData?.logoMediaId || null,
         dataAiHintLogo: initialData?.dataAiHintLogo || '',
         description: initialData?.description || '',
-        userId: initialData?.userId || '',
+        userId: initialData?.userId || null,
       });
     }
   }, [initialData, form]);
@@ -89,6 +97,13 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
   const validLogoUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
+  
+  const handleRefetchUsers = React.useCallback(async () => {
+    setIsFetchingUsers(true);
+    const fetchedUsers = await getUsersWithRoles();
+    setUsers(fetchedUsers);
+    setIsFetchingUsers(false);
+  }, []);
 
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
@@ -145,6 +160,29 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                       <Input placeholder="Ex: JUCESP 123, Matrícula 001/AA" {...field} value={field.value ?? ""} />
                     </FormControl>
                     <FormDescription>Número de matrícula na Junta Comercial ou órgão competente.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="userId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Conta de Usuário Vinculada (Opcional)</FormLabel>
+                    <EntitySelector
+                      value={field.value}
+                      onChange={field.onChange}
+                      options={users.map(u => ({ value: u.id, label: `${u.fullName} (${u.email})`}))}
+                      placeholder="Selecione um usuário"
+                      searchPlaceholder="Buscar por nome ou email..."
+                      emptyStateMessage="Nenhum usuário encontrado."
+                      createNewUrl="/admin/users/new"
+                      editUrlPrefix="/admin/users"
+                      onRefetch={handleRefetchUsers}
+                      isFetching={isFetchingUsers}
+                    />
+                    <FormDescription>Vincule este perfil de leiloeiro a uma conta de usuário existente na plataforma.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
