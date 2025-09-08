@@ -3,7 +3,6 @@ import { HabilitationRepository } from '@/repositories/habilitation.repository';
 import { UserService } from './user.service';
 import type { UserProfileData, UserDocument } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { prisma } from '@/lib/prisma'; // Import prisma directly for specific checks not in repo
 
 export class HabilitationService {
   private repository: HabilitationRepository;
@@ -15,7 +14,9 @@ export class HabilitationService {
   }
 
   async getHabilitationRequests(): Promise<UserProfileData[]> {
-    return this.repository.findHabilitationRequests();
+    const users = await this.repository.findHabilitationRequests();
+    // Use the user service's formatting logic to ensure consistency
+    return users.map(u => this.userService.formatUser(u)).filter(Boolean) as UserProfileData[];
   }
 
   async habilitateForAuction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {

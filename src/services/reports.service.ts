@@ -1,6 +1,7 @@
 // src/services/reports.service.ts
 import { ReportsRepository } from '@/repositories/reports.repository';
-import type { AdminReportData, AdminDashboardStats } from '@/types';
+import { prisma } from '@/lib/prisma';
+import type { AdminReportData, AdminDashboardStats, DashboardOverviewData } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -10,6 +11,58 @@ export class ReportsService {
   constructor() {
     this.repository = new ReportsRepository();
   }
+  
+  async getUserDashboardOverview(userId: string): Promise<DashboardOverviewData> {
+    if (!userId) {
+      throw new Error("User ID is required.");
+    }
+    
+    const [user, activeBids, wins] = await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { habilitationStatus: true }
+      }),
+      prisma.bid.findMany({
+        where: {
+          bidderId: userId,
+          lot: { status: 'ABERTO_PARA_LANCES' }
+        },
+        distinct: ['lotId'],
+      }),
+      prisma.userWin.findMany({
+        where: { userId }
+      })
+    ]);
+
+    const pendingWinsCount = wins.filter(w => w.paymentStatus === 'PENDENTE').length;
+    const auctionsWonCount = wins.length;
+
+    const lotsEndingSoon = await prisma.lot.findMany({
+      where: {
+        status: 'ABERTO_PARA_LANCES',
+        endDate: { gte: new Date() }
+      },
+      orderBy: { endDate: 'asc' },
+      take: 3,
+      include: { auction: { select: { title: true } } }
+    });
+
+    const recommendedLots = await prisma.lot.findMany({
+      where: { status: 'ABERTO_PARA_LANCES', isFeatured: true },
+      take: 3,
+      include: { auction: { select: { title: true } } }
+    });
+
+    return {
+      upcomingLots: lotsEndingSoon.map(l => ({ ...l, auctionName: l.auction.title })),
+      pendingWinsCount,
+      recommendedLots: recommendedLots,
+      activeBidsCount: activeBids.length,
+      habilitationStatus: user?.habilitationStatus || null,
+      auctionsWonCount,
+    };
+  }
+
 
   async getAdminDashboardStats(): Promise<AdminDashboardStats> {
     try {

@@ -7,18 +7,18 @@ import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlatformSettingsService } from './platform-settings.service';
 import { UserWinService } from './user-win.service';
 
-// Helper to get commission rate from the BFF, ensuring consistency.
+
+// Helper function to fetch commission rate from the BFF
 async function getCommissionRate(): Promise<number> {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
     const response = await fetch(`${baseUrl}/api/commission`);
     
     if (!response.ok) {
-      console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
-      return 0.05; // Fallback
+        console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
+        return 0.05; // Fallback
     }
     const data = await response.json();
     return data.default_commission_rate || 0.05;
@@ -115,12 +115,7 @@ export class SellerService {
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
     const [sellerData, commissionRate, sellerWins] = await Promise.all([
-        prisma.seller.findUnique({
-            where: { id: sellerId },
-            include: {
-                _count: { select: { auctions: true, lots: true } },
-            },
-        }),
+        this.sellerRepository.findById(sellerId), // Usando o repositório
         getCommissionRate(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
@@ -134,7 +129,11 @@ export class SellerService {
 
     const lotsSoldCount = sellerWins.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
-    const salesRate = sellerData._count.lots > 0 ? (lotsSoldCount / sellerData._count.lots) * 100 : 0;
+    
+    const allLotsFromSeller = await this.sellerRepository.findLotsBySellerId(sellerId);
+    const totalLots = allLotsFromSeller.length;
+    const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
+    const totalAuctions = new Set(allLotsFromSeller.map(l => l.auctionId)).size;
 
     const salesByMonthMap = new Map<string, number>();
     const now = new Date();
@@ -158,8 +157,8 @@ export class SellerService {
       totalRevenue,
       totalCommission,
       netValue,
-      totalAuctions: sellerData._count.auctions,
-      totalLots: sellerData._count.lots,
+      totalAuctions: totalAuctions,
+      totalLots: totalLots,
       lotsSoldCount,
       paidCount: paidWins.length,
       salesRate,

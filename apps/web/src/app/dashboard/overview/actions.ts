@@ -4,7 +4,7 @@
  */
 'use server';
 
-import { ReportsService } from '@bidexpert/services';
+import { ReportsService } from '@bidexpert/core';
 import type { DashboardOverviewData } from '@bidexpert/core';
 
 const reportsService = new ReportsService();

@@ -1,0 +1,40 @@
+// src/app/admin/users/actions.ts
+'use server';
+
+import type { EditableUserProfileData, UserCreationData, UserProfileWithPermissions } from '@bidexpert/core';
+import { UserService } from '@bidexpert/core';
+import { createCrudActions } from '@/lib/actions/create-crud-actions';
+
+const userService = new UserService();
+const userActions = createCrudActions({
+    service: userService,
+    entityName: 'User',
+    entityNamePlural: 'Users',
+    routeBase: '/admin/users'
+});
+
+export const {
+    getAll: getUsersWithRoles,
+    getById: getUserProfileData,
+    create: createUser,
+    update: updateUser,
+    delete: deleteUser,
+} = userActions;
+
+
+// --- Ações Específicas ---
+
+export async function getAdminUserForDev(): Promise<UserProfileWithPermissions | null> {
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+  return userService.findUserByEmail('admin@bidexpert.com.br');
+}
+
+export async function updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
+  return userService.updateUserProfile(userId, data);
+}
+
+export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
+  return userService.updateUserRoles(userId, roleIds);
+}
