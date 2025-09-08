@@ -1,7 +1,7 @@
 // packages/core/src/repositories/bid.repository.ts
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '@prisma/client';
-import type { BidInfo, UserLotMaxBid } from '../types';
+import type { BidInfo, UserLotMaxBid } from '@bidexpert/core';
 
 export class BidRepository {
   async findHighestBid(lotId: string): Promise<BidInfo | null> {

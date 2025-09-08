@@ -1,7 +1,7 @@
 // packages/core/src/repositories/user-win.repository.ts
 import { prisma } from '../lib/prisma';
 import type { Prisma } from '@prisma/client';
-import type { UserWin } from '../types';
+import type { UserWin } from '@bidexpert/core';
 
 export class UserWinRepository {
   async findById(id: string): Promise<any | null> {
@@ -72,7 +72,4 @@ export class UserWinRepository {
     });
   }
 
-  async createInstallments(data: Prisma.InstallmentPaymentCreateManyInput) {
-    return prisma.installmentPayment.createMany({ data });
-  }
 }

@@ -1,0 +1,66 @@
+// packages/core/src/repositories/user.repository.ts
+import { prisma } from '../lib/prisma';
+import type { Prisma, User } from '@prisma/client';
+import type { EditableUserProfileData } from '@bidexpert/core';
+
+export class UserRepository {
+  async findAll() {
+    return prisma.user.findMany({
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+      orderBy: { fullName: 'asc' },
+    });
+  }
+
+  async findById(id: string) {
+    if (!id) return null;
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+  }
+
+  async findByEmail(email: string) {
+    if (!email) return null;
+    return prisma.user.findUnique({
+      where: { email },
+    });
+  }
+
+  async create(userData: Prisma.UserCreateInput, roleIds: string[]): Promise<User> {
+    const dataWithRoles: Prisma.UserCreateInput = {
+      ...userData,
+      roles: {
+        create: roleIds.map(roleId => ({
+          role: { connect: { id: roleId } },
+          assignedBy: 'system-signup'
+        }))
+      }
+    };
+    return prisma.user.create({ data: dataWithRoles });
+  }
+
+  async update(userId: string, data: Partial<EditableUserProfileData>): Promise<User> {
+    return prisma.user.update({
+      where: { id: userId },
+      data: data as Prisma.UserUpdateInput,
+    });
+  }
+
+  async delete(id: string): Promise<void> {
+    // The relation table (UsersOnRoles) should cascade delete,
+    // as defined in the Prisma schema.
+    await prisma.user.delete({ where: { id } });
+  }
+}

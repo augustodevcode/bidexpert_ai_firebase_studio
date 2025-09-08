@@ -1,6 +1,6 @@
 // packages/core/src/repositories/document-template.repository.ts
 import { prisma } from '../lib/prisma';
-import type { DocumentTemplate } from '../types';
+import type { DocumentTemplate } from '@bidexpert/core';
 import type { Prisma } from '@prisma/client';
 
 export class DocumentTemplateRepository {

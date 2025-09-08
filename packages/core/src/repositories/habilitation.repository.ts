@@ -1,6 +1,6 @@
 // packages/core/src/repositories/habilitation.repository.ts
 import { prisma } from '../lib/prisma';
-import type { UserHabilitationStatus, UserDocumentStatus } from '../types';
+import type { UserHabilitationStatus, UserDocumentStatus } from '@bidexpert/core';
 
 export class HabilitationRepository {
 

@@ -1,6 +1,6 @@
 // packages/core/src/repositories/contact-message.repository.ts
 import { prisma } from '../lib/prisma';
-import type { ContactMessage } from '../types';
+import type { ContactMessage } from '@bidexpert/core';
 import type { Prisma } from '@prisma/client';
 
 export class ContactMessageRepository {
