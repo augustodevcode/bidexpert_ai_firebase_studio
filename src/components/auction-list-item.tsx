@@ -4,6 +4,8 @@
 // Re-exporting from @bidexpert/ui to maintain a single source of truth.
 export { AuctionListItem } from '@bidexpert/ui';
 
+export { default } from '@bidexpert/ui/components/auction-list-item';
+
 // This approach allows us to centralize UI components while maintaining
 // existing import paths within the `apps/web` application. Any new
 // modifications should be made in the `packages/ui` version of this component.

@@ -286,7 +286,7 @@ export function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="space-y-1 mb-3 text-xs" data-ai-id={`auction-card-timeline-${auction.id}`}>
-                    <AuctionStagesTimeline stages={auction.auctionStages} />
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             ) : null}
 

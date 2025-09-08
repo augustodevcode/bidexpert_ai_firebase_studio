@@ -1,4 +1,3 @@
-
 // packages/ui/src/lib/ui-helpers.ts
 import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@bidexpert/core';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
@@ -201,13 +200,13 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
         const now = new Date();
         // Find the first stage that hasn't ended yet
         const upcomingOrActiveStage = auction.auctionStages
-            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+            .filter(stage => stage.endDate && !isPast(new Date(stage.endDate as string)))
+            .sort((a, b) => new Date(a.startDate as string).getTime() - new Date(b.startDate as string).getTime())[0];
         
         if (upcomingOrActiveStage?.endDate) {
             return { 
                 effectiveLotEndDate: new Date(upcomingOrActiveStage.endDate), 
-                effectiveLotStartDate: new Date(upcomingOrActiveStage.startDate)
+                effectiveLotStartDate: new Date(upcomingOrActiveStage.startDate as string)
             };
         }
 
@@ -219,7 +218,7 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
         if (lastStage?.endDate) {
             return { 
                 effectiveLotEndDate: new Date(lastStage.endDate),
-                effectiveLotStartDate: new Date(lastStage.startDate)
+                effectiveLotStartDate: new Date(lastStage.startDate as string)
              };
         }
     }
