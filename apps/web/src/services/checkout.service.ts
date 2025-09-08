@@ -3,6 +3,8 @@ import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
+import { CheckoutRepository } from '@/repositories/checkout.repository';
+
 
 // Helper function to fetch commission rate from the BFF
 async function getCommissionRate(): Promise<number> {
@@ -29,9 +31,11 @@ async function getCommissionRate(): Promise<number> {
 
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
+  private checkoutRepository: CheckoutRepository;
   
   constructor() {
     this.userWinRepository = new UserWinRepository();
+    this.checkoutRepository = new CheckoutRepository();
   }
 
   async calculateTotals(winId: string): Promise<{
@@ -97,7 +101,7 @@ export class CheckoutService {
                 status: 'PENDENTE' as const
             }));
             
-            await this.userWinRepository.createInstallments({data: installmentsToCreate});
+            await this.checkoutRepository.createInstallments({data: installmentsToCreate});
             await this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' });
             
             if (process.env.NODE_ENV !== 'test') {

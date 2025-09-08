@@ -17,6 +17,7 @@ export class UserWinRepository {
             },
           },
         },
+        installments: true, // Incluir parcelas
       },
     });
   }
@@ -40,6 +41,7 @@ export class UserWinRepository {
             auction: { select: { title: true } },
           },
         },
+         installments: true, // Incluir parcelas
       },
       orderBy: { winDate: 'desc' },
     });
@@ -58,6 +60,10 @@ export class UserWinRepository {
               auction: { select: { title: true } }
             }
           },
+          user: { // Incluir o nome do arrematante
+              select: { fullName: true }
+          },
+          installments: true,
       },
       orderBy: {
           winDate: 'desc'
@@ -72,7 +78,4 @@ export class UserWinRepository {
     });
   }
 
-  async createInstallments(data: Prisma.InstallmentPaymentCreateManyInput) {
-    return prisma.installmentPayment.createMany({ data });
-  }
 }
