@@ -1,5 +1,5 @@
 // src/app/admin/lots/[lotId]/edit/page.tsx
-'use client';
+'use client'; 
 
 import LotForm from '../../lot-form';
 import { getLot, updateLot, finalizeLot, deleteLot } from '../../actions'; 
@@ -9,11 +9,11 @@ import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
-import type { Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo, Lot } from '@bidexpert/core';
+import type { Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo, Lot, LotFormData } from '@bidexpert/core';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { CheckCircle, FileSignature, Loader2, Gavel, Repeat, Layers, PlusCircle, BarChart3, Lightbulb } from 'lucide-react';
+import { PlusCircle, Info, Settings, BarChart3, Layers, Gavel, Lightbulb, BarChart3 as BarChartIcon, TrendingUp, ListChecks, Users, CheckCircle, Repeat } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +25,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import React, { useEffect, useCallback, useState, useRef } from 'react'; 
+import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
 import RelistLotModal from '../../relist-lot-modal';
@@ -33,7 +33,8 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-
+import { Separator } from '@/components/ui/separator';
+import { Loader2 } from 'lucide-react';
 
 export default function EditLotPage() {
   const params = useParams();
@@ -190,7 +191,7 @@ export default function EditLotPage() {
               states={states}
               allCities={allCities}
               initialAvailableBens={availableBens}
-              onSubmitAction={handleUpdateLot as any}
+              onSubmitAction={handleUpdateLot}
               onSuccessCallback={fetchPageData}
             />
         </FormPageLayout>
@@ -261,7 +262,7 @@ export default function EditLotPage() {
             if (formRef.current) {
                 formRef.current.setValue('title', suggestions.suggestedTitle, { shouldDirty: true });
                 formRef.current.setValue('description', suggestions.suggestedDescription, { shouldDirty: true });
-                toast({ title: 'Sugestões aplicadas!' });
+                toast({ title: 'Sugestões aplicadas!', description: 'O título e a descrição foram atualizados.' });
             }
         }}
       />

@@ -2,13 +2,14 @@
 'use client';
 
 import RoleForm from '../../role-form';
-import { getRole, updateRole, deleteRole, type RoleFormData } from '../../actions';
+import { getRole, updateRole, deleteRole } from '../../actions';
+import type { RoleFormData } from '@bidexpert/core';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { ShieldCheck } from 'lucide-react';
-import type { Role } from '@/types';
+import type { Role } from '@bidexpert/core';
 
 export default function EditRolePage() {
   const params = useParams();
@@ -45,7 +46,7 @@ export default function EditRolePage() {
   
   const handleFormSubmit = async (data: RoleFormData) => {
     setIsSubmitting(true);
-    const result = await updateRole(roleId, data as Partial<Pick<Role, "name" | "description" | "permissions">>);
+    const result = await updateRole(roleId, data);
     if (result.success) {
         toast({ title: 'Sucesso!', description: 'Perfil atualizado.' });
         fetchPageData();

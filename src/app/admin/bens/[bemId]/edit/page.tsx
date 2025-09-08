@@ -7,7 +7,7 @@ import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { notFound, useParams, useRouter } from 'next/navigation';
-import type { BemFormData, Bem, JudicialProcess, LotCategory, SellerProfileInfo } from '@/types';
+import type { BemFormData, Bem, JudicialProcess, LotCategory, SellerProfileInfo } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';

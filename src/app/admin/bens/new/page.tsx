@@ -3,7 +3,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import BemForm from '../bem-form';
-import { createBem, type BemFormData } from '../actions';
+import { createBem } from '../actions';
+import type { BemFormData } from '@bidexpert/core';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -11,7 +12,7 @@ import FormPageLayout from '@/components/admin/form-page-layout';
 import { Package, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import type { JudicialProcess, LotCategory, SellerProfileInfo } from '@/types';
+import type { JudicialProcess, LotCategory, SellerProfileInfo } from '@bidexpert/core';
 
 interface NewBemPageContentProps {
   processes: JudicialProcess[];

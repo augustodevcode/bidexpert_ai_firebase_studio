@@ -3,14 +3,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import LotForm from '../lot-form';
-import { createLot, type LotFormData } from '../actions';
+import { createLot } from '../actions';
+import type { LotFormData } from '@bidexpert/core';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { getBens } from '@/app/admin/bens/actions';
 import { Suspense } from 'react';
 import { Loader2, Package } from 'lucide-react';
-import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@/types';
+import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@bidexpert/core';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '../sellers/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
@@ -40,13 +41,13 @@ function NewLotPageContent({ categories, auctions, sellers, states, allCities, a
   async function handleCreateLot(data: Partial<LotFormData>) {
     setIsSubmitting(true);
     const result = await createLot(data);
-    if (result.success) {
+     if (result.success) {
       toast({ title: 'Sucesso!', description: 'Lote criado. Você será redirecionado.' });
       router.push(result.lotId ? `/admin/lots/${result.lotId}/edit` : '/admin/lots');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+      setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   }
 
   return (
@@ -96,5 +97,9 @@ export default function NewLotPage() {
      return <div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
   
-  return <NewLotPageContent {...pageData} />;
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+        <NewLotPageContent {...pageData} />
+    </Suspense>
+  );
 }
