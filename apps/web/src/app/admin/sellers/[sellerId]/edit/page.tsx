@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import SellerForm from '@/app/admin/sellers/seller-form';
-import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
+import { getComitente, atualizarComitente, deletarComitente } from '@/app/admin/sellers/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import type { SellerDashboardData } from '@bidexpert/core';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
-import FormPageLayout from '@/components/admin/form-page-layout'; // Importar o novo layout
+import FormPageLayout from '@/components/admin/form-page-layout'; 
 import type { SellerFormData } from '@bidexpert/core';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -98,7 +98,7 @@ export default function EditSellerPage() {
     setIsLoading(true);
     try {
         const [sellerData, branchesData] = await Promise.all([
-            getSeller(sellerId),
+            getComitente(sellerId),
             getJudicialBranches()
         ]);
 
@@ -121,7 +121,7 @@ export default function EditSellerPage() {
   
   const handleFormSubmit = async (data: SellerFormData) => {
     setIsSubmitting(true);
-    const result = await updateSeller(sellerId, data);
+    const result = await atualizarComitente(sellerId, data);
     if (result.success) {
         toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
         fetchPageData();
@@ -133,7 +133,7 @@ export default function EditSellerPage() {
   };
   
   const handleDelete = async () => {
-    const result = await deleteSeller(sellerId);
+    const result = await deletarComitente(sellerId);
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
       router.push('/admin/sellers');

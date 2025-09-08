@@ -1,4 +1,3 @@
-
 // src/app/consignor-dashboard/financial/page.tsx
 'use client';
 
@@ -8,13 +7,13 @@ import { DollarSign, BarChart3, TrendingUp, CircleDollarSign, Loader2, AlertCirc
 import { DataTable } from '@/components/ui/data-table';
 import { createFinancialColumns } from './columns';
 import { getFinancialDataForConsignor } from './actions';
-import type { UserWin, SellerProfileInfo } from '@/types';
+import type { UserWin, SellerProfileInfo } from '@bidexpert/core';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 import { LineChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { hasPermission } from '@/lib/permissions';
-import { getSellers } from '@/app/admin/sellers/actions';
+import { getComitentes } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
 import type { SellerDashboardData } from '@bidexpert/core';
@@ -47,7 +46,7 @@ export default function ConsignorFinancialPage() {
 
   useEffect(() => {
     if (isUserAdmin) {
-      getSellers().then(sellers => {
+      getComitentes().then(sellers => {
         setAllSellers(sellers);
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);

@@ -1,7 +1,8 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import { SellerService } from '@bidexpert/core';
+import type { SellerFormData } from '@bidexpert/core';
+import { SellerService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const sellerService = new SellerService();
@@ -12,18 +13,16 @@ const sellerActions = createCrudActions({
   routeBase: '/admin/sellers',
 });
 
-// Export a função getSellers com o nome original para manter compatibilidade
-export const getSellers = sellerActions.getAll;
-
 export const {
-  getById: getSeller,
-  getBySlug: getSellerBySlug,
-  create: createSeller,
-  update: updateSeller,
-  delete: deleteSeller
+  getAll: getComitentes,
+  getById: getComitente,
+  getBySlug: getComitentePorSlug,
+  create: criarComitente,
+  update: atualizarComitente,
+  delete: deletarComitente,
 } = sellerActions;
 
 // Funções específicas que não se encaixam no CRUD padrão permanecem aqui
-export async function getLotsBySellerSlug(sellerSlugOrId: string) {
+export async function getLotesPorComitenteSlug(sellerSlugOrId: string) {
     return sellerService.getLotsBySellerSlug(sellerSlugOrId);
 }

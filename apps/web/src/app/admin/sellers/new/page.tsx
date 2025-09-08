@@ -3,8 +3,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import SellerForm from './seller-form';
-import { createSeller } from './actions';
+import SellerForm from '../seller-form';
+import { criarComitente } from '../actions';
 import type { SellerFormData } from '@bidexpert/core';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
@@ -24,7 +24,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
 
     async function handleCreateSeller(data: SellerFormData) {
         setIsSubmitting(true);
-        const result = await createSeller(data);
+        const result = await criarComitente(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Comitente criado com sucesso.' });
             router.push('/admin/sellers');
@@ -52,6 +52,7 @@ function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
         </FormPageLayout>
     );
 }
+
 
 export default function NewSellerPage() {
     const [branches, setBranches] = useState<JudicialBranch[]>([]);
