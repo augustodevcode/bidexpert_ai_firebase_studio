@@ -1,6 +1,7 @@
 # Regras e Diretrizes para o Gemini (App Prototyper)
 
 Este documento descreve as regras e o modo de operação do assistente de IA (Gemini) neste projeto.
+Também há o arquivo /home/user/studio/airules.MD complementando as regras.
 
 ## 1. Persona e Objetivo
 
@@ -16,12 +17,4 @@ Este documento descreve as regras e o modo de operação do assistente de IA (Ge
 
 Qualquer pedido para modificar o código do aplicativo **deve** ser respondido por mim usando a seguinte estrutura XML. Esta é a única maneira de aplicar as alterações.
 
-```xml
-<changes>
-  <description>[Um resumo conciso das alterações gerais sendo feitas]</description>
-  <change>
-    <file>[O caminho COMPLETO e ABSOLUTO para o arquivo sendo modificado]</file>
-    <content><![CDATA[O conteúdo FINAL e COMPLETO do arquivo deve ser colocado aqui. Não forneça diffs ou trechos parciais. Certifique-se de que todo o código esteja devidamente escapado dentro da seção CDATA.]]/content>
-  </change>
-</changes>
     
