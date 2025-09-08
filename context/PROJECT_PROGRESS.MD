@@ -24,12 +24,14 @@
 - **Item 22: Direcionamento Técnico - Transformação para Arquitetura Híbrida Segura**: Completed the migration of core business logic and UI components to a monorepo structure with shared packages and a dedicated microservice.
 - **Item 25: Finalizar Refatoração de Acesso a Dados (Prioridade 1)**: Moved all direct database calls from services to dedicated Repository classes, completing the data access layer refactoring.
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**: Added `data-ai-id` attributes to all critical layout containers and interactive components to improve reliability for future modifications and automated testing.
+- **Item 27: Padronizar Idioma**: Esta tarefa foi revertida e removida. O padrão do código será mantido em inglês para consistência técnica.
 
 ## DOING
 - **Item 28: Estabilização Pós-Refatoração**
   - **Objetivo**: Corrigir erros de inicialização e de tempo de execução decorrentes da nova arquitetura monorepo, garantindo que a aplicação volte a funcionar perfeitamente sem perda de funcionalidades.
   - **Status**:
-    - [ ] Diagnosticar e corrigir erros de inicialização reportados.
+    - [x] Diagnosticar e corrigir erro de argumento inesperado (`--port`) no `turbo dev`.
+    - [ ] Diagnosticar e corrigir erro `Unable to find package manager binary` (em andamento).
     - [ ] Validar a comunicação entre `apps/web` e os pacotes `@bidexpert/core` e `@bidexpert/ui`.
     - [ ] Garantir que todas as `server actions` e rotas de API funcionem como esperado após a refatoração.
 
