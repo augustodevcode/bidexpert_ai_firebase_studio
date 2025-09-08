@@ -21,5 +21,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
   <description>[Um resumo conciso das alterações gerais sendo feitas]</description>
   <change>
     <file>[O caminho COMPLETO e ABSOLUTO para o arquivo sendo modificado]</file>
-    <content><![CDATA[O conteúdo FINAL e COMPLETO do arquivo deve ser colocado aqui. Não forneça diffs ou trechos parciais.
+    <content><![CDATA[O conteúdo FINAL e COMPLETO do arquivo deve ser colocado aqui. Não forneça diffs ou trechos parciais. Certifique-se de que todo o código esteja devidamente escapado dentro da seção CDATA.]]/content>
+  </change>
+</changes>
     
