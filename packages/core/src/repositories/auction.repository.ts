@@ -12,7 +12,7 @@ export class AuctionRepository {
         seller: true, // Include full seller object
         auctioneer: true, // Include full auctioneer object
         category: { select: { name: true } },
-        auctionStages: true, 
+        stages: true, 
       },
     });
   }
@@ -25,7 +25,7 @@ export class AuctionRepository {
         auctioneer: true,
         seller: true, // Full seller object
         category: true,
-        auctionStages: true,
+        stages: true,
       },
     });
   }
@@ -43,7 +43,7 @@ export class AuctionRepository {
             seller: true,
             auctioneer: true,
             category: { select: { name: true } },
-            auctionStages: true,
+            stages: true,
         }
     });
   }
@@ -82,7 +82,7 @@ export class AuctionRepository {
         seller: true,
         auctioneer: true,
         category: true,
-        auctionStages: true,
+        stages: true,
         lots: {
           include: {
             bens: { include: { bem: true } },
@@ -105,7 +105,7 @@ export class AuctionRepository {
             seller: true,
             auctioneer: true,
             category: true,
-            auctionStages: true,
+            stages: true,
             lots: {
                 include: {
                     bens: { include: { bem: true } },

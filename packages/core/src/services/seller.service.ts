@@ -1,6 +1,6 @@
-
 // packages/core/src/services/seller.service.ts
 import { SellerRepository } from '../repositories/seller.repository';
+import { AuctionRepository } from '../repositories/auction.repository';
 import { LotService } from './lot.service';
 import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from '../types';
 import { slugify } from '../lib/ui-helpers';
@@ -10,24 +10,25 @@ import { prisma } from '../lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWinService } from './user-win.service';
-import { PlatformSettingsService } from './platform-settings.service';
+import { CheckoutService } from './checkout.service';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
   private lotService: LotService;
   private userWinService: UserWinService;
-  private settingsService: PlatformSettingsService;
+  private checkoutService: CheckoutService;
+  private auctionRepository: AuctionRepository;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.lotService = new LotService();
     this.userWinService = new UserWinService();
-    this.settingsService = new PlatformSettingsService();
+    this.checkoutService = new CheckoutService();
+    this.auctionRepository = new AuctionRepository();
   }
 
   private async getCommissionRate(): Promise<number> {
-    const settings = await this.settingsService.getSettings();
-    return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
+    return this.checkoutService.getCommissionRate();
   }
 
   async getSellers(): Promise<SellerProfileInfo[]> {
@@ -49,8 +50,11 @@ export class SellerService {
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
-      const lots = await prisma.lot.findMany({ where: { sellerId: seller.id } });
-      return lots as Lot[];
+      return this.lotService.getLotsForConsignor(seller.id);
+  }
+  
+  async getAuctionsBySellerSlug(sellerSlugOrId: string): Promise<any[]> {
+    return this.auctionRepository.findBySellerSlug(sellerSlugOrId);
   }
 
   async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
@@ -62,14 +66,12 @@ export class SellerService {
 
       const { userId, ...sellerData } = data;
 
-      // Prepare the data for creation, generating the required fields.
       const dataToCreate: Prisma.SellerCreateInput = {
         ...sellerData,
         slug: slugify(data.name),
         publicId: `COM-${uuidv4()}`,
       };
       
-      // If a userId is provided, create the connection.
       if (userId) {
         dataToCreate.user = { connect: { id: userId } };
       }
@@ -95,7 +97,7 @@ export class SellerService {
   
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const lots = await this.lotService.getLotsBySellerId(id);
+      const lots = await this.lotService.getLotsForConsignor(id);
       if (lots.length > 0) {
         return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
       }
@@ -108,13 +110,14 @@ export class SellerService {
   }
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
-    const [sellerData, commissionRate, sellerWins] = await Promise.all([
+    const [sellerData, sellerWins] = await Promise.all([
         this.sellerRepository.findById(sellerId),
-        this.getCommissionRate(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
 
     if (!sellerData) return null;
+
+    const commissionRate = await this.checkoutService.getCommissionRate();
 
     const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
     const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);

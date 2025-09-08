@@ -86,9 +86,10 @@ export class AuctioneerService {
   
   async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // In a real app, you'd check for linked auctions. We'll skip for this example.
-      // const linkedAuctions = await prisma.auction.count({ where: { auctioneerId: id } });
-      // if (linkedAuctions > 0) return { success: false, message: `Cannot delete auctioneer with ${linkedAuctions} active auction(s).`};
+      const linkedAuctions = await this.auctionRepository.findByAuctioneerSlug(id);
+      if (linkedAuctions.length > 0) {
+        return { success: false, message: `Não é possível excluir. O leiloeiro está vinculado a ${linkedAuctions.length} leilão(ões).` };
+      }
       await this.auctioneerRepository.delete(id);
       return { success: true, message: 'Leiloeiro excluído com sucesso.' };
     } catch (error: any) {

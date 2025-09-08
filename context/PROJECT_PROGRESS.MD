@@ -29,10 +29,11 @@
   - **Objetivo**: Mover todas as chamadas diretas ao `prisma` das `actions.ts` e `services` para classes de `Repository` dedicadas, conforme o padrão arquitetural definido.
   - **Status**:
     - [x] Repositórios de Checkout (`UserWinRepository`, `CheckoutRepository`) implementados.
-    - [ ] Repositórios de Leiloeiros (`AuctioneerRepository`).
+    - [x] Repositórios de Leiloeiros (`AuctioneerRepository`).
+    - [x] Repositórios de Leilões (`AuctionRepository`).
 
 ## NEXT
-- **Item 25 (Continuação):** Concluir a refatoração para todas as entidades restantes (`Auction`, `Lot`, `User`, `Seller`, etc.).
+- **Item 25 (Continuação):** Concluir a refatoração para todas as entidades restantes (`Lot`, `User`, `Seller`, etc.).
 - **Item 26: Finalizar a Instrumentação da UI (Prioridade 2)**
   - **Objetivo**: Adicionar os `data-ai-id` restantes nos layouts das páginas principais e contêineres estruturais.
 - **Item 27: Padronizar Idioma (Prioridade 3)**
