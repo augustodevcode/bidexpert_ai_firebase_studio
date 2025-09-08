@@ -1,7 +1,7 @@
 // src/services/reports.service.ts
 import { ReportsRepository } from '@/repositories/reports.repository';
 import type { AdminReportData, AdminDashboardStats } from '@/types';
-import { format, subDays } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export class ReportsService {
@@ -65,7 +65,6 @@ export class ReportsService {
         const totalLotsInAuctions = auctionsWithLots.reduce((sum, a) => sum + a._count.lots, 0);
         const averageLotsPerAuction = auctionCount > 0 ? totalLotsInAuctions / auctionCount : 0;
 
-        // Aggregate monthly sales
         const salesByMonthMap = new Map<string, number>();
         soldLotsForSales.forEach(lot => {
             const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
@@ -73,7 +72,6 @@ export class ReportsService {
         });
         const salesData = Array.from(salesByMonthMap, ([name, Sales]) => ({ name, Sales }));
         
-        // Aggregate sales by category
         const categoryCountMap = new Map<string, number>();
         const categoryMap = new Map(allCategories.map(c => [c.id, c.name]));
         

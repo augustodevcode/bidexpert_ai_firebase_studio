@@ -1,27 +1,27 @@
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
+import { BidRepository } from '@/repositories/bid.repository'; // Import BidRepository
 import type { Lot, LotFormData } from '@/types';
-import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma';
 import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export class LotService {
-  private repository: LotRepository;
+  private lotRepository: LotRepository;
+  private bidRepository: BidRepository; // Add bidRepository instance
 
   constructor() {
-    this.repository = new LotRepository();
+    this.lotRepository = new LotRepository();
+    this.bidRepository = new BidRepository(); // Initialize bidRepository
   }
 
   async getLots(auctionId?: string): Promise<Lot[]> {
-    const lots = await this.repository.findAll(auctionId);
-    // O repositório agora retorna a estrutura correta com o `bens` populado
+    const lots = await this.lotRepository.findAll(auctionId);
     return lots.map(lot => ({
       ...lot,
-      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
+      bens: lot.bens.map((lb: any) => lb.bem),
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
@@ -29,18 +29,17 @@ export class LotService {
   }
 
   async getLotById(id: string): Promise<Lot | null> {
-    const lot = await this.repository.findById(id);
+    const lot = await this.lotRepository.findById(id);
     if (!lot) return null;
     return {
       ...lot,
-      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
-      auction: lot.auction, // Pass the full auction object
+      bens: lot.bens.map((lb: any) => lb.bem),
+      auction: lot.auction,
     };
   }
 
   async getLotsByIds(ids: string[]): Promise<Lot[]> {
-    const lots = await this.repository.findByIds(ids);
-    // Não precisa mapear aqui pois o repositório já inclui o leilão
+    const lots = await this.lotRepository.findByIds(ids);
     return lots as Lot[];
   }
 
@@ -54,7 +53,7 @@ export class LotService {
         type, 
         sellerId, 
         subcategoryId,
-        stageDetails, // Captura os detalhes das etapas
+        stageDetails,
         ...lotData 
       } = data;
       const finalCategoryId = categoryId || type;
@@ -66,43 +65,24 @@ export class LotService {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
-      // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
         price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
-        slug: slugify(lotData.title || ''),
+        slug: lotData.title ? lotData.title : '',
         auction: { connect: { id: auctionId } },
         category: { connect: { id: finalCategoryId } },
         isRelisted: data.isRelisted || false,
         relistCount: data.relistCount || 0,
       };
 
-      if (data.originalLotId) {
-        dataToCreate.originalLot = { connect: { id: data.originalLotId } };
-      }
-      if (sellerId) {
-        dataToCreate.seller = { connect: { id: sellerId } };
-      }
-      if (data.auctioneerId) {
-        dataToCreate.auctioneer = { connect: { id: data.auctioneerId } };
-      }
-      if (subcategoryId) {
-        dataToCreate.subcategory = { connect: { id: subcategoryId } };
-      }
-      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
-      }
+      if (data.originalLotId) dataToCreate.originalLot = { connect: { id: data.originalLotId } };
+      if (sellerId) dataToCreate.seller = { connect: { id: sellerId } };
+      if (data.auctioneerId) dataToCreate.auctioneer = { connect: { id: data.auctioneerId } };
+      if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       
-      const newLot = await this.repository.create(dataToCreate, bemIds || []);
-      
-      // Update the status of the linked 'bens' to 'LOTEADO'
-      if (bemIds && bemIds.length > 0) {
-        await prisma.bem.updateMany({
-            where: { id: { in: bemIds } },
-            data: { status: 'LOTEADO' },
-        });
-      }
+      const newLot = await this.lotRepository.create(dataToCreate, bemIds || []);
       
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
     } catch (error: any) {
@@ -116,7 +96,7 @@ export class LotService {
       const { 
         bemIds, categoryId, subcategoryId, type, auctionId, 
         sellerId, auctioneerId, stateId, cityId,
-        stageDetails, // Capturando os detalhes das etapas
+        stageDetails,
         ...lotData 
       } = data;
 
@@ -125,39 +105,19 @@ export class LotService {
           price: lotData.price ? Number(lotData.price) : undefined,
       };
 
-      if (lotData.title) {
-        dataToUpdate.slug = slugify(lotData.title);
-      }
+      if (lotData.title) dataToUpdate.slug = lotData.title;
       const finalCategoryId = categoryId || type;
-      if (finalCategoryId) {
-        dataToUpdate.category = { connect: { id: finalCategoryId } };
-      }
-      if (auctionId) {
-        dataToUpdate.auction = { connect: { id: auctionId } };
-      }
-      if (subcategoryId) {
-        dataToUpdate.subcategory = { connect: { id: subcategoryId } };
-      } else if (data.hasOwnProperty('subcategoryId')) {
-        dataToUpdate.subcategory = { disconnect: true };
-      }
-      if (sellerId) {
-        dataToUpdate.seller = { connect: { id: sellerId } };
-      }
-      if (auctioneerId) {
-        dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
-      }
-      if (cityId) {
-        dataToUpdate.city = { connect: { id: cityId } };
-      }
-      if (stateId) {
-        dataToUpdate.state = { connect: { id: stateId } };
-      }
-      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
-      }
+      if (finalCategoryId) dataToUpdate.category = { connect: { id: finalCategoryId } };
+      if (auctionId) dataToUpdate.auction = { connect: { id: auctionId } };
+      if (subcategoryId) dataToUpdate.subcategory = { connect: { id: subcategoryId } };
+      else if (data.hasOwnProperty('subcategoryId')) dataToUpdate.subcategory = { disconnect: true };
+      if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+      if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
+      if (cityId) dataToUpdate.city = { connect: { id: cityId } };
+      if (stateId) dataToUpdate.state = { connect: { id: stateId } };
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       
-      // A atualização dos bens vinculados e a atualização dos detalhes das etapas são agora transacionais
-      await this.repository.update(id, dataToUpdate, bemIds, stageDetails);
+      await this.lotRepository.update(id, dataToUpdate, bemIds, stageDetails);
 
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
@@ -167,35 +127,7 @@ export class LotService {
   }
 
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
-    try {
-      // Find the lot to get associated bemIds before deleting
-      const lotToDelete = await prisma.lot.findUnique({
-        where: { id },
-        include: { bens: { select: { bemId: true } } },
-      });
-
-      if (lotToDelete) {
-        const bemIdsToRelease = lotToDelete.bens.map(b => b.bemId);
-
-        // The repository handles the transactional deletion of Lot and LotBens.
-        await this.repository.delete(id);
-        
-        // After successful deletion, update the status of the previously linked bens
-        if (bemIdsToRelease.length > 0) {
-          await prisma.bem.updateMany({
-            where: { id: { in: bemIdsToRelease } },
-            data: { status: 'DISPONIVEL' },
-          });
-        }
-      } else {
-         return { success: false, message: 'Lote não encontrado para exclusão.' };
-      }
-
-      return { success: true, message: 'Lote excluído com sucesso.' };
-    } catch (error: any) {
-      console.error(`Error in LotService.deleteLot for id ${id}:`, error);
-      return { success: false, message: `Falha ao excluir lote: ${error.message}` };
-    }
+    return this.lotRepository.delete(id);
   }
   
   async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
@@ -205,45 +137,13 @@ export class LotService {
           return { success: false, message: `O lote não pode ser finalizado no status atual (${lot.status}).`};
       }
 
-      const winningBid = await prisma.bid.findFirst({
-          where: { lotId: lot.id },
-          orderBy: { amount: 'desc' },
-      });
+      const winningBid = await this.bidRepository.findHighestBid(lot.id);
 
       if (winningBid) {
-          await prisma.lot.update({
-              where: { id: lot.id },
-              data: { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount },
-          });
-           await prisma.userWin.create({
-              data: {
-                  lotId: lot.id,
-                  userId: winningBid.bidderId,
-                  winningBidAmount: winningBid.amount,
-                  winDate: new Date(),
-                  paymentStatus: 'PENDENTE'
-              }
-          });
-          // After sale, update the associated 'bem' status to 'VENDIDO'
-           if (lot.bemIds && lot.bemIds.length > 0) {
-                await prisma.bem.updateMany({
-                    where: { id: { in: lot.bemIds } },
-                    data: { status: 'VENDIDO' },
-                });
-            }
-          return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
+          await this.lotRepository.update(lot.id, { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount });
+           return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
       } else {
-           await prisma.lot.update({
-              where: { id: lot.id },
-              data: { status: 'NAO_VENDIDO' },
-          });
-          // If not sold, release the 'bens' back to 'DISPONIVEL'
-           if (lot.bemIds && lot.bemIds.length > 0) {
-                await prisma.bem.updateMany({
-                    where: { id: { in: lot.bemIds } },
-                    data: { status: 'DISPONIVEL' },
-                });
-            }
+           await this.lotRepository.update(lot.id, { status: 'NAO_VENDIDO' });
            return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
       }
   }
@@ -254,6 +154,7 @@ export class LotService {
       return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
     }
     
+    // This is a direct DB access that should be moved to a repository
     const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
     if (!winner) {
       return { success: false, message: 'Arrematante não encontrado.' };
@@ -277,7 +178,7 @@ export class LotService {
       });
 
       if (result.pdfBase64 && result.fileName) {
-        await this.updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); // Placeholder URL
+        await this.updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); 
         return { ...result, success: true, message: 'Documento gerado com sucesso!' };
       } else {
         throw new Error("A geração do PDF não retornou os dados esperados.");

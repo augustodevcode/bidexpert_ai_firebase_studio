@@ -48,9 +48,9 @@ export class BidService {
       const previousHighBid = await this.repository.findHighestBid(lot.id);
 
       const newBid = await this.repository.createBid({
-        lotId: lot.id,
-        auctionId: lot.auctionId,
-        bidderId: userId,
+        lot: { connect: { id: lot.id } },
+        auction: { connect: { id: lot.auctionId } },
+        bidder: { connect: { id: userId } },
         bidderDisplay: userDisplayName,
         amount: bidAmount,
       });

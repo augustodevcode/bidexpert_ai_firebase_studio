@@ -1,8 +1,6 @@
 // src/services/relist.service.ts
-import { prisma } from '@/lib/prisma';
 import { LotService } from './lot.service';
 import type { Lot } from '@/types';
-import { v4 as uuidv4 } from 'uuid';
 
 export class RelistService {
   private lotService: LotService;
@@ -30,7 +28,6 @@ export class RelistService {
 
       const newLotData: Partial<Lot> = {
           ...restOfLotData,
-          publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`, // Generate new public ID
           status: 'EM_BREVE',
           auctionId: newAuctionId,
           originalLotId: originalLot.id,
