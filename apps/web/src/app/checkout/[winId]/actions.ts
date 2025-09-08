@@ -2,11 +2,11 @@
 'use server';
 
 import type { UserWin, CheckoutFormValues } from '@bidexpert/core';
-import { CheckoutService } from '@bidexpert/core/services';
-import { UserWinService } from '@bidexpert/services'; // Mantido para obter detalhes
+import { UserWinService } from '@bidexpert/services'; 
+import { CheckoutService } from '@/services/checkout.service'; // Agora aponta para o novo local
 
-const checkoutService = new CheckoutService();
 const userWinService = new UserWinService();
+const checkoutService = new CheckoutService();
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -20,6 +20,7 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
 
 /**
  * Calculates the final totals for a given win, including commission.
+ * This function now acts as a BFF, calling the microservice.
  * @param {string} winId - The ID of the user win record.
  * @returns An object with the calculated totals.
  */
@@ -28,8 +29,7 @@ export async function getCheckoutTotalsAction(winId: string) {
 }
 
 /**
- * Processes a payment for a won lot. This can be a one-time payment or create
- * installment records.
+ * Processes a payment for a won lot. This function now acts as a BFF.
  * @param {string} winId - The ID of the user win record.
  * @param {CheckoutFormValues} paymentData - The validated payment form data.
  * @returns {Promise<{success: boolean; message: string}>} The result of the payment operation.

@@ -1,8 +1,8 @@
-// packages/core/src/services/checkout.service.ts
+// apps/microservice/src/services/checkout.service.ts
 import { UserWinRepository } from '../repositories/user-win.repository';
 import { CheckoutRepository } from '../repositories/checkout.repository';
 import { PlatformSettingsService } from './platform-settings.service';
-import type { CheckoutFormValues } from '../lib/zod-schemas';
+import type { CheckoutFormValues } from '@bidexpert/core';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
@@ -61,16 +61,12 @@ export class CheckoutService {
 
     // In a real scenario, you would integrate with a payment gateway here using the totals.
     // For this simulation, we'll just update the status.
-    console.log(`[SERVICE - processPayment] Processing payment for win ID: ${winId}`, {paymentData, totals});
+    console.log(`[MICROSERVICE - processPayment] Processing payment for win ID: ${winId}`, {paymentData, totals});
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     try {
         if (paymentData.paymentMethod === 'credit_card') {
             await this.userWinRepository.update(winId, { paymentStatus: 'PAGO' });
-            if (process.env.NODE_ENV !== 'test') {
-                revalidatePath(`/dashboard/wins`);
-                revalidatePath(`/checkout/${winId}`);
-            }
             return { success: true, message: "Pagamento à vista processado com sucesso!" };
         } 
         
@@ -88,11 +84,6 @@ export class CheckoutService {
             
             await this.checkoutRepository.createInstallments({data: installmentsToCreate});
             await this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' });
-            
-            if (process.env.NODE_ENV !== 'test') {
-                revalidatePath(`/dashboard/wins`);
-                revalidatePath(`/checkout/${winId}`);
-            }
             
             return { success: true, message: `${installmentCount} boletos de parcelamento foram gerados com sucesso!` };
         }

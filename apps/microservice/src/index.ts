@@ -1,6 +1,8 @@
+// apps/microservice/src/index.ts
 import Fastify from 'fastify';
 import dotenv from 'dotenv';
 import appRoutes from './routes';
+import checkoutRoutes from './routes/checkout.routes'; // Importar as novas rotas
 import helmet from '@fastify/helmet';
 import cors from '@fastify/cors';
 
@@ -32,6 +34,7 @@ server.register(cors, {
 
 // Registra as rotas da aplicação
 server.register(appRoutes);
+server.register(checkoutRoutes, { prefix: '/api/v1/checkout'}); // Registrar rotas de checkout
 
 const start = async () => {
   try {
