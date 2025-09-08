@@ -1,11 +1,10 @@
-// src/services/bid.service.ts
-import { BidRepository } from '@/repositories/bid.repository';
+// packages/core/src/services/bid.service.ts
+import { BidRepository } from '../repositories/bid.repository';
 import { LotService } from './lot.service';
-import type { UserProfileData, BidInfo, UserLotMaxBid, UserBid } from '@/types';
-import { prisma } from '@/lib/prisma';
-import { revalidatePath } from 'next/cache';
-import { NotificationService } from './notification.service';
 import { HabilitationService } from './habilitation.service';
+import { NotificationService } from './notification.service';
+import type { UserProfileData, BidInfo, UserLotMaxBid, UserBid } from '../types';
+import { revalidatePath } from 'next/cache';
 
 export class BidService {
   private repository: BidRepository;

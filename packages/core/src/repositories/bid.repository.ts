@@ -18,6 +18,23 @@ export class BidRepository {
     });
   }
 
+  async findBidsByUserId(userId: string): Promise<any[]> {
+    return prisma.bid.findMany({
+        where: { bidderId: userId },
+        orderBy: { timestamp: 'desc' },
+        distinct: ['lotId'], // Get only the latest bid from the user for each lot
+        include: {
+            lot: {
+            include: {
+                auction: {
+                select: { title: true },
+                },
+            },
+            },
+        },
+    });
+  }
+
   async createBid(data: Prisma.BidCreateInput): Promise<BidInfo> {
     return prisma.bid.create({ data });
   }
