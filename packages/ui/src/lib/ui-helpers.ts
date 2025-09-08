@@ -1,22 +1,11 @@
+
 // packages/ui/src/lib/ui-helpers.ts
 import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@bidexpert/core';
 import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
 
-// ============================================================================
-// PURE HELPER FUNCTIONS (CLIENT & SERVER SAFE)
-// ============================================================================
-export const slugify = (text: string): string => {
-  if (!text) return '';
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-    .replace(/\s+/g, '-') 
-    .replace(/[^\w-]+/g, '') 
-    .replace(/--+/g, '-'); 
-};
+// A função slugify foi movida para @bidexpert/core
+export { slugify } from '@bidexpert/core';
 
 /**
  * Validates if a given URL string is a valid, absolute URL for use in next/image.

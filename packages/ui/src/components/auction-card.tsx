@@ -1,12 +1,13 @@
+
 // packages/ui/src/components/auction-card.tsx
 'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardFooter } from './ui/card';
+import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import type { Auction, AuctionStage as AuctionStageType } from '@bidexpert/core';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
@@ -17,13 +18,13 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+} from "./ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 // Corrected internal imports
 import  EntityEditMenu  from './entity-edit-menu';
-import  AuctionStagesTimeline  from './auction-stages-timeline';
-import  AuctionPreviewModal  from './auction-preview-modal';
+import  AuctionStagesTimeline  from './auction/auction-stages-timeline';
+import  AuctionPreviewModal  from './auction/auction-preview-modal';
 
 
 interface AuctionCardProps {

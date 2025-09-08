@@ -1,8 +1,9 @@
+
 // src/components/auction-card.tsx
 
 // This component now re-exports the shared component from the UI package.
 // Re-exporting from @bidexpert/ui to maintain a single source of truth.
-export { AuctionCard } from '@bidexpert/ui';
+export { AuctionCard as default } from '@bidexpert/ui';
 
 
 // This approach allows us to centralize UI components while maintaining
