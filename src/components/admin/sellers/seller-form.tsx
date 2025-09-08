@@ -4,7 +4,8 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
+import { sellerFormSchema } from '@/app/admin/sellers/seller-form-schema';
+import type { SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
 import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@bidexpert/core';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -20,6 +21,7 @@ import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
 
+
 interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
   judicialBranches: JudicialBranch[];
@@ -27,6 +29,7 @@ interface SellerFormProps {
   onSuccessCallback?: () => void;
 }
 
+// Tornando o formulário um forwardRef para que o FormPageLayout possa acessá-lo
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
   initialData,
   judicialBranches: initialBranches,

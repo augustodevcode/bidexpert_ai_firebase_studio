@@ -1,7 +1,7 @@
 // src/app/admin/contact-messages/actions.ts
 'use server';
 
-import type { ContactMessage } from '@/types';
+import type { ContactMessage } from '@bidexpert/core';
 import { ContactMessageService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 

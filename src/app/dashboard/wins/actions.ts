@@ -4,8 +4,10 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
-import type { UserWin } from '@/types';
+import { UserWinService } from '@bidexpert/services';
+import type { UserWin } from '@bidexpert/core';
+
+const userWinService = new UserWinService();
 
 /**
  * Fetches all lots won by a specific user.
@@ -14,35 +16,5 @@ import type { UserWin } from '@/types';
  * including details of the lot won.
  */
 export async function getWinsForUserAction(userId: string): Promise<UserWin[]> {
-  if (!userId) {
-    console.warn("[Action - getWinsForUserAction] No userId provided, returning empty array.");
-    return [];
-  }
-  
-  const wins = await prisma.userWin.findMany({
-    where: { userId },
-    include: {
-        lot: {
-            include: {
-                auction: {
-                    select: {
-                        title: true,
-                    }
-                }
-            }
-        }
-    },
-    orderBy: {
-        winDate: 'desc'
-    }
-  });
-
-  // @ts-ignore
-  return wins.map(win => ({
-      ...win,
-      lot: {
-          ...win.lot,
-          auctionName: win.lot.auction.title
-      }
-  }));
+  return userWinService.findWinsByUserId(userId);
 }

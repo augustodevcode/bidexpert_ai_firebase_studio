@@ -1,7 +1,7 @@
 // src/app/admin/roles/actions.ts
 'use server';
 
-import { RoleService } from '@/services/role.service';
+import { RoleService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
 const roleService = new RoleService();

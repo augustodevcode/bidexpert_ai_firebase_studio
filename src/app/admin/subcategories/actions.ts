@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Subcategory, SubcategoryFormData } from '@/types';
+import type { Subcategory, SubcategoryFormData } from '@bidexpert/core';
 import { SubcategoryService } from '@bidexpert/services';
 
 const subcategoryService = new SubcategoryService();

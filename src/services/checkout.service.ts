@@ -3,6 +3,8 @@ import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
+import { prisma } from '@/lib/prisma'; // Directly import prisma for transaction
+
 
 // Helper function to fetch commission rate from the BFF
 async function getCommissionRate(): Promise<number> {
@@ -97,8 +99,11 @@ export class CheckoutService {
                 status: 'PENDENTE' as const
             }));
             
-            await this.userWinRepository.createInstallments({data: installmentsToCreate});
-            await this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' });
+            // Using a transaction to ensure both operations succeed or fail together.
+            await prisma.$transaction([
+                prisma.installmentPayment.createMany({data: installmentsToCreate}),
+                this.userWinRepository.update(winId, { paymentStatus: 'PROCESSANDO' })
+            ]);
             
             if (process.env.NODE_ENV !== 'test') {
                 revalidatePath(`/dashboard/wins`);

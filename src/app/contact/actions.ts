@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { ContactMessageService } from '@/services/contact-message.service';
+import { ContactMessageService } from '@bidexpert/services';
 
 const contactMessageService = new ContactMessageService();
 

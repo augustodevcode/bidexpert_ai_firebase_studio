@@ -4,7 +4,6 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -14,8 +13,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { vehicleMakeFormSchema, type VehicleMakeFormData } from '@/app/admin/vehicle-makes/form-schema';
-import type { VehicleMake } from '@/types';
+import { vehicleMakeFormSchema } from '@/app/admin/vehicle-makes/form-schema';
+import type { VehicleMakeFormData, VehicleMake } from '@bidexpert/core';
 
 interface VehicleMakeFormProps {
   initialData?: VehicleMake | null;

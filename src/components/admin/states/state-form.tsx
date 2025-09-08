@@ -14,8 +14,8 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { stateFormSchema, type StateFormValues } from '@/app/admin/states/state-form-schema';
-import type { StateInfo } from '@/types';
+import { stateFormSchema } from '@/app/admin/states/state-form-schema';
+import type { StateFormValues, StateInfo } from '@bidexpert/core';
 
 interface StateFormProps {
   initialData?: StateInfo | null;
@@ -28,6 +28,7 @@ const StateForm = React.forwardRef<any, StateFormProps>(({ initialData, onSubmit
     defaultValues: {
       name: initialData?.name || '',
       uf: initialData?.uf || '',
+      // cityCount não é editável aqui
     },
   });
   

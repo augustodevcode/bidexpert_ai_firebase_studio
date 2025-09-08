@@ -1,7 +1,7 @@
 // src/app/admin/document-templates/actions.ts
 'use server';
 
-import type { DocumentTemplate } from '@/types';
+import type { DocumentTemplate } from '@bidexpert/core';
 import type { DocumentTemplateFormData } from './document-template-form-schema';
 import { DocumentTemplateService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';

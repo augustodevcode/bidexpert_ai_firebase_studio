@@ -1,7 +1,7 @@
 // src/app/admin/judicial-processes/actions.ts
 'use server';
 
-import type { JudicialProcessFormData } from '@/types';
+import type { JudicialProcessFormData } from '@bidexpert/core';
 import { JudicialProcessService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 

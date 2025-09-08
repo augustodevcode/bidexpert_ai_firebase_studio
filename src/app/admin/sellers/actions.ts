@@ -1,7 +1,7 @@
 // src/app/admin/sellers/actions.ts
 'use server';
 
-import type { SellerFormData } from '@/types';
+import type { SellerFormData } from '@bidexpert/core';
 import { SellerService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 

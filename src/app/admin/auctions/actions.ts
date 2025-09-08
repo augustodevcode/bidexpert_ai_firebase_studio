@@ -2,7 +2,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { Auction, AuctionFormData } from '@/types';
+import type { Auction, AuctionFormData } from '@bidexpert/core';
 import { AuctionService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
@@ -27,10 +27,6 @@ export const {
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string) {
     return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
-}
-
-export async function getAuctionDashboardDataAction(auctionId: string) {
-    return auctionService.getAuctionDashboardData(auctionId);
 }
 
 export async function updateAuctionTitle(id: string, newTitle: string): Promise<{ success: boolean; message: string; }> {

@@ -2,7 +2,7 @@
 'use server';
 
 import { DirectSaleOfferService } from '@bidexpert/services';
-import type { DirectSaleOffer } from '@/types';
+import type { DirectSaleOffer } from '@bidexpert/core';
 
 const offerService = new DirectSaleOfferService();
 

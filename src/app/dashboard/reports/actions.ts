@@ -2,7 +2,7 @@
 'use server';
 
 import { UserWinService } from '@bidexpert/services';
-import type { UserReportData } from '@/types';
+import type { UserReportData } from '@bidexpert/core';
 
 const userWinService = new UserWinService();
 

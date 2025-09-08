@@ -10,8 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { subcategoryFormSchema, type SubcategoryFormValues } from '@/app/admin/subcategories/subcategory-form-schema';
-import type { Subcategory, LotCategory, MediaItem } from '@/types';
+import { subcategoryFormSchema } from '@/app/admin/subcategories/subcategory-form-schema';
+import type { SubcategoryFormValues } from '@/app/admin/subcategories/subcategory-form-schema';
+import type { Subcategory, LotCategory, MediaItem } from '@bidexpert/core';
 import { ImageIcon } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
@@ -48,7 +49,7 @@ const SubcategoryForm = React.forwardRef<any, SubcategoryFormProps>(({
       iconMediaId: initialData?.iconMediaId || null,
     },
   });
-  
+
   React.useEffect(() => {
     form.reset({
       name: initialData?.name || '',
@@ -185,6 +186,21 @@ const SubcategoryForm = React.forwardRef<any, SubcategoryFormProps>(({
               </div>
             </div>
           </FormItem>
+
+          <FormField
+            control={form.control}
+            name="dataAiHintIcon"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Dica para IA (Ícone - Opcional)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: apartamento predio, carro esporte" {...field} value={field.value ?? ""} />
+                </FormControl>
+                <FormDescription>Duas palavras chave para ajudar a IA a encontrar um ícone de placeholder, se a URL não for fornecida.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </form>
       </Form>
       <ChooseMediaDialog
@@ -199,4 +215,3 @@ const SubcategoryForm = React.forwardRef<any, SubcategoryFormProps>(({
 
 SubcategoryForm.displayName = 'SubcategoryForm';
 export default SubcategoryForm;
-

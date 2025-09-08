@@ -4,7 +4,7 @@
  */
 'use server';
 
-import type { UserDocument, DocumentType } from '@/types';
+import type { UserDocument, DocumentType } from '@bidexpert/core';
 import { HabilitationService } from '@bidexpert/services';
 import { DocumentTypeService } from '@bidexpert/services';
 

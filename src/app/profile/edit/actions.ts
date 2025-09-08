@@ -1,13 +1,12 @@
-
-
+// src/app/profile/edit/actions.ts
 /**
  * @fileoverview Server Action for updating a user's own profile.
  */
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import type { EditableUserProfileData } from '@/types';
-import { UserService } from '@/services/user.service';
+import type { EditableUserProfileData } from '@bidexpert/core';
+import { UserService } from '@bidexpert/services';
 
 interface UpdateProfileResult {
   success: boolean;
@@ -32,13 +31,6 @@ export async function updateUserProfile(
   }
   
   try {
-    // The UserService will handle the database update via Prisma.
-    // We can expand the UserService with a dedicated 'updateProfile' method if needed,
-    // but for now, we can reuse the existing user update logic if it fits.
-    // For this case, we'll assume a method `updateUserProfile` exists on the service.
-    
-    // As `updateUser` in service might expect a different structure, let's create a dedicated one.
-    // For now, let's just pass the data, assuming the service can handle it.
     const result = await userService.updateUserProfile(userId, data);
     
     if (result.success && process.env.NODE_ENV !== 'test') {

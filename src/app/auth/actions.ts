@@ -1,10 +1,9 @@
-
 // src/app/auth/actions.ts
 'use server';
 
 import { redirect } from 'next/navigation';
 import { createSession, getSession, deleteSession } from '@/lib/session';
-import type { UserProfileWithPermissions } from '@/types';
+import type { UserProfileWithPermissions } from '@bidexpert/core';
 import { revalidatePath } from 'next/cache';
 import { UserService } from '@bidexpert/services'; // Import the service
 

@@ -1,7 +1,7 @@
 // src/app/admin/users/actions.ts
 'use server';
 
-import type { EditableUserProfileData, UserCreationData, UserProfileWithPermissions } from '@/types';
+import type { EditableUserProfileData, UserCreationData, UserProfileWithPermissions } from '@bidexpert/core';
 import { UserService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 

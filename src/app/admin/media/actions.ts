@@ -1,7 +1,7 @@
 // src/app/admin/media/actions.ts
 'use server';
 
-import type { MediaItem } from '@/types';
+import type { MediaItem } from '@bidexpert/core';
 import { MediaService } from '@bidexpert/services';
 import { createCrudActions } from '@/lib/actions/create-crud-actions';
 
