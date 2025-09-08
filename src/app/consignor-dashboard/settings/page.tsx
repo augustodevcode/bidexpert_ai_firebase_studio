@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { obterComitente, obterComitentes } from '@/app/admin/sellers/actions';
+import { obterComitentes, obterComitente } from '@/app/admin/sellers/actions';
 import { atualizarPerfilComitente } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@bidexpert/core';

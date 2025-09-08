@@ -1,4 +1,3 @@
-
 // src/app/consignor-dashboard/overview/page.tsx
 'use client';
 
@@ -9,8 +8,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useAuth } from '@/contexts/auth-context';
-import { getSellerBySlug, getSellers } from '@/app/admin/sellers/actions'; 
-import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions'; 
+import { obterComitentePorSlug, obterComitentes } from '@/app/admin/sellers/actions'; 
+import { obterLeiloesPorComitenteSlug } from '@/app/admin/auctions/actions'; 
 import { getConsignorDashboardStatsAction } from '../reports/actions';
 import type { Auction, Lot, SellerProfileInfo, ConsignorDashboardStats } from '@bidexpert/core';
 import { format } from 'date-fns';
@@ -36,9 +35,8 @@ export default function ConsignorOverviewPage() {
   // Fetch all sellers if the user is an admin
   useEffect(() => {
     if (isUserAdmin) {
-      getSellers().then(sellers => {
+      obterComitentes().then(sellers => {
         setAllSellers(sellers);
-        // Default to the first seller if none is selected
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);
         }
@@ -51,8 +49,8 @@ export default function ConsignorOverviewPage() {
     setError(null);
     try {
       const [profile, auctions, dashboardStats] = await Promise.all([
-        getSellerBySlug(targetSellerId),
-        getAuctionsBySellerSlug(targetSellerId),
+        obterComitentePorSlug(targetSellerId),
+        obterLeiloesPorComitenteSlug(targetSellerId),
         getConsignorDashboardStatsAction(targetSellerId),
       ]);
       

@@ -4,7 +4,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SellerForm from '../seller-form';
-import { createSeller } from '../actions';
+import { criarComitente } from '../actions';
 import type { SellerFormData } from '@bidexpert/core';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
@@ -15,9 +15,9 @@ import type { JudicialBranch } from '@bidexpert/core';
 function NewSellerPageContent({ branches }: { branches: JudicialBranch[] }) {
     const router = useRouter();
     const { toast } = useToast();
-
+    
     const handleCreate = async (data: SellerFormData) => {
-        const result = await createSeller(data);
+        const result = await criarComitente(data);
         if (result.success) {
             toast({ title: 'Sucesso!', description: 'Comitente criado com sucesso.' });
             router.push('/admin/sellers');
