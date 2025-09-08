@@ -1,4 +1,3 @@
-
 // src/app/lots/[lotId]/page.tsx
 import { notFound, redirect } from 'next/navigation';
 import { getLot, getLots } from '@/app/admin/lots/actions';

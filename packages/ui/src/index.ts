@@ -1,17 +1,5 @@
+
 // packages/ui/src/index.ts
-
-// Components
-export * from './components/auction-card';
-export * from './components/lot-card';
-export * from './components/auction-list-item';
-export * from './components/entity-edit-menu';
-export * from './components/lot-list-item';
-export * from './components/auction/auction-stages-timeline';
-export * from './components/auction/auction-preview-modal';
-export * from './components/lot-preview-modal';
-export * from './components/direct-sale-offer-card';
-export * from './components/direct-sale-offer-list-item';
-
 
 // Lib
 export * from './lib/utils';
@@ -19,24 +7,17 @@ export * from './lib/ui-helpers';
 export * from './lib/favorite-store';
 export * from './lib/recently-viewed-store';
 
-// UI (ShadCN)
+// UI (ShadCN) - Base components
 export * from './components/ui/accordion';
 export * from './components/ui/alert';
 export * from './components/ui/alert-dialog';
 export * from './components/ui/avatar';
 export * from './components/ui/badge';
-export * from './components/ui/breadcrumbs';
 export * from './components/ui/button';
 export * from './components/ui/calendar';
 export * from './components/ui/card';
 export * from './components/ui/checkbox';
 export * from './components/ui/command';
-export * from './components/ui/data-table';
-export * from './components/ui/data-table-column-header';
-export * from './components/ui/data-table-faceted-filter';
-export * from './components/ui/data-table-pagination';
-export * from './components/ui/data-table-toolbar';
-export * from './components/ui/data-table-view-options';
 export * from './components/ui/dialog';
 export * from './components/ui/dropdown-menu';
 export * from './components/ui/form';
@@ -60,4 +41,25 @@ export * from './components/ui/textarea';
 export * from './components/ui/toast';
 export * from './components/ui/toaster';
 export * from './components/ui/tooltip';
+
+// UI (ShadCN) - More complex components
+export * from './components/ui/data-table';
+export * from './components/ui/data-table-column-header';
+export * from './components/ui/data-table-faceted-filter';
+export * from './components/ui/data-table-pagination';
+export * from './components/ui/data-table-toolbar';
+export * from './components/ui/data-table-view-options';
 export * from './components/ui/entity-selector';
+export * from './components/ui/breadcrumbs';
+
+// Domain-specific Components (will be added here)
+export * from './components/auction-card';
+export * from './components/lot-card';
+export * from './components/auction-list-item';
+export * from './components/entity-edit-menu';
+export * from './components/lot-list-item';
+export * from './components/auction/auction-stages-timeline';
+export * from './components/auction/auction-preview-modal';
+export * from './components/lot-preview-modal';
+export * from './components/direct-sale-offer-card';
+export * from './components/direct-sale-offer-list-item';

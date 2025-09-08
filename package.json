@@ -1,4 +1,3 @@
-
 {
   "name": "bidexpert-monorepo",
   "private": true,
@@ -16,5 +15,8 @@
     "turbo": "^2.0.9",
     "typescript": "^5.5.4"
   },
-  "packageManager": "pnpm@9.6.0"
+  "packageManager": "pnpm@9.6.0",
+  "dependencies": {
+    "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector"
+  }
 }

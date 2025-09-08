@@ -3,17 +3,17 @@ import { Suspense } from 'react';
 import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
 import PromoCard from '@/components/promo-card';
-import { Button } from '@/components/ui/button';
+import { Button } from '@bidexpert/ui';
 import { ArrowRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { fetchPlatformSettings } from '@/lib/data-queries';
+import { fetchPlatformSettings } from '@bidexpert/core/lib/data-queries';
 import FeaturedItems from '@/components/featured-items';
-import type { Auction, Lot, LotCategory, SellerProfileInfo } from '@/types';
+import type { Auction, Lot, LotCategory, SellerProfileInfo } from '@bidexpert/core';
 import { getLotCategories } from './admin/categories/actions';
 import { getSellers } from './admin/sellers/actions'; // Import getSellers
-import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
-import { AuctionService } from '@/services/auction.service';
-import { LotService } from '@/services/lot.service';
+import { getCategoryAssets, slugify } from '@bidexpert/core';
+import { AuctionService } from '@bidexpert/core/services';
+import { LotService } from '@bidexpert/core/services';
 import FeaturedSellers from '@/components/featured-sellers'; // Importar o novo componente
 
 async function HomePageContent() {

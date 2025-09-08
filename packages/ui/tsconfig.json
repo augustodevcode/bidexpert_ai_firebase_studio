@@ -11,6 +11,6 @@
       "@bidexpert/ui": ["./src/index"]
     }
   },
-  "include": ["src"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]
 }

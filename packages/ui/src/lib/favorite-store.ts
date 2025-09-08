@@ -1,3 +1,4 @@
+
 // packages/ui/src/lib/favorite-store.ts
 'use client';
 

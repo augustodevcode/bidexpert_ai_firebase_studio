@@ -3,24 +3,20 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@bidexpert/ui';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@bidexpert/ui';
 import { getAuctions, deleteAuction } from './actions';
-import type { Auction, PlatformSettings } from '@/types';
+import type { Auction, PlatformSettings } from '@bidexpert/core';
 import { PlusCircle, Gavel } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@bidexpert/ui";
 import SearchResultsFrame from '@/components/search-results-frame';
-import { getPlatformSettings } from '../settings/actions';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
-import AuctionCard from '@/components/auction-card';
-import AuctionListItem from '@/components/auction-list-item';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getAuctionStatusText } from '@bidexpert/core';
+import { AuctionCard, AuctionListItem } from '@bidexpert/ui';
 import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminAuctionsPage() {
-  // A maior parte da lógica de estado foi movida para dentro do ResourceDataTable
-  // A lógica de busca de plataforma e leilões para as visualizações de card/lista permanece
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -99,7 +95,6 @@ export default function AdminAuctionsPage() {
               {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
-                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -109,10 +104,6 @@ export default function AdminAuctionsPage() {
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
                     facetedFilterColumns={facetedFilterColumns}
-                    itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
-                    onPageChange={() => {}}
-                    onItemsPerPageChange={() => {}}
-                    currentPage={1}
                   />
               )}
             </TabsContent>
@@ -120,7 +111,6 @@ export default function AdminAuctionsPage() {
                {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
-                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -130,10 +120,6 @@ export default function AdminAuctionsPage() {
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
                     facetedFilterColumns={facetedFilterColumns}
-                    itemsPerPage={platformSettings.defaultListItemsPerPage || 12}
-                    onPageChange={() => {}}
-                    onItemsPerPageChange={() => {}}
-                    currentPage={1}
                   />
               )}
             </TabsContent>

@@ -93,18 +93,15 @@ export default function EditAuctioneerPage({ params }: { params: { auctioneerId:
       <FormPageLayout
         pageTitle="Leiloeiro"
         fetchAction={() => getAuctioneer(params.auctioneerId)}
-        deleteAction={deleteAuctioneer}
+        deleteAction={() => deleteAuctioneer(params.auctioneerId)}
         entityId={params.auctioneerId}
         entityName="Leiloeiro"
         routeBase="/admin/auctioneers"
         icon={Gavel}
       >
-        {(initialData) => (
           <AuctioneerForm
-            initialData={initialData}
             onSubmitAction={(data) => handleUpdate(params.auctioneerId, data)}
           />
-        )}
       </FormPageLayout>
 
       <Separator className="my-8" />
