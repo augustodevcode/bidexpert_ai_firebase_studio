@@ -4,20 +4,36 @@ import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma'; // Import prisma directly for complex queries
+import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { PlatformSettingsService } from './platform-settings.service';
 import { UserWinService } from './user-win.service';
 
+// Helper to get commission rate from the BFF, ensuring consistency.
+async function getCommissionRate(): Promise<number> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
+    const response = await fetch(`${baseUrl}/api/commission`);
+    
+    if (!response.ok) {
+      console.error(`[SellerService] Failed to fetch commission rate, status: ${response.status}`);
+      return 0.05; // Fallback
+    }
+    const data = await response.json();
+    return data.default_commission_rate || 0.05;
+  } catch (error) {
+    console.error("[SellerService] Error fetching commission rate from BFF:", error);
+    return 0.05; // Fallback
+  }
+}
+
 export class SellerService {
   private sellerRepository: SellerRepository;
-  private settingsService: PlatformSettingsService;
   private userWinService: UserWinService;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
-    this.settingsService = new PlatformSettingsService();
     this.userWinService = new UserWinService();
   }
 
@@ -98,14 +114,14 @@ export class SellerService {
   }
   
   async getSellerDashboardData(sellerId: string): Promise<SellerDashboardData | null> {
-    const [sellerData, platformSettings, sellerWins] = await Promise.all([
+    const [sellerData, commissionRate, sellerWins] = await Promise.all([
         prisma.seller.findUnique({
             where: { id: sellerId },
             include: {
                 _count: { select: { auctions: true, lots: true } },
             },
         }),
-        this.settingsService.getSettings(),
+        getCommissionRate(),
         this.userWinService.getWinsForConsignor(sellerId)
     ]);
 
@@ -113,7 +129,6 @@ export class SellerService {
 
     const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
     const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);
-    const commissionRate = (platformSettings.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
     const totalCommission = totalRevenue * commissionRate;
     const netValue = totalRevenue - totalCommission;
 
@@ -130,7 +145,8 @@ export class SellerService {
     }
 
     paidWins.forEach(win => {
-      const monthKey = format(new Date(win.winDate), 'MMM/yy', { locale: ptBR });
+      const winDate = win.paymentDate ? new Date(win.paymentDate) : new Date(win.winDate);
+      const monthKey = format(winDate, 'MMM/yy', { locale: ptBR });
       if (salesByMonthMap.has(monthKey)) {
         salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + win.winningBidAmount);
       }

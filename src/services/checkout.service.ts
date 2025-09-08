@@ -1,8 +1,6 @@
 // src/services/checkout.service.ts
-import { prisma } from '@/lib/prisma';
-import { PlatformSettingsService } from './platform-settings.service';
 import { UserWinRepository } from '@/repositories/user-win.repository';
-import { type CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
+import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
 import { revalidatePath } from 'next/cache';
 import { add } from 'date-fns';
 
@@ -10,18 +8,19 @@ import { add } from 'date-fns';
 async function getCommissionRate(): Promise<number> {
   try {
     // In a deployed environment, this URL should be absolute and internal.
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:9002';
-    const response = await fetch(`${baseUrl}/api/commission`);
+    // NEXT_PUBLIC_BASE_URL should point to the deployed web app URL.
+    const baseUrl = process.env.COMMISSION_MICROSERVICE_URL || 'http://localhost:3001';
+    const response = await fetch(`${baseUrl}/api/v1/commission-rules`);
     
     if (!response.ok) {
-        console.error(`Failed to fetch commission rate, status: ${response.status}`);
+        console.error(`Failed to fetch commission rate from microservice, status: ${response.status}`);
         // Fallback to a default value if the service fails
         return 0.05; 
     }
     const data = await response.json();
     return data.default_commission_rate || 0.05;
   } catch (error) {
-    console.error("Error fetching commission rate from BFF:", error);
+    console.error("Error fetching commission rate from microservice:", error);
     // Fallback to a default value in case of network errors
     return 0.05;
   }

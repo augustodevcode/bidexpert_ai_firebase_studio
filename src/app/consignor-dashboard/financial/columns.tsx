@@ -41,7 +41,7 @@ export const createFinancialColumns = ({ commissionRate }: { commissionRate: num
   },
   {
     id: 'commission',
-    header: () => <div className="text-right">Comissão ({commissionRate}%)</div>,
+    header: () => <div className="text-right">Comissão ({commissionRate.toFixed(2)}%)</div>,
     cell: ({ row }) => {
       const amount = row.original.winningBidAmount * (commissionRate / 100);
       return <div className="text-right">{amount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;

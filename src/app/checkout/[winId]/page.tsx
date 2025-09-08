@@ -10,7 +10,6 @@ import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 import CheckoutForm from './checkout-form';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 export default async function CheckoutPage({ params }: { params: { winId: string } }) {
   const winId = params.winId;
