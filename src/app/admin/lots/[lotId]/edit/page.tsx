@@ -2,16 +2,17 @@
 'use client';
 
 import LotForm from '../../lot-form';
-import { getLot, updateLot, type LotFormData, finalizeLot, deleteLot } from '../../actions'; 
+import { getLot, updateLot, finalizeLot, deleteLot } from '../../actions'; 
 import { getBens as getBensForLotting } from '@/app/admin/bens/actions'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
-import type { Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin } from '@bidexpert/core';
+import type { Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo, Lot } from '@bidexpert/core';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { CheckCircle, FileSignature, Loader2, Gavel, Repeat, Layers, PlusCircle, BarChart3, Lightbulb } from 'lucide-react';
 import {
   AlertDialog,
@@ -27,11 +28,7 @@ import {
 import React, { useEffect, useCallback, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
-import RelistLotModal from '../../relist-lot-modal'; // Importar o novo modal
-import Link from 'next/link';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
-import { Separator } from '@/components/ui/separator';
+import RelistLotModal from '../../relist-lot-modal';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
@@ -106,7 +103,7 @@ export default function EditLotPage() {
     fetchPageData();
   }, [fetchPageData]);
   
-  const handleSave = () => {
+  const handleSave = async () => {
     if (formRef.current) {
         formRef.current.requestSubmit();
     }

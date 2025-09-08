@@ -9,11 +9,9 @@ import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { BemFormData, JudicialProcess, LotCategory, SellerProfileInfo } from '@/types';
 import FormPageLayout from '@/components/admin/form-page-layout';
-import { Package } from 'lucide-react';
+import { Package, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
-
 
 interface NewBemPageContentProps {
   processes: JudicialProcess[];
@@ -39,8 +37,8 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
       router.push('/admin/bens');
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive' });
+      setIsSubmitting(false); // Only stop loading on error, success will navigate away
     }
-    setIsSubmitting(false);
   }
 
   return (
@@ -48,7 +46,7 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
         formTitle="Novo Bem"
         formDescription="Cadastre um novo bem para que possa ser posteriormente loteado."
         icon={Package}
-        isViewMode={false}
+        isViewMode={false} // Always in edit mode for new page
         isSubmitting={isSubmitting}
         onSave={handleSave}
         onCancel={() => router.push('/admin/bens')}

@@ -1,10 +1,9 @@
-
+// src/app/admin/roles/role-form.tsx
 'use client';
 
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
-import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
@@ -16,21 +15,14 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { roleFormSchema, type RoleFormValues, predefinedPermissions } from './role-form-schema';
 import type { Role } from '@/types';
-import { Loader2, Save, ShieldCheck } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { roleFormSchema, type RoleFormValues, predefinedPermissions } from './role-form-schema';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 interface RoleFormProps {
   initialData?: Role | null;
-  onSubmitAction: (data: RoleFormValues) => Promise<{ success: boolean; message: string; roleId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSubmitAction: (data: RoleFormValues) => Promise<any>;
 }
 
 // Group permissions by their group property
@@ -44,16 +36,10 @@ const groupedPermissions = predefinedPermissions.reduce((acc, permission) => {
 }, {} as Record<string, typeof predefinedPermissions>);
 
 
-export default function RoleForm({
+const RoleForm = React.forwardRef<any, RoleFormProps>(({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
-}: RoleFormProps) {
-  const { toast } = useToast();
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+}, ref) => {
 
   const form = useForm<RoleFormValues>({
     resolver: zodResolver(roleFormSchema),
@@ -64,48 +50,22 @@ export default function RoleForm({
     },
   });
 
-  async function onSubmit(values: RoleFormValues) {
-    setIsSubmitting(true);
-    try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({
-          title: 'Sucesso!',
-          description: result.message,
-        });
-        router.push('/admin/roles');
-        router.refresh();
-      } else {
-        toast({
-          title: 'Erro',
-          description: result.message,
-          variant: 'destructive',
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro Inesperado',
-        description: 'Ocorreu um erro ao processar sua solicitação.',
-        variant: 'destructive',
-      });
-      console.error("Unexpected error in role form:", error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
+  React.useEffect(() => {
+    form.reset({
+      name: initialData?.name || '',
+      description: initialData?.description || '',
+      permissions: initialData?.permissions || [],
+    });
+  }, [initialData, form]);
+
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+  }));
 
   return (
-    <Card className="max-w-2xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ShieldCheck className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
@@ -145,7 +105,7 @@ export default function RoleForm({
                   <FormDescription>
                     Selecione as permissões que este perfil terá.
                   </FormDescription>
-                  <Accordion type="multiple" className="w-full bg-background p-2 rounded-md border">
+                  <Accordion type="multiple" className="w-full bg-background p-2 rounded-md border" defaultValue={Object.keys(groupedPermissions)}>
                     {Object.entries(groupedPermissions).map(([groupName, permissions]) => (
                       <AccordionItem value={groupName} key={groupName}>
                         <AccordionTrigger className="text-sm font-medium">{groupName}</AccordionTrigger>
@@ -181,19 +141,10 @@ export default function RoleForm({
                 </FormItem>
               )}
             />
-
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/roles')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
         </form>
       </Form>
-    </Card>
   );
-}
+});
+
+RoleForm.displayName = 'RoleForm';
+export default RoleForm;
