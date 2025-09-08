@@ -66,6 +66,7 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({ elements, onAddElement, o
             "p-2 bg-slate-100/80 hover:border-primary-light transition-all",
              selectedElementId === el.id ? 'border-2 border-primary ring-2 ring-primary/30' : 'border border-dashed border-muted-foreground'
           )}
+          data-ai-id={`report-element-${el.id}`}
         >
           <p className="text-xs truncate pointer-events-none">{el.content} ({el.type})</p>
         </div>

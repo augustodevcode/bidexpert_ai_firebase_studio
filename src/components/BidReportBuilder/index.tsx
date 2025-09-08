@@ -5,7 +5,6 @@ import React from 'react';
 import Toolbar from './components/Toolbar';
 import DesignSurface from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
-import PreviewPanel from './components/PreviewPanel';
 import VariablePanel from './components/VariablePanel';
 import MediaLibrary from './components/MediaLibrary';
 import { DndProvider } from 'react-dnd';
@@ -44,7 +43,7 @@ const BidReportBuilder = () => {
             x: x || 50,
             y: y || 50,
             width: elementType === 'Image' ? 200 : 150,
-            height: elementType === 'Image' ? 150 : 30
+            height: elementType === 'Image' ? 150 : 40, // Aumentado altura padrão
         };
         setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newElement]}));
         setSelectedElement(newElement);
@@ -155,7 +154,7 @@ const BidReportBuilder = () => {
                      <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
                         <TabsList className="flex-shrink-0 mx-2 mt-2">
                             <TabsTrigger value="properties">Propriedades</TabsTrigger>
-                            <TabsTrigger value="variables">Dados</TabsTrigger>
+                            <TabsTrigger value="data">Dados</TabsTrigger>
                             <TabsTrigger value="media">Mídia</TabsTrigger>
                         </TabsList>
                         <TabsContent value="properties" className="flex-grow overflow-y-auto">
@@ -164,7 +163,7 @@ const BidReportBuilder = () => {
                                 onElementChange={handleElementChange}
                             />
                         </TabsContent>
-                        <TabsContent value="variables" className="flex-grow overflow-y-auto">
+                        <TabsContent value="data" className="flex-grow overflow-y-auto">
                             <VariablePanel />
                         </TabsContent>
                          <TabsContent value="media" className="flex-grow overflow-y-auto">

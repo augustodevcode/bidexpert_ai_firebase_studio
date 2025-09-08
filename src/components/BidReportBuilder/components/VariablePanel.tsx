@@ -80,9 +80,9 @@ const VariablePanel: React.FC = () => {
 
     return (
         <div className="p-4 h-full flex flex-col" data-ai-id="report-variable-panel">
-            <h3 className="text-md font-semibold border-b pb-2 mb-2">Variáveis</h3>
+            <h3 className="text-md font-semibold border-b pb-2 mb-2">Dados</h3>
              <Input 
-                placeholder="Buscar variável..." 
+                placeholder="Buscar dados..." 
                 className="mb-3 h-8 text-xs"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}

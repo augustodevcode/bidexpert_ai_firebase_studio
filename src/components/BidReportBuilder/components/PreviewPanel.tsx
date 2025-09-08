@@ -20,7 +20,7 @@ const PreviewPanel: React.FC<PreviewPanelProps> = ({ reportDefinition }) => {
   return (
     <div className="p-4 h-full overflow-y-auto" data-ai-id="report-preview-panel">
       <h3 className="text-md font-semibold border-b pb-2 mb-2">Pré-Visualização</h3>
-      <div className="bg-white p-4 shadow-sm h-full">
+      <div className="bg-white p-4 shadow-inner h-full bg-slate-50">
          {/* Renderização simulada baseada na definição do relatório */}
         {reportDefinition.elements.length === 0 && (
             <p className="text-sm text-muted-foreground text-center pt-8">A pré-visualização aparecerá aqui.</p>
