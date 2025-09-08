@@ -16,7 +16,7 @@ export default function WizardFlowModal({ isOpen, onClose }: WizardFlowModalProp
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[90vw] w-full h-[90vh] flex flex-col p-0">
+      <DialogContent className="max-w-[90vw] w-full h-[90vh] flex flex-col p-0" data-ai-id="wizard-flow-modal">
         <DialogHeader className="p-4 border-b">
           <DialogTitle>Fluxo de Criação de Leilão</DialogTitle>
           <DialogDescription>

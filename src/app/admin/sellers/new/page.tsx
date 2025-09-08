@@ -4,7 +4,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import SellerForm from '../seller-form';
-import { createSeller, type SellerFormData } from '../actions';
+import { createSeller } from '../actions';
+import type { SellerFormData } from '@bidexpert/core';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Users, Loader2 } from 'lucide-react';

@@ -1,4 +1,4 @@
-// src/app/admin/sellers/[sellerId]/edit/page.tsx
+// apps/web/src/app/admin/sellers/[sellerId]/edit/page.tsx
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -10,11 +10,11 @@ import { Button } from '@/components/ui/button';
 import { BarChart3, Users, Loader2, Gavel, ListChecks, DollarSign, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellerDashboardDataAction } from '@/app/admin/sellers/analysis/actions';
-import type { SellerDashboardData } from '@bidexpert/services';
+import type { SellerDashboardData } from '@bidexpert/core';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
-import FormPageLayout from '@/components/admin/form-page-layout'; // Importar o novo layout
+import FormPageLayout from '@/components/admin/form-page-layout'; 
 import type { SellerFormData } from '@bidexpert/core';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -147,7 +147,7 @@ export default function EditSellerPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id={`admin-seller-edit-page-${sellerId}`}>
       <FormPageLayout
         formTitle={isViewMode ? "Visualizar Comitente" : "Editar Comitente"}
         formDescription={seller?.name || 'Carregando...'}

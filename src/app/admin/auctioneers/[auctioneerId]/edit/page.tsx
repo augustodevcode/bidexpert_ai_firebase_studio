@@ -144,7 +144,7 @@ export default function EditAuctioneerPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id={`admin-auctioneer-edit-page-${auctioneerId}`}>
       <FormPageLayout
         formTitle={isViewMode ? "Visualizar Leiloeiro" : "Editar Leiloeiro"}
         formDescription={auctioneer?.name || 'Carregando...'}

@@ -6,7 +6,7 @@ import { FileSpreadsheet } from 'lucide-react';
 export default function ReportBuilderPage() {
   return (
     <div className="space-y-6" data-ai-id="report-builder-page-container">
-       <Card className="shadow-lg">
+       <Card className="shadow-lg" data-ai-id="report-builder-card">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <FileSpreadsheet className="h-6 w-6 mr-2 text-primary" />

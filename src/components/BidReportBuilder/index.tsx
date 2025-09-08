@@ -141,8 +141,8 @@ const BidReportBuilder = () => {
             <div className="flex h-[80vh] w-full" data-ai-id="report-builder-container">
                 <Toolbar onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
 
-                <main className="flex-grow flex flex-col bg-muted/40 p-3">
-                     <div className="flex-grow border bg-background shadow-md rounded-md relative overflow-hidden">
+                <main className="flex-grow flex flex-col bg-muted/40 p-3" data-ai-id="report-builder-main-panel">
+                     <div className="flex-grow border bg-background shadow-md rounded-md relative overflow-hidden" data-ai-id="report-builder-design-surface-wrapper">
                         <DesignSurface 
                             elements={reportDefinition.elements} 
                             onAddElement={handleAddElement}
@@ -151,7 +151,7 @@ const BidReportBuilder = () => {
                         />
                     </div>
                 </main>
-                <aside className="w-80 flex-shrink-0 flex flex-col bg-card border-l">
+                <aside className="w-80 flex-shrink-0 flex flex-col bg-card border-l" data-ai-id="report-builder-sidebar">
                      <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
                         <TabsList className="flex-shrink-0 mx-2 mt-2">
                             <TabsTrigger value="properties">Propriedades</TabsTrigger>

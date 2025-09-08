@@ -10,7 +10,7 @@ import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-
 import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
 import Step5Review from '@/components/admin/wizard/steps/step-5-review';
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@bidexpert/core';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
@@ -170,7 +170,7 @@ function WizardContent({
 
   return (
     <>
-      <div className="space-y-6">
+      <div className="space-y-6" data-ai-id="wizard-page-container">
         <Card className="shadow-lg">
           <CardHeader>
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -214,7 +214,7 @@ function WizardContent({
           )}
         </Card>
         
-        <Card className="shadow-lg mt-8">
+        <Card className="shadow-lg mt-8" data-ai-id="wizard-flow-card">
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>

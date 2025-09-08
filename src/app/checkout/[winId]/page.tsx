@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, ArrowLeft } from 'lucide-react';
-import { getPaymentStatusText } from '@/lib/ui-helpers';
+import { getPaymentStatusText } from '@bidexpert/core';
 import CheckoutForm from './checkout-form';
 
 export default async function CheckoutPage({ params }: { params: { winId: string } }) {
@@ -29,7 +29,7 @@ export default async function CheckoutPage({ params }: { params: { winId: string
 
   if (!winDetails.lot) {
      return (
-      <div className="text-center py-12" data-ai-id="checkout-lot-error">
+      <div className="text-center py-12" data-ai-id="checkout-lot-error-container">
         <AlertTriangle className="mx-auto h-12 w-12 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Erro nos Dados do Lote</h1>
         <p className="text-muted-foreground">Não foi possível carregar os detalhes do lote associado a este arremate.</p>

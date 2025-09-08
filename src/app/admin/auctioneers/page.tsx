@@ -12,10 +12,10 @@ import ResourceDataTable from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminAuctioneersPage() {
-  const columns = useMemo(() => createColumns(), []);
+  const columns = useMemo(() => createColumns({ handleDelete: deleteAuctioneer }), [deleteAuctioneer]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-auctioneers-page">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
