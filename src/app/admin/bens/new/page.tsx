@@ -1,17 +1,17 @@
 // src/app/admin/bens/new/page.tsx
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import BemForm from '../bem-form';
-import { createBem } from '../actions';
+import { createBem, type BemFormData } from '../actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
-import type { BemFormData, JudicialProcess, LotCategory, SellerProfileInfo } from '@/types';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Package, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import type { JudicialProcess, LotCategory, SellerProfileInfo } from '@/types';
 
 interface NewBemPageContentProps {
   processes: JudicialProcess[];
@@ -61,6 +61,7 @@ function NewBemPageContent({ processes, categories, sellers }: NewBemPageContent
     </FormPageLayout>
   );
 }
+
 
 export default function NewBemPage() {
     const [isLoading, setIsLoading] = useState(true);

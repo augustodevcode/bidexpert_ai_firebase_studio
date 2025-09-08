@@ -2,14 +2,14 @@
 'use client';
 
 import JudicialBranchForm from '../../judicial-branch-form';
-import { getJudicialBranch, updateJudicialBranch, deleteJudicialBranch, type JudicialBranchFormData } from '../../actions';
+import { getJudicialBranch, updateJudicialBranch, deleteJudicialBranch } from '../../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { notFound, useParams, useRouter } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Building2 } from 'lucide-react';
-import type { JudicialBranch, JudicialDistrict } from '@/types';
+import type { JudicialBranch, JudicialDistrict, JudicialBranchFormData } from '@bidexpert/core';
 
 export default function EditJudicialBranchPage() {
   const params = useParams();

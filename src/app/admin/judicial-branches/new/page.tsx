@@ -9,7 +9,7 @@ import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { Building2, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { JudicialDistrict } from '@/types';
+import type { JudicialDistrict } from '@bidexpert/core';
 
 function NewJudicialBranchPageContent({ districts }: { districts: JudicialDistrict[] }) {
     const router = useRouter();

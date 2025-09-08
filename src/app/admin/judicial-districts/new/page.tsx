@@ -37,7 +37,7 @@ function NewJudicialDistrictPageContent({ courts, states }: { courts: Court[], s
     return (
          <FormPageLayout
             formTitle="Nova Comarca"
-            formDescription="Preencha os detalhes para cadastrar uma nova comarca e associe-a a um tribunal e estado."
+            formDescription="Preencha os detalhes para cadastrar uma nova comarca."
             icon={MapPin}
             isViewMode={false}
             isSubmitting={isSubmitting}
