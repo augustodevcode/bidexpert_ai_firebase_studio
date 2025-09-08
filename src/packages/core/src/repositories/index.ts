@@ -18,6 +18,7 @@ export * from './judicial-district.repository';
 export * from './judicial-process.repository';
 export * from './lot.repository';
 export * from './media.repository';
+export * from './notification.repository';
 export * from './platform-settings.repository';
 export * from './reports.repository';
 export * from './role.repository';
