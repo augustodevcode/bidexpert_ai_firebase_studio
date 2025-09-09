@@ -44,8 +44,8 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
                 {stage.name || `Etapa`}
             </p>
             <p className="text-muted-foreground">{formattedDate} - {formattedTime}</p>
-            {stage.initialPrice && (
-                <p className="text-primary font-medium">R$ {stage.initialPrice.toLocaleString('pt-br')}</p>
+            {stage.evaluationValue && (
+                <p className="text-primary font-medium">R$ {stage.evaluationValue.toLocaleString('pt-br')}</p>
             )}
         </div>
     </div>

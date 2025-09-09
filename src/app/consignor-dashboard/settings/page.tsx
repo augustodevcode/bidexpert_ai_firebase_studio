@@ -8,7 +8,7 @@ import { updateConsignorProfile } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@bidexpert/core';
 import { Loader2, Users } from 'lucide-react';
-import SellerForm from '@/app/admin/sellers/seller-form';
+import { SellerForm } from '@/app/admin/sellers/seller-form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { hasPermission } from '@/lib/permissions';

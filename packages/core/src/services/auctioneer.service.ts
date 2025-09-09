@@ -1,26 +1,23 @@
 // packages/core/src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '../repositories/auctioneer.repository';
 import { AuctionRepository } from '../repositories/auction.repository';
-import type { AuctioneerFormData, AuctioneerProfileInfo, Auction, SellerDashboardData as AuctioneerDashboardData } from '../types';
+import type { AuctioneerProfileInfo, Auction, SellerDashboardData as AuctioneerDashboardData } from '../types';
 import { slugify } from '../lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { PlatformSettingsService } from './platform-settings.service';
 
 export type { AuctioneerDashboardData };
 
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
   private auctionRepository: AuctionRepository;
-  private settingsService: PlatformSettingsService;
 
   constructor() {
     this.auctioneerRepository = new AuctioneerRepository();
     this.auctionRepository = new AuctionRepository();
-    this.settingsService = new PlatformSettingsService();
   }
 
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
@@ -54,7 +51,7 @@ export class AuctioneerService {
     return this.mapAuctionsWithDetails(auctions);
   }
 
-  async criarLeiloeiro(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+  async criarLeiloeiro(data: any): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
       const dataToCreate: Prisma.AuctioneerCreateInput = {
         ...data,
@@ -73,7 +70,7 @@ export class AuctioneerService {
     }
   }
 
-  async atualizarLeiloeiro(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
+  async atualizarLeiloeiro(id: string, data: any): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
       await this.auctioneerRepository.update(id, dataWithSlug);
@@ -119,7 +116,7 @@ export class AuctioneerService {
                 }
             }
         }),
-        this.settingsService.getSettings()
+        Promise.resolve({})
     ]);
 
 
@@ -142,9 +139,11 @@ export class AuctioneerService {
     }
     
     allLotsFromAuctions.forEach(lot => {
-        const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
-        if (salesByMonthMap.has(monthKey)) {
-            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+        if (lot.updatedAt) {
+            const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
+            if (salesByMonthMap.has(monthKey)) {
+                salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+            }
         }
     });
         

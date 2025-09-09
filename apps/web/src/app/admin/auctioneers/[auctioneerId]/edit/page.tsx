@@ -12,7 +12,7 @@ import type { AuctioneerDashboardData, AuctioneerFormData } from '@bidexpert/cor
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
 import { getAuctioneerDashboardDataAction } from '@/app/admin/auctioneers/analysis/actions';
-import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
+import { AuctioneerForm } from '@/app/admin/auctioneers/auctioneer-form';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">

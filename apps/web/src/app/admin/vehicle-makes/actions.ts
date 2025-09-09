@@ -1,22 +1,29 @@
-
-// src/app/admin/vehicle-makes/actions.ts
 'use server';
 
-import { VehicleMakeService } from '@bidexpert/services';
-import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import { VehicleMake } from '@bidexpert/core'; // Assuming VehicleMake type is available from core
 
-const vehicleMakeService = new VehicleMakeService();
+// Placeholder implementations for CRUD operations
+export async function getVehicleMakes(): Promise<VehicleMake[]> {
+  console.log('Placeholder: getVehicleMakes');
+  return [];
+}
 
-const { 
-  obterTodos: getVehicleMakes, 
-  obterPorId: getVehicleMake, 
-  criar: createVehicleMake, 
-  atualizar: updateVehicleMake, 
-  excluir: deleteVehicleMake 
-} = createCrudActions({
-  service: vehicleMakeService,
-  entityName: 'Marca de Veículo',
-  routeBase: '/admin/vehicle-makes',
-});
+export async function getVehicleMake(id: string): Promise<VehicleMake | null> {
+  console.log('Placeholder: getVehicleMake', id);
+  return null;
+}
 
-export { getVehicleMakes, getVehicleMake, createVehicleMake, updateVehicleMake, deleteVehicleMake };
+export async function createVehicleMake(data: any): Promise<VehicleMake | null> {
+  console.log('Placeholder: createVehicleMake', data);
+  return null;
+}
+
+export async function updateVehicleMake(id: string, data: any): Promise<VehicleMake | null> {
+  console.log('Placeholder: updateVehicleMake', id, data);
+  return null;
+}
+
+export async function deleteVehicleMake(id: string): Promise<{ success: boolean; message: string }> {
+  console.log('Placeholder: deleteVehicleMake', id);
+  return { success: true, message: 'Deleted successfully (placeholder)' };
+}

@@ -50,7 +50,7 @@ model Role {
   name                  String        @db.VarChar(50)
   nameNormalized        String        @unique @db.VarChar(50)
   description           String?       @db.VarChar(255)
-  permissions           String[]
+  permissions           Json?
   createdAt             DateTime?     @default(now())
   updatedAt             DateTime?     @updatedAt
   users                 UsersOnRoles[]
@@ -66,6 +66,7 @@ model State {
   updatedAt       DateTime?     @updatedAt
   cities          City[]
   districts       JudicialDistrict[]
+  lots            Lot[]
 }
 
 model LotCategory {
@@ -151,6 +152,7 @@ model User {
   mediaItems              MediaItem[]
   maxBids                 UserLotMaxBid[]
   auctionHabilitations    AuctionHabilitation[]
+  wonLots                 Lot[]           @relation("WonLots")
 
   // Detalhes PF
   rgNumber                String?
@@ -258,6 +260,7 @@ model JudicialDistrict {
   updatedAt           DateTime?         @updatedAt
   branches            JudicialBranch[]
   judicialProcesses   JudicialProcess[]
+  auctions            Auction[]
 }
 
 model JudicialBranch {
@@ -273,6 +276,7 @@ model JudicialBranch {
   updatedAt           DateTime?         @updatedAt
   judicialProcesses   JudicialProcess[]
   sellers             Seller[]
+  auctions            Auction[]
 }
 
 model Seller {
@@ -303,6 +307,7 @@ model Seller {
   lots                    Lot[]
   bens                    Bem[]
   directSaleOffers        DirectSaleOffer[]
+  judicialProcesses       JudicialProcess[]
 }
 
 model Auctioneer {
@@ -677,7 +682,7 @@ model UserWin {
   id                  String        @id @default(cuid())
   lot                 Lot           @relation(fields: [lotId], references: [id])
   lotId               String        @unique
-  user                User          @relation("WonLots", fields: [userId], references: [id])
+  user                User          @relation(fields: [userId], references: [id])
   userId              String
   winningBidAmount    Float
   winDate             DateTime      @default(now())

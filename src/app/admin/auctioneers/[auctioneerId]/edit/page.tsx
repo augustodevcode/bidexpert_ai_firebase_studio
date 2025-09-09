@@ -8,10 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import type { AuctioneerDashboardData, AuctioneerFormData } from '@bidexpert/core';
-import FormPageLayout from '@/components/admin/form-page-layout';
+import FormPageLayout from '../../../../components/admin/form-page-layout';
 import { obterLeiloeiro, atualizarLeiloeiro, excluirLeiloeiro } from '@/app/admin/auctioneers/actions';
 import { getAuctioneerDashboardDataAction } from '@/app/admin/auctioneers/analysis/actions';
-import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
+import AuctioneerForm from '@/app/admin/auctioneers/components/auctioneer-form';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -90,7 +90,7 @@ export default function EditAuctioneerPage({ params }: { params: { auctioneerId:
 
   return (
     <div className="space-y-6" data-ai-id={`admin-auctioneer-edit-page-${params.auctioneerId}`}>
-      <FormPageLayout
+      <FormPageLayout<AuctioneerProfileInfo>
         pageTitle="Leiloeiro"
         fetchAction={() => obterLeiloeiro(params.auctioneerId)}
         deleteAction={() => excluirLeiloeiro(params.auctioneerId)}
@@ -100,13 +100,30 @@ export default function EditAuctioneerPage({ params }: { params: { auctioneerId:
         icon={Gavel}
         isEdit={true}
       >
-        {(initialData, formRef, handleSubmit) => (
-          <AuctioneerForm
-            ref={formRef}
-            initialData={initialData}
-            onSubmitAction={(data) => handleSubmit(async () => handleUpdate(params.auctioneerId, data))}
-          />
-        )}
+        {(initialData, formRef, handleSubmit) => {
+          const auctioneerFormData: AuctioneerFormData | null = initialData ? {
+            name: initialData.name,
+            registrationNumber: initialData.registrationNumber,
+            contactName: initialData.contactName,
+            email: initialData.email,
+            phone: initialData.phone,
+            address: initialData.address,
+            city: initialData.city,
+            state: initialData.state,
+            zipCode: initialData.zipCode,
+            website: initialData.website,
+            logoUrl: initialData.logoUrl,
+            description: initialData.description,
+          } : null;
+
+          return (
+            <AuctioneerForm
+              ref={formRef}
+              initialData={auctioneerFormData}
+              onSubmitAction={(data) => handleSubmit(async () => handleUpdate(params.auctioneerId, data))}
+            />
+          );
+        }}
       </FormPageLayout>
 
       <Separator className="my-8" />

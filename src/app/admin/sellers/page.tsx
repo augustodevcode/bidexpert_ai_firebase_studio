@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getSellers, deleteSeller } from './actions';
 import type { SellerProfileInfo } from '@bidexpert/core';
 import { PlusCircle, Users } from 'lucide-react';
-import ResourceDataTable from '@/components/admin/resource-data-table';
+import { ResourceDataTable } from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 export default function AdminSellersPage() {

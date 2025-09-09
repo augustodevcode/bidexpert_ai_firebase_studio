@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import JudicialBranchForm from '../judicial-branch-form';
+import JudicialBranchForm from '../components/judicial-branch-form';
 import { createJudicialBranch, type JudicialBranchFormData } from '../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';

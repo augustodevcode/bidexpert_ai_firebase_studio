@@ -2,7 +2,7 @@
 import { SellerRepository } from '../repositories/seller.repository';
 import { AuctionRepository } from '../repositories/auction.repository';
 import { LotService } from './lot.service';
-import type { SellerFormData, SellerProfileInfo, Lot, SellerDashboardData } from '../types';
+import type { SellerProfileInfo, Lot, SellerDashboardData } from '../types';
 import { slugify } from '../lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
@@ -10,20 +10,17 @@ import { prisma } from '../lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { UserWinService } from './user-win.service';
-import { CheckoutService } from './checkout.service';
 
 export class SellerService {
   private sellerRepository: SellerRepository;
   private lotService: LotService;
   private userWinService: UserWinService;
-  private checkoutService: CheckoutService;
   private auctionRepository: AuctionRepository;
 
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.lotService = new LotService();
     this.userWinService = new UserWinService();
-    this.checkoutService = new CheckoutService();
     this.auctionRepository = new AuctionRepository();
   }
 
@@ -46,14 +43,14 @@ export class SellerService {
   async getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
       const seller = await this.sellerRepository.findBySlug(sellerSlugOrId);
       if (!seller) return [];
-      return this.lotService.getLotsForConsignor(seller.id);
+      return this.lotService.getLotsBySellerId(seller.id);
   }
   
   async getAuctionsBySellerSlug(sellerSlugOrId: string): Promise<any[]> {
     return this.auctionRepository.findBySellerSlug(sellerSlugOrId);
   }
 
-  async createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+  async createSeller(data: any): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
       const existingSeller = await this.findByName(data.name);
       if (existingSeller) {
@@ -80,7 +77,7 @@ export class SellerService {
     }
   }
 
-  async updateSeller(id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
+  async updateSeller(id: string, data: any): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
       await this.sellerRepository.update(id, dataWithSlug);
@@ -93,7 +90,7 @@ export class SellerService {
   
   async deleteSeller(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const lots = await this.lotService.getLotsForConsignor(id);
+      const lots = await this.lotService.getLotsBySellerId(id);
       if (lots.length > 0) {
         return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
       }
@@ -113,10 +110,10 @@ export class SellerService {
 
     if (!sellerData) return null;
 
-    const commissionRate = await this.checkoutService.getCommissionRate();
+    const commissionRate = 0.05;
 
-    const paidWins = sellerWins.filter(win => win.paymentStatus === 'PAGO');
-    const totalRevenue = paidWins.reduce((acc, win) => acc + win.winningBidAmount, 0);
+    const paidWins = sellerWins.filter((win: any) => win.paymentStatus === 'PAGO');
+    const totalRevenue = paidWins.reduce((acc: any, win: any) => acc + win.winningBidAmount, 0);
     const totalCommission = totalRevenue * commissionRate;
     const netValue = totalRevenue - totalCommission;
 
@@ -138,7 +135,7 @@ export class SellerService {
       salesByMonthMap.set(monthKey, 0);
     }
 
-    paidWins.forEach(win => {
+    paidWins.forEach((win: any) => {
       // @ts-ignore
       const winDate = win.paymentDate ? new Date(win.paymentDate) : new Date(win.winDate);
       const monthKey = format(winDate, 'MMM/yy', { locale: ptBR });

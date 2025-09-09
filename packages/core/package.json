@@ -12,11 +12,17 @@
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "uuid": "*",
+    "@prisma/client": "*",
+    "date-fns": "*",
+    "next": "*"
   },
   "devDependencies": {
     "typescript": "^5.5.4",
     "tsup": "^8.0.2",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "@types/uuid": "*",
+    "@types/node": "*"
   }
 }

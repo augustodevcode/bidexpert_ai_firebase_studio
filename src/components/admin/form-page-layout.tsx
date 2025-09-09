@@ -110,7 +110,7 @@ export default function FormPageLayout<T extends { id: string, name?: string | n
 
         const result = await deleteAction(entityId);
         if (result.success) {
-            toast({ title: "Sucesso!", description: result.message });
+            toast({ title: "Sucesso! 개발!", description: result.message });
             router.push(routeBase || '/admin/dashboard');
             router.refresh(); // Ensure the list page is updated
         } else {

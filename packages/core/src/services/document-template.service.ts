@@ -1,6 +1,5 @@
 // packages/core/src/services/document-template.service.ts
 import { DocumentTemplateRepository } from '../repositories/document-template.repository';
-import type { DocumentTemplate, DocumentTemplateFormData } from '../types';
 import type { Prisma } from '@prisma/client';
 
 export class DocumentTemplateService {
@@ -10,15 +9,15 @@ export class DocumentTemplateService {
     this.repository = new DocumentTemplateRepository();
   }
 
-  async getDocumentTemplates(): Promise<DocumentTemplate[]> {
+  async getDocumentTemplates(): Promise<any[]> {
     return this.repository.findAll();
   }
 
-  async getDocumentTemplateById(id: string): Promise<DocumentTemplate | null> {
+  async getDocumentTemplateById(id: string): Promise<any | null> {
     return this.repository.findById(id);
   }
 
-  async createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
+  async createDocumentTemplate(data: any): Promise<{ success: boolean; message: string; templateId?: string; }> {
     try {
       const newTemplate = await this.repository.create(data);
       return { success: true, message: "Template criado com sucesso.", templateId: newTemplate.id };
@@ -28,7 +27,7 @@ export class DocumentTemplateService {
     }
   }
 
-  async updateDocumentTemplate(id: string, data: Partial<DocumentTemplateFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateDocumentTemplate(id: string, data: any): Promise<{ success: boolean; message: string; }> {
     try {
       await this.repository.update(id, data);
       return { success: true, message: 'Template atualizado com sucesso.' };

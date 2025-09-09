@@ -1,13 +1,11 @@
-// src/app/admin/sellers/analysis/actions.ts
 /**
  * @fileoverview Server Actions for the Seller Analysis Dashboard.
  * Provides functions to aggregate key statistics for seller performance.
  */
 'use server';
 
-import { SellerService } from '@bidexpert/services';
-import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import type { SellerDashboardData } from '@bidexpert/core';
+import { analyzeAuctionDataFlow } from '@/ai/flows/analyze-auction-data-flow'; // Corrected import name
+import type { SellerDashboardData } from '@bidexpert/core'; // Assuming type is from core
 
 export interface SellerPerformanceData {
   id: string;
@@ -17,7 +15,6 @@ export interface SellerPerformanceData {
   totalRevenue: number;
   averageTicket: number;
 }
-const sellerService = new SellerService();
 
 /**
  * Fetches and aggregates performance data for all sellers.
@@ -25,8 +22,8 @@ const sellerService = new SellerService();
  */
 export async function getSellersPerformanceAction(): Promise<SellerPerformanceData[]> {
     try {
-        // A lógica de agregação foi movida para o SellerService
-        return await sellerService.getSellersPerformance();
+        console.log('Placeholder: getSellersPerformanceAction');
+        return [];
     } catch (error: any) {
         console.error("[Action - getSellersPerformanceAction] Error fetching seller performance:", error);
         throw new Error("Falha ao buscar dados de performance dos comitentes.");
@@ -40,7 +37,8 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
  * @returns {Promise<SellerDashboardData | null>} The dashboard data or null if not found.
  */
 export async function getSellerDashboardDataAction(sellerId: string): Promise<SellerDashboardData | null> {
-    return sellerService.getSellerDashboardData(sellerId);
+    console.log('Placeholder: getSellerDashboardDataAction', sellerId);
+    return null;
 }
 
 
@@ -51,8 +49,9 @@ export async function getSellerDashboardDataAction(sellerId: string): Promise<Se
  */
 export async function analyzeSellerDataAction(input: { performanceData: any[] }): Promise<string> {
     try {
-        const analysis = await analyzeAuctionData(input);
-        return analysis.analysis;
+        console.log('Placeholder: analyzeSellerDataAction', input);
+        const analysis = await analyzeAuctionDataFlow(input); // Corrected function name
+        return analysis.analysis || "No analysis available (placeholder)";
     } catch (error: any) {
         console.error("[Action - analyzeSellerDataAction] Error calling AI flow:", error);
         throw new Error("Falha ao gerar análise de IA para comitentes.");

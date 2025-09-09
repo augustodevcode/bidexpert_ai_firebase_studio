@@ -15,8 +15,7 @@
     "dotenv": "^16.4.5",
     "fastify": "^4.28.1",
     "fastify-plugin": "^4.5.1",
-    "@bidexpert/core": "workspace:*",
-    "@bidexpert/services": "workspace:*"
+    "@bidexpert/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.14.12",

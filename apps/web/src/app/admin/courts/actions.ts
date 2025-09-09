@@ -1,22 +1,29 @@
-
-// src/app/admin/courts/actions.ts
 'use server';
 
-import { CourtService } from '@bidexpert/services';
-import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import { Court } from '@bidexpert/core'; // Assuming Court type is available from core
 
-const courtService = new CourtService();
+// Placeholder implementations for CRUD operations
+export async function getCourts(): Promise<Court[]> {
+  console.log('Placeholder: getCourts');
+  return [];
+}
 
-const { 
-  obterTodos: getCourts, 
-  obterPorId: getCourt, 
-  criar: createCourt, 
-  atualizar: updateCourt, 
-  excluir: deleteCourt 
-} = createCrudActions({
-  service: courtService,
-  entityName: 'Tribunal',
-  routeBase: '/admin/courts',
-});
+export async function getCourt(id: string): Promise<Court | null> {
+  console.log('Placeholder: getCourt', id);
+  return null;
+}
 
-export { getCourts, getCourt, createCourt, updateCourt, deleteCourt };
+export async function createCourt(data: any): Promise<Court | null> {
+  console.log('Placeholder: createCourt', data);
+  return null;
+}
+
+export async function updateCourt(id: string, data: any): Promise<Court | null> {
+  console.log('Placeholder: updateCourt', id, data);
+  return null;
+}
+
+export async function deleteCourt(id: string): Promise<{ success: boolean; message: string }> {
+  console.log('Placeholder: deleteCourt', id);
+  return { success: true, message: 'Deleted successfully (placeholder)' };
+}

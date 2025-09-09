@@ -1,23 +1,29 @@
-
-// src/app/admin/judicial-processes/actions.ts
 'use server';
 
-import type { JudicialProcessFormData } from '@bidexpert/core';
-import { JudicialProcessService } from '@bidexpert/services';
-import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import { JudicialProcess } from '@bidexpert/core'; // Assuming JudicialProcess type is available from core
 
-const judicialProcessService = new JudicialProcessService();
+// Placeholder implementations for CRUD operations
+export async function getJudicialProcesses(): Promise<JudicialProcess[]> {
+  console.log('Placeholder: getJudicialProcesses');
+  return [];
+}
 
-const { 
-  obterTodos: getJudicialProcesses, 
-  obterPorId: getJudicialProcess, 
-  excluir: deleteJudicialProcess,
-  criar: createJudicialProcessAction,
-  atualizar: updateJudicialProcessAction,
-} = createCrudActions({
-    service: judicialProcessService,
-    entityName: 'Processo Judicial',
-    routeBase: '/admin/judicial-processes'
-});
+export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {
+  console.log('Placeholder: getJudicialProcess', id);
+  return null;
+}
 
-export { getJudicialProcesses, getJudicialProcess, deleteJudicialProcess, createJudicialProcessAction, updateJudicialProcessAction };
+export async function createJudicialProcessAction(data: any): Promise<JudicialProcess | null> {
+  console.log('Placeholder: createJudicialProcessAction', data);
+  return null;
+}
+
+export async function updateJudicialProcessAction(id: string, data: any): Promise<JudicialProcess | null> {
+  console.log('Placeholder: updateJudicialProcessAction', id, data);
+  return null;
+}
+
+export async function deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string }> {
+  console.log('Placeholder: deleteJudicialProcess', id);
+  return { success: true, message: 'Deleted successfully (placeholder)' };
+}

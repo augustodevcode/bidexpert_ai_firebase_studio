@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import SellerForm from '../seller-form';
+import { SellerForm } from '../seller-form';
 import { createSeller } from '../actions';
 import type { SellerFormData } from '@bidexpert/core';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';

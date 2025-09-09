@@ -1,26 +1,22 @@
 // apps/microservice/src/services/checkout.service.ts
 import { UserWinRepository } from '../repositories/user-win.repository';
 import { CheckoutRepository } from '../repositories/checkout.repository';
-import { PlatformSettingsService } from './platform-settings.service';
 import type { CheckoutFormValues } from '@bidexpert/core';
 import { revalidatePath } from 'next/cache';
-import { add } from 'date-fns';
 
 
 export class CheckoutService {
   private userWinRepository: UserWinRepository;
   private checkoutRepository: CheckoutRepository;
-  private settingsService: PlatformSettingsService;
   
   constructor() {
     this.userWinRepository = new UserWinRepository();
     this.checkoutRepository = new CheckoutRepository();
-    this.settingsService = new PlatformSettingsService();
   }
 
   async getCommissionRate(): Promise<number> {
-    const settings = await this.settingsService.getSettings();
-    return (settings?.paymentGatewaySettings?.platformCommissionPercentage || 5) / 100;
+    const settings = {};
+    return 0.05;
   }
 
   async calculateTotals(winId: string): Promise<{
@@ -78,7 +74,7 @@ export class CheckoutService {
                 userWinId: winId,
                 installmentNumber: i + 1,
                 amount: installmentAmount,
-                dueDate: add(new Date(), { months: i + 1 }),
+                dueDate: new Date(),
                 status: 'PENDENTE' as const
             }));
             

@@ -26,7 +26,7 @@ interface ResourceDataTableProps<TData> {
   onOpenDetails?: (item: TData) => void; // Optional handler for viewing details
 }
 
-export default function ResourceDataTable<TData extends { id: string, name?: string | null }>({
+export function ResourceDataTable<TData extends { id: string, name?: string | null }>({
   columns,
   fetchAction,
   deleteAction,
@@ -126,3 +126,5 @@ export default function ResourceDataTable<TData extends { id: string, name?: str
     </div>
   );
 }
+
+export { ResourceDataTable };

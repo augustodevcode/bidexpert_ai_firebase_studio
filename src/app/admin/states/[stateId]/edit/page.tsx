@@ -1,7 +1,7 @@
 // src/app/admin/states/[stateId]/edit/page.tsx
 'use client';
 
-import StateForm from '../../state-form';
+import { StateForm } from '../components/state-form';
 import { getState, updateState, deleteState, type StateFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import FormPageLayout from '@/components/admin/form-page-layout';

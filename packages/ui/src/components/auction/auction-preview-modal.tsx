@@ -3,6 +3,7 @@
 
 import type { Auction } from '@bidexpert/core';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '../ui/dialog';
+import { Calendar } from '../ui/calendar';
 import { Button } from '../ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, ListChecks, Landmark } from 'lucide-react';
@@ -31,9 +32,9 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   };
   
   const auctioneerInitial = getAuctioneerInitial();
-  const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
+  const displayLocation = auction.address || 'Nacional';
   
-  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
+  const validImageUrl = auction.imageUrl ?? 'https://placehold.co/600x400.png';
 
   const auctionDates = useMemo(() => {
     const dates: Date[] = [];

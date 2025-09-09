@@ -1,12 +1,9 @@
 // packages/core/src/services/auction.service.ts
 import { AuctionRepository } from '../repositories/auction.repository';
-import type { Auction, AuctionFormData, LotCategory, AuctionDashboardData } from '../types';
+import type { Auction, LotCategory } from '../types';
 import { slugify } from '../lib/ui-helpers';
-import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '../lib/prisma';
-import { format, subMonths } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 
 export class AuctionService {
   private auctionRepository: AuctionRepository;
@@ -56,7 +53,7 @@ export class AuctionService {
     return this.mapAuctionsWithDetails(auctions);
   }
 
-  async createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+  async createAuction(data: any): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
       const { categoryId, auctioneerId, sellerId, stages, judicialProcessId, cityId, stateId, ...restOfData } = data;
 
@@ -66,7 +63,7 @@ export class AuctionService {
       
       const derivedAuctionDate = (stages && stages.length > 0 && stages[0].startDate) ? stages[0].startDate : new Date();
 
-      const auctionData: Prisma.AuctionCreateInput = {
+      const auctionData: any = {
         ...(restOfData as any),
         auctionDate: derivedAuctionDate,
         publicId: `AUC-${uuidv4()}`,
@@ -86,7 +83,7 @@ export class AuctionService {
       
       if (stages && stages.length > 0) {
         auctionData.stages = {
-            create: stages.map(stage => ({
+            create: stages.map((stage: any) => ({
                 name: stage.name,
                 startDate: new Date(stage.startDate as Date),
                 endDate: new Date(stage.endDate as Date),
@@ -105,7 +102,7 @@ export class AuctionService {
     }
   }
 
-  async updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateAuction(id: string, data: any): Promise<{ success: boolean; message: string; }> {
     try {
       const auctionToUpdate = await this.auctionRepository.findById(id);
       if (!auctionToUpdate) return { success: false, message: 'Leilão não encontrado para atualização.' };
@@ -113,8 +110,8 @@ export class AuctionService {
       const internalId = auctionToUpdate.id;
       const { categoryId, auctioneerId, sellerId, stages, judicialProcessId, cityId, stateId, ...restOfData } = data;
       
-      await prisma.$transaction(async (tx) => {
-        const dataToUpdate: Prisma.AuctionUpdateInput = { ...(restOfData as any) };
+      await prisma.$transaction(async (tx: any) => {
+        const dataToUpdate: any = { ...(restOfData as any) };
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
@@ -134,7 +131,7 @@ export class AuctionService {
         if (stages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
-                data: stages.map(stage => ({
+                data: stages.map((stage: any) => ({
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
                     endDate: new Date(stage.endDate as Date),
@@ -159,7 +156,7 @@ export class AuctionService {
       if (lotCount > 0) {
         return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
       }
-      await prisma.$transaction(async (tx) => {
+      await prisma.$transaction(async (tx: any) => {
           await tx.auctionStage.deleteMany({ where: { auctionId: id }});
           await tx.auction.delete({ where: { id } });
       });
@@ -180,47 +177,5 @@ export class AuctionService {
 
   async updateAuctionFeaturedStatus(id: string, newStatus: boolean): Promise<{ success: boolean; message: string; }> {
     return this.updateAuction(id, { isFeaturedOnMarketplace: newStatus });
-  }
-
-  async getAuctionDashboardData(auctionId: string): Promise<AuctionDashboardData | null> {
-    try {
-        const auction = await this.getAuctionById(auctionId);
-        if (!auction) return null;
-
-        const soldLots = (auction.lots || []).filter(lot => lot.status === 'VENDIDO');
-        const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
-        
-        const allBids = await prisma.bid.findMany({ where: { auctionId: auction.id }, orderBy: { timestamp: 'asc' } });
-        const totalBids = allBids.length;
-        const uniqueBidders = new Set(allBids.map(bid => bid.bidderId)).size;
-        
-        const salesRate = auction.totalLots && auction.totalLots > 0 ? (soldLots.length / auction.totalLots) * 100 : 0;
-
-        // Revenue by Category
-        const revenueByCategoryMap = new Map<string, number>();
-        soldLots.forEach(lot => {
-            const categoryName = lot.categoryName || 'Sem Categoria';
-            const currentRevenue = revenueByCategoryMap.get(categoryName) || 0;
-            revenueByCategoryMap.set(categoryName, currentRevenue + (lot.price || 0));
-        });
-        const revenueByCategory = Array.from(revenueByCategoryMap, ([name, Faturamento]) => ({ name, Faturamento }))
-            .sort((a,b) => b.Faturamento - a.Faturamento);
-
-        // Bids over Time
-        const bidsOverTimeMap = new Map<string, number>();
-        allBids.forEach(bid => {
-            const dayKey = format(new Date(bid.timestamp as Date), 'dd/MM', { locale: ptBR });
-            bidsOverTimeMap.set(dayKey, (bidsOverTimeMap.get(dayKey) || 0) + 1);
-        });
-        const bidsOverTime = Array.from(bidsOverTimeMap, ([name, Lances]) => ({ name, Lances }))
-             .sort((a, b) => new Date(a.name.split('/').reverse().join('-')).getTime() - new Date(b.name.split('/').reverse().join('-')).getTime());
-
-        return {
-            totalRevenue, totalBids, uniqueBidders, salesRate, revenueByCategory, bidsOverTime,
-        };
-    } catch (error: any) {
-        console.error(`[Service - getAuctionDashboardData] Error for auction ${auctionId}:`, error);
-        throw new Error("Falha ao buscar dados de performance do leilão.");
-    }
   }
 }

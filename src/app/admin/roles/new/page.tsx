@@ -5,7 +5,7 @@ import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { ShieldCheck } from 'lucide-react';
-import RoleForm from '../role-form';
+import { RoleForm } from '../components/role-form';
 import { createRole } from '../actions';
 import type { RoleFormData } from '@bidexpert/core';
 import FormPageLayout from '@/components/admin/form-page-layout';

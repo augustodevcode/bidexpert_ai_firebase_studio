@@ -174,10 +174,7 @@ export function DataTable<TData, TValue>({
                                 )}
                             </Button>
                             <span>
-                                {flexRender(
-                                  row.getVisibleCells()[0].column.columnDef.header,
-                                  row.getVisibleCells()[0].getContext()
-                                )}: {row.getVisibleCells()[0].getValue() as string}
+                                {row.getVisibleCells()[0].column.id}: {row.getVisibleCells()[0].getValue() as string}
                             </span>
                             <span className="text-xs font-normal text-muted-foreground">({row.subRows.length})</span>
                            </div>

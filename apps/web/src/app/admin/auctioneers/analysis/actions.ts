@@ -1,13 +1,11 @@
-// src/app/admin/auctioneers/analysis/actions.ts
 /**
  * @fileoverview Server Actions for the Auctioneer Analysis Dashboard.
  * Provides functions to aggregate key statistics for auctioneer performance.
  */
 'use server';
 
-import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import { AuctioneerService } from '@bidexpert/services';
-import type { AuctioneerDashboardData } from '@bidexpert/services';
+import { analyzeAuctionDataFlow } from '@/ai/flows/analyze-auction-data-flow'; // Corrected import name
+import type { AuctioneerDashboardData } from '@bidexpert/core'; // Assuming type is from core
 
 export interface AuctioneerPerformanceData {
   id: string;
@@ -19,8 +17,6 @@ export interface AuctioneerPerformanceData {
   averageTicket: number;
   salesRate: number;
 }
-const auctioneerService = new AuctioneerService();
-
 
 /**
  * Fetches and aggregates performance data for all auctioneers.
@@ -28,7 +24,8 @@ const auctioneerService = new AuctioneerService();
  */
 export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerformanceData[]> {
   try {
-    return await auctioneerService.getAuctioneersPerformance();
+    console.log('Placeholder: getAuctioneersPerformanceAction');
+    return [];
   } catch (error: any) {
     console.error("[Action - getAuctioneersPerformanceAction] Error fetching auctioneer performance:", error);
     throw new Error("Falha ao buscar dados de performance dos leiloeiros.");
@@ -41,7 +38,8 @@ export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerfo
  * @returns {Promise<AuctioneerDashboardData | null>} The dashboard data or null if not found.
  */
 export async function getAuctioneerDashboardDataAction(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
-    return auctioneerService.getAuctioneerDashboardData(auctioneerId);
+    console.log('Placeholder: getAuctioneerDashboardDataAction', auctioneerId);
+    return null;
 }
 
 
@@ -52,8 +50,9 @@ export async function getAuctioneerDashboardDataAction(auctioneerId: string): Pr
  */
 export async function analyzeAuctioneerDataAction(input: { performanceData: any[] }): Promise<string> {
     try {
-        const analysis = await analyzeAuctionData(input);
-        return analysis.analysis;
+        console.log('Placeholder: analyzeAuctioneerDataAction', input);
+        const analysis = await analyzeAuctionDataFlow(input); // Corrected function name
+        return analysis.analysis || "No analysis available (placeholder)";
     } catch (error: any) {
         console.error("[Action - analyzeAuctioneerDataAction] Error calling AI flow:", error);
         throw new Error("Falha ao gerar análise de IA para leiloeiros.");

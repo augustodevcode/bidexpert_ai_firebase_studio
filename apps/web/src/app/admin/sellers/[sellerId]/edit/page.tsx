@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import SellerForm from '@/app/admin/sellers/seller-form';
+import { SellerForm } from '@/app/admin/sellers/seller-form';
 import { getSeller, updateSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';

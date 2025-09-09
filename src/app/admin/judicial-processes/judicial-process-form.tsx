@@ -381,4 +381,4 @@ const JudicialProcessForm = React.forwardRef<any, JudicialProcessFormProps>(({
   );
 });
 JudicialProcessForm.displayName = 'JudicialProcessForm';
-export default JudicialProcessForm;
+export { JudicialProcessForm };

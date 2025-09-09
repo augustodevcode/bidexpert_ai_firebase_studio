@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import JudicialProcessForm from '../judicial-process-form';
+import { JudicialProcessForm } from '../judicial-process-form';
 import { createJudicialProcessAction, type JudicialProcessFormValues } from '../actions';
 import { getCourts } from '@/app/admin/courts/actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';

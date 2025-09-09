@@ -1,7 +1,7 @@
 // src/app/admin/judicial-processes/[processId]/edit/page.tsx
 'use client';
 
-import JudicialProcessForm from '../../judicial-process-form';
+import { JudicialProcessForm } from '../../judicial-process-form';
 import { getJudicialProcess, updateJudicialProcessAction, deleteJudicialProcess, type JudicialProcessFormValues } from '../../actions';
 import { getCourts } from '@/app/admin/courts/actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';

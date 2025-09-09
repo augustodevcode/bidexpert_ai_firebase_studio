@@ -84,7 +84,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
 
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   
-  const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
+  const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || { showDiscountBadge: false, showUrgencyTimer: false, urgencyTimerThresholdDays: 0, urgencyTimerThresholdHours: 0, showPopularityBadge: false, popularityViewThreshold: 0, showHotBidBadge: false, hotBidThreshold: 0, showExclusiveBadge: false };
   
   const discountPercentage = useMemo(() => {
     if (lot.initialPrice && lot.secondInitialPrice && lot.secondInitialPrice < lot.initialPrice && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'EM_BREVE')) {
@@ -104,7 +104,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings]);
   
-  const effectiveLotEndDate = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const { effectiveLotEndDate } = useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
   const activeStage = useMemo(() => getActiveStage(auction?.auctionStages), [auction?.auctionStages]);
   const activeLotPrices = useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 

@@ -11,7 +11,7 @@ import type { Lot, Auction } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import ResourceDataTable from '@/components/admin/resource-data-table';
+import { ResourceDataTable } from '@/components/admin/resource-data-table';
 import { createColumns } from './columns';
 
 

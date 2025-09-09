@@ -1,22 +1,23 @@
-
-// src/app/admin/vehicle-models/actions.ts
 'use server';
 
-import { VehicleModelService } from '@bidexpert/services';
-import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import { VehicleModel } from '@bidexpert/core';
 
-const vehicleModelService = new VehicleModelService();
+export async function createVehicleModel(data: any): Promise<VehicleModel | null> {
+  console.log('Placeholder: createVehicleModel', data);
+  return null;
+}
 
-const { 
-  obterTodos: getVehicleModels, 
-  obterPorId: getVehicleModel, 
-  criar: createVehicleModel, 
-  atualizar: updateVehicleModel, 
-  excluir: deleteVehicleModel 
-} = createCrudActions({
-  service: vehicleModelService,
-  entityName: 'Modelo de Veículo',
-  routeBase: '/admin/vehicle-models',
-});
+export async function updateVehicleModel(id: string, data: any): Promise<VehicleModel | null> {
+  console.log('Placeholder: updateVehicleModel', id, data);
+  return null;
+}
 
-export { getVehicleModels, getVehicleModel, createVehicleModel, updateVehicleModel, deleteVehicleModel };
+export async function deleteVehicleModel(id: string): Promise<{ success: boolean; message: string }> {
+  console.log('Placeholder: deleteVehicleModel', id);
+  return { success: true, message: 'Deleted successfully (placeholder)' };
+}
+
+export async function getVehicleModelById(id: string): Promise<VehicleModel | null> {
+  console.log('Placeholder: getVehicleModelById', id);
+  return null;
+}

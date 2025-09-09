@@ -1,7 +1,7 @@
 // src/app/admin/judicial-branches/[branchId]/edit/page.tsx
 'use client';
 
-import JudicialBranchForm from '../../judicial-branch-form';
+import JudicialBranchForm from '../components/judicial-branch-form';
 import { getJudicialBranch, updateJudicialBranch, deleteJudicialBranch } from '../../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { notFound, useParams, useRouter } from 'next/navigation';

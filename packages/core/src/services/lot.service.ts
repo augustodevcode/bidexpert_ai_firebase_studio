@@ -1,12 +1,9 @@
 // packages/core/src/services/lot.service.ts
 import { LotRepository } from '../repositories/lot.repository';
 import { BidRepository } from '../repositories/bid.repository';
-import { ReviewRepository } from '../repositories/review.repository';
-import { QuestionRepository } from '../repositories/question.repository';
-import type { Lot, LotFormData, Review, LotQuestion, UserProfileWithPermissions } from '../types';
+import type { Lot, UserProfileWithPermissions } from '../types';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { generateDocument } from '@/ai/flows/generate-document-flow';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { prisma } from '../lib/prisma'; // For specific queries not in a repository yet
@@ -15,14 +12,10 @@ import { revalidatePath } from 'next/cache';
 export class LotService {
   private lotRepository: LotRepository;
   private bidRepository: BidRepository;
-  private reviewRepository: ReviewRepository;
-  private questionRepository: QuestionRepository;
 
   constructor() {
     this.lotRepository = new LotRepository();
     this.bidRepository = new BidRepository();
-    this.reviewRepository = new ReviewRepository();
-    this.questionRepository = new QuestionRepository();
   }
 
   async getLots(auctionId?: string): Promise<Lot[]> {
@@ -57,7 +50,7 @@ export class LotService {
   }
 
 
-  async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
+  async createLot(data: any): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
       const { 
         bemIds, 
@@ -104,7 +97,7 @@ export class LotService {
     }
   }
 
-  async updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateLot(id: string, data: any): Promise<{ success: boolean; message: string; }> {
     try {
       const { 
         bemIds, categoryId, subcategoryId, type, auctionId, 
@@ -159,130 +152,11 @@ export class LotService {
       const winningBid = await this.bidRepository.findHighestBid(lot.id);
 
       if (winningBid) {
-          await this.lotRepository.update(lot.id, { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount });
+          await this.lotRepository.update(lot.id, { status: 'VENDIDO', winner: { connect: { id: winningBid.bidderId } }, price: winningBid.amount });
            return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
       } else {
            await this.lotRepository.update(lot.id, { status: 'NAO_VENDIDO' });
            return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
-      }
-  }
-
-  async generateWinningBidTerm(lotId: string): Promise<{ success: boolean; message: string; pdfBase64?: string; fileName?: string; }> {
-    const lot = await this.getLotById(lotId);
-    if (!lot || !lot.winnerId || !lot.auction) {
-      return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
-    }
-    
-    const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
-    if (!winner) {
-      return { success: false, message: 'Arrematante não encontrado.' };
-    }
-
-    const { auction } = lot;
-    const auctioneer = auction.auctioneer;
-    const seller = auction.seller;
-
-    try {
-      const result = await generateDocument({
-        documentType: 'WINNING_BID_TERM',
-        data: {
-          lot: lot,
-          auction: auction,
-          winner: winner,
-          auctioneer: auctioneer,
-          seller: seller,
-          currentDate: format(new Date(), 'dd/MM/yyyy', { locale: ptBR }),
-        },
-      });
-
-      if (result.pdfBase64 && result.fileName) {
-        await this.updateLot(lotId, { winningBidTermUrl: `/${result.fileName}` }); 
-        return { ...result, success: true, message: 'Documento gerado com sucesso!' };
-      } else {
-        throw new Error("A geração do PDF não retornou os dados esperados.");
-      }
-    } catch (error: any) {
-      console.error("Error generating winning bid term PDF:", error);
-      return { success: false, message: `Falha ao gerar documento: ${error.message}` };
-    }
-  }
-  
-  async getReviewsForLot(lotIdOrPublicId: string): Promise<Review[]> {
-    const lot = await this.getLotById(lotIdOrPublicId);
-    if (!lot) return [];
-    return this.reviewRepository.findByLotId(lot.id);
-  }
-  
-  async createReview(lotIdOrPublicId: string, userId: string, userDisplayName: string, rating: number, comment: string): Promise<{ success: boolean; message: string; reviewId?: string }> {
-    const lot = await this.getLotById(lotIdOrPublicId);
-    if (!lot) return { success: false, message: "Lote não encontrado." };
-
-    try {
-        const newReview = await this.reviewRepository.create({
-            lotId: lot.id, 
-            auctionId: lot.auctionId, 
-            userId, 
-            userDisplayName, 
-            rating, 
-            comment 
-        });
-        if (process.env.NODE_ENV !== 'test') {
-            revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-        }
-        return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
-    } catch(error) {
-        console.error("Error creating review:", error);
-        return { success: false, message: "Falha ao enviar avaliação." };
-    }
-  }
-
-  async getQuestionsForLot(lotIdOrPublicId: string): Promise<LotQuestion[]> {
-      const lot = await this.getLotById(lotIdOrPublicId);
-      if (!lot) return [];
-      return this.questionRepository.findByLotId(lot.id);
-  }
-
-  async askQuestionOnLot(lotIdOrPublicId: string, userId: string, userDisplayName: string, questionText: string): Promise<{ success: boolean; message: string; questionId?: string }> {
-      const lot = await this.getLotById(lotIdOrPublicId);
-      if (!lot) return { success: false, message: "Lote não encontrado." };
-
-      try {
-          const newQuestion = await this.questionRepository.create({
-              lotId: lot.id, 
-              auctionId: lot.auctionId, 
-              userId, 
-              userDisplayName, 
-              questionText, 
-              isPublic: true 
-          });
-          if (process.env.NODE_ENV !== 'test') {
-              revalidatePath(`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
-          }
-          return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
-      } catch(error) {
-          console.error("Error creating question:", error);
-          return { success: false, message: "Falha ao enviar pergunta." };
-      }
-  }
-  
-  async answerQuestionOnLot(questionId: string, answerText: string, answeredByUser: UserProfileWithPermissions): Promise<{ success: boolean; message: string }> {
-      const question = await this.questionRepository.findById(questionId);
-      if(!question) return {success: false, message: "Pergunta não encontrada."};
-      
-      try {
-          const updatedQuestion = await this.questionRepository.update(questionId, {
-              answerText, 
-              answeredByUserId: answeredByUser.id, 
-              answeredByUserDisplayName: answeredByUser.fullName, 
-              answeredAt: new Date() 
-          });
-          if (process.env.NODE_ENV !== 'test') {
-              revalidatePath(`/auctions/${question.lot.auctionId}/lots/${question.lot.publicId || question.lot.id}`);
-          }
-          return { success: true, message: "Resposta enviada com sucesso." };
-      } catch (error) {
-          console.error("Error answering question:", error);
-          return { success: false, message: "Falha ao enviar resposta."};
       }
   }
 }

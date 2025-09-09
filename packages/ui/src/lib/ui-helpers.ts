@@ -190,8 +190,8 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
 
     // 1. Specific date on the lot always wins
     if (lot.endDate) {
-        return { 
-            effectiveLotEndDate: new Date(lot.endDate), 
+        return {
+            effectiveLotEndDate: lot.endDate ? new Date(lot.endDate) : null,
             effectiveLotStartDate: lot.auctionDate ? new Date(lot.auctionDate) : (auction?.auctionDate ? new Date(auction.auctionDate) : null)
         };
     }
@@ -202,33 +202,41 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): { effective
         // Find the first stage that hasn't ended yet
         const upcomingOrActiveStage = auction.auctionStages
             .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
-        
+            .sort((a, b) => {
+                const aStartDate = a.startDate ? new Date(a.startDate) : null;
+                const bStartDate = b.startDate ? new Date(b.startDate) : null;
+                return (aStartDate?.getTime() || 0) - (bStartDate?.getTime() || 0);
+            })[0];
+
         if (upcomingOrActiveStage?.endDate) {
-            return { 
-                effectiveLotEndDate: new Date(upcomingOrActiveStage.endDate), 
-                effectiveLotStartDate: new Date(upcomingOrActiveStage.startDate)
+            return {
+                effectiveLotEndDate: upcomingOrActiveStage.endDate ? new Date(upcomingOrActiveStage.endDate) : null,
+                effectiveLotStartDate: upcomingOrActiveStage.startDate ? new Date(upcomingOrActiveStage.startDate) : null
             };
         }
 
         // If all stages are in the past, get the end date of the last stage
         const lastStage = auction.auctionStages
             .filter(stage => stage.endDate)
-            .sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
-        
+            .sort((a, b) => {
+                const aEndDate = a.endDate ? new Date(a.endDate) : null;
+                const bEndDate = b.endDate ? new Date(b.endDate) : null;
+                return (bEndDate?.getTime() || 0) - (aEndDate?.getTime() || 0);
+            })[0];
+
         if (lastStage?.endDate) {
-            return { 
-                effectiveLotEndDate: new Date(lastStage.endDate),
-                effectiveLotStartDate: new Date(lastStage.startDate)
-             };
+            return {
+                effectiveLotEndDate: lastStage.endDate ? new Date(lastStage.endDate) : null,
+                effectiveLotStartDate: lastStage.startDate ? new Date(lastStage.startDate) : null
+            };
         }
     }
 
     // 3. Fallback to the main auction end date
     if (auction?.endDate) {
-        return { 
-            effectiveLotEndDate: new Date(auction.endDate),
-            effectiveLotStartDate: new Date(auction.auctionDate)
+        return {
+            effectiveLotEndDate: auction.endDate ? new Date(auction.endDate) : null,
+            effectiveLotStartDate: auction.auctionDate ? new Date(auction.auctionDate) : null
         };
     }
 
@@ -247,14 +255,18 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
 
   const now = new Date();
   const activeStages = stages.filter(stage => {
-    const startDate = new Date(stage.startDate);
-    const endDate = new Date(stage.endDate);
-    return !isFuture(startDate) && isFuture(endDate);
+    const startDate = stage.startDate ? new Date(stage.startDate) : null;
+    const endDate = stage.endDate ? new Date(stage.endDate) : null;
+    return startDate && endDate && !isFuture(startDate) && isFuture(endDate);
   });
   
   // If multiple stages are active, return the one that started most recently
   if (activeStages.length > 1) {
-    return activeStages.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
+    return activeStages.sort((a, b) => {
+        const aStartDate = a.startDate ? new Date(a.startDate) : null;
+        const bStartDate = b.startDate ? new Date(b.startDate) : null;
+        return (bStartDate?.getTime() || 0) - (aStartDate?.getTime() || 0);
+    })[0];
   }
 
   return activeStages[0] || null;
@@ -266,7 +278,7 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
  * @param activeStageId The ID of the currently active auction stage.
  * @returns An object with initialBid and increment or null.
  */
-export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number | null; bidIncrement: number | null } | null => {
+export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number | null | undefined; bidIncrement: number | null | undefined } | null => {
     if (!lot) return null;
 
     // If there's a specific price for the active stage, use it

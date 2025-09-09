@@ -11,12 +11,12 @@ export class UserWinService {
   }
 
   private formatWin(win: any): UserWin | null {
-    if (!win) return null;
+    if (!win || !win.id) return null; // Ensure id is present
     const lotWithAuctionName = win.lot ? {
       ...win.lot,
       auctionName: win.lot.auction?.title,
     } : null;
-    return { ...win, lot: lotWithAuctionName };
+    return { ...win, lot: lotWithAuctionName, id: win.id }; // Ensure id is explicitly set
   }
 
   async getWinDetails(winId: string): Promise<UserWin | null> {
@@ -27,7 +27,7 @@ export class UserWinService {
   async findWinsByUserId(userId: string): Promise<UserWin[]> {
     const wins = await this.repository.findWinsByUserId(userId);
     // @ts-ignore
-    return wins;
+    return wins.map(win => this.formatWin(win)).filter(Boolean) as UserWin[];
   }
   
   async getWinsForConsignor(sellerId: string): Promise<UserWin[]> {
@@ -35,7 +35,7 @@ export class UserWinService {
     return wins.map((win: any) => ({
       ...this.formatWin(win),
       user: { fullName: win.user?.fullName },
-    }));
+    })).filter(Boolean) as UserWin[];
   }
 
   async getUserReportData(userId: string): Promise<UserReportData> {

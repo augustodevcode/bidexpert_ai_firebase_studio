@@ -27,7 +27,7 @@ export function AuctionListItem({ auction, onUpdate }: AuctionListItemProps) {
     ? { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3.5 w-3.5" /> }
     : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
 
-  const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
+  const displayLocation = auction.cityId && auction.stateId ? `${auction.cityId} - ${auction.stateId}` : auction.stateId || auction.cityId || 'N/A';
   const sellerName = auction.seller?.name;
 
   const mentalTriggers = React.useMemo(() => {

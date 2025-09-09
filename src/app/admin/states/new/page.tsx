@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import StateForm from '../state-form';
+import { StateForm } from '../components/state-form';
 import { createState, type StateFormData } from '../actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { MapPin } from 'lucide-react';

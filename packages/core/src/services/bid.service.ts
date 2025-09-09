@@ -2,21 +2,17 @@
 import { BidRepository } from '../repositories/bid.repository';
 import { LotService } from './lot.service';
 import { HabilitationService } from './habilitation.service';
-import { NotificationService } from './notification.service';
-import type { UserProfileData, BidInfo, UserLotMaxBid, UserBid } from '../types';
 import { revalidatePath } from 'next/cache';
 
 export class BidService {
   private repository: BidRepository;
   private lotService: LotService;
   private habilitationService: HabilitationService;
-  private notificationService: NotificationService;
 
   constructor() {
     this.repository = new BidRepository();
     this.lotService = new LotService();
     this.habilitationService = new HabilitationService();
-    this.notificationService = new NotificationService();
   }
 
   async placeBid(
@@ -25,7 +21,7 @@ export class BidService {
     userId: string,
     userDisplayName: string,
     bidAmount: number
-  ): Promise<{ success: boolean; message: string; updatedLot?: any; newBid?: BidInfo }> {
+  ): Promise<{ success: boolean; message: string; updatedLot?: any; newBid?: any }> {
     try {
       const lot = await this.lotService.getLotById(lotIdOrPublicId);
       if (!lot) return { success: false, message: 'Lote não encontrado.' };
@@ -52,14 +48,6 @@ export class BidService {
         bidderDisplay: userDisplayName,
         amount: bidAmount,
       });
-
-      if (previousHighBid && previousHighBid.bidderId !== userId) {
-        await this.notificationService.createNotification({
-            userId: previousHighBid.bidderId,
-            message: `Seu lance no lote "${lot.title}" foi superado.`,
-            link: `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`,
-        });
-      }
 
       await this.lotService.updateLot(lot.id, {
         price: bidAmount,
@@ -102,7 +90,7 @@ export class BidService {
     }
   }
 
-  async getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: string): Promise<UserLotMaxBid | null> {
+  async getActiveUserLotMaxBid(lotIdOrPublicId: string, userId: string): Promise<any | null> {
     if (!userId) return null;
     const lot = await this.lotService.getLotById(lotIdOrPublicId);
     if (!lot) return null;
@@ -115,7 +103,7 @@ export class BidService {
     }
   }
 
-  async getBidsForLot(lotIdOrPublicId: string): Promise<BidInfo[]> {
+  async getBidsForLot(lotIdOrPublicId: string): Promise<any[]> {
     const lot = await this.lotService.getLotById(lotIdOrPublicId);
     if (!lot) return [];
 
@@ -127,7 +115,7 @@ export class BidService {
     }
   }
 
-  async getBidsForUser(userId: string): Promise<UserBid[]> {
+  async getBidsForUser(userId: string): Promise<any[]> {
     if (!userId) {
       console.warn("[BidService - getBidsForUser] No userId provided.");
       return [];
@@ -135,8 +123,8 @@ export class BidService {
 
     const userBidsRaw = await this.repository.findBidsByUserId(userId);
 
-    return userBidsRaw.map((bid) => {
-      let bidStatus: UserBid['bidStatus'] = 'PERDENDO';
+    return userBidsRaw.map((bid: any) => {
+      let bidStatus: any = 'PERDENDO';
 
       if (bid.lot.status === 'ABERTO_PARA_LANCES') {
         if (bid.amount === bid.lot.price) {

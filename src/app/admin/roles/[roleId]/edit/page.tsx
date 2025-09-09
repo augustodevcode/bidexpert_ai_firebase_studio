@@ -1,7 +1,7 @@
 // src/app/admin/roles/[roleId]/edit/page.tsx
 'use client';
 
-import RoleForm from '../../role-form';
+import { RoleForm } from '../components/role-form';
 import { getRole, updateRole, deleteRole } from '../../actions';
 import type { RoleFormData } from '@bidexpert/core';
 import { notFound, useRouter, useParams } from 'next/navigation';

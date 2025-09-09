@@ -2,24 +2,18 @@
 import { z } from 'zod';
 
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
-export const auctionStatusValues: [AuctionStatus, ...AuctionStatus[]] = [
-  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
-];
+
 
 export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'RELISTADO' | 'CANCELADO';
 
-export const lotStatusValues: [LotStatus, ...LotStatus[]] = [
-  'RASCUNHO', 'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'RELISTADO', 'CANCELADO'
-];
+
 
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
 
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO' | 'ATRASADO';
-export const paymentStatusValues: [PaymentStatus, ...PaymentStatus[]] = [
-  'PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO', 'ATRASADO'
-];
+
 
 export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
@@ -313,8 +307,8 @@ export interface Auction {
 export interface AuctionStage {
   id: string;
   name: string;
-  endDate: string | Date;
-  startDate: string | Date; // Adicionado para timeline
+  endDate: string | Date | null;
+  startDate: string | Date | null; // Adicionado para timeline
   evaluationValue?: number | null; // Adicionado para avaliação por praça
 }
 
@@ -585,16 +579,16 @@ export interface DirectSaleOffer {
 export interface DocumentType {
     id: string;
     name: string;
-    description: string;
-    isRequired: boolean;
-    appliesTo: 'PHYSICAL' | 'LEGAL' | 'ALL' | 'PROCESS';
+    description: string | null;
+    isRequired: boolean | null;
+    appliesTo: string | null;
 }
 
 export interface UserDocument {
     id: string;
     userId: string;
     documentTypeId: string;
-    status: UserDocumentStatus;
+    status: string;
     fileUrl: string;
     rejectionReason?: string | null;
     documentType: DocumentType;
@@ -925,24 +919,7 @@ export interface SellerDashboardData {
 export type EditableUserProfileData = Partial<Omit<UserProfileData, 'id' | 'uid' | 'email' | 'sellerId' | 'habilitationStatus' | 'password' | 'createdAt' | 'updatedAt' | 'roleName' | 'roleNames' | 'permissions'>>;
 export type UserCreationData = Pick<UserProfileData, 'email' | 'password' | 'fullName' | 'accountType' | 'habilitationStatus'> & Partial<Omit<UserProfileData, 'id' | 'email' | 'password' | 'fullName' | 'accountType' | 'habilitationStatus' | 'roleName' | 'roleNames' | 'permissions'>> & { roleIds?: string[] };
 
+export type AuctioneerFormData = Partial<Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt'>>;
 
-export type BemFormData = z.infer<typeof import('@/app/admin/bens/bem-form-schema').bemFormSchema>;
-export type LotFormData = z.infer<typeof import('@/app/admin/lots/lot-form-schema').lotFormSchema>;
-export type AuctionFormData = z.infer<typeof import('@/app/admin/auctions/auction-form-schema').auctionFormSchema>;
-export type SellerFormData = z.infer<typeof import('@/app/admin/sellers/seller-form-schema').sellerFormSchema>;
-export type AuctioneerFormData = z.infer<typeof import('@/app/admin/auctioneers/auctioneer-form-schema').auctioneerFormSchema>;
-export type JudicialProcessFormData = z.infer<typeof import('@/app/admin/judicial-processes/judicial-process-form-schema').judicialProcessFormSchema>;
-export type JudicialBranchFormData = z.infer<typeof import('@/app/admin/judicial-branches/judicial-branch-form-schema').judicialBranchFormSchema>;
-export type JudicialDistrictFormData = z.infer<typeof import('@/app/admin/judicial-districts/judicial-district-form-schema').judicialDistrictFormSchema>;
-export type CourtFormData = z.infer<typeof import('@/app/admin/courts/court-form-schema').courtFormSchema>;
-export type StateFormData = z.infer<typeof import('@/app/admin/states/state-form-schema').stateFormSchema>;
-export type CityFormData = z.infer<typeof import('@/app/admin/cities/city-form-schema').cityFormSchema>;
-export type SubcategoryFormData = z.infer<typeof import('@/app/admin/subcategories/subcategory-form-schema').subcategoryFormSchema>;
-export type RoleFormData = z.infer<typeof import('@/app/admin/roles/role-form-schema').roleFormSchema>;
-export type UserFormData = z.infer<typeof import('@/app/admin/users/user-form-schema').userFormSchema>;
-export type VehicleMakeFormData = z.infer<typeof import('@/app/admin/vehicle-makes/form-schema').vehicleMakeFormSchema>;
-export type VehicleModelFormData = z.infer<typeof import('@/app/admin/vehicle-models/form-schema').vehicleModelFormSchema>;
-export type DocumentTemplateFormData = z.infer<typeof import('@/app/admin/document-templates/document-template-form-schema').documentTemplateFormSchema>;
-export type PlatformSettingsFormData = z.infer<typeof import('@/app/admin/settings/settings-form-schema').platformSettingsFormSchema>;
-export type RegistrationFormValues = z.infer<typeof import('@/app/auth/register/form-schema').registrationFormSchema>;
-export type CheckoutFormValues = z.infer<typeof import('./lib/zod-schemas').checkoutFormSchema>;
+
+

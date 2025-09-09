@@ -1,22 +1,29 @@
-
-// src/app/admin/states/actions.ts
 'use server';
 
-import { StateService } from '@bidexpert/services';
-import { createCrudActions } from '@/lib/actions/create-crud-actions';
+import { State } from '@bidexpert/core'; // Assuming State type is available from core
 
-const stateService = new StateService();
+// Placeholder implementations for CRUD operations
+export async function getStates(): Promise<State[]> {
+  console.log('Placeholder: getStates');
+  return [];
+}
 
-const { 
-  obterTodos: getStates, 
-  obterPorId: getState, 
-  criar: createState, 
-  atualizar: updateState, 
-  excluir: deleteState 
-} = createCrudActions({
-  service: stateService,
-  entityName: 'Estado',
-  routeBase: '/admin/states',
-});
+export async function getState(id: string): Promise<State | null> {
+  console.log('Placeholder: getState', id);
+  return null;
+}
 
-export { getStates, getState, createState, updateState, deleteState };
+export async function createState(data: any): Promise<State | null> {
+  console.log('Placeholder: createState', data);
+  return null;
+}
+
+export async function updateState(id: string, data: any): Promise<State | null> {
+  console.log('Placeholder: updateState', id, data);
+  return null;
+}
+
+export async function deleteState(id: string): Promise<{ success: boolean; message: string }> {
+  console.log('Placeholder: deleteState', id);
+  return { success: true, message: 'Deleted successfully (placeholder)' };
+}

@@ -1,7 +1,7 @@
 // src/app/admin/judicial-districts/[districtId]/edit/page.tsx
 'use client';
 
-import JudicialDistrictForm from '../../judicial-district-form';
+import JudicialDistrictForm from '../components/judicial-district-form';
 import { getJudicialDistrict, updateJudicialDistrict, deleteJudicialDistrict } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCourts } from '@/app/admin/courts/actions';

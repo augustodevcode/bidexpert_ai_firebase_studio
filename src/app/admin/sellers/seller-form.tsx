@@ -206,4 +206,4 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({ initialData, judici
   );
 });
 SellerForm.displayName = "SellerForm";
-export default SellerForm;
+export { SellerForm };

@@ -4,12 +4,7 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": ["../../apps/web/src/*"],
-      "@bidexpert/core": ["../core/src/index"],
-      "@bidexpert/ui": ["./src/index"]
-    }
+    "jsx": "react-jsx"
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist"]

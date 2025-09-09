@@ -1,23 +1,19 @@
 // packages/core/src/services/habilitation.service.ts
 import { HabilitationRepository } from '../repositories/habilitation.repository';
-import { UserService } from './user.service';
 import type { UserProfileData, UserDocument } from '../types';
 import { revalidatePath } from 'next/cache';
 import { prisma } from '../lib/prisma'; // Import prisma directly for specific checks not in repo
 
 export class HabilitationService {
   private repository: HabilitationRepository;
-  private userService: UserService;
 
   constructor() {
     this.repository = new HabilitationRepository();
-    this.userService = new UserService();
   }
 
   async getHabilitationRequests(): Promise<UserProfileData[]> {
     const users = await this.repository.findHabilitationRequests();
-    // Use the user service's formatting logic to ensure consistency
-    return users.map(u => this.userService.formatUser(u)).filter(Boolean) as UserProfileData[];
+    return users as UserProfileData[];
   }
 
   async habilitateForAuction(userId: string, auctionId: string): Promise<{ success: boolean; message: string }> {
@@ -54,9 +50,6 @@ export class HabilitationService {
     try {
       await this.repository.createOrUpdateUserDocument(userId, documentTypeId, fileUrl, fileName);
 
-      // After saving, check if the user status should be updated
-      await this.userService.checkAndHabilitateUser(userId);
-      
       if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/dashboard/documents');
         revalidatePath(`/admin/habilitations/${userId}`);
@@ -77,9 +70,6 @@ export class HabilitationService {
       }
 
       await this.repository.updateDocumentStatus(documentId, 'APPROVED', null);
-
-      // After approval, check if the user is now fully habilitated
-      await this.userService.checkAndHabilitateUser(docToUpdate.userId);
 
       if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');
@@ -103,7 +93,6 @@ export class HabilitationService {
       }
 
       await this.repository.updateDocumentStatus(documentId, 'REJECTED', reason);
-      await this.userService.updateHabilitationStatus(docToUpdate.userId, 'REJECTED_DOCUMENTS');
 
       if (process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/habilitations');

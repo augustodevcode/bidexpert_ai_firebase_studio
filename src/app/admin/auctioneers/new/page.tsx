@@ -4,10 +4,10 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
-import AuctioneerForm from '../auctioneer-form';
+import AuctioneerForm from '@/app/admin/auctioneers/components/auctioneer-form';
 import { createAuctioneer } from '../actions';
 import type { AuctioneerFormData } from '@bidexpert/core';
-import FormPageLayout from '@/components/admin/form-page-layout';
+import FormPageLayout from '../../../../components/admin/form-page-layout';
 import { Gavel } from 'lucide-react';
 
 export default function NewAuctioneerPage() {

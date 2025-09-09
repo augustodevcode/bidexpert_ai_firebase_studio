@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import JudicialDistrictForm from '../judicial-district-form';
+import JudicialDistrictForm from '../components/judicial-district-form';
 import { createJudicialDistrict, type JudicialDistrictFormData } from '../actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCourts } from '@/app/admin/courts/actions';
