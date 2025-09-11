@@ -1011,37 +1011,333 @@ var CommandShortcut = ({
 };
 CommandShortcut.displayName = "CommandShortcut";
 
-// src/components/ui/menubar.tsx
+// src/components/ui/dropdown-menu.tsx
 import * as React10 from "react";
-import * as MenubarPrimitive from "@radix-ui/react-menubar";
-import { Check as Check2, ChevronRight as ChevronRight2, Circle } from "lucide-react";
+import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
+import { Check as Check2, ChevronRight as ChevronRight2, Dot } from "lucide-react";
 import { jsx as jsx12, jsxs as jsxs5 } from "react/jsx-runtime";
+var DropdownMenu = DropdownMenuPrimitive.Root;
+var DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
+var DropdownMenuGroup = DropdownMenuPrimitive.Group;
+var DropdownMenuPortal = DropdownMenuPrimitive.Portal;
+var DropdownMenuSub = DropdownMenuPrimitive.Sub;
+var DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup;
+var DropdownMenuSubTrigger = React10.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxs5(
+  DropdownMenuPrimitive.SubTrigger,
+  {
+    ref,
+    className: cn(
+      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
+      inset && "pl-8",
+      className
+    ),
+    ...props,
+    children: [
+      children,
+      /* @__PURE__ */ jsx12(ChevronRight2, { className: "ml-auto h-4 w-4" })
+    ]
+  }
+));
+DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
+var DropdownMenuSubContent = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+  DropdownMenuPrimitive.SubContent,
+  {
+    ref,
+    className: cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+      className
+    ),
+    ...props
+  }
+));
+DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
+var DropdownMenuContent = React10.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx12(DropdownMenuPrimitive.Portal, { children: /* @__PURE__ */ jsx12(
+  DropdownMenuPrimitive.Content,
+  {
+    ref,
+    sideOffset,
+    className: cn(
+      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
+      className
+    ),
+    ...props
+  }
+) }));
+DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
+var DropdownMenuItem = React10.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx12(
+  DropdownMenuPrimitive.Item,
+  {
+    ref,
+    className: cn(
+      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      inset && "pl-8",
+      className
+    ),
+    ...props
+  }
+));
+DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+var DropdownMenuCheckboxItem = React10.forwardRef(({ className, children, checked, ...props }, ref) => /* @__PURE__ */ jsxs5(
+  DropdownMenuPrimitive.CheckboxItem,
+  {
+    ref,
+    className: cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    ),
+    checked,
+    ...props,
+    children: [
+      /* @__PURE__ */ jsx12("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx12(DropdownMenuPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx12(Check2, { className: "h-4 w-4" }) }) }),
+      children
+    ]
+  }
+));
+DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName;
+var DropdownMenuRadioItem = React10.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs5(
+  DropdownMenuPrimitive.RadioItem,
+  {
+    ref,
+    className: cn(
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      className
+    ),
+    ...props,
+    children: [
+      /* @__PURE__ */ jsx12("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx12(DropdownMenuPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx12(Dot, { className: "h-4 w-4 fill-current" }) }) }),
+      children
+    ]
+  }
+));
+DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
+var DropdownMenuLabel = React10.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx12(
+  DropdownMenuPrimitive.Label,
+  {
+    ref,
+    className: cn(
+      "px-2 py-1.5 text-sm font-semibold",
+      inset && "pl-8",
+      className
+    ),
+    ...props
+  }
+));
+DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
+var DropdownMenuSeparator = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+  DropdownMenuPrimitive.Separator,
+  {
+    ref,
+    className: cn("-mx-1 my-1 h-px bg-muted", className),
+    ...props
+  }
+));
+DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
+var DropdownMenuShortcut = ({
+  className,
+  ...props
+}) => {
+  return /* @__PURE__ */ jsx12(
+    "span",
+    {
+      className: cn("ml-auto text-xs tracking-widest opacity-60", className),
+      ...props
+    }
+  );
+};
+DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
+
+// src/components/ui/form.tsx
+import * as React12 from "react";
+import { Slot as Slot2 } from "@radix-ui/react-slot";
+import {
+  Controller,
+  FormProvider,
+  useFormContext
+} from "react-hook-form";
+
+// src/components/ui/label.tsx
+import * as React11 from "react";
+import * as LabelPrimitive from "@radix-ui/react-label";
+import { cva as cva4 } from "class-variance-authority";
+import { jsx as jsx13 } from "react/jsx-runtime";
+var labelVariants = cva4(
+  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+);
+var Label2 = React11.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx13(
+  LabelPrimitive.Root,
+  {
+    ref,
+    className: cn(labelVariants(), className),
+    ...props
+  }
+));
+Label2.displayName = LabelPrimitive.Root.displayName;
+
+// src/components/ui/form.tsx
+import { jsx as jsx14 } from "react/jsx-runtime";
+var Form = FormProvider;
+var FormField = (props) => {
+  return /* @__PURE__ */ jsx14(
+    Controller,
+    {
+      ...props,
+      render: ({ field, fieldState, formState }) => {
+        return /* @__PURE__ */ jsx14(
+          FormContext.Provider,
+          {
+            value: {
+              name: props.name,
+              formLabel: /* @__PURE__ */ jsx14(FormLabel, {}),
+              field,
+              fieldState,
+              formState
+            },
+            children: props.render({ field, fieldState, formState })
+          }
+        );
+      }
+    }
+  );
+};
+var FormContext = React12.createContext(void 0);
+function useFormField() {
+  const fieldContext = React12.useContext(FormContext);
+  const itemContext = React12.useContext(FormItemContext);
+  const { getFieldState, formState } = useFormContext();
+  if (!fieldContext) {
+    throw new Error("useFormField should be used within <FormField>");
+  }
+  const fieldState = getFieldState(fieldContext.name, formState);
+  return {
+    id: itemContext.id,
+    formItemId: `${itemContext.id}-form-item`,
+    formDescriptionId: `${itemContext.id}-form-item-description`,
+    formMessageId: `${itemContext.id}-form-item-message`,
+    ...fieldContext,
+    ...fieldState
+  };
+}
+var FormItemContext = React12.createContext(
+  {}
+);
+var FormItem = React12.forwardRef(({ className, ...props }, ref) => {
+  const id = React12.useId();
+  return /* @__PURE__ */ jsx14(FormItemContext.Provider, { value: { id }, children: /* @__PURE__ */ jsx14("div", { ref, className: cn("space-y-2", className), ...props }) });
+});
+FormItem.displayName = "FormItem";
+var FormLabel = React12.forwardRef(({ className, ...props }, ref) => {
+  const { error, formItemId } = useFormField();
+  return /* @__PURE__ */ jsx14(
+    Label2,
+    {
+      ref,
+      className: cn(error && "text-destructive", className),
+      htmlFor: formItemId,
+      ...props
+    }
+  );
+});
+FormLabel.displayName = "FormLabel";
+var FormControl = React12.forwardRef(({ ...props }, ref) => {
+  const { formItemId, field, fieldState } = useFormField();
+  return /* @__PURE__ */ jsx14(
+    Slot2,
+    {
+      ref,
+      id: formItemId,
+      "aria-describedby": !fieldState.invalid ? `${formItemId}-description` : `${formItemId}-message`,
+      "aria-invalid": fieldState.invalid,
+      onChange: field.onChange,
+      onBlur: field.onBlur,
+      ...props
+    }
+  );
+});
+FormControl.displayName = "FormControl";
+var FormDescription = React12.forwardRef(({ className, ...props }, ref) => {
+  const { formDescriptionId } = useFormField();
+  return /* @__PURE__ */ jsx14(
+    "p",
+    {
+      ref,
+      id: formDescriptionId,
+      className: cn("text-[0.8rem] text-muted-foreground", className),
+      ...props
+    }
+  );
+});
+FormDescription.displayName = "FormDescription";
+var FormMessage = React12.forwardRef(({ className, children, ...props }, ref) => {
+  const { error, formMessageId } = useFormField();
+  const body = error ? String(error?.message) : children;
+  if (!body) {
+    return null;
+  }
+  return /* @__PURE__ */ jsx14(
+    "p",
+    {
+      ref,
+      id: formMessageId,
+      className: cn("text-[0.8rem] font-medium text-destructive", className),
+      ...props,
+      children: body
+    }
+  );
+});
+FormMessage.displayName = "FormMessage";
+
+// src/components/ui/input.tsx
+import * as React13 from "react";
+import { jsx as jsx15 } from "react/jsx-runtime";
+var Input = React13.forwardRef(
+  ({ className, type, ...props }, ref) => {
+    return /* @__PURE__ */ jsx15(
+      "input",
+      {
+        type,
+        className: cn(
+          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+          className
+        ),
+        ref,
+        ...props
+      }
+    );
+  }
+);
+Input.displayName = "Input";
+
+// src/components/ui/menubar.tsx
+import * as React14 from "react";
+import * as MenubarPrimitive from "@radix-ui/react-menubar";
+import { Check as Check3, ChevronRight as ChevronRight3, Circle } from "lucide-react";
+import { jsx as jsx16, jsxs as jsxs6 } from "react/jsx-runtime";
 function MenubarMenu({
   ...props
 }) {
-  return /* @__PURE__ */ jsx12(MenubarPrimitive.Menu, { ...props });
+  return /* @__PURE__ */ jsx16(MenubarPrimitive.Menu, { ...props });
 }
 function MenubarGroup({
   ...props
 }) {
-  return /* @__PURE__ */ jsx12(MenubarPrimitive.Group, { ...props });
+  return /* @__PURE__ */ jsx16(MenubarPrimitive.Group, { ...props });
 }
 function MenubarPortal({
   ...props
 }) {
-  return /* @__PURE__ */ jsx12(MenubarPrimitive.Portal, { ...props });
+  return /* @__PURE__ */ jsx16(MenubarPrimitive.Portal, { ...props });
 }
 function MenubarRadioGroup({
   ...props
 }) {
-  return /* @__PURE__ */ jsx12(MenubarPrimitive.RadioGroup, { ...props });
+  return /* @__PURE__ */ jsx16(MenubarPrimitive.RadioGroup, { ...props });
 }
 function MenubarSub({
   ...props
 }) {
-  return /* @__PURE__ */ jsx12(MenubarPrimitive.Sub, { "data-slot": "menubar-sub", ...props });
+  return /* @__PURE__ */ jsx16(MenubarPrimitive.Sub, { "data-slot": "menubar-sub", ...props });
 }
-var Menubar = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+var Menubar = React14.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.Root,
   {
     ref,
@@ -1053,7 +1349,7 @@ var Menubar = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ 
   }
 ));
 Menubar.displayName = MenubarPrimitive.Root.displayName;
-var MenubarTrigger = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+var MenubarTrigger = React14.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.Trigger,
   {
     ref,
@@ -1065,7 +1361,7 @@ var MenubarTrigger = React10.forwardRef(({ className, ...props }, ref) => /* @__
   }
 ));
 MenubarTrigger.displayName = MenubarPrimitive.Trigger.displayName;
-var MenubarSubTrigger = React10.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxs5(
+var MenubarSubTrigger = React14.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxs6(
   MenubarPrimitive.SubTrigger,
   {
     ref,
@@ -1077,12 +1373,12 @@ var MenubarSubTrigger = React10.forwardRef(({ className, inset, children, ...pro
     ...props,
     children: [
       children,
-      /* @__PURE__ */ jsx12(ChevronRight2, { className: "ml-auto h-4 w-4" })
+      /* @__PURE__ */ jsx16(ChevronRight3, { className: "ml-auto h-4 w-4" })
     ]
   }
 ));
 MenubarSubTrigger.displayName = MenubarPrimitive.SubTrigger.displayName;
-var MenubarSubContent = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+var MenubarSubContent = React14.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.SubContent,
   {
     ref,
@@ -1094,8 +1390,8 @@ var MenubarSubContent = React10.forwardRef(({ className, ...props }, ref) => /* 
   }
 ));
 MenubarSubContent.displayName = MenubarPrimitive.SubContent.displayName;
-var MenubarContent = React10.forwardRef(
-  ({ className, align = "start", alignOffset = -4, sideOffset = 8, ...props }, ref) => /* @__PURE__ */ jsx12(MenubarPrimitive.Portal, { children: /* @__PURE__ */ jsx12(
+var MenubarContent = React14.forwardRef(
+  ({ className, align = "start", alignOffset = -4, sideOffset = 8, ...props }, ref) => /* @__PURE__ */ jsx16(MenubarPrimitive.Portal, { children: /* @__PURE__ */ jsx16(
     MenubarPrimitive.Content,
     {
       ref,
@@ -1111,7 +1407,7 @@ var MenubarContent = React10.forwardRef(
   ) })
 );
 MenubarContent.displayName = MenubarPrimitive.Content.displayName;
-var MenubarItem = React10.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx12(
+var MenubarItem = React14.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.Item,
   {
     ref,
@@ -1124,7 +1420,7 @@ var MenubarItem = React10.forwardRef(({ className, inset, ...props }, ref) => /*
   }
 ));
 MenubarItem.displayName = MenubarPrimitive.Item.displayName;
-var MenubarCheckboxItem = React10.forwardRef(({ className, children, checked, ...props }, ref) => /* @__PURE__ */ jsxs5(
+var MenubarCheckboxItem = React14.forwardRef(({ className, children, checked, ...props }, ref) => /* @__PURE__ */ jsxs6(
   MenubarPrimitive.CheckboxItem,
   {
     ref,
@@ -1135,13 +1431,13 @@ var MenubarCheckboxItem = React10.forwardRef(({ className, children, checked, ..
     checked,
     ...props,
     children: [
-      /* @__PURE__ */ jsx12("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx12(MenubarPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx12(Check2, { className: "h-4 w-4" }) }) }),
+      /* @__PURE__ */ jsx16("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx16(MenubarPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx16(Check3, { className: "h-4 w-4" }) }) }),
       children
     ]
   }
 ));
 MenubarCheckboxItem.displayName = MenubarPrimitive.CheckboxItem.displayName;
-var MenubarRadioItem = React10.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs5(
+var MenubarRadioItem = React14.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs6(
   MenubarPrimitive.RadioItem,
   {
     ref,
@@ -1151,13 +1447,13 @@ var MenubarRadioItem = React10.forwardRef(({ className, children, ...props }, re
     ),
     ...props,
     children: [
-      /* @__PURE__ */ jsx12("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx12(MenubarPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx12(Circle, { className: "h-2 w-2 fill-current" }) }) }),
+      /* @__PURE__ */ jsx16("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx16(MenubarPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx16(Circle, { className: "h-2 w-2 fill-current" }) }) }),
       children
     ]
   }
 ));
 MenubarRadioItem.displayName = MenubarPrimitive.RadioItem.displayName;
-var MenubarLabel = React10.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx12(
+var MenubarLabel = React14.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.Label,
   {
     ref,
@@ -1170,7 +1466,7 @@ var MenubarLabel = React10.forwardRef(({ className, inset, ...props }, ref) => /
   }
 ));
 MenubarLabel.displayName = MenubarPrimitive.Label.displayName;
-var MenubarSeparator = React10.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx12(
+var MenubarSeparator = React14.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx16(
   MenubarPrimitive.Separator,
   {
     ref,
@@ -1183,7 +1479,7 @@ var MenubarShortcut = ({
   className,
   ...props
 }) => {
-  return /* @__PURE__ */ jsx12(
+  return /* @__PURE__ */ jsx16(
     "span",
     {
       className: cn(
@@ -1197,12 +1493,12 @@ var MenubarShortcut = ({
 MenubarShortcut.displayname = "MenubarShortcut";
 
 // src/components/ui/navigation-menu.tsx
-import * as React11 from "react";
+import * as React15 from "react";
 import * as NavigationMenuPrimitive from "@radix-ui/react-navigation-menu";
-import { cva as cva4 } from "class-variance-authority";
+import { cva as cva5 } from "class-variance-authority";
 import { ChevronDown as ChevronDown2 } from "lucide-react";
-import { jsx as jsx13, jsxs as jsxs6 } from "react/jsx-runtime";
-var NavigationMenu = React11.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs6(
+import { jsx as jsx17, jsxs as jsxs7 } from "react/jsx-runtime";
+var NavigationMenu = React15.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs7(
   NavigationMenuPrimitive.Root,
   {
     ref,
@@ -1214,12 +1510,12 @@ var NavigationMenu = React11.forwardRef(({ className, children, ...props }, ref)
     ...props,
     children: [
       children,
-      /* @__PURE__ */ jsx13(NavigationMenuViewport, {})
+      /* @__PURE__ */ jsx17(NavigationMenuViewport, {})
     ]
   }
 ));
 NavigationMenu.displayName = NavigationMenuPrimitive.Root.displayName;
-var NavigationMenuList = React11.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx13(
+var NavigationMenuList = React15.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx17(
   NavigationMenuPrimitive.List,
   {
     ref,
@@ -1233,10 +1529,10 @@ var NavigationMenuList = React11.forwardRef(({ className, ...props }, ref) => /*
 ));
 NavigationMenuList.displayName = NavigationMenuPrimitive.List.displayName;
 var NavigationMenuItem = NavigationMenuPrimitive.Item;
-var navigationMenuTriggerStyle = cva4(
+var navigationMenuTriggerStyle = cva5(
   "group inline-flex h-10 w-max items-center justify-center rounded-md bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 data-[active]:bg-accent/50 data-[state=open]:bg-accent/50"
 );
-var NavigationMenuTrigger = React11.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs6(
+var NavigationMenuTrigger = React15.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs7(
   NavigationMenuPrimitive.Trigger,
   {
     ref,
@@ -1245,7 +1541,7 @@ var NavigationMenuTrigger = React11.forwardRef(({ className, children, ...props 
     children: [
       children,
       " ",
-      /* @__PURE__ */ jsx13(
+      /* @__PURE__ */ jsx17(
         ChevronDown2,
         {
           className: "relative top-[1px] ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180",
@@ -1256,7 +1552,7 @@ var NavigationMenuTrigger = React11.forwardRef(({ className, children, ...props 
   }
 ));
 NavigationMenuTrigger.displayName = NavigationMenuPrimitive.Trigger.displayName;
-var NavigationMenuContent = React11.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx13(
+var NavigationMenuContent = React15.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx17(
   NavigationMenuPrimitive.Content,
   {
     ref,
@@ -1270,11 +1566,11 @@ var NavigationMenuContent = React11.forwardRef(({ className, ...props }, ref) =>
 ));
 NavigationMenuContent.displayName = NavigationMenuPrimitive.Content.displayName;
 var NavigationMenuLink = NavigationMenuPrimitive.Link;
-var NavigationMenuViewport = React11.forwardRef(({ className, align = "start", ...props }, ref) => /* @__PURE__ */ jsx13("div", { className: cn("absolute top-full flex", {
+var NavigationMenuViewport = React15.forwardRef(({ className, align = "start", ...props }, ref) => /* @__PURE__ */ jsx17("div", { className: cn("absolute top-full flex", {
   "justify-start": align === "start",
   "justify-center": align === "center",
   "justify-end": align === "end"
-}), children: /* @__PURE__ */ jsx13(
+}), children: /* @__PURE__ */ jsx17(
   NavigationMenuPrimitive.Viewport,
   {
     className: cn(
@@ -1286,7 +1582,7 @@ var NavigationMenuViewport = React11.forwardRef(({ className, align = "start", .
   }
 ) }));
 NavigationMenuViewport.displayName = NavigationMenuPrimitive.Viewport.displayName;
-var NavigationMenuIndicator = React11.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx13(
+var NavigationMenuIndicator = React15.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx17(
   NavigationMenuPrimitive.Indicator,
   {
     ref,
@@ -1295,18 +1591,18 @@ var NavigationMenuIndicator = React11.forwardRef(({ className, ...props }, ref) 
       className
     ),
     ...props,
-    children: /* @__PURE__ */ jsx13("div", { className: "relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-md" })
+    children: /* @__PURE__ */ jsx17("div", { className: "relative top-[60%] h-2 w-2 rotate-45 rounded-tl-sm bg-border shadow-md" })
   }
 ));
 NavigationMenuIndicator.displayName = NavigationMenuPrimitive.Indicator.displayName;
 
 // src/components/ui/popover.tsx
-import * as React12 from "react";
+import * as React16 from "react";
 import * as PopoverPrimitive from "@radix-ui/react-popover";
-import { jsx as jsx14 } from "react/jsx-runtime";
+import { jsx as jsx18 } from "react/jsx-runtime";
 var Popover = PopoverPrimitive.Root;
 var PopoverTrigger = PopoverPrimitive.Trigger;
-var PopoverContent = React12.forwardRef(({ className, align = "center", sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx14(PopoverPrimitive.Portal, { children: /* @__PURE__ */ jsx14(
+var PopoverContent = React16.forwardRef(({ className, align = "center", sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx18(PopoverPrimitive.Portal, { children: /* @__PURE__ */ jsx18(
   PopoverPrimitive.Content,
   {
     ref,
@@ -1322,10 +1618,10 @@ var PopoverContent = React12.forwardRef(({ className, align = "center", sideOffs
 PopoverContent.displayName = PopoverPrimitive.Content.displayName;
 
 // src/components/ui/progress.tsx
-import * as React13 from "react";
+import * as React17 from "react";
 import * as ProgressPrimitive from "@radix-ui/react-progress";
-import { jsx as jsx15 } from "react/jsx-runtime";
-var Progress = React13.forwardRef(({ className, value, ...props }, ref) => /* @__PURE__ */ jsx15(
+import { jsx as jsx19 } from "react/jsx-runtime";
+var Progress = React17.forwardRef(({ className, value, ...props }, ref) => /* @__PURE__ */ jsx19(
   ProgressPrimitive.Root,
   {
     ref,
@@ -1334,7 +1630,7 @@ var Progress = React13.forwardRef(({ className, value, ...props }, ref) => /* @_
       className
     ),
     ...props,
-    children: /* @__PURE__ */ jsx15(
+    children: /* @__PURE__ */ jsx19(
       ProgressPrimitive.Indicator,
       {
         className: "h-full w-full flex-1 bg-primary transition-all",
@@ -1346,12 +1642,12 @@ var Progress = React13.forwardRef(({ className, value, ...props }, ref) => /* @_
 Progress.displayName = ProgressPrimitive.Root.displayName;
 
 // src/components/ui/radio-group.tsx
-import * as React14 from "react";
+import * as React18 from "react";
 import * as RadioGroupPrimitive from "@radix-ui/react-radio-group";
 import { Circle as Circle2 } from "lucide-react";
-import { jsx as jsx16 } from "react/jsx-runtime";
-var RadioGroup2 = React14.forwardRef(({ className, ...props }, ref) => {
-  return /* @__PURE__ */ jsx16(
+import { jsx as jsx20 } from "react/jsx-runtime";
+var RadioGroup3 = React18.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsx20(
     RadioGroupPrimitive.Root,
     {
       className: cn("grid gap-2", className),
@@ -1360,9 +1656,9 @@ var RadioGroup2 = React14.forwardRef(({ className, ...props }, ref) => {
     }
   );
 });
-RadioGroup2.displayName = RadioGroupPrimitive.Root.displayName;
-var RadioGroupItem = React14.forwardRef(({ className, ...props }, ref) => {
-  return /* @__PURE__ */ jsx16(
+RadioGroup3.displayName = RadioGroupPrimitive.Root.displayName;
+var RadioGroupItem = React18.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsx20(
     RadioGroupPrimitive.Item,
     {
       ref,
@@ -1371,31 +1667,31 @@ var RadioGroupItem = React14.forwardRef(({ className, ...props }, ref) => {
         className
       ),
       ...props,
-      children: /* @__PURE__ */ jsx16(RadioGroupPrimitive.Indicator, { className: "flex items-center justify-center", children: /* @__PURE__ */ jsx16(Circle2, { className: "h-2.5 w-2.5 fill-current text-current" }) })
+      children: /* @__PURE__ */ jsx20(RadioGroupPrimitive.Indicator, { className: "flex items-center justify-center", children: /* @__PURE__ */ jsx20(Circle2, { className: "h-2.5 w-2.5 fill-current text-current" }) })
     }
   );
 });
 RadioGroupItem.displayName = RadioGroupPrimitive.Item.displayName;
 
 // src/components/ui/scroll-area.tsx
-import * as React15 from "react";
+import * as React19 from "react";
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-import { jsx as jsx17, jsxs as jsxs7 } from "react/jsx-runtime";
-var ScrollArea = React15.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs7(
+import { jsx as jsx21, jsxs as jsxs8 } from "react/jsx-runtime";
+var ScrollArea = React19.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs8(
   ScrollAreaPrimitive.Root,
   {
     ref,
     className: cn("relative overflow-hidden", className),
     ...props,
     children: [
-      /* @__PURE__ */ jsx17(ScrollAreaPrimitive.Viewport, { className: "h-full w-full rounded-[inherit]", children }),
-      /* @__PURE__ */ jsx17(ScrollBar, {}),
-      /* @__PURE__ */ jsx17(ScrollAreaPrimitive.Corner, {})
+      /* @__PURE__ */ jsx21(ScrollAreaPrimitive.Viewport, { className: "h-full w-full rounded-[inherit]", children }),
+      /* @__PURE__ */ jsx21(ScrollBar, {}),
+      /* @__PURE__ */ jsx21(ScrollAreaPrimitive.Corner, {})
     ]
   }
 ));
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
-var ScrollBar = React15.forwardRef(({ className, orientation = "vertical", ...props }, ref) => /* @__PURE__ */ jsx17(
+var ScrollBar = React19.forwardRef(({ className, orientation = "vertical", ...props }, ref) => /* @__PURE__ */ jsx21(
   ScrollAreaPrimitive.ScrollAreaScrollbar,
   {
     ref,
@@ -1407,20 +1703,20 @@ var ScrollBar = React15.forwardRef(({ className, orientation = "vertical", ...pr
       className
     ),
     ...props,
-    children: /* @__PURE__ */ jsx17(ScrollAreaPrimitive.ScrollAreaThumb, { className: "relative flex-1 rounded-full bg-border" })
+    children: /* @__PURE__ */ jsx21(ScrollAreaPrimitive.ScrollAreaThumb, { className: "relative flex-1 rounded-full bg-border" })
   }
 ));
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName;
 
 // src/components/ui/select.tsx
-import * as React16 from "react";
+import * as React20 from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check as Check3, ChevronDown as ChevronDown3, ChevronUp } from "lucide-react";
-import { jsx as jsx18, jsxs as jsxs8 } from "react/jsx-runtime";
+import { Check as Check4, ChevronDown as ChevronDown3, ChevronUp } from "lucide-react";
+import { jsx as jsx22, jsxs as jsxs9 } from "react/jsx-runtime";
 var Select = SelectPrimitive.Root;
 var SelectGroup = SelectPrimitive.Group;
 var SelectValue = SelectPrimitive.Value;
-var SelectTrigger = React16.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs8(
+var SelectTrigger = React20.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs9(
   SelectPrimitive.Trigger,
   {
     ref,
@@ -1431,12 +1727,12 @@ var SelectTrigger = React16.forwardRef(({ className, children, ...props }, ref) 
     ...props,
     children: [
       children,
-      /* @__PURE__ */ jsx18(SelectPrimitive.Icon, { asChild: true, children: /* @__PURE__ */ jsx18(ChevronDown3, { className: "h-4 w-4 opacity-50" }) })
+      /* @__PURE__ */ jsx22(SelectPrimitive.Icon, { asChild: true, children: /* @__PURE__ */ jsx22(ChevronDown3, { className: "h-4 w-4 opacity-50" }) })
     ]
   }
 ));
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
-var SelectScrollUpButton = React16.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx18(
+var SelectScrollUpButton = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx22(
   SelectPrimitive.ScrollUpButton,
   {
     ref,
@@ -1445,11 +1741,11 @@ var SelectScrollUpButton = React16.forwardRef(({ className, ...props }, ref) => 
       className
     ),
     ...props,
-    children: /* @__PURE__ */ jsx18(ChevronUp, { className: "h-4 w-4" })
+    children: /* @__PURE__ */ jsx22(ChevronUp, { className: "h-4 w-4" })
   }
 ));
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
-var SelectScrollDownButton = React16.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx18(
+var SelectScrollDownButton = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx22(
   SelectPrimitive.ScrollDownButton,
   {
     ref,
@@ -1458,11 +1754,11 @@ var SelectScrollDownButton = React16.forwardRef(({ className, ...props }, ref) =
       className
     ),
     ...props,
-    children: /* @__PURE__ */ jsx18(ChevronDown3, { className: "h-4 w-4" })
+    children: /* @__PURE__ */ jsx22(ChevronDown3, { className: "h-4 w-4" })
   }
 ));
 SelectScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayName;
-var SelectContent = React16.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsx18(SelectPrimitive.Portal, { children: /* @__PURE__ */ jsxs8(
+var SelectContent = React20.forwardRef(({ className, children, position = "popper", ...props }, ref) => /* @__PURE__ */ jsx22(SelectPrimitive.Portal, { children: /* @__PURE__ */ jsxs9(
   SelectPrimitive.Content,
   {
     ref,
@@ -1474,8 +1770,8 @@ var SelectContent = React16.forwardRef(({ className, children, position = "poppe
     position,
     ...props,
     children: [
-      /* @__PURE__ */ jsx18(SelectScrollUpButton, {}),
-      /* @__PURE__ */ jsx18(
+      /* @__PURE__ */ jsx22(SelectScrollUpButton, {}),
+      /* @__PURE__ */ jsx22(
         SelectPrimitive.Viewport,
         {
           className: cn(
@@ -1485,12 +1781,12 @@ var SelectContent = React16.forwardRef(({ className, children, position = "poppe
           children
         }
       ),
-      /* @__PURE__ */ jsx18(SelectScrollDownButton, {})
+      /* @__PURE__ */ jsx22(SelectScrollDownButton, {})
     ]
   }
 ) }));
 SelectContent.displayName = SelectPrimitive.Content.displayName;
-var SelectLabel = React16.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx18(
+var SelectLabel = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx22(
   SelectPrimitive.Label,
   {
     ref,
@@ -1499,7 +1795,7 @@ var SelectLabel = React16.forwardRef(({ className, ...props }, ref) => /* @__PUR
   }
 ));
 SelectLabel.displayName = SelectPrimitive.Label.displayName;
-var SelectItem = React16.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs8(
+var SelectItem = React20.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs9(
   SelectPrimitive.Item,
   {
     ref,
@@ -1509,13 +1805,13 @@ var SelectItem = React16.forwardRef(({ className, children, ...props }, ref) => 
     ),
     ...props,
     children: [
-      /* @__PURE__ */ jsx18("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx18(SelectPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx18(Check3, { className: "h-4 w-4" }) }) }),
-      /* @__PURE__ */ jsx18(SelectPrimitive.ItemText, { children })
+      /* @__PURE__ */ jsx22("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx22(SelectPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx22(Check4, { className: "h-4 w-4" }) }) }),
+      /* @__PURE__ */ jsx22(SelectPrimitive.ItemText, { children })
     ]
   }
 ));
 SelectItem.displayName = SelectPrimitive.Item.displayName;
-var SelectSeparator = React16.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx18(
+var SelectSeparator = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx22(
   SelectPrimitive.Separator,
   {
     ref,
@@ -1526,11 +1822,11 @@ var SelectSeparator = React16.forwardRef(({ className, ...props }, ref) => /* @_
 SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
 
 // src/components/ui/separator.tsx
-import * as React17 from "react";
+import * as React21 from "react";
 import * as SeparatorPrimitive from "@radix-ui/react-separator";
-import { jsx as jsx19 } from "react/jsx-runtime";
-var Separator3 = React17.forwardRef(
-  ({ className, orientation = "horizontal", decorative = true, ...props }, ref) => /* @__PURE__ */ jsx19(
+import { jsx as jsx23 } from "react/jsx-runtime";
+var Separator4 = React21.forwardRef(
+  ({ className, orientation = "horizontal", decorative = true, ...props }, ref) => /* @__PURE__ */ jsx23(
     SeparatorPrimitive.Root,
     {
       ref,
@@ -1545,19 +1841,19 @@ var Separator3 = React17.forwardRef(
     }
   )
 );
-Separator3.displayName = SeparatorPrimitive.Root.displayName;
+Separator4.displayName = SeparatorPrimitive.Root.displayName;
 
 // src/components/ui/sheet.tsx
-import * as React18 from "react";
+import * as React22 from "react";
 import * as SheetPrimitive from "@radix-ui/react-dialog";
-import { cva as cva5 } from "class-variance-authority";
+import { cva as cva6 } from "class-variance-authority";
 import { X as X2 } from "lucide-react";
-import { jsx as jsx20, jsxs as jsxs9 } from "react/jsx-runtime";
+import { jsx as jsx24, jsxs as jsxs10 } from "react/jsx-runtime";
 var Sheet = SheetPrimitive.Root;
 var SheetTrigger = SheetPrimitive.Trigger;
 var SheetClose = SheetPrimitive.Close;
 var SheetPortal = SheetPrimitive.Portal;
-var SheetOverlay = React18.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx20(
+var SheetOverlay = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
   SheetPrimitive.Overlay,
   {
     className: cn(
@@ -1569,7 +1865,7 @@ var SheetOverlay = React18.forwardRef(({ className, ...props }, ref) => /* @__PU
   }
 ));
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName;
-var sheetVariants = cva5(
+var sheetVariants = cva6(
   "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
   {
     variants: {
@@ -1585,9 +1881,9 @@ var sheetVariants = cva5(
     }
   }
 );
-var SheetContent = React18.forwardRef(({ side = "right", className, children, ...props }, ref) => /* @__PURE__ */ jsxs9(SheetPortal, { children: [
-  /* @__PURE__ */ jsx20(SheetOverlay, {}),
-  /* @__PURE__ */ jsxs9(
+var SheetContent = React22.forwardRef(({ side = "right", className, children, ...props }, ref) => /* @__PURE__ */ jsxs10(SheetPortal, { children: [
+  /* @__PURE__ */ jsx24(SheetOverlay, {}),
+  /* @__PURE__ */ jsxs10(
     SheetPrimitive.Content,
     {
       ref,
@@ -1595,9 +1891,9 @@ var SheetContent = React18.forwardRef(({ side = "right", className, children, ..
       ...props,
       children: [
         children,
-        /* @__PURE__ */ jsxs9(SheetPrimitive.Close, { className: "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary", children: [
-          /* @__PURE__ */ jsx20(X2, { className: "h-4 w-4" }),
-          /* @__PURE__ */ jsx20("span", { className: "sr-only", children: "Close" })
+        /* @__PURE__ */ jsxs10(SheetPrimitive.Close, { className: "absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary", children: [
+          /* @__PURE__ */ jsx24(X2, { className: "h-4 w-4" }),
+          /* @__PURE__ */ jsx24("span", { className: "sr-only", children: "Close" })
         ] })
       ]
     }
@@ -1607,7 +1903,7 @@ SheetContent.displayName = SheetPrimitive.Content.displayName;
 var SheetHeader = ({
   className,
   ...props
-}) => /* @__PURE__ */ jsx20(
+}) => /* @__PURE__ */ jsx24(
   "div",
   {
     className: cn(
@@ -1621,7 +1917,7 @@ SheetHeader.displayName = "SheetHeader";
 var SheetFooter = ({
   className,
   ...props
-}) => /* @__PURE__ */ jsx20(
+}) => /* @__PURE__ */ jsx24(
   "div",
   {
     className: cn(
@@ -1632,7 +1928,7 @@ var SheetFooter = ({
   }
 );
 SheetFooter.displayName = "SheetFooter";
-var SheetTitle = React18.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx20(
+var SheetTitle = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
   SheetPrimitive.Title,
   {
     ref,
@@ -1641,7 +1937,7 @@ var SheetTitle = React18.forwardRef(({ className, ...props }, ref) => /* @__PURE
   }
 ));
 SheetTitle.displayName = SheetPrimitive.Title.displayName;
-var SheetDescription = React18.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx20(
+var SheetDescription = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
   SheetPrimitive.Description,
   {
     ref,
@@ -1652,12 +1948,12 @@ var SheetDescription = React18.forwardRef(({ className, ...props }, ref) => /* @
 SheetDescription.displayName = SheetPrimitive.Description.displayName;
 
 // src/components/ui/skeleton.tsx
-import { jsx as jsx21 } from "react/jsx-runtime";
+import { jsx as jsx25 } from "react/jsx-runtime";
 function Skeleton({
   className,
   ...props
 }) {
-  return /* @__PURE__ */ jsx21(
+  return /* @__PURE__ */ jsx25(
     "div",
     {
       className: cn("animate-pulse rounded-md bg-muted", className),
@@ -1667,10 +1963,10 @@ function Skeleton({
 }
 
 // src/components/ui/slider.tsx
-import * as React19 from "react";
+import * as React23 from "react";
 import * as SliderPrimitive from "@radix-ui/react-slider";
-import { jsx as jsx22, jsxs as jsxs10 } from "react/jsx-runtime";
-var Slider = React19.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxs10(
+import { jsx as jsx26, jsxs as jsxs11 } from "react/jsx-runtime";
+var Slider = React23.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsxs11(
   SliderPrimitive.Root,
   {
     ref,
@@ -1680,18 +1976,18 @@ var Slider = React19.forwardRef(({ className, ...props }, ref) => /* @__PURE__ *
     ),
     ...props,
     children: [
-      /* @__PURE__ */ jsx22(SliderPrimitive.Track, { className: "relative h-2 w-full grow overflow-hidden rounded-full bg-secondary", children: /* @__PURE__ */ jsx22(SliderPrimitive.Range, { className: "absolute h-full bg-primary" }) }),
-      /* @__PURE__ */ jsx22(SliderPrimitive.Thumb, { className: "block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" })
+      /* @__PURE__ */ jsx26(SliderPrimitive.Track, { className: "relative h-2 w-full grow overflow-hidden rounded-full bg-secondary", children: /* @__PURE__ */ jsx26(SliderPrimitive.Range, { className: "absolute h-full bg-primary" }) }),
+      /* @__PURE__ */ jsx26(SliderPrimitive.Thumb, { className: "block h-5 w-5 rounded-full border-2 border-primary bg-background ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50" })
     ]
   }
 ));
 Slider.displayName = SliderPrimitive.Root.displayName;
 
 // src/components/ui/switch.tsx
-import * as React20 from "react";
+import * as React24 from "react";
 import * as SwitchPrimitives from "@radix-ui/react-switch";
-import { jsx as jsx23 } from "react/jsx-runtime";
-var Switch = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx23(
+import { jsx as jsx27 } from "react/jsx-runtime";
+var Switch = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
   SwitchPrimitives.Root,
   {
     className: cn(
@@ -1700,7 +1996,7 @@ var Switch = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ *
     ),
     ...props,
     ref,
-    children: /* @__PURE__ */ jsx23(
+    children: /* @__PURE__ */ jsx27(
       SwitchPrimitives.Thumb,
       {
         className: cn(
@@ -1713,9 +2009,9 @@ var Switch = React20.forwardRef(({ className, ...props }, ref) => /* @__PURE__ *
 Switch.displayName = SwitchPrimitives.Root.displayName;
 
 // src/components/ui/table.tsx
-import * as React21 from "react";
-import { jsx as jsx24 } from "react/jsx-runtime";
-var Table = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24("div", { className: "relative w-full overflow-auto", children: /* @__PURE__ */ jsx24(
+import * as React25 from "react";
+import { jsx as jsx28 } from "react/jsx-runtime";
+var Table = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28("div", { className: "relative w-full overflow-auto", children: /* @__PURE__ */ jsx28(
   "table",
   {
     ref,
@@ -1724,9 +2020,9 @@ var Table = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */
   }
 ) }));
 Table.displayName = "Table";
-var TableHeader = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24("thead", { ref, className: cn("[&_tr]:border-b", className), ...props }));
+var TableHeader = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28("thead", { ref, className: cn("[&_tr]:border-b", className), ...props }));
 TableHeader.displayName = "TableHeader";
-var TableBody = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableBody = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "tbody",
   {
     ref,
@@ -1735,7 +2031,7 @@ var TableBody = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE_
   }
 ));
 TableBody.displayName = "TableBody";
-var TableFooter = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableFooter = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "tfoot",
   {
     ref,
@@ -1747,7 +2043,7 @@ var TableFooter = React21.forwardRef(({ className, ...props }, ref) => /* @__PUR
   }
 ));
 TableFooter.displayName = "TableFooter";
-var TableRow = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableRow = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "tr",
   {
     ref,
@@ -1759,7 +2055,7 @@ var TableRow = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__
   }
 ));
 TableRow.displayName = "TableRow";
-var TableHead = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableHead = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "th",
   {
     ref,
@@ -1771,7 +2067,7 @@ var TableHead = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE_
   }
 ));
 TableHead.displayName = "TableHead";
-var TableCell = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableCell = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "td",
   {
     ref,
@@ -1780,7 +2076,7 @@ var TableCell = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE_
   }
 ));
 TableCell.displayName = "TableCell";
-var TableCaption = React21.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx24(
+var TableCaption = React25.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx28(
   "caption",
   {
     ref,
@@ -1791,11 +2087,11 @@ var TableCaption = React21.forwardRef(({ className, ...props }, ref) => /* @__PU
 TableCaption.displayName = "TableCaption";
 
 // src/components/ui/tabs.tsx
-import * as React22 from "react";
+import * as React26 from "react";
 import * as TabsPrimitive from "@radix-ui/react-tabs";
-import { jsx as jsx25 } from "react/jsx-runtime";
+import { jsx as jsx29 } from "react/jsx-runtime";
 var Tabs = TabsPrimitive.Root;
-var TabsList = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx25(
+var TabsList = React26.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx29(
   TabsPrimitive.List,
   {
     ref,
@@ -1807,7 +2103,7 @@ var TabsList = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__
   }
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;
-var TabsTrigger = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx25(
+var TabsTrigger = React26.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx29(
   TabsPrimitive.Trigger,
   {
     ref,
@@ -1819,7 +2115,7 @@ var TabsTrigger = React22.forwardRef(({ className, ...props }, ref) => /* @__PUR
   }
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
-var TabsContent = React22.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx25(
+var TabsContent = React26.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx29(
   TabsPrimitive.Content,
   {
     ref,
@@ -1833,10 +2129,10 @@ var TabsContent = React22.forwardRef(({ className, ...props }, ref) => /* @__PUR
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 
 // src/components/ui/textarea.tsx
-import * as React23 from "react";
-import { jsx as jsx26 } from "react/jsx-runtime";
-var Textarea = React23.forwardRef(({ className, ...props }, ref) => {
-  return /* @__PURE__ */ jsx26(
+import * as React27 from "react";
+import { jsx as jsx30 } from "react/jsx-runtime";
+var Textarea = React27.forwardRef(({ className, ...props }, ref) => {
+  return /* @__PURE__ */ jsx30(
     "textarea",
     {
       className: cn(
@@ -1851,13 +2147,13 @@ var Textarea = React23.forwardRef(({ className, ...props }, ref) => {
 Textarea.displayName = "Textarea";
 
 // src/components/ui/toast.tsx
-import * as React24 from "react";
+import * as React28 from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
-import { cva as cva6 } from "class-variance-authority";
+import { cva as cva7 } from "class-variance-authority";
 import { X as X3 } from "lucide-react";
-import { jsx as jsx27 } from "react/jsx-runtime";
+import { jsx as jsx31 } from "react/jsx-runtime";
 var ToastProvider = ToastPrimitives.Provider;
-var ToastViewport = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
+var ToastViewport = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
   ToastPrimitives.Viewport,
   {
     ref,
@@ -1869,7 +2165,7 @@ var ToastViewport = React24.forwardRef(({ className, ...props }, ref) => /* @__P
   }
 ));
 ToastViewport.displayName = ToastPrimitives.Viewport.displayName;
-var toastVariants = cva6(
+var toastVariants = cva7(
   "group pointer-events-auto relative flex w-full items-center justify-between space-x-4 overflow-hidden rounded-md border p-6 pr-8 shadow-lg transition-all data-[swipe=cancel]:translate-x-0 data-[swipe=end]:translate-x-[var(--radix-toast-swipe-end-x)] data-[swipe=move]:translate-x-[var(--radix-toast-swipe-move-x)] data-[swipe=move]:transition-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[swipe=end]:animate-out data-[state=closed]:fade-out-80 data-[state=closed]:slide-out-to-right-full data-[state=open]:slide-in-from-top-full data-[state=open]:sm:slide-in-from-bottom-full",
   {
     variants: {
@@ -1883,8 +2179,8 @@ var toastVariants = cva6(
     }
   }
 );
-var Toast = React24.forwardRef(({ className, variant, ...props }, ref) => {
-  return /* @__PURE__ */ jsx27(
+var Toast = React28.forwardRef(({ className, variant, ...props }, ref) => {
+  return /* @__PURE__ */ jsx31(
     ToastPrimitives.Root,
     {
       ref,
@@ -1894,7 +2190,7 @@ var Toast = React24.forwardRef(({ className, variant, ...props }, ref) => {
   );
 });
 Toast.displayName = ToastPrimitives.Root.displayName;
-var ToastAction = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
+var ToastAction = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
   ToastPrimitives.Action,
   {
     ref,
@@ -1906,7 +2202,7 @@ var ToastAction = React24.forwardRef(({ className, ...props }, ref) => /* @__PUR
   }
 ));
 ToastAction.displayName = ToastPrimitives.Action.displayName;
-var ToastClose = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
+var ToastClose = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
   ToastPrimitives.Close,
   {
     ref,
@@ -1916,11 +2212,11 @@ var ToastClose = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE
     ),
     "toast-close": "",
     ...props,
-    children: /* @__PURE__ */ jsx27(X3, { className: "h-4 w-4" })
+    children: /* @__PURE__ */ jsx31(X3, { className: "h-4 w-4" })
   }
 ));
 ToastClose.displayName = ToastPrimitives.Close.displayName;
-var ToastTitle = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
+var ToastTitle = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
   ToastPrimitives.Title,
   {
     ref,
@@ -1929,7 +2225,7 @@ var ToastTitle = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE
   }
 ));
 ToastTitle.displayName = ToastPrimitives.Title.displayName;
-var ToastDescription = React24.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx27(
+var ToastDescription = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
   ToastPrimitives.Description,
   {
     ref,
@@ -1940,9 +2236,9 @@ var ToastDescription = React24.forwardRef(({ className, ...props }, ref) => /* @
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
 // src/components/ui/toaster.tsx
-import * as React25 from "react";
-import { Copy, Check as Check4 } from "lucide-react";
-import { Fragment, jsx as jsx28, jsxs as jsxs11 } from "react/jsx-runtime";
+import * as React29 from "react";
+import { Copy, Check as Check5 } from "lucide-react";
+import { Fragment, jsx as jsx32, jsxs as jsxs12 } from "react/jsx-runtime";
 var getTextContent = (node) => {
   if (typeof node === "string") return node;
   if (typeof node === "number") return String(node);
@@ -1950,14 +2246,14 @@ var getTextContent = (node) => {
   if (Array.isArray(node)) {
     return node.map(getTextContent).join("");
   }
-  if (React25.isValidElement(node) && node.props.children) {
+  if (React29.isValidElement(node) && node.props.children) {
     return getTextContent(node.props.children);
   }
   return "";
 };
 function ToastComponent({ id, title, description, action, variant, ...props }) {
-  const [hasCopied, setHasCopied] = React25.useState(false);
-  const fullErrorText = React25.useMemo(() => {
+  const [hasCopied, setHasCopied] = React29.useState(false);
+  const fullErrorText = React29.useMemo(() => {
     const titleText = getTextContent(title);
     const descriptionText = getTextContent(description);
     return `${titleText ? titleText + "\n" : ""}${descriptionText || ""}`.trim();
@@ -1969,10 +2265,10 @@ function ToastComponent({ id, title, description, action, variant, ...props }) {
       setTimeout(() => setHasCopied(false), 2e3);
     }
   };
-  return /* @__PURE__ */ jsx28(Fragment, { children: /* @__PURE__ */ jsxs11(Toast, { variant, ...props, className: "flex-col items-start gap-2", children: [
-    /* @__PURE__ */ jsxs11("div", { className: "w-full flex justify-between items-start gap-2", children: [
-      /* @__PURE__ */ jsx28("div", { className: "grid gap-1 flex-grow", children: title && /* @__PURE__ */ jsx28(ToastTitle, { children: title }) }),
-      /* @__PURE__ */ jsx28("div", { className: "flex flex-col gap-2 self-start flex-shrink-0", children: /* @__PURE__ */ jsx28(
+  return /* @__PURE__ */ jsx32(Fragment, { children: /* @__PURE__ */ jsxs12(Toast, { variant, ...props, className: "flex-col items-start gap-2", children: [
+    /* @__PURE__ */ jsxs12("div", { className: "w-full flex justify-between items-start gap-2", children: [
+      /* @__PURE__ */ jsx32("div", { className: "grid gap-1 flex-grow", children: title && /* @__PURE__ */ jsx32(ToastTitle, { children: title }) }),
+      /* @__PURE__ */ jsx32("div", { className: "flex flex-col gap-2 self-start flex-shrink-0", children: /* @__PURE__ */ jsx32(
         Button,
         {
           size: "icon",
@@ -1980,30 +2276,30 @@ function ToastComponent({ id, title, description, action, variant, ...props }) {
           className: "h-7 w-7 text-muted-foreground hover:bg-secondary",
           onClick: handleCopy,
           "aria-label": "Copiar notifica\xE7\xE3o",
-          children: hasCopied ? /* @__PURE__ */ jsx28(Check4, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx28(Copy, { className: "h-4 w-4" })
+          children: hasCopied ? /* @__PURE__ */ jsx32(Check5, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx32(Copy, { className: "h-4 w-4" })
         }
       ) }),
-      /* @__PURE__ */ jsx28(ToastClose, {})
+      /* @__PURE__ */ jsx32(ToastClose, {})
     ] }),
-    description && /* @__PURE__ */ jsx28(ScrollArea, { className: "w-full max-h-[200px] pr-4", children: /* @__PURE__ */ jsx28(ToastDescription, { className: "text-xs whitespace-pre-wrap", children: description }) })
+    description && /* @__PURE__ */ jsx32(ScrollArea, { className: "w-full max-h-[200px] pr-4", children: /* @__PURE__ */ jsx32(ToastDescription, { className: "text-xs whitespace-pre-wrap", children: description }) })
   ] }, id) });
 }
 function Toaster() {
   const toasts = [];
-  return /* @__PURE__ */ jsxs11(ToastProvider, { children: [
-    toasts.map((toastProps) => /* @__PURE__ */ jsx28(ToastComponent, { ...toastProps }, toastProps.id)),
-    /* @__PURE__ */ jsx28(ToastViewport, {})
+  return /* @__PURE__ */ jsxs12(ToastProvider, { children: [
+    toasts.map((toastProps) => /* @__PURE__ */ jsx32(ToastComponent, { ...toastProps }, toastProps.id)),
+    /* @__PURE__ */ jsx32(ToastViewport, {})
   ] });
 }
 
 // src/components/ui/tooltip.tsx
-import * as React26 from "react";
+import * as React30 from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { jsx as jsx29 } from "react/jsx-runtime";
+import { jsx as jsx33 } from "react/jsx-runtime";
 var TooltipProvider = TooltipPrimitive.Provider;
 var Tooltip = TooltipPrimitive.Root;
 var TooltipTrigger = TooltipPrimitive.Trigger;
-var TooltipContent = React26.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx29(
+var TooltipContent = React30.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx33(
   TooltipPrimitive.Content,
   {
     ref,
@@ -2018,7 +2314,7 @@ var TooltipContent = React26.forwardRef(({ className, sideOffset = 4, ...props }
 TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
 // src/components/ui/data-table.tsx
-import * as React29 from "react";
+import * as React31 from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -2035,164 +2331,10 @@ import { AlertCircle, ChevronDown as ChevronDown4, ChevronRight as ChevronRight4
 // src/components/ui/data-table-toolbar.tsx
 import { X as X4, ListTree, Trash2 } from "lucide-react";
 
-// src/components/ui/input.tsx
-import * as React27 from "react";
-import { jsx as jsx30 } from "react/jsx-runtime";
-var Input = React27.forwardRef(
-  ({ className, type, ...props }, ref) => {
-    return /* @__PURE__ */ jsx30(
-      "input",
-      {
-        type,
-        className: cn(
-          "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
-          className
-        ),
-        ref,
-        ...props
-      }
-    );
-  }
-);
-Input.displayName = "Input";
-
 // src/components/ui/data-table-view-options.tsx
 import { DropdownMenuTrigger as DropdownMenuTrigger2 } from "@radix-ui/react-dropdown-menu";
 import { SlidersHorizontal } from "lucide-react";
-
-// src/components/ui/dropdown-menu.tsx
-import * as React28 from "react";
-import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
-import { Check as Check5, ChevronRight as ChevronRight3, Dot } from "lucide-react";
-import { jsx as jsx31, jsxs as jsxs12 } from "react/jsx-runtime";
-var DropdownMenu = DropdownMenuPrimitive.Root;
-var DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
-var DropdownMenuSubTrigger = React28.forwardRef(({ className, inset, children, ...props }, ref) => /* @__PURE__ */ jsxs12(
-  DropdownMenuPrimitive.SubTrigger,
-  {
-    ref,
-    className: cn(
-      "flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent",
-      inset && "pl-8",
-      className
-    ),
-    ...props,
-    children: [
-      children,
-      /* @__PURE__ */ jsx31(ChevronRight3, { className: "ml-auto h-4 w-4" })
-    ]
-  }
-));
-DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName;
-var DropdownMenuSubContent = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
-  DropdownMenuPrimitive.SubContent,
-  {
-    ref,
-    className: cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-      className
-    ),
-    ...props
-  }
-));
-DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
-var DropdownMenuContent = React28.forwardRef(({ className, sideOffset = 4, ...props }, ref) => /* @__PURE__ */ jsx31(DropdownMenuPrimitive.Portal, { children: /* @__PURE__ */ jsx31(
-  DropdownMenuPrimitive.Content,
-  {
-    ref,
-    sideOffset,
-    className: cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]",
-      className
-    ),
-    ...props
-  }
-) }));
-DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
-var DropdownMenuItem = React28.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx31(
-  DropdownMenuPrimitive.Item,
-  {
-    ref,
-    className: cn(
-      "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      inset && "pl-8",
-      className
-    ),
-    ...props
-  }
-));
-DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
-var DropdownMenuCheckboxItem = React28.forwardRef(({ className, children, checked, ...props }, ref) => /* @__PURE__ */ jsxs12(
-  DropdownMenuPrimitive.CheckboxItem,
-  {
-    ref,
-    className: cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    ),
-    checked,
-    ...props,
-    children: [
-      /* @__PURE__ */ jsx31("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx31(DropdownMenuPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx31(Check5, { className: "h-4 w-4" }) }) }),
-      children
-    ]
-  }
-));
-DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName;
-var DropdownMenuRadioItem = React28.forwardRef(({ className, children, ...props }, ref) => /* @__PURE__ */ jsxs12(
-  DropdownMenuPrimitive.RadioItem,
-  {
-    ref,
-    className: cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    ),
-    ...props,
-    children: [
-      /* @__PURE__ */ jsx31("span", { className: "absolute left-2 flex h-3.5 w-3.5 items-center justify-center", children: /* @__PURE__ */ jsx31(DropdownMenuPrimitive.ItemIndicator, { children: /* @__PURE__ */ jsx31(Dot, { className: "h-4 w-4 fill-current" }) }) }),
-      children
-    ]
-  }
-));
-DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName;
-var DropdownMenuLabel = React28.forwardRef(({ className, inset, ...props }, ref) => /* @__PURE__ */ jsx31(
-  DropdownMenuPrimitive.Label,
-  {
-    ref,
-    className: cn(
-      "px-2 py-1.5 text-sm font-semibold",
-      inset && "pl-8",
-      className
-    ),
-    ...props
-  }
-));
-DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName;
-var DropdownMenuSeparator = React28.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx31(
-  DropdownMenuPrimitive.Separator,
-  {
-    ref,
-    className: cn("-mx-1 my-1 h-px bg-muted", className),
-    ...props
-  }
-));
-DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName;
-var DropdownMenuShortcut = ({
-  className,
-  ...props
-}) => {
-  return /* @__PURE__ */ jsx31(
-    "span",
-    {
-      className: cn("ml-auto text-xs tracking-widest opacity-60", className),
-      ...props
-    }
-  );
-};
-DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
-
-// src/components/ui/data-table-view-options.tsx
-import { jsx as jsx32, jsxs as jsxs13 } from "react/jsx-runtime";
+import { jsx as jsx34, jsxs as jsxs13 } from "react/jsx-runtime";
 var getColumnHeader = (column) => {
   const columnDef = column.columnDef;
   if (typeof columnDef.header === "string") {
@@ -2204,7 +2346,7 @@ function DataTableViewOptions({
   table
 }) {
   return /* @__PURE__ */ jsxs13(DropdownMenu, { children: [
-    /* @__PURE__ */ jsx32(DropdownMenuTrigger2, { asChild: true, children: /* @__PURE__ */ jsxs13(
+    /* @__PURE__ */ jsx34(DropdownMenuTrigger2, { asChild: true, children: /* @__PURE__ */ jsxs13(
       Button,
       {
         variant: "outline",
@@ -2212,19 +2354,19 @@ function DataTableViewOptions({
         className: "ml-auto hidden h-8 lg:flex",
         "data-ai-id": "data-table-view-options-button",
         children: [
-          /* @__PURE__ */ jsx32(SlidersHorizontal, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx34(SlidersHorizontal, { className: "mr-2 h-4 w-4" }),
           "Visualiza\xE7\xE3o"
         ]
       }
     ) }),
     /* @__PURE__ */ jsxs13(DropdownMenuContent, { align: "end", className: "w-[150px]", children: [
-      /* @__PURE__ */ jsx32(DropdownMenuLabel, { children: "Alternar Colunas" }),
-      /* @__PURE__ */ jsx32(DropdownMenuSeparator, {}),
+      /* @__PURE__ */ jsx34(DropdownMenuLabel, { children: "Alternar Colunas" }),
+      /* @__PURE__ */ jsx34(DropdownMenuSeparator, {}),
       table.getAllColumns().filter(
         (column) => typeof column.accessorFn !== "undefined" && column.getCanHide()
       ).map((column) => {
         const columnHeader = getColumnHeader(column);
-        return /* @__PURE__ */ jsx32(
+        return /* @__PURE__ */ jsx34(
           DropdownMenuCheckboxItem,
           {
             className: "capitalize",
@@ -2241,7 +2383,7 @@ function DataTableViewOptions({
 
 // src/components/ui/data-table-faceted-filter.tsx
 import { Check as Check6, PlusCircle } from "lucide-react";
-import { Fragment as Fragment2, jsx as jsx33, jsxs as jsxs14 } from "react/jsx-runtime";
+import { Fragment as Fragment2, jsx as jsx35, jsxs as jsxs14 } from "react/jsx-runtime";
 function DataTableFacetedFilter({
   column,
   title,
@@ -2250,12 +2392,12 @@ function DataTableFacetedFilter({
   const facets = column?.getFacetedUniqueValues();
   const selectedValues = new Set(column?.getFilterValue());
   return /* @__PURE__ */ jsxs14(Popover, { children: [
-    /* @__PURE__ */ jsx33(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsxs14(Button, { variant: "outline", size: "sm", className: "h-8 border-dashed", children: [
-      /* @__PURE__ */ jsx33(PlusCircle, { className: "mr-2 h-4 w-4" }),
+    /* @__PURE__ */ jsx35(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsxs14(Button, { variant: "outline", size: "sm", className: "h-8 border-dashed", children: [
+      /* @__PURE__ */ jsx35(PlusCircle, { className: "mr-2 h-4 w-4" }),
       title,
       selectedValues?.size > 0 && /* @__PURE__ */ jsxs14(Fragment2, { children: [
-        /* @__PURE__ */ jsx33(Separator3, { orientation: "vertical", className: "mx-2 h-4" }),
-        /* @__PURE__ */ jsx33(
+        /* @__PURE__ */ jsx35(Separator4, { orientation: "vertical", className: "mx-2 h-4" }),
+        /* @__PURE__ */ jsx35(
           Badge,
           {
             variant: "secondary",
@@ -2263,7 +2405,7 @@ function DataTableFacetedFilter({
             children: selectedValues.size
           }
         ),
-        /* @__PURE__ */ jsx33("div", { className: "hidden space-x-1 lg:flex", children: selectedValues.size > 2 ? /* @__PURE__ */ jsxs14(
+        /* @__PURE__ */ jsx35("div", { className: "hidden space-x-1 lg:flex", children: selectedValues.size > 2 ? /* @__PURE__ */ jsxs14(
           Badge,
           {
             variant: "secondary",
@@ -2273,7 +2415,7 @@ function DataTableFacetedFilter({
               " selecionados"
             ]
           }
-        ) : options.filter((option) => selectedValues.has(option.value)).map((option) => /* @__PURE__ */ jsx33(
+        ) : options.filter((option) => selectedValues.has(option.value)).map((option) => /* @__PURE__ */ jsx35(
           Badge,
           {
             variant: "secondary",
@@ -2284,11 +2426,11 @@ function DataTableFacetedFilter({
         )) })
       ] })
     ] }) }),
-    /* @__PURE__ */ jsx33(PopoverContent, { className: "w-[200px] p-0", align: "start", children: /* @__PURE__ */ jsxs14(Command, { children: [
-      /* @__PURE__ */ jsx33(CommandInput, { placeholder: title }),
+    /* @__PURE__ */ jsx35(PopoverContent, { className: "w-[200px] p-0", align: "start", children: /* @__PURE__ */ jsxs14(Command, { children: [
+      /* @__PURE__ */ jsx35(CommandInput, { placeholder: title }),
       /* @__PURE__ */ jsxs14(CommandList, { children: [
-        /* @__PURE__ */ jsx33(CommandEmpty, { children: "Nenhum resultado encontrado." }),
-        /* @__PURE__ */ jsx33(CommandGroup, { children: options.map((option) => {
+        /* @__PURE__ */ jsx35(CommandEmpty, { children: "Nenhum resultado encontrado." }),
+        /* @__PURE__ */ jsx35(CommandGroup, { children: options.map((option) => {
           const isSelected = selectedValues.has(option.value);
           return /* @__PURE__ */ jsxs14(
             CommandItem,
@@ -2305,27 +2447,27 @@ function DataTableFacetedFilter({
                 );
               },
               children: [
-                /* @__PURE__ */ jsx33(
+                /* @__PURE__ */ jsx35(
                   "div",
                   {
                     className: cn(
                       "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
                       isSelected ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible"
                     ),
-                    children: /* @__PURE__ */ jsx33(Check6, { className: cn("h-4 w-4") })
+                    children: /* @__PURE__ */ jsx35(Check6, { className: cn("h-4 w-4") })
                   }
                 ),
-                option.icon && /* @__PURE__ */ jsx33(option.icon, { className: "mr-2 h-4 w-4 text-muted-foreground" }),
-                /* @__PURE__ */ jsx33("span", { children: option.label }),
-                facets?.get(option.value) && /* @__PURE__ */ jsx33("span", { className: "ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs", children: facets.get(option.value) })
+                option.icon && /* @__PURE__ */ jsx35(option.icon, { className: "mr-2 h-4 w-4 text-muted-foreground" }),
+                /* @__PURE__ */ jsx35("span", { children: option.label }),
+                facets?.get(option.value) && /* @__PURE__ */ jsx35("span", { className: "ml-auto flex h-4 w-4 items-center justify-center font-mono text-xs", children: facets.get(option.value) })
               ]
             },
             option.value
           );
         }) }),
         selectedValues.size > 0 && /* @__PURE__ */ jsxs14(Fragment2, { children: [
-          /* @__PURE__ */ jsx33(CommandSeparator, {}),
-          /* @__PURE__ */ jsx33(CommandGroup, { children: /* @__PURE__ */ jsx33(
+          /* @__PURE__ */ jsx35(CommandSeparator, {}),
+          /* @__PURE__ */ jsx35(CommandGroup, { children: /* @__PURE__ */ jsx35(
             CommandItem,
             {
               onSelect: () => column?.setFilterValue(void 0),
@@ -2340,7 +2482,7 @@ function DataTableFacetedFilter({
 }
 
 // src/components/ui/data-table-toolbar.tsx
-import { jsx as jsx34, jsxs as jsxs15 } from "react/jsx-runtime";
+import { jsx as jsx36, jsxs as jsxs15 } from "react/jsx-runtime";
 function DataTableToolbar({
   table,
   searchColumnId,
@@ -2369,7 +2511,7 @@ function DataTableToolbar({
   };
   return /* @__PURE__ */ jsxs15("div", { className: "flex items-center justify-between", "data-ai-id": "data-table-toolbar", children: [
     /* @__PURE__ */ jsxs15("div", { className: "flex flex-1 flex-wrap items-center gap-2", children: [
-      searchColumnId && /* @__PURE__ */ jsx34(
+      searchColumnId && /* @__PURE__ */ jsx36(
         Input,
         {
           placeholder: searchPlaceholder,
@@ -2379,7 +2521,7 @@ function DataTableToolbar({
           "data-ai-id": "data-table-search-input"
         }
       ),
-      facetedFilterColumns.map((col) => table.getColumn(col.id) ? /* @__PURE__ */ jsx34(
+      facetedFilterColumns.map((col) => table.getColumn(col.id) ? /* @__PURE__ */ jsx36(
         DataTableFacetedFilter,
         {
           column: table.getColumn(col.id),
@@ -2389,19 +2531,19 @@ function DataTableToolbar({
         col.id
       ) : null),
       groupableColumns.length > 0 && /* @__PURE__ */ jsxs15("div", { className: "flex items-center gap-1", children: [
-        /* @__PURE__ */ jsx34(ListTree, { className: "h-4 w-4 text-muted-foreground", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx36(ListTree, { className: "h-4 w-4 text-muted-foreground", "aria-hidden": "true" }),
         /* @__PURE__ */ jsxs15(
           Select,
           {
             value: groupingState[0] ?? "__NONE__",
             onValueChange: (value) => table.setGrouping(value === "__NONE__" ? [] : [value]),
             children: [
-              /* @__PURE__ */ jsx34(SelectTrigger, { className: "h-8 w-auto min-w-[150px] text-xs", "aria-label": "Agrupar por", children: /* @__PURE__ */ jsx34(SelectValue, { placeholder: "Agrupar por..." }) }),
+              /* @__PURE__ */ jsx36(SelectTrigger, { className: "h-8 w-auto min-w-[150px] text-xs", "aria-label": "Agrupar por", children: /* @__PURE__ */ jsx36(SelectValue, { placeholder: "Agrupar por..." }) }),
               /* @__PURE__ */ jsxs15(SelectContent, { children: [
-                /* @__PURE__ */ jsx34(SelectItem, { value: "__NONE__", children: "Nenhum grupo" }),
+                /* @__PURE__ */ jsx36(SelectItem, { value: "__NONE__", children: "Nenhum grupo" }),
                 groupableColumns.map((column) => {
                   const columnHeader = getColumnHeader2(column);
-                  return /* @__PURE__ */ jsx34(SelectItem, { value: column.id, children: columnHeader }, column.id);
+                  return /* @__PURE__ */ jsx36(SelectItem, { value: column.id, children: columnHeader }, column.id);
                 })
               ] })
             ]
@@ -2416,20 +2558,20 @@ function DataTableToolbar({
           className: "h-8 px-2 lg:px-3",
           children: [
             "Limpar",
-            /* @__PURE__ */ jsx34(X4, { className: "ml-2 h-4 w-4" })
+            /* @__PURE__ */ jsx36(X4, { className: "ml-2 h-4 w-4" })
           ]
         }
       ),
       selectedRowsCount > 0 && onDeleteSelected && /* @__PURE__ */ jsxs15(AlertDialog, { children: [
-        /* @__PURE__ */ jsx34(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxs15(Button, { variant: "destructive", size: "sm", className: "h-8", "data-ai-id": "data-table-delete-selected-button", children: [
-          /* @__PURE__ */ jsx34(Trash2, { className: "mr-2 h-4 w-4" }),
+        /* @__PURE__ */ jsx36(AlertDialogTrigger, { asChild: true, children: /* @__PURE__ */ jsxs15(Button, { variant: "destructive", size: "sm", className: "h-8", "data-ai-id": "data-table-delete-selected-button", children: [
+          /* @__PURE__ */ jsx36(Trash2, { className: "mr-2 h-4 w-4" }),
           "Excluir (",
           selectedRowsCount,
           ")"
         ] }) }),
         /* @__PURE__ */ jsxs15(AlertDialogContent, { children: [
           /* @__PURE__ */ jsxs15(AlertDialogHeader, { children: [
-            /* @__PURE__ */ jsx34(AlertDialogTitle, { children: "Confirmar Exclus\xE3o em Massa?" }),
+            /* @__PURE__ */ jsx36(AlertDialogTitle, { children: "Confirmar Exclus\xE3o em Massa?" }),
             /* @__PURE__ */ jsxs15(AlertDialogDescription, { children: [
               "Esta a\xE7\xE3o \xE9 permanente e n\xE3o pode ser desfeita. Voc\xEA tem certeza que deseja excluir os ",
               selectedRowsCount,
@@ -2437,13 +2579,13 @@ function DataTableToolbar({
             ] })
           ] }),
           /* @__PURE__ */ jsxs15(AlertDialogFooter, { children: [
-            /* @__PURE__ */ jsx34(AlertDialogCancel, { children: "Cancelar" }),
-            /* @__PURE__ */ jsx34(AlertDialogAction, { onClick: handleDelete, className: "bg-destructive hover:bg-destructive/90", children: "Confirmar Exclus\xE3o" })
+            /* @__PURE__ */ jsx36(AlertDialogCancel, { children: "Cancelar" }),
+            /* @__PURE__ */ jsx36(AlertDialogAction, { onClick: handleDelete, className: "bg-destructive hover:bg-destructive/90", children: "Confirmar Exclus\xE3o" })
           ] })
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsx34(DataTableViewOptions, { table })
+    /* @__PURE__ */ jsx36(DataTableViewOptions, { table })
   ] });
 }
 
@@ -2454,7 +2596,7 @@ import {
   ChevronsLeft,
   ChevronsRight
 } from "lucide-react";
-import { jsx as jsx35, jsxs as jsxs16 } from "react/jsx-runtime";
+import { jsx as jsx37, jsxs as jsxs16 } from "react/jsx-runtime";
 function DataTablePagination({
   table
 }) {
@@ -2468,7 +2610,7 @@ function DataTablePagination({
     ] }),
     /* @__PURE__ */ jsxs16("div", { className: "flex items-center space-x-6 lg:space-x-8", children: [
       /* @__PURE__ */ jsxs16("div", { className: "flex items-center space-x-2", children: [
-        /* @__PURE__ */ jsx35("p", { className: "text-sm font-medium", children: "Linhas por p\xE1gina" }),
+        /* @__PURE__ */ jsx37("p", { className: "text-sm font-medium", children: "Linhas por p\xE1gina" }),
         /* @__PURE__ */ jsxs16(
           Select,
           {
@@ -2477,8 +2619,8 @@ function DataTablePagination({
               table.setPageSize(Number(value));
             },
             children: [
-              /* @__PURE__ */ jsx35(SelectTrigger, { className: "h-8 w-[70px]", children: /* @__PURE__ */ jsx35(SelectValue, { placeholder: table.getState().pagination.pageSize }) }),
-              /* @__PURE__ */ jsx35(SelectContent, { side: "top", children: [10, 20, 30, 40, 50].map((pageSize) => /* @__PURE__ */ jsx35(SelectItem, { value: `${pageSize}`, children: pageSize }, pageSize)) })
+              /* @__PURE__ */ jsx37(SelectTrigger, { className: "h-8 w-[70px]", children: /* @__PURE__ */ jsx37(SelectValue, { placeholder: table.getState().pagination.pageSize }) }),
+              /* @__PURE__ */ jsx37(SelectContent, { side: "top", children: [10, 20, 30, 40, 50].map((pageSize) => /* @__PURE__ */ jsx37(SelectItem, { value: `${pageSize}`, children: pageSize }, pageSize)) })
             ]
           }
         )
@@ -2499,8 +2641,8 @@ function DataTablePagination({
             onClick: () => table.setPageIndex(0),
             disabled: !table.getCanPreviousPage(),
             children: [
-              /* @__PURE__ */ jsx35("span", { className: "sr-only", children: "Ir para a primeira p\xE1gina" }),
-              /* @__PURE__ */ jsx35(ChevronsLeft, { className: "h-4 w-4" })
+              /* @__PURE__ */ jsx37("span", { className: "sr-only", children: "Ir para a primeira p\xE1gina" }),
+              /* @__PURE__ */ jsx37(ChevronsLeft, { className: "h-4 w-4" })
             ]
           }
         ),
@@ -2512,8 +2654,8 @@ function DataTablePagination({
             onClick: () => table.previousPage(),
             disabled: !table.getCanPreviousPage(),
             children: [
-              /* @__PURE__ */ jsx35("span", { className: "sr-only", children: "Ir para a p\xE1gina anterior" }),
-              /* @__PURE__ */ jsx35(ChevronLeftIcon, { className: "h-4 w-4" })
+              /* @__PURE__ */ jsx37("span", { className: "sr-only", children: "Ir para a p\xE1gina anterior" }),
+              /* @__PURE__ */ jsx37(ChevronLeftIcon, { className: "h-4 w-4" })
             ]
           }
         ),
@@ -2525,8 +2667,8 @@ function DataTablePagination({
             onClick: () => table.nextPage(),
             disabled: !table.getCanNextPage(),
             children: [
-              /* @__PURE__ */ jsx35("span", { className: "sr-only", children: "Ir para a pr\xF3xima p\xE1gina" }),
-              /* @__PURE__ */ jsx35(ChevronRightIcon, { className: "h-4 w-4" })
+              /* @__PURE__ */ jsx37("span", { className: "sr-only", children: "Ir para a pr\xF3xima p\xE1gina" }),
+              /* @__PURE__ */ jsx37(ChevronRightIcon, { className: "h-4 w-4" })
             ]
           }
         ),
@@ -2538,8 +2680,8 @@ function DataTablePagination({
             onClick: () => table.setPageIndex(table.getPageCount() - 1),
             disabled: !table.getCanNextPage(),
             children: [
-              /* @__PURE__ */ jsx35("span", { className: "sr-only", children: "Ir para a \xFAltima p\xE1gina" }),
-              /* @__PURE__ */ jsx35(ChevronsRight, { className: "h-4 w-4" })
+              /* @__PURE__ */ jsx37("span", { className: "sr-only", children: "Ir para a \xFAltima p\xE1gina" }),
+              /* @__PURE__ */ jsx37(ChevronsRight, { className: "h-4 w-4" })
             ]
           }
         )
@@ -2549,7 +2691,7 @@ function DataTablePagination({
 }
 
 // src/components/ui/data-table.tsx
-import { jsx as jsx36, jsxs as jsxs17 } from "react/jsx-runtime";
+import { jsx as jsx38, jsxs as jsxs17 } from "react/jsx-runtime";
 function DataTable({
   columns,
   data,
@@ -2564,11 +2706,11 @@ function DataTable({
   tableInstance,
   renderChildrenAboveTable
 }) {
-  const [uncontrolledRowSelection, setUncontrolledRowSelection] = React29.useState({});
-  const [columnVisibility, setColumnVisibility] = React29.useState({});
-  const [columnFilters, setColumnFilters] = React29.useState([]);
-  const [sorting, setSorting] = React29.useState([]);
-  const [grouping, setGrouping] = React29.useState([]);
+  const [uncontrolledRowSelection, setUncontrolledRowSelection] = React31.useState({});
+  const [columnVisibility, setColumnVisibility] = React31.useState({});
+  const [columnFilters, setColumnFilters] = React31.useState([]);
+  const [sorting, setSorting] = React31.useState([]);
+  const [grouping, setGrouping] = React31.useState([]);
   const isControlled = controlledRowSelection !== void 0 && setControlledRowSelection !== void 0;
   const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
   const setRowSelection = isControlled ? setControlledRowSelection : setUncontrolledRowSelection;
@@ -2597,7 +2739,7 @@ function DataTable({
     enableRowSelection: true
   });
   return /* @__PURE__ */ jsxs17("div", { className: "space-y-4", "data-ai-id": "data-table-container", children: [
-    /* @__PURE__ */ jsx36(
+    /* @__PURE__ */ jsx38(
       DataTableToolbar,
       {
         table,
@@ -2608,30 +2750,30 @@ function DataTable({
       }
     ),
     renderChildrenAboveTable && renderChildrenAboveTable(table),
-    /* @__PURE__ */ jsx36("div", { className: "rounded-md border", children: /* @__PURE__ */ jsxs17(Table, { children: [
-      /* @__PURE__ */ jsx36(TableHeader, { children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx36(TableRow, { children: headerGroup.headers.map((header) => {
-        return /* @__PURE__ */ jsx36(TableHead, { colSpan: header.colSpan, children: header.isPlaceholder ? null : flexRender(
+    /* @__PURE__ */ jsx38("div", { className: "rounded-md border", children: /* @__PURE__ */ jsxs17(Table, { children: [
+      /* @__PURE__ */ jsx38(TableHeader, { children: table.getHeaderGroups().map((headerGroup) => /* @__PURE__ */ jsx38(TableRow, { children: headerGroup.headers.map((header) => {
+        return /* @__PURE__ */ jsx38(TableHead, { colSpan: header.colSpan, children: header.isPlaceholder ? null : flexRender(
           header.column.columnDef.header,
           header.getContext()
         ) }, header.id);
       }) }, headerGroup.id)) }),
-      /* @__PURE__ */ jsx36(TableBody, { children: isLoading ? /* @__PURE__ */ jsx36(TableRow, { children: /* @__PURE__ */ jsx36(TableCell, { colSpan: columns.length, className: "h-24 text-center", children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center justify-center", children: [
-        /* @__PURE__ */ jsx36(Loader2, { className: "mr-2 h-6 w-6 animate-spin" }),
+      /* @__PURE__ */ jsx38(TableBody, { children: isLoading ? /* @__PURE__ */ jsx38(TableRow, { children: /* @__PURE__ */ jsx38(TableCell, { colSpan: columns.length, className: "h-24 text-center", children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center justify-center", children: [
+        /* @__PURE__ */ jsx38(Loader2, { className: "mr-2 h-6 w-6 animate-spin" }),
         "Carregando dados..."
-      ] }) }) }) : error ? /* @__PURE__ */ jsx36(TableRow, { children: /* @__PURE__ */ jsx36(TableCell, { colSpan: columns.length, className: "h-24 text-center text-destructive", children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center justify-center", children: [
-        /* @__PURE__ */ jsx36(AlertCircle, { className: "mr-2 h-6 w-6" }),
+      ] }) }) }) : error ? /* @__PURE__ */ jsx38(TableRow, { children: /* @__PURE__ */ jsx38(TableCell, { colSpan: columns.length, className: "h-24 text-center text-destructive", children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center justify-center", children: [
+        /* @__PURE__ */ jsx38(AlertCircle, { className: "mr-2 h-6 w-6" }),
         error
       ] }) }) }) : table.getRowModel().rows?.length ? table.getRowModel().rows.map((row) => {
         if (row.getIsGrouped()) {
-          return /* @__PURE__ */ jsx36(TableRow, { className: "bg-muted/50 hover:bg-muted/60 font-medium", children: /* @__PURE__ */ jsx36(TableCell, { colSpan: columns.length, children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center gap-2", children: [
-            /* @__PURE__ */ jsx36(
+          return /* @__PURE__ */ jsx38(TableRow, { className: "bg-muted/50 hover:bg-muted/60 font-medium", children: /* @__PURE__ */ jsx38(TableCell, { colSpan: columns.length, children: /* @__PURE__ */ jsxs17("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx38(
               Button,
               {
                 variant: "ghost",
                 size: "icon",
                 className: "h-6 w-6",
                 onClick: row.getToggleExpandedHandler(),
-                children: row.getIsExpanded() ? /* @__PURE__ */ jsx36(ChevronDown4, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx36(ChevronRight4, { className: "h-4 w-4" })
+                children: row.getIsExpanded() ? /* @__PURE__ */ jsx38(ChevronDown4, { className: "h-4 w-4" }) : /* @__PURE__ */ jsx38(ChevronRight4, { className: "h-4 w-4" })
               }
             ),
             /* @__PURE__ */ jsxs17("span", { children: [
@@ -2646,18 +2788,18 @@ function DataTable({
             ] })
           ] }) }) }, row.id);
         }
-        return /* @__PURE__ */ jsx36(
+        return /* @__PURE__ */ jsx38(
           TableRow,
           {
             "data-state": row.getIsSelected() && "selected",
-            children: row.getVisibleCells().map((cell) => /* @__PURE__ */ jsx36(TableCell, { children: flexRender(
+            children: row.getVisibleCells().map((cell) => /* @__PURE__ */ jsx38(TableCell, { children: flexRender(
               cell.column.columnDef.cell,
               cell.getContext()
             ) }, cell.id))
           },
           row.id
         );
-      }) : /* @__PURE__ */ jsx36(TableRow, { children: /* @__PURE__ */ jsx36(
+      }) : /* @__PURE__ */ jsx38(TableRow, { children: /* @__PURE__ */ jsx38(
         TableCell,
         {
           colSpan: columns.length,
@@ -2666,7 +2808,7 @@ function DataTable({
         }
       ) }) })
     ] }) }),
-    /* @__PURE__ */ jsx36(DataTablePagination, { table })
+    /* @__PURE__ */ jsx38(DataTablePagination, { table })
   ] });
 }
 
@@ -2677,42 +2819,42 @@ import {
   ChevronsUpDownIcon,
   EyeOff
 } from "lucide-react";
-import { Fragment as Fragment3, jsx as jsx37, jsxs as jsxs18 } from "react/jsx-runtime";
+import { Fragment as Fragment3, jsx as jsx39, jsxs as jsxs18 } from "react/jsx-runtime";
 function DataTableColumnHeader({
   column,
   title,
   className
 }) {
   if (!column.getCanSort() && !column.getCanHide()) {
-    return /* @__PURE__ */ jsx37("div", { className: cn(className), children: title });
+    return /* @__PURE__ */ jsx39("div", { className: cn(className), children: title });
   }
-  return /* @__PURE__ */ jsx37("div", { className: cn("flex items-center space-x-2", className), children: /* @__PURE__ */ jsxs18(DropdownMenu, { children: [
-    /* @__PURE__ */ jsx37(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs18(
+  return /* @__PURE__ */ jsx39("div", { className: cn("flex items-center space-x-2", className), children: /* @__PURE__ */ jsxs18(DropdownMenu, { children: [
+    /* @__PURE__ */ jsx39(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsxs18(
       Button,
       {
         variant: "ghost",
         size: "sm",
         className: "-ml-3 h-8 data-[state=open]:bg-accent",
         children: [
-          /* @__PURE__ */ jsx37("span", { children: title }),
-          column.getIsSorted() === "desc" ? /* @__PURE__ */ jsx37(ArrowDownIcon, { className: "ml-2 h-4 w-4" }) : column.getIsSorted() === "asc" ? /* @__PURE__ */ jsx37(ArrowUpIcon, { className: "ml-2 h-4 w-4" }) : /* @__PURE__ */ jsx37(ChevronsUpDownIcon, { className: "ml-2 h-4 w-4" })
+          /* @__PURE__ */ jsx39("span", { children: title }),
+          column.getIsSorted() === "desc" ? /* @__PURE__ */ jsx39(ArrowDownIcon, { className: "ml-2 h-4 w-4" }) : column.getIsSorted() === "asc" ? /* @__PURE__ */ jsx39(ArrowUpIcon, { className: "ml-2 h-4 w-4" }) : /* @__PURE__ */ jsx39(ChevronsUpDownIcon, { className: "ml-2 h-4 w-4" })
         ]
       }
     ) }),
     /* @__PURE__ */ jsxs18(DropdownMenuContent, { align: "start", children: [
       column.getCanSort() && /* @__PURE__ */ jsxs18(Fragment3, { children: [
         /* @__PURE__ */ jsxs18(DropdownMenuItem, { onClick: () => column.toggleSorting(false), children: [
-          /* @__PURE__ */ jsx37(ArrowUpIcon, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
+          /* @__PURE__ */ jsx39(ArrowUpIcon, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
           "Asc"
         ] }),
         /* @__PURE__ */ jsxs18(DropdownMenuItem, { onClick: () => column.toggleSorting(true), children: [
-          /* @__PURE__ */ jsx37(ArrowDownIcon, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
+          /* @__PURE__ */ jsx39(ArrowDownIcon, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
           "Desc"
         ] })
       ] }),
-      column.getCanSort() && column.getCanHide() && /* @__PURE__ */ jsx37(DropdownMenuSeparator, {}),
+      column.getCanSort() && column.getCanHide() && /* @__PURE__ */ jsx39(DropdownMenuSeparator, {}),
       column.getCanHide() && /* @__PURE__ */ jsxs18(DropdownMenuItem, { onClick: () => column.toggleVisibility(false), children: [
-        /* @__PURE__ */ jsx37(EyeOff, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
+        /* @__PURE__ */ jsx39(EyeOff, { className: "mr-2 h-3.5 w-3.5 text-muted-foreground/70" }),
         "Ocultar"
       ] })
     ] })
@@ -2720,19 +2862,19 @@ function DataTableColumnHeader({
 }
 
 // src/components/ui/entity-selector.tsx
-import * as React30 from "react";
+import * as React32 from "react";
 import { ChevronsUpDown, PlusCircle as PlusCircle2, Pencil, X as X5, RefreshCw, ListChecks } from "lucide-react";
 import Link2 from "next/link";
-import { Fragment as Fragment4, jsx as jsx38, jsxs as jsxs19 } from "react/jsx-runtime";
+import { Fragment as Fragment4, jsx as jsx40, jsxs as jsxs19 } from "react/jsx-runtime";
 var createEntitySelectorColumns = (onSelect) => [
   {
     accessorKey: "label",
     header: "Nome",
-    cell: ({ row }) => /* @__PURE__ */ jsx38("div", { className: "font-medium", children: row.getValue("label") })
+    cell: ({ row }) => /* @__PURE__ */ jsx40("div", { className: "font-medium", children: row.getValue("label") })
   },
   {
     id: "actions",
-    cell: ({ row }) => /* @__PURE__ */ jsx38("div", { className: "text-right", children: /* @__PURE__ */ jsx38(Button, { variant: "ghost", size: "sm", onClick: (e) => {
+    cell: ({ row }) => /* @__PURE__ */ jsx40("div", { className: "text-right", children: /* @__PURE__ */ jsx40(Button, { variant: "ghost", size: "sm", onClick: (e) => {
       e.stopPropagation();
       onSelect(row.original.value);
     }, children: "Selecionar" }) })
@@ -2742,10 +2884,10 @@ var createEntitySelectorColumns = (onSelect) => [
 // src/components/ui/breadcrumbs.tsx
 import Link3 from "next/link";
 import { ChevronRight as ChevronRight5 } from "lucide-react";
-import { jsx as jsx39, jsxs as jsxs20 } from "react/jsx-runtime";
+import { jsx as jsx41, jsxs as jsxs20 } from "react/jsx-runtime";
 
 // src/components/auction-card.tsx
-import * as React34 from "react";
+import * as React35 from "react";
 import Link6 from "next/link";
 import Image3 from "next/image";
 import { Heart, Share2, Eye as Eye2, X as X6, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Clock as Clock2, Users, Star as Star2, ListChecks as ListChecks3 } from "lucide-react";
@@ -2759,27 +2901,7 @@ import Link4 from "next/link";
 
 // src/components/update-title-modal.tsx
 import { useState as useState4 } from "react";
-
-// src/components/ui/label.tsx
-import * as React31 from "react";
-import * as LabelPrimitive from "@radix-ui/react-label";
-import { cva as cva7 } from "class-variance-authority";
-import { jsx as jsx40 } from "react/jsx-runtime";
-var labelVariants = cva7(
-  "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-);
-var Label4 = React31.forwardRef(({ className, ...props }, ref) => /* @__PURE__ */ jsx40(
-  LabelPrimitive.Root,
-  {
-    ref,
-    className: cn(labelVariants(), className),
-    ...props
-  }
-));
-Label4.displayName = LabelPrimitive.Root.displayName;
-
-// src/components/update-title-modal.tsx
-import { jsx as jsx41, jsxs as jsxs21 } from "react/jsx-runtime";
+import { jsx as jsx42, jsxs as jsxs21 } from "react/jsx-runtime";
 function UpdateTitleModal({
   isOpen,
   onClose,
@@ -2791,7 +2913,7 @@ function UpdateTitleModal({
   const handleSubmit = async () => {
     await onSubmit(newTitle);
   };
-  return /* @__PURE__ */ jsx41(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs21(DialogContent, { children: [
+  return /* @__PURE__ */ jsx42(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs21(DialogContent, { children: [
     /* @__PURE__ */ jsxs21(DialogHeader, { children: [
       /* @__PURE__ */ jsxs21(DialogTitle, { children: [
         "Alterar T\xEDtulo d",
@@ -2803,9 +2925,9 @@ function UpdateTitleModal({
         "."
       ] })
     ] }),
-    /* @__PURE__ */ jsx41("div", { className: "grid gap-4 py-4", children: /* @__PURE__ */ jsxs21("div", { className: "grid grid-cols-4 items-center gap-4", children: [
-      /* @__PURE__ */ jsx41(Label4, { htmlFor: "newTitle", className: "text-right", children: "Novo T\xEDtulo" }),
-      /* @__PURE__ */ jsx41(
+    /* @__PURE__ */ jsx42("div", { className: "grid gap-4 py-4", children: /* @__PURE__ */ jsxs21("div", { className: "grid grid-cols-4 items-center gap-4", children: [
+      /* @__PURE__ */ jsx42(Label2, { htmlFor: "newTitle", className: "text-right", children: "Novo T\xEDtulo" }),
+      /* @__PURE__ */ jsx42(
         Input,
         {
           id: "newTitle",
@@ -2816,14 +2938,14 @@ function UpdateTitleModal({
       )
     ] }) }),
     /* @__PURE__ */ jsxs21(DialogFooter, { children: [
-      /* @__PURE__ */ jsx41(Button, { variant: "outline", onClick: onClose, children: "Cancelar" }),
-      /* @__PURE__ */ jsx41(Button, { onClick: handleSubmit, children: "Salvar Altera\xE7\xF5es" })
+      /* @__PURE__ */ jsx42(Button, { variant: "outline", onClick: onClose, children: "Cancelar" }),
+      /* @__PURE__ */ jsx42(Button, { onClick: handleSubmit, children: "Salvar Altera\xE7\xF5es" })
     ] })
   ] }) });
 }
 
 // src/components/entity-edit-menu.tsx
-import { Fragment as Fragment5, jsx as jsx42, jsxs as jsxs22 } from "react/jsx-runtime";
+import { Fragment as Fragment5, jsx as jsx43, jsxs as jsxs22 } from "react/jsx-runtime";
 function EntityEditMenu({
   entityType,
   entityId,
@@ -2853,32 +2975,32 @@ function EntityEditMenu({
   return /* @__PURE__ */ jsxs22(Fragment5, { children: [
     /* @__PURE__ */ jsxs22(DropdownMenu, { children: [
       /* @__PURE__ */ jsxs22(Tooltip, { children: [
-        /* @__PURE__ */ jsx42(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx42(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx42(Button, { variant: "outline", size: "icon", className: "h-7 w-7 bg-background/80 hover:bg-primary/10", "aria-label": "Editar Entidade", children: /* @__PURE__ */ jsx42(Pencil2, { className: "h-3.5 w-3.5 text-primary" }) }) }) }),
-        /* @__PURE__ */ jsx42(TooltipContent, { children: /* @__PURE__ */ jsx42("p", { children: "Op\xE7\xF5es de Edi\xE7\xE3o" }) })
+        /* @__PURE__ */ jsx43(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx43(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx43(Button, { variant: "outline", size: "icon", className: "h-7 w-7 bg-background/80 hover:bg-primary/10", "aria-label": "Editar Entidade", children: /* @__PURE__ */ jsx43(Pencil2, { className: "h-3.5 w-3.5 text-primary" }) }) }) }),
+        /* @__PURE__ */ jsx43(TooltipContent, { children: /* @__PURE__ */ jsx43("p", { children: "Op\xE7\xF5es de Edi\xE7\xE3o" }) })
       ] }),
       /* @__PURE__ */ jsxs22(DropdownMenuContent, { align: "end", className: "w-56", children: [
-        /* @__PURE__ */ jsx42(DropdownMenuLabel, { children: "Edi\xE7\xE3o R\xE1pida" }),
-        /* @__PURE__ */ jsx42(DropdownMenuSeparator, {}),
+        /* @__PURE__ */ jsx43(DropdownMenuLabel, { children: "Edi\xE7\xE3o R\xE1pida" }),
+        /* @__PURE__ */ jsx43(DropdownMenuSeparator, {}),
         /* @__PURE__ */ jsxs22(DropdownMenuItem, { onClick: () => setIsMediaModalOpen(true), children: [
-          /* @__PURE__ */ jsx42(ImageIcon, { className: "mr-2 h-4 w-4" }),
-          /* @__PURE__ */ jsx42("span", { children: "Editar Imagem Principal" })
+          /* @__PURE__ */ jsx43(ImageIcon, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx43("span", { children: "Editar Imagem Principal" })
         ] }),
         /* @__PURE__ */ jsxs22(DropdownMenuItem, { onClick: () => setIsTitleModalOpen(true), children: [
-          /* @__PURE__ */ jsx42(TextCursorInput, { className: "mr-2 h-4 w-4" }),
-          /* @__PURE__ */ jsx42("span", { children: "Alterar T\xEDtulo" })
+          /* @__PURE__ */ jsx43(TextCursorInput, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx43("span", { children: "Alterar T\xEDtulo" })
         ] }),
         /* @__PURE__ */ jsxs22(DropdownMenuItem, { onClick: handleToggleFeatured, children: [
-          /* @__PURE__ */ jsx42(Star, { className: "mr-2 h-4 w-4" }),
-          /* @__PURE__ */ jsx42("span", { children: isFeatured ? "Remover Destaque" : "Destacar no Marketplace" })
+          /* @__PURE__ */ jsx43(Star, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx43("span", { children: isFeatured ? "Remover Destaque" : "Destacar no Marketplace" })
         ] }),
-        /* @__PURE__ */ jsx42(DropdownMenuSeparator, {}),
-        /* @__PURE__ */ jsx42(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs22(Link4, { href: adminEditUrl, children: [
-          /* @__PURE__ */ jsx42(ExternalLink, { className: "mr-2 h-4 w-4" }),
-          /* @__PURE__ */ jsx42("span", { children: "Edi\xE7\xE3o Completa" })
+        /* @__PURE__ */ jsx43(DropdownMenuSeparator, {}),
+        /* @__PURE__ */ jsx43(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs22(Link4, { href: adminEditUrl, children: [
+          /* @__PURE__ */ jsx43(ExternalLink, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx43("span", { children: "Edi\xE7\xE3o Completa" })
         ] }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsx42(
+    /* @__PURE__ */ jsx43(
       UpdateTitleModal,
       {
         isOpen: isTitleModalOpen,
@@ -2896,7 +3018,7 @@ import { CalendarDays } from "lucide-react";
 import { format, isPast as isPast2 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useState as useState6, useEffect } from "react";
-import { jsx as jsx43, jsxs as jsxs23 } from "react/jsx-runtime";
+import { jsx as jsx44, jsxs as jsxs23 } from "react/jsx-runtime";
 var AuctionStageItem = ({ stage, isCompleted, isActive }) => {
   const [formattedDate, setFormattedDate] = useState6("N/D");
   const [formattedTime, setFormattedTime] = useState6("");
@@ -2910,12 +3032,12 @@ var AuctionStageItem = ({ stage, isCompleted, isActive }) => {
     }
   }, [stage.endDate]);
   return /* @__PURE__ */ jsxs23("div", { className: "flex items-start gap-2 flex-1 min-w-0 px-1 text-xs", children: [
-    /* @__PURE__ */ jsx43("div", { className: "flex flex-col items-center gap-1 mt-1", children: /* @__PURE__ */ jsx43("div", { className: cn(
+    /* @__PURE__ */ jsx44("div", { className: "flex flex-col items-center gap-1 mt-1", children: /* @__PURE__ */ jsx44("div", { className: cn(
       "h-3.5 w-3.5 rounded-full border-2",
       isCompleted ? "bg-primary border-primary" : isActive ? "bg-background border-primary ring-2 ring-primary/30" : "bg-background border-border"
     ) }) }),
     /* @__PURE__ */ jsxs23("div", { className: "flex-grow", children: [
-      /* @__PURE__ */ jsx43("p", { className: cn(
+      /* @__PURE__ */ jsx44("p", { className: cn(
         "font-semibold truncate w-full",
         isActive ? "text-primary" : isCompleted ? "text-muted-foreground line-through" : "text-foreground"
       ), title: stage.name || "", children: stage.name || `Etapa` }),
@@ -2954,15 +3076,15 @@ function AuctionStagesTimeline({ stages }) {
   }
   return /* @__PURE__ */ jsxs23("div", { children: [
     /* @__PURE__ */ jsxs23("h4", { className: "text-xs font-semibold mb-2 flex items-center text-muted-foreground", children: [
-      /* @__PURE__ */ jsx43(CalendarDays, { className: "h-3 w-3 mr-1.5" }),
+      /* @__PURE__ */ jsx44(CalendarDays, { className: "h-3 w-3 mr-1.5" }),
       "ETAPAS DO LEIL\xC3O"
     ] }),
     /* @__PURE__ */ jsxs23("div", { className: "relative flex flex-col space-y-2", children: [
-      /* @__PURE__ */ jsx43("div", { className: "absolute left-[6px] top-2 bottom-2 w-0.5 bg-border -z-10" }),
+      /* @__PURE__ */ jsx44("div", { className: "absolute left-[6px] top-2 bottom-2 w-0.5 bg-border -z-10" }),
       processedStages.map((stage, index) => {
         const isCompleted = stage.endDate ? isPast2(stage.endDate) : false;
         const isActive = index === activeStageIndex;
-        return /* @__PURE__ */ jsx43(AuctionStageItem, { stage, isActive, isCompleted }, stage.name || index);
+        return /* @__PURE__ */ jsx44(AuctionStageItem, { stage, isActive, isCompleted }, stage.name || index);
       })
     ] })
   ] });
@@ -2973,7 +3095,7 @@ import Image2 from "next/image";
 import { CalendarDays as CalendarDays2, Eye, ListChecks as ListChecks2, Landmark } from "lucide-react";
 import Link5 from "next/link";
 import { useMemo as useMemo3 } from "react";
-import { jsx as jsx44, jsxs as jsxs24 } from "react/jsx-runtime";
+import { jsx as jsx45, jsxs as jsxs24 } from "react/jsx-runtime";
 function AuctionPreviewModal({ auction, isOpen, onClose }) {
   if (!isOpen) return null;
   const getAuctioneerInitial = () => {
@@ -2996,9 +3118,9 @@ function AuctionPreviewModal({ auction, isOpen, onClose }) {
     const uniqueDates = Array.from(new Set(dates.map((d) => d.toISOString()))).map((iso) => new Date(iso));
     return uniqueDates;
   }, [auction]);
-  return /* @__PURE__ */ jsx44(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs24(DialogContent, { className: "sm:max-w-[800px] max-h-[90vh] flex flex-col p-0", children: [
+  return /* @__PURE__ */ jsx45(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs24(DialogContent, { className: "sm:max-w-[800px] max-h-[90vh] flex flex-col p-0", children: [
     /* @__PURE__ */ jsxs24(DialogHeader, { className: "p-4 sm:p-6 pb-0 flex-shrink-0", children: [
-      /* @__PURE__ */ jsx44(DialogTitle, { className: "text-xl sm:text-2xl font-bold font-headline", children: auction.title }),
+      /* @__PURE__ */ jsx45(DialogTitle, { className: "text-xl sm:text-2xl font-bold font-headline", children: auction.title }),
       /* @__PURE__ */ jsxs24(DialogDescription, { children: [
         "Leil\xE3o do tipo ",
         auction.auctionType || "N\xE3o especificado",
@@ -3008,7 +3130,7 @@ function AuctionPreviewModal({ auction, isOpen, onClose }) {
     ] }),
     /* @__PURE__ */ jsxs24("div", { className: "flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto px-4 sm:px-6", children: [
       /* @__PURE__ */ jsxs24("div", { className: "space-y-4", children: [
-        /* @__PURE__ */ jsx44("div", { className: "relative aspect-video w-full bg-muted rounded-md overflow-hidden", children: /* @__PURE__ */ jsx44(
+        /* @__PURE__ */ jsx45("div", { className: "relative aspect-video w-full bg-muted rounded-md overflow-hidden", children: /* @__PURE__ */ jsx45(
           Image2,
           {
             src: validImageUrl,
@@ -3019,53 +3141,53 @@ function AuctionPreviewModal({ auction, isOpen, onClose }) {
           }
         ) }),
         /* @__PURE__ */ jsxs24(Card, { children: [
-          /* @__PURE__ */ jsx44(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
-            /* @__PURE__ */ jsx44(Landmark, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx45(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
+            /* @__PURE__ */ jsx45(Landmark, { className: "mr-2 h-4 w-4" }),
             " Leiloeiro e Comitente"
           ] }) }),
           /* @__PURE__ */ jsxs24(CardContent, { className: "p-3 pt-0 text-sm space-y-2", children: [
             /* @__PURE__ */ jsxs24("div", { className: "flex items-center gap-2", children: [
               /* @__PURE__ */ jsxs24(Avatar, { className: "h-9 w-9 border", children: [
-                /* @__PURE__ */ jsx44(AvatarImage, { src: auction.auctioneer?.logoUrl || "", alt: auction.auctioneerName || "", "data-ai-hint": auction.auctioneer?.dataAiHintLogo || "leiloeiro logo" }),
-                /* @__PURE__ */ jsx44(AvatarFallback, { children: auctioneerInitial })
+                /* @__PURE__ */ jsx45(AvatarImage, { src: auction.auctioneer?.logoUrl || "", alt: auction.auctioneerName || "", "data-ai-hint": auction.auctioneer?.dataAiHintLogo || "leiloeiro logo" }),
+                /* @__PURE__ */ jsx45(AvatarFallback, { children: auctioneerInitial })
               ] }),
               /* @__PURE__ */ jsxs24("div", { children: [
-                /* @__PURE__ */ jsx44("p", { className: "text-xs text-muted-foreground", children: "Leiloeiro" }),
-                /* @__PURE__ */ jsx44("p", { className: "font-semibold", children: auction.auctioneer?.name || auction.auctioneerName })
+                /* @__PURE__ */ jsx45("p", { className: "text-xs text-muted-foreground", children: "Leiloeiro" }),
+                /* @__PURE__ */ jsx45("p", { className: "font-semibold", children: auction.auctioneer?.name || auction.auctioneerName })
               ] })
             ] }),
-            /* @__PURE__ */ jsx44("div", { className: "border-t border-dashed my-1" }),
+            /* @__PURE__ */ jsx45("div", { className: "border-t border-dashed my-1" }),
             /* @__PURE__ */ jsxs24("div", { children: [
-              /* @__PURE__ */ jsx44("p", { className: "text-xs text-muted-foreground", children: "Comitente/Vendedor" }),
-              /* @__PURE__ */ jsx44("p", { className: "font-semibold", children: auction.seller?.name || "N\xE3o informado" })
+              /* @__PURE__ */ jsx45("p", { className: "text-xs text-muted-foreground", children: "Comitente/Vendedor" }),
+              /* @__PURE__ */ jsx45("p", { className: "font-semibold", children: auction.seller?.name || "N\xE3o informado" })
             ] })
           ] })
         ] })
       ] }),
       /* @__PURE__ */ jsxs24("div", { className: "space-y-4", children: [
         /* @__PURE__ */ jsxs24(Card, { children: [
-          /* @__PURE__ */ jsx44(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
-            /* @__PURE__ */ jsx44(ListChecks2, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx45(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
+            /* @__PURE__ */ jsx45(ListChecks2, { className: "mr-2 h-4 w-4" }),
             "Lotes e Visitas"
           ] }) }),
           /* @__PURE__ */ jsxs24(CardContent, { className: "p-3 pt-0 grid grid-cols-2 gap-2 text-center", children: [
             /* @__PURE__ */ jsxs24("div", { className: "bg-accent/40 p-2 rounded-md", children: [
-              /* @__PURE__ */ jsx44("p", { className: "text-xl font-bold", children: auction.totalLots || 0 }),
-              /* @__PURE__ */ jsx44("p", { className: "text-xs text-muted-foreground", children: "Lotes" })
+              /* @__PURE__ */ jsx45("p", { className: "text-xl font-bold", children: auction.totalLots || 0 }),
+              /* @__PURE__ */ jsx45("p", { className: "text-xs text-muted-foreground", children: "Lotes" })
             ] }),
             /* @__PURE__ */ jsxs24("div", { className: "bg-accent/40 p-2 rounded-md", children: [
-              /* @__PURE__ */ jsx44("p", { className: "text-xl font-bold", children: auction.visits || 0 }),
-              /* @__PURE__ */ jsx44("p", { className: "text-xs text-muted-foreground", children: "Visitas" })
+              /* @__PURE__ */ jsx45("p", { className: "text-xl font-bold", children: auction.visits || 0 }),
+              /* @__PURE__ */ jsx45("p", { className: "text-xs text-muted-foreground", children: "Visitas" })
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx44(AuctionStagesTimeline, { stages: auction.auctionStages || [] }),
+        /* @__PURE__ */ jsx45(AuctionStagesTimeline, { stages: auction.auctionStages || [] }),
         /* @__PURE__ */ jsxs24(Card, { children: [
-          /* @__PURE__ */ jsx44(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
-            /* @__PURE__ */ jsx44(CalendarDays2, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx45(CardHeader, { className: "p-3", children: /* @__PURE__ */ jsxs24(CardTitle, { className: "text-md font-semibold flex items-center", children: [
+            /* @__PURE__ */ jsx45(CalendarDays2, { className: "mr-2 h-4 w-4" }),
             " Calend\xE1rio"
           ] }) }),
-          /* @__PURE__ */ jsx44(CardContent, { className: "flex justify-center p-0", children: /* @__PURE__ */ jsx44(
+          /* @__PURE__ */ jsx45(CardContent, { className: "flex justify-center p-0", children: /* @__PURE__ */ jsx45(
             Calendar,
             {
               mode: "multiple",
@@ -3083,9 +3205,9 @@ function AuctionPreviewModal({ auction, isOpen, onClose }) {
       ] })
     ] }),
     /* @__PURE__ */ jsxs24(DialogFooter, { className: "p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0", children: [
-      /* @__PURE__ */ jsx44(Button, { variant: "outline", onClick: onClose, children: " Fechar " }),
-      /* @__PURE__ */ jsx44(Button, { asChild: true, children: /* @__PURE__ */ jsxs24(Link5, { href: `/auctions/${auction.publicId || auction.id}`, children: [
-        /* @__PURE__ */ jsx44(Eye, { className: "mr-2 h-4 w-4" }),
+      /* @__PURE__ */ jsx45(Button, { variant: "outline", onClick: onClose, children: " Fechar " }),
+      /* @__PURE__ */ jsx45(Button, { asChild: true, children: /* @__PURE__ */ jsxs24(Link5, { href: `/auctions/${auction.publicId || auction.id}`, children: [
+        /* @__PURE__ */ jsx45(Eye, { className: "mr-2 h-4 w-4" }),
         " Ver Leil\xE3o Completo"
       ] }) })
     ] })
@@ -3093,16 +3215,16 @@ function AuctionPreviewModal({ auction, isOpen, onClose }) {
 }
 
 // src/components/auction-card.tsx
-import { Fragment as Fragment6, jsx as jsx45, jsxs as jsxs25 } from "react/jsx-runtime";
+import { Fragment as Fragment6, jsx as jsx46, jsxs as jsxs25 } from "react/jsx-runtime";
 function AuctionCard({ auction, onUpdate }) {
-  const [isFavorite, setIsFavorite] = React34.useState(auction.isFavorite || false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = React34.useState(false);
-  const [auctionFullUrl, setAuctionFullUrl] = React34.useState(`/auctions/${auction.publicId || auction.id}`);
-  const soldLotsCount = React34.useMemo(() => {
+  const [isFavorite, setIsFavorite] = React35.useState(auction.isFavorite || false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React35.useState(false);
+  const [auctionFullUrl, setAuctionFullUrl] = React35.useState(`/auctions/${auction.publicId || auction.id}`);
+  const soldLotsCount = React35.useMemo(() => {
     if (!auction.lots || auction.lots.length === 0) return 0;
     return auction.lots.filter((lot) => lot.status === "VENDIDO").length;
   }, [auction.lots]);
-  const mentalTriggers = React34.useMemo(() => {
+  const mentalTriggers = React35.useMemo(() => {
     const triggers = [];
     const now = /* @__PURE__ */ new Date();
     if (auction.endDate) {
@@ -3124,7 +3246,7 @@ function AuctionCard({ auction, onUpdate }) {
     }
     return Array.from(new Set(triggers));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
-  React34.useEffect(() => {
+  React35.useEffect(() => {
     if (typeof window !== "undefined") {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
     }
@@ -3163,13 +3285,13 @@ function AuctionCard({ auction, onUpdate }) {
     if (!type) return null;
     switch (type) {
       case "JUDICIAL":
-        return { label: "Judicial", icon: /* @__PURE__ */ jsx45(AuctionTypeIcon, { className: "h-3 w-3" }) };
+        return { label: "Judicial", icon: /* @__PURE__ */ jsx46(AuctionTypeIcon, { className: "h-3 w-3" }) };
       case "EXTRAJUDICIAL":
-        return { label: "Extrajudicial", icon: /* @__PURE__ */ jsx45(AuctionTypeIcon, { className: "h-3 w-3" }) };
+        return { label: "Extrajudicial", icon: /* @__PURE__ */ jsx46(AuctionTypeIcon, { className: "h-3 w-3" }) };
       case "PARTICULAR":
-        return { label: "Particular", icon: /* @__PURE__ */ jsx45(AuctionTypeIcon, { className: "h-3 w-3" }) };
+        return { label: "Particular", icon: /* @__PURE__ */ jsx46(AuctionTypeIcon, { className: "h-3 w-3" }) };
       case "TOMADA_DE_PRECOS":
-        return { label: "Tomada de Pre\xE7os", icon: /* @__PURE__ */ jsx45(TomadaPrecosIcon, { className: "h-3 w-3" }) };
+        return { label: "Tomada de Pre\xE7os", icon: /* @__PURE__ */ jsx46(TomadaPrecosIcon, { className: "h-3 w-3" }) };
       default:
         return null;
     }
@@ -3191,11 +3313,11 @@ function AuctionCard({ auction, onUpdate }) {
     return { text: getAuctionStatusText(auction.status), className: "bg-gray-500 text-white" };
   };
   const statusDisplay = getStatusDisplay();
-  return /* @__PURE__ */ jsx45(TooltipProvider, { children: /* @__PURE__ */ jsxs25(Fragment6, { children: [
+  return /* @__PURE__ */ jsx46(TooltipProvider, { children: /* @__PURE__ */ jsxs25(Fragment6, { children: [
     /* @__PURE__ */ jsxs25(Card, { "data-ai-id": `auction-card-container-${auction.id}`, className: "flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group", children: [
       /* @__PURE__ */ jsxs25("div", { className: "relative", children: [
-        /* @__PURE__ */ jsx45(Link6, { href: `/auctions/${auction.publicId || auction.id}`, className: "block", children: /* @__PURE__ */ jsxs25("div", { className: "aspect-[16/10] relative bg-muted", children: [
-          /* @__PURE__ */ jsx45(
+        /* @__PURE__ */ jsx46(Link6, { href: `/auctions/${auction.publicId || auction.id}`, className: "block", children: /* @__PURE__ */ jsxs25("div", { className: "aspect-[16/10] relative bg-muted", children: [
+          /* @__PURE__ */ jsx46(
             Image3,
             {
               src: mainImageUrl,
@@ -3208,57 +3330,57 @@ function AuctionCard({ auction, onUpdate }) {
             }
           ),
           sellerLogoUrl && /* @__PURE__ */ jsxs25(Tooltip, { children: [
-            /* @__PURE__ */ jsx45(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx45(Link6, { href: sellerSlug ? `/sellers/${sellerSlug}` : "#", onClick: (e) => e.stopPropagation(), className: "absolute bottom-2 right-2 z-10", children: /* @__PURE__ */ jsxs25(Avatar, { className: "h-12 w-12 border-2 bg-background border-border shadow-md", "data-ai-id": `auction-card-seller-logo-${auction.id}`, children: [
-              /* @__PURE__ */ jsx45(AvatarImage, { src: sellerLogoUrl, alt: sellerName || "Logo Comitente", "data-ai-hint": auction.seller?.dataAiHintLogo || "logo comitente" }),
-              /* @__PURE__ */ jsx45(AvatarFallback, { children: sellerName ? sellerName.charAt(0) : "C" })
+            /* @__PURE__ */ jsx46(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx46(Link6, { href: sellerSlug ? `/sellers/${sellerSlug}` : "#", onClick: (e) => e.stopPropagation(), className: "absolute bottom-2 right-2 z-10", children: /* @__PURE__ */ jsxs25(Avatar, { className: "h-12 w-12 border-2 bg-background border-border shadow-md", "data-ai-id": `auction-card-seller-logo-${auction.id}`, children: [
+              /* @__PURE__ */ jsx46(AvatarImage, { src: sellerLogoUrl, alt: sellerName || "Logo Comitente", "data-ai-hint": auction.seller?.dataAiHintLogo || "logo comitente" }),
+              /* @__PURE__ */ jsx46(AvatarFallback, { children: sellerName ? sellerName.charAt(0) : "C" })
             ] }) }) }),
-            /* @__PURE__ */ jsx45(TooltipContent, { children: /* @__PURE__ */ jsxs25("p", { children: [
+            /* @__PURE__ */ jsx46(TooltipContent, { children: /* @__PURE__ */ jsxs25("p", { children: [
               "Comitente: ",
               sellerName
             ] }) })
           ] })
         ] }) }),
-        /* @__PURE__ */ jsx45("div", { className: "absolute top-2 left-2 flex flex-col items-start gap-1 z-10", "data-ai-id": `auction-card-badges-${auction.id}`, children: /* @__PURE__ */ jsx45(Badge, { className: `text-xs px-2 py-1 ${statusDisplay.className}`, children: statusDisplay.text }) }),
-        /* @__PURE__ */ jsx45("div", { className: "absolute top-2 right-2 flex flex-col items-end gap-1 z-10", "data-ai-id": `auction-card-mental-triggers-${auction.id}`, children: mentalTriggers.map((trigger) => /* @__PURE__ */ jsxs25(Badge, { variant: "secondary", className: "text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300", children: [
-          trigger.startsWith("ENCERRA") && /* @__PURE__ */ jsx45(Clock2, { className: "h-3 w-3 mr-0.5" }),
-          trigger === "ALTA DEMANDA" && /* @__PURE__ */ jsx45(Users, { className: "h-3 w-3 mr-0.5" }),
-          trigger === "DESTAQUE" && /* @__PURE__ */ jsx45(Star2, { className: "h-3 w-3 mr-0.5" }),
+        /* @__PURE__ */ jsx46("div", { className: "absolute top-2 left-2 flex flex-col items-start gap-1 z-10", "data-ai-id": `auction-card-badges-${auction.id}`, children: /* @__PURE__ */ jsx46(Badge, { className: `text-xs px-2 py-1 ${statusDisplay.className}`, children: statusDisplay.text }) }),
+        /* @__PURE__ */ jsx46("div", { className: "absolute top-2 right-2 flex flex-col items-end gap-1 z-10", "data-ai-id": `auction-card-mental-triggers-${auction.id}`, children: mentalTriggers.map((trigger) => /* @__PURE__ */ jsxs25(Badge, { variant: "secondary", className: "text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300", children: [
+          trigger.startsWith("ENCERRA") && /* @__PURE__ */ jsx46(Clock2, { className: "h-3 w-3 mr-0.5" }),
+          trigger === "ALTA DEMANDA" && /* @__PURE__ */ jsx46(Users, { className: "h-3 w-3 mr-0.5" }),
+          trigger === "DESTAQUE" && /* @__PURE__ */ jsx46(Star2, { className: "h-3 w-3 mr-0.5" }),
           trigger
         ] }, trigger)) }),
         /* @__PURE__ */ jsxs25("div", { className: "absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4", children: [
           /* @__PURE__ */ jsxs25(Tooltip, { children: [
-            /* @__PURE__ */ jsx45(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx45(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handleFavoriteToggle, "aria-label": isFavorite ? "Desfavoritar" : "Favoritar", children: /* @__PURE__ */ jsx45(Heart, { className: `h-4 w-4 ${isFavorite ? "text-red-500 fill-red-500" : "text-muted-foreground"}` }) }) }),
-            /* @__PURE__ */ jsx45(TooltipContent, { children: /* @__PURE__ */ jsx45("p", { children: isFavorite ? "Desfavoritar" : "Favoritar" }) })
+            /* @__PURE__ */ jsx46(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx46(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handleFavoriteToggle, "aria-label": isFavorite ? "Desfavoritar" : "Favoritar", children: /* @__PURE__ */ jsx46(Heart, { className: `h-4 w-4 ${isFavorite ? "text-red-500 fill-red-500" : "text-muted-foreground"}` }) }) }),
+            /* @__PURE__ */ jsx46(TooltipContent, { children: /* @__PURE__ */ jsx46("p", { children: isFavorite ? "Desfavoritar" : "Favoritar" }) })
           ] }),
           /* @__PURE__ */ jsxs25(Tooltip, { children: [
-            /* @__PURE__ */ jsx45(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx45(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: openPreviewModal, "aria-label": "Pr\xE9-visualizar", children: /* @__PURE__ */ jsx45(Eye2, { className: "h-4 w-4 text-muted-foreground" }) }) }),
-            /* @__PURE__ */ jsx45(TooltipContent, { children: /* @__PURE__ */ jsx45("p", { children: "Pr\xE9-visualizar" }) })
+            /* @__PURE__ */ jsx46(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx46(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: openPreviewModal, "aria-label": "Pr\xE9-visualizar", children: /* @__PURE__ */ jsx46(Eye2, { className: "h-4 w-4 text-muted-foreground" }) }) }),
+            /* @__PURE__ */ jsx46(TooltipContent, { children: /* @__PURE__ */ jsx46("p", { children: "Pr\xE9-visualizar" }) })
           ] }),
           /* @__PURE__ */ jsxs25(DropdownMenu, { children: [
             /* @__PURE__ */ jsxs25(Tooltip, { children: [
-              /* @__PURE__ */ jsx45(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx45(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx45(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", "aria-label": "Compartilhar", children: /* @__PURE__ */ jsx45(Share2, { className: "h-4 w-4 text-muted-foreground" }) }) }) }),
-              /* @__PURE__ */ jsx45(TooltipContent, { children: /* @__PURE__ */ jsx45("p", { children: "Compartilhar" }) })
+              /* @__PURE__ */ jsx46(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx46(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx46(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", "aria-label": "Compartilhar", children: /* @__PURE__ */ jsx46(Share2, { className: "h-4 w-4 text-muted-foreground" }) }) }) }),
+              /* @__PURE__ */ jsx46(TooltipContent, { children: /* @__PURE__ */ jsx46("p", { children: "Compartilhar" }) })
             ] }),
             /* @__PURE__ */ jsxs25(DropdownMenuContent, { align: "end", className: "w-56", children: [
-              /* @__PURE__ */ jsx45(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("x", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
-                /* @__PURE__ */ jsx45(X6, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsx46(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("x", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
+                /* @__PURE__ */ jsx46(X6, { className: "h-3.5 w-3.5" }),
                 " X (Twitter)"
               ] }) }),
-              /* @__PURE__ */ jsx45(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("facebook", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
-                /* @__PURE__ */ jsx45(Facebook, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsx46(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("facebook", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
+                /* @__PURE__ */ jsx46(Facebook, { className: "h-3.5 w-3.5" }),
                 " Facebook"
               ] }) }),
-              /* @__PURE__ */ jsx45(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("whatsapp", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
-                /* @__PURE__ */ jsx45(MessageSquareText, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsx46(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("whatsapp", auctionFullUrl, auction.title), target: "_blank", rel: "noopener noreferrer", className: "flex items-center gap-2 text-xs", children: [
+                /* @__PURE__ */ jsx46(MessageSquareText, { className: "h-3.5 w-3.5" }),
                 " WhatsApp"
               ] }) }),
-              /* @__PURE__ */ jsx45(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("email", auctionFullUrl, auction.title), className: "flex items-center gap-2 text-xs", children: [
-                /* @__PURE__ */ jsx45(Mail, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsx46(DropdownMenuItem, { asChild: true, children: /* @__PURE__ */ jsxs25("a", { href: getSocialLink("email", auctionFullUrl, auction.title), className: "flex items-center gap-2 text-xs", children: [
+                /* @__PURE__ */ jsx46(Mail, { className: "h-3.5 w-3.5" }),
                 " Email"
               ] }) })
             ] })
           ] }),
-          /* @__PURE__ */ jsx45(
+          /* @__PURE__ */ jsx46(
             EntityEditMenu,
             {
               entityType: "auction",
@@ -3279,51 +3401,51 @@ function AuctionCard({ auction, onUpdate }) {
           ] }),
           auctionTypeDisplay && /* @__PURE__ */ jsxs25("div", { className: "flex items-center gap-1", "data-ai-id": `auction-card-type-${auction.id}`, children: [
             auctionTypeDisplay.icon,
-            /* @__PURE__ */ jsx45("span", { children: auctionTypeDisplay.label })
+            /* @__PURE__ */ jsx46("span", { children: auctionTypeDisplay.label })
           ] })
         ] }),
-        /* @__PURE__ */ jsx45(Link6, { href: `/auctions/${auction.publicId || auction.id}`, children: /* @__PURE__ */ jsx45("h3", { "data-ai-id": `auction-card-title-${auction.id}`, className: "text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2", children: auction.title }) }),
+        /* @__PURE__ */ jsx46(Link6, { href: `/auctions/${auction.publicId || auction.id}`, children: /* @__PURE__ */ jsx46("h3", { "data-ai-id": `auction-card-title-${auction.id}`, className: "text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2", children: auction.title }) }),
         /* @__PURE__ */ jsxs25("div", { className: "grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2", "data-ai-id": `auction-card-counters-${auction.id}`, children: [
           /* @__PURE__ */ jsxs25("div", { className: "flex items-center", title: `${auction.totalLots || 0} Lotes`, children: [
-            /* @__PURE__ */ jsx45(ListChecks3, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
+            /* @__PURE__ */ jsx46(ListChecks3, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
             /* @__PURE__ */ jsxs25("span", { className: "truncate", children: [
               auction.totalLots || 0,
               " Lotes"
             ] })
           ] }),
           /* @__PURE__ */ jsxs25("div", { className: "flex items-center", title: `${auction.visits || 0} Visitas`, children: [
-            /* @__PURE__ */ jsx45(Eye2, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
+            /* @__PURE__ */ jsx46(Eye2, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
             /* @__PURE__ */ jsxs25("span", { className: "truncate", children: [
               auction.visits || 0,
               " Visitas"
             ] })
           ] }),
           /* @__PURE__ */ jsxs25("div", { className: "flex items-center", title: `${auction.totalHabilitatedUsers || 0} Usu\xE1rios Habilitados`, children: [
-            /* @__PURE__ */ jsx45(Users, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
+            /* @__PURE__ */ jsx46(Users, { className: "h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" }),
             /* @__PURE__ */ jsxs25("span", { className: "truncate", children: [
               auction.totalHabilitatedUsers || 0,
               " Habilitados"
             ] })
           ] })
         ] }),
-        auction.auctionStages && auction.auctionStages.length > 0 ? /* @__PURE__ */ jsx45("div", { className: "space-y-1 mb-3 text-xs", "data-ai-id": `auction-card-timeline-${auction.id}`, children: /* @__PURE__ */ jsx45(AuctionStagesTimeline, { stages: auction.auctionStages }) }) : null
+        auction.auctionStages && auction.auctionStages.length > 0 ? /* @__PURE__ */ jsx46("div", { className: "space-y-1 mb-3 text-xs", "data-ai-id": `auction-card-timeline-${auction.id}`, children: /* @__PURE__ */ jsx46(AuctionStagesTimeline, { stages: auction.auctionStages }) }) : null
       ] }),
       /* @__PURE__ */ jsxs25(CardFooter, { className: "p-4 border-t flex-col items-start space-y-2", children: [
         auction.initialOffer && /* @__PURE__ */ jsxs25("div", { className: "w-full", "data-ai-id": `auction-card-initial-offer-${auction.id}`, children: [
-          /* @__PURE__ */ jsx45("p", { className: "text-xs text-muted-foreground", children: auction.auctionType === "TOMADA_DE_PRECOS" ? "Valor de Refer\xEAncia" : "A partir de" }),
+          /* @__PURE__ */ jsx46("p", { className: "text-xs text-muted-foreground", children: auction.auctionType === "TOMADA_DE_PRECOS" ? "Valor de Refer\xEAncia" : "A partir de" }),
           /* @__PURE__ */ jsxs25("p", { className: "text-2xl font-bold text-primary", children: [
             "R$ ",
             auction.initialOffer.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           ] })
         ] }),
-        /* @__PURE__ */ jsx45(Button, { asChild: true, className: "w-full mt-2", children: /* @__PURE__ */ jsxs25(Link6, { href: `/auctions/${auction.publicId || auction.id}`, children: [
+        /* @__PURE__ */ jsx46(Button, { asChild: true, className: "w-full mt-2", children: /* @__PURE__ */ jsxs25(Link6, { href: `/auctions/${auction.publicId || auction.id}`, children: [
           "Ver Lotes (",
           auction.totalLots,
           ")"
         ] }) })
       ] })
     ] }),
-    isPreviewModalOpen && /* @__PURE__ */ jsx45(
+    isPreviewModalOpen && /* @__PURE__ */ jsx46(
       AuctionPreviewModal,
       {
         auction,
@@ -3335,7 +3457,7 @@ function AuctionCard({ auction, onUpdate }) {
 }
 
 // src/components/lot-card.tsx
-import * as React35 from "react";
+import * as React36 from "react";
 import Link8 from "next/link";
 import Image5 from "next/image";
 import { Heart as Heart2, Eye as Eye4, MapPin as MapPin4, Gavel as Gavel2, Percent as Percent2, Zap as Zap2, TrendingUp as TrendingUp2, Crown as Crown2, Tag as Tag3 } from "lucide-react";
@@ -3348,16 +3470,16 @@ import Link7 from "next/link";
 import { useState as useState9, useMemo as useMemo5, useEffect as useEffect3 } from "react";
 import { isPast as isPast4, differenceInSeconds, format as format3, isValid } from "date-fns";
 import { ptBR as ptBR2 } from "date-fns/locale";
-import { Fragment as Fragment7, jsx as jsx46, jsxs as jsxs26 } from "react/jsx-runtime";
+import { Fragment as Fragment7, jsx as jsx47, jsxs as jsxs26 } from "react/jsx-runtime";
 var InfoItem = ({ icon: Icon2, value, label }) => {
   if (!value && value !== 0) return null;
   return /* @__PURE__ */ jsxs26("div", { className: "flex items-center text-sm text-muted-foreground bg-secondary/30 p-2 rounded-md", children: [
-    /* @__PURE__ */ jsx46(Icon2, { className: "h-5 w-5 mr-2 text-primary/80" }),
+    /* @__PURE__ */ jsx47(Icon2, { className: "h-5 w-5 mr-2 text-primary/80" }),
     /* @__PURE__ */ jsxs26("span", { className: "font-semibold text-foreground mr-1", children: [
       label,
       ":"
     ] }),
-    /* @__PURE__ */ jsx46("span", { children: value })
+    /* @__PURE__ */ jsx47("span", { children: value })
   ] });
 };
 var TimeRemaining = ({ endDate }) => {
@@ -3383,7 +3505,7 @@ var TimeRemaining = ({ endDate }) => {
     }, 1e3);
     return () => clearInterval(interval);
   }, [endDate]);
-  return /* @__PURE__ */ jsx46(Fragment7, { children: remaining || "Calculando..." });
+  return /* @__PURE__ */ jsx47(Fragment7, { children: remaining || "Calculando..." });
 };
 function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
   if (!isOpen || !lot) return null;
@@ -3431,9 +3553,9 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
     { label: "Ra\xE7a", value: lot.bens?.[0]?.breed, icon: Leaf }
   ].filter((spec) => spec.value !== void 0 && spec.value !== null);
   const formattedEndDate = effectiveLotEndDate ? format3(effectiveLotEndDate, "dd/MM/yyyy '\xE0s' HH:mm", { locale: ptBR2 }) : "N\xE3o definida";
-  return /* @__PURE__ */ jsx46(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs26(DialogContent, { className: "sm:max-w-[850px] max-h-[90vh] flex flex-col p-0", children: [
+  return /* @__PURE__ */ jsx47(Dialog, { open: isOpen, onOpenChange: onClose, children: /* @__PURE__ */ jsxs26(DialogContent, { className: "sm:max-w-[850px] max-h-[90vh] flex flex-col p-0", children: [
     /* @__PURE__ */ jsxs26(DialogHeader, { className: "p-4 sm:p-6 pb-0 flex-shrink-0", children: [
-      /* @__PURE__ */ jsx46(DialogTitle, { className: "text-xl sm:text-2xl font-bold font-headline line-clamp-2", children: lot.title }),
+      /* @__PURE__ */ jsx47(DialogTitle, { className: "text-xl sm:text-2xl font-bold font-headline line-clamp-2", children: lot.title }),
       /* @__PURE__ */ jsxs26(DialogDescription, { children: [
         "Lote N\xBA: ",
         lot.number || lot.id.replace("LOTE", "")
@@ -3442,19 +3564,19 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
     /* @__PURE__ */ jsxs26("div", { className: "flex-grow grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto px-4 sm:px-6", children: [
       /* @__PURE__ */ jsxs26("div", { className: "space-y-2", children: [
         /* @__PURE__ */ jsxs26("div", { className: "relative aspect-video w-full bg-muted rounded-md overflow-hidden", children: [
-          /* @__PURE__ */ jsx46(Image4, { src: gallery[currentImageIndex], alt: `Imagem ${currentImageIndex + 1} de ${lot.title}`, fill: true, className: "object-contain", "data-ai-hint": lot.dataAiHint || "imagem lote preview", priority: true }),
+          /* @__PURE__ */ jsx47(Image4, { src: gallery[currentImageIndex], alt: `Imagem ${currentImageIndex + 1} de ${lot.title}`, fill: true, className: "object-contain", "data-ai-hint": lot.dataAiHint || "imagem lote preview", priority: true }),
           gallery.length > 1 && /* @__PURE__ */ jsxs26(Fragment7, { children: [
-            /* @__PURE__ */ jsx46(Button, { variant: "outline", size: "icon", onClick: prevImage, className: "absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md", children: /* @__PURE__ */ jsx46(ChevronLeft3, { className: "h-5 w-5" }) }),
-            /* @__PURE__ */ jsx46(Button, { variant: "outline", size: "icon", onClick: nextImage, className: "absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md", children: /* @__PURE__ */ jsx46(ChevronRight7, { className: "h-5 w-5" }) })
+            /* @__PURE__ */ jsx47(Button, { variant: "outline", size: "icon", onClick: prevImage, className: "absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md", children: /* @__PURE__ */ jsx47(ChevronLeft3, { className: "h-5 w-5" }) }),
+            /* @__PURE__ */ jsx47(Button, { variant: "outline", size: "icon", onClick: nextImage, className: "absolute right-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md", children: /* @__PURE__ */ jsx47(ChevronRight7, { className: "h-5 w-5" }) })
           ] })
         ] }),
-        gallery.length > 1 && /* @__PURE__ */ jsx46("div", { className: "grid grid-cols-5 gap-1.5", children: gallery.slice(0, 5).map((imgUrl, index) => /* @__PURE__ */ jsx46("button", { onClick: () => setCurrentImageIndex(index), className: `relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${index === currentImageIndex ? "border-primary" : "border-transparent"}`, children: /* @__PURE__ */ jsx46(Image4, { src: imgUrl, alt: `Thumbnail ${index + 1}`, fill: true, className: "object-cover" }) }, index)) })
+        gallery.length > 1 && /* @__PURE__ */ jsx47("div", { className: "grid grid-cols-5 gap-1.5", children: gallery.slice(0, 5).map((imgUrl, index) => /* @__PURE__ */ jsx47("button", { onClick: () => setCurrentImageIndex(index), className: `relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${index === currentImageIndex ? "border-primary" : "border-transparent"}`, children: /* @__PURE__ */ jsx47(Image4, { src: imgUrl, alt: `Thumbnail ${index + 1}`, fill: true, className: "object-cover" }) }, index)) })
       ] }),
       /* @__PURE__ */ jsxs26("div", { className: "space-y-4", children: [
         /* @__PURE__ */ jsxs26("div", { className: "p-3 border rounded-lg bg-amber-50 dark:bg-amber-900/20 border-amber-500/30", children: [
           /* @__PURE__ */ jsxs26("div", { className: "flex items-center gap-2 text-amber-700 dark:text-amber-300", children: [
-            /* @__PURE__ */ jsx46(TrendingUp, { className: "h-5 w-5" }),
-            /* @__PURE__ */ jsx46("p", { className: "font-bold", children: "Alta Demanda!" })
+            /* @__PURE__ */ jsx47(TrendingUp, { className: "h-5 w-5" }),
+            /* @__PURE__ */ jsx47("p", { className: "font-bold", children: "Alta Demanda!" })
           ] }),
           /* @__PURE__ */ jsxs26("p", { className: "text-xs text-amber-600 dark:text-amber-400 mt-1", children: [
             lot.views || 0,
@@ -3464,7 +3586,7 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
           ] })
         ] }),
         /* @__PURE__ */ jsxs26("div", { className: "space-y-2", children: [
-          /* @__PURE__ */ jsx46("p", { className: "text-sm text-muted-foreground", children: "Lance Atual" }),
+          /* @__PURE__ */ jsx47("p", { className: "text-sm text-muted-foreground", children: "Lance Atual" }),
           /* @__PURE__ */ jsxs26("p", { className: "text-4xl font-bold text-primary", children: [
             "R$ ",
             lot.price.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
@@ -3474,17 +3596,17 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
             (lot.price + (lot.bidIncrementStep || 100)).toLocaleString("pt-BR")
           ] })
         ] }),
-        /* @__PURE__ */ jsx46(Separator3, {}),
+        /* @__PURE__ */ jsx47(Separator4, {}),
         /* @__PURE__ */ jsxs26("div", { className: "space-y-2", children: [
           /* @__PURE__ */ jsxs26("div", { className: "flex items-center text-destructive font-semibold", children: [
-            /* @__PURE__ */ jsx46(Clock3, { className: "h-5 w-5 mr-2" }),
+            /* @__PURE__ */ jsx47(Clock3, { className: "h-5 w-5 mr-2" }),
             /* @__PURE__ */ jsxs26("span", { className: "text-lg", children: [
               "Encerra em: ",
-              /* @__PURE__ */ jsx46(TimeRemaining, { endDate: effectiveLotEndDate })
+              /* @__PURE__ */ jsx47(TimeRemaining, { endDate: effectiveLotEndDate })
             ] })
           ] }),
           discountPercentage > 0 && /* @__PURE__ */ jsxs26("div", { className: "flex items-center text-green-600 font-semibold", children: [
-            /* @__PURE__ */ jsx46(Percent, { className: "h-5 w-5 mr-2" }),
+            /* @__PURE__ */ jsx47(Percent, { className: "h-5 w-5 mr-2" }),
             /* @__PURE__ */ jsxs26("span", { className: "text-lg", children: [
               discountPercentage,
               "% de Desconto sobre a 1\xAA Pra\xE7a"
@@ -3492,21 +3614,21 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
           ] })
         ] }),
         keySpecs.length > 0 && /* @__PURE__ */ jsxs26(Fragment7, { children: [
-          /* @__PURE__ */ jsx46(Separator3, {}),
-          /* @__PURE__ */ jsx46("div", { className: "grid grid-cols-2 gap-2 text-sm", children: keySpecs.map((spec) => /* @__PURE__ */ jsx46(InfoItem, { icon: spec.icon, value: `${spec.value}`, label: spec.label }, spec.label)) })
+          /* @__PURE__ */ jsx47(Separator4, {}),
+          /* @__PURE__ */ jsx47("div", { className: "grid grid-cols-2 gap-2 text-sm", children: keySpecs.map((spec) => /* @__PURE__ */ jsx47(InfoItem, { icon: spec.icon, value: `${spec.value}`, label: spec.label }, spec.label)) })
         ] })
       ] })
     ] }),
     /* @__PURE__ */ jsxs26(DialogFooter, { className: "p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0", children: [
       /* @__PURE__ */ jsxs26("div", { className: "text-xs text-muted-foreground hidden sm:flex items-center gap-1.5", children: [
-        /* @__PURE__ */ jsx46(CalendarDays4, { className: "h-4 w-4" }),
+        /* @__PURE__ */ jsx47(CalendarDays4, { className: "h-4 w-4" }),
         /* @__PURE__ */ jsxs26("span", { children: [
           "Prazo: ",
           formattedEndDate
         ] })
       ] }),
-      /* @__PURE__ */ jsx46(Button, { asChild: true, size: "lg", onClick: onClose, children: /* @__PURE__ */ jsxs26(Link7, { href: lotDetailUrl, children: [
-        /* @__PURE__ */ jsx46(Eye3, { className: "mr-2 h-5 w-5" }),
+      /* @__PURE__ */ jsx47(Button, { asChild: true, size: "lg", onClick: onClose, children: /* @__PURE__ */ jsxs26(Link7, { href: lotDetailUrl, children: [
+        /* @__PURE__ */ jsx47(Eye3, { className: "mr-2 h-5 w-5" }),
         " Ver Detalhes e Dar Lance"
       ] }) })
     ] })
@@ -3514,11 +3636,11 @@ function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }) {
 }
 
 // src/components/lot-card.tsx
-import { Fragment as Fragment8, jsx as jsx47, jsxs as jsxs27 } from "react/jsx-runtime";
+import { Fragment as Fragment8, jsx as jsx48, jsxs as jsxs27 } from "react/jsx-runtime";
 function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }) {
-  const [isFavorite, setIsFavorite] = React35.useState(false);
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = React35.useState(false);
-  const [isViewed, setIsViewed] = React35.useState(false);
+  const [isFavorite, setIsFavorite] = React36.useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React36.useState(false);
+  const [isViewed, setIsViewed] = React36.useState(false);
   const hasEditPermission = true;
   const mentalTriggersGlobalSettings = platformSettings?.mentalTriggerSettings || {};
   const sectionBadges = badgeVisibilityConfig || platformSettings.sectionBadgeVisibility?.searchGrid || {
@@ -3530,10 +3652,10 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     showExclusiveBadge: true
   };
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
-  const { effectiveLotEndDate } = React35.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
-  const activeStage = React35.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
-  const activeLotPrices = React35.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
-  React35.useEffect(() => {
+  const { effectiveLotEndDate } = React36.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const activeStage = React36.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
+  const activeLotPrices = React36.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
+  React36.useEffect(() => {
     setIsFavorite(isLotFavoriteInStorage(lot.id));
     setIsViewed(getRecentlyViewedIds().includes(lot.id));
   }, [lot.id]);
@@ -3555,13 +3677,13 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   };
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || "N\xE3o informado";
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
-  const discountPercentage = React35.useMemo(() => {
+  const discountPercentage = React36.useMemo(() => {
     if (activeLotPrices?.initialBid && lot.evaluationValue && activeLotPrices.initialBid < lot.evaluationValue) {
       return Math.round((lot.evaluationValue - activeLotPrices.initialBid) / lot.evaluationValue * 100);
     }
     return lot.discountPercentage || 0;
   }, [activeLotPrices, lot.evaluationValue, lot.discountPercentage]);
-  const mentalTriggers = React35.useMemo(() => {
+  const mentalTriggers = React36.useMemo(() => {
     let triggers = lot.additionalTriggers ? [...lot.additionalTriggers] : [];
     const settings = mentalTriggersGlobalSettings;
     if (sectionBadges.showPopularityBadge !== false && settings.showPopularityBadge && (lot.views || 0) > (settings.popularityViewThreshold || 500)) {
@@ -3580,7 +3702,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   return /* @__PURE__ */ jsxs27(Fragment8, { children: [
     /* @__PURE__ */ jsxs27(Card, { "data-ai-id": `lot-card-container-${lot.id}`, className: "flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group", children: [
       /* @__PURE__ */ jsxs27("div", { className: "relative", children: [
-        /* @__PURE__ */ jsx47(Link8, { href: lotDetailUrl, className: "block", children: /* @__PURE__ */ jsx47("div", { className: "aspect-video relative bg-muted", children: /* @__PURE__ */ jsx47(
+        /* @__PURE__ */ jsx48(Link8, { href: lotDetailUrl, className: "block", children: /* @__PURE__ */ jsx48("div", { className: "aspect-video relative bg-muted", children: /* @__PURE__ */ jsx48(
           Image5,
           {
             src: isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay : "https://placehold.co/600x400.png",
@@ -3592,36 +3714,36 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           }
         ) }) }),
         /* @__PURE__ */ jsxs27("div", { className: "absolute top-2 left-2 flex flex-col items-start gap-1 z-10", "data-ai-id": `lot-card-status-badges-${lot.id}`, children: [
-          sectionBadges.showStatusBadge !== false && /* @__PURE__ */ jsx47(Badge, { className: `text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`, children: getAuctionStatusText(lot.status) }),
+          sectionBadges.showStatusBadge !== false && /* @__PURE__ */ jsx48(Badge, { className: `text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`, children: getAuctionStatusText(lot.status) }),
           isViewed && /* @__PURE__ */ jsxs27(Badge, { variant: "outline", className: "text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700", children: [
-            /* @__PURE__ */ jsx47(Eye4, { className: "h-3 w-3 mr-0.5" }),
+            /* @__PURE__ */ jsx48(Eye4, { className: "h-3 w-3 mr-0.5" }),
             " Visto"
           ] })
         ] }),
         /* @__PURE__ */ jsxs27("div", { className: "absolute top-2 right-2 flex flex-col items-end gap-1 z-10", "data-ai-id": `lot-card-mental-triggers-${lot.id}`, children: [
           sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && /* @__PURE__ */ jsxs27(Badge, { variant: "destructive", className: "text-xs animate-pulse", children: [
-            /* @__PURE__ */ jsx47(Percent2, { className: "h-3 w-3 mr-1" }),
+            /* @__PURE__ */ jsx48(Percent2, { className: "h-3 w-3 mr-1" }),
             " ",
             discountPercentage,
             "% OFF"
           ] }),
           mentalTriggers.map((trigger) => /* @__PURE__ */ jsxs27(Badge, { variant: "secondary", className: "text-xs bg-amber-100 text-amber-700 border-amber-300", children: [
-            trigger === "MAIS VISITADO" && /* @__PURE__ */ jsx47(TrendingUp2, { className: "h-3 w-3 mr-0.5" }),
-            trigger === "LANCE QUENTE" && /* @__PURE__ */ jsx47(Zap2, { className: "h-3 w-3 mr-0.5 text-red-500 fill-red-500" }),
-            trigger === "EXCLUSIVO" && /* @__PURE__ */ jsx47(Crown2, { className: "h-3 w-3 mr-0.5 text-purple-600" }),
+            trigger === "MAIS VISITADO" && /* @__PURE__ */ jsx48(TrendingUp2, { className: "h-3 w-3 mr-0.5" }),
+            trigger === "LANCE QUENTE" && /* @__PURE__ */ jsx48(Zap2, { className: "h-3 w-3 mr-0.5 text-red-500 fill-red-500" }),
+            trigger === "EXCLUSIVO" && /* @__PURE__ */ jsx48(Crown2, { className: "h-3 w-3 mr-0.5 text-purple-600" }),
             trigger
           ] }, trigger))
         ] }),
-        /* @__PURE__ */ jsx47("div", { className: "absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4", children: /* @__PURE__ */ jsxs27(TooltipProvider, { children: [
+        /* @__PURE__ */ jsx48("div", { className: "absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4", children: /* @__PURE__ */ jsxs27(TooltipProvider, { children: [
           /* @__PURE__ */ jsxs27(Tooltip, { children: [
-            /* @__PURE__ */ jsx47(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx47(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handleFavoriteToggle, "aria-label": isFavorite ? "Desfavoritar" : "Favoritar", children: /* @__PURE__ */ jsx47(Heart2, { className: `h-4 w-4 ${isFavorite ? "text-red-500 fill-red-500" : "text-muted-foreground"}` }) }) }),
-            /* @__PURE__ */ jsx47(TooltipContent, { children: /* @__PURE__ */ jsx47("p", { children: isFavorite ? "Desfavoritar" : "Favoritar" }) })
+            /* @__PURE__ */ jsx48(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx48(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handleFavoriteToggle, "aria-label": isFavorite ? "Desfavoritar" : "Favoritar", children: /* @__PURE__ */ jsx48(Heart2, { className: `h-4 w-4 ${isFavorite ? "text-red-500 fill-red-500" : "text-muted-foreground"}` }) }) }),
+            /* @__PURE__ */ jsx48(TooltipContent, { children: /* @__PURE__ */ jsx48("p", { children: isFavorite ? "Desfavoritar" : "Favoritar" }) })
           ] }),
           /* @__PURE__ */ jsxs27(Tooltip, { children: [
-            /* @__PURE__ */ jsx47(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx47(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handlePreviewOpen, "aria-label": "Pr\xE9-visualizar", children: /* @__PURE__ */ jsx47(Eye4, { className: "h-4 w-4 text-muted-foreground" }) }) }),
-            /* @__PURE__ */ jsx47(TooltipContent, { children: /* @__PURE__ */ jsx47("p", { children: "Pr\xE9-visualizar" }) })
+            /* @__PURE__ */ jsx48(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx48(Button, { variant: "outline", size: "icon", className: "h-8 w-8 bg-background/80 hover:bg-background", onClick: handlePreviewOpen, "aria-label": "Pr\xE9-visualizar", children: /* @__PURE__ */ jsx48(Eye4, { className: "h-4 w-4 text-muted-foreground" }) }) }),
+            /* @__PURE__ */ jsx48(TooltipContent, { children: /* @__PURE__ */ jsx48("p", { children: "Pr\xE9-visualizar" }) })
           ] }),
-          hasEditPermission && /* @__PURE__ */ jsx47(
+          hasEditPermission && /* @__PURE__ */ jsx48(
             EntityEditMenu,
             {
               entityType: "lot",
@@ -3637,37 +3759,37 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
       /* @__PURE__ */ jsxs27(CardContent, { className: "p-3 flex-grow space-y-1.5", children: [
         /* @__PURE__ */ jsxs27("div", { className: "flex justify-between items-center text-xs text-muted-foreground", children: [
           /* @__PURE__ */ jsxs27("div", { className: "flex items-center gap-1", "data-ai-id": `lot-card-category-${lot.id}`, children: [
-            /* @__PURE__ */ jsx47(Tag3, { className: "h-3 w-3" }),
-            /* @__PURE__ */ jsx47("span", { children: lot.type })
+            /* @__PURE__ */ jsx48(Tag3, { className: "h-3 w-3" }),
+            /* @__PURE__ */ jsx48("span", { children: lot.type })
           ] }),
           /* @__PURE__ */ jsxs27("div", { className: "flex items-center gap-1", "data-ai-id": `lot-card-bid-count-${lot.id}`, children: [
-            /* @__PURE__ */ jsx47(Gavel2, { className: "h-3 w-3" }),
+            /* @__PURE__ */ jsx48(Gavel2, { className: "h-3 w-3" }),
             /* @__PURE__ */ jsxs27("span", { children: [
               lot.bidsCount || 0,
               " Lances"
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx47(Link8, { href: lotDetailUrl, children: /* @__PURE__ */ jsxs27("h3", { "data-ai-id": `lot-card-title-${lot.id}`, className: "text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2", children: [
+        /* @__PURE__ */ jsx48(Link8, { href: lotDetailUrl, children: /* @__PURE__ */ jsxs27("h3", { "data-ai-id": `lot-card-title-${lot.id}`, className: "text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2", children: [
           "Lote ",
           lot.number || lot.id.replace("LOTE", ""),
           " - ",
           lot.title
         ] }) }),
         /* @__PURE__ */ jsxs27("div", { className: "flex items-center text-xs text-muted-foreground", "data-ai-id": `lot-card-location-${lot.id}`, children: [
-          /* @__PURE__ */ jsx47(MapPin4, { className: "h-3 w-3 mr-1" }),
-          /* @__PURE__ */ jsx47("span", { children: displayLocation })
+          /* @__PURE__ */ jsx48(MapPin4, { className: "h-3 w-3 mr-1" }),
+          /* @__PURE__ */ jsx48("span", { children: displayLocation })
         ] })
       ] }),
-      /* @__PURE__ */ jsx47(CardFooter, { className: "p-3 border-t flex-col items-start space-y-1.5", "data-ai-id": `lot-card-footer-${lot.id}`, children: /* @__PURE__ */ jsx47("div", { className: "w-full flex justify-between items-end", "data-ai-id": `lot-card-price-section-${lot.id}`, children: /* @__PURE__ */ jsxs27("div", { "data-ai-id": `lot-card-price-info-${lot.id}`, children: [
-        /* @__PURE__ */ jsx47("p", { className: "text-xs text-muted-foreground", children: lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial" }),
+      /* @__PURE__ */ jsx48(CardFooter, { className: "p-3 border-t flex-col items-start space-y-1.5", "data-ai-id": `lot-card-footer-${lot.id}`, children: /* @__PURE__ */ jsx48("div", { className: "w-full flex justify-between items-end", "data-ai-id": `lot-card-price-section-${lot.id}`, children: /* @__PURE__ */ jsxs27("div", { "data-ai-id": `lot-card-price-info-${lot.id}`, children: [
+        /* @__PURE__ */ jsx48("p", { className: "text-xs text-muted-foreground", children: lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial" }),
         /* @__PURE__ */ jsxs27("p", { className: `text-xl font-bold ${effectiveLotEndDate && isPast5(effectiveLotEndDate) ? "text-muted-foreground line-through" : "text-primary"}`, children: [
           "R$ ",
           (activeLotPrices?.initialBid ?? lot.price).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
         ] })
       ] }) }) })
     ] }),
-    isPreviewModalOpen && /* @__PURE__ */ jsx47(
+    isPreviewModalOpen && /* @__PURE__ */ jsx48(
       LotPreviewModal,
       {
         lot,
@@ -3680,39 +3802,39 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   ] });
 }
 function LotCard(props) {
-  const [isClient, setIsClient] = React35.useState(false);
-  React35.useEffect(() => {
+  const [isClient, setIsClient] = React36.useState(false);
+  React36.useEffect(() => {
     setIsClient(true);
   }, []);
   if (!isClient) {
     return /* @__PURE__ */ jsxs27(Card, { "data-ai-id": `lot-card-skeleton-${props.lot.id}`, className: "flex flex-col overflow-hidden h-full shadow-md rounded-lg", children: [
-      /* @__PURE__ */ jsx47("div", { className: "aspect-video relative bg-muted animate-pulse" }),
+      /* @__PURE__ */ jsx48("div", { className: "aspect-video relative bg-muted animate-pulse" }),
       /* @__PURE__ */ jsxs27(CardContent, { className: "p-3 flex-grow space-y-1.5", children: [
-        /* @__PURE__ */ jsx47(Skeleton, { className: "h-5 bg-muted rounded w-3/4" }),
-        /* @__PURE__ */ jsx47(Skeleton, { className: "h-4 bg-muted rounded w-1/2" }),
-        /* @__PURE__ */ jsx47(Skeleton, { className: "h-4 bg-muted rounded w-full" })
+        /* @__PURE__ */ jsx48(Skeleton, { className: "h-5 bg-muted rounded w-3/4" }),
+        /* @__PURE__ */ jsx48(Skeleton, { className: "h-4 bg-muted rounded w-1/2" }),
+        /* @__PURE__ */ jsx48(Skeleton, { className: "h-4 bg-muted rounded w-full" })
       ] }),
       /* @__PURE__ */ jsxs27(CardFooter, { className: "p-3 border-t flex-col items-start space-y-1.5", children: [
-        /* @__PURE__ */ jsx47(Skeleton, { className: "h-4 bg-muted rounded w-1/4" }),
-        /* @__PURE__ */ jsx47(Skeleton, { className: "h-6 bg-muted rounded w-1/2" })
+        /* @__PURE__ */ jsx48(Skeleton, { className: "h-4 bg-muted rounded w-1/4" }),
+        /* @__PURE__ */ jsx48(Skeleton, { className: "h-6 bg-muted rounded w-1/2" })
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsx47(LotCardClientContent, { ...props });
+  return /* @__PURE__ */ jsx48(LotCardClientContent, { ...props });
 }
 
 // src/components/auction-list-item.tsx
-import * as React36 from "react";
+import * as React37 from "react";
 import Image6 from "next/image";
 import Link9 from "next/link";
 import { Eye as Eye5, ListChecks as ListChecks4, Gavel as AuctionTypeIcon2, FileText as TomadaPrecosIcon2, MapPin as MapPin5, Tag as Tag4, Users as Users3 } from "lucide-react";
 import { isPast as isPast6, differenceInDays as differenceInDays2 } from "date-fns";
-import { jsx as jsx48, jsxs as jsxs28 } from "react/jsx-runtime";
+import { jsx as jsx49, jsxs as jsxs28 } from "react/jsx-runtime";
 function AuctionListItem({ auction, onUpdate }) {
-  const auctionTypeDisplay = auction.auctionType === "TOMADA_DE_PRECOS" ? { label: "Tomada de Pre\xE7os", icon: /* @__PURE__ */ jsx48(TomadaPrecosIcon2, { className: "h-3.5 w-3.5" }) } : { label: auction.auctionType || "Leil\xE3o", icon: /* @__PURE__ */ jsx48(AuctionTypeIcon2, { className: "h-3.5 w-3.5" }) };
+  const auctionTypeDisplay = auction.auctionType === "TOMADA_DE_PRECOS" ? { label: "Tomada de Pre\xE7os", icon: /* @__PURE__ */ jsx49(TomadaPrecosIcon2, { className: "h-3.5 w-3.5" }) } : { label: auction.auctionType || "Leil\xE3o", icon: /* @__PURE__ */ jsx49(AuctionTypeIcon2, { className: "h-3.5 w-3.5" }) };
   const displayLocation = auction.cityId && auction.stateId ? `${auction.cityId} - ${auction.stateId}` : auction.stateId || auction.cityId || "N/A";
   const sellerName = auction.seller?.name;
-  const mentalTriggers = React36.useMemo(() => {
+  const mentalTriggers = React37.useMemo(() => {
     const triggers = [];
     const now = /* @__PURE__ */ new Date();
     if (auction.endDate) {
@@ -3736,9 +3858,9 @@ function AuctionListItem({ auction, onUpdate }) {
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : void 0;
-  return /* @__PURE__ */ jsx48(TooltipProvider, { children: /* @__PURE__ */ jsx48(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", children: /* @__PURE__ */ jsxs28("div", { className: "flex flex-col md:flex-row", children: [
+  return /* @__PURE__ */ jsx49(TooltipProvider, { children: /* @__PURE__ */ jsx49(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", children: /* @__PURE__ */ jsxs28("div", { className: "flex flex-col md:flex-row", children: [
     /* @__PURE__ */ jsxs28("div", { className: "md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted", children: [
-      /* @__PURE__ */ jsx48(Link9, { href: `/auctions/${auction.publicId || auction.id}`, className: "block h-full w-full", children: /* @__PURE__ */ jsx48(
+      /* @__PURE__ */ jsx49(Link9, { href: `/auctions/${auction.publicId || auction.id}`, className: "block h-full w-full", children: /* @__PURE__ */ jsx49(
         Image6,
         {
           src: mainImageUrl,
@@ -3749,11 +3871,11 @@ function AuctionListItem({ auction, onUpdate }) {
         }
       ) }),
       sellerLogoUrl && /* @__PURE__ */ jsxs28(Tooltip, { children: [
-        /* @__PURE__ */ jsx48(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx48(Link9, { href: auction.seller?.slug ? `/sellers/${auction.seller.slug}` : "#", onClick: (e) => e.stopPropagation(), className: "absolute bottom-1 right-1 z-10", children: /* @__PURE__ */ jsxs28(Avatar, { className: "h-10 w-10 border-2 bg-background border-border shadow-md", children: [
-          /* @__PURE__ */ jsx48(AvatarImage, { src: sellerLogoUrl, alt: sellerName || "Logo Comitente", "data-ai-hint": auction.seller?.dataAiHintLogo || "logo comitente pequeno" }),
-          /* @__PURE__ */ jsx48(AvatarFallback, { children: sellerName ? sellerName.charAt(0) : "C" })
+        /* @__PURE__ */ jsx49(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx49(Link9, { href: auction.seller?.slug ? `/sellers/${auction.seller.slug}` : "#", onClick: (e) => e.stopPropagation(), className: "absolute bottom-1 right-1 z-10", children: /* @__PURE__ */ jsxs28(Avatar, { className: "h-10 w-10 border-2 bg-background border-border shadow-md", children: [
+          /* @__PURE__ */ jsx49(AvatarImage, { src: sellerLogoUrl, alt: sellerName || "Logo Comitente", "data-ai-hint": auction.seller?.dataAiHintLogo || "logo comitente pequeno" }),
+          /* @__PURE__ */ jsx49(AvatarFallback, { children: sellerName ? sellerName.charAt(0) : "C" })
         ] }) }) }),
-        /* @__PURE__ */ jsx48(TooltipContent, { children: /* @__PURE__ */ jsxs28("p", { children: [
+        /* @__PURE__ */ jsx49(TooltipContent, { children: /* @__PURE__ */ jsxs28("p", { children: [
           "Comitente: ",
           sellerName
         ] }) })
@@ -3763,7 +3885,7 @@ function AuctionListItem({ auction, onUpdate }) {
       /* @__PURE__ */ jsxs28("div", { className: "flex justify-between items-start mb-1.5", children: [
         /* @__PURE__ */ jsxs28("div", { className: "flex-grow min-w-0", children: [
           /* @__PURE__ */ jsxs28("div", { className: "flex items-center gap-2 mb-1", children: [
-            /* @__PURE__ */ jsx48(
+            /* @__PURE__ */ jsx49(
               Badge,
               {
                 className: `text-xs px-1.5 py-0.5 shadow-sm
@@ -3774,15 +3896,15 @@ function AuctionListItem({ auction, onUpdate }) {
                 children: getAuctionStatusText(auction.status)
               }
             ),
-            mentalTriggers.map((trigger) => /* @__PURE__ */ jsx48(Badge, { variant: "secondary", className: "text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300", children: trigger }, trigger))
+            mentalTriggers.map((trigger) => /* @__PURE__ */ jsx49(Badge, { variant: "secondary", className: "text-xs px-1 py-0.5 bg-amber-100 text-amber-700 border-amber-300", children: trigger }, trigger))
           ] }),
-          /* @__PURE__ */ jsx48(Link9, { href: `/auctions/${auction.publicId || auction.id}`, children: /* @__PURE__ */ jsx48("h3", { className: "text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2", title: auction.title, children: auction.title }) }),
+          /* @__PURE__ */ jsx49(Link9, { href: `/auctions/${auction.publicId || auction.id}`, children: /* @__PURE__ */ jsx49("h3", { className: "text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2", title: auction.title, children: auction.title }) }),
           /* @__PURE__ */ jsxs28("p", { className: "text-xs text-muted-foreground mt-0.5 truncate", title: `ID: ${auction.publicId || auction.id}`, children: [
             "ID: ",
             auction.publicId || auction.id
           ] })
         ] }),
-        /* @__PURE__ */ jsx48(
+        /* @__PURE__ */ jsx49(
           EntityEditMenu,
           {
             entityType: "auction",
@@ -3796,50 +3918,50 @@ function AuctionListItem({ auction, onUpdate }) {
       ] }),
       /* @__PURE__ */ jsxs28("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2", children: [
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          auctionTypeDisplay.icon && React36.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
-          /* @__PURE__ */ jsx48("span", { children: auctionTypeDisplay.label })
+          auctionTypeDisplay.icon && React37.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49("span", { children: auctionTypeDisplay.label })
         ] }),
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx48(Tag4, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
-          /* @__PURE__ */ jsx48("span", { children: auction.category?.name || "N\xE3o especificada" })
+          /* @__PURE__ */ jsx49(Tag4, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49("span", { children: auction.category?.name || "N\xE3o especificada" })
         ] }),
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx48(MapPin5, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
-          /* @__PURE__ */ jsx48("span", { className: "truncate", children: displayLocation })
+          /* @__PURE__ */ jsx49(MapPin5, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49("span", { className: "truncate", children: displayLocation })
         ] }),
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx48(Eye5, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49(Eye5, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
           /* @__PURE__ */ jsxs28("span", { children: [
             auction.visits || 0,
             " Visitas"
           ] })
         ] }),
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx48(ListChecks4, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49(ListChecks4, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
           /* @__PURE__ */ jsxs28("span", { className: "truncate", children: [
             auction.totalLots || 0,
             " Lotes"
           ] })
         ] }),
         /* @__PURE__ */ jsxs28("div", { className: "flex items-center", children: [
-          /* @__PURE__ */ jsx48(Users3, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+          /* @__PURE__ */ jsx49(Users3, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
           /* @__PURE__ */ jsxs28("span", { className: "truncate", children: [
             auction.totalHabilitatedUsers || 0,
             " Habilitados"
           ] })
         ] })
       ] }),
-      auction.auctionStages && auction.auctionStages.length > 0 && /* @__PURE__ */ jsx48("div", { className: "my-2 p-3 bg-muted/30 rounded-md", children: /* @__PURE__ */ jsx48(AuctionStagesTimeline, { stages: auction.auctionStages }) }),
+      auction.auctionStages && auction.auctionStages.length > 0 && /* @__PURE__ */ jsx49("div", { className: "my-2 p-3 bg-muted/30 rounded-md", children: /* @__PURE__ */ jsx49(AuctionStagesTimeline, { stages: auction.auctionStages }) }),
       /* @__PURE__ */ jsxs28("div", { className: "mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed", children: [
         /* @__PURE__ */ jsxs28("div", { className: "flex-shrink-0", children: [
-          /* @__PURE__ */ jsx48("p", { className: "text-xs text-muted-foreground", children: auction.auctionType === "TOMADA_DE_PRECOS" ? "Valor de Refer\xEAncia" : "A partir de" }),
+          /* @__PURE__ */ jsx49("p", { className: "text-xs text-muted-foreground", children: auction.auctionType === "TOMADA_DE_PRECOS" ? "Valor de Refer\xEAncia" : "A partir de" }),
           /* @__PURE__ */ jsxs28("p", { className: "text-xl font-bold text-primary", children: [
             "R$ ",
             (auction.initialOffer || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           ] })
         ] }),
-        /* @__PURE__ */ jsx48(Button, { asChild: true, size: "sm", className: "w-full md:w-auto mt-2 md:mt-0", children: /* @__PURE__ */ jsxs28(Link9, { href: `/auctions/${auction.publicId || auction.id}`, children: [
-          /* @__PURE__ */ jsx48(Eye5, { className: "mr-2 h-4 w-4" }),
+        /* @__PURE__ */ jsx49(Button, { asChild: true, size: "sm", className: "w-full md:w-auto mt-2 md:mt-0", children: /* @__PURE__ */ jsxs28(Link9, { href: `/auctions/${auction.publicId || auction.id}`, children: [
+          /* @__PURE__ */ jsx49(Eye5, { className: "mr-2 h-4 w-4" }),
           " Ver Leil\xE3o (",
           auction.totalLots,
           ")"
@@ -3850,41 +3972,41 @@ function AuctionListItem({ auction, onUpdate }) {
 }
 
 // src/components/lot-list-item.tsx
-import * as React37 from "react";
+import * as React38 from "react";
 import Image7 from "next/image";
 import Link10 from "next/link";
 import { Eye as Eye6, MapPin as MapPin6, Gavel as Gavel3, Truck as Truck2, Building as Building2, Car as Car2, Info as Info2 } from "lucide-react";
 import { isPast as isPast7 } from "date-fns";
-import { Fragment as Fragment9, jsx as jsx49, jsxs as jsxs29 } from "react/jsx-runtime";
+import { Fragment as Fragment9, jsx as jsx50, jsxs as jsxs29 } from "react/jsx-runtime";
 function LotListItemClientContent({ lot, auction, platformSettings, onUpdate }) {
-  const [isPreviewModalOpen, setIsPreviewModalOpen] = React37.useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = React38.useState(false);
   const hasEditPermission = true;
-  const { effectiveLotEndDate } = React37.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
-  const activeStage = React37.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
-  const activeLotPrices = React37.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
+  const { effectiveLotEndDate } = React38.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const activeStage = React38.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
+  const activeLotPrices = React38.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || "N\xE3o informado";
   const lotDetailUrl = `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`;
   const inheritedBem = lot.inheritedMediaFromBemId && lot.bens ? lot.bens.find((b) => b.id === lot.inheritedMediaFromBemId) : null;
   const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
   const getTypeIcon = (type) => {
     if (!type) {
-      return /* @__PURE__ */ jsx49(Info2, { className: "h-3.5 w-3.5 text-muted-foreground" });
+      return /* @__PURE__ */ jsx50(Info2, { className: "h-3.5 w-3.5 text-muted-foreground" });
     }
     const upperType = type.toUpperCase();
     if (upperType.includes("CASA") || upperType.includes("IM\xD3VEL") || upperType.includes("APARTAMENTO")) {
-      return /* @__PURE__ */ jsx49(Building2, { className: "h-3.5 w-3.5 text-muted-foreground" });
+      return /* @__PURE__ */ jsx50(Building2, { className: "h-3.5 w-3.5 text-muted-foreground" });
     }
     if (upperType.includes("VE\xCDCULO") || upperType.includes("AUTOM\xD3VEL") || upperType.includes("CARRO")) {
-      return /* @__PURE__ */ jsx49(Car2, { className: "h-3.5 w-3.5 text-muted-foreground" });
+      return /* @__PURE__ */ jsx50(Car2, { className: "h-3.5 w-3.5 text-muted-foreground" });
     }
     if (upperType.includes("MAQUIN\xC1RIO") || upperType.includes("TRATOR")) {
-      return /* @__PURE__ */ jsx49(Truck2, { className: "h-3.5 w-3.5 text-muted-foreground" });
+      return /* @__PURE__ */ jsx50(Truck2, { className: "h-3.5 w-3.5 text-muted-foreground" });
     }
-    return /* @__PURE__ */ jsx49(Info2, { className: "h-3.5 w-3.5 text-muted-foreground" });
+    return /* @__PURE__ */ jsx50(Info2, { className: "h-3.5 w-3.5 text-muted-foreground" });
   };
   return /* @__PURE__ */ jsxs29(Fragment9, { children: [
-    /* @__PURE__ */ jsx49(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", "data-ai-id": `lot-list-item-container-${lot.id}`, children: /* @__PURE__ */ jsxs29("div", { className: "flex flex-col md:flex-row", children: [
-      /* @__PURE__ */ jsx49("div", { className: "md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted", children: /* @__PURE__ */ jsx49(Link10, { href: lotDetailUrl, className: "block h-full w-full", children: /* @__PURE__ */ jsx49(
+    /* @__PURE__ */ jsx50(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", "data-ai-id": `lot-list-item-container-${lot.id}`, children: /* @__PURE__ */ jsxs29("div", { className: "flex flex-col md:flex-row", children: [
+      /* @__PURE__ */ jsx50("div", { className: "md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted", children: /* @__PURE__ */ jsx50(Link10, { href: lotDetailUrl, className: "block h-full w-full", children: /* @__PURE__ */ jsx50(
         Image7,
         {
           src: isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay : "https://placehold.co/600x400.png",
@@ -3898,57 +4020,57 @@ function LotListItemClientContent({ lot, auction, platformSettings, onUpdate }) 
       /* @__PURE__ */ jsxs29("div", { className: "flex flex-col flex-grow p-4", children: [
         /* @__PURE__ */ jsxs29("div", { className: "flex justify-between items-start mb-1.5", children: [
           /* @__PURE__ */ jsxs29("div", { className: "flex-grow min-w-0", children: [
-            /* @__PURE__ */ jsx49("div", { className: "flex items-center gap-2 mb-1", "data-ai-id": `lot-list-item-badges-${lot.id}`, children: /* @__PURE__ */ jsx49(Badge, { className: `text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)}`, children: getAuctionStatusText(lot.status) }) }),
-            /* @__PURE__ */ jsx49(Link10, { href: lotDetailUrl, children: /* @__PURE__ */ jsxs29("h3", { className: "text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2", title: lot.title, "data-ai-id": `lot-list-item-title-${lot.id}`, children: [
+            /* @__PURE__ */ jsx50("div", { className: "flex items-center gap-2 mb-1", "data-ai-id": `lot-list-item-badges-${lot.id}`, children: /* @__PURE__ */ jsx50(Badge, { className: `text-xs px-1.5 py-0.5 ${getLotStatusColor(lot.status)}`, children: getAuctionStatusText(lot.status) }) }),
+            /* @__PURE__ */ jsx50(Link10, { href: lotDetailUrl, children: /* @__PURE__ */ jsxs29("h3", { className: "text-base font-semibold hover:text-primary transition-colors leading-tight line-clamp-2 mr-2", title: lot.title, "data-ai-id": `lot-list-item-title-${lot.id}`, children: [
               "Lote ",
               lot.number || lot.id.replace("LOTE", ""),
               " - ",
               lot.title
             ] }) })
           ] }),
-          hasEditPermission && /* @__PURE__ */ jsx49(EntityEditMenu, { entityType: "lot", entityId: lot.id, publicId: lot.publicId, currentTitle: lot.title, isFeatured: lot.isFeatured || false, onUpdate })
+          hasEditPermission && /* @__PURE__ */ jsx50(EntityEditMenu, { entityType: "lot", entityId: lot.id, publicId: lot.publicId, currentTitle: lot.title, isFeatured: lot.isFeatured || false, onUpdate })
         ] }),
         /* @__PURE__ */ jsxs29("div", { className: "grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2", "data-ai-id": `lot-list-item-details-${lot.id}`, children: [
           /* @__PURE__ */ jsxs29("div", { className: "flex items-center", title: `Categoria: ${lot.type}`, children: [
             getTypeIcon(lot.type),
-            /* @__PURE__ */ jsx49("span", { className: "truncate ml-1", children: lot.type })
+            /* @__PURE__ */ jsx50("span", { className: "truncate ml-1", children: lot.type })
           ] }),
           /* @__PURE__ */ jsxs29("div", { className: "flex items-center", children: [
-            /* @__PURE__ */ jsx49(MapPin6, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
-            /* @__PURE__ */ jsx49("span", { className: "truncate", title: displayLocation, children: displayLocation })
+            /* @__PURE__ */ jsx50(MapPin6, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+            /* @__PURE__ */ jsx50("span", { className: "truncate", title: displayLocation, children: displayLocation })
           ] }),
           /* @__PURE__ */ jsxs29("div", { className: "flex items-center", children: [
-            /* @__PURE__ */ jsx49(Gavel3, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+            /* @__PURE__ */ jsx50(Gavel3, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
             /* @__PURE__ */ jsxs29("span", { className: "truncate", children: [
               lot.bidsCount || 0,
               " Lances"
             ] })
           ] }),
           /* @__PURE__ */ jsxs29("div", { className: "flex items-center", children: [
-            /* @__PURE__ */ jsx49(Eye6, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
+            /* @__PURE__ */ jsx50(Eye6, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" }),
             /* @__PURE__ */ jsxs29("span", { className: "truncate", children: [
               lot.views || 0,
               " Visitas"
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx49("p", { className: "text-sm text-muted-foreground line-clamp-2 mb-3", children: lot.description }),
+        /* @__PURE__ */ jsx50("p", { className: "text-sm text-muted-foreground line-clamp-2 mb-3", children: lot.description }),
         /* @__PURE__ */ jsxs29("div", { className: "mt-auto flex flex-col md:flex-row md:items-end justify-between gap-3 pt-2 border-t border-dashed", "data-ai-id": `lot-list-item-footer-${lot.id}`, children: [
           /* @__PURE__ */ jsxs29("div", { children: [
-            /* @__PURE__ */ jsx49("p", { className: "text-xs text-muted-foreground", children: lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial" }),
+            /* @__PURE__ */ jsx50("p", { className: "text-xs text-muted-foreground", children: lot.bidsCount && lot.bidsCount > 0 ? "Lance Atual" : "Lance Inicial" }),
             /* @__PURE__ */ jsxs29("p", { className: `text-xl font-bold ${effectiveLotEndDate && isPast7(effectiveLotEndDate) ? "text-muted-foreground line-through" : "text-primary"}`, children: [
               "R$ ",
               (activeLotPrices?.initialBid ?? lot.price).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             ] })
           ] }),
-          /* @__PURE__ */ jsx49(Button, { asChild: true, size: "sm", className: "w-full md:w-auto mt-2 md:mt{0}", children: /* @__PURE__ */ jsxs29(Link10, { href: lotDetailUrl, children: [
-            /* @__PURE__ */ jsx49(Eye6, { className: "mr-2 h-4 w-4" }),
+          /* @__PURE__ */ jsx50(Button, { asChild: true, size: "sm", className: "w-full md:w-auto mt-2 md:mt{0}", children: /* @__PURE__ */ jsxs29(Link10, { href: lotDetailUrl, children: [
+            /* @__PURE__ */ jsx50(Eye6, { className: "mr-2 h-4 w-4" }),
             " Ver Detalhes"
           ] }) })
         ] })
       ] })
     ] }) }),
-    /* @__PURE__ */ jsx49(
+    /* @__PURE__ */ jsx50(
       LotPreviewModal,
       {
         lot,
@@ -3961,43 +4083,43 @@ function LotListItemClientContent({ lot, auction, platformSettings, onUpdate }) 
   ] });
 }
 function LotListItem(props) {
-  const [isClient, setIsClient] = React37.useState(false);
-  React37.useEffect(() => {
+  const [isClient, setIsClient] = React38.useState(false);
+  React38.useEffect(() => {
     setIsClient(true);
   }, []);
   if (!isClient) {
     return /* @__PURE__ */ jsxs29(Card, { className: "flex flex-row overflow-hidden h-full shadow-md rounded-lg group", children: [
-      /* @__PURE__ */ jsx49("div", { className: "relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0" }),
+      /* @__PURE__ */ jsx50("div", { className: "relative aspect-square h-full bg-muted animate-pulse w-1/3 md:w-1/4 flex-shrink-0" }),
       /* @__PURE__ */ jsxs29("div", { className: "flex flex-col flex-grow", children: [
         /* @__PURE__ */ jsxs29(CardContent, { className: "p-4 flex-grow space-y-1.5", children: [
-          /* @__PURE__ */ jsx49(Skeleton, { className: "h-5 bg-muted rounded w-3/4" }),
-          /* @__PURE__ */ jsx49(Skeleton, { className: "h-4 bg-muted rounded w-1/2" }),
-          /* @__PURE__ */ jsx49(Skeleton, { className: "h-4 bg-muted rounded w-full" }),
-          /* @__PURE__ */ jsx49(Skeleton, { className: "h-4 bg-muted rounded w-2/3" })
+          /* @__PURE__ */ jsx50(Skeleton, { className: "h-5 bg-muted rounded w-3/4" }),
+          /* @__PURE__ */ jsx50(Skeleton, { className: "h-4 bg-muted rounded w-1/2" }),
+          /* @__PURE__ */ jsx50(Skeleton, { className: "h-4 bg-muted rounded w-full" }),
+          /* @__PURE__ */ jsx50(Skeleton, { className: "h-4 bg-muted rounded w-2/3" })
         ] }),
         /* @__PURE__ */ jsxs29("div", { className: "p-4 border-t flex flex-col md:flex-row items-start md:items-center justify-between gap-3", children: [
           /* @__PURE__ */ jsxs29("div", { className: "flex-grow", children: [
-            /* @__PURE__ */ jsx49(Skeleton, { className: "h-4 bg-muted rounded w-1/4" }),
-            /* @__PURE__ */ jsx49(Skeleton, { className: "h-6 bg-muted rounded w-1/2 mt-1" })
+            /* @__PURE__ */ jsx50(Skeleton, { className: "h-4 bg-muted rounded w-1/4" }),
+            /* @__PURE__ */ jsx50(Skeleton, { className: "h-6 bg-muted rounded w-1/2 mt-1" })
           ] }),
-          /* @__PURE__ */ jsx49(Skeleton, { className: "h-9 bg-muted rounded w-full md:w-auto" })
+          /* @__PURE__ */ jsx50(Skeleton, { className: "h-9 bg-muted rounded w-full md:w-auto" })
         ] })
       ] })
     ] });
   }
-  return /* @__PURE__ */ jsx49(LotListItemClientContent, { ...props });
+  return /* @__PURE__ */ jsx50(LotListItemClientContent, { ...props });
 }
 
 // src/components/direct-sale-offer-card.tsx
 import Image8 from "next/image";
 import Link11 from "next/link";
 import { Eye as Eye7, Tag as Tag6, MapPin as MapPin7, UserCircle } from "lucide-react";
-import { Fragment as Fragment10, jsx as jsx50, jsxs as jsxs30 } from "react/jsx-runtime";
+import { Fragment as Fragment10, jsx as jsx51, jsxs as jsxs30 } from "react/jsx-runtime";
 function DirectSaleOfferCard({ offer }) {
   const displayLocation = offer.locationCity && offer.locationState ? `${offer.locationCity} - ${offer.locationState}` : offer.locationState || offer.locationCity || "N\xE3o informado";
   return /* @__PURE__ */ jsxs30(Card, { className: "flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group", "data-ai-id": `direct-sale-card-container-${offer.id}`, children: [
-    /* @__PURE__ */ jsx50("div", { className: "relative", children: /* @__PURE__ */ jsx50(Link11, { href: `/direct-sales/${offer.id}`, className: "block", children: /* @__PURE__ */ jsxs30("div", { className: "aspect-[16/10] relative bg-muted", children: [
-      /* @__PURE__ */ jsx50(
+    /* @__PURE__ */ jsx51("div", { className: "relative", children: /* @__PURE__ */ jsx51(Link11, { href: `/direct-sales/${offer.id}`, className: "block", children: /* @__PURE__ */ jsxs30("div", { className: "aspect-[16/10] relative bg-muted", children: [
+      /* @__PURE__ */ jsx51(
         Image8,
         {
           src: offer.imageUrl || "https://placehold.co/600x400.png",
@@ -4009,45 +4131,45 @@ function DirectSaleOfferCard({ offer }) {
           "data-ai-id": `direct-sale-card-image-${offer.id}`
         }
       ),
-      /* @__PURE__ */ jsx50(Badge, { className: `absolute top-2 left-2 text-xs px-2 py-1 ${getLotStatusColor(offer.status)}`, children: getAuctionStatusText(offer.status) }),
-      /* @__PURE__ */ jsx50(Badge, { variant: "outline", className: "absolute top-2 right-2 text-xs px-2 py-1 bg-background/80", children: offer.offerType === "BUY_NOW" ? "Comprar J\xE1" : "Aceita Proposta" })
+      /* @__PURE__ */ jsx51(Badge, { className: `absolute top-2 left-2 text-xs px-2 py-1 ${getLotStatusColor(offer.status)}`, children: getAuctionStatusText(offer.status) }),
+      /* @__PURE__ */ jsx51(Badge, { variant: "outline", className: "absolute top-2 right-2 text-xs px-2 py-1 bg-background/80", children: offer.offerType === "BUY_NOW" ? "Comprar J\xE1" : "Aceita Proposta" })
     ] }) }) }),
     /* @__PURE__ */ jsxs30(CardContent, { className: "p-3 flex-grow space-y-1.5", children: [
       /* @__PURE__ */ jsxs30("div", { className: "flex justify-between items-center text-xs text-muted-foreground", children: [
         /* @__PURE__ */ jsxs30("div", { className: "flex items-center gap-1 truncate", children: [
-          /* @__PURE__ */ jsx50(UserCircle, { className: "h-3.5 w-3.5 flex-shrink-0" }),
-          /* @__PURE__ */ jsx50("span", { className: "truncate", children: offer.sellerName })
+          /* @__PURE__ */ jsx51(UserCircle, { className: "h-3.5 w-3.5 flex-shrink-0" }),
+          /* @__PURE__ */ jsx51("span", { className: "truncate", children: offer.sellerName })
         ] }),
         /* @__PURE__ */ jsxs30("div", { className: "flex items-center gap-1", children: [
-          /* @__PURE__ */ jsx50(Tag6, { className: "h-3 w-3" }),
-          /* @__PURE__ */ jsx50("span", { children: offer.category })
+          /* @__PURE__ */ jsx51(Tag6, { className: "h-3 w-3" }),
+          /* @__PURE__ */ jsx51("span", { children: offer.category })
         ] })
       ] }),
-      /* @__PURE__ */ jsx50(Link11, { href: `/direct-sales/${offer.id}`, children: /* @__PURE__ */ jsx50("h3", { className: "text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2", "data-ai-id": `direct-sale-card-title-${offer.id}`, children: offer.title }) }),
+      /* @__PURE__ */ jsx51(Link11, { href: `/direct-sales/${offer.id}`, children: /* @__PURE__ */ jsx51("h3", { className: "text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2", "data-ai-id": `direct-sale-card-title-${offer.id}`, children: offer.title }) }),
       /* @__PURE__ */ jsxs30("div", { className: "flex items-center text-xs text-muted-foreground", children: [
-        /* @__PURE__ */ jsx50(MapPin7, { className: "h-3 w-3 mr-1" }),
-        /* @__PURE__ */ jsx50("span", { children: displayLocation })
+        /* @__PURE__ */ jsx51(MapPin7, { className: "h-3 w-3 mr-1" }),
+        /* @__PURE__ */ jsx51("span", { children: displayLocation })
       ] })
     ] }),
     /* @__PURE__ */ jsxs30(CardFooter, { className: "p-3 border-t flex-col items-start space-y-1.5", children: [
       /* @__PURE__ */ jsxs30("div", { className: "w-full", children: [
         offer.offerType === "BUY_NOW" && offer.price !== void 0 && /* @__PURE__ */ jsxs30(Fragment10, { children: [
-          /* @__PURE__ */ jsx50("p", { className: "text-xs text-muted-foreground", children: "Pre\xE7o Fixo" }),
+          /* @__PURE__ */ jsx51("p", { className: "text-xs text-muted-foreground", children: "Pre\xE7o Fixo" }),
           /* @__PURE__ */ jsxs30("p", { className: "text-xl font-bold text-primary", children: [
             "R$ ",
             offer.price.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
           ] })
         ] }),
         offer.offerType === "ACCEPTS_PROPOSALS" && /* @__PURE__ */ jsxs30(Fragment10, { children: [
-          /* @__PURE__ */ jsx50("p", { className: "text-xs text-muted-foreground", children: "Aceita Propostas" }),
+          /* @__PURE__ */ jsx51("p", { className: "text-xs text-muted-foreground", children: "Aceita Propostas" }),
           offer.minimumOfferPrice ? /* @__PURE__ */ jsxs30("p", { className: "text-md font-bold text-primary", children: [
             "A partir de R$ ",
             offer.minimumOfferPrice.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-          ] }) : /* @__PURE__ */ jsx50("p", { className: "text-md font-bold text-primary", children: "Envie sua proposta" })
+          ] }) : /* @__PURE__ */ jsx51("p", { className: "text-md font-bold text-primary", children: "Envie sua proposta" })
         ] })
       ] }),
-      /* @__PURE__ */ jsx50(Button, { asChild: true, className: "w-full mt-2", size: "sm", children: /* @__PURE__ */ jsxs30(Link11, { href: `/direct-sales/${offer.id}`, children: [
-        /* @__PURE__ */ jsx50(Eye7, { className: "mr-2 h-4 w-4" }),
+      /* @__PURE__ */ jsx51(Button, { asChild: true, className: "w-full mt-2", size: "sm", children: /* @__PURE__ */ jsxs30(Link11, { href: `/direct-sales/${offer.id}`, children: [
+        /* @__PURE__ */ jsx51(Eye7, { className: "mr-2 h-4 w-4" }),
         " Ver Detalhes"
       ] }) })
     ] })
@@ -4057,15 +4179,15 @@ function DirectSaleOfferCard({ offer }) {
 // src/components/direct-sale-offer-list-item.tsx
 import { Tag as Tag7 } from "lucide-react";
 import Link12 from "next/link";
-import { jsx as jsx51, jsxs as jsxs31 } from "react/jsx-runtime";
+import { jsx as jsx52, jsxs as jsxs31 } from "react/jsx-runtime";
 function DirectSaleOfferListItem({ offer }) {
-  return /* @__PURE__ */ jsx51(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", children: /* @__PURE__ */ jsx51(CardContent, { className: "p-4", children: /* @__PURE__ */ jsxs31(Link12, { href: `/direct-sales/${offer.id}`, children: [
-    /* @__PURE__ */ jsx51("h3", { className: "font-semibold hover:text-primary", children: offer.title }),
+  return /* @__PURE__ */ jsx52(Card, { className: "w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden", children: /* @__PURE__ */ jsx52(CardContent, { className: "p-4", children: /* @__PURE__ */ jsxs31(Link12, { href: `/direct-sales/${offer.id}`, children: [
+    /* @__PURE__ */ jsx52("h3", { className: "font-semibold hover:text-primary", children: offer.title }),
     /* @__PURE__ */ jsxs31("div", { className: "flex items-center text-sm text-muted-foreground gap-2 mt-1", children: [
-      /* @__PURE__ */ jsx51(Tag7, { className: "h-4 w-4" }),
-      /* @__PURE__ */ jsx51("span", { children: offer.category }),
-      /* @__PURE__ */ jsx51("span", { children: "-" }),
-      /* @__PURE__ */ jsx51("span", { children: offer.sellerName })
+      /* @__PURE__ */ jsx52(Tag7, { className: "h-4 w-4" }),
+      /* @__PURE__ */ jsx52("span", { children: offer.category }),
+      /* @__PURE__ */ jsx52("span", { children: "-" }),
+      /* @__PURE__ */ jsx52("span", { children: offer.sellerName })
     ] })
   ] }) }) });
 }
@@ -4120,6 +4242,30 @@ export {
   DataTableViewOptions,
   DirectSaleOfferCard,
   DirectSaleOfferListItem,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  Input,
+  Label2 as Label,
   LotCard,
   LotListItem,
   Menubar,
@@ -4150,7 +4296,7 @@ export {
   PopoverContent,
   PopoverTrigger,
   Progress,
-  RadioGroup2 as RadioGroup,
+  RadioGroup3 as RadioGroup,
   RadioGroupItem,
   ScrollArea,
   ScrollBar,
@@ -4164,7 +4310,7 @@ export {
   SelectSeparator,
   SelectTrigger,
   SelectValue,
-  Separator3 as Separator,
+  Separator4 as Separator,
   Sheet,
   SheetClose,
   SheetContent,
@@ -4228,5 +4374,6 @@ export {
   navigationMenuTriggerStyle,
   removeFavoriteLotIdFromStorage,
   removeRecentlyViewedId,
-  slugify
+  slugify,
+  useFormField
 };

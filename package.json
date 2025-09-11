@@ -19,5 +19,10 @@
   "packageManager": "pnpm@9.6.0",
   "dependencies": {
     "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector"
+  },
+  "pnpm": {
+    "overrides": {
+      "simple-swizzle": "0.2.2"
+    }
   }
 }

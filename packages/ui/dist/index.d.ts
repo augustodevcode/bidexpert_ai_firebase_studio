@@ -5,6 +5,7 @@ import { AuctionStatus, LotStatus, UserDocumentStatus, UserHabilitationStatus, P
 export { slugify } from '@bidexpert/core';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import * as class_variance_authority_dist_types from 'class-variance-authority/dist/types';
+import * as class_variance_authority from 'class-variance-authority';
 import { VariantProps } from 'class-variance-authority';
 import * as react_jsx_runtime from 'react/jsx-runtime';
 import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
@@ -13,6 +14,11 @@ import { DayPicker } from 'react-day-picker';
 import * as CheckboxPrimitive from '@radix-ui/react-checkbox';
 import * as SheetPrimitive from '@radix-ui/react-dialog';
 import { DialogProps } from '@radix-ui/react-dialog';
+import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
+import * as _radix_ui_react_slot from '@radix-ui/react-slot';
+import * as _radix_ui_react_label from '@radix-ui/react-label';
+import * as react_hook_form from 'react-hook-form';
+import { FieldPath, ControllerRenderProps, ControllerFieldState, UseFormStateReturn, FieldValues, ControllerProps } from 'react-hook-form';
 import * as MenubarPrimitive from '@radix-ui/react-menubar';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
@@ -232,6 +238,61 @@ declare const CommandShortcut: {
     ({ className, ...props }: React$1.HTMLAttributes<HTMLSpanElement>): react_jsx_runtime.JSX.Element;
     displayName: string;
 };
+
+declare const DropdownMenu: React$1.FC<DropdownMenuPrimitive.DropdownMenuProps>;
+declare const DropdownMenuTrigger: React$1.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuTriggerProps & React$1.RefAttributes<HTMLButtonElement>>;
+declare const DropdownMenuGroup: React$1.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuGroupProps & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuPortal: React$1.FC<DropdownMenuPrimitive.DropdownMenuPortalProps>;
+declare const DropdownMenuSub: React$1.FC<DropdownMenuPrimitive.DropdownMenuSubProps>;
+declare const DropdownMenuRadioGroup: React$1.ForwardRefExoticComponent<DropdownMenuPrimitive.DropdownMenuRadioGroupProps & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSubTrigger: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubTriggerProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & {
+    inset?: boolean;
+} & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSubContent: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSubContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuContent: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuContentProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuItem: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & {
+    inset?: boolean;
+} & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuCheckboxItem: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuCheckboxItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuRadioItem: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuRadioItemProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuLabel: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuLabelProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & {
+    inset?: boolean;
+} & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuSeparator: React$1.ForwardRefExoticComponent<Omit<DropdownMenuPrimitive.DropdownMenuSeparatorProps & React$1.RefAttributes<HTMLDivElement>, "ref"> & React$1.RefAttributes<HTMLDivElement>>;
+declare const DropdownMenuShortcut: {
+    ({ className, ...props }: React$1.HTMLAttributes<HTMLSpanElement>): react_jsx_runtime.JSX.Element;
+    displayName: string;
+};
+
+declare const Form: <TFieldValues extends FieldValues, TContext = any, TTransformedValues = TFieldValues>(props: react_hook_form.FormProviderProps<TFieldValues, TContext, TTransformedValues>) => React$1.JSX.Element;
+declare const FormField: <TFieldValues extends FieldValues = FieldValues, TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>>(props: ControllerProps<TFieldValues, TName>) => react_jsx_runtime.JSX.Element;
+declare function useFormField(): {
+    invalid: boolean;
+    isDirty: boolean;
+    isTouched: boolean;
+    isValidating: boolean;
+    error?: react_hook_form.FieldError;
+    name: FieldPath<any>;
+    formLabel: React$1.ReactElement;
+    field: ControllerRenderProps<any, any>;
+    fieldState: ControllerFieldState;
+    formState: UseFormStateReturn<any>;
+    id: string;
+    formItemId: string;
+    formDescriptionId: string;
+    formMessageId: string;
+};
+declare const FormItem: React$1.ForwardRefExoticComponent<React$1.HTMLAttributes<HTMLDivElement> & React$1.RefAttributes<HTMLDivElement>>;
+declare const FormLabel: React$1.ForwardRefExoticComponent<Omit<Omit<_radix_ui_react_label.LabelProps & React$1.RefAttributes<HTMLLabelElement>, "ref"> & class_variance_authority.VariantProps<(props?: class_variance_authority_dist_types.ClassProp | undefined) => string> & React$1.RefAttributes<HTMLLabelElement>, "ref"> & React$1.RefAttributes<HTMLLabelElement>>;
+declare const FormControl: React$1.ForwardRefExoticComponent<Omit<_radix_ui_react_slot.SlotProps & React$1.RefAttributes<HTMLElement>, "ref"> & React$1.RefAttributes<HTMLElement>>;
+declare const FormDescription: React$1.ForwardRefExoticComponent<React$1.HTMLAttributes<HTMLParagraphElement> & React$1.RefAttributes<HTMLParagraphElement>>;
+declare const FormMessage: React$1.ForwardRefExoticComponent<React$1.HTMLAttributes<HTMLParagraphElement> & React$1.RefAttributes<HTMLParagraphElement>>;
+
+interface InputProps extends React$1.InputHTMLAttributes<HTMLInputElement> {
+}
+declare const Input: React$1.ForwardRefExoticComponent<InputProps & React$1.RefAttributes<HTMLInputElement>>;
+
+declare const Label: React$1.ForwardRefExoticComponent<Omit<_radix_ui_react_label.LabelProps & React$1.RefAttributes<HTMLLabelElement>, "ref"> & VariantProps<(props?: class_variance_authority_dist_types.ClassProp | undefined) => string> & React$1.RefAttributes<HTMLLabelElement>>;
 
 declare function MenubarMenu({ ...props }: React$1.ComponentProps<typeof MenubarPrimitive.Menu>): react_jsx_runtime.JSX.Element;
 declare function MenubarGroup({ ...props }: React$1.ComponentProps<typeof MenubarPrimitive.Group>): react_jsx_runtime.JSX.Element;
@@ -481,4 +542,4 @@ interface DirectSaleOfferListItemProps {
 }
 declare function DirectSaleOfferListItem({ offer }: DirectSaleOfferListItemProps): react_jsx_runtime.JSX.Element;
 
-export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger, AlertTitle, AuctionCard, AuctionListItem, Avatar, AvatarFallback, AvatarImage, Badge, type BadgeProps, type BreadcrumbItem, Button, type ButtonProps, Calendar, type CalendarProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Checkbox, Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut, DataTable, DataTableColumnHeader, DataTableFacetedFilter, DataTablePagination, DataTableToolbar, DataTableViewOptions, DirectSaleOfferCard, DirectSaleOfferListItem, LotCard, LotListItem, Menubar, MenubarCheckboxItem, MenubarContent, MenubarGroup, MenubarItem, MenubarLabel, MenubarMenu, MenubarPortal, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator, MenubarShortcut, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport, Popover, PopoverContent, PopoverTrigger, Progress, RadioGroup, RadioGroupItem, ScrollArea, ScrollBar, Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue, Separator, Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger, Skeleton, Slider, Switch, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Toast, ToastAction, type ToastActionElement, ToastClose, ToastDescription, type ToastProps, ToastProvider, ToastTitle, ToastViewport, Toaster, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, addFavoriteLotIdToStorage, addRecentlyViewedId, badgeVariants, buttonVariants, cn, createEntitySelectorColumns, getActiveStage, getAuctionStatusColor, getAuctionStatusText, getCategoryAssets, getEffectiveLotEndDate, getFavoriteLotIdsFromStorage, getLotPriceForStage, getLotStatusColor, getPaymentStatusText, getRecentlyViewedIds, getUniqueLotLocations, getUserDocumentStatusColor, getUserDocumentStatusInfo, getUserHabilitationStatusInfo, isLotFavoriteInStorage, isValidImageUrl, navigationMenuTriggerStyle, removeFavoriteLotIdFromStorage, removeRecentlyViewedId };
+export { Accordion, AccordionContent, AccordionItem, AccordionTrigger, Alert, AlertDescription, AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogOverlay, AlertDialogPortal, AlertDialogTitle, AlertDialogTrigger, AlertTitle, AuctionCard, AuctionListItem, Avatar, AvatarFallback, AvatarImage, Badge, type BadgeProps, type BreadcrumbItem, Button, type ButtonProps, Calendar, type CalendarProps, Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle, Checkbox, Command, CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut, DataTable, DataTableColumnHeader, DataTableFacetedFilter, DataTablePagination, DataTableToolbar, DataTableViewOptions, DirectSaleOfferCard, DirectSaleOfferListItem, DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuPortal, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuShortcut, DropdownMenuSub, DropdownMenuSubContent, DropdownMenuSubTrigger, DropdownMenuTrigger, Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage, Input, type InputProps, Label, LotCard, LotListItem, Menubar, MenubarCheckboxItem, MenubarContent, MenubarGroup, MenubarItem, MenubarLabel, MenubarMenu, MenubarPortal, MenubarRadioGroup, MenubarRadioItem, MenubarSeparator, MenubarShortcut, MenubarSub, MenubarSubContent, MenubarSubTrigger, MenubarTrigger, NavigationMenu, NavigationMenuContent, NavigationMenuIndicator, NavigationMenuItem, NavigationMenuLink, NavigationMenuList, NavigationMenuTrigger, NavigationMenuViewport, Popover, PopoverContent, PopoverTrigger, Progress, RadioGroup, RadioGroupItem, ScrollArea, ScrollBar, Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectScrollDownButton, SelectScrollUpButton, SelectSeparator, SelectTrigger, SelectValue, Separator, Sheet, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger, Skeleton, Slider, Switch, Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Toast, ToastAction, type ToastActionElement, ToastClose, ToastDescription, type ToastProps, ToastProvider, ToastTitle, ToastViewport, Toaster, Tooltip, TooltipContent, TooltipProvider, TooltipTrigger, addFavoriteLotIdToStorage, addRecentlyViewedId, badgeVariants, buttonVariants, cn, createEntitySelectorColumns, getActiveStage, getAuctionStatusColor, getAuctionStatusText, getCategoryAssets, getEffectiveLotEndDate, getFavoriteLotIdsFromStorage, getLotPriceForStage, getLotStatusColor, getPaymentStatusText, getRecentlyViewedIds, getUniqueLotLocations, getUserDocumentStatusColor, getUserDocumentStatusInfo, getUserHabilitationStatusInfo, isLotFavoriteInStorage, isValidImageUrl, navigationMenuTriggerStyle, removeFavoriteLotIdFromStorage, removeRecentlyViewedId, useFormField };

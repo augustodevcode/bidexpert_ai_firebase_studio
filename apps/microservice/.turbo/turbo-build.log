@@ -1,5 +1,5 @@
 
-> microservice@1.0.0 build /home/user/studio/apps/microservice
+> microservice@1.0.0 build /app/apps/microservice
 > tsup src/index.ts --format cjs --minify
 
 CLI Building entry: src/index.ts
@@ -8,4 +8,4 @@ CLI tsup v8.5.0
 CLI Target: esnext
 CJS Build start
 CJS dist/index.js 4.11 KB
-CJS ⚡️ Build success in 160ms
+CJS ⚡️ Build success in 41ms

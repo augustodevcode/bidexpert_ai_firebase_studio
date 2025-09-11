@@ -29,7 +29,7 @@ interface FormPageLayoutProps<T> {
   entityName?: string;
   routeBase?: string;
   icon?: LucideIcon;
-  children: (initialData: T, formRef: React.RefObject<any>, handleSubmit: (submitFn: () => Promise<any>) => void) => React.ReactNode;
+  children: (initialData: T | null, formRef: React.RefObject<any>, handleSubmit: (submitFn: () => Promise<any>) => void) => React.ReactNode;
   isEdit: boolean;
   pageDescription?: string;
   deleteConfirmation?: (item: T) => boolean;

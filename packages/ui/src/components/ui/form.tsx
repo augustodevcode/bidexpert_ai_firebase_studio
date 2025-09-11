@@ -40,7 +40,7 @@ const FormField = <
             }}
           >
             {props.render({ field, fieldState, formState })}
-          </FormContext.Context.Provider>
+          </FormContext.Provider>
         )
       }}
     />
@@ -50,11 +50,11 @@ const FormField = <
 const FormContext = React.createContext<
   |
     {
-      name: FieldPath<FieldValues>
+      name: FieldPath<any>
       formLabel: React.ReactElement
-      field: ControllerRenderProps<FieldValues, FieldPath<FieldValues>>
+      field: ControllerRenderProps<any, any>
       fieldState: ControllerFieldState
-      formState: UseFormStateReturn<FieldValues>
+      formState: UseFormStateReturn<any>
     }
   | undefined
 >(undefined)
@@ -65,20 +65,19 @@ function useFormField() {
 
   const { getFieldState, formState } = useFormContext()
 
-  const fieldState = getFieldState(fieldContext?.name as FieldPath<FieldValues>, formState)
-
   if (!fieldContext) {
     throw new Error("useFormField should be used within <FormField>")
   }
 
+  const fieldState = getFieldState(fieldContext.name, formState)
+
   return {
     id: itemContext.id,
-    name: fieldContext.name,
     formItemId: `${itemContext.id}-form-item`,
     formDescriptionId: `${itemContext.id}-form-item-description`,
     formMessageId: `${itemContext.id}-form-item-message`,
-    ...fieldState,
     ...fieldContext,
+    ...fieldState,
   }
 }
 
@@ -137,7 +136,8 @@ const FormControl = React.forwardRef<
           : `${formItemId}-message`
       }
       aria-invalid={fieldState.invalid}
-      {...field}
+      onChange={field.onChange}
+      onBlur={field.onBlur}
       {...props}
     />
   )

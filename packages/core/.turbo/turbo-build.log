@@ -1,5 +1,5 @@
 
-> @bidexpert/core@1.0.0 build /home/user/studio/packages/core
+> @bidexpert/core@1.0.0 build /app/packages/core
 > tsup src/index.ts --format cjs,esm --dts
 
 CLI Building entry: src/index.ts
@@ -8,11 +8,11 @@ CLI tsup v8.5.0
 CLI Target: esnext
 CJS Build start
 ESM Build start
-CJS dist/index.js 59.26 KB
-CJS ⚡️ Build success in 307ms
 ESM dist/index.mjs 55.58 KB
-ESM ⚡️ Build success in 316ms
+ESM ⚡️ Build success in 150ms
+CJS dist/index.js 59.26 KB
+CJS ⚡️ Build success in 153ms
 DTS Build start
-DTS ⚡️ Build success in 12559ms
+DTS ⚡️ Build success in 6358ms
 DTS dist/index.d.ts  42.64 KB
 DTS dist/index.d.mts 42.64 KB

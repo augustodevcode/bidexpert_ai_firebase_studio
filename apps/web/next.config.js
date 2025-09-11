@@ -5,6 +5,7 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 
 const config = {
   /* config options here */
+  transpilePackages: ['@bidexpert/ui', '@bidexpert/core'],
   typescript: {
     // Em desenvolvimento, ignoramos erros para não quebrar o HMR. Em produção, forçamos a verificação.
     ignoreBuildErrors: isDevelopment,
