@@ -1,12 +1,12 @@
 // tests/auction-data.test.ts
-import { test, describe, beforeAll, afterAll, it } from 'vitest';
+import { describe, it, beforeAll, afterAll, expect } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '../lib/prisma';
-import { slugify } from '../lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../types';
+import { prisma } from '@/lib/prisma';
+import { slugify } from '@/lib/ui-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { AuctionService } from '../services/auction.service';
-import { LotService } from '../services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+import { LotService } from '@/services/lot.service';
 
 const auctionService = new AuctionService();
 const lotService = new LotService();
@@ -52,7 +52,7 @@ async function createTestData() {
         auctioneerId: auctioneer.id,
         sellerId: seller.id,
         categoryId: category.id,
-        auctionDate: new Date(),
+        auctionStages: [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5)}],
     } as any);
     
     assert.ok(auctionResult.success && auctionResult.auctionId, 'Failed to create test auction');

@@ -5,12 +5,13 @@ import type { Lot, Auction, AuctionStage } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark } from 'lucide-react';
+import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
 import Link from 'next/link';
 import AuctionStagesTimeline from './auction/auction-stages-timeline';
 import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 interface AuctionPreviewModalProps {
   auction: Auction;
@@ -31,6 +32,8 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   
   const auctioneerInitial = getAuctioneerInitial();
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
+  
+  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
 
   const auctionDates = useMemo(() => {
     const dates: Date[] = [];
@@ -57,11 +60,12 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
             <div className="space-y-4">
                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
                     <Image
-                        src={auction.imageUrl || 'https://placehold.co/600x400.png'}
+                        src={validImageUrl}
                         alt={auction.title}
                         fill
                         className="object-cover"
                         data-ai-hint={auction.dataAiHint || 'auction item image'}
+                        priority
                     />
                 </div>
                  <Card>

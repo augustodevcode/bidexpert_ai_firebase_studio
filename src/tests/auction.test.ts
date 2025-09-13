@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { AuctionService } from '../src/services/auction.service';
 import { prisma } from '../src/lib/prisma';
-import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../src/types';
+import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const auctionService = new AuctionService();
@@ -65,7 +65,6 @@ test.describe('Auction Service E2E Tests (Full)', () => {
             title: testAuctionTitle,
             description: 'Um leilão completo criado para o teste E2E, com todos os campos.',
             status: 'EM_BREVE',
-            auctionDate: startDate,
             auctioneerId: testAuctioneer.id,
             sellerId: testSeller.id,
             categoryId: testCategory.id,
@@ -74,8 +73,6 @@ test.describe('Auction Service E2E Tests (Full)', () => {
             auctionMethod: 'STANDARD',
             onlineUrl: 'https://meet.google.com/xyz-abc-def',
             address: 'Rua do Leilão, 123',
-            cityId: null, // Testando nulo
-            stateId: null, // Testando nulo
             zipCode: '12345-000',
             imageUrl: 'https://placehold.co/800x600.png',
             documentsUrl: 'https://placehold.co/docs/edital.pdf',
@@ -101,7 +98,7 @@ test.describe('Auction Service E2E Tests (Full)', () => {
         // Assert: Verify directly in the database
         const createdAuctionFromDb = await prisma.auction.findUnique({
             where: { id: result.auctionId },
-            include: { auctionStages: true }
+            include: { stages: true } // Renamed from auctionStages to stages
         });
 
         console.log('--- Full Auction Record Found in DB ---');
@@ -119,10 +116,10 @@ test.describe('Auction Service E2E Tests (Full)', () => {
         assert.strictEqual(createdAuctionFromDb.softCloseMinutes, 3, 'softCloseMinutes should be correct');
         
         // Assert Stages
-        assert.strictEqual(createdAuctionFromDb.auctionStages.length, 2, "Should have 2 auction stages");
-        assert.strictEqual(createdAuctionFromDb.auctionStages[0].name, "1ª Praça", "First stage name should be correct");
-        assert.strictEqual(createdAuctionFromDb.auctionStages[1].name, "2ª Praça", "Second stage name should be correct");
-        assert.strictEqual(createdAuctionFromDb.auctionStages[0].initialPrice, 10000, "First stage price should be correct");
-        assert.strictEqual(createdAuctionFromDb.auctionStages[1].initialPrice, 5000, "Second stage price should be correct");
+        assert.strictEqual(createdAuctionFromDb.stages.length, 2, "Should have 2 auction stages");
+        assert.strictEqual(createdAuctionFromDb.stages[0].name, "1ª Praça", "First stage name should be correct");
+        assert.strictEqual(createdAuctionFromDb.stages[1].name, "2ª Praça", "Second stage name should be correct");
+        assert.strictEqual(Number(createdAuctionFromDb.stages[0].evaluationValue), 10000, "First stage price should be correct");
+        assert.strictEqual(Number(createdAuctionFromDb.stages[1].evaluationValue), 5000, "Second stage price should be correct");
     });
 });

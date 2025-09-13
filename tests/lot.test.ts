@@ -1,9 +1,9 @@
 // tests/lot.test.ts
-import { describe, test, beforeAll, afterAll, it } from 'vitest';
+import test from 'node:test';
 import assert from 'node:assert';
-import { LotService } from '@/services/lot.service';
-import { prisma } from '@/lib/prisma';
-import type { LotFormData, Auction, Bem, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '@/types';
+import { LotService } from '../src/services/lot.service';
+import { prisma } from '../src/lib/prisma';
+import type { LotFormData, Auction, Bem, SellerProfileInfo, AuctioneerProfileInfo, LotCategory } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const lotService = new LotService();
@@ -17,9 +17,9 @@ let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
 let createdLotId: string | undefined;
 
-describe('Lot Service E2E Tests', () => {
+test.describe('Lot Service E2E Tests', () => {
 
-    beforeAll(async () => {
+    test.before(async () => {
         // Use the unique testRunId to ensure data does not conflict with other tests
         testCategory = await prisma.lotCategory.create({
             data: { name: `Categoria Teste Lotes ${testRunId}`, slug: `cat-lotes-${testRunId}`, hasSubcategories: false }
@@ -55,7 +55,7 @@ describe('Lot Service E2E Tests', () => {
         });
     });
 
-    afterAll(async () => {
+    test.after(async () => {
         try {
              if (createdLotId) {
                 // The repository now handles the cascade deletion within a transaction
@@ -73,7 +73,7 @@ describe('Lot Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    it('should create a new lot with a bem and verify it in the database', async () => {
+    test('should create a new lot with a bem and verify it in the database', async () => {
         // Arrange
         const newLotData: Partial<LotFormData> = {
             title: testLotTitle,

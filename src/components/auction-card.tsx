@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from './entity-edit-menu';
-import AuctionStagesTimeline from './auction/auction-stages-timeline'; // Importando o componente de timeline
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 

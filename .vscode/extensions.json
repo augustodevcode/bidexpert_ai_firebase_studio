@@ -1,6 +1,5 @@
 {
     "recommendations": [
-        "googlecloudtools.firebase-dataconnect-vscode",
-        "anthropic.claude-code"
+        "googlecloudtools.firebase-dataconnect-vscode"
     ]
 }
