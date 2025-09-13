@@ -16,6 +16,11 @@ export class BemService {
   private mapBensWithDetails(bens: any[]): Bem[] {
     return bens.map(bem => ({
       ...bem,
+      evaluationValue: bem.evaluationValue ? Number(bem.evaluationValue) : null,
+      totalArea: bem.totalArea ? Number(bem.totalArea) : null,
+      builtArea: bem.builtArea ? Number(bem.builtArea) : null,
+      latitude: bem.latitude ? Number(bem.latitude) : null,
+      longitude: bem.longitude ? Number(bem.longitude) : null,
       categoryName: bem.category?.name,
       subcategoryName: bem.subcategory?.name,
       judicialProcessNumber: bem.judicialProcess?.processNumber,
@@ -105,5 +110,3 @@ export class BemService {
     }
   }
 }
-
-  

@@ -1,3 +1,8 @@
+# MySQL Schema (from Prisma) - Minimal Data Model Guide
+
+This document contains the current, functional database schema derived from `prisma/schema.prisma`. It serves as the minimal data model reference for the application. It can be extended, but not reduced without careful consideration.
+
+```prisma
 // prisma/schema.prisma
 
 datasource db {
@@ -187,8 +192,8 @@ model User {
   maxBids            UserLotMaxBid[]
   sellerProfile      Seller?
   auctioneerProfile  Auctioneer?
-  wins               UserWin[]
-  wonLots            Lot[]                  @relation("WonLots")
+  wins               UserWin[]              @relation("UserWinToUser")
+  wonLots            Lot[]                  @relation("LotWinner")
   habilitations      AuctionHabilitation[]
   mediaItems         MediaItem[]
   questions          LotQuestion[]
@@ -239,7 +244,7 @@ model Seller {
   userId            String?           @unique
   user              User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
   isJudicial        Boolean           @default(false)
-  judicialBranchId  String? @unique
+  judicialBranchId  String?
   judicialBranch    JudicialBranch?   @relation(fields: [judicialBranchId], references: [id], onDelete: SetNull)
   createdAt         DateTime          @default(now()) @db.DateTime(3)
   updatedAt         DateTime          @updatedAt @db.DateTime(3)
@@ -343,7 +348,7 @@ model Auction {
   judicialProcess JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
   court           Court?                @relation(fields: [courtId], references: [id])
   district        JudicialDistrict?     @relation(fields: [districtId], references: [id])
-  branch          JudicialBranch?       @relation(fields: [branchId], references: [id], name: "AuctionBranch")
+  branch          JudicialBranch?       @relation(name: "AuctionBranch", fields: [branchId], references: [id])
   city            City?                 @relation(fields: [cityId], references: [id])
   state           State?                @relation(fields: [stateId], references: [id])
   lots            Lot[]
@@ -372,7 +377,7 @@ model AuctionStage {
   auctionId       String
   // Relations
   auction         Auction                  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  lotDetails      LotAuctionStageDetails[]
+  lotStageDetails LotAuctionStageDetails[]
 
   @@index([auctionId])
 }
@@ -790,10 +795,10 @@ model Lot {
   originalLot             Lot?                     @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLots            Lot[]                    @relation("RelistHistory")
   bids                    Bid[]
-  win                     UserWin?
+  wins                    UserWin[]                @relation("LotWin")
   bens                    LotBens[]
   maxBids                 UserLotMaxBid[]
-  auctioneer              Auctioneer?              @relation("AuctioneerToLot", fields: [auctioneerId], references: [id])
+  auctioneer              Auctioneer[]             @relation("AuctioneerToLot")
   stageDetails            LotAuctionStageDetails[]
 
   @@index([auctionId])
@@ -803,9 +808,6 @@ model Lot {
   @@index([cityId])
   @@index([stateId])
   @@index([winnerId])
-  @@index([auctioneerId])
-  Review Review[]
-  LotQuestion LotQuestion[]
 }
 
 model Bid {
@@ -819,7 +821,7 @@ model Bid {
   // Relations
   lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
-  auction       Auction  @relation(fields: [auctionId], references: [id])
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
 
   @@index([lotId])
   @@index([bidderId])
@@ -835,8 +837,8 @@ model UserWin {
   paymentStatus    PaymentStatus        @default(PENDENTE)
   invoiceUrl       String?
   // Relations
-  lot              Lot                  @relation(fields: [lotId], references: [id])
-  user             User                 @relation(fields: [userId], references: [id])
+  lot              Lot                  @relation("LotWin", fields: [lotId], references: [id])
+  user             User                 @relation("UserWinToUser", fields: [userId], references: [id])
   installments     InstallmentPayment[]
 
   @@index([userId])
@@ -911,6 +913,42 @@ model Notification {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model LotQuestion {
+  id                      String    @id @default(uuid())
+  lotId                   String
+  auctionId               String
+  userId                  String
+  userDisplayName         String
+  questionText            String    @db.Text
+  answerText              String?   @db.Text
+  answeredByUserId        String?
+  answeredByUserDisplayName String?
+  isPublic                Boolean   @default(true)
+  createdAt               DateTime  @default(now()) @db.DateTime(3)
+  answeredAt              DateTime? @db.DateTime(3)
+  // Relations
+  lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  user                    User      @relation(fields: [userId], references: [id])
+
+  @@index([lotId])
+}
+
+model Review {
+  id              String   @id @default(uuid())
+  lotId           String
+  auctionId       String
+  userId          String
+  userDisplayName String
+  rating          Int
+  comment         String   @db.Text
+  createdAt       DateTime @default(now()) @db.DateTime(3)
+  // Relations
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([lotId])
 }
 
 model DocumentType {
@@ -997,6 +1035,8 @@ model PlatformSettings {
   id                         String    @id @default("global")
   siteTitle                  String?
   siteTagline                String?
+  logoUrl                    String?
+  faviconUrl                 String?
   galleryImageBasePath       String?
   storageProvider            String?
   firebaseStorageBucket      String?
@@ -1019,8 +1059,6 @@ model PlatformSettings {
   biddingSettings            Json?
   paymentGatewaySettings     Json?
   defaultListItemsPerPage    Int?
-  logoUrl                    String?
-  faviconUrl                 String?
   updatedAt                  DateTime? @updatedAt @db.DateTime(3)
 }
 
@@ -1043,41 +1081,4 @@ model VehicleModel {
   @@unique([name, makeId])
   @@index([makeId])
 }
-
-model Review {
-  id              String   @id @default(uuid())
-  lotId           String
-  auctionId       String
-  userId          String
-  userDisplayName String
-  rating          Int
-  comment         String   @db.Text
-  createdAt       DateTime @default(now()) @db.DateTime(3)
-  // Relations
-  user            User     @relation(fields: [userId], references: [id])
-  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-
-  @@index([lotId])
-  @@index([userId])
-}
-
-model LotQuestion {
-  id                        String   @id @default(uuid())
-  lotId                     String
-  auctionId                 String
-  userId                    String
-  userDisplayName           String
-  questionText              String   @db.Text
-  answerText                String?  @db.Text
-  answeredAt                DateTime?
-  answeredByUserId          String?
-  answeredByUserDisplayName String?
-  isPublic                  Boolean  @default(true)
-  createdAt                 DateTime @default(now()) @db.DateTime(3)
-  // Relations
-  user                      User     @relation(fields: [userId], references: [id])
-  lot                       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-
-  @@index([lotId])
-  @@index([userId])
-}
+```

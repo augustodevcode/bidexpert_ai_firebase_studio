@@ -1,3 +1,4 @@
+
 // src/services/auction.service.ts
 import { AuctionRepository } from '@/repositories/auction.repository';
 import type { Auction, AuctionFormData, LotCategory } from '@/types';
@@ -16,6 +17,11 @@ export class AuctionService {
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
     return auctions.map(a => ({
       ...a,
+      initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
+      estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
+      achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
+      decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : undefined,
+      floorPrice: a.floorPrice ? Number(a.floorPrice) : undefined,
       totalLots: a._count?.lots ?? a.lots?.length ?? 0,
       seller: a.seller, // Pass the full seller object
       auctioneer: a.auctioneer, // Pass the full auctioneer object

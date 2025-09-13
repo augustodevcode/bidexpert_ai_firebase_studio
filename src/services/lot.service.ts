@@ -14,27 +14,32 @@ export class LotService {
     this.repository = new LotRepository();
   }
 
-  async getLots(auctionId?: string): Promise<Lot[]> {
-    const lots = await this.repository.findAll(auctionId);
-    // O repositório agora retorna a estrutura correta com o `bens` populado
-    return lots.map(lot => ({
+  private mapLotWithDetails(lot: any): Lot {
+    return {
       ...lot,
-      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
+      price: lot.price ? Number(lot.price) : 0,
+      initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+      secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+      bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+      latitude: lot.latitude ? Number(lot.latitude) : null,
+      longitude: lot.longitude ? Number(lot.longitude) : null,
+      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+      bens: lot.bens?.map((lb: any) => lb.bem) || [],
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
-    }));
+    };
+  }
+
+  async getLots(auctionId?: string): Promise<Lot[]> {
+    const lots = await this.repository.findAll(auctionId);
+    return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
   async getLotById(id: string): Promise<Lot | null> {
     const lot = await this.repository.findById(id);
     if (!lot) return null;
-    return {
-      ...lot,
-      bens: lot.bens.map((lb: any) => lb.bem), // Extrai o objeto 'bem'
-      auctionName: lot.auction?.title,
-      auction: lot.auction, // Pass the full auction object
-    };
+    return this.mapLotWithDetails(lot);
   }
 
 
@@ -48,7 +53,6 @@ export class LotService {
         sellerId, 
         subcategoryId,
         stageDetails, // Captura os detalhes das etapas
-        initialPrice, // Remove from main data
         ...lotData 
       } = data;
       const finalCategoryId = categoryId || type;
@@ -63,7 +67,7 @@ export class LotService {
       // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
-        price: Number(lotData.price) || 0,
+        price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
         auction: { connect: { id: auctionId } },
@@ -88,7 +92,7 @@ export class LotService {
         dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
-      const newLot = await this.repository.create(dataToCreate, bemIds || [], stageDetails || []);
+      const newLot = await this.repository.create(dataToCreate, bemIds || []);
       
       // Update the status of the linked 'bens' to 'LOTEADO'
       if (bemIds && bemIds.length > 0) {
@@ -110,8 +114,7 @@ export class LotService {
       const { 
         bemIds, categoryId, subcategoryId, type, auctionId, 
         sellerId, auctioneerId, stateId, cityId,
-        stageDetails, // Capturando os detalhes das etapas
-        initialPrice, // Remove from main data
+        stageDetails,
         ...lotData 
       } = data;
 
@@ -153,7 +156,7 @@ export class LotService {
       }
       
       // A atualização dos bens vinculados e a atualização dos detalhes das etapas são agora transacionais
-      await this.repository.update(id, dataToUpdate, bemIds, stageDetails);
+      await this.repository.update(id, dataToUpdate, bemIds);
 
       return { success: true, message: 'Lote atualizado com sucesso.' };
     } catch (error: any) {
@@ -244,5 +247,3 @@ export class LotService {
       }
   }
 }
-
-  
