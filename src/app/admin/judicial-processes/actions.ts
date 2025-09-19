@@ -8,26 +8,27 @@ import { getSession } from '@/app/auth/actions';
 
 const judicialProcessService = new JudicialProcessService();
 
-async function getTenantId() {
+async function getTenantIdFromSession(): Promise<string> {
     const session = await getSession();
+    // For judicial processes, we must have a tenant context. No public fallback.
     if (!session?.tenantId) {
-        throw new Error("Tenant ID não encontrado.");
+        throw new Error("Acesso não autorizado ou tenant não identificado.");
     }
     return session.tenantId;
 }
 
 export async function getJudicialProcesses(tenantId?: string): Promise<JudicialProcess[]> {
-    const id = tenantId || await getTenantId();
+    const id = tenantId || await getTenantIdFromSession();
     return judicialProcessService.getJudicialProcesses(id);
 }
 
 export async function getJudicialProcess(id: string): Promise<JudicialProcess | null> {
-    const tenantId = await getTenantId();
+    const tenantId = await getTenantIdFromSession();
     return judicialProcessService.getJudicialProcessById(tenantId, id);
 }
 
 export async function createJudicialProcessAction(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
-    const tenantId = await getTenantId();
+    const tenantId = await getTenantIdFromSession();
     const result = await judicialProcessService.createJudicialProcess(tenantId, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
@@ -36,7 +37,7 @@ export async function createJudicialProcessAction(data: JudicialProcessFormData)
 }
 
 export async function updateJudicialProcessAction(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
-    const tenantId = await getTenantId();
+    const tenantId = await getTenantIdFromSession();
     const result = await judicialProcessService.updateJudicialProcess(tenantId, id, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
@@ -46,7 +47,7 @@ export async function updateJudicialProcessAction(id: string, data: Partial<Judi
 }
 
 export async function deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
-    const tenantId = await getTenantId();
+    const tenantId = await getTenantIdFromSession();
     const result = await judicialProcessService.deleteJudicialProcess(tenantId, id);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/judicial-processes');
