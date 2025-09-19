@@ -126,10 +126,10 @@ export const getAuctionStatusColor = (status: AuctionStatus | undefined): string
 export const getAuctionTypeDisplayData = (type?: AuctionType) => {
     if (!type) return null;
     switch (type) {
-      case 'JUDICIAL': return { label: 'Judicial', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
-      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
-      case 'PARTICULAR': return { label: 'Particular', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
-      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: React.createElement(TomadaPrecosIcon, { className: "h-3 w-3" }) };
+      case 'JUDICIAL': return { label: 'Judicial', iconName: 'Gavel' };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', iconName: 'Gavel' };
+      case 'PARTICULAR': return { label: 'Particular', iconName: 'Gavel' };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', iconName: 'FileText' };
       default: return null;
     }
 };
@@ -208,43 +208,44 @@ export const getUniqueLotLocations = (lots: Lot[]): string[] => {
   return Array.from(locations).sort();
 };
 
-export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): Date | null {
-    if (!lot) return null;
+export const getEffectiveLotEndDate = (lot: Lot, auction?: Auction): { effectiveLotEndDate: Date | null, effectiveLotStartDate: Date | null } => {
+    if (!lot) return { effectiveLotEndDate: null, effectiveLotStartDate: null };
 
-    // 1. Specific date on the lot always wins
-    if (lot.endDate) {
-        return new Date(lot.endDate);
-    }
+    const now = new Date();
 
-    // 2. Fallback to auction stages
+    // Prioritize stage dates from the parent auction if available
     if (auction?.auctionStages && auction.auctionStages.length > 0) {
-        const now = new Date();
-        // Find the first stage that hasn't ended yet
-        const upcomingOrActiveStage = auction.auctionStages
+        const activeOrNextStage = auction.auctionStages
             .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
             .sort((a, b) => new Date(a.startDate as Date).getTime() - new Date(b.startDate as Date).getTime())[0];
         
-        if (upcomingOrActiveStage?.endDate) {
-            return new Date(upcomingOrActiveStage.endDate);
+        if (activeOrNextStage) {
+            return {
+                effectiveLotEndDate: new Date(activeOrNextStage.endDate as string),
+                effectiveLotStartDate: new Date(activeOrNextStage.startDate as string)
+            };
         }
-
-        // If all stages are in the past, get the end date of the last stage
-        const lastStage = auction.auctionStages
-            .filter(stage => stage.endDate)
-            .sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
         
-        if (lastStage?.endDate) {
-            return new Date(lastStage.endDate);
+        // If all stages are in the past, find the most recent one
+        const lastFinishedStage = auction.auctionStages
+            .filter(stage => stage.endDate)
+            .sort((a,b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime())[0];
+            
+        if (lastFinishedStage) {
+             return {
+                effectiveLotEndDate: new Date(lastFinishedStage.endDate as string),
+                effectiveLotStartDate: new Date(lastFinishedStage.startDate as string)
+            };
         }
     }
+    
+    // Fallback to lot-specific dates
+    const endDate = lot.endDate ? new Date(lot.endDate as string) : (auction?.endDate ? new Date(auction.endDate as string) : null);
+    const startDate = lot.auctionDate ? new Date(lot.auctionDate as string) : (auction?.auctionDate ? new Date(auction.auctionDate as string) : null);
 
-    // 3. Fallback to the main auction end date
-    if (auction?.endDate) {
-        return new Date(auction.endDate);
-    }
-
-    return null;
+    return { effectiveLotEndDate: endDate, effectiveLotStartDate: startDate };
 }
+
 
 /**
  * Gets the currently active stage from a list of auction stages.

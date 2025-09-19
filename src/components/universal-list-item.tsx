@@ -25,6 +25,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as icons from 'lucide-react';
 
 
 type Item = Partial<Auction & Lot>;
@@ -36,6 +37,14 @@ interface UniversalListItemProps {
   parentAuction?: Auction;
   onUpdate?: () => void;
 }
+
+// Helper to render an icon dynamically by its name
+const IconByName = ({ name, ...props }: { name: string; [key: string]: any }) => {
+    const IconComponent = (icons as any)[name];
+    if (!IconComponent) return null; // Or return a default icon
+    return <IconComponent {...props} />;
+};
+
 
 export default function UniversalListItem({ item, type, platformSettings, parentAuction, onUpdate }: UniversalListItemProps) {
   if (!item) return null;
@@ -172,7 +181,10 @@ export default function UniversalListItem({ item, type, platformSettings, parent
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
                   {isAuction ? (
                       <>
-                          <div className="flex items-center">{auctionTypeDisplay?.icon && React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}<span>{auctionTypeDisplay?.label}</span></div>
+                          <div className="flex items-center">
+                            {auctionTypeDisplay?.iconName && <IconByName name={auctionTypeDisplay.iconName} className="h-3.5 w-3.5 mr-1.5 text-primary/80" />}
+                            <span>{auctionTypeDisplay?.label}</span>
+                          </div>
                           <div className="flex items-center"><ListChecks className="h-3.5 w-3.5 mr-1.5 text-primary/80" /><span className="truncate">{item.totalLots || 0} Lotes</span></div>
                           <div className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5 mr-0.5 text-primary/80" /><span className="truncate">{item.city} - {item.state}</span>{item.latitude && item.longitude && (<a href={`https://www.google.com/maps/search/?api=1&query=${item.latitude},${item.longitude}`} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline" onClick={(e) => e.stopPropagation()}><MapPin className="h-3 w-3" /></a>)}</div>
                           <div className="flex items-center"><Users className="h-3.5 w-3.5 mr-1.5 text-primary/80" /><span className="truncate">{item.totalHabilitatedUsers || 0} Habilitados</span></div>
