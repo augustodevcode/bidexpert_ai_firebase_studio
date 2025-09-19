@@ -1,7 +1,7 @@
 // src/app/admin/sellers/[sellerId]/edit/page.tsx
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import SellerForm from '../../seller-form';
 import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
@@ -14,7 +14,7 @@ import type { SellerDashboardData } from '@/services/seller.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
-import FormPageLayout from '@/components/admin/form-page-layout'; // Importar o novo layout
+import FormPageLayout from '@/components/admin/form-page-layout'; 
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -106,14 +106,13 @@ export default function EditSellerPage() {
       }
   };
 
-  // Esta função será passada para o SellerForm
   const handleFormSubmit = async (data: SellerFormData) => {
     setIsSubmitting(true);
     const result = await updateSeller(sellerId, data);
     if (result.success) {
         toast({ title: 'Sucesso!', description: 'Comitente atualizado.' });
-        fetchPageData(); // Re-fetch data
-        setIsViewMode(true); // Return to view mode on success
+        fetchPageData(); 
+        setIsViewMode(true); 
     } else {
         toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
     }
@@ -135,7 +134,7 @@ export default function EditSellerPage() {
             onDelete={handleDelete}
         >
             <SellerForm
-                ref={formRef} // Passando a ref para o formulário
+                ref={formRef} 
                 initialData={seller}
                 judicialBranches={judicialBranches}
                 onSubmitAction={handleFormSubmit}

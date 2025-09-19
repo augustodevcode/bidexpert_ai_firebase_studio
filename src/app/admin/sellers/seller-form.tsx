@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useWatch } from 'react-hook-form';
-import { sellerFormSchema, type SellerFormValues } from './seller-form-schema';
+import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
 import type { SellerProfileInfo, MediaItem, JudicialBranch } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
@@ -18,6 +18,8 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep'; 
 import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialBranches } from '../judicial-branches/actions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
+
 
 interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
@@ -124,12 +126,20 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsCepLoading(false);
   }
 
+  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
+
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6" data-ai-id="seller-form">
            <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem><FormLabel>Nome do Comitente/Empresa</FormLabel><FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
+                <FormItem>
+                  <FormLabel>Nome do Comitente/Empresa</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
               )} />
              {initialData?.publicId && (
                 <FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>ID Público</FormLabel><FormControl><Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription><FormMessage /></FormItem>)} />
@@ -141,14 +151,15 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                 <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
                     <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
                         <EntitySelector 
+                            entityName="judicialBranch"
                             value={field.value}
                             onChange={field.onChange}
                             options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
                             placeholder="Nenhuma vara judicial vinculada"
                             searchPlaceholder="Buscar vara..."
                             emptyStateMessage="Nenhuma vara encontrada."
-                            entityName="judicialBranch"
                             createNewUrl="/admin/judicial-branches/new"
+                            editUrlPrefix="/admin/judicial-branches"
                             onRefetch={handleRefetchBranches}
                             isFetching={isFetchingBranches}
                         />
@@ -164,10 +175,10 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
               <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
              <FormField control={form.control} name="zipCode" render={({ field }) => (
-                    <FormItem><FormLabel>CEP</FormLabel><div className="flex gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>
+                    <FormItem><FormLabel>CEP</FormLabel><div className="flex flex-col sm:flex-row gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading} className="w-full sm:w-auto">{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar Endereço'}</Button></div><FormMessage /></FormItem>
                 )} />
              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado/UF</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
@@ -176,10 +187,10 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
               <FormLabel>Logo do Comitente</FormLabel>
               <div className="flex items-center gap-4">
                 <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                  {logoUrlPreview ? ( <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
+                  {validLogoPreviewUrl ? ( <Image src={validLogoPreviewUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
                 </div>
                 <div className="flex-grow space-y-2">
-                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{validLogoPreviewUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
                   <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                   <FormMessage />
                 </div>

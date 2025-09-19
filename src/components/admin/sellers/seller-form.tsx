@@ -25,15 +25,12 @@ interface SellerFormProps {
   initialData?: Partial<SellerProfileInfo> | null;
   judicialBranches: JudicialBranch[];
   onSubmitAction: (data: SellerFormValues) => Promise<any>;
-  onUpdateSuccess?: () => void; // Callback para quando a atualização for bem-sucedida
 }
 
-// Tornando o formulário um forwardRef para que o FormPageLayout possa acessá-lo
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
   initialData,
   judicialBranches: initialBranches,
   onSubmitAction,
-  onUpdateSuccess,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -63,7 +60,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     },
   });
 
-  // Expor o método de submit do formulário via ref
   React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
   }));

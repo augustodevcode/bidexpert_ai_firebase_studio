@@ -6,6 +6,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Loader2, Save, XCircle, ChevronLeft, ChevronRight, Copy, PlusCircle, Trash2, Edit, Printer } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface FormPageLayoutProps {
   formTitle: string;
@@ -20,7 +31,6 @@ interface FormPageLayoutProps {
   onDelete?: () => Promise<void>;
   onCancel?: () => void;
   onEnterEditMode?: () => void;
-  // Props for navigation
   onNavigateNext?: () => void;
   onNavigatePrev?: () => void;
   hasNext?: boolean;
@@ -57,18 +67,40 @@ function FormToolbar({
   return (
     <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2" data-ai-id="form-page-toolbar-edit-mode">
       <div className="flex items-center gap-2">
-        {onDelete && <Button variant="destructive" size="sm" disabled={isSubmitting} onClick={onDelete}><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>}
-        <Button variant="outline" size="sm" disabled={isSubmitting}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
+        {onDelete && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={isSubmitting}><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. Isso irá excluir permanentemente este registro do banco de dados.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+        )}
+        <Button variant="outline" size="sm" disabled={true}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
       </div>
       <div className="flex items-center gap-2">
-        <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-            Salvar e Novo
-        </Button>
-        <Button onClick={onSave} disabled={isSubmitting}>
-            {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
-            Salvar
-        </Button>
+        {onSaveAndNew && (
+            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                Salvar e Novo
+            </Button>
+        )}
+        {onSave && (
+            <Button onClick={onSave} disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
+                Salvar
+            </Button>
+        )}
       </div>
     </div>
   );
@@ -132,11 +164,10 @@ export default function FormPageLayout({
         </div>
       </CardHeader>
       <fieldset disabled={isViewMode || isSubmitting} className="group" data-ai-id="form-page-fieldset">
-        <CardContent className="p-6 bg-secondary/20 group-disabled:bg-muted/10 group-disabled:cursor-not-allowed">
+        <CardContent className="p-6 bg-secondary/20 group-disabled:bg-background/20 group-disabled:cursor-not-allowed">
             {children}
         </CardContent>
         <CardFooter className="flex flex-col sm:flex-row justify-between items-center gap-2 p-6 border-t">
-             {/* Toolbar para mobile */}
              <div className="sm:hidden w-full">
                  <FormToolbar 
                     isViewMode={isViewMode} 
