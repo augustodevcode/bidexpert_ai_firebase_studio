@@ -1,3 +1,4 @@
+
 // src/components/universal-card.tsx
 'use client';
 
@@ -27,8 +28,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import * as icons from 'lucide-react';
 
 type Item = Partial<Auction & Lot>;
+
+// Helper to render an icon dynamically by its name
+const IconByName = ({ name, ...props }: { name: string; [key: string]: any }) => {
+    const IconComponent = (icons as any)[name];
+    if (!IconComponent) return null; // Or return a default icon
+    return <IconComponent {...props} />;
+};
+
 
 interface UniversalCardProps {
   item: Item;
@@ -143,7 +153,10 @@ export default function UniversalCard({ item, type, platformSettings, parentAuct
       <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
         <span className="truncate" title={`ID: ${item.publicId || item.id}`} data-ai-id="auction-card-public-id">ID: {item.publicId || item.id}</span>
         {auctionTypeDisplay && (
-          <div className="flex items-center gap-1" data-ai-id="auction-card-type">{auctionTypeDisplay.icon}<span>{auctionTypeDisplay.label}</span></div>
+          <div className="flex items-center gap-1" data-ai-id="auction-card-type">
+             {auctionTypeDisplay.iconName && <IconByName name={auctionTypeDisplay.iconName} className="h-3 w-3" />}
+            <span>{auctionTypeDisplay.label}</span>
+          </div>
         )}
       </div>
       <h3 data-ai-id="auction-card-title" className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">{item.title}</h3>
