@@ -112,14 +112,24 @@ Baseado na estrutura de `src/app`:
 
 ## 5. Regras de Negócio Críticas
 
-(As regras existentes permanecem, com a adição da regra de isolamento de dados)
-
 ### 5.1. **[NOVO]** Isolamento de Dados (Multi-Tenancy)
 
 *   **`tenantId` Mandatório:** Todas as tabelas que contêm dados de um leiloeiro específico (leilões, lotes, bens, comitentes, usuários do leiloeiro, lances, etc.) **devem** ter uma coluna `tenantId`.
-*   **Filtragem Automática:** Todas as queries (leituras, escritas, atualizações, exclusões) realizadas na plataforma **devem** ser automaticamente filtradas pelo `tenantId` do usuário logado ou do contexto do subdomínio acessado.
+*   **Filtragem Automática:** Todas as queries (leituras, escritas, atualizações, exclusões) realizadas na plataforma **devem** ser automaticamente filtradas pelo `tenantId` do usuário logado ou do contexto do subdomínio acessado. Isso é garantido pelo `Prisma Middleware` em `src/lib/prisma.ts`.
 *   **Segurança:** Um usuário de um `tenantId` **NUNCA** deve conseguir visualizar, modificar ou acessar dados pertencentes a outro `tenant_id`.
+
+### 5.2. **[NOVO]** Separação de Responsabilidades (Services)
+
+*   A lógica de negócio deve residir na camada de **Serviço** (`src/services/*.service.ts`).
+*   Uma `Server Action` (`src/app/**/actions.ts`) deve ser "burra", servindo apenas como um ponto de entrada que chama o serviço correspondente.
+*   Um serviço **não deve** chamar o repositório de outra entidade diretamente. Por exemplo, `AuctioneerService` não deve chamar `LotRepository`. Se precisar de dados de lotes, ele deve chamar o `LotService`. Isso garante o encapsulamento e a manutenibilidade.
+*   Funções que buscam dados para páginas públicas (não autenticadas) devem ter um parâmetro `isPublicCall: boolean = false` e usar um mecanismo para obter o `tenantId` do contexto público (geralmente via `headers` injetados pelo middleware) ou usar o padrão '1' (Landlord).
 
 ---
 
-(O restante do documento permanece o mesmo)
+## 6. Orientações para Futuros Desenvolvedores
+
+*   **Sempre Use o Contexto de Tenant:** Ao criar novas `Server Actions` ou serviços, sempre utilize a função `getTenantIdFromRequest` para garantir que todas as operações sejam executadas no contexto do tenant correto.
+*   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
+*   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
+*   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.

@@ -1,4 +1,3 @@
-
 // src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
@@ -39,10 +38,6 @@ export class AuctioneerService {
 
   async getAuctioneerBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
       return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
-  }
-
-  async getAuctionsByAuctioneerSlug(tenantId: string, auctioneerSlug: string): Promise<any[]> {
-    return this.auctioneerRepository.findAuctionsBySlug(tenantId, auctioneerSlug);
   }
 
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
@@ -187,5 +182,3 @@ export class AuctioneerService {
     });
   }
 }
-
-    

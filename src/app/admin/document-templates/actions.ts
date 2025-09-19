@@ -1,4 +1,3 @@
-
 // src/app/admin/document-templates/actions.ts
 'use server';
 

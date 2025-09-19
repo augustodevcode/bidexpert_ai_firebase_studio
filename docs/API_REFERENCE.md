@@ -1,4 +1,3 @@
-
 # Referência de API (Server Actions)
 
 Este documento descreve as principais Server Actions disponíveis no projeto BidExpert. Como usamos o padrão de Server Actions do Next.js, estas não são rotas de API REST tradicionais, mas sim funções assíncronas que são exportadas de arquivos com a diretiva `'use server';` e podem ser chamadas diretamente de componentes do cliente.
@@ -11,17 +10,17 @@ A arquitetura segue o padrão `Controller -> Service -> Repository`. As funçõe
 
 Estas ações gerenciam os leilões da plataforma.
 
-- **`getAuctions(): Promise<Auction[]>`**
-  - **Descrição:** Retorna uma lista de todos os leilões.
-  - **Parâmetros:** Nenhum.
+- **`getAuctions(isPublicCall?: boolean): Promise<Auction[]>`**
+  - **Descrição:** Retorna uma lista de todos os leilões, respeitando o contexto do tenant.
+  - **Parâmetros:** `isPublicCall` (opcional, boolean) - Se `true`, busca dados do tenant Landlord (ID '1').
 
-- **`getAuction(id: string): Promise<Auction | null>`**
+- **`getAuction(id: string, isPublicCall?: boolean): Promise<Auction | null>`**
   - **Descrição:** Retorna um leilão específico pelo seu ID ou publicId.
-  - **Parâmetros:** `id` (string) - O ID do leilão a ser buscado.
+  - **Parâmetros:** `id` (string), `isPublicCall` (opcional, boolean).
 
 - **`createAuction(data: Partial<AuctionFormData>): Promise<{...}>`**
   - **Descrição:** Cria um novo leilão.
-  - **Parâmetros:** `data` (objeto) - Os dados do leilão a ser criado.
+  - **Parâmetros:** `data` (objeto).
 
 - **`updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{...}>`**
   - **Descrição:** Atualiza os dados de um leilão existente.
@@ -32,11 +31,11 @@ Estas ações gerenciam os leilões da plataforma.
   - **Parâmetros:** `id` (string).
 
 - **`getAuctionsBySellerSlug(slug: string): Promise<Auction[]>`**
-  - **Descrição:** Busca leilões de um comitente específico pelo slug ou ID.
+  - **Descrição:** Busca leilões de um comitente específico pelo slug ou ID (chamada pública, tenant Landlord).
   - **Parâmetros:** `slug` (string).
 
 - **`getAuctionsByAuctioneerSlug(slug: string): Promise<Auction[]>`**
-  - **Descrição:** Busca leilões de um leiloeiro específico pelo slug ou ID.
+  - **Descrição:** Busca leilões de um leiloeiro específico pelo slug ou ID (chamada pública, tenant Landlord).
   - **Parâmetros:** `slug` (string).
 
 ---
@@ -45,13 +44,13 @@ Estas ações gerenciam os leilões da plataforma.
 
 Gerenciam os lotes individuais dentro dos leilões.
 
-- **`getLots(auctionId?: string): Promise<Lot[]>`**
+- **`getLots(auctionId?: string, isPublicCall?: boolean): Promise<Lot[]>`**
   - **Descrição:** Retorna uma lista de lotes, opcionalmente filtrados por `auctionId`.
-  - **Parâmetros:** `auctionId` (opcional, string).
+  - **Parâmetros:** `auctionId` (opcional, string), `isPublicCall` (opcional, boolean).
 
-- **`getLot(id: string): Promise<Lot | null>`**
+- **`getLot(id: string, isPublicCall?: boolean): Promise<Lot | null>`**
   - **Descrição:** Retorna um lote específico pelo seu ID ou publicId.
-  - **Parâmetros:** `id` (string).
+  - **Parâmetros:** `id` (string), `isPublicCall` (opcional, boolean).
 
 - **`createLot(data: Partial<LotFormData>): Promise<{...}>`**
   - **Descrição:** Cria um novo lote.
@@ -71,11 +70,12 @@ Gerenciam os lotes individuais dentro dos leilões.
 
 Gerenciam os perfis dos comitentes/vendedores. Todas as chamadas são intermediadas pela `SellerService`.
 
-- **`getSellers(): Promise<SellerProfileInfo[]>`**
+- **`getSellers(isPublicCall?: boolean): Promise<SellerProfileInfo[]>`**
 - **`getSeller(id: string): Promise<SellerProfileInfo | null>`**
 - **`createSeller(data: SellerFormData): Promise<{...}>`**
 - **`updateSeller(id: string, data: Partial<SellerFormData>): Promise<{...}>`**
 - **`deleteSeller(id: string): Promise<{...}>`**
+- **`getSellerBySlug(slug: string): Promise<SellerProfileInfo | null>`**
 
 ---
 
@@ -83,11 +83,12 @@ Gerenciam os perfis dos comitentes/vendedores. Todas as chamadas são intermedia
 
 Gerenciam os perfis dos leiloeiros.
 
-- **`getAuctioneers(): Promise<AuctioneerProfileInfo[]>`**
+- **`getAuctioneers(isPublicCall?: boolean): Promise<AuctioneerProfileInfo[]>`**
 - **`getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null>`**
 - **`createAuctioneer(data: AuctioneerFormData): Promise<{...}>`**
 - **`updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{...}>`**
 - **`deleteAuctioneer(id: string): Promise<{...}>`**
+- **`getAuctioneerBySlug(slug: string): Promise<AuctioneerProfileInfo | null>`**
 
 ---
 

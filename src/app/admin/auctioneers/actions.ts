@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/actions.ts
 'use server';
 
-import type { AuctioneerProfileInfo, AuctioneerFormData, Auction } from '@/types';
+import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { AuctioneerService } from '@/services/auctioneer.service';
 import { getSession } from '@/app/auth/actions';
@@ -14,14 +14,19 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
     if (session?.tenantId) {
         return session.tenantId;
     }
+
     const headersList = headers();
     const tenantIdFromHeader = headersList.get('x-tenant-id');
+
     if (tenantIdFromHeader) {
         return tenantIdFromHeader;
     }
+
+    // For public calls, we assume we want landlord data if no specific context is found
     if (isPublicCall) {
         return '1';
     }
+    
     throw new Error("Acesso não autorizado ou tenant não identificado.");
 }
 
@@ -39,11 +44,6 @@ export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo |
 export async function getAuctioneerBySlug(slugOrId: string): Promise<AuctioneerProfileInfo | null> {
     const tenantId = await getTenantIdFromRequest(true); // Public data is always from landlord
     return auctioneerService.getAuctioneerBySlug(tenantId, slugOrId);
-}
-
-export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const tenantId = await getTenantIdFromRequest(true); // Public data is always from landlord
-    return auctioneerService.getAuctionsByAuctioneerSlug(tenantId, auctioneerSlug);
 }
 
 export async function createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean, message: string, auctioneerId?: string }> {

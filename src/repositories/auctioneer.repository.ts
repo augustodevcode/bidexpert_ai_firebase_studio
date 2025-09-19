@@ -30,22 +30,6 @@ export class AuctioneerRepository {
     });
   }
 
-  async findAuctionsBySlug(tenantId: string, auctioneerSlug: string): Promise<any[]> {
-    return this.prisma.auction.findMany({
-        where: {
-            tenantId,
-            auctioneer: {
-                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
-            }
-        },
-        include: { 
-            _count: { select: { lots: true } },
-            seller: true 
-        },
-        orderBy: { auctionDate: 'desc' }
-    });
-  }
-
   async create(data: Prisma.AuctioneerCreateInput): Promise<AuctioneerProfileInfo> {
     return this.prisma.auctioneer.create({ data });
   }

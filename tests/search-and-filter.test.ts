@@ -39,42 +39,42 @@ async function createSearchTestData() {
             publicId: `pub-auc-1-${testRunId}`, 
             status: 'ABERTO_PARA_LANCES', 
             auctionDate: new Date(), 
-            auctioneer: { connect: { id: auctioneer1.id } },
-            seller: { connect: { id: seller1.id } },
-            category: { connect: { id: category1.id } },
+            auctioneerId: auctioneer1.id,
+            sellerId: seller1.id,
+            categoryId: category1.id,
             city: 'São Paulo', 
             state: 'SP',
             latitude: -23.550520,
             longitude: -46.633308,
-        } }),
+        } as any }),
         prisma.auction.create({ data: { 
             title: `Leilão de Apartamentos RJ ${testRunId}`, 
             slug: `leilao-apartamentos-rj-${testRunId}`, 
             publicId: `pub-auc-2-${testRunId}`, 
             status: 'EM_BREVE', 
             auctionDate: new Date(Date.now() + 86400000), 
-            auctioneer: { connect: { id: auctioneer1.id } },
-            seller: { connect: { id: seller1.id } },
-            category: { connect: { id: category2.id } },
+            auctioneerId: auctioneer1.id,
+            sellerId: seller1.id,
+            categoryId: category2.id,
             city: 'Rio de Janeiro', 
             state: 'RJ',
             latitude: -22.906847,
             longitude: -43.172896,
-        } }),
+        } as any }),
         prisma.auction.create({ data: { 
             title: `Leilão Misto SP ${testRunId}`, 
             slug: `leilao-misto-sp-${testRunId}`, 
             publicId: `pub-auc-3-${testRunId}`, 
             status: 'ABERTO_PARA_LANCES', 
             auctionDate: new Date(), 
-            auctioneer: { connect: { id: auctioneer1.id } },
-            seller: { connect: { id: seller1.id } },
-            category: { connect: { id: category1.id } },
+            auctioneerId: auctioneer1.id,
+            sellerId: seller1.id,
+            categoryId: category1.id,
             city: 'São Paulo', 
             state: 'SP',
             latitude: -23.5613,
             longitude: -46.6800, 
-        } })
+        } as any })
     ]);
 
     [lot1, lot2, lot3, lot4] = await prisma.$transaction([
@@ -157,7 +157,7 @@ describe('Search and Filter Service Logic Test', () => {
     it('should fetch auctions by auctioneer slug', async () => {
         console.log('--- Test: Fetching auctions by auctioneer slug ---');
         // Act
-        const auctions = await auctionService.getAuctionsByAuctioneerSlug(auctioneer1.slug);
+        const auctions = await auctionService.getAuctionsByAuctioneerSlug('1', auctioneer1.slug!);
         
         // Assert
         console.log(`[ASSERT] Found ${auctions.length} auctions for auctioneer ${auctioneer1.slug}`);

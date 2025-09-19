@@ -14,14 +14,18 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
     if (session?.tenantId) {
         return session.tenantId;
     }
+
     const headersList = headers();
     const tenantIdFromHeader = headersList.get('x-tenant-id');
+
     if (tenantIdFromHeader) {
         return tenantIdFromHeader;
     }
+
     if (isPublicCall) {
         return '1';
     }
+    
     throw new Error("Acesso não autorizado ou tenant não identificado.");
 }
 
@@ -39,11 +43,6 @@ export async function getSeller(id: string): Promise<SellerProfileInfo | null> {
 export async function getSellerBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
     const tenantId = await getTenantIdFromRequest(true); // Public data is always from landlord
     return sellerService.getSellerBySlug(tenantId, slugOrId);
-}
-
-export async function getLotsBySellerSlug(sellerSlugOrId: string): Promise<Lot[]> {
-    const tenantId = await getTenantIdFromRequest(true); // Public data is always from landlord
-    return sellerService.getLotsBySellerSlug(tenantId, sellerSlugOrId);
 }
 
 export async function createSeller(data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {

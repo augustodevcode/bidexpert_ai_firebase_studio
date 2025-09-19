@@ -1,4 +1,3 @@
-
 // src/app/sellers/[sellerId]/page.tsx
 'use client';
 
@@ -6,7 +5,6 @@ import { useEffect, useState, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-import { getLotsBySellerSlug } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
 import SearchResultsFrame from '@/components/search-results-frame';
@@ -17,9 +15,9 @@ import { Separator } from '@/components/ui/separator';
 import { Star, Loader2, Mail, Phone, Globe, Briefcase, Users, TrendingUp, MessageSquare, Pencil } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { getSellerBySlug } from '@/app/admin/sellers/actions';
+import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
-import { getAuctions } from '@/app/admin/auctions/actions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
@@ -39,8 +37,7 @@ export default function SellerDetailsPage() {
 
   const { userProfileWithPermissions } = useAuth();
   const [sellerProfile, setSellerProfile] = useState<SellerProfileInfo | null>(null);
-  const [relatedLots, setRelatedLots] = useState<Lot[]>([]);
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
+  const [relatedAuctions, setRelatedAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -60,25 +57,23 @@ export default function SellerDetailsPage() {
         setIsLoading(true);
         setError(null);
         try {
-          const [foundSeller, lots, auctions, settings] = await Promise.all([
+          const [foundSeller, auctions, settings] = await Promise.all([
               getSellerBySlug(sellerIdSlug),
-              getLotsBySellerSlug(sellerIdSlug),
-              getAuctions(),
+              getAuctionsBySellerSlug(sellerIdSlug),
               getPlatformSettings()
           ]);
           setPlatformSettings(settings);
           setLotItemsPerPage(settings.searchItemsPerPage || 6);
-          setAllAuctions(auctions);
 
           if (!foundSeller) {
             setError(`Comitente com slug/publicId "${sellerIdSlug}" não encontrado.`);
             setSellerProfile(null);
-            setRelatedLots([]);
+            setRelatedAuctions([]);
             setIsLoading(false);
             return;
           }
           setSellerProfile(foundSeller);
-          setRelatedLots(lots);
+          setRelatedAuctions(auctions);
           setCurrentLotPage(1);
 
         } catch (e) {
@@ -96,29 +91,29 @@ export default function SellerDetailsPage() {
   }, [sellerIdSlug]);
 
   const sortedLots = useMemo(() => {
-    let lotsToSort = [...relatedLots];
+    let allLots = relatedAuctions.flatMap(a => a.lots || []);
     switch (lotSortBy) {
         case 'endDate_asc':
-          lotsToSort.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
+          allLots.sort((a, b) => new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime());
           break;
         case 'endDate_desc':
-          lotsToSort.sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
+          allLots.sort((a, b) => new Date(b.endDate as string).getTime() - new Date(a.endDate as string).getTime());
           break;
         case 'price_asc':
-          lotsToSort.sort((a, b) => a.price - b.price);
+          allLots.sort((a, b) => a.price - b.price);
           break;
         case 'price_desc':
-          lotsToSort.sort((a, b) => b.price - a.price);
+          allLots.sort((a, b) => b.price - a.price);
           break;
         case 'views_desc':
-          lotsToSort.sort((a, b) => (b.views || 0) - (a.views || 0));
+          allLots.sort((a, b) => (b.views || 0) - (a.views || 0));
           break;
         case 'relevance':
         default:
           break;
       }
-      return lotsToSort;
-  }, [relatedLots, lotSortBy]);
+      return allLots;
+  }, [relatedAuctions, lotSortBy]);
 
   const paginatedLots = useMemo(() => {
     if (!platformSettings) return [];
@@ -141,8 +136,8 @@ export default function SellerDetailsPage() {
       setCurrentLotPage(1);
   }
   
-  const renderLotGridItemForSellerPage = (lot: Lot) => <UniversalCard item={lot} type="lot" platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
-  const renderLotListItemForSellerPage = (lot: Lot) => <UniversalListItem item={lot} type="lot" platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotGridItemForSellerPage = (lot: Lot) => <UniversalCard item={lot} type="lot" platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotListItemForSellerPage = (lot: Lot) => <UniversalListItem item={lot} type="lot" platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
 
 
   if (isLoading || !platformSettings) {
@@ -205,14 +200,14 @@ export default function SellerDetailsPage() {
             </div>
           </section>
 
-          {relatedLots.length > 0 && (
+          {sortedLots.length > 0 && (
             <section className="pt-6" data-ai-id="seller-details-related-lots-section">
               <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
                 <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes de {sellerProfile.name}
               </h2>
               <SearchResultsFrame
                   items={paginatedLots}
-                  totalItemsCount={relatedLots.length}
+                  totalItemsCount={sortedLots.length}
                   renderGridItem={renderLotGridItemForSellerPage}
                   renderListItem={renderLotListItemForSellerPage}
                   sortOptions={sortOptionsLots}
@@ -229,7 +224,7 @@ export default function SellerDetailsPage() {
             </section>
           )}
 
-          {relatedLots.length === 0 && !isLoading && (
+          {sortedLots.length === 0 && !isLoading && (
             <Card className="shadow-sm mt-8" data-ai-id="seller-details-no-lots">
               <CardContent className="text-center py-10">
                 <p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p>

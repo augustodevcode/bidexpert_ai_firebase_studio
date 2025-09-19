@@ -1,16 +1,16 @@
 // src/app/admin/lots/actions.ts
 'use server';
 
-import type { Lot, Bem, LotFormData, UserWin } from '@/types';
+import type { Lot, Bem, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
-import { BemRepository } from '@/repositories/bem.repository';
+import { BemService } from '@/services/bem.service'; // Use BemService now
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/app/auth/actions';
 import { headers } from 'next/headers';
 
 const lotService = new LotService();
-const bemRepository = new BemRepository();
+const bemService = new BemService(); // Use BemService
 
 async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
     const session = await getSession();
@@ -79,12 +79,12 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 }
 
 export async function getBensForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-  const tenantId = await getTenantIdFromRequest();
-  return bemRepository.findAll({ ...filter, tenantId });
+    const tenantId = await getTenantIdFromRequest();
+    return bemService.getBens({ ...filter, tenantId });
 }
 
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  return bemRepository.findByIds(ids);
+  return bemService.getBensByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
