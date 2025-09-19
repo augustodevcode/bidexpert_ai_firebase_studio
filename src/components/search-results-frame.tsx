@@ -14,13 +14,14 @@ import {
   getCoreRowModel, 
   getFilteredRowModel,
   getFacetedRowModel,
-  getFacetedUniqueValues
+  getFacetedUniqueValues,
+  Column,
+  Table
 } from "@tanstack/react-table";
-import UniversalListItem from './universal-list-item';
-import UniversalCard from './universal-card';
 
 interface SearchResultsFrameProps<TItem> {
   items: TItem[]; 
+  totalItemsCount: number;
   renderGridItem: (item: TItem, index: number) => React.ReactNode;
   renderListItem: (item: TItem, index: number) => React.ReactNode;
   sortOptions: { value: string; label: string }[];
@@ -39,15 +40,12 @@ interface SearchResultsFrameProps<TItem> {
         icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
-  // Pagination Props
-  totalItemsCount: number;
-  currentPage: number;
-  itemsPerPage: number;
-  onPageChange: (page: number) => void;
-  onItemsPerPageChange: (size: number) => void;
+  currentPage?: number;
+  itemsPerPage?: number;
+  onPageChange?: (page: number) => void;
+  onItemsPerPageChange?: (size: number) => void;
 }
 
-// Pagination is now a separate component
 const PaginationControls = ({
     currentPage,
     totalItemsCount,
@@ -125,7 +123,7 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   const [columnFilters, setColumnFilters] = React.useState<any[]>([]);
   
   const table = useReactTable({
-    data: items, // Note: pagination is now handled outside of tanstack-table for this component
+    data: items,
     columns: [],
     state: { columnFilters },
     onColumnFiltersChange: setColumnFilters,
@@ -141,6 +139,8 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   };
   
   const isFiltered = table.getState().columnFilters.length > 0;
+  
+  const showPagination = onPageChange && currentPage && itemsPerPage && totalItemsCount > itemsPerPage;
 
   return (
     <div className="space-y-6">
@@ -152,7 +152,7 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
            {facetedFilterColumns.map(col => table.getColumn(col.id) ? (
             <DataTableFacetedFilter
                 key={col.id}
-                column={table.getColumn(col.id)}
+                column={table.getColumn(col.id) as Column<TItem, unknown>}
                 title={col.title}
                 options={col.options}
             />
@@ -197,12 +197,14 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
               viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
             ))}
           </div>
-          <PaginationControls 
-            currentPage={currentPage}
-            totalItemsCount={totalItemsCount}
-            itemsPerPage={itemsPerPage}
-            onPageChange={onPageChange}
-          />
+          {showPagination && (
+            <PaginationControls 
+              currentPage={currentPage}
+              totalItemsCount={totalItemsCount}
+              itemsPerPage={itemsPerPage}
+              onPageChange={onPageChange}
+            />
+          )}
         </>
       ) : (
         <Card>

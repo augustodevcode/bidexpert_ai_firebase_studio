@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -12,7 +11,7 @@ import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getPlatformSettings } from '../settings/actions';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
@@ -132,6 +131,7 @@ export default function AdminAuctionsPage() {
               {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
+                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}
@@ -148,6 +148,7 @@ export default function AdminAuctionsPage() {
                {platformSettings && (
                  <SearchResultsFrame
                     items={allAuctions}
+                    totalItemsCount={allAuctions.length}
                     renderGridItem={renderAuctionGridItem}
                     renderListItem={renderAuctionListItem}
                     sortOptions={sortOptions}

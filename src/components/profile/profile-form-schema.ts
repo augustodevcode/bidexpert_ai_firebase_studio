@@ -1,4 +1,3 @@
-
 // src/components/profile/profile-form-schema.ts
 import * as z from 'zod';
 import type { AccountType } from '@/types';

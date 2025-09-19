@@ -129,13 +129,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6" data-ai-id="seller-form">
            <FormField control={form.control} name="name" render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Comitente/Empresa</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <FormItem><FormLabel>Nome do Comitente/Empresa</FormLabel><FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
               )} />
              {initialData?.publicId && (
                 <FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>ID Público</FormLabel><FormControl><Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription><FormMessage /></FormItem>)} />

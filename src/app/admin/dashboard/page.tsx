@@ -6,8 +6,7 @@ import { LayoutDashboard, Settings, Database, Gavel, Package, Users, Users2, Bar
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
-import type { AdminDashboardStats, AdminReportData } from '@/types';
-import { getAdminDashboardStatsAction } from './actions';
+import type { AdminReportData } from '@/types';
 import { getAdminReportDataAction } from '../reports/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -55,7 +54,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="space-y-8" data-ai-id="admin-dashboard-page-container">
       <Card className="shadow-lg" data-ai-id="admin-dashboard-header-card">
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <LayoutDashboard className="h-7 w-7 mr-3 text-primary" />

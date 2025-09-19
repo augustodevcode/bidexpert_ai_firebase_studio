@@ -76,7 +76,7 @@ export function DataTableToolbar<TData>({
   };
 
   return (
-    <div className="flex items-center justify-between" data-ai-id="data-table-toolbar">
+    <div className="flex flex-col sm:flex-row items-center justify-between gap-2" data-ai-id="data-table-toolbar">
       <div className="flex flex-1 flex-wrap items-center gap-2">
         {searchColumnId && (
             <Input
@@ -85,7 +85,7 @@ export function DataTableToolbar<TData>({
             onChange={(event) =>
                 table.getColumn(searchColumnId)?.setFilterValue(event.target.value)
             }
-            className="h-8 w-[150px] lg:w-[250px]"
+            className="h-8 w-full sm:w-[150px] lg:w-[250px]"
             data-ai-id="data-table-search-input"
             />
         )}
@@ -131,32 +131,34 @@ export function DataTableToolbar<TData>({
             <X className="ml-2 h-4 w-4" />
           </Button>
         )}
-        {selectedRowsCount > 0 && onDeleteSelected && (
-           <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" className="h-8">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Excluir ({selectedRowsCount})
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusão em Massa?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação é permanente e não pode ser desfeita. Você tem certeza que deseja excluir os {selectedRowsCount} itens selecionados? Itens que possuem vínculos (ex: leilões com lotes) não serão excluídos.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                    Confirmar Exclusão
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-        )}
       </div>
-      <DataTableViewOptions table={table} />
+       <div className="flex w-full sm:w-auto items-center justify-end gap-2">
+          {selectedRowsCount > 0 && onDeleteSelected && (
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="h-8">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir ({selectedRowsCount})
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Confirmar Exclusão em Massa?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta ação é permanente e não pode ser desfeita. Você tem certeza que deseja excluir os {selectedRowsCount} itens selecionados? Itens que possuem vínculos (ex: leilões com lotes) não serão excluídos.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                      Confirmar Exclusão
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+          )}
+          <DataTableViewOptions table={table} />
+       </div>
     </div>
   )
 }
