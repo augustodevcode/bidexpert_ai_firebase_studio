@@ -125,6 +125,7 @@ export default function EntitySelector({
                       searchColumnId="label"
                       searchPlaceholder={searchPlaceholder}
                       isLoading={isFetching}
+                      emptyStateMessage={emptyStateMessage}
                   />
               </div>
               <DialogFooter className="p-4 border-t flex justify-between">

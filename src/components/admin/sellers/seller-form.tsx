@@ -118,7 +118,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
-        // O campo 'neighborhood' não existe no schema do comitente, então não o preenchemos.
         form.setValue('city', result.data.localidade);
         form.setValue('state', result.data.uf);
     } else {
@@ -146,25 +145,26 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                 <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
                     <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
                         <EntitySelector 
+                            entityName="judicialBranch"
                             value={field.value}
                             onChange={field.onChange}
                             options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
                             placeholder="Nenhuma vara judicial vinculada"
                             searchPlaceholder="Buscar vara..."
                             emptyStateMessage="Nenhuma vara encontrada."
-                            entityName="judicialBranch"
                             createNewUrl="/admin/judicial-branches/new"
+                            editUrlPrefix="/admin/judicial-branches"
                             onRefetch={handleRefetchBranches}
                             isFetching={isFetchingBranches}
                         />
                         <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
                     )} />
             )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato (Opcional)</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone (Opcional)</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
@@ -172,7 +172,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                     <FormItem><FormLabel>CEP</FormLabel><div className="flex flex-col sm:flex-row gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading} className="w-full sm:w-auto">{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar Endereço'}</Button></div><FormMessage /></FormItem>
                 )} />
              <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123, Bairro" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid md:grid-cols-2 gap-6">
               <FormField control={form.control} name="city" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="state" render={({ field }) => (<FormItem><FormLabel>Estado/UF</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>

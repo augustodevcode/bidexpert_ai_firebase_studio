@@ -122,6 +122,7 @@ export default function CityForm({
                 <FormItem>
                   <FormLabel>Estado</FormLabel>
                    <EntitySelector
+                      entityName="state"
                       value={field.value}
                       onChange={field.onChange}
                       options={states.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))}

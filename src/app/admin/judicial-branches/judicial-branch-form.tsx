@@ -92,6 +92,7 @@ export default function JudicialBranchForm({
                 <FormItem>
                   <FormLabel>Comarca</FormLabel>
                    <EntitySelector
+                      entityName="district"
                       value={field.value}
                       onChange={field.onChange}
                       options={districts.map(d => ({ value: d.id, label: `${d.name} (${d.stateUf})` }))}

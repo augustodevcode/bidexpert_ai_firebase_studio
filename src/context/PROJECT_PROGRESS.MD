@@ -7,7 +7,7 @@
 - **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard and the Consignor Dashboard.
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
-- **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets and improved workflow.
+- **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets and improved the workflow.
 - **Item 8:** **Full AI Integration:** Connecting UI to Genkit AI flows for listing suggestions and predictions.
 - **Item 9:** **PDF Document Generation:** Implemented server-side logic using Puppeteer for document generation.
 - **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status.
@@ -20,21 +20,22 @@
 - **Item 18: Implementação de Pagamento Parcelado:** Implemented.
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Completed.
 - **Item 19: Padronização de Identificadores `data-ai-id`:** Completed.
-- **Item 24: Unificação dos Componentes de Card (UniversalCard):** Completed.
-- **Item 26: Adicionar Atalho de Mapa nos Cards:** Completed.
-- **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** Completed.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):**
     - **Status:**
-        - **Arquitetura de Dados (Conforme):** Refatorado para garantir que `actions` não chamem repositórios diretamente, passando sempre pela camada de serviço.
+        - **Arquitetura de Dados (Conforme):** Refatorado para garantir que `actions` não chamem repositórios diretamente.
         - **Padrão Controller-Service-Repository (Conforme):** A separação de camadas foi reforçada.
+        - **Padronização de Nomenclatura (Em Andamento):** Conversão gradual do código para português, com o módulo BidReportBuilder completo.
+        - **Auditoria do `EntitySelector` (Conforme):** Todos os formulários de admin que lidam com relacionamentos foram auditados e atualizados para usar o componente `EntitySelector` padronizado.
+- **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** Completed.
+- **Item 24: Unificação dos Componentes de Card (UniversalCard):** Completed.
+- **Item 26: Adicionar Atalho de Mapa nos Cards:** Completed.
 
 ## DOING
 - **Item 20 (Continuação): Auditoria e Refatoração Arquitetural (Análise de GAPs)**
-    - **Objetivo:** Continuar corrigindo as lacunas entre as regras de arquitetura definidas e a implementação atual.
+    - **Objetivo:** Finalizar as tarefas de auditoria para garantir a consistência total do código com as regras de arquitetura.
     - **Status Atual:**
-        - **Padronização de Nomenclatura (Em Andamento):** Iniciando a conversão gradual de nomes de arquivos, funções e variáveis para português.
-        - **Consistência de `data-ai-id` (Pendente):** Próximo passo será garantir a aplicação consistente do atributo `data-ai-id`.
-        - **Auditoria do `EntitySelector` (Pendente):** Auditar todos os formulários de admin para garantir o uso correto do componente.
+        - **Padronização de Nomenclatura (Em Andamento):** Continuar a tradução de nomes de arquivos, funções e variáveis para português.
+        - **Consistência de `data-ai-id` (Pendente):** Próximo passo será garantir a aplicação consistente do atributo `data-ai-id` em todos os elementos estruturais e interativos.
 
 ## NEXT
 - **Item 27: Refatorar Testes de Integração e E2E:**
