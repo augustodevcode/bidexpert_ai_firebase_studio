@@ -1,4 +1,4 @@
-// src/lib/session.ts
+// src/server/lib/session.ts
 import 'server-only';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
@@ -11,25 +11,15 @@ if (!secretKey || secretKey.length < 32) {
     throw new Error('A variável de ambiente SESSION_SECRET deve ser definida e ter pelo menos 32 caracteres.');
 }
 
-/**
- * Criptografa um payload para criar um token de sessão JWT.
- * @param {object} payload - Os dados a serem incluídos no token.
- * @returns {Promise<string>} O token de sessão assinado.
- */
 export async function encrypt(payload: any) {
     console.log('[Session Encrypt] Payload para ser criptografado:', payload);
     return new SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
-        .setExpirationTime('7d') // A sessão expira em 7 dias
+        .setExpirationTime('7d')
         .sign(encodedKey);
 }
 
-/**
- * Descriptografa e verifica um token de sessão JWT.
- * @param {string | undefined} session - O token de sessão do cookie.
- * @returns {Promise<any | null>} O payload do token se for válido, caso contrário, null.
- */
 export async function decrypt(session: string | undefined = '') {
     console.log('[Session Decrypt] Tentando decodificar a sessão do cookie.');
     if (!session) {
@@ -48,11 +38,6 @@ export async function decrypt(session: string | undefined = '') {
     }
 }
 
-/**
- * Cria uma nova sessão para o usuário e a define em um cookie HTTP-only.
- * @param {UserProfileWithPermissions} user - O objeto de perfil do usuário.
- * @param {string} tenantId - O ID do tenant no qual o usuário está logando.
- */
 export async function createSession(user: UserProfileWithPermissions, tenantId: string) {
     if (!tenantId) {
         throw new Error('O Tenant ID é obrigatório para criar uma sessão.');
@@ -64,7 +49,7 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     const sessionPayload = {
         userId: user.id,
         email: user.email,
-        tenantId: tenantId, // Adiciona o tenantId ao payload da sessão
+        tenantId: tenantId,
         roleNames: user.roleNames,
         permissions: user.permissions,
     };
@@ -81,11 +66,6 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     });
 }
 
-
-/**
- * Recupera e verifica a sessão do cookie atual.
- * @returns {Promise<{userId: string; tenantId: string; [key: string]: any} | null>} O payload da sessão se válida, senão null.
- */
 export async function getSession(): Promise<{ userId: string; tenantId: string; [key: string]: any } | null> {
     console.log('[Get Session] Tentando obter o cookie de sessão.');
     const cookie = cookies().get('session')?.value;
@@ -95,13 +75,9 @@ export async function getSession(): Promise<{ userId: string; tenantId: string; 
     }
     console.log('[Get Session] Cookie encontrado, prosseguindo para a decodificação.');
     const session = await decrypt(cookie);
-    // Retorna a sessão, garantindo que o tipo inclua o tenantId
     return session as { userId: string; tenantId: string; [key: string]: any } | null;
 }
 
-/**
- * Exclui a sessão do usuário, removendo o cookie.
- */
 export async function deleteSession() {
     console.log('[Delete Session] Excluindo o cookie de sessão.');
     cookies().delete('session');

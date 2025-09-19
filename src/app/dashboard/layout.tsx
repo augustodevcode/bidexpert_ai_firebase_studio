@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, redirect } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -15,20 +15,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
-  const router = useRouter();
   const pathname = usePathname();
   
-  // Client-side effect to handle redirection
-  useEffect(() => {
-    // Only redirect if loading is complete and there's definitely no user
-    if (!loading && !userProfileWithPermissions) {
-      router.push(`/auth/login?redirect=${pathname}`);
-    }
-  }, [userProfileWithPermissions, loading, router, pathname]);
-
-
-  // While the auth state is being determined, show a loading screen.
-  // This prevents the "access denied" or redirect flash for logged-in users.
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -38,13 +26,13 @@ export default function DashboardLayout({
     );
   }
 
-  // If loading is finished and there's no user, the useEffect will handle the redirect.
-  // We render null here to prevent flashing the "Access Denied" message.
   if (!userProfileWithPermissions) {
-    return null;
+    // Se o código chegar aqui no lado do servidor, o redirect será usado.
+    // No lado do cliente, o useEffect em AuthProvider já pode ter redirecionado.
+    redirect(`/auth/login?redirect=${pathname}`);
   }
 
-  // If we reach here, loading is false and user exists. Render the dashboard.
+  // Se we reach here, loading is false and user exists. Render the dashboard.
   return (
     <div className="flex min-h-screen">
       <DashboardSidebar />

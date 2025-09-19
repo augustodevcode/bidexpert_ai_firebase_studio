@@ -6,8 +6,7 @@ import { createSession, getSession as getSessionFromCookie, deleteSession as del
 import type { UserProfileWithPermissions, Role, Tenant, UserCreationData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
-// Correção: Importar a instância base do Prisma para queries globais
-import { prisma as basePrisma, getPrismaInstance } from '@/lib/prisma';
+import { prisma as basePrisma } from '@/lib/prisma';
 
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
@@ -41,13 +40,13 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   let tenantId = formData.get('tenantId') as string | null;
+  const redirectUrl = formData.get('redirectUrl') as string || '/dashboard/overview';
 
   if (!email || !password) {
     return { success: false, message: 'Email e senha são obrigatórios.' };
   }
 
   try {
-    // Correção: Usar a instância base do prisma para buscar um usuário global por email.
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
     const user = await basePrisma.user.findUnique({
         where: { email },
@@ -62,19 +61,14 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // Se o tenantId não for fornecido e o usuário pertencer a apenas um tenant, usa esse.
     if (!tenantId && user.tenants?.length === 1) {
         tenantId = user.tenants[0].tenantId;
     } else if (!tenantId && user.tenants && user.tenants.length > 1) {
-        // Se o usuário pertence a múltiplos tenants e nenhum foi selecionado,
-        // retorna sucesso, mas com uma flag para a UI mostrar o seletor.
         const userProfile = formatUserWithPermissions(user);
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfile };
     }
     
-    // Se um tenantId foi fornecido (ou inferido), verifique se o usuário pertence a ele
     const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
-
     if (tenantId && !userBelongsToTenant) {
         console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
         return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
@@ -89,26 +83,22 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     }
 
     const userProfileWithPerms = formatUserWithPermissions(user);
-
     if (!userProfileWithPerms) {
       return { success: false, message: 'Falha ao processar o perfil do usuário.' };
     }
 
-    // Se a lógica chegou aqui, o tenantId é conhecido e válido.
     await createSession(userProfileWithPerms, tenantId!);
-
-    return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
   } catch (error: any) {
     return { success: false, message: `Ocorreu um erro interno durante o login: ${error.message}` };
   }
+  
+  // Se tudo deu certo, redireciona no lado do servidor
+  redirect(redirectUrl);
 }
 
 export async function logout() {
   await deleteSessionFromCookie();
-  if (process.env.NODE_ENV !== 'test') {
-    revalidatePath('/', 'layout');
-  }
   redirect('/');
 }
 
@@ -122,7 +112,6 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         return null;
     }
 
-    // Correção: Usar a instância base do prisma para buscar um usuário global por ID.
     const user = await basePrisma.user.findUnique({
         where: { id: session.userId },
         include: { 

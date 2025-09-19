@@ -27,7 +27,6 @@ export default function LoginPage() {
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Se o usuário tem múltiplos tenants e seleciona um, seta no estado.
     if (userWithMultipleTenants?.tenants && userWithMultipleTenants.tenants.length > 0) {
       setSelectedTenantId(userWithMultipleTenants.tenants[0].id);
     }
@@ -37,35 +36,30 @@ export default function LoginPage() {
     event.preventDefault();
     setIsLoading(true);
     setError(null);
-    setUserWithMultipleTenants(null); // Limpa o estado anterior
     
     const formData = new FormData(event.currentTarget);
-    // Se um tenant foi selecionado na UI, adicione ao formData.
+    const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
+    formData.append('redirectUrl', redirectUrl);
+
     if (selectedTenantId) {
         formData.set('tenantId', selectedTenantId);
     }
     
+    // A Server Action `login` agora cuidará do redirecionamento.
+    // Nós apenas aguardamos o resultado em caso de erro ou necessidade de seleção de tenant.
     const result = await login(formData);
-    setIsLoading(false);
 
-    if (result.success) {
-        // Se o usuário tem múltiplos tenants, exibe o seletor.
-        if (result.user && result.user.tenants && result.user.tenants.length > 1 && !formData.get('tenantId')) {
-            toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
-            setUserWithMultipleTenants(result.user);
-        } 
-        // Se o login foi um sucesso direto (ou após seleção de tenant).
-        else if (result.user) {
-            toast({ title: "Login bem-sucedido!", description: "Redirecionando..." });
-            const tenantIdForContext = selectedTenantId || result.user.tenants?.[0]?.id || '1';
-            loginUser(result.user, tenantIdForContext);
-            const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-            router.push(redirectUrl);
-        }
-    } else {
+    if (!result.success) {
       setError(result.message);
       toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
+      setIsLoading(false);
+    } else if (result.user && result.user.tenants && result.user.tenants.length > 1 && !formData.get('tenantId')) {
+        toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
+        setUserWithMultipleTenants(result.user);
+        setIsLoading(false);
     }
+    // Em caso de sucesso com redirecionamento, esta parte do código não será mais alcançada
+    // porque o `redirect()` na Server Action interromperá a execução.
   };
 
   return (
