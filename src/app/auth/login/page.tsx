@@ -45,21 +45,24 @@ export default function LoginPage() {
         formData.set('tenantId', selectedTenantId);
     }
     
-    // A Server Action `login` agora cuidará do redirecionamento.
-    // Nós apenas aguardamos o resultado em caso de erro ou necessidade de seleção de tenant.
-    const result = await login(formData);
-
-    if (!result.success) {
-      setError(result.message);
-      toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
-      setIsLoading(false);
-    } else if (result.user && result.user.tenants && result.user.tenants.length > 1 && !formData.get('tenantId')) {
-        toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
-        setUserWithMultipleTenants(result.user);
+    try {
+        const result = await login(formData);
+        // If login returns, it's because there was an error or a multi-tenant selection is needed.
+        if (result && !result.success) {
+            setError(result.message);
+            toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
+        } else if (result && result.user && result.user.tenants && result.user.tenants.length > 1) {
+            toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
+            setUserWithMultipleTenants(result.user);
+        }
+    } catch (e: any) {
+        // Catch errors that might not be returned as a JSON object, like network errors.
+        const errorMessage = e.message || 'Ocorreu um erro inesperado.';
+        setError(errorMessage);
+        toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
+    } finally {
         setIsLoading(false);
     }
-    // Em caso de sucesso com redirecionamento, esta parte do código não será mais alcançada
-    // porque o `redirect()` na Server Action interromperá a execução.
   };
 
   return (
@@ -87,8 +90,9 @@ export default function LoginPage() {
                             ))}
                         </SelectContent>
                     </Select>
-                     <Input type="hidden" name="email" value={userWithMultipleTenants.email} />
-                     <Input type="hidden" name="password" value="[already_validated]" />
+                     {/* Hidden inputs to resubmit credentials */}
+                     <input type="hidden" name="email" value={userWithMultipleTenants.email} />
+                     <input type="hidden" name="password" value="[already_validated]" />
                 </div>
             ) : (
                 <>
