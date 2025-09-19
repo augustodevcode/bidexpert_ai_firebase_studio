@@ -3,35 +3,45 @@
 
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
-import { prisma } from '@/lib/prisma';
 import { AuctionService } from '@/services/auction.service';
 import { getSession } from '@/app/auth/actions';
+import { headers } from 'next/headers';
 
 const auctionService = new AuctionService();
 
-async function getTenantIdFromSession(isPublicCall: boolean = false): Promise<string> {
+async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
     const session = await getSession();
-    if (!session?.tenantId) {
-        if (isPublicCall) {
-            return '1'; // Landlord tenant ID for public data
-        }
-        throw new Error("Acesso não autorizado ou tenant não identificado.");
+    if (session?.tenantId) {
+        return session.tenantId;
     }
-    return session.tenantId;
+
+    const headersList = headers();
+    const tenantIdFromHeader = headersList.get('x-tenant-id');
+
+    if (tenantIdFromHeader) {
+        return tenantIdFromHeader;
+    }
+
+    if (isPublicCall) {
+        return '1'; // Landlord tenant ID for public data
+    }
+    
+    throw new Error("Acesso não autorizado ou tenant não identificado.");
 }
 
+
 export async function getAuctions(isPublicCall: boolean = false): Promise<Auction[]> {
-    const tenantIdToUse = await getTenantIdFromSession(isPublicCall);
+    const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
     return auctionService.getAuctions(tenantIdToUse);
 }
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
-    const tenantId = await getTenantIdFromSession(isPublicCall);
+    const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
     return auctionService.getAuctionById(tenantId, id);
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
-    const tenantId = await getTenantIdFromSession();
+    const tenantId = await getTenantIdFromRequest();
     const result = await auctionService.createAuction(tenantId, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
@@ -40,7 +50,7 @@ export async function createAuction(data: Partial<AuctionFormData>): Promise<{ s
 }
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
-    const tenantId = await getTenantIdFromSession();
+    const tenantId = await getTenantIdFromRequest();
     const result = await auctionService.updateAuction(tenantId, id, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
@@ -50,7 +60,7 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 }
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-    const tenantId = await getTenantIdFromSession();
+    const tenantId = await getTenantIdFromRequest();
     const result = await auctionService.deleteAuction(tenantId, id);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctions');
@@ -74,17 +84,17 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
 }
 
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-   const tenantId = await getTenantIdFromSession(true); // Public call
+   const tenantId = await getTenantIdFromRequest(true); // Public call
    return auctionService.getAuctionsBySellerSlug(tenantId, sellerSlugOrPublicId);
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    const tenantId = await getTenantIdFromSession(true); // Public call
+    const tenantId = await getTenantIdFromRequest(true); // Public call
     return auctionService.getAuctionsByAuctioneerSlug(tenantId, auctioneerSlug);
 }
 
 export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
   if (ids.length === 0) return [];
-  const tenantId = await getTenantIdFromSession(true); // Public call
+  const tenantId = await getTenantIdFromRequest(true); // Public call
   return auctionService.getAuctionsByIds(tenantId, ids);
 }

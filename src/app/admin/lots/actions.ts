@@ -7,33 +7,40 @@ import { LotService } from '@/services/lot.service';
 import { BemRepository } from '@/repositories/bem.repository';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/app/auth/actions';
+import { headers } from 'next/headers';
 
 const lotService = new LotService();
 const bemRepository = new BemRepository();
 
-async function getTenantId(isPublicCall: boolean = false): Promise<string> {
+async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
     const session = await getSession();
-    if (!session?.tenantId) {
-        if (isPublicCall) {
-            return '1';
-        }
-        throw new Error("Acesso não autorizado ou tenant não identificado.");
+    if (session?.tenantId) {
+        return session.tenantId;
     }
-    return session.tenantId;
+    const headersList = headers();
+    const tenantIdFromHeader = headersList.get('x-tenant-id');
+    if (tenantIdFromHeader) {
+        return tenantIdFromHeader;
+    }
+    if (isPublicCall) {
+        return '1';
+    }
+    throw new Error("Acesso não autorizado ou tenant não identificado.");
 }
 
+
 export async function getLots(auctionId?: string, isPublicCall: boolean = false): Promise<Lot[]> {
-  const tenantId = await getTenantId(isPublicCall);
+  const tenantId = await getTenantIdFromRequest(isPublicCall);
   return lotService.getLots(auctionId, tenantId);
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
-  const tenantId = isPublicCall ? undefined : await getTenantId();
+  const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : undefined;
   return lotService.getLotById(id, tenantId);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
-  const tenantId = await getTenantId();
+  const tenantId = await getTenantIdFromRequest();
   const result = await lotService.createLot(data, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/lots');
@@ -72,7 +79,7 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
 }
 
 export async function getBensForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-  const tenantId = await getTenantId();
+  const tenantId = await getTenantIdFromRequest();
   return bemRepository.findAll({ ...filter, tenantId });
 }
 
