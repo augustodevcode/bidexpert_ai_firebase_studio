@@ -6,13 +6,13 @@ import { createSession, getSession as getSessionFromCookie, deleteSession as del
 import type { UserProfileWithPermissions, Role, Tenant, UserCreationData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
-import { prisma as basePrisma } from '@/lib/prisma';
+import { prisma as basePrisma } from '@/lib/prisma'; // Use a instância base para operações globais de usuário
 
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
 
     const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
-        const permissions = Array.from(new Set(roles.flatMap((r: any) => {
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => {
         if (typeof r.permissions === 'string') {
             return r.permissions.split(',');
         }
@@ -40,7 +40,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
   let tenantId = formData.get('tenantId') as string | null;
-  const redirectUrl = formData.get('redirectUrl') as string || '/dashboard/overview';
 
   if (!email || !password) {
     return { success: false, message: 'Email e senha são obrigatórios.' };
@@ -61,13 +60,16 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
+    // Se nenhum tenant foi selecionado, mas o usuário pertence a apenas um, seleciona-o automaticamente
     if (!tenantId && user.tenants?.length === 1) {
         tenantId = user.tenants[0].tenantId;
     } else if (!tenantId && user.tenants && user.tenants.length > 1) {
         const userProfile = formatUserWithPermissions(user);
+        // Retorna sucesso, mas com um usuário, para que a UI possa pedir a seleção do tenant
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfile };
     }
     
+    // Valida se o usuário pertence ao tenant que está tentando acessar
     const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
     if (tenantId && !userBelongsToTenant) {
         console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
@@ -89,17 +91,21 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
     await createSession(userProfileWithPerms, tenantId!);
 
+    return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
+
   } catch (error: any) {
     return { success: false, message: `Ocorreu um erro interno durante o login: ${error.message}` };
   }
-  
-  // Se tudo deu certo, redireciona no lado do servidor
-  redirect(redirectUrl);
 }
 
-export async function logout() {
-  await deleteSessionFromCookie();
-  redirect('/');
+export async function logout(): Promise<{ success: boolean; message: string }> {
+  try {
+    await deleteSessionFromCookie();
+    return { success: true, message: 'Logout bem-sucedido.' };
+  } catch (error) {
+    console.error('Error during logout:', error);
+    return { success: false, message: 'Falha ao fazer logout.' };
+  }
 }
 
 export async function getSession() {

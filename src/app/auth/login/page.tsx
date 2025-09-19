@@ -38,25 +38,29 @@ export default function LoginPage() {
     setError(null);
     
     const formData = new FormData(event.currentTarget);
-    const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-    formData.append('redirectUrl', redirectUrl);
-
+    
     if (selectedTenantId) {
         formData.set('tenantId', selectedTenantId);
     }
     
     try {
         const result = await login(formData);
-        // If login returns, it's because there was an error or a multi-tenant selection is needed.
-        if (result && !result.success) {
-            setError(result.message);
-            toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
-        } else if (result && result.user && result.user.tenants && result.user.tenants.length > 1) {
+        
+        if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !selectedTenantId) {
+            // Caso de múltiplos tenants: exibir o seletor
             toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
             setUserWithMultipleTenants(result.user);
+        } else if (result.success && result.user) {
+            // Login bem-sucedido e tenant definido: redirecionar
+            const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
+            loginUser(result.user, selectedTenantId || result.user.tenants[0].id);
+            router.push(redirectUrl);
+        } else {
+            // Falha no login
+            setError(result.message);
+            toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
         }
     } catch (e: any) {
-        // Catch errors that might not be returned as a JSON object, like network errors.
         const errorMessage = e.message || 'Ocorreu um erro inesperado.';
         setError(errorMessage);
         toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
