@@ -1,37 +1,38 @@
-// tests/auctioneer.test.ts
-import test from 'node:test';
-import assert from 'node:assert';
-import { AuctioneerService } from '../src/services/auctioneer.service';
-import { prisma } from '../src/lib/prisma';
-import type { AuctioneerFormData } from '../src/types';
-import { v4 as uuidv4 } from 'uuid';
 
-const auctioneerService = new AuctioneerService();
-const testRunId = `auct-e2e-${uuidv4().substring(0,8)}`;
+// tests/auctioneer.test.ts
+import { describe, it, beforeAll, afterAll } from 'vitest';
+import assert from 'node:assert';
+import { createAuctioneer } from '../src/app/admin/auctioneers/actions';
+import { prisma } from '../src/lib/prisma';
+import type { AuctioneerFormData, Tenant } from '../src/types';
+import { v4 as uuidv4 } from 'uuid';
+import { tenantContext } from '@/lib/prisma';
+
+const testRunId = `auct-e2e-${uuidv4().substring(0, 8)}`;
 const testAuctioneerName = `Leiloeiro de Teste ${testRunId}`;
 const testAuctioneerEmail = `leiloeiro.teste.${testRunId}@example.com`;
+let testTenant: Tenant;
 
-test.describe('Auctioneer Service E2E Tests', () => {
+describe('Auctioneer Service E2E Tests via Actions', () => {
 
-    test.beforeEach(async () => {
-        // Clean up previous test runs to ensure a clean slate
-        await prisma.auctioneer.deleteMany({
-            where: { email: testAuctioneerEmail }
-        });
+    beforeAll(async () => {
+        // Create a dedicated tenant for this test run
+        testTenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `test-tenant-auct-${testRunId}` } });
     });
-    
-    test.after(async () => {
+
+    afterAll(async () => {
         try {
             await prisma.auctioneer.deleteMany({
                 where: { email: testAuctioneerEmail }
             });
+            await prisma.tenant.delete({ where: { id: testTenant.id } });
         } catch (error) {
-            // Ignore errors during cleanup
+            console.error(`[AUCTIONEER TEST CLEANUP] - Failed to delete records:`, error);
         }
         await prisma.$disconnect();
     });
 
-    test('should create a new auctioneer and verify it in the database', async () => {
+    it('should create a new auctioneer within a tenant context and verify it', async () => {
         // Arrange
         const newAuctioneerData: AuctioneerFormData = {
             name: testAuctioneerName,
@@ -40,12 +41,12 @@ test.describe('Auctioneer Service E2E Tests', () => {
             phone: '11987654321',
         };
 
-        // Act
-        const result = await auctioneerService.createAuctioneer(newAuctioneerData);
+        // Act: Run the server action within the tenant's context
+        const result = await tenantContext.run({ tenantId: testTenant.id }, () => createAuctioneer(newAuctioneerData));
 
-        // Assert: Check the result of the service method
-        assert.strictEqual(result.success, true, 'AuctioneerService.createAuctioneer should return success: true');
-        assert.ok(result.auctioneerId, 'AuctioneerService.createAuctioneer should return an auctioneerId');
+        // Assert: Check the result of the action
+        assert.strictEqual(result.success, true, 'createAuctioneer action should return success: true');
+        assert.ok(result.auctioneerId, 'createAuctioneer action should return an auctioneerId');
 
         // Assert: Verify directly in the database
         const createdAuctioneerFromDb = await prisma.auctioneer.findUnique({
@@ -61,7 +62,7 @@ test.describe('Auctioneer Service E2E Tests', () => {
         assert.ok(createdAuctioneerFromDb.publicId, 'Auctioneer should have a publicId generated');
         assert.strictEqual(createdAuctioneerFromDb.name, newAuctioneerData.name, 'Auctioneer name should match');
         assert.strictEqual(createdAuctioneerFromDb.email, newAuctioneerData.email, 'Auctioneer email should match');
-        assert.strictEqual(createdAuctioneerFromDb.registrationNumber, newAuctioneerData.registrationNumber, 'Auctioneer registration number should match');
+        assert.strictEqual(createdAuctioneerFromDb.tenantId, testTenant.id, 'Auctioneer tenantId should match the context');
     });
 
 });

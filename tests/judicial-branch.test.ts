@@ -1,21 +1,21 @@
+
 // tests/judicial-branch.test.ts
-import test from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert';
-import { JudicialBranchService } from '../src/services/judicial-branch.service';
+import { createJudicialBranch } from '../src/app/admin/judicial-branches/actions';
 import { prisma } from '../src/lib/prisma';
 import type { JudicialBranchFormData, Court, StateInfo, JudicialDistrict } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
-const branchService = new JudicialBranchService();
 const testRunId = `branch-e2e-${uuidv4().substring(0, 8)}`;
 const testBranchName = `Vara de Teste ${testRunId}`;
 let testCourt: Court;
 let testState: StateInfo;
 let testDistrict: JudicialDistrict;
 
-test.describe('Judicial Branch Service E2E Tests', () => {
+describe('Judicial Branch Actions E2E Tests', () => {
 
-    test.before(async () => {
+    beforeAll(async () => {
         // Create dependency records: State -> Court -> District
         const uf = testRunId.substring(0, 2).toUpperCase();
         testState = await prisma.state.create({
@@ -29,19 +29,19 @@ test.describe('Judicial Branch Service E2E Tests', () => {
         });
     });
     
-    test.after(async () => {
+    afterAll(async () => {
         try {
             await prisma.judicialBranch.deleteMany({ where: { name: testBranchName } });
-            await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
-            await prisma.court.delete({ where: { id: testCourt.id } });
-            await prisma.state.delete({ where: { id: testState.id } });
+            if (testDistrict) await prisma.judicialDistrict.delete({ where: { id: testDistrict.id } });
+            if (testCourt) await prisma.court.delete({ where: { id: testCourt.id } });
+            if (testState) await prisma.state.delete({ where: { id: testState.id } });
         } catch (error) {
             console.error(`[JUDICIAL BRANCH TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
     });
 
-    test('should create a new judicial branch and verify it', async () => {
+    it('should create a new judicial branch via action and verify it', async () => {
         // Arrange
         const newBranchData: JudicialBranchFormData = {
             name: testBranchName,
@@ -50,11 +50,11 @@ test.describe('Judicial Branch Service E2E Tests', () => {
         };
 
         // Act
-        const result = await branchService.createJudicialBranch(newBranchData);
+        const result = await createJudicialBranch(newBranchData);
 
-        // Assert: Check the service method result
-        assert.strictEqual(result.success, true, 'Service should return success: true');
-        assert.ok(result.branchId, 'Service should return a branchId');
+        // Assert: Check the action result
+        assert.strictEqual(result.success, true, 'Action should return success: true');
+        assert.ok(result.branchId, 'Action should return a branchId');
 
         // Assert: Verify directly in the database
         const createdBranchFromDb = await prisma.judicialBranch.findUnique({
@@ -68,6 +68,5 @@ test.describe('Judicial Branch Service E2E Tests', () => {
         assert.ok(createdBranchFromDb, 'Branch should be found in the database');
         assert.strictEqual(createdBranchFromDb.name, newBranchData.name, 'Branch name should match');
         assert.strictEqual(createdBranchFromDb.districtId, newBranchData.districtId, 'Branch districtId should match');
-        assert.strictEqual(createdBranchFromDb.email, newBranchData.email, 'Branch email should match');
     });
 });

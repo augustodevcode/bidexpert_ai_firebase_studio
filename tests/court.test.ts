@@ -1,22 +1,22 @@
+
 // tests/court.test.ts
-import test from 'node:test';
+import { describe, it, beforeEach, afterAll } from 'vitest';
 import assert from 'node:assert';
-import { CourtService } from '../src/services/court.service';
+import { createCourt } from '../src/app/admin/courts/actions';
 import { prisma } from '../src/lib/prisma';
 import type { CourtFormData } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
-const courtService = new CourtService();
 const testRunId = `court-e2e-${uuidv4().substring(0, 8)}`;
 const testCourtName = `Tribunal de Teste ${testRunId}`;
 
-test.describe('Court Service E2E Tests', () => {
+describe('Court Actions E2E Tests', () => {
 
-    test.beforeEach(async () => {
+    beforeEach(async () => {
         await prisma.court.deleteMany({ where: { name: testCourtName }});
     });
     
-    test.after(async () => {
+    afterAll(async () => {
         try {
             await prisma.court.deleteMany({ where: { name: testCourtName } });
         } catch (error) {
@@ -25,7 +25,7 @@ test.describe('Court Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should create a new court and verify it in the database', async () => {
+    it('should create a new court via action and verify it in the database', async () => {
         // Arrange
         const newCourtData: CourtFormData = {
             name: testCourtName,
@@ -34,13 +34,12 @@ test.describe('Court Service E2E Tests', () => {
         };
 
         // Act
-        const result = await courtService.createCourt(newCourtData);
+        const result = await createCourt(newCourtData);
 
-        // Assert: Check the result of the service method
-        assert.strictEqual(result.success, true, 'CourtService.createCourt should return success: true');
-        assert.ok(result.courtId, 'CourtService.createCourt should return a courtId');
+        // Assert
+        assert.strictEqual(result.success, true, 'createCourt action should return success: true');
+        assert.ok(result.courtId, 'createCourt action should return a courtId');
 
-        // Assert: Verify directly in the database
         const createdCourtFromDb = await prisma.court.findUnique({
             where: { id: result.courtId },
         });

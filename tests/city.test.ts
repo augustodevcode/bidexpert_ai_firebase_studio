@@ -1,19 +1,19 @@
+
 // tests/city.test.ts
 import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert';
-import { CityService } from '../src/services/city.service';
+import { createCity } from '../src/app/admin/cities/actions';
 import { prisma } from '../src/lib/prisma';
 import type { CityFormData, StateInfo } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
-const cityService = new CityService();
 const testRunId = `city-e2e-${uuidv4().substring(0, 8)}`;
 const testCityName = `Cidade de Teste ${testRunId}`;
 const testStateName = `Estado para Cidades ${testRunId}`;
 const testStateUf = testRunId.substring(0, 2).toUpperCase();
 let testState: StateInfo;
 
-describe('City Service E2E Tests', () => {
+describe('City Actions E2E Tests', () => {
 
     beforeAll(async () => {
         // Create the necessary State dependency
@@ -39,7 +39,7 @@ describe('City Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    it('should create a new city and verify it in the database', async () => {
+    it('should create a new city via action and verify it in the database', async () => {
         // Arrange
         const newCityData: CityFormData = {
             name: testCityName,
@@ -48,11 +48,11 @@ describe('City Service E2E Tests', () => {
         };
 
         // Act
-        const result = await cityService.createCity(newCityData);
+        const result = await createCity(newCityData);
 
         // Assert: Check the service method result
-        assert.strictEqual(result.success, true, 'CityService.createCity should return success: true');
-        assert.ok(result.cityId, 'CityService.createCity should return a cityId');
+        assert.strictEqual(result.success, true, 'createCity action should return success: true');
+        assert.ok(result.cityId, 'createCity action should return a cityId');
 
         // Assert: Verify directly in the database
         const createdCityFromDb = await prisma.city.findUnique({
