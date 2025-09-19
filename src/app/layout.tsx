@@ -25,7 +25,8 @@ async function getLayoutData() {
       roleNames: session.roleNames,
       permissions: session.permissions,
   } as any : null;
-  const initialTenantId = session?.tenantId || null;
+  // Correção: Garante que sempre haverá um tenantId, usando '1' (Landlord) como padrão.
+  const initialTenantId = session?.tenantId || '1';
 
   return { initialUser, initialTenantIdForProvider: initialTenantId };
 }
