@@ -33,19 +33,15 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="wizard-step2-judicial-setup">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
         <h3 className="text-lg font-semibold">Selecione o Processo Judicial</h3>
-        <Button variant="secondary" onClick={handleAddNew}>
-            <PlusCircle className="mr-2 h-4 w-4"/>
-            Cadastrar Novo Processo
-        </Button>
       </div>
       <EntitySelector
         entityName="Processo"
         value={selectedProcess?.id}
         onChange={(processId) => {
-            const process = processes.find(p => p.id === processId) || undefined;
+            const process = processId ? processes.find(p => p.id === processId) : undefined;
             setWizardData((prev) => ({ ...prev, judicialProcess: process }));
         }}
         options={processes.map(p => ({ value: p.id, label: p.processNumber }))}
@@ -56,10 +52,11 @@ export default function Step2JudicialSetup({ processes, onRefetchRequest, onAddN
         editUrlPrefix="/admin/judicial-processes"
         onRefetch={handleRefetch}
         isFetching={isFetching}
+        onAddNew={onAddNewProcess}
       />
       
       {selectedProcess && (
-        <div className="p-4 border rounded-lg bg-secondary/50 space-y-2">
+        <div className="p-4 border rounded-lg bg-secondary/50 space-y-2" data-ai-id="wizard-step2-selected-process-details">
             <h4 className="font-semibold text-md">Detalhes do Processo Selecionado</h4>
             <p className="text-sm"><strong className="text-muted-foreground">Nº do Processo:</strong> {selectedProcess.processNumber}</p>
             <p className="text-sm"><strong className="text-muted-foreground">Vara:</strong> {selectedProcess.branchName}</p>

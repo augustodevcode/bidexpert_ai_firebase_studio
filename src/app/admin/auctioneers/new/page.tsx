@@ -34,7 +34,7 @@ export default function NewAuctioneerPage() {
   }
 
   return (
-     <div data-ai-id="admin-new-auctioneer-form-card">
+     <div data-ai-id="admin-new-auctioneer-page">
         <FormPageLayout
             formTitle="Novo Leiloeiro"
             formDescription="Preencha os detalhes para cadastrar um novo leiloeiro."
