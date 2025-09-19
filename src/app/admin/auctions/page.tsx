@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -175,8 +176,5 @@ export default function AdminAuctionsPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-v>
   );
 }
