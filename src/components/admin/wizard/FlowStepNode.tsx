@@ -41,7 +41,7 @@ const entityLinks: Record<string, string> = {
   seller: '/admin/sellers',
 };
 
-const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
+const FlowStepNode = ({ id, data }: NodeProps<FlowNodeData>) => {
   const { label, title, status, icon: Icon, pathType, isActivePath, isEntity, entityId, entityType } = data;
   const { wizardData } = useWizard(); // Access wizardData
   
@@ -67,6 +67,7 @@ const FlowStepNode = ({ data }: NodeProps<FlowNodeData>) => {
     <>
       <Handle type="target" position={Position.Left} className="!bg-primary" />
       <div 
+        data-ai-id={`wizard-flow-node-${id}`}
         className={cn("w-56 rounded-md bg-card border-2 shadow-sm p-0.5 transition-opacity relative", styles.node, highlightClass)}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}

@@ -14,6 +14,7 @@ import { revalidatePath } from 'next/cache';
 import { AuctionService } from '@/services/auction.service';
 import { LotService } from '@/services/lot.service';
 import { getSession } from '@/app/auth/actions';
+import { hasPermission } from '@/lib/permissions';
 
 /**
  * @fileoverview Server Actions para o assistente de criação de leilões (Wizard).
@@ -84,7 +85,13 @@ export async function getWizardInitialData() {
  * @returns {Promise<{success: boolean, message: string, auctionId?: string}>} O resultado da operação.
  */
 export async function createAuctionFromWizard(wizardData: WizardData): Promise<{success: boolean; message: string; auctionId?: string;}> {
-  const tenantId = await getTenantIdFromSession();
+  const session = await getSession();
+  const user = session; // Assumindo que a sessão tem o perfil do usuário
+  if (!user || !hasPermission(user, 'auctions:create')) {
+    return { success: false, message: "Acesso negado. Você não tem permissão para criar leilões." };
+  }
+
+  const tenantId = session.tenantId;
   
   if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId) {
     return { success: false, message: "Detalhes do leilão incompletos." };

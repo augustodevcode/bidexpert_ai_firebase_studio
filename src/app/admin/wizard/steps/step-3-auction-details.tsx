@@ -54,7 +54,6 @@ export default function Step3AuctionDetails({
         auctionDetails: {
             ...prev.auctionDetails,
             ...data,
-            // Ensure derived names are also updated
             auctioneerName: auctioneers.find(a => a.id === data.auctioneerId)?.name,
             sellerName: sellers.find(s => s.id === data.sellerId)?.name,
         }

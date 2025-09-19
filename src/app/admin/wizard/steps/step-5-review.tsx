@@ -44,7 +44,7 @@ export default function Step5Review() {
             title: "Leilão Publicado!",
             description: "O leilão e seus lotes foram criados com sucesso.",
         });
-        // Não resetar o wizard aqui, o redirecionamento cuidará de limpar o estado
+        resetWizard();
         router.push(result.auctionId ? `/admin/auctions/${result.auctionId}/edit` : '/admin/auctions');
     } else {
         toast({
@@ -62,7 +62,7 @@ export default function Step5Review() {
       <h3 className="text-lg font-semibold mb-4">Revise e Confirme as Informações</h3>
       
       {/* Resumo do Leilão */}
-      <Card>
+      <Card data-ai-id="wizard-step5-auction-summary-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2"><Gavel className="text-primary"/> Detalhes do Leilão</CardTitle>
         </CardHeader>
@@ -85,7 +85,7 @@ export default function Step5Review() {
 
       {/* Resumo do Processo Judicial (se aplicável) */}
       {auctionType === 'JUDICIAL' && judicialProcess && (
-        <Card>
+        <Card data-ai-id="wizard-step5-judicial-summary-card">
           <CardHeader>
             <CardTitle className="text-lg font-semibold flex items-center gap-2"><FileText className="text-primary"/> Processo Judicial Vinculado</CardTitle>
           </CardHeader>
@@ -106,7 +106,7 @@ export default function Step5Review() {
       )}
 
       {/* Lotes Criados */}
-      <Card>
+      <Card data-ai-id="wizard-step5-lots-summary-card">
         <CardHeader>
           <CardTitle className="text-lg font-semibold flex items-center gap-2"><ListChecks className="text-primary"/> Lotes Criados ({createdLots.length})</CardTitle>
         </CardHeader>
@@ -118,7 +118,7 @@ export default function Step5Review() {
               <div key={index} className="p-3 border rounded-md">
                 <p className="font-semibold">Lote {lot.number}: {lot.title}</p>
                 <p className="text-xs text-muted-foreground">
-                    {lot.bemIds?.length} bem(ns) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
+                    {lot.bemIds?.length} bem(ns) | Lance Inicial: R$ {(lot.initialPrice || 0).toLocaleString('pt-br', {minimumFractionDigits: 2})}
                 </p>
               </div>
             ))
