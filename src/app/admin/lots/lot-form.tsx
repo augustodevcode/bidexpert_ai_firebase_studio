@@ -281,7 +281,7 @@ export default function LotForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmitAction)}>
             <div className="space-y-6">
                 <Card className="shadow-lg">
                     <CardHeader>
@@ -339,7 +339,7 @@ export default function LotForm({
                         <Separator />
                         <div>
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
-                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                         </div>
                     </CardContent>
                 </Card>
