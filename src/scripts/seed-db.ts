@@ -1,164 +1,169 @@
-
-// scripts/seed-db.ts
+// src/scripts/seed-db.ts
 import { prisma } from '@/lib/prisma';
-import { 
-  sampleSellers, 
-  sampleAuctioneers, 
-  sampleJudicialDistricts, 
-  sampleJudicialBranches,
-  sampleJudicialProcesses,
-  sampleAuctions,
-  sampleLots,
-  sampleBens,
-  sampleDirectSaleOffers,
-  sampleBids,
-  sampleUserWins,
-  sampleUsers
-} from '@/lib/sample-data';
 import bcryptjs from 'bcryptjs';
-import { v4 as uuidv4 } from 'uuid';
+import { slugify } from '@/lib/ui-helpers';
 
-async function seedFullData() {
-    console.log('\n--- [DB SEED] Seeding Full Demo Data ---');
+/**
+ * Dados essenciais para o funcionamento da plataforma.
+ */
+const essentialRoles = [
+  { id: 'role-admin', name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: 'manage_all' },
+  { id: 'role-consignor', name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: 'consignor_dashboard:view,auctions:manage_own,lots:manage_own' },
+  { id: 'role-analyst', name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', description: 'Analisa e aprova habilitações de usuários.', permissions: 'users:manage_habilitation,reports:view' },
+  { id: 'role-bidder', name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: 'place_bids' },
+  { id: 'role-user', name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: 'view_auctions,view_lots' },
+  { id: 'role-tenant-admin', name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
+];
 
-    try {
-        // Seeding Admin User (moved to setup step, but upsert here as a fallback)
-        console.log('[DB SEED] Seeding Admin User...');
-        const adminUserFromSample = sampleUsers.find(u => u.email === 'admin@bidexpert.com.br');
-        if (adminUserFromSample) {
-            const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' } });
-            if (adminRole) {
-                const adminUser = await prisma.user.upsert({
-                    where: { email: adminUserFromSample.email },
-                    update: {
-                        fullName: adminUserFromSample.fullName,
-                        habilitationStatus: 'HABILITADO',
-                    },
+const brazilianStates = [
+  { name: 'Acre', uf: 'AC' }, { name: 'Alagoas', uf: 'AL' }, { name: 'Amapá', uf: 'AP' },
+  { name: 'Amazonas', uf: 'AM' }, { name: 'Bahia', uf: 'BA' }, { name: 'Ceará', uf: 'CE' },
+  { name: 'Distrito Federal', uf: 'DF' }, { name: 'Espírito Santo', uf: 'ES' }, { name: 'Goiás', uf: 'GO' },
+  { name: 'Maranhão', uf: 'MA' }, { name: 'Mato Grosso', uf: 'MT' }, { name: 'Mato Grosso do Sul', uf: 'MS' },
+  { name: 'Minas Gerais', uf: 'MG' }, { name: 'Pará', uf: 'PA' }, { name: 'Paraíba', uf: 'PB' },
+  { name: 'Paraná', uf: 'PR' }, { name: 'Pernambuco', uf: 'PE' }, { name: 'Piauí', uf: 'PI' },
+  { name: 'Rio de Janeiro', uf: 'RJ' }, { name: 'Rio Grande do Norte', uf: 'RN' },
+  { name: 'Rio Grande do Sul', uf: 'RS' }, { name: 'Rondônia', uf: 'RO' }, { name: 'Roraima', uf: 'RR' },
+  { name: 'Santa Catarina', uf: 'SC' }, { name: 'São Paulo', uf: 'SP' }, { name: 'Sergipe', uf: 'SE' },
+  { name: 'Tocantins', uf: 'TO' }
+];
+
+async function seedEssentialData() {
+  console.log('--- [DB SEED] Starting essential data seeding ---');
+  
+  try {
+    // 1. Seed Roles
+    console.log('[DB SEED] Seeding Roles...');
+    for (const role of essentialRoles) {
+      await prisma.role.upsert({
+        where: { nameNormalized: role.nameNormalized },
+        update: {},
+        create: {
+          id: role.id,
+          name: role.name,
+          nameNormalized: role.nameNormalized,
+          description: role.description,
+          permissions: role.permissions.split(','),
+        },
+      });
+    }
+    console.log(`[DB SEED] ✅ SUCCESS: ${essentialRoles.length} roles processed.`);
+
+    // 2. Seed Landlord Tenant
+    console.log('[DB SEED] Seeding Landlord Tenant...');
+    const landlordTenant = await prisma.tenant.upsert({
+        where: { id: '1' },
+        update: {},
+        create: { id: '1', name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+    });
+    console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
+    
+    // 3. Seed Platform Settings for Landlord
+    console.log('[DB SEED] Seeding Platform Settings for Landlord...');
+    await prisma.platformSettings.upsert({
+        where: { tenantId: '1' },
+        update: {},
+        create: {
+            tenantId: '1',
+            siteTitle: 'BidExpert',
+            siteTagline: 'Sua plataforma de leilões online.',
+            galleryImageBasePath: '/uploads/media/',
+            storageProvider: 'local',
+            searchPaginationType: 'loadMore',
+            searchItemsPerPage: 12,
+            searchLoadMoreCount: 12,
+            showCountdownOnLotDetail: true,
+            showCountdownOnCards: true,
+            showRelatedLotsOnLotDetail: true,
+            relatedLotsCount: 4,
+            defaultListItemsPerPage: 10,
+        }
+    });
+    console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
+
+    // 4. Seed Admin User
+    console.log('[DB SEED] Seeding Admin User...');
+    const adminEmail = 'admin@bidexpert.com.br';
+    const adminPassword = 'Admin@123';
+    let adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
+
+    if (!adminUser) {
+        const hashedPassword = await bcryptjs.hash(adminPassword, 10);
+        const adminRole = await prisma.role.findUnique({ where: { nameNormalized: 'ADMINISTRATOR' } });
+        if (!adminRole) {
+            throw new Error("ADMINISTRATOR role not found. Seeding roles might have failed.");
+        }
+
+        adminUser = await prisma.user.create({
+            data: {
+                email: adminEmail,
+                fullName: 'Administrador',
+                password: hashedPassword,
+                habilitationStatus: 'HABILITADO',
+                accountType: 'LEGAL',
+                roles: {
                     create: {
-                        email: adminUserFromSample.email,
-                        fullName: adminUserFromSample.fullName,
-                        password: await bcryptjs.hash(adminUserFromSample.password || 'Admin@123', 10),
-                        habilitationStatus: 'HABILITADO',
-                        accountType: 'PHYSICAL',
+                        role: { connect: { id: adminRole.id } },
+                        assignedBy: 'system-seed'
                     }
-                });
-                // Ensure the join table record exists
-                await prisma.usersOnRoles.upsert({
-                    where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
-                    update: {},
-                    create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' }
-                });
-
-                console.log("[DB SEED] ✅ SUCCESS: Admin user created or confirmed.");
-            } else {
-                 console.error("[DB SEED] ❌ ERROR: Administrator role not found. Cannot create admin user.");
-            }
-        }
-        
-        console.log('[DB SEED] Seeding Sellers...');
-        for (const seller of sampleSellers) {
-            await prisma.seller.upsert({ where: { id: seller.id }, update: {}, create: seller as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleSellers.length} sellers processed.`);
-
-        console.log('[DB SEED] Seeding Auctioneers...');
-        for (const auctioneer of sampleAuctioneers) {
-            await prisma.auctioneer.upsert({ where: { id: auctioneer.id }, update: {}, create: auctioneer as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctioneers.length} auctioneers processed.`);
-        
-        console.log('[DB SEED] Seeding Judicial Districts...');
-        for (const district of sampleJudicialDistricts) {
-             await prisma.judicialDistrict.upsert({ where: { id: district.id }, update: {}, create: district as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialDistricts.length} judicial districts processed.`);
-        
-        console.log('[DB SEED] Seeding Judicial Branches...');
-        for (const branch of sampleJudicialBranches) {
-            await prisma.judicialBranch.upsert({ where: { id: branch.id }, update: {}, create: branch as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialBranches.length} judicial branches processed.`);
-        
-        console.log('[DB SEED] Seeding Judicial Processes...');
-        for (const process of sampleJudicialProcesses) {
-             await prisma.judicialProcess.upsert({ where: { id: process.id }, update: {}, create: process as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleJudicialProcesses.length} judicial processes processed.`);
-
-        console.log('[DB SEED] Seeding Bens...');
-        for (const bem of sampleBens) {
-            await prisma.bem.upsert({ where: { id: bem.id }, update: {}, create: bem as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleBens.length} bens processed.`);
-        
-        console.log('[DB SEED] Seeding Auctions...');
-        for (const auction of sampleAuctions) {
-            await prisma.auction.upsert({ where: { id: auction.id }, update: {}, create: auction as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleAuctions.length} auctions processed.`);
-
-        console.log('[DB SEED] Seeding Lots...');
-        for (const lot of sampleLots) {
-            await prisma.lot.upsert({ where: { id: lot.id }, update: {}, create: lot as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleLots.length} lots processed.`);
-        
-        console.log('[DB SEED] Seeding Direct Sale Offers...');
-        for (const offer of sampleDirectSaleOffers) {
-            await prisma.directSaleOffer.upsert({ where: { id: offer.id }, update: {}, create: offer as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleDirectSaleOffers.length} direct sale offers processed.`);
-        
-        console.log('[DB SEED] Seeding Bids...');
-        for (const bid of sampleBids) {
-            await prisma.bid.upsert({ where: { id: bid.id }, update: {}, create: bid as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleBids.length} bids processed.`);
-
-        console.log('[DB SEED] Seeding User Wins...');
-        for (const win of sampleUserWins) {
-            await prisma.userWin.upsert({ where: { id: win.id }, update: {}, create: win as any });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${sampleUserWins.length} wins processed.`);
-
-        console.log('[DB SEED] Seeding Non-Admin Users with Hashed Passwords...');
-        const otherUsers = sampleUsers.filter(u => u.email !== 'admin@bidexpert.com.br');
-        for (const user of otherUsers) {
-            const existingUser = await prisma.user.findUnique({ where: { email: user.email }});
-            if (!existingUser) {
-                const { id, uid, ...userData } = user;
-                const hashedPassword = await bcryptjs.hash(userData.password || 'password123', 10);
-                const role = await prisma.role.findFirst({ where: { id: userData.roleId }});
-                if (role) {
-                     const newUser = await prisma.user.create({
-                        data: {
-                            email: userData.email,
-                            fullName: userData.fullName,
-                            password: hashedPassword,
-                            habilitationStatus: 'HABILITADO',
-                            accountType: 'PHYSICAL',
-                            seller: userData.sellerId ? { connect: { id: userData.sellerId }} : undefined,
-                        }
-                    });
-                     await prisma.usersOnRoles.create({
-                        data: { userId: newUser.id, roleId: role.id, assignedBy: 'seed-script' }
-                    });
+                },
+                tenants: {
+                    create: {
+                        tenant: { connect: { id: landlordTenant.id } },
+                        assignedBy: 'system-seed'
+                    }
                 }
             }
+        });
+        console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
+    } else {
+        // Ensure admin user is linked to landlord tenant if they exist
+        const adminTenantLink = await prisma.usersOnTenants.findUnique({
+            where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } }
+        });
+        if (!adminTenantLink) {
+            await prisma.usersOnTenants.create({
+                data: {
+                    userId: adminUser.id,
+                    tenantId: landlordTenant.id,
+                    assignedBy: 'system-seed-fix'
+                }
+            });
+            console.log('[DB SEED] Admin user already existed and was linked to Landlord tenant.');
+        } else {
+            console.log('[DB SEED] Admin user already exists and is linked.');
         }
-        console.log(`[DB SEED] ✅ SUCCESS: ${otherUsers.length} other users processed.`);
+    }
+    
+    // 5. Seed States
+    console.log('[DB SEED] Seeding Brazilian States...');
+    for (const state of brazilianStates) {
+        await prisma.state.upsert({
+            where: { uf: state.uf },
+            update: { name: state.name },
+            create: { name: state.name, uf: state.uf, slug: slugify(state.name) },
+        });
+    }
+    console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
 
-    } catch (error: any) {
-        console.error(`[DB SEED] ❌ ERROR seeding full demo data: ${error.message}`);
+  } catch (error: any) {
+    console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
+    throw error; // Throw error to stop the process if essential data fails
+  }
+}
+
+
+async function main() {
+    console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
+    try {
+        await seedEssentialData();
+        console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
+    } catch (error) {
+        console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
+        process.exit(1);
     } finally {
         await prisma.$disconnect();
     }
-    
-    console.log('--- [DB SEED] Full Demo Data seeding finished ---');
 }
 
-seedFullData().catch(async (error) => {
-    console.error("[DB SEED] ❌ FATAL ERROR during seeding:", error);
-    await prisma.$disconnect();
-    process.exit(1);
-});
+main();

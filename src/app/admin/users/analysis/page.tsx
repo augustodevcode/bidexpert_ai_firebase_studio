@@ -10,6 +10,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, Gavel, Loader2, ShoppingBag, Users, BarChart3, TrendingUp, Handshake, UserCheck, BrainCircuit } from 'lucide-react';
 import { createUserAnalysisColumns } from './columns';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>

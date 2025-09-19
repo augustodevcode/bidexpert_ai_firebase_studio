@@ -1,3 +1,4 @@
+
 // src/services/relist.service.ts
 import { prisma } from '@/lib/prisma';
 import { LotService } from './lot.service';
@@ -46,15 +47,15 @@ export class RelistService {
 
       if (discountPercentage && discountPercentage > 0) {
           const discountMultiplier = 1 - (discountPercentage / 100);
-          newLotData.price = evaluationValue * discountMultiplier;
-          newLotData.initialPrice = evaluationValue * discountMultiplier;
+          newLotData.price = Number(evaluationValue) * discountMultiplier;
+          newLotData.initialPrice = Number(evaluationValue) * discountMultiplier;
       } else {
-          newLotData.price = evaluationValue;
-          newLotData.initialPrice = evaluationValue;
+          newLotData.price = Number(evaluationValue);
+          newLotData.initialPrice = Number(evaluationValue);
       }
       
       // Create the new lot
-      const createResult = await this.lotService.createLot(newLotData);
+      const createResult = await this.lotService.createLot(newLotData, originalLot.tenantId);
 
       if (!createResult.success) {
           return createResult;

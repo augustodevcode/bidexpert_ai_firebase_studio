@@ -4,15 +4,15 @@ import { Users, Target, Handshake } from 'lucide-react';
 
 export default function AboutPage() {
   return (
-    <div className="space-y-12">
-      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg">
+    <div className="space-y-12" data-ai-id="about-page-container">
+      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg" data-ai-id="about-page-hero-section">
         <h1 className="text-4xl font-bold mb-4 font-headline">About BidExpert</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           We are passionate about connecting buyers and sellers through a seamless and trustworthy auction experience.
         </p>
       </section>
 
-      <section>
+      <section data-ai-id="about-page-mission-section">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold font-headline flex items-center">
@@ -27,7 +27,7 @@ export default function AboutPage() {
         </Card>
       </section>
 
-      <section className="grid md:grid-cols-2 gap-8 items-center">
+      <section className="grid md:grid-cols-2 gap-8 items-center" data-ai-id="about-page-who-we-are-section">
         <div>
           <h2 className="text-3xl font-bold mb-4 font-headline">Who We Are</h2>
           <p className="text-muted-foreground mb-4">
@@ -42,7 +42,7 @@ export default function AboutPage() {
         </div>
       </section>
       
-      <section>
+      <section data-ai-id="about-page-values-section">
         <h2 className="text-3xl font-bold text-center mb-8 font-headline">Our Values</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[

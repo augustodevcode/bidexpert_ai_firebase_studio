@@ -1,4 +1,3 @@
-
 // src/app/admin/judicial-districts/judicial-district-form.tsx
 'use client';
 
@@ -100,16 +99,18 @@ export default function JudicialDistrictForm({
             <FormField control={form.control} name="name" render={({ field }) => (
               <FormItem><FormLabel>Nome da Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
             )} />
-            <FormField control={form.control} name="courtId" render={({ field }) => (
-              <FormItem><FormLabel>Tribunal</FormLabel>
-                <EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: `${c.name} (${c.stateUf})` }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal." createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} />
-              <FormMessage /></FormItem>
-            )} />
-            <FormField control={form.control} name="stateId" render={({ field }) => (
-              <FormItem><FormLabel>Estado</FormLabel>
-                <EntitySelector value={field.value} onChange={field.onChange} options={states.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o estado" searchPlaceholder="Buscar estado..." emptyStateMessage="Nenhum estado." createNewUrl="/admin/states/new" editUrlPrefix="/admin/states" onRefetch={() => handleRefetch('states')} isFetching={isFetchingStates} />
-              <FormMessage /></FormItem>
-            )} />
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField control={form.control} name="courtId" render={({ field }) => (
+                <FormItem><FormLabel>Tribunal</FormLabel>
+                    <EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: `${c.name} (${c.stateUf})` }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal." createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} />
+                <FormMessage /></FormItem>
+                )} />
+                <FormField control={form.control} name="stateId" render={({ field }) => (
+                <FormItem><FormLabel>Estado</FormLabel>
+                    <EntitySelector value={field.value} onChange={field.onChange} options={states.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o estado" searchPlaceholder="Buscar estado..." emptyStateMessage="Nenhum estado." createNewUrl="/admin/states/new" editUrlPrefix="/admin/states" onRefetch={() => handleRefetch('states')} isFetching={isFetchingStates} />
+                <FormMessage /></FormItem>
+                )} />
+            </div>
             <FormField control={form.control} name="zipCode" render={({ field }) => (
               <FormItem><FormLabel>CEP (Opcional)</FormLabel><FormControl><Input placeholder="49400-000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
             )} />

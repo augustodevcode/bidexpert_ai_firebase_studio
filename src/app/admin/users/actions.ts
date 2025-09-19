@@ -1,4 +1,3 @@
-
 // src/app/admin/users/actions.ts
 'use server';
 
@@ -58,12 +57,4 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
         revalidatePath('/admin/users');
     }
   return result;
-}
-
-export async function getRoles(): Promise<Role[]> {
-    // This is a bit of a cross-concern, but for simplicity in the UI we get it here.
-    // In a larger app, this might come from a dedicated RoleService call.
-    const { prisma } = await import('@/lib/prisma');
-    // @ts-ignore
-    return prisma.role.findMany();
 }

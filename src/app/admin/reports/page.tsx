@@ -52,9 +52,9 @@ const initialStats: AdminReportData = {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
-function StatCard({ title, value, icon: Icon, description, isLoading }: { title: string, value: number | string, icon: React.ElementType, description: string, isLoading: boolean }) {
+function StatCard({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) {
     return (
-        <Card>
+        <Card data-ai-id={`stat-card-${title.toLowerCase().replace(/\s/g, '-')}`}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
@@ -91,8 +91,8 @@ export default function AdminReportsPage() {
       }, []);
   
   return (
-    <div className="space-y-6">
-      <Card className="shadow-lg">
+    <div className="space-y-6" data-ai-id="admin-reports-page-container">
+      <Card className="shadow-lg" data-ai-id="admin-reports-header-card">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <BarChart3 className="h-7 w-7 mr-3 text-primary" />
@@ -104,7 +104,7 @@ export default function AdminReportsPage() {
         </CardHeader>
       </Card>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-ai-id="admin-reports-stats-grid">
         <StatCard 
             title="Faturamento Bruto Total"
             value={stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -163,8 +163,8 @@ export default function AdminReportsPage() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-md">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6" data-ai-id="admin-reports-charts-grid">
+        <Card className="shadow-md" data-ai-id="admin-reports-monthly-sales-card">
           <CardHeader>
             <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
           </CardHeader>
@@ -181,7 +181,7 @@ export default function AdminReportsPage() {
             </ResponsiveContainer>
           </CardContent>
         </Card>
-        <Card className="shadow-md">
+        <Card className="shadow-md" data-ai-id="admin-reports-category-sales-card">
           <CardHeader>
             <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Lotes Vendidos por Categoria</CardTitle>
           </CardHeader>

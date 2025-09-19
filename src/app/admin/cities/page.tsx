@@ -84,7 +84,7 @@ export default function AdminCitiesPage() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-cities-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

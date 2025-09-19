@@ -1,0 +1,15 @@
+model InstallmentPayment {
+  id                String        @id @default(cuid())
+  userWinId         String
+  installmentNumber Int
+  amount            Decimal       @db.Decimal(15, 2)
+  dueDate           DateTime
+  status            PaymentStatus @default(PENDENTE)
+  paymentDate       DateTime?
+  paymentMethod     String?
+  transactionId     String?
+  userWin           UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
+
+  @@unique([userWinId, installmentNumber])
+  @@index([userWinId])
+}

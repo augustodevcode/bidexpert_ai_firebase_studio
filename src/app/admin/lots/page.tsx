@@ -7,14 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getPlatformSettings } from '../settings/actions';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
+
 
 export default function AdminLotsPage() {
   const [allLots, setAllLots] = useState<Lot[]>([]);
@@ -36,7 +37,7 @@ export default function AdminLotsPage() {
       ]);
       setAllLots(fetchedLots);
       setAllAuctions(fetchedAuctions);
-      setPlatformSettings(fetchedSettings);
+      setPlatformSettings(fetchedSettings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
       console.error("Error fetching lots:", e);
@@ -65,8 +66,8 @@ export default function AdminLotsPage() {
         <SearchResultsFrame
             items={lots}
             totalItemsCount={lots.length}
-            renderGridItem={(item) => <LotCard lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
-            renderListItem={(item) => <LotListItem lot={item} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
+            renderGridItem={(item) => <UniversalCard item={item} type="lot" auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
+            renderListItem={(item) => <UniversalListItem item={item} type="lot" auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
             sortOptions={sortOptions}
             initialSortBy="endDate_asc"
             onSortChange={() => {}} // Sorting is handled locally if needed, or can be passed

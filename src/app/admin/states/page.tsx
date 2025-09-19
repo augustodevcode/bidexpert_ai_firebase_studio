@@ -75,7 +75,7 @@ export default function AdminStatesPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-states-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

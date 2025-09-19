@@ -10,6 +10,7 @@ import type { AuctionPerformanceData, AuctionDashboardData } from '@/types';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
+import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 /**
  * Fetches and aggregates performance data for all auctions.
@@ -102,7 +103,7 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
         const bidsOverTimeMap = new Map<string, number>();
         const allBids = auction.lots.flatMap(lot => lot.bids);
         allBids.forEach(bid => {
-            const dayKey = format(new Date(bid.timestamp), 'dd/MM', { locale: ptBR });
+            const dayKey = formatInSaoPaulo(bid.timestamp, 'dd/MM'); // Use timezone-aware function
             bidsOverTimeMap.set(dayKey, (bidsOverTimeMap.get(dayKey) || 0) + 1);
         });
         const bidsOverTime = Array.from(bidsOverTimeMap, ([name, Lances]) => ({ name, Lances }))

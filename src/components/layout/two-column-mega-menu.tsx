@@ -16,6 +16,11 @@ interface MegaMenuLinkItem {
   icon?: React.ReactNode;
 }
 
+interface MegaMenuGroup {
+  title?: string;
+  items: MegaMenuLinkItem[];
+}
+
 interface TwoColumnMegaMenuProps {
   sidebarTitle?: string;
   sidebarItems: MegaMenuLinkItem[];
@@ -141,7 +146,8 @@ export default function TwoColumnMegaMenu({
                 alt={mainContent.imageAlt}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
-                data-ai-hint={mainContent.dataAiHint} 
+                data-ai-hint={mainContent.dataAiHint}
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 />
             </div>
             </Link>

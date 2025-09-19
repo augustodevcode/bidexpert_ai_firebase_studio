@@ -13,9 +13,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { ChevronRight, Tag, MapPin, DollarSign, ShoppingCart, Edit, MessageSquare, UserCircle, CalendarDays, Clock, AlertCircle, Loader2, CheckCircle, Info, ImageOff } from 'lucide-react';
 import type { DirectSaleOffer } from '@/types';
-import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/sample-data-helpers';
+import { getLotStatusColor, getAuctionStatusText, slugify } from '@/lib/ui-helpers';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/auth-context';
 import { hasPermission } from '@/lib/permissions';
@@ -94,8 +95,8 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
 
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center text-sm text-muted-foreground">
+    <div className="space-y-8" data-ai-id="offer-details-page-container">
+      <div className="flex items-center text-sm text-muted-foreground" data-ai-id="offer-details-breadcrumbs">
         <Link href="/" className="hover:text-primary">Home</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
         <Link href="/direct-sales" className="hover:text-primary">Venda Direta</Link>
@@ -104,7 +105,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-6" data-ai-id="offer-details-main-content">
           <Card className="shadow-lg">
             <CardContent className="p-4">
               <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden mb-3">
@@ -146,7 +147,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
             </CardContent>
           </Card>
 
-          <Card className="shadow-md">
+          <Card className="shadow-md" data-ai-id="offer-details-description-card">
             <CardHeader>
               <CardTitle className="text-xl font-semibold">Descrição da Oferta</CardTitle>
             </CardHeader>
@@ -156,7 +157,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
           </Card>
 
           {offer.itemsIncluded && offer.itemsIncluded.length > 0 && (
-            <Card className="shadow-md">
+            <Card className="shadow-md" data-ai-id="offer-details-included-items-card">
               <CardHeader>
                 <CardTitle className="text-xl font-semibold">Itens Incluídos</CardTitle>
               </CardHeader>
@@ -171,7 +172,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6" data-ai-id="offer-details-sidebar">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl font-bold font-headline">{offer.title}</CardTitle>
@@ -226,13 +227,13 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
                 <MapPin className="h-4 w-4 mr-2 text-primary" /> Localização: {displayLocation}
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
-                <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Publicado em: {format(new Date(offer.createdAt as string), 'dd/MM/yyyy', {locale: ptBR})}
-              </div>
-              {offer.expiresAt && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="h-4 w-4 mr-2 text-primary" /> Válido até: {format(new Date(offer.expiresAt as string), 'dd/MM/yyyy', {locale: ptBR})}
+                  <CalendarDays className="h-4 w-4 mr-2 text-primary" /> Publicado em: {formatInSaoPaulo(offer.createdAt as string, 'dd/MM/yyyy')}
                 </div>
-              )}
+                {offer.expiresAt && (
+                  <div className="flex items-center text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4 mr-2 text-primary" /> Válido até: {formatInSaoPaulo(offer.expiresAt as string, 'dd/MM/yyyy')}
+                  </div>
+                )}
 
             </CardContent>
             <CardFooter className="flex flex-col gap-3">
@@ -276,7 +277,7 @@ export default function OfferDetailClient({ offer }: OfferDetailClientProps) {
             </CardFooter>
           </Card>
 
-          <Card className="shadow-md">
+          <Card className="shadow-md" data-ai-id="offer-details-similar-offers-card">
             <CardHeader><CardTitle className="text-lg">Outras Ofertas (Placeholder)</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground text-center py-6">
                 <Info className="h-8 w-8 mx-auto mb-2 text-gray-400"/>

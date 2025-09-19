@@ -36,11 +36,11 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
     allAuctioneers
   ] = await Promise.all([
     getPlatformSettings(),
-    getAuction(currentAuctionId),
-    getLot(currentLotId),
+    getAuction(currentAuctionId, true), // Public call
+    getLot(currentLotId, true), // Public call
     getLotCategories(),
-    getSellers(),
-    getAuctioneers()
+    getSellers(true), // Public call
+    getAuctioneers(true) // Public call
   ]);
   
   if (!auctionFromDb || !lotFromDb) {
@@ -62,9 +62,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   }
 
   // Ensure the lots array on the auction object is populated.
-  // The `getAuction` service should ideally handle this join.
   if (!auctionFromDb.lots || auctionFromDb.lots.length === 0) {
-      auctionFromDb.lots = await getLots(auctionFromDb.id);
+      auctionFromDb.lots = await getLots(auctionFromDb.id, true); // Public call
   }
   const lotsForThisAuction = auctionFromDb.lots || [];
   const lotIndex = lotsForThisAuction.findIndex(l => l.id === lotFromDb.id || (l.publicId && l.publicId === lotFromDb.publicId));
@@ -85,7 +84,7 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   return { 
     lot: lotFromDb, 
     auction: auctionFromDb, 
-    platformSettings, 
+    platformSettings: platformSettings!, 
     sellerName, 
     lotIndex, 
     previousLotId, 
@@ -149,7 +148,7 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
 
 export async function generateStaticParams() {
   try {
-    const lots = await getLots(); 
+    const lots = await getLots(undefined, true); // Public call
     // Limit to a reasonable number for build time
     const paths = lots.slice(0, 50).map(lot => ({
         auctionId: lot.auctionId,

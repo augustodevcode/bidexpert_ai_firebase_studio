@@ -1,0 +1,32 @@
+
+model DirectSaleOffer {
+  id                   String                @id @default(cuid())
+  publicId             String                @unique
+  title                String
+  description          String?               @db.Text
+  offerType            DirectSaleOfferType
+  price                Decimal?              @db.Decimal(15, 2)
+  minimumOfferPrice    Decimal?              @db.Decimal(15, 2)
+  status               DirectSaleOfferStatus @default(ACTIVE)
+  sellerId             String
+  seller               Seller                @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  sellerName           String?
+  sellerLogoUrl        String?
+  dataAiHintSellerLogo String?
+  categoryId           String
+  category             LotCategory           @relation(fields: [categoryId], references: [id])
+  locationCity         String?
+  locationState        String?
+  imageUrl             String?
+  imageMediaId         String?
+  dataAiHint           String?
+  galleryImageUrls     Json?
+  mediaItemIds         Json?
+  itemsIncluded        Json?
+  views                Int                   @default(0)
+  expiresAt            DateTime?
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
+  tenant               Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId             String
+}

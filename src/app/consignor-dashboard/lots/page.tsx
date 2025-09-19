@@ -90,7 +90,7 @@ export default function ConsignorLotsPage() {
   ], [statusOptions, auctionOptions]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="consignor-lots-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -110,7 +110,7 @@ export default function ConsignorLotsPage() {
         </CardHeader>
         <CardContent>
           {isUserAdmin && (
-             <div className="mb-4">
+            <div className="mb-4" data-ai-id="consignor-lots-admin-selector">
               <label className="text-sm font-medium text-muted-foreground">Visualizando como:</label>
                <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
                   <SelectTrigger className="w-full md:w-[300px] mt-1">

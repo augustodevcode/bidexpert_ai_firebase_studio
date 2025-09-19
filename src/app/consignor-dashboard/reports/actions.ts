@@ -6,9 +6,10 @@
 
 import { prisma } from '@/lib/prisma';
 import type { ConsignorDashboardStats } from '@/types';
-import { format } from 'date-fns';
+import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { startOfMonth, subMonths } from 'date-fns';
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
+import { getSession } from '@/app/auth/actions';
 
 /**
  * Fetches and calculates key performance indicators for a consignor's dashboard.
@@ -17,22 +18,38 @@ import { startOfMonth, subMonths } from 'date-fns';
  * @returns {Promise<ConsignorDashboardStats>} A promise resolving to the aggregated stats object.
  */
 export async function getConsignorDashboardStatsAction(sellerId: string): Promise<ConsignorDashboardStats> {
-    if (!sellerId) return { totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesData: [] };
+    const emptyStats: ConsignorDashboardStats = { totalLotsConsigned: 0, activeLots: 0, soldLots: 0, totalSalesValue: 0, salesRate: 0, salesData: [] };
+    
+    if (!sellerId) {
+        console.warn("[Action - getConsignorDashboardStats] No sellerId provided.");
+        return emptyStats;
+    }
+
+    const session = await getSession();
+    const tenantId = session?.tenantId;
+
+    if (!tenantId) {
+        console.warn("[Action - getConsignorDashboardStats] No tenantId found in session.");
+        return emptyStats;
+    }
 
     const allLots = await prisma.lot.findMany({
-        where: { sellerId: sellerId },
+        where: { 
+            sellerId: sellerId,
+            tenantId: tenantId // Ensure data is fetched from the correct tenant
+        },
         select: { status: true, price: true, createdAt: true }
     });
 
     const totalLotsConsigned = allLots.length;
     const activeLots = allLots.filter(l => l.status === 'ABERTO_PARA_LANCES').length;
     const soldLots = allLots.filter(l => l.status === 'VENDIDO');
-    const totalSalesValue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+    const totalSalesValue = soldLots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
     const salesRate = totalLotsConsigned > 0 ? (soldLots.length / totalLotsConsigned) * 100 : 0;
     
     // Monthly sales data for the last 12 months
     const salesByMonthMap = new Map<string, number>();
-    const now = new Date();
+    const now = nowInSaoPaulo();
     for (let i = 11; i >= 0; i--) {
         const date = subMonths(now, i);
         const monthKey = format(date, 'MMM/yy', { locale: ptBR });
@@ -40,9 +57,9 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
     }
     
     soldLots.forEach(lot => {
-        const monthKey = format(new Date(lot.createdAt), 'MMM/yy', { locale: ptBR });
+        const monthKey = formatInSaoPaulo(lot.createdAt, 'MMM/yy');
         if (salesByMonthMap.has(monthKey)) {
-            salesByMonthMap.set(monthKey, salesByMonthMap.get(monthKey)! + (lot.price || 0));
+            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
         }
     });
 

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, FileText, Handshake, Rocket } from 'lucide-react';
@@ -29,8 +28,8 @@ export default function SellWithUsPage() {
   ];
 
   return (
-    <div className="max-w-3xl mx-auto space-y-12">
-      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg">
+    <div className="max-w-3xl mx-auto space-y-12" data-ai-id="sell-with-us-page-container">
+      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg" data-ai-id="sell-with-us-hero-section">
         <Rocket className="mx-auto h-12 w-12 text-primary mb-4" />
         <h1 className="text-4xl font-bold mb-4 font-headline">Venda Conosco no BidExpert</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -38,7 +37,7 @@ export default function SellWithUsPage() {
         </p>
       </section>
 
-      <section>
+      <section data-ai-id="sell-with-us-steps-section">
         <Card className="shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl font-semibold font-headline">Como Funciona?</CardTitle>
@@ -60,7 +59,7 @@ export default function SellWithUsPage() {
         </Card>
       </section>
 
-      <section className="text-center py-8">
+      <section className="text-center py-8" data-ai-id="sell-with-us-cta-section">
         <h2 className="text-2xl font-bold mb-3 font-headline">Pronto para Começar?</h2>
         <p className="text-muted-foreground mb-6">
           Entre em contato conosco para uma consulta gratuita e sem compromisso.

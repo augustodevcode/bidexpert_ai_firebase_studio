@@ -2,19 +2,19 @@
 'use client';
 import React from 'react';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
 import { isPast } from 'date-fns';
-import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor } from '@/lib/ui-helpers';
+import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -52,6 +52,8 @@ const initialFiltersState: ActiveFilters = {
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
+  makes: [],
+  models: [],
   startDate: undefined,
   endDate: undefined,
   status: [],
@@ -184,12 +186,19 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   };
   
 
-  const renderGridItem = (lot: Lot) => <LotCard lot={lot} auction={auction} platformSettings={platformSettings} />;
-  const renderListItem = (lot: Lot) => <LotListItem lot={lot} auction={auction} platformSettings={platformSettings} />;
+  const renderGridItem = (lot: Lot) => <UniversalCard item={lot} type="lot" auction={auction} platformSettings={platformSettings} />;
+  const renderListItem = (lot: Lot) => <UniversalListItem item={lot} type="lot" auction={auction} platformSettings={platformSettings} />;
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 
-  const auctioneerInitial = auctioneer?.name ? auctioneer.name.charAt(0).toUpperCase() : (auction.auctioneerName ? auction.auctioneerName.charAt(0).toUpperCase() : '?');
+  const auctioneerName = auction.auctioneer?.name || auction.auctioneerName;
+  const getAuctioneerInitial = () => {
+    if (auctioneerName && typeof auctioneerName === 'string') {
+      return auctioneerName.charAt(0).toUpperCase();
+    }
+    return '?';
+  };
+  const auctioneerInitial = getAuctioneerInitial();
 
   return (
     <>
@@ -249,12 +258,12 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
             </Card>
           </div>
 
-          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24">
+          <div className="lg:col-span-1 space-y-6 lg:sticky lg:top-24 self-start">
             {auctioneer && (
                <Card className="shadow-md">
                   <CardHeader className="text-center">
                       <Avatar className="h-20 w-20 mx-auto mb-3 border-2 border-primary/30">
-                          <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/80x80.png?text=${auctioneerInitial}`} alt={auctioneer.name} data-ai-hint={auctioneer.dataAiHintLogo || "logo leiloeiro"} />
+                          <AvatarImage src={auctioneer.logoUrl || `https://placehold.co/80x80.png?text=${auctioneerInitial}`} alt={auctioneerName || ''} data-ai-hint={auctioneer.dataAiHintLogo || 'logo leiloeiro'} />
                           <AvatarFallback>{auctioneerInitial}</AvatarFallback>
                       </Avatar>
                       <CardTitle className="text-lg">{auctioneer.name}</CardTitle>
@@ -286,7 +295,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                       <CardContent>
                           <Button variant="link" asChild className="p-0 h-auto text-primary">
                               <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
-                                  Ver Edital/Documentos <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
+                                  Ver Edital Completo <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                               </a>
                           </Button>
                       </CardContent>
@@ -299,7 +308,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
 
         <h2 className="text-2xl font-bold font-headline">Lotes do Leilão ({auction.totalLots || auction.lots?.length || 0})</h2>
         
-        <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
+        <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
            <aside className="hidden md:block sticky top-24 h-fit">
              <SidebarFilters
                categories={allCategories}
@@ -308,7 +317,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                onFilterSubmit={handleFilterSubmit}
                onFilterReset={handleFilterReset}
                initialFilters={activeFilters}
-               filterContext="auctions"
+               filterContext="lots"
                disableCategoryFilter={true}
              />
            </aside>
@@ -322,7 +331,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                 sortOptions={sortOptionsLots}
                 initialSortBy={sortBy}
                 onSortChange={handleSortChange}
-                platformSettings={platformSettings}
+                platformSettings={platformSettings!}
                 isLoading={!isClient}
                 searchTypeLabel="lotes"
                 emptyStateMessage={`Nenhum lote encontrado para o leilão "${auction.title}" com os filtros aplicados.`}

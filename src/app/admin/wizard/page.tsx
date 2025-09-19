@@ -164,14 +164,14 @@ function WizardContent({
                />;
       }
       case 'review': return <Step5Review />;
-      default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
+      default: return <div className="text-center py-10"><p>Etapa &quot;{stepsToUse[currentStep]?.title || 'Próxima'}&quot; em desenvolvimento.</p></div>;
     }
   };
 
   return (
     <>
-      <div className="space-y-6">
-        <Card className="shadow-lg">
+      <div className="space-y-6" data-ai-id="admin-wizard-page-container">
+        <Card className="shadow-lg" data-ai-id="admin-wizard-main-card">
           <CardHeader>
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
@@ -183,7 +183,7 @@ function WizardContent({
             <>
               <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
-                <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
+                <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]" data-ai-id="admin-wizard-step-content">
                   {renderStep()}
                 </div>
               </CardContent>
@@ -214,7 +214,7 @@ function WizardContent({
           )}
         </Card>
         
-        <Card className="shadow-lg mt-8">
+        <Card className="shadow-lg mt-8" data-ai-id="admin-wizard-flow-visualization-card">
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>

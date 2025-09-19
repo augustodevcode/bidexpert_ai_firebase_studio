@@ -1,10 +1,9 @@
 // src/components/featured-items.tsx
 import type { Auction, Lot, PlatformSettings } from '@/types';
-import AuctionCard from './auction-card';
-import LotCard from './lot-card';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
+import UniversalCard from './universal-card'; // Importar o novo componente
 
 interface FeaturedItemsProps {
   items: (Auction | Lot)[];
@@ -32,12 +31,16 @@ export default function FeaturedItems({ items, type, title, viewAllLink, platfor
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {items.map((item) => {
-          if (type === 'auction') {
-            return <AuctionCard key={item.id} auction={item as Auction} />;
-          }
-          // For lots, we need to find their parent auction to pass to the card
-          const parentAuction = allAuctions.find(a => a.id === (item as Lot).auctionId);
-          return <LotCard key={item.id} lot={item as Lot} platformSettings={platformSettings} auction={parentAuction} />;
+          const parentAuction = type === 'lot' ? allAuctions.find(a => a.id === (item as Lot).auctionId) : undefined;
+          return (
+            <UniversalCard 
+                key={item.id} 
+                item={item}
+                type={type} 
+                platformSettings={platformSettings}
+                parentAuction={parentAuction}
+            />
+          );
         })}
       </div>
     </section>

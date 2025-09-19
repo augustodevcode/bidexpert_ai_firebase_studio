@@ -1,3 +1,4 @@
+
 // src/app/checkout/[winId]/checkout-form.tsx
 'use client';
 
@@ -11,11 +12,12 @@ import { processPaymentAction } from './actions';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { CreditCard, Lock, Loader2, Landmark } from 'lucide-react';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
 
 interface CheckoutFormProps {
   winId: string;
@@ -73,7 +75,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
   return (
     <Card className="w-full max-w-lg shadow-lg">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} data-ai-id="checkout-payment-form">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center gap-2">
                     <CreditCard className="h-5 w-5 text-primary" />

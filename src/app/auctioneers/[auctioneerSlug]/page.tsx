@@ -1,3 +1,4 @@
+
 // src/app/auctioneers/[auctioneerSlug]/page.tsx
 'use client';
 
@@ -9,8 +10,8 @@ import { getAuctionsByAuctioneerSlug } from '@/app/admin/auctions/actions';
 import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; 
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, AuctioneerProfileInfo, PlatformSettings, Lot } from '@/types';
-import AuctionCard from '@/components/auction-card';
-import AuctionListItem from '@/components/auction-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -38,38 +39,13 @@ const sortOptionsAuctions = [
   { value: 'id_desc', label: 'Adicionados Recentemente' }
 ];
 
-function RecentAuctionCarouselItem({ auction }: { auction: Auction }) {
-  const auctionEndDate = auction.endDate || (auction.auctionStages && auction.auctionStages.length > 0 ? auction.auctionStages[auction.auctionStages.length - 1].endDate : auction.auctionDate);
-  const statusText = new Date(auctionEndDate as string) < new Date() ? `Encerrado há ${differenceInDays(new Date(), new Date(auctionEndDate as string))} dias` : `Encerra em ${differenceInDays(new Date(auctionEndDate as string), new Date())} dias`;
-
-  const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x450.png?text=Leilao';
-
+function RecentAuctionCarouselItem({ auction, platformSettings }: { auction: Auction, platformSettings: PlatformSettings }) {
   return (
-    <Card className="overflow-hidden shadow-md h-full flex flex-col">
-      <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
-        <div className="relative aspect-[4/3] bg-muted">
-          <Image
-            src={validImageUrl}
-            alt={auction.title}
-            fill
-            className="object-cover"
-            data-ai-hint={auction.dataAiHint || "auction item small"}
-          />
-        </div>
-      </Link>
-      <CardContent className="p-3 flex-grow">
-        <p className="text-lg font-bold text-primary">
-          R$ {(auction.initialOffer || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-        </p>
-        <p className="text-xs text-muted-foreground truncate">
-          {auction.totalLots || 0} lotes | {auction.category?.name} | {auction.city}, {auction.state}
-        </p>
-        <p className="text-xs text-muted-foreground mt-1">
-          <span className="inline-block h-2 w-2 rounded-full bg-yellow-500 mr-1.5"></span>
-          {statusText}
-        </p>
-      </CardContent>
-    </Card>
+      <UniversalCard 
+        item={auction}
+        type="auction"
+        platformSettings={platformSettings}
+      />
   );
 }
 
@@ -110,8 +86,12 @@ export default function AuctioneerDetailsPage() {
             getAuctionsByAuctioneerSlug(auctioneerSlug),
             getPlatformSettings(),
           ]);
-          setPlatformSettings(settings);
-          setAuctionItemsPerPage(settings.searchItemsPerPage || 6);
+
+          if (settings) {
+            setPlatformSettings(settings as PlatformSettings);
+            setAuctionItemsPerPage((settings as PlatformSettings).searchItemsPerPage || 6);
+          }
+
 
           if (!foundAuctioneer) {
             setError(`Leiloeiro com slug/publicId "${auctioneerSlug}" não encontrado.`);
@@ -183,12 +163,12 @@ export default function AuctioneerDetailsPage() {
       setCurrentAuctionPage(1);
   }
   
-  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} />;
-  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} />;
+  const renderAuctionGridItem = (auction: Auction) => <UniversalCard item={auction} type="auction" platformSettings={platformSettings!} />;
+  const renderAuctionListItem = (auction: Auction) => <UniversalListItem item={auction} type="auction" platformSettings={platformSettings!} />;
 
   if (isLoading || !platformSettings) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]">
+      <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]" data-ai-id="auctioneer-details-loading-spinner">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="text-muted-foreground">Carregando informações do leiloeiro...</p>
       </div>
@@ -197,7 +177,7 @@ export default function AuctioneerDetailsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]">
+      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="auctioneer-details-error-message">
         <h2 className="text-xl font-semibold text-destructive">{error}</h2>
         <Button asChild className="mt-4">
           <Link href="/auctioneers">Voltar para Leiloeiros</Link>
@@ -208,7 +188,7 @@ export default function AuctioneerDetailsPage() {
 
   if (!auctioneerProfile) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]">
+      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="auctioneer-details-not-found-message">
         <h2 className="text-xl font-semibold text-muted-foreground">Leiloeiro não encontrado.</h2>
         <Button asChild className="mt-4">
           <Link href="/auctioneers">Voltar para Leiloeiros</Link>
@@ -224,14 +204,13 @@ export default function AuctioneerDetailsPage() {
   const placeholderAveragePrice = ((Math.random() * 500 + 100) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '');
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
   const editUrl = `/admin/auctioneers/${auctioneerProfile.id}/edit`;
-  const validLogoUrl = isValidImageUrl(auctioneerProfile.logoUrl) ? auctioneerProfile.logoUrl : `https://placehold.co/160x160.png?text=${auctioneerInitial}`;
+  const validLogoUrl = isValidImageUrl(auctioneerProfile.logoUrl) ? auctioneerProfile.logoUrl! : `https://placehold.co/160x160.png?text=${auctioneerInitial}`;
 
   return (
     <>
     <TooltipProvider>
-      <div className="space-y-10 py-6">
-        {/* Top Section: Auctioneer Info & Recent Auctions Carousel */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10">
+      <div className="space-y-10 py-6" data-ai-id="auctioneer-details-page-container">
+        <section className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start border-b pb-10" data-ai-id="auctioneer-profile-header">
           <div className="lg:col-span-1 space-y-3 text-center lg:text-left">
             <Avatar className="h-40 w-40 mx-auto lg:mx-0 mb-4 border-4 border-primary/30 shadow-lg">
               <AvatarImage src={validLogoUrl} alt={auctioneerProfile.name} data-ai-hint={auctioneerProfile.dataAiHintLogo || "logo leiloeiro grande"} />
@@ -267,7 +246,7 @@ export default function AuctioneerDetailsPage() {
                 <div className="flex -ml-4"> 
                   {recentAuctionsForCarousel.map((auction, index) => (
                     <div key={auction.id || index} className="flex-[0_0_100%] sm:flex-[0_0_50%] lg:flex-[0_0_calc(100%/2.5_-_1rem)] min-w-0 pl-4"> 
-                      <RecentAuctionCarouselItem auction={auction} />
+                      <RecentAuctionCarouselItem auction={auction} platformSettings={platformSettings} />
                     </div>
                   ))}
                 </div>
@@ -278,7 +257,7 @@ export default function AuctioneerDetailsPage() {
           </div>
         </section>
 
-        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center py-6">
+        <section className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center py-6" data-ai-id="auctioneer-stats-section">
           <div><p className="text-3xl font-bold text-primary">{auctioneerProfile.auctionsConductedCount || 0}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Leilões Conduzidos</p></div>
           <div><p className="text-3xl font-bold text-primary">R$ {(auctioneerProfile.totalValueSold || 0).toLocaleString('pt-BR')}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Valor Total Vendido</p></div>
           <div><p className="text-3xl font-bold text-primary">{placeholderPriceRange}</p><p className="text-xs text-muted-foreground uppercase tracking-wider">Faixa de Preço (Leilões)</p></div>
@@ -287,7 +266,7 @@ export default function AuctioneerDetailsPage() {
 
         <Separator className="print:hidden"/>
 
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6">
+        <section className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-6" data-ai-id="auctioneer-about-contact-section">
           <div className="md:col-span-2">
             <Card className="shadow-md">
               <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><Briefcase className="h-5 w-5 mr-2 text-primary" /> Sobre {auctioneerProfile.name}</CardTitle></CardHeader>
@@ -332,7 +311,7 @@ export default function AuctioneerDetailsPage() {
         <Separator className="print:hidden"/>
 
         {relatedAuctions.length > 0 && (
-          <section className="pt-6">
+          <section className="pt-6" data-ai-id="auctioneer-all-auctions-section">
             <h2 className="text-2xl font-bold mb-6 font-headline flex items-center"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Todos os Leilões de {auctioneerProfile.name}</h2>
             <SearchResultsFrame
                 items={paginatedAuctions}
@@ -354,7 +333,7 @@ export default function AuctioneerDetailsPage() {
         )}
 
         {relatedAuctions.length === 0 && !isLoading && (
-          <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum leilão ativo encontrado para este leiloeiro no momento.</p></CardContent></Card>
+          <Card className="shadow-sm mt-8" data-ai-id="auctioneer-no-auctions-message"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum leilão ativo encontrado para este leiloeiro no momento.</p></CardContent></Card>
         )}
       </div>
     </TooltipProvider>
@@ -363,7 +342,7 @@ export default function AuctioneerDetailsPage() {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon">
+            <Button asChild className="fixed bottom-16 right-5 z-50 h-14 w-14 rounded-full shadow-lg" size="icon" data-ai-id="auctioneer-edit-fab">
               <Link href={editUrl}>
                 <Pencil className="h-6 w-6" />
                 <span className="sr-only">Editar Leiloeiro</span>

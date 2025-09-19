@@ -7,9 +7,9 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, AuctionStage as AuctionStageType, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
+import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock } from 'lucide-react';
-import { isPast, differenceInSeconds } from 'date-fns';
+import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
@@ -50,7 +50,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   
   const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
   
-  const effectiveEndDate = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
+  const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
   const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
   const activeLotPrices = React.useMemo(() => getLotPriceForStage(lot, activeStage?.id), [lot, activeStage]);
 
@@ -112,7 +112,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id="lot-card-container" className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
+      <Card data-ai-id={`lot-card-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
         <div className="relative">
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
@@ -173,7 +173,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                     <EntityEditMenu
                         entityType="lot"
                         entityId={lot.id}
-                        publicId={lot.publicId}
+                        publicId={lot.publicId!}
                         currentTitle={lot.title}
                         isFeatured={lot.isFeatured || false}
                         onUpdate={onUpdate}
@@ -208,8 +208,8 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <div className="w-full flex justify-between items-end" data-ai-id="lot-card-footer">
             <div data-ai-id="lot-card-price-section">
               <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-              <p className={`text-xl font-bold ${effectiveEndDate && isPast(effectiveEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
-                R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <p className={`text-xl font-bold ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+                R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
           </div>
@@ -228,7 +228,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   );
 }
 
-export default function LotCard(props: LotCardProps) {
+export default function LotCard(props: LotCardProps & {onUpdate?: () => void}) {
   const [isClient, setIsClient] = React.useState(false);
   
   React.useEffect(() => {
@@ -254,3 +254,5 @@ export default function LotCard(props: LotCardProps) {
 
   return <LotCardClientContent {...props} />;
 }
+
+    

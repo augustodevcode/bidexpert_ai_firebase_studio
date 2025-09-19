@@ -1,4 +1,3 @@
-
 // src/app/admin/layout.tsx
 'use client';
 
@@ -36,8 +35,7 @@ export default function AdminLayout({
   if (!userProfileWithPermissions) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Redirecionando para login...</p>
+        <p className="text-muted-foreground">Redirecionando para login...</p>
       </div>
     );
   }
@@ -69,7 +67,7 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 md:pl-8">
         {children}
       </main>
     </div>

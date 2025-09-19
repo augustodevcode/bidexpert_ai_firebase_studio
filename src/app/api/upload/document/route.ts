@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import path from 'path';
-import { prisma } from '@/lib/prisma';
 import { writeFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { saveUserDocument } from '@/app/dashboard/documents/actions'; // Import the server action

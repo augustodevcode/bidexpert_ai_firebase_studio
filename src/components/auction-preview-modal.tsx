@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import AuctionStagesTimeline from './auction/auction-stages-timeline';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -20,6 +20,17 @@ interface AuctionPreviewModalProps {
 }
 
 export default function AuctionPreviewModal({ auction, isOpen, onClose }: AuctionPreviewModalProps) {
+  const auctionDates = useMemo(() => {
+    const dates: Date[] = [];
+    if (auction.auctionDate) dates.push(new Date(auction.auctionDate as string));
+    if (auction.endDate) dates.push(new Date(auction.endDate as string));
+    (auction.auctionStages || []).forEach(stage => {
+        if (stage.endDate) dates.push(new Date(stage.endDate as string));
+    });
+    const uniqueDates = Array.from(new Set(dates.map(d => d.toISOString()))).map(iso => new Date(iso));
+    return uniqueDates;
+  }, [auction]);
+
   if (!isOpen) return null;
 
   const getAuctioneerInitial = () => {
@@ -34,17 +45,6 @@ export default function AuctionPreviewModal({ auction, isOpen, onClose }: Auctio
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
   
   const validImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
-
-  const auctionDates = useMemo(() => {
-    const dates: Date[] = [];
-    if (auction.auctionDate) dates.push(new Date(auction.auctionDate as string));
-    if (auction.endDate) dates.push(new Date(auction.endDate as string));
-    (auction.auctionStages || []).forEach(stage => {
-        if (stage.endDate) dates.push(new Date(stage.endDate as string));
-    });
-    const uniqueDates = Array.from(new Set(dates.map(d => d.toISOString()))).map(iso => new Date(iso));
-    return uniqueDates;
-  }, [auction]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>

@@ -4,8 +4,9 @@ import type { JudicialProcess } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class JudicialProcessRepository {
-  async findAll(): Promise<any[]> {
+  async findAll(tenantId: string): Promise<any[]> {
     return prisma.judicialProcess.findMany({
+      where: { tenantId },
       include: {
         court: { select: { name: true } },
         district: { select: { name: true } },
@@ -13,13 +14,13 @@ export class JudicialProcessRepository {
         seller: { select: { name: true } },
         parties: true,
       },
-      orderBy: { processNumber: 'desc' } // Alterado de createdAt para processNumber
+      orderBy: { processNumber: 'desc' }
     });
   }
 
-  async findById(id: string): Promise<any | null> {
-    return prisma.judicialProcess.findUnique({
-      where: { id },
+  async findById(tenantId: string, id: string): Promise<any | null> {
+    return prisma.judicialProcess.findFirst({
+      where: { id, tenantId },
       include: {
         court: { select: { name: true } },
         district: { select: { name: true } },
@@ -35,10 +36,10 @@ export class JudicialProcessRepository {
     return prisma.judicialProcess.create({ data });
   }
 
-  async update(id: string, data: Partial<Prisma.JudicialProcessUpdateInput>, parties: any[] | undefined): Promise<JudicialProcess> {
+  async update(tenantId: string, id: string, data: Partial<Prisma.JudicialProcessUpdateInput>, parties: any[] | undefined): Promise<JudicialProcess> {
     return prisma.$transaction(async (tx) => {
         const updatedProcess = await tx.judicialProcess.update({
-            where: { id },
+            where: { id, tenantId },
             data: data,
         });
 
@@ -48,7 +49,7 @@ export class JudicialProcessRepository {
             // Create new relations for parties
             if (parties.length > 0) {
               await tx.judicialProcess.update({
-                  where: { id },
+                  where: { id, tenantId },
                   data: {
                       parties: {
                           create: parties,
@@ -61,10 +62,10 @@ export class JudicialProcessRepository {
     });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(tenantId: string, id: string): Promise<void> {
      await prisma.$transaction(async (tx) => {
         await tx.judicialParty.deleteMany({ where: { processId: id }});
-        await tx.judicialProcess.delete({ where: { id } });
+        await tx.judicialProcess.delete({ where: { id, tenantId } });
     });
   }
 }

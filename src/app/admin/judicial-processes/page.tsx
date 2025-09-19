@@ -84,7 +84,7 @@ export default function AdminJudicialProcessesPage() {
   }, [processes]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-judicial-processes-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

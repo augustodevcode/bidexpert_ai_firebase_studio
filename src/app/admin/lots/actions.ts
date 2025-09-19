@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/actions.ts
 'use server';
 
@@ -7,21 +6,35 @@ import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { BemRepository } from '@/repositories/bem.repository';
 import { prisma } from '@/lib/prisma';
-// Importação de generateDocument foi removida daqui
+import { getSession } from '@/app/auth/actions';
 
 const lotService = new LotService();
 const bemRepository = new BemRepository();
 
-export async function getLots(auctionId?: string): Promise<Lot[]> {
-  return lotService.getLots(auctionId);
+async function getTenantId(isPublicCall: boolean = false): Promise<string> {
+    const session = await getSession();
+    if (!session?.tenantId) {
+        if (isPublicCall) {
+            return '1';
+        }
+        throw new Error("Acesso não autorizado ou tenant não identificado.");
+    }
+    return session.tenantId;
 }
 
-export async function getLot(id: string): Promise<Lot | null> {
-  return lotService.getLotById(id);
+export async function getLots(auctionId?: string, isPublicCall: boolean = false): Promise<Lot[]> {
+  const tenantId = await getTenantId(isPublicCall);
+  return lotService.getLots(auctionId, tenantId);
+}
+
+export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
+  const tenantId = isPublicCall ? undefined : await getTenantId();
+  return lotService.getLotById(id, tenantId);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
-  const result = await lotService.createLot(data);
+  const tenantId = await getTenantId();
+  const result = await lotService.createLot(data, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/lots');
     if (data.auctionId) {
@@ -58,14 +71,17 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
   return result;
 }
 
+export async function getBensForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
+  const tenantId = await getTenantId();
+  return bemRepository.findAll({ ...filter, tenantId });
+}
+
 export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
   return bemRepository.findByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {
-  if (ids.length === 0) return [];
-  // @ts-ignore
-  return prisma.lot.findMany({ where: { id: { in: ids } }, include: { auction: true } });
+  return lotService.getLotsByIds(ids);
 }
 
 export async function finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {

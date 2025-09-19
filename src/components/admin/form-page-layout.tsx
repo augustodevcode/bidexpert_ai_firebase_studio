@@ -42,7 +42,7 @@ function FormToolbar({
   
   if (isViewMode) {
     return (
-        <div className="flex justify-between items-center w-full">
+        <div className="flex justify-between items-center w-full" data-ai-id="form-page-toolbar-view-mode">
              <div className="flex items-center gap-1">
                 <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev}><ChevronLeft className="h-4 w-4" /></Button>
                 <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext}><ChevronRight className="h-4 w-4" /></Button>
@@ -55,9 +55,8 @@ function FormToolbar({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2">
+    <div className="flex flex-col sm:flex-row justify-between items-center w-full gap-2" data-ai-id="form-page-toolbar-edit-mode">
       <div className="flex items-center gap-2">
-        <Button variant="outline" size="sm" disabled={isSubmitting}><Copy className="mr-2 h-4 w-4" /> Clonar</Button>
         {onDelete && <Button variant="destructive" size="sm" disabled={isSubmitting} onClick={onDelete}><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>}
         <Button variant="outline" size="sm" disabled={isSubmitting}><Printer className="mr-2 h-4 w-4" /> Imprimir</Button>
       </div>
@@ -99,14 +98,14 @@ export default function FormPageLayout({
 
   if (isLoading) {
     return (
-        <div className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-full" data-ai-id="form-page-loading-spinner">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
   }
 
   return (
-    <Card className="shadow-lg w-full">
+    <Card className="shadow-lg w-full" data-ai-id="form-page-layout-card">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
             <div className="flex items-center gap-3">
@@ -132,7 +131,7 @@ export default function FormPageLayout({
             </div>
         </div>
       </CardHeader>
-      <fieldset disabled={isViewMode || isSubmitting} className="group">
+      <fieldset disabled={isViewMode || isSubmitting} className="group" data-ai-id="form-page-fieldset">
         <CardContent className="p-6 bg-secondary/20 group-disabled:bg-muted/10 group-disabled:cursor-not-allowed">
             {children}
         </CardContent>

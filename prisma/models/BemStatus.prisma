@@ -1,0 +1,9 @@
+/// Status de um bem individual.
+enum BemStatus {
+  CADASTRO
+  DISPONIVEL
+  LOTEADO
+  VENDIDO
+  REMOVIDO
+  INATIVADO
+}

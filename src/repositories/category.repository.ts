@@ -9,7 +9,7 @@ export class CategoryRepository {
         orderBy: { name: 'asc' },
         include: {
             _count: {
-                select: { lots: true, bens: true }
+                select: { lots: true }
             }
         }
     });

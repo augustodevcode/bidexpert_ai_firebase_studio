@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import ConsignorSidebar from '@/components/layout/consignor-sidebar';
@@ -15,12 +15,13 @@ export default function ConsignorDashboardLayout({
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/consignor-dashboard/overview');
+      router.push(`/auth/login?redirect=${pathname}`);
     }
-  }, [userProfileWithPermissions, loading, router]);
+  }, [userProfileWithPermissions, loading, router, pathname]);
 
   if (loading) {
     return (
@@ -68,7 +69,7 @@ export default function ConsignorDashboardLayout({
   return (
     <div className="flex min-h-screen">
       <ConsignorSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 md:pl-8">
         {children}
       </main>
     </div>

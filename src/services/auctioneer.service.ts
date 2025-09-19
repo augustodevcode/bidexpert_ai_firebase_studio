@@ -1,12 +1,14 @@
+
 // src/services/auctioneer.service.ts
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma'; // Import the instance getter
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 export interface AuctioneerDashboardData {
   totalRevenue: number;
@@ -20,25 +22,36 @@ export interface AuctioneerDashboardData {
 
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
+  private prisma;
 
   constructor() {
     this.auctioneerRepository = new AuctioneerRepository();
+    this.prisma = getPrismaInstance();
   }
 
-  async getAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-    return this.auctioneerRepository.findAll();
+  async getAuctioneers(tenantId: string): Promise<AuctioneerProfileInfo[]> {
+    return this.auctioneerRepository.findAll(tenantId);
   }
 
-  async getAuctioneerById(id: string): Promise<AuctioneerProfileInfo | null> {
-    return this.auctioneerRepository.findById(id);
+  async getAuctioneerById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {
+    return this.auctioneerRepository.findById(tenantId, id);
   }
 
-  async createAuctioneer(data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
+  async getAuctioneerBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+      return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
+  }
+
+  async getAuctionsByAuctioneerSlug(tenantId: string, auctioneerSlug: string): Promise<any[]> {
+    return this.auctioneerRepository.findAuctionsBySlug(tenantId, auctioneerSlug);
+  }
+
+  async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
       const dataToCreate: Prisma.AuctioneerCreateInput = {
-        ...data,
+        ...(data as any),
         slug: slugify(data.name),
-        publicId: `LEIL-${uuidv4()}`,
+        publicId: `LEILOE-${uuidv4()}`,
+        tenant: { connect: { id: tenantId } },
       };
       
       const newAuctioneer = await this.auctioneerRepository.create(dataToCreate);
@@ -52,10 +65,10 @@ export class AuctioneerService {
     }
   }
 
-  async updateAuctioneer(id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
+  async updateAuctioneer(tenantId: string, id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
     try {
       const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
-      await this.auctioneerRepository.update(id, dataWithSlug);
+      await this.auctioneerRepository.update(tenantId, id, dataWithSlug);
       return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
     } catch (error: any) {
        console.error(`Error in AuctioneerService.updateAuctioneer for id ${id}:`, error);
@@ -63,12 +76,9 @@ export class AuctioneerService {
     }
   }
   
-  async deleteAuctioneer(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteAuctioneer(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // In a real app, you'd check for linked auctions. We'll skip for this example.
-      // const linkedAuctions = await prisma.auction.count({ where: { auctioneerId: id } });
-      // if (linkedAuctions > 0) return { success: false, message: `Cannot delete auctioneer with ${linkedAuctions} active auction(s).`};
-      await this.auctioneerRepository.delete(id);
+      await this.auctioneerRepository.delete(tenantId, id);
       return { success: true, message: 'Leiloeiro excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AuctioneerService.deleteAuctioneer for id ${id}:`, error);
@@ -76,9 +86,9 @@ export class AuctioneerService {
     }
   }
 
-  async getAuctioneerDashboardData(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
-    const auctioneerData = await prisma.auctioneer.findUnique({
-      where: { id: auctioneerId },
+  async getAuctioneerDashboardData(tenantId: string, auctioneerId: string): Promise<AuctioneerDashboardData | null> {
+    const auctioneerData = await this.prisma.auctioneer.findFirst({
+      where: { id: auctioneerId, tenantId },
       include: {
         _count: {
           select: { auctions: true },
@@ -86,7 +96,7 @@ export class AuctioneerService {
         auctions: {
           include: {
             lots: {
-              where: { status: 'VENDIDO' },
+              where: { status: 'VENDIDO', tenantId },
               select: { price: true, updatedAt: true }
             },
             _count: {
@@ -102,13 +112,13 @@ export class AuctioneerService {
     const allLotsFromAuctions = auctioneerData.auctions.flatMap(auc => auc.lots);
     const totalLots = auctioneerData.auctions.reduce((sum, auc) => sum + auc._count.lots, 0);
     
-    const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+    const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
     const lotsSoldCount = allLotsFromAuctions.length;
     const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
     const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
 
     const salesByMonthMap = new Map<string, number>();
-    const now = new Date();
+    const now = nowInSaoPaulo(); // Use timezone-aware function
     for (let i = 11; i >= 0; i--) {
       const date = subMonths(now, i);
       const monthKey = format(date, 'MMM/yy', { locale: ptBR });
@@ -116,9 +126,9 @@ export class AuctioneerService {
     }
     
     allLotsFromAuctions.forEach(lot => {
-        const monthKey = format(new Date(lot.updatedAt), 'MMM/yy', { locale: ptBR });
+        const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy'); // Use timezone-aware function
         if (salesByMonthMap.has(monthKey)) {
-            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price || 0));
+            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
         }
     });
         
@@ -134,4 +144,48 @@ export class AuctioneerService {
       salesByMonth,
     };
   }
+
+  async getAuctioneersPerformance(tenantId: string): Promise<any[]> {
+    const auctioneers = await this.prisma.auctioneer.findMany({
+      where: { tenantId },
+      include: {
+        _count: {
+          select: { auctions: true },
+        },
+        auctions: {
+          include: {
+            lots: {
+              where: { status: 'VENDIDO', tenantId },
+              select: { price: true },
+            },
+            _count: {
+              select: { lots: true },
+            },
+          },
+        },
+      },
+    });
+
+    return auctioneers.map(auctioneer => {
+      const allLotsFromAuctions = auctioneer.auctions.flatMap(auc => auc.lots);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
+      const lotsSoldCount = allLotsFromAuctions.length;
+      const totalLotsInAuctions = auctioneer.auctions.reduce((acc, auc) => acc + auc._count.lots, 0);
+      const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
+      const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
+
+      return {
+        id: auctioneer.id,
+        name: auctioneer.name,
+        totalAuctions: auctioneer._count.auctions,
+        totalLots: totalLotsInAuctions,
+        lotsSoldCount,
+        totalRevenue,
+        averageTicket,
+        salesRate,
+      };
+    });
+  }
 }
+
+    

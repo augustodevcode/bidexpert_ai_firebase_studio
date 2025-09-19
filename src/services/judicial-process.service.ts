@@ -17,8 +17,8 @@ export class JudicialProcessService {
     this.sellerService = new SellerService();
   }
 
-  async getJudicialProcesses(): Promise<JudicialProcess[]> {
-    const processes = await this.repository.findAll();
+  async getJudicialProcesses(tenantId: string): Promise<JudicialProcess[]> {
+    const processes = await this.repository.findAll(tenantId);
     return processes.map(p => ({
       ...p,
       courtName: p.court?.name,
@@ -28,8 +28,8 @@ export class JudicialProcessService {
     }));
   }
 
-  async getJudicialProcessById(id: string): Promise<JudicialProcess | null> {
-    const process = await this.repository.findById(id);
+  async getJudicialProcessById(tenantId: string, id: string): Promise<JudicialProcess | null> {
+    const process = await this.repository.findById(tenantId, id);
     if (!process) return null;
     return {
       ...process,
@@ -40,20 +40,19 @@ export class JudicialProcessService {
     };
   }
 
-  async createJudicialProcess(data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
+  async createJudicialProcess(tenantId: string, data: JudicialProcessFormData): Promise<{ success: boolean; message: string; processId?: string; }> {
     try {
       const { parties, courtId, districtId, branchId, sellerId: providedSellerId, ...processData } = data;
       let finalSellerId = providedSellerId;
 
-      // If a seller is not provided, check if one exists for the branch, or create it.
       if (!finalSellerId && branchId) {
-        const branchSeller = await prisma.seller.findFirst({ where: { judicialBranchId: branchId }});
+        const branchSeller = await prisma.seller.findFirst({ where: { judicialBranchId: branchId, tenantId }});
         if (branchSeller) {
           finalSellerId = branchSeller.id;
         } else {
           const branchDetails = await prisma.judicialBranch.findUnique({ where: { id: branchId }});
           if (branchDetails) {
-            const newSellerResult = await this.sellerService.createSeller({
+            const newSellerResult = await this.sellerService.createSeller(tenantId, {
               name: branchDetails.name,
               isJudicial: true,
               judicialBranchId: branchId
@@ -76,6 +75,7 @@ export class JudicialProcessService {
         court: { connect: { id: courtId } },
         district: { connect: { id: districtId } },
         branch: { connect: { id: branchId } },
+        tenant: { connect: { id: tenantId } },
       };
 
       if (finalSellerId) {
@@ -90,7 +90,7 @@ export class JudicialProcessService {
     }
   }
 
-  async updateJudicialProcess(id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateJudicialProcess(tenantId: string, id: string, data: Partial<JudicialProcessFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const { parties, courtId, districtId, branchId, sellerId, ...processData } = data;
       const dataToUpdate: Partial<Prisma.JudicialProcessUpdateInput> = {...processData};
@@ -101,7 +101,7 @@ export class JudicialProcessService {
       if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
       else if (data.hasOwnProperty('sellerId')) dataToUpdate.seller = { disconnect: true };
 
-      await this.repository.update(id, dataToUpdate, parties);
+      await this.repository.update(tenantId, id, dataToUpdate, parties);
       return { success: true, message: 'Processo judicial atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialProcessService.update for id ${id}:`, error);
@@ -109,9 +109,9 @@ export class JudicialProcessService {
     }
   }
 
-  async deleteJudicialProcess(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteJudicialProcess(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      await this.repository.delete(id);
+      await this.repository.delete(tenantId, id);
       return { success: true, message: 'Processo judicial excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in JudicialProcessService.delete for id ${id}:`, error);

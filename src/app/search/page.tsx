@@ -1,4 +1,4 @@
-
+// src/app/search/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -10,16 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/sidebar-filters'; 
-import AuctionCard from '@/components/auction-card';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
-import DirectSaleOfferCard from '@/components/direct-sale-offer-card';
-import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import AuctionListItem from '@/components/auction-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
@@ -33,6 +27,8 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
+import UniversalListItem from '@/components/universal-list-item';
+import UniversalCard from '@/components/universal-card';
 
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
@@ -259,7 +255,7 @@ export default function SearchPage() {
 
   const handleFilterSubmit = (filters: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; }) => {
     setActiveFilters(prev => ({...prev, ...filters, searchType: currentSearchType}));
-    setIsFilterSheetOpen(false);
+    setIsFilterSheetOpen(false); 
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
     currentParams.set('type', currentSearchType === 'tomada_de_precos' ? 'auctions' : currentSearchType);
 
@@ -364,12 +360,6 @@ export default function SearchPage() {
         else if ('seller' in item && (item as Auction).seller) sellerName = (item as Auction).seller!.name;
         if (!sellerName || !activeFilters.sellers.includes(sellerName)) return false;
       }
-      if (activeFilters.makes && activeFilters.makes.length > 0) {
-          if(!('make' in item) || !item.make || !activeFilters.makes.includes(item.make)) return false;
-      }
-      if (activeFilters.models && activeFilters.models.length > 0) {
-          if(!('model' in item) || !item.model || !activeFilters.models.includes(item.model)) return false;
-      }
        if (activeFilters.status && activeFilters.status.length > 0) {
           if (!item.status || !activeFilters.status.includes(item.status as string)) return false;
       }
@@ -455,18 +445,35 @@ export default function SearchPage() {
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
-    if (currentSearchType === 'lots') return <LotCard key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings}/>;
-    if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionCard key={`${item.id}-${index}`} auction={item as Auction} />;
-    if (currentSearchType === 'direct_sale') return <DirectSaleOfferCard key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
-    return null;
+    let itemType: 'auction' | 'lot' | 'direct_sale' = 'auction';
+    if(currentSearchType === 'lots') itemType = 'lot';
+    else if(currentSearchType === 'direct_sale') itemType = 'direct_sale';
+
+    return (
+        <UniversalCard
+            key={`${itemType}-${item.id}-${index}`}
+            item={item}
+            type={itemType as 'auction' | 'lot'} // Cast as UniversalCard only handles these two for now
+            platformSettings={platformSettings}
+            parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
+        />
+    );
   };
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
-    if (!platformSettings) return null;
-    if (currentSearchType === 'lots') return <LotListItem key={`${(item as Lot).auctionId}-${item.id}-${index}`} lot={item as Lot} auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings}/>;
-    if (currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos') return <AuctionListItem key={`${item.id}-${index}`} auction={item as Auction} />;
-    if (currentSearchType === 'direct_sale') return <DirectSaleOfferListItem key={`${item.id}-${index}`} offer={item as DirectSaleOffer} />;
-    return null;
+     if (!platformSettings) return null;
+    let itemType: 'auction' | 'lot' | 'direct_sale' = 'auction';
+    if(currentSearchType === 'lots') itemType = 'lot';
+    else if(currentSearchType === 'direct_sale') itemType = 'direct_sale';
+     return (
+        <UniversalListItem
+            key={`${itemType}-list-${item.id}-${index}`}
+            item={item}
+            type={itemType as 'auction' | 'lot'} // Cast as UniversalListItem only handles these two for now
+            platformSettings={platformSettings}
+            parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
+        />
+    );
   };
 
   const getSearchTypeLabel = () => {
@@ -495,49 +502,27 @@ export default function SearchPage() {
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground font-medium">Resultados da Busca</span>
       </div>
-      
-      <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 mb-6 max-w-3xl mx-auto">
-        <div className="relative flex-grow w-full">
-            <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-            <Input
-            type="search"
-            placeholder="Buscar por palavra-chave, ID..."
-            className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            />
-        </div>
-        <Button type="submit" className="h-12 w-full md:w-auto">
-          <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
-        </Button>
-        <div className="md:hidden w-full">
-          <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="w-full h-12">
-                <SlidersHorizontal className="mr-2 h-5 w-5" /> Filtros
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="p-0 w-[85vw] max-w-sm">
-                 <div className="p-4 h-full overflow-y-auto">
-                    <SidebarFilters
-                        categories={allCategoriesForFilter}
-                        locations={uniqueLocationsForFilter}
-                        sellers={uniqueSellersForFilter}
-                        onFilterSubmit={handleFilterSubmit as any}
-                        onFilterReset={handleFilterReset}
-                        initialFilters={activeFilters as ActiveFilters}
-                        filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
-                        makes={allMakesForFilter}
-                        models={allModelsForFilter}
-                    />
-                </div>
-            </SheetContent>
-          </Sheet>
-        </div>
-      </form>
+
+      <Card className="shadow-lg p-6 bg-secondary/30">
+        <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full">
+            <div className="relative flex-grow w-full">
+                <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                type="search"
+                placeholder="Buscar por palavra-chave, ID..."
+                className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button type="submit" className="h-12 w-full md:w-auto">
+              <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
+            </Button>
+        </form>
+      </Card>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <div className="hidden md:block">
+        <aside className="hidden md:block sticky top-24 h-fit">
              <SidebarFilters
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
@@ -549,7 +534,7 @@ export default function SearchPage() {
                 makes={allMakesForFilter}
                 models={allModelsForFilter}
             />
-        </div>
+        </aside>
         
         <main className="min-w-0 space-y-6 md:ml-4">
             <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
@@ -571,6 +556,7 @@ export default function SearchPage() {
               platformSettings={platformSettings}
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
+              emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
               currentPage={currentPage}
               itemsPerPage={itemsPerPage}
               onPageChange={handlePageChange}

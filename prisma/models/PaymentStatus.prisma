@@ -1,0 +1,9 @@
+enum PaymentStatus {
+  PENDENTE
+  PROCESSANDO
+  PAGO
+  FALHOU
+  REEMBOLSADO
+  CANCELADO
+  ATRASADO
+}

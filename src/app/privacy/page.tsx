@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 export default function PrivacyPage() {
   return (
@@ -10,7 +11,7 @@ export default function PrivacyPage() {
         <p className="text-lg text-muted-foreground">
           Your privacy is important to us. This policy explains how we handle your personal information.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">Last Updated: {new Date().toLocaleDateString()}</p>
+        <p className="text-sm text-muted-foreground mt-2">Last Updated: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
       </section>
 
       <Card className="shadow-lg">

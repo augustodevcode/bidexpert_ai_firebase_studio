@@ -1,40 +1,49 @@
+
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
-import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData } from '@/types';
+import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData, Tenant, Role } from '@/types';
 import bcrypt from 'bcryptjs';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma';
+import { prisma as basePrisma, getPrismaInstance } from '@/lib/prisma';
 
 
 export class UserService {
   private userRepository: UserRepository;
   private roleRepository: RoleRepository;
+  private prisma;
 
   constructor() {
     this.userRepository = new UserRepository();
     this.roleRepository = new RoleRepository();
+    // A instância do serviço usará o prisma com contexto por padrão.
+    this.prisma = getPrismaInstance(); 
   }
   
   private formatUser(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
-    const roles = user.roles?.map((ur: any) => ur.role) || [];
-    const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
+
+    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => (r.permissions as string)?.split(',') || [])));
+    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
+    
     return {
       ...user,
-      id: user.id, // Ensure id is passed through
-      uid: user.id, // Ensure uid is the same as id
-      roles, // Pass the full role objects
+      id: user.id,
+      uid: user.id, 
+      roles,
+      tenants,
       roleIds: roles.map((r: any) => r.id),
       roleNames: roles.map((r: any) => r.name),
       permissions,
-      // For compatibility with older components that might expect a single roleName
       roleName: roles[0]?.name,
     };
   }
 
+
   async getUsers(): Promise<UserProfileWithPermissions[]> {
+    // A busca de todos os usuários é uma operação de admin, pode usar o base.
     const users = await this.userRepository.findAll();
     return users.map(user => this.formatUser(user)).filter(Boolean) as UserProfileWithPermissions[];
   }
@@ -44,55 +53,47 @@ export class UserService {
         console.warn("[UserService] getUserById called with a null or undefined id.");
         return null;
     }
+    // A busca de um usuário por ID deve ser global.
     const user = await this.userRepository.findById(id);
     return this.formatUser(user);
   }
   
   async findUserByEmail(email: string): Promise<UserProfileWithPermissions | null> {
-    const user = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        roles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
+    // A busca por email no login deve ser global.
+    const user = await this.userRepository.findByEmail(email);
     return this.formatUser(user);
   }
 
 
   async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {
-        if (!data.email || !data.password) {
+        const { roleIds: providedRoleIds, tenantId, ...userData } = data;
+        if (!userData.email || !userData.password) {
             return { success: false, message: "Email e senha são obrigatórios." };
         }
-
-        const existingUser = await this.userRepository.findByEmail(data.email);
+        
+        const existingUser = await this.userRepository.findByEmail(userData.email);
         if (existingUser) {
             return { success: false, message: "Este email já está em uso." };
         }
 
-        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const hashedPassword = await bcrypt.hash(userData.password, 10);
         
-        let roleIdsToAssign = data.roleIds || [];
-        if (roleIdsToAssign.length === 0) {
+        let finalRoleIds = providedRoleIds || [];
+        if (finalRoleIds.length === 0) {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {
               throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
           }
-          roleIdsToAssign.push(userRole.id);
+          finalRoleIds.push(userRole.id);
         }
 
-        const { roleIds, ...userData } = data;
-
         const dataToCreate: Prisma.UserCreateInput = {
-            ...userData,
+            ...(userData as any),
             password: hashedPassword,
         };
         
-        const newUser = await this.userRepository.create(dataToCreate, roleIdsToAssign);
+        const newUser = await this.userRepository.create(dataToCreate, finalRoleIds, tenantId || '1');
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);
@@ -102,28 +103,19 @@ export class UserService {
   
   async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string }> {
     try {
-      if (!userId) {
-        throw new Error("UserID é obrigatório para atualizar perfis.");
-      }
-      
-      // First, clear existing roles for the user
-      await prisma.usersOnRoles.deleteMany({ where: { userId }});
+      const user = await this.userRepository.findById(userId);
+      if(!user) return { success: false, message: 'Usuário não encontrado.'};
 
-      // Then, add the new roles
-      await prisma.usersOnRoles.createMany({
-        data: roleIds.map(roleId => ({
-            userId,
-            roleId,
-            assignedBy: 'admin-panel', 
-        })),
-      });
+      const tenantIds = user.tenants.map(t => t.tenantId);
 
+      await this.userRepository.updateUserRoles(userId, tenantIds, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
     } catch (error: any) {
       console.error(`Error in UserService.updateUserRoles for userId ${userId}:`, error);
       return { success: false, message: `Falha ao atualizar perfis: ${error.message}` };
     }
   }
+
 
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     try {
@@ -152,23 +144,22 @@ export class UserService {
    * @returns {Promise<void>}
    */
   async checkAndHabilitateUser(userId: string): Promise<void> {
-    const user = await prisma.user.findUnique({
+    const user = await basePrisma.user.findUnique({
       where: { id: userId },
-      include: { documents: true }
+      include: { documents: true, tenants: true }
     });
 
     if (!user || user.habilitationStatus === 'HABILITADO') {
       return; // Skip if user not found or already habilitated
     }
     
-    // Determine the account type to find required documents
     const accountType = user.accountType || 'PHYSICAL';
     
-    const requiredDocTypes = await prisma.documentType.findMany({
+    const requiredDocTypes = await basePrisma.documentType.findMany({
       where: { 
         isRequired: true,
         appliesTo: {
-          contains: accountType // Corrected from 'has' to 'contains'
+          contains: accountType
         }
       }
     });
@@ -182,20 +173,26 @@ export class UserService {
     );
 
     if (allRequiredDocsApproved) {
-      await prisma.user.update({
+      await basePrisma.user.update({
         where: { id: userId },
         data: { habilitationStatus: 'HABILITADO' }
       });
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
-      if(bidderRole) {
-        await prisma.usersOnRoles.createMany({
-          data: [{ userId: userId, roleId: bidderRole.id, assignedBy: 'system-habilitation-check' }],
-          skipDuplicates: true,
-        });
+      if(bidderRole && user.tenants) {
+        // Habilitar como licitante em todos os tenants aos quais ele pertence.
+        for (const userTenant of user.tenants) {
+            await basePrisma.usersOnRoles.createMany({
+                data: [{ 
+                    userId: userId, 
+                    roleId: bidderRole.id, 
+                    assignedBy: 'system-habilitation' 
+                }],
+                skipDuplicates: true,
+            });
+        }
       }
     } else if (user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
-       // **NEW LOGIC**: If any document is submitted and status is PENDING_DOCUMENTS, update to PENDING_ANALYSIS
-      await prisma.user.update({
+      await basePrisma.user.update({
         where: { id: userId },
         data: { habilitationStatus: 'PENDING_ANALYSIS' }
       });

@@ -4,6 +4,7 @@
 import { prisma } from '@/lib/prisma';
 import type { Lot, UserHabilitationStatus } from '@/types';
 import { isPast } from 'date-fns';
+import { nowInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 export interface DashboardOverviewData {
   upcomingLots: Lot[];
@@ -50,7 +51,7 @@ export async function getDashboardOverviewDataAction(userId: string): Promise<Da
     where: {
       status: 'ABERTO_PARA_LANCES',
       endDate: {
-        gte: new Date(),
+        gte: nowInSaoPaulo(), // Use timezone-aware function
       }
     },
     orderBy: {

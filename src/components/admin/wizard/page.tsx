@@ -164,7 +164,7 @@ function WizardContent({
                />;
       }
       case 'review': return <Step5Review />;
-      default: return <div className="text-center py-10"><p>Etapa "{stepsToUse[currentStep]?.title || 'Próxima'}" em desenvolvimento.</p></div>;
+      default: return <div className="text-center py-10"><p>Etapa &quot;{stepsToUse[currentStep]?.title || 'Próxima'}&quot; em desenvolvimento.</p></div>;
     }
   };
 

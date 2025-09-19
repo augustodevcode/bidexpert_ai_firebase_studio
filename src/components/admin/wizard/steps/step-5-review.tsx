@@ -128,7 +128,7 @@ export default function Step5Review() {
           <CheckCircle className="mx-auto h-8 w-8 text-green-600 mb-2"/>
           <h4 className="text-lg font-semibold text-green-800 dark:text-green-300">Tudo Pronto para Publicar!</h4>
           <p className="text-sm text-muted-foreground mt-1 mb-4">
-             Ao clicar em "Publicar Leilão", o leilão e todos os lotes criados serão salvos no banco de dados.
+             Ao clicar em &quot;Publicar Leilão&quot;, o leilão e todos os lotes criados serão salvos no banco de dados.
           </p>
           <Button size="lg" onClick={handlePublish} disabled={isPublishing}>
             {isPublishing ? <Loader2 className="animate-spin mr-2" /> : <Rocket className="mr-2 h-5 w-5" />}

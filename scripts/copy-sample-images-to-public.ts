@@ -11,7 +11,7 @@ import { promisify } from 'util';
 const IMAGES_SOURCE_PATH = '/home/user/studio/CadastrosExemplo';
 
 // Caminho de destino para as imagens copiadas dentro do diretório 'public'
-const IMAGES_DESTINATION_PATH = '/home/user/studio/public/lotes-exemplo';
+const IMAGES_DESTINATION_PATH = '/home/user/studio/public/assets/images';
 
 // Extensões de arquivo de imagem a procurar (deve corresponder ao script de seed)
 const IMAGE_EXTENSIONS = ['.jpg', '.png', '.jpeg'];

@@ -1,0 +1,11 @@
+model JudicialParty {
+  id             String           @id @default(cuid())
+  processId      String
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType
+
+  process JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@index([processId])
+}

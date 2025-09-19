@@ -18,9 +18,13 @@ import {
     Bell, 
     Settings,
     Briefcase,
-    ShieldCheck
+    ShieldCheck,
+    Menu
 } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useState } from 'react';
+import { hasPermission, hasAnyPermission } from '@/lib/permissions';
 
 const mainNavItems = [
   { href: '/dashboard/overview', title: 'Visão Geral', icon: LayoutDashboard },
@@ -52,41 +56,68 @@ const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; titl
   </Button>
 );
 
-export default function DashboardSidebar() {
-  const pathname = usePathname();
-  const { userProfileWithPermissions } = useAuth();
+function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
+    const pathname = usePathname();
+    const { userProfileWithPermissions } = useAuth();
+    
+    const canSeeConsignorDashboard = hasAnyPermission(userProfileWithPermissions, ['consignor_dashboard:view', 'manage_all']);
+    const canSeeAdminDashboard = hasPermission(userProfileWithPermissions, 'manage_all');
 
-  const canSeeConsignorDashboard = userProfileWithPermissions?.permissions?.includes('consignor_dashboard:view') || userProfileWithPermissions?.permissions?.includes('manage_all');
-  const canSeeAdminDashboard = userProfileWithPermissions?.permissions?.includes('manage_all');
+    return (
+        <>
+            <div className="p-4 border-b">
+                <Link href="/dashboard/overview" className="flex items-center space-x-2">
+                <LayoutDashboard className="h-7 w-7 text-primary" />
+                <span className="font-bold text-xl text-primary">Meu Painel</span>
+                </Link>
+            </div>
+            <ScrollArea className="flex-1">
+                <nav className="p-2 space-y-1">
+                {mainNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                
+                {(canSeeConsignorDashboard || canSeeAdminDashboard) && <Separator className="my-2"/>}
+                
+                {canSeeConsignorDashboard && (
+                    <NavButton item={{href: '/consignor-dashboard/overview', title: 'Painel Comitente', icon: Briefcase}} pathname={pathname} onLinkClick={onLinkClick} />
+                )}
+
+                {canSeeAdminDashboard && (
+                    <NavButton item={{href: '/admin/dashboard', title: 'Painel Admin', icon: ShieldCheck}} pathname={pathname} onLinkClick={onLinkClick} />
+                )}
+                </nav>
+            </ScrollArea>
+            <div className="p-4 border-t">
+                <Button variant="outline" className="w-full" asChild>
+                    <Link href="/">Voltar ao Site</Link>
+                </Button>
+            </div>
+        </>
+    );
+}
+
+export default function DashboardSidebar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <aside className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">
-      <div className="p-4 border-b">
-        <Link href="/dashboard/overview" className="flex items-center space-x-2">
-          <LayoutDashboard className="h-7 w-7 text-primary" />
-          <span className="font-bold text-xl text-primary">Meu Painel</span>
-        </Link>
+    <>
+      {/* Mobile Sidebar */}
+      <div className="md:hidden">
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+          <SheetTrigger asChild>
+            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm">
+              <Menu className="h-5 w-5" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+            <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+          </SheetContent>
+        </Sheet>
       </div>
-      <ScrollArea className="flex-1">
-        <nav className="p-2 space-y-1">
-          {mainNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-          
-          {(canSeeConsignorDashboard || canSeeAdminDashboard) && <Separator className="my-2"/>}
-          
-          {canSeeConsignorDashboard && (
-             <NavButton item={{href: '/consignor-dashboard/overview', title: 'Painel Comitente', icon: Briefcase}} pathname={pathname} />
-          )}
 
-          {canSeeAdminDashboard && (
-             <NavButton item={{href: '/admin/dashboard', title: 'Painel Admin', icon: ShieldCheck}} pathname={pathname} />
-          )}
-        </nav>
-      </ScrollArea>
-       <div className="p-4 border-t">
-        <Button variant="outline" className="w-full" asChild>
-            <Link href="/">Voltar ao Site</Link>
-        </Button>
-      </div>
-    </aside>
+      {/* Desktop Sidebar */}
+      <aside data-ai-id="user-dashboard-sidebar" className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">
+         <SidebarContent />
+      </aside>
+    </>
   );
 }

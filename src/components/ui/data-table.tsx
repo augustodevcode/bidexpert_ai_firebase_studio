@@ -108,7 +108,7 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="space-y-4" data-ai-id="bid-expert-data-grid">
+    <div className="space-y-4" data-ai-id="data-table-container">
       <DataTableToolbar 
         table={table}
         searchColumnId={searchColumnId}
@@ -117,9 +117,9 @@ export function DataTable<TData, TValue>({
         onDeleteSelected={onDeleteSelected}
       />
       {renderChildrenAboveTable && renderChildrenAboveTable(table)}
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
+      <div className="rounded-md border md:border-0">
+        <Table className="responsive-table">
+          <TableHeader className="hidden md:table-header-group">
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
@@ -173,13 +173,6 @@ export function DataTable<TData, TValue>({
                                     <ChevronRight className="h-4 w-4" />
                                 )}
                             </Button>
-                            <span>
-                                {flexRender(
-                                  row.getVisibleCells()[0].column.columnDef.header,
-                                  row.getVisibleCells()[0].getContext()
-                                )}: {row.getVisibleCells()[0].getValue() as string}
-                            </span>
-                            <span className="text-xs font-normal text-muted-foreground">({row.subRows.length})</span>
                            </div>
                         </TableCell>
                     </TableRow>
@@ -189,13 +182,21 @@ export function DataTable<TData, TValue>({
                     <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
+                    className="block md:table-row mb-4 md:mb-0 border md:border-b rounded-lg md:rounded-none shadow-md md:shadow-none"
                     >
                     {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                        {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                        )}
+                        <TableCell 
+                            key={cell.id} 
+                            className="flex items-center justify-between md:table-cell px-4 py-2 md:px-4 md:py-4 border-b md:border-b-0"
+                            data-label={typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}
+                        >
+                          <span className="font-bold text-sm text-foreground md:hidden mr-2">{typeof cell.column.columnDef.header === 'string' ? cell.column.columnDef.header : cell.column.id}:</span>
+                          <div className="text-right md:text-left">
+                            {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                            )}
+                          </div>
                         </TableCell>
                     ))}
                     </TableRow>

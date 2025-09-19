@@ -1,0 +1,79 @@
+
+model Lot {
+  id                        String              @id @default(cuid())
+  publicId                  String              @unique
+  slug                      String              @unique
+  number                    String?
+  title                     String
+  description               String?             @db.Text
+  price                     Decimal             @db.Decimal(15, 2)
+  initialPrice              Decimal?            @db.Decimal(15, 2)
+  secondInitialPrice        Decimal?            @db.Decimal(15, 2)
+  bidIncrementStep          Decimal?            @db.Decimal(10, 2)
+  status                    LotStatus           @default(EM_BREVE)
+  bidsCount                 Int?                @default(0)
+  views                     Int?                @default(0)
+  isFeatured                Boolean?            @default(false)
+  isExclusive               Boolean?            @default(false)
+  discountPercentage        Int?
+  additionalTriggers        Json?
+  imageUrl                  String?             @db.Text
+  imageMediaId              String?
+  galleryImageUrls          Json?
+  mediaItemIds              Json?
+  dataAiHint                String?
+  winnerId                  String?
+  winner                    User?               @relation("UserWins", fields: [winnerId], references: [id], onDelete: SetNull)
+  winningBidTermUrl         String?             @db.Text
+  allowInstallmentBids      Boolean?            @default(false)
+  endDate                   DateTime?
+  auctionDate               DateTime?
+  lotSpecificAuctionDate    DateTime?
+  secondAuctionDate         DateTime?
+  condition                 String?             @db.Text
+  createdAt                 DateTime            @default(now())
+  updatedAt                 DateTime            @updatedAt
+  // Relacionamentos
+  auction                   Auction             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auctionId                 String
+  type                      String
+  categoryId                String?
+  category                  LotCategory?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategoryId             String?
+  subcategory               Subcategory?        @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  sellerId                  String?
+  seller                    Seller?             @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  auctioneerId              String?
+  auctioneer                Auctioneer?         @relation(fields: [auctioneerId], references: [id], onDelete: SetNull)
+  cityId                    String?
+  city                      City?               @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  stateId                   String?
+  state                     State?              @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  cityName                  String?             @db.Text
+  stateUf                   String?             @db.Text
+  latitude                  Float?
+  longitude                 Float?
+  mapAddress                String?             @db.Text
+  mapEmbedUrl               String?             @db.Text
+  mapStaticImageUrl         String?             @db.Text
+  bens                      LotBens[]
+  bids                      Bid[]
+  userWins                  UserWin[]
+  userMaxBids               UserLotMaxBid[]
+  reviews                   Review[]
+  questions                 LotQuestion[]
+  inheritedMediaFromBemId   String?
+  // Relist info
+  isRelisted                Boolean             @default(false)
+  relistCount               Int                 @default(0)
+  originalLotId             String?
+  originalLot               Lot?                @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLots              Lot[]               @relation("RelistHistory")
+  // Multi-tenancy
+  tenant                    Tenant              @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId                  String
+  stageDetails              Json?
+
+  @@unique([auctionId, number])
+  @@index([slug])
+}

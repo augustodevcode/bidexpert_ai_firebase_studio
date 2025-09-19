@@ -29,10 +29,10 @@ async function getAuctionPageData(id: string): Promise<{
       allAuctioneersData
     ] = await Promise.all([
     getPlatformSettings(),
-    getAuction(id),
+    getAuction(id, true), // Public call
     getLotCategories(),
-    getSellers(),
-    getAuctioneers()
+    getSellers(true), // Public call
+    getAuctioneers(true) // Public call
   ]);
   
   if (!auctionFromDb) {
@@ -41,10 +41,11 @@ async function getAuctionPageData(id: string): Promise<{
     return { platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
   }
 
-  // The getAuction adapter now populates lots, so this call is redundant but safe.
+  // The getAuction service should ideally handle this join.
+  // We'll ensure it's populated here as a safeguard.
   const lotsForAuction = auctionFromDb.lots && auctionFromDb.lots.length > 0 
     ? auctionFromDb.lots 
-    : await getLots(auctionFromDb.id);
+    : await getLots(auctionFromDb.id, true); // Public call
     
   const auction = { ...auctionFromDb, lots: lotsForAuction, totalLots: lotsForAuction.length };
 
@@ -53,13 +54,14 @@ async function getAuctionPageData(id: string): Promise<{
       const found = allAuctioneersData.find(a => a.id === auction.auctioneerId);
       auctioneer = found || null;
   } else if (auction.auctioneer) {
+      // @ts-ignore
       const found = allAuctioneersData.find(a => a.name === auction.auctioneer);
       auctioneer = found || null;
   }
 
   console.log(`[getAuctionPageData - Adapter Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
   
-  return { auction, auctioneer, platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
+  return { auction, auctioneer, platformSettings: platformSettingsData!, allCategories: allCategoriesData, allSellers: allSellersData };
 }
 
 
@@ -106,7 +108,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 
 export async function generateStaticParams() {
   try {
-    const auctions = await getAuctions();
+    const auctions = await getAuctions(true); // Public call
     return auctions.slice(0, 50).map((auction) => ({
       auctionId: auction.publicId || auction.id,
     }));

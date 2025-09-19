@@ -18,7 +18,7 @@ export default async function AuctioneersListPage() {
   let error: string | null = null;
 
   try {
-    auctioneers = await getAuctioneers();
+    auctioneers = await getAuctioneers(true); // Public call
   } catch (e) {
     console.error("Error fetching auctioneers:", e);
     error = "Falha ao buscar leiloeiros.";

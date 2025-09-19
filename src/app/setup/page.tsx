@@ -1,3 +1,4 @@
+
 // src/app/setup/page.tsx
 'use client';
 
@@ -10,6 +11,7 @@ import AdminUserStep from '@/components/setup/admin-user-step';
 import FinishStep from '@/components/setup/finish-step';
 import { verifyInitialData } from './actions';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 const STEPS = [
   { id: 'welcome', title: 'Boas-Vindas', icon: Rocket },
@@ -20,24 +22,19 @@ const STEPS = [
 
 export default function SetupPage() {
   const [currentStep, setCurrentStep] = useState(0);
-  const router = useRouter();
-
-  // Adicionado para verificar se o setup já foi concluído ao carregar a página
-  useEffect(() => {
-    console.log('[SetupPage] Verificando se o setup já foi concluído no localStorage.');
-    const setupComplete = localStorage.getItem('bidexpert_setup_complete') === 'true';
-    if (setupComplete) {
-      console.log('[SetupPage] Setup já concluído. Redirecionando para /admin/dashboard.');
-      router.replace('/admin/dashboard');
-    }
-  }, [router]);
+  const { toast } = useToast();
 
   const goToNextStep = async () => {
     console.log(`[SetupPage] Tentando avançar do step: ${STEPS[currentStep].id}`);
     if (STEPS[currentStep].id === 'seeding') {
       const result = await verifyInitialData();
       if (!result.success) {
-        alert(`Falha na verificação do banco de dados: ${result.message}. Por favor, tente popular os dados novamente ou verifique as configurações do seu banco.`);
+        toast({
+            title: "Verificação Falhou",
+            description: result.message,
+            variant: "destructive",
+            duration: 7000,
+        });
         console.log('[SetupPage] Verificação do DB falhou. Bloqueando avanço.');
         return;
       }
@@ -67,7 +64,7 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
+    <div data-ai-id="setup-page-container" className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <div className="w-full max-w-4xl">
         <ol className="flex items-center w-full mb-8">
             {STEPS.map((step, index) => (

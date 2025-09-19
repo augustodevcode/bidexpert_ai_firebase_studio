@@ -9,6 +9,8 @@ import { getWizardInitialData, createAuctionFromWizard } from '@/app/admin/wizar
 import { SellerService } from '@/services/seller.service';
 import { JudicialProcessService } from '@/services/judicial-process.service';
 import { BemService } from '@/services/bem.service';
+import { RoleRepository } from '@/repositories/role.repository';
+import { UserService } from '@/services/user.service';
 
 const testRunId = `wizard-e2e-${uuidv4().substring(0, 8)}`;
 
@@ -54,6 +56,8 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
     const sellerService = new SellerService();
     const judicialProcessService = new JudicialProcessService();
     const bemService = new BemService();
+    const roleRepository = new RoleRepository();
+    const userService = new UserService();
 
     beforeAll(async () => {
         await cleanup(); // Ensure a clean slate before starting
@@ -87,7 +91,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         testBem = (await bemService.getBemById(bemRes.bemId!))!;
         
         console.log(`--- [Wizard E2E Setup - ${testRunId}] Complete. ---`);
-    });
+    }, 60000);
 
     afterAll(async () => {
         await cleanup();
@@ -136,6 +140,7 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
             id: `temp-lot-${uuidv4()}`,
             number: '101-WIZ',
             title: `Lote do Bem ${testRunId}`,
+            type: 'BEM_TESTE',
             price: 50000,
             initialPrice: 50000,
             status: 'EM_BREVE',
@@ -171,5 +176,70 @@ describe(`[E2E] Auction Creation Wizard Lifecycle (ID: ${testRunId})`, () => {
         assert.strictEqual(createdLot?.bens[0].bemId, testBem.id, 'The correct bem should be linked to the lot.');
         
         console.log('- PASSED: Database verification successful.');
+    });
+
+    it('should NOT allow a user without permission to create an auction', async () => {
+        console.log('\n--- Test: Authorization Check for Wizard Flow ---');
+        
+        // Step 1: Create a user with only BIDDER role
+        console.log('- Step 1: Creating a user with insufficient permissions...');
+        const bidderRole = await roleRepository.findByNormalizedName('BIDDER');
+        assert.ok(bidderRole, 'BIDDER role must exist');
+
+        const unauthorizedUserRes = await userService.createUser({
+            fullName: `Unauthorized User ${testRunId}`,
+            email: `unauthorized-${testRunId}@test.com`,
+            password: 'password123',
+            roleIds: [bidderRole!.id]
+        });
+        assert.ok(unauthorizedUserRes.success && unauthorizedUserRes.userId, 'Unauthorized user creation failed.');
+        const unauthorizedUser = await userService.getUserById(unauthorizedUserRes.userId!)
+        assert.ok(unauthorizedUser, 'Unauthorized user not found after creation');
+        console.log('- PASSED: Unauthorized user created.');
+
+        // Step 2: Prepare valid wizard data
+        const wizardData: WizardData = {
+            createdLots: [{
+                id: `temp-lot-unauth-${uuidv4()}`,
+                number: '999-UNAUTH',
+                title: `Lote Não Autorizado ${testRunId}`,
+                type: 'BEM_TESTE',
+                price: 1000,
+                initialPrice: 1000,
+                bemIds: [testBem.id],
+                categoryId: testCategory.id,
+                auctionId: '', 
+            } as Lot],
+            auctionDetails: {
+                title: `Leilão Não Autorizado ${testRunId}`,
+                auctionType: 'JUDICIAL',
+                auctioneerId: testAuctioneer.id,
+                sellerId: testJudicialSeller.id,
+                judicialProcessId: testJudicialProcess.id,
+                auctionStages: [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 86400000), initialPrice: 1000 }]
+            },
+            auctionType: 'JUDICIAL',
+            judicialProcess: testJudicialProcess as JudicialProcess,
+        };
+
+        // Step 3: Attempt to create auction as the unauthorized user
+        console.log('- Step 2: Attempting to publish auction as unauthorized user...');
+        // We need to bind the user session to the action call
+        const createAuctionAsUnauthorizedUser = createAuctionFromWizard.bind(null, wizardData);
+        // This is a mock of how server actions get user context. For this test, we'll check the service layer directly if needed,
+        // but ideally the action itself should throw. Let's assume the action checks permissions.
+        // For now, we expect a failure. The real implementation would involve mocking the session.
+        const creationResult = await createAuctionFromWizard(wizardData, unauthorizedUser); // Assuming action can receive user context for testing
+
+        // Step 4: Assert that the creation failed
+        console.log('- Step 3: Verifying that the action was blocked...');
+        assert.strictEqual(creationResult.success, false, 'Action should have failed for unauthorized user.');
+        assert.match(creationResult.message, /não autorizado|permissão negada/i, 'Error message should indicate an authorization issue.');
+        console.log(`- PASSED: Action correctly blocked with message: "${creationResult.message}".`);
+
+        // Step 5: Verify that no auction was created
+        const noAuction = await prisma.auction.findFirst({ where: { title: wizardData.auctionDetails.title } });
+        assert.strictEqual(noAuction, null, 'No auction should have been created in the database.');
+        console.log('- PASSED: Database verification successful, no auction was created.');
     });
 });

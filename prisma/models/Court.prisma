@@ -1,0 +1,12 @@
+model Court {
+  id                String              @id @default(cuid())
+  name              String
+  slug              String?
+  stateUf           String?
+  website           String?
+  createdAt         DateTime?           @default(now())
+  updatedAt         DateTime?           @updatedAt
+  judicialDistricts JudicialDistrict[]
+  judicialProcesses JudicialProcess[]
+  auctions          Auction[]           @relation(map: "CourtAuctions")
+}

@@ -53,8 +53,8 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8">
-      <Card className="shadow-lg">
+    <div className="space-y-8" data-ai-id="admin-dashboard-page-container">
+      <Card className="shadow-lg" data-ai-id="admin-dashboard-header-card">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -72,7 +72,7 @@ export default function AdminDashboardPage() {
             </Button>
         </CardHeader>
         <CardContent className="space-y-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-ai-id="admin-dashboard-stats-grid">
              <StatCard 
                 title="Faturamento Total" 
                 value={(stats?.totalRevenue ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})} 

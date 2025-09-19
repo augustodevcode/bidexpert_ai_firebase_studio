@@ -1,0 +1,13 @@
+model City {
+  id        String    @id @default(cuid())
+  name      String
+  slug      String?
+  ibgeCode  String?   @unique
+  lotCount  Int?      @default(0)
+  createdAt DateTime? @default(now())
+  updatedAt DateTime? @updatedAt
+  state     State     @relation(fields: [stateId], references: [id])
+  stateId   String
+  lots      Lot[]
+  auctions  Auction[]
+}

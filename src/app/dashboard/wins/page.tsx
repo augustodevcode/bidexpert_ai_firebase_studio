@@ -1,6 +1,8 @@
 // src/app/dashboard/wins/page.tsx
 'use client';
 
+import React from 'react';
+
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -11,6 +13,7 @@ import { getPaymentStatusText } from '@/lib/ui-helpers';
 import type { UserWin } from '@/types';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatInSaoPaulo, convertUtcToSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 import { useAuth } from '@/contexts/auth-context';
 import { useEffect, useState, useCallback } from 'react';
 import { getWinsForUserAction } from './actions';
@@ -144,7 +147,7 @@ function WinsPageContent() {
                         if (!win.lot) {
                         return <Card key={win.id} className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
                         }
-                        const paymentDeadline = addDays(new Date(win.winDate as string), 5); // Exemplo: 5 dias para pagar
+                        const paymentDeadline = addDays(convertUtcToSaoPaulo(win.winDate as string), 5); // Exemplo: 5 dias para pagar, usando data em SP
                         const commissionRate = 0.05; // Exemplo: 5% de comissão
                         const commissionValue = win.winningBidAmount * commissionRate;
                         const totalDue = win.winningBidAmount + commissionValue; // Simplificado, pode haver outras taxas
@@ -183,7 +186,7 @@ function WinsPageContent() {
                             </div>
                             <div className="flex items-center">
                                 <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <span>Arrematado em: {format(new Date(win.winDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                                <span>Arrematado em: {formatInSaoPaulo(win.winDate as string, "dd/MM/yyyy 'às' HH:mm")}</span>
                             </div>
                             <div className="flex items-center">
                                 <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -195,7 +198,7 @@ function WinsPageContent() {
                             {win.paymentStatus === 'PENDENTE' && (
                                 <div className="flex items-center text-xs text-amber-600">
                                     <CalendarCheck className="h-4 w-4 mr-2" />
-                                    <span>Prazo para Pagamento: {format(paymentDeadline, "dd/MM/yyyy", { locale: ptBR })} (placeholder)</span>
+                                    <span>Prazo para Pagamento: {formatInSaoPaulo(paymentDeadline, "dd/MM/yyyy")} (placeholder)</span>
                                 </div>
                             )}
                             <div className="flex items-center">

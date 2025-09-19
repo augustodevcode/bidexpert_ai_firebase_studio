@@ -88,7 +88,7 @@ export default function ConsignorOverviewPage() {
       setError("Perfil de comitente não encontrado ou não vinculado à sua conta.");
       setIsLoading(false);
     }
-  }, [userProfileWithPermissions, authLoading, fetchConsignorData, isUserAdmin, selectedSellerId]);
+  }, [userProfileWithPermissions, authLoading, fetchConsignorData, isUserAdmin, selectedSellerId, allSellers.length]);
 
   if (authLoading) {
     return (
@@ -99,14 +99,14 @@ export default function ConsignorOverviewPage() {
   }
   
   const SellerSelector = () => (
-    <Card className="mb-6">
+    <Card className="mb-6" data-ai-id="consignor-dashboard-admin-selector-card">
       <CardHeader>
         <CardTitle className="text-lg flex items-center gap-2"><Users /> Selecionar Comitente</CardTitle>
         <CardDescription>Como administrador, você pode visualizar o painel de qualquer comitente.</CardDescription>
       </CardHeader>
       <CardContent>
           <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
-              <SelectTrigger className="w-full md:w-[300px]">
+              <SelectTrigger className="w-full md:w-[300px] mt-1">
                   <SelectValue placeholder="Selecione um comitente..." />
               </SelectTrigger>
               <SelectContent>
@@ -120,7 +120,7 @@ export default function ConsignorOverviewPage() {
   );
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="consignor-dashboard-overview-page">
       {isUserAdmin && <SellerSelector />}
       {isLoading ? (
         <div className="flex items-center justify-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-3 text-muted-foreground">Carregando dados do comitente...</p></div>
@@ -128,7 +128,7 @@ export default function ConsignorOverviewPage() {
         <div className="text-center py-12"><h2 className="text-xl font-semibold text-destructive">{error || "Perfil do comitente não carregado."}</h2></div>
       ) : (
         <>
-          <Card className="shadow-lg">
+          <Card className="shadow-lg" data-ai-id="consignor-dashboard-header-card">
             <CardHeader className="flex flex-col md:flex-row justify-between md:items-center gap-4">
               <div>
                 <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -149,13 +149,13 @@ export default function ConsignorOverviewPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" data-ai-id="consignor-dashboard-stats-grid">
                 <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Lotes Consignados</CardTitle><ListChecks className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{stats?.totalLotsConsigned || 0}</div><p className="text-xs text-muted-foreground mt-1">Lotes ativos e passados.</p></CardContent></Card>
                 <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Taxa de Venda</CardTitle><TrendingUp className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">{(stats?.salesRate || 0).toFixed(1)}%</div><p className="text-xs text-muted-foreground mt-1">Percentual de lotes vendidos.</p></CardContent></Card>
                 <Card className="bg-secondary/30"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto</CardTitle><DollarSign className="h-5 w-5 text-muted-foreground" /></CardHeader><CardContent><div className="text-3xl font-bold">R$ {(stats?.totalSalesValue || 0).toLocaleString('pt-BR')}</div><p className="text-xs text-muted-foreground mt-1">Soma dos valores de venda.</p></CardContent></Card>
                 <Card className="bg-primary/10 border-primary"><CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium text-primary">Próximos Leilões</CardTitle><Eye className="h-5 w-5 text-primary" /></CardHeader><CardContent><div className="text-3xl font-bold text-primary">{upcomingAuctionsWithLots.length}</div><p className="text-xs text-primary/80 mt-1">Leilões com seus lotes em breve.</p></CardContent></Card>
               </div>
-              <Card>
+              <Card data-ai-id="consignor-dashboard-sales-chart-card">
                 <CardHeader><CardTitle className="text-xl font-semibold">Performance de Vendas (Últimos Meses)</CardTitle></CardHeader>
                 <CardContent className="h-72">
                    <ResponsiveContainer width="100%" height="100%">

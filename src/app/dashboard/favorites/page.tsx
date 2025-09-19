@@ -1,5 +1,5 @@
 
-
+// src/app/dashboard/favorites/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Heart, Eye, XCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getLotStatusColor, getAuctionStatusText } from '@/lib/ui-helpers';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
@@ -16,7 +16,7 @@ import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/
 import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getAuctionsByIds } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import LotCard from '@/components/lot-card';
+import UniversalCard from '@/components/universal-card';
 
 
 export default function FavoriteLotsPage() {
@@ -28,8 +28,8 @@ export default function FavoriteLotsPage() {
 
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
-    const [settings] = await Promise.all([getPlatformSettings()]);
-    setPlatformSettings(settings);
+    const settings = await getPlatformSettings();
+    setPlatformSettings(settings as PlatformSettings);
 
     const favoriteIds = getFavoriteLotIdsFromStorage();
     if (favoriteIds.length > 0) {
@@ -67,7 +67,7 @@ export default function FavoriteLotsPage() {
 
   if (isLoading || !platformSettings) {
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-ai-id="my-favorites-page-container">
         <Card className="shadow-lg">
             <CardHeader>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -78,7 +78,7 @@ export default function FavoriteLotsPage() {
                 Acompanhe os lotes que você marcou como favoritos.
             </CardDescription>
             </CardHeader>
-            <CardContent className="animate-pulse">
+            <CardContent className="animate-pulse" data-ai-id="my-favorites-loading-state">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {[1,2,3].map(i => (
                         <Card key={i} className="overflow-hidden">
@@ -103,7 +103,7 @@ export default function FavoriteLotsPage() {
 
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="my-favorites-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -116,7 +116,7 @@ export default function FavoriteLotsPage() {
         </CardHeader>
         <CardContent>
           {favoriteLots.length === 0 ? (
-            <div className="text-center py-12 bg-secondary/30 rounded-lg">
+            <div className="text-center py-12 bg-secondary/30 rounded-lg" data-ai-id="my-favorites-empty-state">
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-muted-foreground">Nenhum Lote Favorito</h3>
               <p className="text-sm text-muted-foreground mt-2">
@@ -124,13 +124,14 @@ export default function FavoriteLotsPage() {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-ai-id="my-favorites-grid">
               {favoriteLots.map((lot) => {
                 const parentAuction = auctionsMap.get(lot.auctionId);
                 return (
                   <div key={lot.id} className="relative group/fav">
-                      <LotCard 
-                          lot={lot} 
+                      <UniversalCard 
+                          item={lot} 
+                          type="lot"
                           auction={parentAuction}
                           platformSettings={platformSettings!} 
                       />

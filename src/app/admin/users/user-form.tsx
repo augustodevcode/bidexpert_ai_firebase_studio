@@ -91,96 +91,24 @@ export default function UserForm({
   return (
     <Card className="max-w-2xl mx-auto shadow-lg">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <UserPlus className="h-6 w-6 text-primary" /> {formTitle}
-        </CardTitle>
+        <CardTitle className="flex items-center gap-2"><UserPlus className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
       </CardHeader>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="fullName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome Completo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: João da Silva" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input type="email" placeholder="usuario@exemplo.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Senha (Opcional)</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="Defina uma senha inicial" {...field} />
-                  </FormControl>
-                  <FormDescription>
-                    Se deixado em branco, o usuário pode precisar redefinir a senha no primeiro login ou um email será enviado.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="roleId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Perfil Principal do Usuário</FormLabel>
-                   <Select
-                    onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)}
-                    value={field.value || "---NONE---"}
-                   >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um perfil" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="---NONE---">Nenhum Perfil</SelectItem>
-                      {roles.map((role) => (
-                        <SelectItem key={role.id} value={role.id}>
-                          {role.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>
-                    Atribua o perfil principal. Perfis adicionais podem ser gerenciados na página de edição do usuário.
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input placeholder="Ex: João da Silva" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email</FormLabel><FormControl><Input type="email" placeholder="usuario@exemplo.com" {...field} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="password" render={({ field }) => (<FormItem><FormLabel>Senha (Opcional)</FormLabel><FormControl><Input type="password" placeholder="Defina uma senha inicial" {...field} /></FormControl><FormDescription>Deixe em branco para não alterar.</FormDescription><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="roleId" render={({ field }) => (<FormItem><FormLabel>Perfil Principal do Usuário</FormLabel><Select onValueChange={(value) => field.onChange(value === "---NONE---" ? null : value)} value={field.value || "---NONE---"}><FormControl><SelectTrigger><SelectValue placeholder="Selecione um perfil" /></SelectTrigger></FormControl><SelectContent><SelectItem value="---NONE---">Nenhum Perfil</SelectItem>{roles.map((role) => (<SelectItem key={role.id} value={role.id}>{role.name}</SelectItem>))}</SelectContent></Select><FormDescription>Atribua o perfil principal. Perfis adicionais podem ser gerenciados na página de edição do usuário.</FormDescription><FormMessage /></FormItem>)} />
+            </div>
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>Cancelar</Button>
+            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
           </CardFooter>
         </form>
       </Form>

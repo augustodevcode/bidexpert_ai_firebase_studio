@@ -32,10 +32,11 @@ export class VehicleModelService {
   async createVehicleModel(data: VehicleModelFormData): Promise<{ success: boolean; message: string; modelId?: string; }> {
     try {
       const slug = slugify(data.name);
+      const { makeId, ...restOfData } = data;
       const dataToCreate: Prisma.VehicleModelCreateInput = { 
-        ...data,
+        ...restOfData,
         slug,
-        make: { connect: { id: data.makeId } },
+        make: { connect: { id: makeId } },
       };
       
       const newModel = await this.repository.create(dataToCreate);

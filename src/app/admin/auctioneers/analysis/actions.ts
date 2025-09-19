@@ -5,9 +5,9 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
 import { AuctioneerService, type AuctioneerDashboardData } from '@/services/auctioneer.service';
+import { getSession } from '@/app/auth/actions';
 
 export interface AuctioneerPerformanceData {
   id: string;
@@ -21,51 +21,26 @@ export interface AuctioneerPerformanceData {
 }
 const auctioneerService = new AuctioneerService();
 
+/**
+ * Retrieves session information and tenant ID.
+ */
+async function getTenantId(): Promise<string> {
+    const session = await getSession();
+    if (!session?.tenantId) {
+        throw new Error("Tenant ID não encontrado na sessão.");
+    }
+    return session.tenantId;
+}
+
 
 /**
- * Fetches and aggregates performance data for all auctioneers.
+ * Fetches and aggregates performance data for all auctioneers within the current tenant.
  * @returns {Promise<AuctioneerPerformanceData[]>} A promise that resolves to an array of auctioneer performance objects.
  */
 export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerformanceData[]> {
   try {
-    const auctioneers = await prisma.auctioneer.findMany({
-      include: {
-        _count: {
-          select: { auctions: true },
-        },
-        auctions: {
-          include: {
-            lots: {
-              where: { status: 'VENDIDO' },
-              select: { price: true },
-            },
-            _count: {
-              select: { lots: true },
-            },
-          },
-        },
-      },
-    });
-
-    return auctioneers.map(auctioneer => {
-      const allLotsFromAuctions = auctioneer.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
-      const lotsSoldCount = allLotsFromAuctions.length;
-      const totalLotsInAuctions = auctioneer.auctions.reduce((acc, auc) => acc + auc._count.lots, 0);
-      const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
-      const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
-
-      return {
-        id: auctioneer.id,
-        name: auctioneer.name,
-        totalAuctions: auctioneer._count.auctions,
-        totalLots: totalLotsInAuctions,
-        lotsSoldCount,
-        totalRevenue,
-        averageTicket,
-        salesRate,
-      };
-    });
+    const tenantId = await getTenantId();
+    return auctioneerService.getAuctioneersPerformance(tenantId);
   } catch (error: any) {
     console.error("[Action - getAuctioneersPerformanceAction] Error fetching auctioneer performance:", error);
     throw new Error("Falha ao buscar dados de performance dos leiloeiros.");
@@ -73,12 +48,13 @@ export async function getAuctioneersPerformanceAction(): Promise<AuctioneerPerfo
 }
 
 /**
- * Fetches dashboard data for a single auctioneer.
+ * Fetches dashboard data for a single auctioneer within the current tenant.
  * @param {string} auctioneerId - The ID of the auctioneer.
  * @returns {Promise<AuctioneerDashboardData | null>} The dashboard data or null if not found.
  */
 export async function getAuctioneerDashboardDataAction(auctioneerId: string): Promise<AuctioneerDashboardData | null> {
-    return auctioneerService.getAuctioneerDashboardData(auctioneerId);
+    const tenantId = await getTenantId();
+    return auctioneerService.getAuctioneerDashboardData(tenantId, auctioneerId);
 }
 
 

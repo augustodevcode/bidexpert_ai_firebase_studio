@@ -1,0 +1,24 @@
+
+model JudicialProcess {
+  id                String  @id @default(cuid())
+  publicId          String  @unique
+  processNumber     String
+  isElectronic      Boolean @default(true)
+  courtId           String?
+  districtId        String?
+  branchId          String?
+  sellerId          String?
+  createdAt         DateTime? @default(now())
+  updatedAt         DateTime? @updatedAt
+  tenantId          String
+  bens              Bem[]
+  auctions          Auction[] @relation(map: "AuctionToJudicialProcess")
+
+  // Relations
+  court             Court?            @relation(fields: [courtId], references: [id])
+  district          JudicialDistrict? @relation(fields: [districtId], references: [id])
+  branch            JudicialBranch?   @relation(fields: [branchId], references: [id])
+  seller            Seller?           @relation(fields: [sellerId], references: [id])
+  tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  parties           JudicialParty[] // Back-relation added here
+}

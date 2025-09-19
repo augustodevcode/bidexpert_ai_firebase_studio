@@ -1,5 +1,5 @@
 // tests/seller.test.ts
-import test from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert';
 import { SellerService } from '../src/services/seller.service';
 import { prisma } from '../src/lib/prisma';
@@ -9,30 +9,32 @@ import { v4 as uuidv4 } from 'uuid';
 const sellerService = new SellerService();
 const testRunId = `seller-e2e-${uuidv4().substring(0, 8)}`;
 const testSellerEmail = `seller.teste.${testRunId}@example.com`;
+const testSellerName = `Test Seller ${testRunId}`;
+let tenant: any;
 
-test.describe('Seller Service E2E Tests', () => {
+
+describe('Seller Service E2E Tests', () => {
     
-    test.beforeEach(async () => {
-        await prisma.seller.deleteMany({
-            where: { email: testSellerEmail }
-        });
+    beforeAll(async () => {
+        tenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `test-tenant-${testRunId}` } });
     });
 
-    test.after(async () => {
+    afterAll(async () => {
         try {
             await prisma.seller.deleteMany({
-                where: { email: testSellerEmail }
+                where: { name: testSellerName }
             });
+            await prisma.tenant.deleteMany({ where: { name: { contains: testRunId } } });
         } catch (error) {
-            // Ignore errors during cleanup
+            // Ignore cleanup errors
         }
         await prisma.$disconnect();
     });
 
-    test('should create a new seller and verify it in the database', async () => {
+    it('should create a new seller and verify it in the database', async () => {
         // Arrange
         const newSellerData: SellerFormData = {
-            name: `Test Seller ${testRunId}`,
+            name: testSellerName,
             contactName: 'Jane Doe',
             email: testSellerEmail,
             phone: '9876543210',
@@ -45,7 +47,7 @@ test.describe('Seller Service E2E Tests', () => {
         };
 
         // Act
-        const result = await sellerService.createSeller(newSellerData);
+        const result = await sellerService.createSeller(tenant.id, newSellerData);
 
         // Assert
         assert.strictEqual(result.success, true, 'SellerService.createSeller should return success: true');

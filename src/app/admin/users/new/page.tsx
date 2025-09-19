@@ -1,12 +1,9 @@
-
 // src/app/admin/users/new/page.tsx
 import UserForm from '../user-form';
 import { createUser, type UserFormData } from '../actions'; 
-// Importar a Server Action getRoles de roles/actions.ts
 import { getRoles } from '@/app/admin/roles/actions'; 
 
 export default async function NewUserPage() {
-  // Chamar a Server Action getRoles
   const roles = await getRoles(); 
 
   async function handleCreateUser(data: UserFormData) {

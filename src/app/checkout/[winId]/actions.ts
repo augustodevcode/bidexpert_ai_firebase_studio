@@ -1,11 +1,16 @@
+
 // src/app/checkout/[winId]/actions.ts
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { checkoutFormSchema, type CheckoutFormValues } from './checkout-form-schema';
 import { add } from 'date-fns';
+import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
+import { UserWinService } from '@/services/user-win.service';
+
+const winService = new UserWinService();
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -15,34 +20,7 @@ import { add } from 'date-fns';
  */
 export async function getWinDetailsForCheckoutAction(winId: string): Promise<UserWin | null> {
   try {
-    const win = await prisma.userWin.findUnique({
-      where: { id: winId },
-      include: {
-        lot: {
-          include: {
-            auction: {
-              select: {
-                title: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (!win) {
-      return null;
-    }
-
-    // Flatten the auction name into the lot object for easier access
-    const lotWithAuctionName = {
-      ...win.lot,
-      auctionName: win.lot.auction.title,
-    };
-
-    // @ts-ignore
-    return { ...win, lot: lotWithAuctionName };
-
+    return winService.getWinDetailsById(winId);
   } catch (error) {
     console.error(`Error fetching win details for checkout (winId: ${winId}):`, error);
     return null;
@@ -57,9 +35,10 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
+    const prisma = getPrismaInstance();
     console.log(`[Action - processPayment] Processing payment for win ID: ${winId}`, paymentData);
     
-    const win = await prisma.userWin.findUnique({ where: { id: winId } });
+    const win = await winService.getWinDetailsById(winId);
 
     if (!win) {
         return { success: false, message: 'Registro do arremate não encontrado.' };
@@ -83,14 +62,14 @@ export async function processPaymentAction(winId: string, paymentData: CheckoutF
         if (paymentData.paymentMethod === 'installments') {
             const installmentCount = paymentData.installments || 1;
             const interestRate = 0.015; // Simulate interest for installments
-            const totalWithInterest = win.winningBidAmount * (1 + (interestRate * installmentCount));
+            const totalWithInterest = Number(win.winningBidAmount) * (1 + (interestRate * installmentCount));
             const installmentAmount = totalWithInterest / installmentCount;
             
             const installmentsToCreate = Array.from({ length: installmentCount }, (_, i) => ({
                 userWinId: winId,
                 installmentNumber: i + 1,
                 amount: installmentAmount,
-                dueDate: add(new Date(), { months: i + 1 }),
+                dueDate: add(convertSaoPauloToUtc(nowInSaoPaulo()), { months: i + 1 }),
                 status: 'PENDENTE' as const
             }));
             
@@ -100,7 +79,7 @@ export async function processPaymentAction(winId: string, paymentData: CheckoutF
                 }),
                 prisma.userWin.update({
                     where: { id: winId },
-                    data: { paymentStatus: 'PROCESSANDO' } // Change status to indicate it's in installments
+                    data: { paymentStatus: 'PROCESSANDO' } 
                 })
             ]);
             

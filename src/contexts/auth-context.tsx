@@ -1,53 +1,57 @@
-
 // src/contexts/auth-context.tsx
 'use client';
 
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { getCurrentUser, logout as logoutAction } from '@/app/auth/actions';
+import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions'; // Corrigido para importar de app/auth/actions
 import type { UserProfileWithPermissions } from '@/types';
-import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   userProfileWithPermissions: UserProfileWithPermissions | null;
+  activeTenantId: string | null;
   loading: boolean;
   setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>;
+  setActiveTenantId: Dispatch<SetStateAction<string | null>>;
   logout: () => void;
   refetchUser: () => void;
-  loginUser: (user: UserProfileWithPermissions) => void; // Nova função
+  loginUser: (user: UserProfileWithPermissions, tenantId: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
+export function AuthProvider({ 
+  children,
+  initialUser,
+  initialTenantId
+}: { 
+  children: ReactNode,
+  initialUser: UserProfileWithPermissions | null,
+  initialTenantId: string | null
+}) {
+  const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
+  const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
-
-  const fetchUser = useCallback(async () => {
-    try {
-      setLoading(true);
-      const user = await getCurrentUser();
-      setUserProfileWithPermissions(user);
-    } catch (error) {
-      console.error("Failed to fetch user session:", error);
-      setUserProfileWithPermissions(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
+  
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
+    setUserProfileWithPermissions(initialUser);
+    setActiveTenantId(initialTenantId);
+    setLoading(false);
+  }, [initialUser, initialTenantId]);
+
+  const refetchUser = useCallback(async () => {
+     router.refresh();
+  }, [router]);
 
   const logout = async () => {
     try {
         await logoutAction();
         setUserProfileWithPermissions(null);
+        setActiveTenantId(null);
         toast({ title: "Logout realizado com sucesso." });
         window.location.href = '/auth/login';
     } catch (error) {
@@ -56,11 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
   
-  // Função para definir o usuário no estado do contexto após o login
-  const loginUser = (user: UserProfileWithPermissions) => {
+  const loginUser = (user: UserProfileWithPermissions, tenantId: string) => {
     setUserProfileWithPermissions(user);
+    setActiveTenantId(tenantId);
   };
-
+  
   if (loading) {
      return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
@@ -73,11 +77,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider value={{
       userProfileWithPermissions,
+      activeTenantId,
       loading,
       setUserProfileWithPermissions,
+      setActiveTenantId,
       logout,
-      refetchUser: fetchUser,
-      loginUser, // Expor a nova função
+      refetchUser,
+      loginUser,
     }}>
       {children}
     </AuthContext.Provider>

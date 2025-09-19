@@ -34,7 +34,7 @@ export const HistoryListItem = forwardRef<
 >(({ className, item, onClick, ...props }, ref) => {
   return (
     <Link
-      href={`/auctions/${item.auctionId}/lots/${item.id}`}
+      href={`/auctions/${item.auctionId}/lots/${item.publicId || item.id}`}
       ref={ref}
       className={cn(
         "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
@@ -202,7 +202,7 @@ export default function MainNav({
 
   return (
     <NavigationMenu className={cn("relative z-10 flex items-center justify-start", className)} {...props} delayDuration={0}>
-      <NavigationMenuList className={cn("group flex list-none items-center justify-start space-x-1")}>
+      <NavigationMenuList className={cn("group flex flex-wrap flex-grow list-none items-center justify-start md:justify-center space-x-1")}>
         {items.map((item) => {
           let megaMenuPropsForTwoColumn: any = null;
           const currentParamsType = searchParams.get('type');

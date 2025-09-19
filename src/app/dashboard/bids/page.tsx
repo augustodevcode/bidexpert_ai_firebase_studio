@@ -1,4 +1,3 @@
-
 // src/app/dashboard/bids/page.tsx
 'use client';
 
@@ -68,7 +67,7 @@ export default function MyBidsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]" data-ai-id="my-bids-loading-spinner">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="ml-3 text-muted-foreground">Carregando seus lances...</p>
       </div>
@@ -76,7 +75,7 @@ export default function MyBidsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="my-bids-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -89,7 +88,7 @@ export default function MyBidsPage() {
         </CardHeader>
         <CardContent>
           {bids.length === 0 ? (
-            <div className="text-center py-12 bg-secondary/30 rounded-lg">
+            <div className="text-center py-12 bg-secondary/30 rounded-lg" data-ai-id="my-bids-empty-state">
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-muted-foreground">Nenhum Lance Registrado</h3>
               <p className="text-sm text-muted-foreground mt-2">
@@ -100,49 +99,51 @@ export default function MyBidsPage() {
               </Button>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lote</TableHead>
-                  <TableHead className="text-right">Meu Lance</TableHead>
-                  <TableHead className="text-right">Lance Atual</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bids.map((bid) => {
-                  const statusInfo = getBidStatusInfo(bid.bidStatus);
-                  return (
-                      <TableRow key={bid.id}>
-                        <TableCell>
-                          <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`} className="hover:text-primary font-medium">
-                            {bid.lot.title}
-                          </Link>
-                          <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
-                        </TableCell>
-                        <TableCell className="text-right font-semibold">
-                          {bid.userBidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {bid.lot.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant="outline" className={statusInfo.color}>
-                                <statusInfo.icon className="h-3.5 w-3.5 mr-1.5"/>
-                                {statusInfo.text}
-                            </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="outline" size="sm" asChild>
-                            <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`}>Ver Lote</Link>
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
+            <div data-ai-id="my-bids-table-container">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lote</TableHead>
+                    <TableHead className="text-right">Meu Lance</TableHead>
+                    <TableHead className="text-right">Lance Atual</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {bids.map((bid) => {
+                    const statusInfo = getBidStatusInfo(bid.bidStatus);
+                    return (
+                        <TableRow key={bid.id}>
+                          <TableCell>
+                            <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`} className="hover:text-primary font-medium">
+                              {bid.lot.title}
+                            </Link>
+                            <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {bid.userBidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {bid.lot.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                          </TableCell>
+                          <TableCell>
+                              <Badge variant="outline" className={statusInfo.color}>
+                                  <statusInfo.icon className="h-3.5 w-3.5 mr-1.5"/>
+                                  {statusInfo.text}
+                              </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button variant="outline" size="sm" asChild>
+                              <Link href={`/auctions/${bid.lot.auctionId}/lots/${bid.lot.publicId || bid.lot.id}`}>Ver Lote</Link>
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

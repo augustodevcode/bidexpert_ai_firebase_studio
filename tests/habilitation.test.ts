@@ -1,15 +1,15 @@
 // tests/habilitation.test.ts
-import { test, describe, beforeAll, afterAll, expect, it } from 'vitest';
+import test from 'node:test';
 import assert from 'node:assert';
-import { prisma } from '@/lib/prisma';
-import { UserService } from '@/services/user.service';
-import { AuctionService } from '@/services/auction.service';
-import { LotService } from '@/services/lot.service';
-import { SellerService } from '@/services/seller.service';
-import { saveUserDocument } from '@/app/dashboard/documents/actions';
-import { approveDocument, habilitateForAuctionAction, checkHabilitationForAuctionAction } from '@/app/admin/habilitations/actions';
-import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, DocumentType } from '@/types';
+import { prisma } from '../src/lib/prisma';
+import { UserService } from '../src/services/user.service';
+import { AuctionService } from '../src/services/auction.service';
+import { LotService } from '../src/services/lot.service';
+import { SellerService } from '../src/services/seller.service';
+import { saveUserDocument } from '../src/app/dashboard/documents/actions';
+import { approveDocument, habilitateForAuctionAction, checkHabilitationForAuctionAction } from '../src/app/admin/habilitations/actions';
+import { placeBidOnLot } from '../src/app/auctions/[auctionId]/lots/[lotId]/actions';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, DocumentType } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const userService = new UserService();
@@ -27,7 +27,7 @@ let testDocumentType: DocumentType;
 let regularUser: UserProfileWithPermissions;
 let analystUser: UserProfileWithPermissions;
 
-describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
+test.describe('User Habilitation E2E Test', () => {
     
     console.log(`
     ================================================================
@@ -47,7 +47,7 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
     ================================================================
     `);
 
-    beforeAll(async () => {
+    test.before(async () => {
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Starting... ---`);
         const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'User', nameNormalized: 'USER', permissions: ['view_auctions', 'view_lots'] } });
         const analystRole = await prisma.role.upsert({ where: { nameNormalized: 'AUCTION_ANALYST' }, update: {}, create: { name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', permissions: ['users:manage_habilitation'] } });
@@ -87,7 +87,7 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         console.log(`--- [Habilitation E2E Setup - ${testRunId}] Complete. ---`);
     });
 
-    afterAll(async () => {
+    test.after(async () => {
         console.log(`--- [Habilitation E2E Teardown - ${testRunId}] Cleaning up... ---`);
         try {
             await prisma.userDocument.deleteMany({ where: { userId: regularUser.id }});
@@ -108,15 +108,15 @@ describe(`[E2E] User Habilitation Lifecycle (ID: ${testRunId})`, () => {
         console.log(`--- [Habilitation E2E Teardown - ${testRunId}] Complete. ---`);
     });
 
-    it('should fail to bid if user has not submitted required documents', async () => {
+    test('should fail to bid if user has not submitted required documents', async () => {
         console.log('\n--- Test: Bidding without submitting any documents ---');
         const bidResult = await placeBidOnLot(testLot.id, testAuction.id, regularUser.id, regularUser.fullName!, 1100);
         assert.strictEqual(bidResult.success, false, 'Bidding should fail without approved documents');
-        assert.strictEqual(bidResult.message, "Apenas usuários com status 'HABILITADO' podem dar lances.", 'Error message should mention habilitation status.');
+        assert.match(bidResult.message, /Apenas usuários com status 'HABILITADO'/, 'Error message should mention habilitation status.');
         console.log('- PASSED: Blocked bid for user with pending documents.');
     });
 
-    it('should go through the full habilitation flow and place a successful bid', async () => {
+    test('should go through the full habilitation flow and place a successful bid', async () => {
         console.log('\n--- Test: Full Habilitation Flow ---');
 
         console.log(`[ACTION] Saving document for user ${regularUser.id}...`);

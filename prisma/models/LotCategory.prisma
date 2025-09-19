@@ -1,0 +1,23 @@
+model LotCategory {
+  id                   String            @id @default(cuid())
+  name                 String
+  slug                 String            @unique
+  description          String?
+  hasSubcategories     Boolean
+  logoUrl              String?
+  logoMediaId          String?
+  dataAiHintLogo       String?
+  coverImageUrl        String?
+  coverImageMediaId    String?
+  dataAiHintCover      String?
+  megaMenuImageUrl     String?
+  megaMenuImageMediaId String?
+  dataAiHintMegaMenu   String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  auctions             Auction[]
+  bens                 Bem[]
+  lots                 Lot[]
+  subcategories        Subcategory[]
+  DirectSaleOffer      DirectSaleOffer[]
+}

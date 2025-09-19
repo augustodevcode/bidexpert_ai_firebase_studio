@@ -2,16 +2,16 @@
 'use client';
 
 import React from 'react';
-import Toolbar from './components/Toolbar';
-import DesignSurface from './components/DesignSurface';
-import PropertiesPanel from './components/PropertiesPanel';
-import PreviewPanel from './components/PreviewPanel';
-import VariablePanel from './components/VariablePanel';
-import MediaLibrary from './components/MediaLibrary';
+import Toolbar from './components/BarraFerramentas';
+import AreaDesenho from './components/AreaDesenho';
+import PainelPropriedades from './components/PainelPropriedades';
+import PainelVisualizacao from './components/PainelVisualizacao';
+import PainelVariaveis from './components/PainelVariaveis';
+import BibliotecaMidia from './components/BibliotecaMidia';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 /**
@@ -20,67 +20,67 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
  * o painel de propriedades e a visualização.
  */
 const BidReportBuilder = () => {
-    const [reportDefinition, setReportDefinition] = React.useState({ elements: [] });
-    const [selectedElement, setSelectedElement] = React.useState(null);
+    const [definicaoRelatorio, setDefinicaoRelatorio] = React.useState({ elements: [] });
+    const [elementoSelecionado, setElementoSelecionado] = React.useState(null);
     const { toast } = useToast();
 
-    const handleAddElement = (elementType, x, y, content) => {
-        const newElement = {
+    const adicionarElemento = (tipoElemento, x, y, conteudo) => {
+        const novoElemento = {
             id: `el-${uuidv4()}`,
-            type: elementType,
-            content: content || `Novo ${elementType}`,
+            type: tipoElemento,
+            content: conteudo || `Novo ${tipoElemento}`,
             x: x || 50,
             y: y || 50,
             width: 150,
-            height: 30
+            height: 40
         };
         // @ts-ignore
-        setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newElement]}));
-        setSelectedElement(newElement);
+        setDefinicaoRelatorio(prev => ({ ...prev, elements: [...prev.elements, novoElemento]}));
+        setElementoSelecionado(novoElemento);
     };
     
-    const handleElementChange = (elementId, newProps) => {
-        let updatedElement;
-        const newElements = reportDefinition.elements.map(el => {
+    const alterarElemento = (idElemento, novasProps) => {
+        let elementoAtualizado;
+        const novosElementos = definicaoRelatorio.elements.map(el => {
             // @ts-ignore
-            if (el.id === elementId) {
-                updatedElement = { ...el, ...newProps };
-                return updatedElement;
+            if (el.id === idElemento) {
+                elementoAtualizado = { ...el, ...novasProps };
+                return elementoAtualizado;
             }
             return el;
         });
 
         // @ts-ignore
-        setReportDefinition({ ...reportDefinition, elements: newElements });
+        setDefinicaoRelatorio({ ...definicaoRelatorio, elements: novosElementos });
         
-        if (selectedElement && selectedElement.id === elementId) {
-            setSelectedElement(updatedElement);
+        if (elementoSelecionado && elementoSelecionado.id === idElemento) {
+            setElementoSelecionado(elementoAtualizado);
         }
     };
 
-    const handleSelectImage = (image) => {
-        const newImageElement = {
+    const selecionarImagem = (imagem) => {
+        const novoElementoImagem = {
             id: `el-${uuidv4()}`,
             type: 'Image',
-            content: image.alt,
+            content: imagem.alt,
             x: 200,
             y: 200,
             width: 200,
             height: 150,
-            imageUrl: image.src,
+            imageUrl: imagem.src,
         };
          // @ts-ignore
-        setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newImageElement]}));
-        setSelectedElement(newImageElement);
+        setDefinicaoRelatorio(prev => ({ ...prev, elements: [...prev.elements, novoElementoImagem]}));
+        setElementoSelecionado(novoElementoImagem);
          toast({
             title: "Imagem Adicionada!",
-            description: `A imagem "${image.alt}" foi adicionada ao seu relatório.`,
+            description: `A imagem "${imagem.alt}" foi adicionada ao seu relatório.`,
         });
     };
 
-    const handleSaveReport = () => {
+    const salvarRelatorio = () => {
         try {
-            localStorage.setItem('bidReportBuilder_save', JSON.stringify(reportDefinition));
+            localStorage.setItem('bidReportBuilder_save', JSON.stringify(definicaoRelatorio));
             toast({
                 title: "Relatório Salvo!",
                 description: "Seu layout foi salvo no armazenamento local do seu navegador.",
@@ -94,13 +94,13 @@ const BidReportBuilder = () => {
         }
     };
 
-    const handleLoadReport = () => {
+    const carregarRelatorio = () => {
         try {
-            const savedReport = localStorage.getItem('bidReportBuilder_save');
-            if (savedReport) {
-                const parsedReport = JSON.parse(savedReport);
-                setReportDefinition(parsedReport);
-                setSelectedElement(null);
+            const relatorioSalvo = localStorage.getItem('bidReportBuilder_save');
+            if (relatorioSalvo) {
+                const relatorioParseado = JSON.parse(relatorioSalvo);
+                setDefinicaoRelatorio(relatorioParseado);
+                setElementoSelecionado(null);
                 toast({
                     title: "Relatório Carregado!",
                     description: "Seu layout salvo foi carregado com sucesso.",
@@ -121,7 +121,7 @@ const BidReportBuilder = () => {
         }
     };
 
-    const handleExportReport = () => {
+    const exportarRelatorio = () => {
         toast({
             title: "Funcionalidade em Desenvolvimento",
             description: "A exportação para PDF será implementada em breve.",
@@ -130,40 +130,40 @@ const BidReportBuilder = () => {
 
     return (
         <DndProvider backend={HTML5Backend}>
-            <div className="flex flex-col h-[75vh] bg-muted/30 rounded-lg border">
-                <Toolbar onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
+            <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
                 <div className="flex flex-grow overflow-hidden">
-                    <main className="flex-grow flex flex-col">
-                        <div className="flex-grow border-r border-t relative">
-                            <DesignSurface 
-                                elements={reportDefinition.elements} 
-                                onAddElement={handleAddElement}
-                                onSelectElement={setSelectedElement}
-                                selectedElementId={selectedElement?.id}
+                    <Toolbar onSave={salvarRelatorio} onLoad={carregarRelatorio} onExport={exportarRelatorio} />
+                    <main className="flex-grow flex flex-col border-l border-r" data-ai-id="report-builder-main-panel">
+                        <div className="flex-grow relative">
+                            <AreaDesenho 
+                                elements={definicaoRelatorio.elements} 
+                                onAddElement={adicionarElemento}
+                                onSelectElement={setElementoSelecionado}
+                                selectedElementId={elementoSelecionado?.id}
                             />
                         </div>
-                        <div className="h-1/3 border-t bg-background">
-                           <PreviewPanel reportDefinition={reportDefinition} />
+                        <div className="h-1/3 border-t bg-background" data-ai-id="report-builder-preview-panel">
+                           <PainelVisualizacao reportDefinition={definicaoRelatorio} />
                         </div>
                     </main>
-                    <aside className="w-80 flex-shrink-0 border-l border-t bg-background">
+                    <aside className="w-80 flex-shrink-0 bg-background flex flex-col" data-ai-id="report-builder-sidebar">
                          <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
-                            <TabsList className="flex-shrink-0">
-                                <TabsTrigger value="properties">Propriedades</TabsTrigger>
-                                <TabsTrigger value="variables">Variáveis</TabsTrigger>
-                                <TabsTrigger value="media">Mídia</TabsTrigger>
+                            <TabsList className="flex-shrink-0 mx-2 mt-2">
+                                <TabsTrigger value="properties" className="flex-1">Propriedades</TabsTrigger>
+                                <TabsTrigger value="variables" className="flex-1">Variáveis</TabsTrigger>
+                                <TabsTrigger value="media" className="flex-1">Mídia</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="properties" className="flex-grow overflow-y-auto">
-                                <PropertiesPanel 
-                                    selectedElement={selectedElement} 
-                                    onElementChange={handleElementChange}
+                            <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
+                                <PainelPropriedades 
+                                    selectedElement={elementoSelecionado} 
+                                    onElementChange={alterarElemento}
                                 />
                             </TabsContent>
-                            <TabsContent value="variables" className="flex-grow overflow-y-auto">
-                                <VariablePanel />
+                            <TabsContent value="variables" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
+                                <PainelVariaveis />
                             </TabsContent>
-                             <TabsContent value="media" className="flex-grow overflow-y-auto">
-                                <MediaLibrary onSelectImage={handleSelectImage} />
+                             <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
+                                <BibliotecaMidia onSelectImage={selecionarImagem} />
                             </TabsContent>
                         </Tabs>
                     </aside>

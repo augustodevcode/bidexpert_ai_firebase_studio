@@ -1,0 +1,32 @@
+model PlatformSettings {
+  id                           String               @id @default("global")
+  siteTitle                    String?
+  siteTagline                  String?
+  logoUrl                      String?
+  faviconUrl                   String?
+  galleryImageBasePath         String?
+  storageProvider              String?
+  firebaseStorageBucket        String?
+  activeThemeName              String?
+  themes                       Json?
+  platformPublicIdMasks        Json?
+  homepageSections             Json?
+  mentalTriggerSettings        Json?
+  sectionBadgeVisibility       Json?
+  mapSettings                  Json?
+  searchPaginationType         SearchPaginationType @default(loadMore)
+  searchItemsPerPage           Int                  @default(12)
+  searchLoadMoreCount          Int                  @default(12)
+  showCountdownOnLotDetail     Boolean              @default(true)
+  showCountdownOnCards         Boolean              @default(true)
+  showRelatedLotsOnLotDetail   Boolean              @default(true)
+  relatedLotsCount             Int                  @default(5)
+  defaultUrgencyTimerHours     Int?
+  variableIncrementTable       Json?
+  biddingSettings              Json?
+  paymentGatewaySettings       Json?
+  defaultListItemsPerPage      Int                  @default(10)
+  updatedAt                    DateTime?            @updatedAt
+  tenantId                     String               @unique
+  tenant                       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}

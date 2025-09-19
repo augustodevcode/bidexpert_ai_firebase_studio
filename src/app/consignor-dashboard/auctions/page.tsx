@@ -79,7 +79,7 @@ export default function ConsignorAuctionsPage() {
   ], [statusOptions]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="consignor-auctions-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

@@ -1,0 +1,10 @@
+// Este arquivo contém o cabeçalho do schema Prisma.
+// É usado pelo script 'build-prisma-schema.ts' para gerar o schema.prisma final.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}

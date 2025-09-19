@@ -5,7 +5,6 @@
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import type { Auction, Lot, PlatformSettings, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -47,6 +46,7 @@ import { getAuctionDashboardDataAction } from '../../analysis/actions';
 import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
+import FormPageLayout from '@/components/admin/form-page-layout';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -145,233 +145,9 @@ function AuctionDashboardSection({ auctionId }: { auctionId: string }) {
     )
 }
 
-
-function DeleteLotButton({ lotId, lotTitle, auctionId, onDeleteSuccess }: { lotId: string; lotTitle: string; auctionId: string; onDeleteSuccess: () => void }) {
-  const [isDeleting, setIsDeleting] = React.useState(false);
-  const { toast } = useToast();
-
-  const handleDelete = async () => {
-    setIsDeleting(true);
-    const result = await deleteLot(lotId, auctionId); 
-    if (!result.success) {
-        console.error("Failed to delete lot:", result.message);
-        toast({ title: "Erro ao Excluir Lote", description: result.message, variant: "destructive" });
-    } else {
-        toast({ title: "Sucesso", description: "Lote excluído com sucesso." });
-        onDeleteSuccess(); 
-    }
-    setIsDeleting(false);
-  };
-
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive/80 h-7 w-7" disabled={isDeleting}>
-          {isDeleting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-          <span className="sr-only">Excluir Lote</span>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Confirmar Exclusão do Lote</AlertDialogTitle>
-          <AlertDialogDescription>
-            Tem certeza que deseja excluir o lote "{lotTitle}" (ID: {lotId}) deste leilão? Esta ação não pode ser desfeita.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDelete}
-            disabled={isDeleting}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isDeleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Excluir Lote
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
-function AuctionActionsDisplay({ auction, userProfile }: { auction: Auction; userProfile: any }) {
-    const { toast } = useToast();
-    const [isLoading, setIsLoading] = useState<Record<string, boolean>>({});
-    
-    const hasGenerateReportPerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_report']);
-    const hasGenerateCertificatePerm = hasAnyPermission(userProfile, ['manage_all', 'documents:generate_certificate']);
-    
-    return (
-        <Card className="shadow-md">
-            <CardHeader>
-                <CardTitle className="text-lg flex items-center"><FileSignature className="mr-2 h-5 w-5 text-primary"/> Ações Pós-Leilão e Documentação</CardTitle>
-                <CardDescription>Gere laudos e certificados para este leilão.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-2">
-                 <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button className="w-full justify-start" disabled>
-                                    <FileText className="mr-2 h-4 w-4"/> Gerar Laudo de Avaliação (PDF)
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button className="w-full justify-start" disabled>
-                                    <CheckCircle className="mr-2 h-4 w-4"/> Gerar Relatório de Arremates (PDF)
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <div className="w-full">
-                                <Button variant="secondary" className="w-full justify-start" disabled>
-                                    <Users className="mr-2 h-4 w-4"/> Enviar Comunicação aos Arrematantes
-                                </Button>
-                            </div>
-                        </TooltipTrigger>
-                        <TooltipContent><p>Funcionalidade em desenvolvimento.</p></TooltipContent>
-                    </Tooltip>
-                 </TooltipProvider>
-            </CardContent>
-        </Card>
-    );
-}
-
-function AuctionInfoDisplay({ auction }: { auction: Auction }) {
-    const auctionTypeLabels: Record<string, string> = {
-        JUDICIAL: 'Judicial',
-        EXTRAJUDICIAL: 'Extrajudicial',
-        PARTICULAR: 'Particular',
-        TOMADA_DE_PRECOS: 'Tomada de Preços',
-    };
-
-    const getDaysRemaining = (endDate: string | Date | null | undefined) => {
-        if (!endDate) return null;
-        const diff = differenceInDays(new Date(endDate), new Date());
-        if (diff < 0) return "Encerrado";
-        if (diff === 0) return "Encerra Hoje";
-        return `${diff} dia(s) restante(s)`;
-    };
-
-    return (
-        <div className="space-y-4">
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><Info className="mr-2 h-5 w-5 text-primary" /> Resumo do Leilão</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>ID do Leilão:</strong> {auction.publicId}</p>
-                    <div className="flex items-center"><strong>Status:</strong><Badge variant="outline" className={`ml-2 ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'border-green-500 text-green-600' : 'border-gray-400'}`}>{getAuctionStatusText(auction.status)}</Badge></div>
-                    <p><strong>Data Início:</strong> {auction.auctionDate ? format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A'}</p>
-                    <p><strong>Data Fim (Estimada):</strong> {auction.endDate ? format(new Date(auction.endDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'Não definida'}</p>
-                    {auction.endDate && !isPast(new Date(auction.endDate as string)) && <p><strong>Tempo Restante:</strong> {getDaysRemaining(auction.endDate)}</p>}
-                    <p><strong>Leiloeiro:</strong> {auction.auctioneerName}</p>
-                    <p><strong>Comitente:</strong> {auction.seller?.name || 'N/A'}</p>
-                </CardContent>
-            </Card>
-
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><Settings className="mr-2 h-5 w-5 text-primary" /> Configurações de Venda e Marketplace</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>Modalidade:</strong> {auctionTypeLabels[auction.auctionType || ''] || 'Não especificada'}</p>
-                    <p><strong>Robô de Lances:</strong> {auction.automaticBiddingEnabled ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.automaticBiddingEnabled ? 'Ativado' : 'Desativado'}</p>
-                    <p><strong>Permite Lance Parcelado:</strong> {auction.allowInstallmentBids ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.allowInstallmentBids ? 'Sim' : 'Não'}</p>
-                    <p><strong>Destaque no Marketplace:</strong> {auction.isFeaturedOnMarketplace ? <CheckCircle className="inline h-4 w-4 text-green-600"/> : <XCircle className="inline h-4 w-4 text-red-600"/>} {auction.isFeaturedOnMarketplace ? 'Sim' : 'Não'}</p>
-                    {auction.isFeaturedOnMarketplace && <p><strong>Título do Anúncio:</strong> {auction.marketplaceAnnouncementTitle || 'Não definido'}</p>}
-                </CardContent>
-            </Card>
-            
-            <Card className="shadow-md">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center"><BarChart2 className="mr-2 h-5 w-5 text-primary" /> Estatísticas</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                    <p><strong>Visitas:</strong> {auction.visits || 0}</p>
-                    <p><strong>Total de Lotes:</strong> {auction.totalLots || 0}</p>
-                    <p><strong>Faturamento Estimado:</strong> R$ {(auction.estimatedRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p><strong>Faturamento Realizado:</strong> R$ {(auction.achievedRevenue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
-                    <p><strong>Usuários Habilitados:</strong> {auction.totalHabilitatedUsers || 0}</p>
-                </CardContent>
-            </Card>
-        </div>
-    );
-}
-
-function DeleteAuctionButton({ auction, onAction }: { auction: Auction; onAction: () => void; }) {
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { toast } = useToast();
-  const router = useRouter();
-
-  const canDelete = auction.status === 'RASCUNHO';
-  const tooltipContent = canDelete 
-    ? "Excluir este leilão" 
-    : "Não é possível excluir um leilão que já foi iniciado ou possui lotes. Altere o status para 'Rascunho' e remova os lotes primeiro.";
-
-  const handleDelete = async () => {
-    if (!canDelete) return;
-    setIsDeleting(true);
-    const result = await deleteAuction(auction.id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/admin/auctions');
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
-    setIsDeleting(false);
-  };
-
-  return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div> {/* Wrapper div to allow tooltip on disabled button */}
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting || !canDelete}>
-                  {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : <Trash2 className="h-4 w-4 mr-2" />}
-                  Excluir
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Confirmar Exclusão?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação é permanente e não pode ser desfeita. Tem certeza que deseja excluir o leilão "{auction.title}"?
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel disabled={isDeleting}>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} disabled={isDeleting} className="bg-destructive hover:bg-destructive/90">
-                    {isDeleting ? <Loader2 className="animate-spin h-4 w-4 mr-2" /> : null}
-                    Confirmar Exclusão
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{tooltipContent}</p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
-  );
-}
-
-
 export default function EditAuctionPage() {
-  const paramsHook = useParams(); 
-  const auctionId = paramsHook.auctionId as string; 
+  const params = useParams(); 
+  const auctionId = params.auctionId as string; 
   const [auction, setAuction] = React.useState<Auction | null>(null);
   const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [lotsInAuction, setLotsInAuction] = React.useState<Lot[]>([]);
@@ -381,6 +157,7 @@ export default function EditAuctionPage() {
   const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
@@ -429,10 +206,34 @@ export default function EditAuctionPage() {
     fetchPageData();
   }, [fetchPageData]);
 
-  async function handleUpdateAuction(data: Partial<AuctionFormData>) {
-    return updateAuction(auctionId, data);
+  const handleUpdateAuction = async (data: Partial<AuctionFormData>) => {
+    setIsSubmitting(true);
+    const result = await updateAuction(auctionId, data);
+    if(result.success) {
+      toast({ title: 'Sucesso!', description: result.message});
+      fetchPageData();
+      setIsViewMode(true);
+    } else {
+      toast({ title: 'Erro', description: result.message, variant: 'destructive'});
+    }
+    setIsSubmitting(false);
   }
 
+  const handleDelete = async () => {
+    if(!auction) return;
+    const result = await deleteAuction(auction.id);
+    if (result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      router.push('/admin/auctions');
+    } else {
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
+    }
+  };
+
+  const handleSave = () => {
+      formRef.current?.requestSubmit();
+  };
+  
   const handleDeleteLot = useCallback(
     async (lotId: string) => {
       const auctionId = auction?.id;
@@ -456,46 +257,39 @@ export default function EditAuctionPage() {
   return (
     <>
       <div className="space-y-8">
-        <div className="flex justify-between items-center gap-2">
-            <Button variant="secondary" onClick={() => setIsAISuggestionModalOpen(true)}>
-                <Lightbulb className="mr-2 h-4 w-4" /> Otimizar com IA
-            </Button>
-            <div className="flex gap-2">
-              {isViewMode ? (
-                  <Button onClick={() => setIsViewMode(false)}>
-                  <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
-                  </Button>
-              ) : null}
-                  <DeleteAuctionButton auction={auction} onAction={fetchPageData} />
-            </div>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            <div className="lg:col-span-2">
-              <AuctionForm
-                formRef={formRef}
-                initialData={auction}
-                categories={categories}
-                auctioneers={auctioneers}
-                sellers={sellers}
-                states={states}
-                allCities={allCities}
-                onSubmitAction={handleUpdateAuction}
-                formTitle={isViewMode ? "Visualizar Leilão" : "Editar Leilão"}
-                formDescription={isViewMode ? "Consulte as informações do leilão abaixo." : "Modifique os detalhes do leilão."}
-                submitButtonText="Salvar Alterações"
-                isViewMode={isViewMode}
-                onUpdateSuccess={() => {
-                    fetchPageData();
-                    setIsViewMode(true);
-                }}
-                onCancelEdit={() => setIsViewMode(true)}
-              />
-            </div>
-            <div className="lg:col-span-1 space-y-6 sticky top-24">
-                <AuctionInfoDisplay auction={auction} />
-                <AuctionActionsDisplay auction={auction} userProfile={userProfileWithPermissions}/>
-            </div>
-        </div>
+        <FormPageLayout
+          formTitle={isViewMode ? `Visualizar Leilão` : `Editar Leilão`}
+          formDescription={auction?.title || 'Carregando...'}
+          icon={Gavel}
+          isViewMode={isViewMode}
+          isLoading={isLoading}
+          isSubmitting={isSubmitting}
+          onEnterEditMode={() => setIsViewMode(false)}
+          onCancel={() => setIsViewMode(true)}
+          onSave={handleSave}
+          onDelete={handleDelete}
+        >
+          <AuctionForm
+            formRef={formRef}
+            initialData={auction}
+            categories={categories}
+            auctioneers={auctioneers}
+            sellers={sellers}
+            states={states}
+            allCities={allCities}
+            onSubmitAction={handleUpdateAuction}
+            formTitle=""
+            formDescription=""
+            submitButtonText="Salvar Alterações"
+            isViewMode={isViewMode}
+            onUpdateSuccess={() => {
+                fetchPageData();
+                setIsViewMode(true);
+            }}
+            onCancelEdit={() => setIsViewMode(true)}
+          />
+        </FormPageLayout>
+
         <Separator className="my-8"/>
 
         <Card>

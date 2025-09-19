@@ -11,8 +11,9 @@ import { Progress } from './ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import type { UserDocumentStatus } from '@/types';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { getUserDocumentStatusInfo } from '@/lib/sample-data-helpers';
+import { getUserDocumentStatusInfo } from '@/lib/ui-helpers';
 import { useAuth } from '@/contexts/auth-context';
+import { Badge } from '@/components/ui/badge';
 
 interface DocumentUploadCardProps {
   title: string;

@@ -158,7 +158,7 @@ export default function QualityAssurancePage() {
 
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8" data-ai-id="admin-qa-page-container">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -208,7 +208,7 @@ export default function QualityAssurancePage() {
             ))}
 
             {testResult && (
-                <Card>
+                <Card data-ai-id="qa-test-results-card">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                           Resultados para: <span className="text-primary">{testGroups.flatMap(g=>g.tests).find(t => t.id === lastTestRun)?.title}</span>

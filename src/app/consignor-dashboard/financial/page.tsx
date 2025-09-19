@@ -98,7 +98,7 @@ export default function ConsignorFinancialPage() {
   ], [statusOptions]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="consignor-financial-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -112,7 +112,7 @@ export default function ConsignorFinancialPage() {
       </Card>
       
       {isUserAdmin && (
-        <Card>
+        <Card data-ai-id="consignor-financial-admin-selector">
             <CardHeader>
                  <CardTitle className="text-lg flex items-center gap-2"><Users /> Selecionar Comitente</CardTitle>
             </CardHeader>
@@ -131,7 +131,7 @@ export default function ConsignorFinancialPage() {
         </Card>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" data-ai-id="consignor-financial-stats-grid">
           <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto (Pago)</CardTitle><BarChart3 className="h-4 w-4 text-muted-foreground" /></CardHeader>
               <CardContent><div className="text-2xl font-bold">{totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div></CardContent>
@@ -150,7 +150,7 @@ export default function ConsignorFinancialPage() {
           </Card>
       </div>
 
-      <Card>
+      <Card data-ai-id="consignor-financial-wins-table">
           <CardHeader>
               <CardTitle>Extrato de Arremates</CardTitle>
               <CardDescription>Lista detalhada de todos os lotes vendidos e seus status financeiros.</CardDescription>

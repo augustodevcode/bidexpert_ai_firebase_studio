@@ -1,0 +1,16 @@
+model Bid {
+  id            String   @id @default(cuid())
+  lotId         String
+  auctionId     String
+  bidderId      String
+  bidderDisplay String?
+  amount        Decimal  @db.Decimal(15, 2)
+  timestamp     DateTime @default(now())
+
+  lot     Lot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  bidder  User    @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([bidderId])
+}

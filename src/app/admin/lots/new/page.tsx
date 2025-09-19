@@ -9,7 +9,7 @@ import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
 import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getSellers } from '../sellers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 
 interface NewLotPageContentProps {
   categories: LotCategory[];

@@ -1,4 +1,3 @@
-
       'use client';
 
 import { Button } from '@/components/ui/button';
@@ -42,8 +41,8 @@ export default function ContactPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12">
-      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg">
+    <div className="max-w-4xl mx-auto space-y-12" data-ai-id="contact-page-container">
+      <section className="text-center py-12 bg-gradient-to-br from-primary/10 via-background to-accent/10 rounded-lg" data-ai-id="contact-page-hero-section">
         <h1 className="text-4xl font-bold mb-4 font-headline">Entre em Contato</h1>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
           Adoraríamos ouvir você. Se você tem uma dúvida, feedback ou precisa de suporte, sinta-se à vontade para nos contatar.
@@ -51,7 +50,7 @@ export default function ContactPage() {
       </section>
 
       <div className="grid md:grid-cols-2 gap-12">
-        <section>
+        <section data-ai-id="contact-page-form-section">
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="text-2xl font-semibold font-headline">Fale Conosco</CardTitle>
@@ -86,7 +85,7 @@ export default function ContactPage() {
           </Card>
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="contact-page-info-section">
            <h2 className="text-2xl font-semibold font-headline mb-4">Nossas Informações de Contato</h2>
            <Card className="p-6 shadow-md">
              <div className="flex items-start space-x-4">
@@ -120,5 +119,3 @@ export default function ContactPage() {
     </div>
   );
 }
-
-    

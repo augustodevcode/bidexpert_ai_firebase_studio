@@ -1,0 +1,11 @@
+model AuctionHabilitation {
+  userId      String
+  auctionId   String
+  habilitatedAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  @@id([userId, auctionId])
+  @@index([auctionId])
+}

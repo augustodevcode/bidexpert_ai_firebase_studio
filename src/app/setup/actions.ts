@@ -1,9 +1,12 @@
+
 // src/app/setup/actions.ts
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
-import type { Role } from '@/types';
+import type { Role, UserProfileWithPermissions, Tenant } from '@/types';
+import { cookies } from 'next/headers';
+import { createSession } from '@/server/lib/session';
 
 /**
  * Verifica se os dados essenciais (ex: roles e settings) existem no banco de dados.
@@ -32,9 +35,29 @@ export async function verifyInitialData(): Promise<{ success: boolean; message: 
   }
 }
 
+function formatUserForSession(user: any): UserProfileWithPermissions | null {
+    if (!user) return null;
+
+    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
+    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
+    
+    return {
+        ...user,
+        id: user.id,
+        uid: user.id,
+        roles,
+        tenants,
+        roleIds: roles.map((r: any) => r.id),
+        roleNames: roles.map((r: any) => r.name),
+        permissions,
+        roleName: roles[0]?.name,
+    };
+}
+
+
 /**
- * Cria ou confirma o usuário administrador inicial da plataforma.
- * Se o usuário já existir, confirma e retorna sucesso.
+ * Cria ou confirma o usuário administrador inicial da plataforma e loga-o.
  * @param {FormData} formData - Os dados do formulário de criação do admin.
  * @returns {Promise<{success: boolean; message: string}>}
  */
@@ -56,36 +79,68 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
+        let userToLogin;
+
         if (existingUser) {
             console.log(`[Setup Action] Usuário admin ${email} já existe. Confirmando e prosseguindo.`);
-            return { success: true, message: 'Usuário administrador já existe e foi confirmado.' };
+            userToLogin = existingUser;
+        } else {
+             throw new Error("Usuário administrador não encontrado. Por favor, rode o `db:init` primeiro.");
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const newUser = await prisma.user.create({
-            data: {                
-                email,
-                password: hashedPassword,
-                fullName,
-                accountType: 'PHYSICAL',
-                habilitationStatus: 'HABILITADO',
+        // Logar o usuário recém-criado/confirmado
+        const userWithRelations = await prisma.user.findUnique({
+            where: { id: userToLogin.id },
+            include: {
+                roles: {
+                    include: {
+                        role: true
+                    }
+                },
+                tenants: {
+                    include: {
+                        tenant: true
+                    }
+                }
             }
         });
         
-        await prisma.usersOnRoles.create({
-            data: {
-                userId: newUser.id,
-                roleId: adminRole.id,
-                assignedBy: 'system-setup'
-            }
-        });
+        if (!userWithRelations) {
+             throw new Error('Não foi possível buscar o usuário com relações para criar a sessão.');
+        }
 
-        console.log(`[Setup Action] Usuário admin ${email} criado com sucesso e vinculado ao perfil.`);
-        return { success: true, message: 'Usuário administrador criado com sucesso!' };
+        const userProfile = formatUserForSession(userWithRelations);
+        
+        if (!userProfile) {
+            throw new Error('Falha ao formatar o perfil do usuário para a sessão.');
+        }
+        
+        const landlordTenantId = '1';
+        await createSession(userProfile, landlordTenantId);
+        console.log(`[Setup Action] Sessão criada para o usuário admin no tenant ${landlordTenantId}.`);
+
+        return { success: true, message: 'Usuário administrador configurado e logado com sucesso!' };
 
     } catch (error: any) {
         console.error('[Setup Action] Erro ao criar usuário admin:', error);
         return { success: false, message: `Falha ao criar administrador: ${error.message}` };
     }
+}
+
+
+/**
+ * Sets a cookie to mark the setup process as complete.
+ * This should be the single source of truth for the SetupRedirect component.
+ * @returns {Promise<{success: boolean}>}
+ */
+export async function markSetupAsComplete(): Promise<{ success: boolean }> {
+  console.log('[Setup Action] Definindo o cookie de conclusão do setup.');
+  cookies().set('bidexpert_setup_complete', 'true', {
+    path: '/',
+    httpOnly: true,
+    maxAge: 60 * 60 * 24 * 365, // 1 year
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  });
+  return { success: true };
 }

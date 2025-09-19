@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -61,7 +60,7 @@ export default function MegaMenuAuctioneers({ auctioneers, onLinkClick }: MegaMe
 
   return (
     <div className="p-2">
-      <ul className="grid w-[300px] gap-1 p-2 md:w-[350px] lg:w-[450px] md:grid-cols-1">
+      <ul className="grid w-[300px] gap-1 p-2 md:w-[350px] lg:w-[400px] md:grid-cols-1">
         {visibleAuctioneers.map((auctioneer) => (
           <ListItem
             key={auctioneer.id}
@@ -77,10 +76,10 @@ export default function MegaMenuAuctioneers({ auctioneers, onLinkClick }: MegaMe
                   href="/auctioneers"
                   onClick={onLinkClick}
                   className={cn(
-                    'flex select-none items-center justify-center space-x-2 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground font-semibold text-primary hover:text-primary/90 text-sm'
+                    'flex select-none items-center justify-center rounded-md p-3 text-sm font-semibold text-primary hover:bg-accent hover:text-primary/90 leading-none no-underline outline-none transition-colors focus:bg-accent focus:text-primary/90'
                   )}
                 >
-                  <Landmark className="h-4 w-4"/> 
+                  <Landmark className="h-4 w-4 mr-2"/> 
                   <span>Ver Todos os Leiloeiros</span>
                   <ChevronRight className="h-4 w-4" />
                 </Link>

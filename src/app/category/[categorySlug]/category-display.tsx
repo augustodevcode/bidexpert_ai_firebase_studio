@@ -226,7 +226,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
       <div className="text-center py-12">
         <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Categoria Não Encontrada</h1>
-        <p className="text-muted-foreground">A categoria "{categorySlug}" que você está procurando não existe.</p>
+        <p className="text-muted-foreground">A categoria &quot;{categorySlug}&quot; que você está procurando não existe.</p>
         <Button asChild className="mt-4">
           <Link href="/">Voltar para Início</Link>
         </Button>
@@ -290,7 +290,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
-            emptyStateMessage={`Nenhum lote encontrado em "${currentCategory.name}" com os filtros aplicados.`}
+            emptyStateMessage={`Nenhum lote encontrado em &quot;${currentCategory.name}&quot; com os filtros aplicados.`}
           />
         </main>
       </div>

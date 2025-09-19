@@ -13,7 +13,9 @@ import {
     Loader2,
     TrendingUp,
     CircleDollarSign,
-    Package
+    Package,
+    AlertCircle,
+    Tag
 } from 'lucide-react';
 import { 
     PieChart,
@@ -88,7 +90,7 @@ export default function ReportsPage() {
 
     if (isLoading || authLoading) {
         return (
-            <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+            <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]" data-ai-id="my-reports-loading-spinner">
                 <Loader2 className="h-10 w-10 animate-spin text-primary" />
                 <p className="ml-3 text-muted-foreground">Gerando seus relatórios...</p>
             </div>
@@ -97,7 +99,7 @@ export default function ReportsPage() {
     
     if (error) {
          return (
-             <div className="text-center py-12">
+             <div className="text-center py-12" data-ai-id="my-reports-error-state">
                 <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
                 <h3 className="text-xl font-semibold text-destructive">{error}</h3>
              </div>
@@ -105,7 +107,7 @@ export default function ReportsPage() {
     }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="my-reports-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -118,7 +120,7 @@ export default function ReportsPage() {
         </CardHeader>
       </Card>
 
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-4" data-ai-id="my-reports-stats-grid">
         <StatCard 
             title="Total Gasto"
             value={reportData.totalAmountSpent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -142,7 +144,7 @@ export default function ReportsPage() {
         />
       </div>
 
-       <Card className="shadow-md">
+       <Card className="shadow-md" data-ai-id="my-reports-category-spending-chart">
           <CardHeader>
             <CardTitle className="flex items-center"><Tag className="mr-2 h-5 w-5 text-primary"/> Gastos por Categoria</CardTitle>
             <CardDescription>Distribuição dos seus gastos totais por categoria de lote.</CardDescription>

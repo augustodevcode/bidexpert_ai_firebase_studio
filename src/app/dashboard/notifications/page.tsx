@@ -65,7 +65,7 @@ export default function NotificationsPage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+      <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]" data-ai-id="my-notifications-loading-spinner">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="ml-3 text-muted-foreground">Carregando suas notificações...</p>
       </div>
@@ -73,7 +73,7 @@ export default function NotificationsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="my-notifications-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -86,7 +86,7 @@ export default function NotificationsPage() {
         </CardHeader>
         <CardContent>
           {notifications.length === 0 ? (
-            <div className="text-center py-12 bg-secondary/30 rounded-lg">
+            <div className="text-center py-12 bg-secondary/30 rounded-lg" data-ai-id="my-notifications-empty-state">
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-muted-foreground">Nenhuma Notificação</h3>
               <p className="text-sm text-muted-foreground mt-2">
@@ -94,7 +94,7 @@ export default function NotificationsPage() {
               </p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-3" data-ai-id="my-notifications-list">
               {notifications.map(notification => (
                 <div
                   key={notification.id}

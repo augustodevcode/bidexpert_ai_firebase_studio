@@ -74,7 +74,7 @@ export default function AdminJudicialDistrictsPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-judicial-districts-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

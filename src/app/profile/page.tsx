@@ -11,6 +11,7 @@ import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, Shi
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -142,7 +143,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <InfoItem icon={FileText} label="CPF" value={cpf} />
-                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? format(new Date(dateOfBirth as string), 'dd/MM/yyyy', { locale: ptBR }) : null} />
+                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? formatInSaoPaulo(dateOfBirth as string, 'dd/MM/yyyy') : null} />
                 </>
               )}
             </div>

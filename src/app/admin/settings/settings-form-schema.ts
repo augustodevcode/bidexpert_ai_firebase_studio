@@ -1,4 +1,3 @@
-
 // src/app/admin/settings/settings-form-schema.ts
 import * as z from 'zod';
 import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
@@ -46,14 +45,14 @@ export const platformSettingsFormSchema = z.object({
   }).optional().default('local'),
   firebaseStorageBucket: z.string().max(200, {message: "Nome do bucket muito longo."}).optional().nullable(),
   activeThemeName: z.string().optional().nullable(),
-  themes: z.array(themeSchema).optional().default([]), 
-  platformPublicIdMasks: z.object({ 
+  themesJson: z.array(themeSchema).optional().default([]), 
+  platformPublicIdMasksJson: z.object({ 
     auctions: z.string().optional(),
     lots: z.string().optional(),
     auctioneers: z.string().optional(),
     sellers: z.string().optional(),
   }).optional().nullable(),
-  mapSettings: z.object({
+  mapSettingsJson: z.object({
     defaultProvider: z.enum(['google', 'openstreetmap', 'staticImage'], {
         errorMap: () => ({ message: "Selecione um provedor de mapa válido."})
     }).optional().default('openstreetmap'),
@@ -71,12 +70,12 @@ export const platformSettingsFormSchema = z.object({
   showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
   defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional(),
-  variableIncrementTable: z.array(variableIncrementRuleSchema).optional().default([]),
-  biddingSettings: biddingSettingsSchema,
-  paymentGatewaySettings: paymentGatewaySettingsSchema, // Adicionado
+  variableIncrementTableJson: z.array(variableIncrementRuleSchema).optional().default([]),
+  biddingSettingsJson: biddingSettingsSchema,
+  paymentGatewaySettingsJson: paymentGatewaySettingsSchema, // Adicionado
   defaultListItemsPerPage: z.coerce.number().min(5, "Mínimo de 5 itens por página").max(100, "Máximo de 100 itens por página").optional().default(10),
 }).refine(data => {
-  const table = data.variableIncrementTable;
+  const table = data.variableIncrementTableJson;
   if (!table || table.length === 0) return true;
 
   for (let i = 0; i < table.length; i++) {
@@ -101,7 +100,7 @@ export const platformSettingsFormSchema = z.object({
   return true;
 }, {
   message: "As faixas de incremento são inválidas. Verifique se não há sobreposições, se os valores 'De' e 'Até' são sequenciais e se a última faixa termina em 'em diante'.",
-  path: ['variableIncrementTable'], 
+  path: ['variableIncrementTableJson'], 
 });
 
 export type PlatformSettingsFormValues = z.infer<typeof platformSettingsFormSchema>;

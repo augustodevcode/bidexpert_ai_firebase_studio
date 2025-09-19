@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
@@ -34,7 +34,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu"; // Alteração aqui
+} from "@/components/ui/navigation-menu";
 import MegaMenuCategories from './mega-menu-categories';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -53,7 +53,7 @@ export const HistoryListItem = forwardRef<
 >(({ className, item, onClick, ...props }, ref) => {
   return (
     <Link
-      href={`/auctions/${item.auctionId}/lots/${item.id}`}
+      href={`/auctions/${item.auctionId}/lots/${item.publicId || item.id}`}
       ref={ref}
       className={cn(
         "flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-accent transition-colors text-xs leading-snug text-muted-foreground",
@@ -91,6 +91,9 @@ export default function Header() {
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
   const { userProfileWithPermissions } = useAuth();
+  const currentParamsType = searchParamsHook.get('type');
+  const currentCategoryParam = searchParamsHook.get('category');
+
 
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
@@ -98,7 +101,7 @@ export default function Header() {
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLinkOrMobileMenuCloseClick = useCallback(() => {
+  const onLinkClick = useCallback(() => {
     if (isMobileMenuOpen) {
       setIsMobileMenuOpen(false);
     }
@@ -106,9 +109,9 @@ export default function Header() {
 
   const updateCounts = useCallback(async () => {
     setFavoriteCount(getFavoriteLotIdsFromStorage().length);
-    if (userProfileWithPermissions?.uid) {
+    if (userProfileWithPermissions?.id) {
         try {
-            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.uid);
+            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
             setUnreadNotificationsCount(count);
         } catch (error) {
             console.error("Failed to fetch notification count:", error);
@@ -117,7 +120,7 @@ export default function Header() {
     } else {
         setUnreadNotificationsCount(0);
     }
-  }, [userProfileWithPermissions?.uid]);
+  }, [userProfileWithPermissions?.id]);
 
   useEffect(() => {
     updateCounts();
@@ -145,11 +148,11 @@ export default function Header() {
         const [settings, categories, allFetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
           getPlatformSettings(),
           getLotCategories(),
-          getLots(), // Fetch all lots once for search
-          getAuctioneers(),
-          getSellers()
+          getLots(undefined, true), // Public call
+          getAuctioneers(true), // Public call
+          getSellers(true), // Public call
         ]);
-        setPlatformSettings(settings);
+        setPlatformSettings(settings as PlatformSettings);
         setSearchCategories(categories);
         setAllLots(allFetchedLots);
         setAuctioneers(fetchedAuctioneers);
@@ -177,7 +180,8 @@ export default function Header() {
                 title: lot.title,
                 imageUrl: lot.imageUrl,
                 auctionId: lot.auctionId,
-                dataAiHint: lot.dataAiHint
+                dataAiHint: lot.dataAiHint,
+                publicId: lot.publicId,
               } : null;
           }).filter(item => item !== null) as RecentlyViewedLotInfo[];
           setRecentlyViewedItems(items);
@@ -345,7 +349,7 @@ export default function Header() {
 
 
   return (
-    <header className="sticky top-0 z-50 w-full shadow-md">
+    <header className="sticky top-0 z-50 w-full shadow-md print:hidden">
       {/* Promotion Bar */}
       <div className="bg-primary/80 text-primary-foreground text-xs sm:text-sm">
         <div className="container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between">
@@ -405,7 +409,7 @@ export default function Header() {
                         {isLoading ? <p>Carregando...</p> : 
                         <MainNav
                             items={allNavItemsForMobile}
-                            onLinkClick={handleLinkOrMobileMenuCloseClick}
+                            onLinkClick={onLinkClick}
                             isMobile={true}
                             searchCategories={searchCategories}
                             auctioneers={auctioneers}
@@ -536,7 +540,7 @@ export default function Header() {
               </TooltipTrigger>
               <TooltipContent><p>Busca por Mapa</p></TooltipContent>
             </Tooltip>
-            <Tooltip>
+             <Tooltip>
                 <TooltipTrigger asChild>
                      <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar em todo o site" asChild>
                         <Link href="/search">
@@ -581,7 +585,7 @@ export default function Header() {
                         <NavigationMenuTrigger
                             className={cn(
                                 navigationMenuTriggerStyle(),
-                                (pathname?.startsWith('/category') || (pathname === '/search' && (searchParamsHook.get('type') === 'lots' || searchParamsHook.get('tab') === 'categories'))) && 'bg-accent text-primary font-semibold',
+                                (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam))) && 'bg-accent text-primary font-semibold',
                                 'font-semibold'
                             )}
                         >
@@ -589,7 +593,7 @@ export default function Header() {
                         {firstNavItem.label}
                     </NavigationMenuTrigger>
                     <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
-                        {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={handleLinkOrMobileMenuCloseClick} />}
+                        {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
                     </NavigationMenuContent>
                     </NavigationMenuItem>
                     </NavigationMenuList>
@@ -600,7 +604,7 @@ export default function Header() {
                 <div className="flex-grow flex justify-start pl-4">
                     <MainNav
                         items={centralNavItems}
-                        onLinkClick={handleLinkOrMobileMenuCloseClick}
+                        onLinkClick={onLinkClick}
                         className="hidden md:flex"
                         searchCategories={searchCategories}
                         auctioneers={auctioneers}

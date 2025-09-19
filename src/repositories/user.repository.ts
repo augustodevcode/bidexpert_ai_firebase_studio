@@ -1,18 +1,24 @@
 
 // src/repositories/user.repository.ts
-import { prisma } from '@/lib/prisma';
+import { prisma as basePrisma } from '@/lib/prisma'; // Usa a instância base para modelos globais
 import type { Prisma, User } from '@prisma/client';
 import type { EditableUserProfileData } from '@/types';
 
 export class UserRepository {
+
   async findAll() {
-    return prisma.user.findMany({
+    return basePrisma.user.findMany({
       include: {
         roles: {
           include: {
             role: true,
           },
         },
+        tenants: {
+            include: {
+                tenant: true
+            }
+        }
       },
       orderBy: { fullName: 'asc' },
     });
@@ -20,66 +26,96 @@ export class UserRepository {
 
   async findById(id: string) {
     if (!id) return null;
-    return prisma.user.findUnique({
-      where: { id },
+    return basePrisma.user.findUnique({
+      where: {
+        id,
+      },
       include: {
         roles: {
           include: {
             role: true,
           },
         },
+        tenants: {
+            include: {
+                tenant: true
+            }
+        }
       },
     });
   }
 
   async findByEmail(email: string) {
     if (!email) return null;
-    return prisma.user.findUnique({
-      where: { email },
+    return basePrisma.user.findUnique({
+      where: {
+        email,
+      },
+       include: {
+        roles: {
+          include: {
+            role: true,
+          },
+        },
+        tenants: {
+            include: {
+                tenant: true
+            }
+        }
+      },
     });
   }
 
-  async create(userData: Prisma.UserCreateInput, roleIds: string[]): Promise<User> {
-    const dataWithRoles: Prisma.UserCreateInput = {
+  async create(userData: Prisma.UserCreateInput, roleIds: string[], tenantId: string): Promise<User> {
+    const dataWithRolesAndTenant: Prisma.UserCreateInput = {
       ...userData,
       roles: {
         create: roleIds.map(roleId => ({
           role: { connect: { id: roleId } },
           assignedBy: 'system-signup'
         }))
-      }
+      },
+      tenants: { // Associação do usuário ao tenant atual
+        create: {
+          tenant: { connect: { id: tenantId } },
+          assignedBy: 'system-signup',
+        },
+      },
     };
-    return prisma.user.create({ data: dataWithRoles });
+    return basePrisma.user.create({ data: dataWithRolesAndTenant });
   }
 
   async update(userId: string, data: Partial<EditableUserProfileData>): Promise<User> {
-    return prisma.user.update({
-      where: { id: userId },
+    return basePrisma.user.update({
+      where: {
+        id: userId,
+      },
       data: data as Prisma.UserUpdateInput,
     });
   }
 
-  async updateUserRoles(userId: string, roleIds: string[]) {
+  async updateUserRoles(userId: string, tenantIds: string[], roleIds: string[]) {
     if (!userId) return;
-    
-    // First, clear existing roles for the user
-    await prisma.usersOnRoles.deleteMany({ where: { userId }});
 
-    // Then, add the new roles
+    // A lógica de roles é global, não por tenant, então usamos basePrisma
+    await basePrisma.usersOnRoles.deleteMany({ where: { userId }});
+
     if (roleIds.length > 0) {
-      await prisma.usersOnRoles.createMany({
+      await basePrisma.usersOnRoles.createMany({
         data: roleIds.map(roleId => ({
           userId,
           roleId,
-          assignedBy: 'admin-panel', 
+          assignedBy: 'admin-panel',
         })),
       });
     }
   }
 
   async delete(id: string): Promise<void> {
-    // The relation table (UsersOnRoles) should cascade delete,
-    // as defined in the Prisma schema.
-    await prisma.user.delete({ where: { id } });
+    await basePrisma.user.delete({
+      where: {
+        id,
+      },
+    });
   }
 }

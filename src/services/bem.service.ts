@@ -1,4 +1,3 @@
-
 // src/services/bem.service.ts
 import { BemRepository } from '@/repositories/bem.repository';
 import type { Bem, BemFormData } from '@/types';
@@ -28,7 +27,7 @@ export class BemService {
     }));
   }
 
-  async getBens(filter?: { judicialProcessId?: string; sellerId?: string }): Promise<Bem[]> {
+  async getBens(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string }): Promise<Bem[]> {
     const bens = await this.repository.findAll(filter);
     return this.mapBensWithDetails(bens);
   }
@@ -44,7 +43,7 @@ export class BemService {
     return this.mapBensWithDetails(bens);
   }
 
-  async createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
+  async createBem(tenantId: string, data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     try {
       // Destructure to separate relation IDs from the rest of the data
       const { categoryId, subcategoryId, judicialProcessId, sellerId, ...bemData } = data;
@@ -52,6 +51,7 @@ export class BemService {
       const dataToCreate: Prisma.BemCreateInput = {
         ...bemData,
         publicId: `BEM-${uuidv4()}`,
+        tenant: { connect: { id: tenantId } },
       };
       
       if (categoryId) dataToCreate.category = { connect: { id: categoryId } };

@@ -11,12 +11,12 @@ import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
-import { getPlatformSettings } from '../settings/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import AuctionCard from '@/components/auction-card';
-import AuctionListItem from '@/components/auction-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
@@ -35,7 +35,7 @@ export default function AdminAuctionsPage() {
         getPlatformSettings(),
       ]);
       setAllAuctions(fetchedAuctions);
-      setPlatformSettings(fetchedSettings);
+      setPlatformSettings(fetchedSettings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
@@ -53,10 +53,10 @@ export default function AdminAuctionsPage() {
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteAuction(id);
     if (result.success) {
-      toast({ title: 'Sucesso!', description: result.message });
+      toast({ title: "Sucesso!", description: result.message });
       setRefetchTrigger(prev => prev + 1);
     } else {
-      toast({ title: 'Erro ao Excluir', description: result.message, variant: 'destructive' });
+      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
     }
   }, [toast]);
 
@@ -93,8 +93,8 @@ export default function AdminAuctionsPage() {
     { id: 'status', title: 'Status', options: statusOptions },
   ], [statusOptions]);
   
-  const renderAuctionGridItem = (auction: Auction) => <AuctionCard auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
-  const renderAuctionListItem = (auction: Auction) => <AuctionListItem auction={auction} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const renderAuctionGridItem = (auction: Auction) => <UniversalCard item={auction} type="auction" platformSettings={platformSettings!} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const renderAuctionListItem = (auction: Auction) => <UniversalListItem item={auction} type="auction" platformSettings={platformSettings!} onUpdate={() => setRefetchTrigger(p => p+1)} />;
   const sortOptions = [
     { value: 'auctionDate_desc', label: 'Mais Recentes' },
     { value: 'endDate_asc', label: 'Encerramento Próximo' },
@@ -159,7 +159,7 @@ export default function AdminAuctionsPage() {
                   />
               )}
             </TabsContent>
-             <TabsContent value="table" className="mt-4" data-ai-id="admin-auctions-data-table">
+             <TabsContent value="table" className="mt-4">
                <DataTable
                 columns={columns}
                 data={allAuctions}
@@ -175,5 +175,8 @@ export default function AdminAuctionsPage() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+v>
   );
 }

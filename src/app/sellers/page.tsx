@@ -8,6 +8,7 @@ import type { SellerProfileInfo } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 const getSellerInitial = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'S';
@@ -18,7 +19,7 @@ export default async function SellersListPage() {
   let error: string | null = null;
 
   try {
-    sellers = await getSellers();
+    sellers = await getSellers(true); // Public call
   } catch (e) {
     console.error("Error fetching sellers:", e);
     error = "Falha ao buscar comitentes.";
@@ -78,7 +79,7 @@ export default async function SellersListPage() {
                     </div>
                     {seller.memberSince && (
                     <div className="text-xs">
-                        Membro desde: {format(new Date(seller.memberSince as any), 'MM/yyyy', { locale: ptBR })}
+                        Membro desde: {formatInSaoPaulo(seller.memberSince as any, 'MM/yyyy')}
                     </div>
                     )}
                 </CardContent>

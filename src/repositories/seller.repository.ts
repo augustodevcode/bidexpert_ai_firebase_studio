@@ -1,53 +1,57 @@
 // src/repositories/seller.repository.ts
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { SellerFormData, SellerProfileInfo, Lot } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class SellerRepository {
-  async findAll(): Promise<SellerProfileInfo[]> {
-    return prisma.seller.findMany({ orderBy: { name: 'asc' } });
+  private prisma;
+
+  constructor() {
+    this.prisma = getPrismaInstance();
   }
 
-  async findById(id: string): Promise<SellerProfileInfo | null> {
-    return prisma.seller.findUnique({ where: { id } });
+  async findAll(tenantId: string): Promise<SellerProfileInfo[]> {
+    return this.prisma.seller.findMany({ 
+        where: { tenantId }, 
+        orderBy: { name: 'asc' } 
+    });
+  }
+
+  async findById(tenantId: string, id: string): Promise<SellerProfileInfo | null> {
+    return this.prisma.seller.findFirst({ where: { id, tenantId } });
   }
   
-  async findByName(name: string): Promise<SellerProfileInfo | null> {
-    try {
-      return await prisma.seller.findUnique({ where: { name } });
-    } catch (error) {
-      // Handles case where findUnique might throw if not found, though it typically returns null.
-      // This makes the method more robust.
-      return null;
-    }
+  async findByName(tenantId: string, name: string): Promise<SellerProfileInfo | null> {
+    return this.prisma.seller.findFirst({ where: { name, tenantId } });
   }
 
-  async findBySlug(slugOrId: string): Promise<SellerProfileInfo | null> {
-      return prisma.seller.findFirst({
+  async findBySlug(tenantId: string, slugOrId: string): Promise<SellerProfileInfo | null> {
+      return this.prisma.seller.findFirst({
         where: {
+            tenantId: tenantId,
             OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
         }
     });
   }
 
-  async findLotsBySellerId(sellerId: string): Promise<Lot[]> {
+  async findLotsBySellerId(tenantId: string, sellerId: string): Promise<Lot[]> {
       // @ts-ignore
-      return prisma.lot.findMany({
-        where: { sellerId: sellerId },
+      return this.prisma.lot.findMany({
+        where: { sellerId, tenantId },
         include: { auction: true }
       });
   }
 
   async create(data: Prisma.SellerCreateInput): Promise<SellerProfileInfo> {
-    return prisma.seller.create({ data });
+    return this.prisma.seller.create({ data });
   }
 
-  async update(id: string, data: Partial<SellerFormData>): Promise<SellerProfileInfo> {
+  async update(tenantId: string, id: string, data: Partial<SellerFormData>): Promise<SellerProfileInfo> {
     // @ts-ignore
-    return prisma.seller.update({ where: { id }, data });
+    return this.prisma.seller.update({ where: { id, tenantId }, data });
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.seller.delete({ where: { id } });
+  async delete(tenantId: string, id: string): Promise<void> {
+    await this.prisma.seller.delete({ where: { id, tenantId } });
   }
 }

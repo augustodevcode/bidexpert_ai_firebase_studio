@@ -1,27 +1,61 @@
 // src/repositories/auctioneer.repository.ts
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class AuctioneerRepository {
-  async findAll(): Promise<AuctioneerProfileInfo[]> {
-    return prisma.auctioneer.findMany({ orderBy: { name: 'asc' } });
+  private prisma;
+
+  constructor() {
+    this.prisma = getPrismaInstance();
   }
 
-  async findById(id: string): Promise<AuctioneerProfileInfo | null> {
-    return prisma.auctioneer.findFirst({ where: { OR: [{id}, {publicId: id}]} });
+  async findAll(tenantId: string): Promise<AuctioneerProfileInfo[]> {
+    return this.prisma.auctioneer.findMany({ 
+        where: { tenantId },
+        orderBy: { name: 'asc' } 
+    });
+  }
+
+  async findById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {
+    return this.prisma.auctioneer.findFirst({ where: { id, tenantId } });
+  }
+
+  async findBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+      return this.prisma.auctioneer.findFirst({
+        where: {
+            tenantId,
+            OR: [{ slug: slugOrId }, { id: slugOrId }, { publicId: slugOrId }]
+        }
+    });
+  }
+
+  async findAuctionsBySlug(tenantId: string, auctioneerSlug: string): Promise<any[]> {
+    return this.prisma.auction.findMany({
+        where: {
+            tenantId,
+            auctioneer: {
+                OR: [{ slug: auctioneerSlug }, { id: auctioneerSlug }, { publicId: auctioneerSlug }]
+            }
+        },
+        include: { 
+            _count: { select: { lots: true } },
+            seller: true 
+        },
+        orderBy: { auctionDate: 'desc' }
+    });
   }
 
   async create(data: Prisma.AuctioneerCreateInput): Promise<AuctioneerProfileInfo> {
-    return prisma.auctioneer.create({ data });
+    return this.prisma.auctioneer.create({ data });
   }
 
-  async update(id: string, data: Partial<AuctioneerFormData>): Promise<AuctioneerProfileInfo> {
+  async update(tenantId: string, id: string, data: Partial<AuctioneerFormData>): Promise<AuctioneerProfileInfo> {
     // @ts-ignore
-    return prisma.auctioneer.update({ where: { id }, data });
+    return this.prisma.auctioneer.update({ where: { id, tenantId }, data });
   }
 
-  async delete(id: string): Promise<void> {
-    await prisma.auctioneer.delete({ where: { id } });
+  async delete(tenantId: string, id: string): Promise<void> {
+    await this.prisma.auctioneer.delete({ where: { id, tenantId } });
   }
 }

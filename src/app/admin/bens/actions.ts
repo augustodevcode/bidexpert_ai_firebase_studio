@@ -1,15 +1,24 @@
-
 // src/app/admin/bens/actions.ts
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { Bem, BemFormData } from '@/types';
 import { BemService } from '@/services/bem.service';
+import { getSession } from '@/app/auth/actions';
 
 const bemService = new BemService();
 
-export async function getBens(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
-    return bemService.getBens(filter);
+async function getTenantId() {
+    const session = await getSession();
+    if (!session?.tenantId) {
+        throw new Error("Tenant ID não encontrado.");
+    }
+    return session.tenantId;
+}
+
+export async function getBens(filter?: { judicialProcessId?: string, sellerId?: string, tenantId?: string }): Promise<Bem[]> {
+    const tenantId = await getTenantId();
+    return bemService.getBens({ ...filter, tenantId });
 }
 
 export async function getBem(id: string): Promise<Bem | null> {
@@ -17,7 +26,8 @@ export async function getBem(id: string): Promise<Bem | null> {
 }
 
 export async function createBem(data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
-    const result = await bemService.createBem(data);
+    const tenantId = await getTenantId();
+    const result = await bemService.createBem(tenantId, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/bens');
     }

@@ -30,8 +30,8 @@ const faqItems = [
 
 export default function FAQPage() {
   return (
-    <div className="max-w-3xl mx-auto">
-      <section className="text-center py-12">
+    <div className="max-w-3xl mx-auto" data-ai-id="faq-page-container">
+      <section className="text-center py-12" data-ai-id="faq-page-hero-section">
          <HelpCircle className="mx-auto h-12 w-12 text-primary mb-4" />
         <h1 className="text-4xl font-bold mb-4 font-headline">Frequently Asked Questions</h1>
         <p className="text-lg text-muted-foreground">
@@ -39,7 +39,7 @@ export default function FAQPage() {
         </p>
       </section>
 
-      <Accordion type="single" collapsible className="w-full space-y-4">
+      <Accordion type="single" collapsible className="w-full space-y-4" data-ai-id="faq-page-accordion">
         {faqItems.map((item, index) => (
           <AccordionItem value={`item-${index}`} key={index} className="bg-secondary/30 rounded-lg px-4 shadow-md">
             <AccordionTrigger className="text-left font-semibold hover:no-underline">

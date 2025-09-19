@@ -8,12 +8,19 @@ import { Card, CardContent } from '@/components/ui/card';
 import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
-import { DataTableFacetedFilter } from './ui/data-table-faceted-filter'; // Importado
-import { useReactTable, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, getFacetedRowModel, getFacetedUniqueValues } from "@tanstack/react-table"; // Importar hooks da table
+import { DataTableFacetedFilter } from './ui/data-table-faceted-filter';
+import { 
+  useReactTable, 
+  getCoreRowModel, 
+  getFilteredRowModel,
+  getFacetedRowModel,
+  getFacetedUniqueValues
+} from "@tanstack/react-table";
+import UniversalListItem from './universal-list-item';
+import UniversalCard from './universal-card';
 
 interface SearchResultsFrameProps<TItem> {
   items: TItem[]; 
-  totalItemsCount: number; 
   renderGridItem: (item: TItem, index: number) => React.ReactNode;
   renderListItem: (item: TItem, index: number) => React.ReactNode;
   sortOptions: { value: string; label: string }[];
@@ -32,14 +39,26 @@ interface SearchResultsFrameProps<TItem> {
         icon?: React.ComponentType<{ className?: string }>;
     }[];
   }[];
+  // Pagination Props
+  totalItemsCount: number;
+  currentPage: number;
+  itemsPerPage: number;
+  onPageChange: (page: number) => void;
+  onItemsPerPageChange: (size: number) => void;
 }
 
-const PaginationControls = <TItem,>({
+// Pagination is now a separate component
+const PaginationControls = ({
     currentPage,
     totalItemsCount,
     itemsPerPage,
     onPageChange,
-}: Pick<SearchResultsFrameProps<TItem>, 'currentPage' | 'totalItemsCount' | 'itemsPerPage' | 'onPageChange'>) => {
+}: {
+    currentPage: number;
+    totalItemsCount: number;
+    itemsPerPage: number;
+    onPageChange: (page: number) => void;
+}) => {
 
     const totalPages = itemsPerPage > 0 ? Math.ceil(totalItemsCount / itemsPerPage) : 1;
     if (totalPages <= 1) return null;
@@ -83,8 +102,9 @@ const PaginationControls = <TItem,>({
 };
 
 
-export default function SearchResultsFrame<TItem extends { id: string | number }>({
+export default function SearchResultsFrame<TItem extends { id: string | number; [key: string]: any }>({
   items,
+  totalItemsCount,
   renderGridItem,
   renderListItem,
   sortOptions,
@@ -95,17 +115,19 @@ export default function SearchResultsFrame<TItem extends { id: string | number }
   emptyStateMessage = "Nenhum item encontrado com os filtros aplicados.",
   searchTypeLabel,
   facetedFilterColumns = [],
-}: Omit<SearchResultsFrameProps<TItem>, 'totalItemsCount' | 'currentPage' | 'itemsPerPage' | 'onPageChange' | 'onItemsPerPageChange'> & {items: TItem[]}) {
+  currentPage,
+  itemsPerPage,
+  onPageChange,
+  onItemsPerPageChange,
+}: SearchResultsFrameProps<TItem>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
   const [columnFilters, setColumnFilters] = React.useState<any[]>([]);
   
   const table = useReactTable({
-    data: items,
-    columns: [], // As colunas são para a tabela, aqui só precisamos dos dados para filtrar
-    state: {
-      columnFilters,
-    },
+    data: items, // Note: pagination is now handled outside of tanstack-table for this component
+    columns: [],
+    state: { columnFilters },
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
@@ -118,15 +140,13 @@ export default function SearchResultsFrame<TItem extends { id: string | number }
     onSortChange(value);
   };
   
-  const filteredItems = table.getRowModel().rows.map(row => row.original);
-  
   const isFiltered = table.getState().columnFilters.length > 0;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
         <p className="text-sm text-muted-foreground">
-          {filteredItems.length} {searchTypeLabel} encontrado(s)
+          {totalItemsCount} {searchTypeLabel} encontrado(s)
         </p>
         <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
            {facetedFilterColumns.map(col => table.getColumn(col.id) ? (
@@ -170,14 +190,20 @@ export default function SearchResultsFrame<TItem extends { id: string | number }
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      ) : filteredItems.length > 0 ? (
-        <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
-          {filteredItems.map((item, index) => (
-            <React.Fragment key={item.id || index}>
-              {viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)}
-            </React.Fragment>
-          ))}
-        </div>
+      ) : items.length > 0 ? (
+        <>
+          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
+            {items.map((item, index) => (
+              viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
+            ))}
+          </div>
+          <PaginationControls 
+            currentPage={currentPage}
+            totalItemsCount={totalItemsCount}
+            itemsPerPage={itemsPerPage}
+            onPageChange={onPageChange}
+          />
+        </>
       ) : (
         <Card>
           <CardContent className="text-center py-12">
@@ -187,8 +213,6 @@ export default function SearchResultsFrame<TItem extends { id: string | number }
           </CardContent>
         </Card>
       )}
-
-      {/* Não vamos usar a paginação interna do SearchResultsFrame por enquanto */}
     </div>
   );
 }

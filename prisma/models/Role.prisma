@@ -1,0 +1,10 @@
+model Role {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  nameNormalized String        @unique
+  description   String?
+  permissions   Json?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  users         UsersOnRoles[]
+}

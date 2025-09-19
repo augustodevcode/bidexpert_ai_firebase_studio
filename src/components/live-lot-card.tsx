@@ -63,7 +63,7 @@ export default function LiveLotCard({ lot, isHighlighted = false }: LiveLotCardP
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
 
   return (
-    <Card className={`flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group ${isHighlighted ? 'border-2 border-primary ring-2 ring-primary/50' : ''}`}>
+    <Card data-ai-id="live-lot-card-container" className={`flex flex-col overflow-hidden h-full shadow-md hover:shadow-xl transition-shadow duration-300 rounded-lg group ${isHighlighted ? 'border-2 border-primary ring-2 ring-primary/50' : ''}`}>
       <div className="relative">
         <Link href={`/auctions/${lot.auctionId}/live?lotId=${lot.publicId || lot.id}`} className="block">
           <div className={`aspect-[16/10] relative ${isHighlighted ? 'bg-primary/10' : 'bg-muted'}`}>

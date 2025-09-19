@@ -153,12 +153,12 @@ export default function DirectSaleForm({
               <FormField control={form.control} name="minimumOfferPrice" render={({ field }) => (<FormItem><FormLabel>Proposta Mínima (R$ - Opcional)</FormLabel><FormControl><div className="relative"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input type="number" placeholder="900.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>Valor mínimo sugerido para propostas.</FormDescription><FormMessage /></FormItem>)} />
             )}
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada" createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o vendedor" searchPlaceholder="Buscar vendedor..." emptyStateMessage="Nenhum vendedor encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormMessage /></FormItem>)} />
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField control={form.control} name="locationCity" render={({ field }) => (<FormItem><FormLabel>Cidade (Opcional)</FormLabel><FormControl><Input placeholder="São Paulo" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="locationState" render={({ field }) => (<FormItem><FormLabel>Estado (UF) (Opcional)</FormLabel><FormControl><Input placeholder="SP" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
             </div>
@@ -172,7 +172,7 @@ export default function DirectSaleForm({
                 <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
                   {imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}
                 </div>
-                <div className="flex-grow space-y-2">
+                <div className="space-y-2 flex-grow">
                   <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
                     {imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}
                   </Button>

@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Auction } from '@/types';
+import type { Auction, Lot, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 import {
   ChevronRight, FileText, Heart, Eye
 } from 'lucide-react';
@@ -16,6 +16,7 @@ import { ptBR } from 'date-fns/locale';
 
 interface AuctionLotsClientProps {
     auction: Auction;
+    platformSettings: PlatformSettings;
 }
 
 const estados = [
@@ -24,7 +25,7 @@ const estados = [
     'Santa Catarina', 'São Paulo', 'Tocantins'
 ];
 
-export default function AuctionLotsClient({ auction }: AuctionLotsClientProps) {
+export default function AuctionLotsClient({ auction, platformSettings }: AuctionLotsClientProps) {
     const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
     return (
@@ -44,13 +45,13 @@ export default function AuctionLotsClient({ auction }: AuctionLotsClientProps) {
                                     Data: {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Lotes: {auction.totalLots} | Status: <span className="font-semibold text-primary">{auction.status}</span>
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                    Leiloeiro: {auction.auctioneer} | Categoria: {auction.category}
+                                    Leiloeiro: {auction.auctioneer?.name} | Categoria: {auction.category?.name}
                                 </p>
                             </div>
                         </div>
                         <div className="flex-shrink-0 flex flex-col items-center md:items-end gap-3">
-                            {auction.auctioneerLogoUrl && (
-                                <Image src={auction.auctioneerLogoUrl} alt="Logo Leiloeiro" width={120} height={40} className="object-contain" data-ai-hint="logo leiloeiro" />
+                            {auction.auctioneer?.logoUrl && (
+                                <Image src={auction.auctioneer.logoUrl} alt="Logo Leiloeiro" width={120} height={40} className="object-contain" data-ai-hint="logo leiloeiro" />
                             )}
                             <Button variant="default" size="sm">
                                 <FileText className="h-4 w-4 mr-2" /> Ver Documentos
@@ -85,7 +86,7 @@ export default function AuctionLotsClient({ auction }: AuctionLotsClientProps) {
             {/* Contagem de Lotes e Controles de Visualização */}
             <div>
                 <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-xl font-semibold">{auction.lots.length} lote(s) encontrado(s)</h2>
+                    <h2 className="text-xl font-semibold">{auction.lots?.length || 0} lote(s) encontrado(s)</h2>
                     <div className="flex items-center gap-2">
                         <span>Exibir:</span>
                         <Button
@@ -105,17 +106,17 @@ export default function AuctionLotsClient({ auction }: AuctionLotsClientProps) {
                     </div>
                 </div>
 
-                {auction.lots.length > 0 ? (
+                {auction.lots && auction.lots.length > 0 ? (
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {auction.lots.map((lot) => (
-                                <LotCard key={lot.id} lot={lot} />
+                                <UniversalCard key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
                             ))}
                         </div>
                     ) : (
                         <div className="space-y-4">
                             {auction.lots.map((lot) => (
-                                <LotListItem key={lot.id} lot={lot} />
+                                <UniversalListItem key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
                             ))}
                         </div>
                     )

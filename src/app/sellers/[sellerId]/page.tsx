@@ -1,3 +1,4 @@
+
 // src/app/sellers/[sellerId]/page.tsx
 'use client';
 
@@ -8,8 +9,6 @@ import { useParams } from 'next/navigation';
 import { getLotsBySellerSlug } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -22,6 +21,8 @@ import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -139,14 +140,14 @@ export default function SellerDetailsPage() {
       setLotItemsPerPage(newSize);
       setCurrentLotPage(1);
   }
-
-  const renderLotGridItemForSellerPage = (lot: Lot) => <LotCard key={lot.id} lot={lot} platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
-  const renderLotListItemForSellerPage = (lot: Lot) => <LotListItem key={lot.id} lot={lot} platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
+  
+  const renderLotGridItemForSellerPage = (lot: Lot) => <UniversalCard item={lot} type="lot" platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotListItemForSellerPage = (lot: Lot) => <UniversalListItem item={lot} type="lot" platformSettings={platformSettings!} auction={allAuctions.find(a => a.id === lot.auctionId)} />;
 
 
   if (isLoading || !platformSettings) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]">
+      <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-loading">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
         <p className="text-muted-foreground">Carregando informações do comitente...</p>
       </div>
@@ -155,7 +156,7 @@ export default function SellerDetailsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]">
+      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-error">
         <h2 className="text-xl font-semibold text-destructive">{error}</h2>
         <Button asChild className="mt-4">
           <Link href="/sellers">Voltar para Comitentes</Link>
@@ -166,7 +167,7 @@ export default function SellerDetailsPage() {
   
   if (!sellerProfile) {
     return (
-      <div className="text-center py-12 min-h-[calc(100vh-20rem)]">
+      <div className="text-center py-12 min-h-[calc(100vh-20rem)]" data-ai-id="seller-details-not-found">
         <h2 className="text-xl font-semibold text-muted-foreground">Comitente não encontrado.</h2>
         <Button asChild className="mt-4">
           <Link href="/sellers">Voltar para Comitentes</Link>
@@ -183,8 +184,8 @@ export default function SellerDetailsPage() {
   return (
     <>
       <TooltipProvider>
-        <div className="space-y-10 py-6">
-          <section className="border-b pb-10">
+        <div className="space-y-10 py-6" data-ai-id="seller-details-page-container">
+          <section className="border-b pb-10" data-ai-id="seller-details-profile-header">
             <div className="flex flex-col md:flex-row items-center gap-6">
               <Avatar className="h-28 w-28 md:h-32 md:w-32 border-4 border-primary/30 shadow-lg">
                 <AvatarImage src={validLogoUrl} alt={sellerProfile.name} data-ai-hint={sellerProfile.dataAiHintLogo || "logo comitente"} />
@@ -205,7 +206,7 @@ export default function SellerDetailsPage() {
           </section>
 
           {relatedLots.length > 0 && (
-            <section className="pt-6">
+            <section className="pt-6" data-ai-id="seller-details-related-lots-section">
               <h2 className="text-2xl font-bold mb-6 font-headline flex items-center">
                 <TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes de {sellerProfile.name}
               </h2>
@@ -229,7 +230,11 @@ export default function SellerDetailsPage() {
           )}
 
           {relatedLots.length === 0 && !isLoading && (
-            <Card className="shadow-sm mt-8"><CardContent className="text-center py-10"><p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p></CardContent></Card>
+            <Card className="shadow-sm mt-8" data-ai-id="seller-details-no-lots">
+              <CardContent className="text-center py-10">
+                <p className="text-muted-foreground">Nenhum lote ativo encontrado para este comitente no momento.</p>
+              </CardContent>
+            </Card>
           )}
         </div>
       </TooltipProvider>

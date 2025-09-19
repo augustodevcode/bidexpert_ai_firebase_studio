@@ -197,7 +197,7 @@ export default function JudicialProcessForm({
     }
   }, [selectedDistrictId, filteredBranches, form]);
 
-  const showCreateSellerButton = useMemo(() => {
+  const showCreateSellerButton = React.useMemo(() => {
     if (!selectedBranchId) return false;
     const linkedSeller = sellersForSelect.find(s => s.judicialBranchId === selectedBranchId);
     return !linkedSeller;
@@ -337,7 +337,7 @@ export default function JudicialProcessForm({
               <FormField control={form.control} name="sellerId" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Comitente Principal</FormLabel>
-                     <div className="flex items-center gap-2">
+                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
                         <EntitySelector 
                           value={field.value} 
                           onChange={field.onChange} 
@@ -352,7 +352,7 @@ export default function JudicialProcessForm({
                           disabled={isCreatingSeller}
                         />
                          {showCreateSellerButton && (
-                            <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller}>
+                            <Button type="button" variant="secondary" onClick={handleAutoCreateSeller} disabled={isCreatingSeller} className="w-full sm:w-auto mt-2 sm:mt-0">
                                 {isCreatingSeller ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Building className="mr-2 h-4 w-4" />}
                                 Criar Comitente da Vara
                             </Button>

@@ -1,3 +1,5 @@
+
+// src/app/map-search/page.tsx
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -8,8 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import type { Lot, Auction, PlatformSettings } from '@/types';
-import LotCard from '@/components/lot-card';
-import AuctionCard from '@/components/auction-card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
@@ -17,6 +17,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { LatLngBounds } from 'leaflet';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
+import UniversalCard from '@/components/universal-card'; // Importando o novo componente
 
 const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
     ssr: false,
@@ -175,18 +176,22 @@ export default function MapSearchPage() {
                         <p className="text-sm text-destructive">{error}</p>
                     </div>
                 )}
-                {!isLoading && !error && displayedItems.length === 0 && (
+                {!isLoading && !error && platformSettings && displayedItems.length === 0 && (
                     <div className="text-center py-6">
                         <MapPin className="h-8 w-8 mx-auto text-muted-foreground mb-2"/>
                         <p className="text-sm text-muted-foreground">Nenhum resultado encontrado. Tente uma busca diferente ou mova o mapa.</p>
                     </div>
                 )}
                 {!isLoading && !error && platformSettings && displayedItems.length > 0 && (
-                    displayedItems.map(item => 
-                    searchType === 'lots' 
-                        ? <LotCard key={`lot-${item.id}`} lot={item as Lot} platformSettings={platformSettings} auction={allAuctions.find(a => a.id === (item as Lot).auctionId)} /> 
-                        : <AuctionCard key={`auction-${item.id}`} auction={item as Auction} />
-                    )
+                    displayedItems.map(item => (
+                       <UniversalCard
+                            key={item.id}
+                            item={item}
+                            type={searchType === 'lots' ? 'lot' : 'auction'}
+                            platformSettings={platformSettings}
+                            parentAuction={searchType === 'lots' ? allAuctions.find(a => a.id === (item as Lot).auctionId) : undefined}
+                       />
+                    ))
                 )}
                 </CardContent>
             </ScrollArea>

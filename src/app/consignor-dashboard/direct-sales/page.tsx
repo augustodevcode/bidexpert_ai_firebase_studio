@@ -91,18 +91,13 @@ export default function ConsignorDirectSalesPage() {
     { value: 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
   ], []);
 
-  const sellerOptions = useMemo(() =>
-    [...new Set(offers.map(o => o.sellerName))]
-        .map(seller => ({ value: seller, label: seller })),
-  [offers]);
-
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
     { id: 'offerType', title: 'Tipo de Oferta', options: offerTypeOptions },
   ], [statusOptions, offerTypeOptions]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="consignor-direct-sales-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -115,7 +110,7 @@ export default function ConsignorDirectSalesPage() {
         </CardHeader>
         <CardContent>
           {isUserAdmin && (
-             <div className="mb-4">
+             <div className="mb-4" data-ai-id="consignor-direct-sales-admin-selector">
               <label className="text-sm font-medium text-muted-foreground">Visualizando como:</label>
                <Select value={selectedSellerId || ''} onValueChange={setSelectedSellerId}>
                   <SelectTrigger className="w-full md:w-[300px] mt-1">

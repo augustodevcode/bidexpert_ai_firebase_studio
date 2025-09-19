@@ -139,7 +139,7 @@ export default function AdminContactMessagesPage() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-contact-messages-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">

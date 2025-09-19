@@ -1,35 +1,44 @@
 // components/BidReportBuilder/components/VariablePanel.tsx
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 
 interface Variable {
     name: string;
     value: string;
-    group: string;
 }
 
-const availableVariables: Variable[] = [
-    { name: "ID do Leilão", value: "{{auction.id}}", group: "Leilão" },
-    { name: "Título do Leilão", value: "{{auction.title}}", group: "Leilão" },
-    { name: "Data do Leilão", value: "{{auction.date}}", group: "Leilão" },
-    { name: "Nome do Lote", value: "{{lot.name}}", group: "Lote" },
-    { name: "Descrição do Lote", value: "{{lot.description}}", group: "Lote" },
-    { name: "Lance Vencedor", value: "{{winningBid.amount}}", group: "Lance" },
-    { name: "Nome do Comprador", value: "{{buyer.name}}", group: "Comprador" },
-    { name: "Data Atual", value: "{{report.currentDate}}", group: "Relatório" },
-    { name: "Total de Lotes", value: "{{report.totalLots}}", group: "Relatório" },
-];
+interface VariableGroup {
+    group: string;
+    items: Variable[];
+}
 
-const groupedVariables = availableVariables.reduce((acc, variable) => {
-    if (!acc[variable.group]) {
-        acc[variable.group] = [];
-    }
-    acc[variable.group].push(variable);
-    return acc;
-}, {} as Record<string, Variable[]>);
+const sampleVariables: VariableGroup[] = [
+    { group: 'Leilão', items: [
+        { name: 'Nome do Leilão', value: '{{leilao.nome}}' },
+        { name: 'Data de Início', value: '{{leilao.dataInicio}}' },
+        { name: 'Status', value: '{{leilao.status}}' },
+        { name: 'Leiloeiro', value: '{{leilao.leiloeiro.nome}}' },
+    ]},
+    { group: 'Lote', items: [
+        { name: 'Número do Lote', value: '{{lote.numero}}' },
+        { name: 'Título do Lote', value: '{{lote.titulo}}' },
+        { name: 'Lance Inicial', value: '{{lote.lanceInicial}}' },
+        { name: 'Lance Atual', value: '{{lote.lanceAtual}}' },
+    ]},
+    { group: 'Comitente', items: [
+        { name: 'Nome do Comitente', value: '{{comitente.nome}}' },
+        { name: 'Cidade do Comitente', value: '{{comitente.cidade}}' },
+    ]},
+     { group: 'Geral', items: [
+        { name: 'Data Atual', value: '{{geral.dataAtual}}' },
+        { name: 'Página Atual', value: '{{geral.pagina}}' },
+    ]}
+];
 
 interface DraggableVariableProps {
   name: string;
@@ -46,33 +55,69 @@ const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value }) =>
   }));
 
   return (
-    <div ref={drag} className={`p-1.5 border rounded-md cursor-grab ${isDragging ? 'opacity-50' : 'opacity-100'} flex justify-between items-center`}>
-      <span className="text-xs font-mono">{name}</span>
-      <Badge variant="outline" className="text-xs">Arrastar</Badge>
+    <div
+      ref={drag}
+      className="p-2 border rounded-md bg-secondary/60 hover:bg-secondary cursor-grab active:cursor-grabbing text-xs"
+      style={{ opacity: isDragging ? 0.5 : 1 }}
+      title={`Arraste para adicionar a variável ${name}`}
+      data-ai-id={`draggable-variable-${name.toLowerCase().replace(/\s/g, '-')}`}
+    >
+      <p className="font-medium text-foreground truncate">{name}</p>
+      <p className="text-muted-foreground font-mono truncate">{value}</p>
     </div>
   );
 };
 
+
+// Panel that displays and allows dragging of data variables into the report.
 const VariablePanel = () => {
-  return (
-    <div className="p-2 border-l bg-card" data-ai-id="report-variable-panel">
-      <h3 className="text-sm font-semibold text-muted-foreground mb-2">Variáveis Dinâmicas</h3>
-      <Accordion type="multiple" defaultValue={Object.keys(groupedVariables)} className="w-full">
-        {Object.entries(groupedVariables).map(([group, variables]) => (
-          <AccordionItem key={group} value={group}>
-            <AccordionTrigger className="text-xs font-medium">{group}</AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-2">
-                {variables.map(variable => (
-                  <DraggableVariable key={variable.name} name={variable.name} value={variable.value} />
-                ))}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
-    </div>
-  );
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filteredVariables, setFilteredVariables] = useState<VariableGroup[]>(sampleVariables);
+
+    useEffect(() => {
+        if (!searchTerm) {
+            setFilteredVariables(sampleVariables);
+            return;
+        }
+
+        const lowercasedFilter = searchTerm.toLowerCase();
+        const filtered = sampleVariables.map(group => {
+            const items = group.items.filter(item => 
+                item.name.toLowerCase().includes(lowercasedFilter) || 
+                item.value.toLowerCase().includes(lowercasedFilter)
+            );
+            return { ...group, items };
+        }).filter(group => group.items.length > 0);
+
+        setFilteredVariables(filtered);
+    }, [searchTerm]);
+
+    return (
+        <div className="p-4 h-full flex flex-col" data-ai-id="report-variable-panel">
+            <h3 className="text-md font-semibold border-b pb-2 mb-2">Variáveis</h3>
+             <Input 
+                placeholder="Buscar variável..." 
+                className="mb-3 h-8 text-xs"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                data-ai-id="variable-panel-search-input"
+            />
+            <ScrollArea className="flex-grow">
+                <Accordion type="multiple" defaultValue={sampleVariables.map(g => g.group)} className="w-full">
+                    {filteredVariables.map(group => (
+                        <AccordionItem value={group.group} key={group.group} data-ai-id={`variable-group-${group.group.toLowerCase()}`}>
+                            <AccordionTrigger className="text-sm py-2">{group.group}</AccordionTrigger>
+                            <AccordionContent className="space-y-2">
+                                {group.items.map(item => (
+                                    <DraggableVariable key={item.value} name={item.name} value={item.value} />
+                                ))}
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
+            </ScrollArea>
+        </div>
+    );
 };
 
 export default VariablePanel;

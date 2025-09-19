@@ -1,0 +1,4 @@
+enum SearchPaginationType {
+  loadMore
+  numberedPages
+}

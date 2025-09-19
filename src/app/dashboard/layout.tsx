@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,14 +16,15 @@ export default function DashboardLayout({
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
   
   // Client-side effect to handle redirection
   useEffect(() => {
     // Only redirect if loading is complete and there's definitely no user
     if (!loading && !userProfileWithPermissions) {
-      router.push('/auth/login?redirect=/dashboard/overview');
+      router.push(`/auth/login?redirect=${pathname}`);
     }
-  }, [userProfileWithPermissions, loading, router]);
+  }, [userProfileWithPermissions, loading, router, pathname]);
 
 
   // While the auth state is being determined, show a loading screen.
@@ -47,7 +48,7 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen">
       <DashboardSidebar />
-      <main className="flex-1 p-6 md:p-8 bg-muted/30">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 md:pl-8">
         {children}
       </main>
     </div>

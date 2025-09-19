@@ -87,4 +87,21 @@
   body {
     @apply bg-background text-foreground;
   }
+  
+  /* Responsive Table Styles */
+  @media screen and (max-width: 768px) {
+    .responsive-table tr {
+        @apply block mb-4 border rounded-lg shadow-md;
+    }
+    .responsive-table td {
+        @apply flex justify-between items-center px-4 py-2 border-b;
+    }
+    .responsive-table td:last-child {
+        @apply border-b-0;
+    }
+    .responsive-table td::before {
+        content: attr(data-label);
+        @apply font-bold mr-2 text-sm;
+    }
+  }
 }

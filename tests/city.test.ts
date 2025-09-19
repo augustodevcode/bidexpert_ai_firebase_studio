@@ -1,5 +1,5 @@
 // tests/city.test.ts
-import test from 'node:test';
+import { describe, it, beforeAll, afterAll } from 'vitest';
 import assert from 'node:assert';
 import { CityService } from '../src/services/city.service';
 import { prisma } from '../src/lib/prisma';
@@ -13,9 +13,9 @@ const testStateName = `Estado para Cidades ${testRunId}`;
 const testStateUf = testRunId.substring(0, 2).toUpperCase();
 let testState: StateInfo;
 
-test.describe('City Service E2E Tests', () => {
+describe('City Service E2E Tests', () => {
 
-    test.before(async () => {
+    beforeAll(async () => {
         // Create the necessary State dependency
         await prisma.state.deleteMany({ where: { uf: testStateUf } });
         testState = await prisma.state.create({
@@ -27,7 +27,7 @@ test.describe('City Service E2E Tests', () => {
         });
     });
 
-    test.after(async () => {
+    afterAll(async () => {
         try {
             await prisma.city.deleteMany({ where: { name: testCityName }});
             if (testState) {
@@ -39,7 +39,7 @@ test.describe('City Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should create a new city and verify it in the database', async () => {
+    it('should create a new city and verify it in the database', async () => {
         // Arrange
         const newCityData: CityFormData = {
             name: testCityName,

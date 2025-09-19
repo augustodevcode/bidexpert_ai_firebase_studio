@@ -11,13 +11,6 @@ const testRunId = `user-e2e-${uuidv4().substring(0, 8)}`;
 const testUserEmail = `teste.usuario.${testRunId}@example.com`;
 
 test.describe('User Service E2E Tests', () => {
-
-    test.beforeEach(async () => {
-        await prisma.user.deleteMany({
-            where: { email: testUserEmail }
-        });
-    });
-    
     test.after(async () => {
         try {
             await prisma.user.deleteMany({
@@ -31,10 +24,14 @@ test.describe('User Service E2E Tests', () => {
 
     test('should create a new user and assign the default USER role', async () => {
         // Arrange
+        const userRole = await prisma.role.findFirst({ where: { name: 'USER' }});
+        assert.ok(userRole, "Default 'USER' role must exist in the database for this test to run.");
+        
         const newUser: UserCreationData = {
             fullName: `Usuário de Teste ${testRunId}`,
             email: testUserEmail,
             password: 'aSecurePassword123',
+            roleIds: [userRole!.id], // Pass the roleId explicitly
         };
 
         // Act
@@ -61,5 +58,4 @@ test.describe('User Service E2E Tests', () => {
         assert.strictEqual(createdUserFromDb.roles.length, 1, 'User should have exactly one role assigned');
         assert.strictEqual(createdUserFromDb.roles[0].role.name, 'USER', 'The assigned role should be USER');
     });
-
 });

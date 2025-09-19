@@ -1,5 +1,5 @@
 // tests/state.test.ts
-import test from 'node:test';
+import { describe, it, beforeEach, afterAll } from 'vitest';
 import assert from 'node:assert';
 import { StateService } from '../src/services/state.service';
 import { prisma } from '../src/lib/prisma';
@@ -11,19 +11,19 @@ const testRunId = `state-e2e-${uuidv4().substring(0, 8)}`;
 const testStateName = `Estado de Teste ${testRunId}`;
 const testStateUf = testRunId.substring(0, 2).toUpperCase();
 
-test.describe('State Service E2E Tests', () => {
+describe('State Service E2E Tests', () => {
 
-    // Before each test, ensure no conflicting state exists
-    test.beforeEach(async () => {
+    beforeEach(async () => {
+        // Clean up previous test runs to ensure a clean slate
         await prisma.state.deleteMany({
-            where: { uf: testStateUf }
+            where: { OR: [{ uf: testStateUf }, {name: {contains: testRunId}}] }
         });
     });
-
-    test.after(async () => {
+    
+    afterAll(async () => {
         try {
             await prisma.state.deleteMany({
-                where: { uf: testStateUf }
+                where: { OR: [{ uf: testStateUf }, {name: {contains: testRunId}}] }
             });
         } catch (error) {
             // Ignore cleanup errors
@@ -31,7 +31,7 @@ test.describe('State Service E2E Tests', () => {
         await prisma.$disconnect();
     });
 
-    test('should create a new state and verify it in the database', async () => {
+    it('should create a new state and verify it in the database', async () => {
         // Arrange
         const newStateData: StateFormData = {
             name: testStateName,
@@ -59,18 +59,20 @@ test.describe('State Service E2E Tests', () => {
         assert.ok(createdStateFromDb.slug, 'State slug should be generated');
     });
 
-    test('should prevent creating a state with a duplicate UF', async () => {
+    it('should prevent creating a state with a duplicate UF', async () => {
         // Arrange: Create the first state
+        const firstStateUf = `DU${testRunId.substring(0,1)}`;
+        await prisma.state.deleteMany({ where: { uf: firstStateUf }}); // Ensure it does not exist
         const firstStateData: StateFormData = {
             name: `${testStateName} Original`,
-            uf: testStateUf,
+            uf: firstStateUf,
         };
         await stateService.createState(firstStateData);
 
         // Arrange: Prepare data for the second state with the same UF
         const duplicateStateData: StateFormData = {
             name: `${testStateName} Duplicado`,
-            uf: testStateUf,
+            uf: firstStateUf,
         };
 
         // Act: Attempt to create the second state
@@ -78,6 +80,6 @@ test.describe('State Service E2E Tests', () => {
 
         // Assert
         assert.strictEqual(result.success, false, 'Should fail to create a state with a duplicate UF');
-        assert.strictEqual(result.message, `Já existe um estado com a UF '${testStateUf}'.`);
+        assert.strictEqual(result.message, `Já existe um estado com a UF '${firstStateUf}'.`);
     });
 });

@@ -1,133 +1,65 @@
 // src/app/page.tsx
 import { Suspense } from 'react';
-import HeroCarousel from '@/components/hero-carousel';
-import FilterLinkCard from '@/components/filter-link-card';
-import PromoCard from '@/components/promo-card';
-import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2 } from 'lucide-react';
-import Link from 'next/link';
-import { fetchPlatformSettings } from '@/lib/data-queries';
-import FeaturedItems from '@/components/featured-items';
-import type { Auction, Lot, LotCategory, SellerProfileInfo } from '@/types';
+import { Loader2 } from 'lucide-react';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getLotCategories } from './admin/categories/actions';
-import { getSellers } from './admin/sellers/actions'; // Import getSellers
-import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
-import { AuctionService } from '@/services/auction.service';
-import { LotService } from '@/services/lot.service';
-import FeaturedSellers from '@/components/featured-sellers'; // Importar o novo componente
+import { getSellers } from './admin/sellers/actions';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+import HomePageClient from './home-page-client';
+import { Skeleton } from '@/components/ui/skeleton';
 
-async function HomePageContent() {
-  const auctionService = new AuctionService();
-  const lotService = new LotService();
-
-  // Fetch data using the services
-  const [
-      platformSettings, 
-      allAuctions, 
-      allLots, 
-      categories, 
-      sellers
+async function HomePageData() {
+    const [
+        settings,
+        auctionsData,
+        lotsData,
+        categoriesData,
+        sellersData,
     ] = await Promise.all([
-    fetchPlatformSettings(),
-    auctionService.getAuctions(),
-    lotService.getLots(),
-    getLotCategories(),
-    getSellers() // Buscar os vendedores
-  ]);
+        getPlatformSettings(),
+        getAuctions(true),
+        getLots(undefined, true),
+        getLotCategories(),
+        getSellers(true),
+    ]);
 
-  if (!platformSettings) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-          <p>Carregando configurações da plataforma...</p>
-        </div>
-      </div>
+        <HomePageClient
+            platformSettings={settings}
+            allAuctions={auctionsData}
+            allLots={lotsData}
+            categories={categoriesData}
+            sellers={sellersData}
+        />
     );
-  }
-
-  const featuredLots = (allLots as Lot[])
-    .filter(l => l.isFeatured)
-    .sort((a, b) => (b.views || 0) - (a.views || 0))
-    .slice(0, 8);
-  const lotsToDisplay = featuredLots.length > 0 ? featuredLots : (allLots as Lot[]).slice(0, 8);
-  const lotsTitle = featuredLots.length > 0 ? "Lotes em Destaque" : "Lotes Recentes";
-
-  const featuredAuctions = (allAuctions as Auction[])
-    .filter(a => a.isFeaturedOnMarketplace)
-    .sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime())
-    .slice(0, 4);
-  const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : (allAuctions as Auction[]).slice(0, 4);
-  const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
-  
-  const featuredCategories = categories.sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0)).slice(0, 3);
-  const featuredSellers = sellers.filter(s => s.logoUrl).slice(0, 12); // Pega até 12 vendedores que tenham logo
-
-  return (
-    <div className="space-y-16">
-      <HeroCarousel />
-      
-      <FeaturedItems items={lotsToDisplay} type="lot" title={lotsTitle} viewAllLink="/search?type=lots" platformSettings={platformSettings} allAuctions={allAuctions as Auction[]} />
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
-        <PromoCard 
-            title="Venda seus Ativos Conosco"
-            description="Transforme seus bens em liquidez de forma rápida e segura. Nossa plataforma conecta você a milhares de compradores qualificados."
-            imageUrl="https://placehold.co/400x300.png?text=Venda+Conosco"
-            imageAlt="Pessoa assinando contrato para vender em leilão"
-            dataAiHint="contrato acordo"
-            link="/sell-with-us"
-        />
-         <PromoCard 
-            title="Leilões Judiciais"
-            description="Acesse oportunidades únicas de processos judiciais com a transparência e segurança que só o BidExpert oferece."
-            imageUrl="https://placehold.co/400x300.png?text=Leiloes+Judiciais"
-            imageAlt="Martelo da justiça em frente a um tribunal"
-            dataAiHint="justica tribunal"
-            link="/search?type=auctions&auctionType=JUDICIAL"
-            bgColorClass="bg-primary/5 dark:bg-primary/10"
-        />
-      </div>
-
-      <FeaturedItems items={auctionsToDisplay} type="auction" title={auctionsTitle} viewAllLink="/search?type=auctions" platformSettings={platformSettings} />
-      
-      {/* Nova Seção de Vendedores */}
-      <FeaturedSellers sellers={featuredSellers} />
-      
-      <section className="space-y-6">
-        <h2 className="text-3xl font-bold text-center">Navegue por Categorias</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {featuredCategories.map((category) => {
-                 const assets = getCategoryAssets(category.name);
-                 return (
-                     <FilterLinkCard 
-                        key={category.id}
-                        title={category.name}
-                        subtitle={`${category.itemCount || 0}+ Oportunidades`}
-                        imageUrl={category.coverImageUrl || assets.bannerUrl || ''}
-                        imageAlt={category.description || `Ícone para ${category.name}`}
-                        dataAiHint={category.dataAiHintCover || assets.bannerAiHint}
-                        link={`/category/${category.slug}`}
-                    />
-                 )
-            })}
-        </div>
-      </section>
-    </div>
-  );
 }
 
+function HomePageSkeleton() {
+    return (
+        <div className="space-y-12">
+            <Skeleton className="h-[400px] w-full rounded-lg" />
+            <div className="space-y-6">
+                <Skeleton className="h-8 w-1/3" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
+                </div>
+            </div>
+            <div className="space-y-6">
+                <Skeleton className="h-8 w-1/3" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-64 w-full" />)}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function HomePage() {
-   const genericLoadingComponent = (
-    <div className="flex justify-center items-center h-64">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-    </div>
-  );
-
-  return (
-    <Suspense fallback={genericLoadingComponent}>
-      <HomePageContent />
-    </Suspense>
-  )
+    return (
+        <Suspense fallback={<HomePageSkeleton />}>
+            <HomePageData />
+        </Suspense>
+    );
 }

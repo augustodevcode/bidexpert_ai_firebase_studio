@@ -1,5 +1,5 @@
 // src/repositories/role.repository.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma'; // Usa a instância base para modelos globais
 import type { Role } from '@/types';
 import type { Prisma } from '@prisma/client';
 

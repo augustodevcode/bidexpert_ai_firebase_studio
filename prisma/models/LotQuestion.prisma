@@ -1,0 +1,21 @@
+
+model LotQuestion {
+  id                      String    @id @default(cuid())
+  lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId                   String
+  auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auctionId               String
+  user                    User      @relation(fields: [userId], references: [id])
+  userId                  String
+  userDisplayName         String
+  questionText            String    @db.Text
+  answerText              String?   @db.Text
+  answeredByUserId        String?
+  answeredByUserDisplayName String?
+  answeredAt              DateTime?
+  isPublic                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+
+  @@index([lotId])
+  @@index([userId])
+}

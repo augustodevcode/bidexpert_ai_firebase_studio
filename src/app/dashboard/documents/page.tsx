@@ -82,7 +82,7 @@ export default function UserDocumentsPage() {
   
   if (isLoading || authLoading) {
       return (
-        <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
+        <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]" data-ai-id="my-documents-loading-spinner">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="ml-3 text-muted-foreground">Carregando seus documentos...</p>
         </div>
@@ -90,7 +90,7 @@ export default function UserDocumentsPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-8">
+    <div className="max-w-4xl mx-auto space-y-8" data-ai-id="my-documents-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -102,7 +102,7 @@ export default function UserDocumentsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-8">
-          <div className="p-4 border rounded-lg bg-secondary/30">
+          <div className="p-4 border rounded-lg bg-secondary/30" data-ai-id="my-documents-habilitation-status-card">
              <CardTitle className="text-lg mb-2">Status da Sua Habilitação</CardTitle>
               <div className="space-y-1">
                 <p className={`font-semibold text-lg ${habilitationStatusInfo.textColor}`}>{habilitationStatusInfo.text}</p>
@@ -112,7 +112,7 @@ export default function UserDocumentsPage() {
               <p className="text-xs text-muted-foreground mt-1 text-right">{habilitationStatusInfo.progress}% completo</p>
           </div>
 
-          <div>
+          <div data-ai-id="my-documents-required-docs-section">
             <h3 className="text-xl font-semibold mb-1">Documentos Necessários</h3>
             <p className="text-sm text-muted-foreground mb-4">Envie os documentos abaixo para análise. Formatos aceitos: PDF, JPG, PNG (Máx. 5MB).</p>
             <div className="space-y-4">
@@ -132,7 +132,7 @@ export default function UserDocumentsPage() {
           
           <Separator />
 
-           <div>
+           <div data-ai-id="my-documents-generated-docs-section">
             <h3 className="text-xl font-semibold mb-2">Documentos Gerados</h3>
             <div className="text-center py-10 bg-muted/50 rounded-lg">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-3" />

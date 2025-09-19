@@ -5,31 +5,34 @@ import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
 import { prisma } from '@/lib/prisma';
 import { AuctionService } from '@/services/auction.service';
-import { AuctioneerService } from '@/services/auctioneer.service'; // Import AuctioneerService
-import { SellerService } from '@/services/seller.service'; // Import SellerService
+import { getSession } from '@/app/auth/actions';
 
 const auctionService = new AuctionService();
 
-export async function getAuctions(): Promise<Auction[]> {
-    return auctionService.getAuctions();
+async function getTenantIdFromSession(isPublicCall: boolean = false): Promise<string> {
+    const session = await getSession();
+    if (!session?.tenantId) {
+        if (isPublicCall) {
+            return '1'; // Landlord tenant ID for public data
+        }
+        throw new Error("Acesso não autorizado ou tenant não identificado.");
+    }
+    return session.tenantId;
 }
 
-export async function getAuctioneers() {
-    const auctioneerService = new AuctioneerService();
-    return auctioneerService.getAuctioneers();
+export async function getAuctions(isPublicCall: boolean = false): Promise<Auction[]> {
+    const tenantIdToUse = await getTenantIdFromSession(isPublicCall);
+    return auctionService.getAuctions(tenantIdToUse);
 }
 
-export async function getSellers() {
-    const sellerService = new SellerService();
-    return sellerService.getSellers();
-}
-
-export async function getAuction(id: string): Promise<Auction | null> {
-    return auctionService.getAuctionById(id);
+export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
+    const tenantId = await getTenantIdFromSession(isPublicCall);
+    return auctionService.getAuctionById(tenantId, id);
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
-    const result = await auctionService.createAuction(data);
+    const tenantId = await getTenantIdFromSession();
+    const result = await auctionService.createAuction(tenantId, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
     }
@@ -37,7 +40,8 @@ export async function createAuction(data: Partial<AuctionFormData>): Promise<{ s
 }
 
 export async function updateAuction(id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string }> {
-    const result = await auctionService.updateAuction(id, data);
+    const tenantId = await getTenantIdFromSession();
+    const result = await auctionService.updateAuction(tenantId, id, data);
     if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/auctions');
         revalidatePath(`/admin/auctions/${id}/edit`);
@@ -46,7 +50,8 @@ export async function updateAuction(id: string, data: Partial<AuctionFormData>):
 }
 
 export async function deleteAuction(id: string): Promise<{ success: boolean, message: string }> {
-    const result = await auctionService.deleteAuction(id);
+    const tenantId = await getTenantIdFromSession();
+    const result = await auctionService.deleteAuction(tenantId, id);
     if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/auctions');
     }
@@ -68,37 +73,18 @@ export async function updateAuctionFeaturedStatus(id: string, newStatus: boolean
     return updateAuction(id, { isFeaturedOnMarketplace: newStatus });
 }
 
-export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
-    if (ids.length === 0) return [];
-    // This is now a simplified version. The service should be used for complex data.
-    const auctions = await prisma.auction.findMany({
-        where: { OR: [{ id: { in: ids }}, { publicId: { in: ids }}] },
-        include: { 
-            lots: { select: { id: true } },
-            seller: true
-        }
-    });
-    // @ts-ignore
-    return auctions.map(a => ({...a, totalLots: a.lots.length}));
-}
-
 export async function getAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-   return auctionService.mapAuctionsWithDetails(
-     await prisma.auction.findMany({
-        where: {
-            seller: {
-                OR: [{ slug: sellerSlugOrPublicId }, { id: sellerSlugOrPublicId }, { publicId: sellerSlugOrPublicId }]
-            }
-        },
-        include: { 
-            lots: { select: { id: true } }, 
-            seller: true 
-        }
-    })
-   );
+   const tenantId = await getTenantIdFromSession(true); // Public call
+   return auctionService.getAuctionsBySellerSlug(tenantId, sellerSlugOrPublicId);
 }
 
 export async function getAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-    // @ts-ignore
-    return auctionService.getAuctionsByAuctioneerSlug(auctioneerSlug);
+    const tenantId = await getTenantIdFromSession(true); // Public call
+    return auctionService.getAuctionsByAuctioneerSlug(tenantId, auctioneerSlug);
+}
+
+export async function getAuctionsByIds(ids: string[]): Promise<Auction[]> {
+  if (ids.length === 0) return [];
+  const tenantId = await getTenantIdFromSession(true); // Public call
+  return auctionService.getAuctionsByIds(tenantId, ids);
 }

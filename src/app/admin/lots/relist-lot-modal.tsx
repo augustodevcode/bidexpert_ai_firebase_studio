@@ -51,7 +51,7 @@ export default function RelistLotModal({ isOpen, onClose, originalLot, auctions,
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Repeat /> Relistar Lote "{originalLot.title}"</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Repeat /> Relistar Lote &quot;{originalLot.title}&quot;</DialogTitle>
           <DialogDescription>
             Crie um novo lote com base neste item para um novo leilão.
           </DialogDescription>

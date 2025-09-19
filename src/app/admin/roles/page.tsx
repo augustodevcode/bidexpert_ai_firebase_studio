@@ -81,7 +81,7 @@ export default function AdminRolesPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-roles-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>

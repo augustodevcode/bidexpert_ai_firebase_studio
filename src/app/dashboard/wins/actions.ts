@@ -1,10 +1,13 @@
+// src/app/dashboard/wins/actions.ts
 /**
  * @fileoverview Server Action for fetching lots a user has won.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { UserWin } from '@/types';
+
+const userWinRepository = new UserWinRepository();
 
 /**
  * Fetches all lots won by a specific user.
@@ -18,30 +21,5 @@ export async function getWinsForUserAction(userId: string): Promise<UserWin[]> {
     return [];
   }
   
-  const wins = await prisma.userWin.findMany({
-    where: { userId },
-    include: {
-        lot: {
-            include: {
-                auction: {
-                    select: {
-                        title: true,
-                    }
-                }
-            }
-        }
-    },
-    orderBy: {
-        winDate: 'desc'
-    }
-  });
-
-  // @ts-ignore
-  return wins.map(win => ({
-      ...win,
-      lot: {
-          ...win.lot,
-          auctionName: win.lot.auction.title
-      }
-  }));
+  return userWinRepository.findByUserId(userId);
 }

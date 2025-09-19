@@ -1,11 +1,12 @@
 
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
-import type { Lot, LotFormData } from '@/types';
+import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
+import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
 
 export class LotService {
   private repository: LotRepository;
@@ -31,19 +32,181 @@ export class LotService {
     };
   }
 
-  async getLots(auctionId?: string): Promise<Lot[]> {
-    const lots = await this.repository.findAll(auctionId);
+  async getLots(auctionId?: string, tenantId?: string): Promise<Lot[]> {
+    const lots = await this.repository.findAll(auctionId, tenantId);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
-  async getLotById(id: string): Promise<Lot | null> {
-    const lot = await this.repository.findById(id);
+  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+    const lots = await this.repository.findByIds(ids);
+    return lots.map(lot => this.mapLotWithDetails(lot));
+  }
+
+  async getLotById(id: string, tenantId?: string): Promise<Lot | null> {
+    const lot = await this.repository.findById(id, tenantId);
     if (!lot) return null;
     return this.mapLotWithDetails(lot);
   }
 
+  async placeBid(lotIdOrPublicId: string, userId: string, bidAmount: number, userDisplayName: string): Promise<{ success: boolean; message: string; updatedLot?: Partial<Lot>; newBid?: BidInfo; }> {
+    try {
+        const lot = await this.getLotById(lotIdOrPublicId);
+        if (!lot) return { success: false, message: 'Lote não encontrado.' };
 
-  async createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string; }> {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user || user.habilitationStatus !== 'HABILITADO') {
+            return { success: false, message: "Apenas usuários com status 'HABILITADO' podem dar lances." };
+        }
+        
+        const isHabilitadoForAuction = await prisma.auctionHabilitation.findUnique({
+            where: { userId_auctionId: { userId, auctionId: lot.auctionId } }
+        });
+        if (!isHabilitadoForAuction) {
+            return { success: false, message: "Você não está habilitado para dar lances neste leilão. Por favor, habilite-se na página do leilão." };
+        }
+
+        if (lot.status !== 'ABERTO_PARA_LANCES') {
+            return { success: false, message: 'Este lote não está aberto para lances.' };
+        }
+        
+        const bidIncrement = lot.bidIncrementStep || 1;
+        const nextMinimumBid = lot.price + bidIncrement;
+        if (bidAmount < nextMinimumBid) {
+            return { success: false, message: `O lance deve ser de no mínimo R$ ${nextMinimumBid.toLocaleString('pt-BR')}.` };
+        }
+
+        const previousHighBid = await prisma.bid.findFirst({
+            where: { lotId: lot.id },
+            orderBy: { timestamp: 'desc' }
+        });
+
+        const newBid = await prisma.bid.create({
+            data: {
+                lotId: lot.id,
+                auctionId: lot.auctionId,
+                bidderId: userId,
+                bidderDisplay: userDisplayName,
+                amount: bidAmount,
+            }
+        });
+
+        if (previousHighBid && previousHighBid.bidderId !== userId) {
+            await prisma.notification.create({
+                data: {
+                    userId: previousHighBid.bidderId,
+                    message: `Seu lance no lote "${lot.title}" foi superado.`,
+                    link: `/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`,
+                    tenantId: lot.tenantId,
+                }
+            });
+        }
+        
+        const updatedLot = await this.repository.update(lot.id, { price: bidAmount, bidsCount: { increment: 1 } });
+        
+        return {
+            success: true,
+            message: "Lance realizado com sucesso!",
+            updatedLot: {
+                price: updatedLot.price,
+                bidsCount: updatedLot.bidsCount,
+            },
+            newBid: newBid as BidInfo,
+        };
+
+    } catch (error: any) {
+        console.error("Error in LotService.placeBid:", error);
+        return { success: false, message: `Ocorreu um erro ao registrar seu lance: ${error.message}` };
+    }
+  }
+
+  async placeMaxBid(lotId: string, userId: string, maxAmount: number): Promise<{ success: boolean, message: string }> {
+    const lot = await this.getLotById(lotId);
+    if (!lot) return { success: false, message: 'Lote não encontrado.' };
+
+    await prisma.userLotMaxBid.upsert({
+        where: { userId_lotId: { userId, lotId } },
+        update: { maxAmount, isActive: true },
+        create: { userId, lotId, maxAmount, isActive: true }
+    });
+    
+    return { success: true, message: "Lance máximo definido com sucesso!" };
+  }
+
+  async getActiveUserMaxBid(lotIdOrPublicId: string, userId: string): Promise<UserLotMaxBid | null> {
+    const lot = await this.getLotById(lotIdOrPublicId);
+    if (!lot || !userId) return null;
+
+    return prisma.userLotMaxBid.findFirst({
+        where: { userId: userId, lotId: lot.id, isActive: true }
+    });
+  }
+
+  async getBidHistory(lotIdOrPublicId: string): Promise<BidInfo[]> {
+    const lot = await this.getLotById(lotIdOrPublicId);
+    if (!lot) return [];
+    // @ts-ignore
+    return prisma.bid.findMany({ where: { lotId: lot.id }, orderBy: { timestamp: 'desc' } });
+  }
+
+  async getReviews(lotIdOrPublicId: string): Promise<Review[]> {
+    const lot = await this.getLotById(lotIdOrPublicId);
+    if (!lot) return [];
+    // @ts-ignore
+    return prisma.review.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createReview(lotId: string, userId: string, userDisplayName: string, rating: number, comment: string): Promise<{ success: boolean; message: string; reviewId?: string }> {
+    const lot = await this.getLotById(lotId);
+    if (!lot) return { success: false, message: "Lote não encontrado." };
+
+    try {
+      const newReview = await prisma.review.create({
+          data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, rating, comment }
+      });
+      return { success: true, message: 'Avaliação enviada com sucesso.', reviewId: newReview.id };
+    } catch(error) {
+      console.error("Error creating review:", error);
+      return { success: false, message: "Falha ao enviar avaliação." };
+    }
+  }
+
+  async getQuestions(lotIdOrPublicId: string): Promise<LotQuestion[]> {
+    const lot = await this.getLotById(lotIdOrPublicId);
+    if (!lot) return [];
+    // @ts-ignore
+    return prisma.lotQuestion.findMany({ where: { lotId: lot.id }, orderBy: { createdAt: 'desc' } });
+  }
+
+  async createQuestion(lotId: string, userId: string, userDisplayName: string, questionText: string): Promise<{ success: boolean; message: string; questionId?: string }> {
+    const lot = await this.getLotById(lotId);
+    if (!lot) return { success: false, message: "Lote não encontrado." };
+
+    try {
+      const newQuestion = await prisma.lotQuestion.create({
+          data: { lotId: lot.id, auctionId: lot.auctionId, userId, userDisplayName, questionText, isPublic: true }
+      });
+      return { success: true, message: 'Pergunta enviada com sucesso.', questionId: newQuestion.id };
+    } catch(error) {
+      console.error("Error creating question:", error);
+      return { success: false, message: "Falha ao enviar pergunta." };
+    }
+  }
+  
+  async answerQuestion(questionId: string, answerText: string, answeredByUserId: string, answeredByUserDisplayName: string): Promise<{ success: boolean; message: string }> {
+      try {
+        await prisma.lotQuestion.update({
+            where: { id: questionId },
+            data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: convertSaoPauloToUtc(nowInSaoPaulo()) }
+        });
+        return { success: true, message: "Resposta enviada com sucesso." };
+      } catch (error) {
+        console.error("Error answering question:", error);
+        return { success: false, message: "Falha ao enviar resposta."};
+      }
+  }
+
+
+  async createLot(data: Partial<LotFormData>, tenantId?: string): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
       const { 
         bemIds, 
@@ -60,6 +223,14 @@ export class LotService {
       if (!auctionId) {
         return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
+
+      const auction = await prisma.auction.findUnique({ where: { id: auctionId } });
+      if (!auction) {
+        return { success: false, message: "Leilão não encontrado." };
+      }
+      
+      const finalTenantId = tenantId || auction.tenantId;
+
       if (!finalCategoryId) {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
@@ -67,6 +238,7 @@ export class LotService {
       // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
+        type: type as string,
         price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
@@ -74,6 +246,7 @@ export class LotService {
         category: { connect: { id: finalCategoryId } },
         isRelisted: data.isRelisted || false,
         relistCount: data.relistCount || 0,
+        tenant: { connect: { id: finalTenantId } },
       };
 
       if (data.originalLotId) {
@@ -88,7 +261,7 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
-      if (data.inheritedMediaFromBemId) {
+      if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
         dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
@@ -219,7 +392,7 @@ export class LotService {
                   lotId: lot.id,
                   userId: winningBid.bidderId,
                   winningBidAmount: winningBid.amount,
-                  winDate: new Date(),
+                  winDate: nowInSaoPaulo(),
                   paymentStatus: 'PENDENTE'
               }
           });

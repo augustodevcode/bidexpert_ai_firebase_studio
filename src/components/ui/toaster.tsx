@@ -129,7 +129,18 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
 
   const handleCopy = () => {
     if (fullErrorText) {
-      navigator.clipboard.writeText(fullErrorText);
+      try {
+        navigator.clipboard.writeText(fullErrorText);
+      } catch (err) {
+        console.error("Failed to copy text to clipboard:", err);
+        // Opcional: Mostrar uma mensagem para o usuário que a cópia falhou
+        // Por exemplo, usando um toast diferente ou um alerta.
+        // toast({
+        //   title: "Falha ao copiar",
+        //   description: "Por favor, copie o texto manualmente.",
+        //   variant: "destructive",
+        // });
+      }
       setHasCopied(true);
       setTimeout(() => setHasCopied(false), 2000); // Reset icon after 2 seconds
     }

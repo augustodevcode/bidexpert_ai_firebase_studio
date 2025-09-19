@@ -165,7 +165,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         {activeSection === 'appearance' && (
              <section className="space-y-6">
                 <FormField control={form.control} name="showCountdownOnCards" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Contagem Regressiva nos Cards</FormLabel><FormDescription>Exibir o cronômetro de contagem regressiva nos cards de leilão/lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
-                <FormField control={form.control} name="showRelatedLotsOnLotDetail" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Exibir Lotes Relacionados</FormLabel><FormDescription>Mostrar uma seção de "Outros Lotes do Leilão" na página de detalhes do lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
+                <FormField control={form.control} name="showRelatedLotsOnLotDetail" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Exibir Lotes Relacionados</FormLabel><FormDescription>Mostrar uma seção de &quot;Outros Lotes do Leilão&quot; na página de detalhes do lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
                 {form.watch('showRelatedLotsOnLotDetail') && (
                     <FormField control={form.control} name="relatedLotsCount" render={({ field }) => (<FormItem><FormLabel>Nº de Lotes Relacionados</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 )}
@@ -242,7 +242,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         {activeSection === 'maps' && (
              <section className="space-y-6">
                 <FormField control={form.control} name="mapSettings.defaultProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Mapa Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem><SelectItem value="google">Google Maps</SelectItem><SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem></SelectContent></Select></FormItem>)} />
-                <FormField control={form.control} name="mapSettings.googleMapsApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API - Google Maps</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormDescription>Necessário se "Google Maps" for o provedor selecionado.</FormDescription><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="mapSettings.googleMapsApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API - Google Maps</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormDescription>Necessário se &quot;Google Maps&quot; for o provedor selecionado.</FormDescription><FormMessage /></FormItem>)} />
              </section>
         )}
 

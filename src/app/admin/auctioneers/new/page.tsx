@@ -1,20 +1,54 @@
 // src/app/admin/auctioneers/new/page.tsx
+'use client';
+import { useRouter } from 'next/navigation';
 import AuctioneerForm from '../auctioneer-form';
 import { createAuctioneer, type AuctioneerFormData } from '../actions';
+import FormPageLayout from '@/components/admin/form-page-layout';
+import { Landmark } from 'lucide-react';
+import * as React from 'react';
+import { useToast } from '@/hooks/use-toast';
 
-export default async function NewAuctioneerPage() {
-  
+export default function NewAuctioneerPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const formRef = React.useRef<any>(null);
+
+  const handleSave = async () => {
+    if (formRef.current) {
+        await formRef.current.requestSubmit();
+    }
+  };
+
   async function handleCreateAuctioneer(data: AuctioneerFormData) {
-    'use server';
-    return createAuctioneer(data);
+    setIsSubmitting(true);
+    const result = await createAuctioneer(data);
+    if (result.success) {
+      toast({ title: 'Sucesso!', description: 'Leiloeiro criado com sucesso.' });
+      router.push('/admin/auctioneers');
+    } else {
+      toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive'});
+    }
+    setIsSubmitting(false);
+    return result;
   }
 
   return (
-    <AuctioneerForm
-      onSubmitAction={handleCreateAuctioneer}
-      formTitle="Novo Leiloeiro"
-      formDescription="Preencha os detalhes para cadastrar um novo leiloeiro."
-      submitButtonText="Criar Leiloeiro"
-    />
+     <div data-ai-id="admin-new-auctioneer-form-card">
+        <FormPageLayout
+            formTitle="Novo Leiloeiro"
+            formDescription="Preencha os detalhes para cadastrar um novo leiloeiro."
+            icon={Landmark}
+            isViewMode={false}
+            isSubmitting={isSubmitting}
+            onSave={handleSave}
+            onCancel={() => router.push('/admin/auctioneers')}
+        >
+            <AuctioneerForm
+                ref={formRef}
+                onSubmitAction={handleCreateAuctioneer}
+            />
+        </FormPageLayout>
+    </div>
   );
 }

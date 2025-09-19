@@ -1,7 +1,8 @@
 // src/lib/ui-helpers.ts
-import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage } from '@/types';
-import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle } from 'lucide-react';
+import type { Lot, AuctionStatus, UserDocumentStatus, UserHabilitationStatus, PaymentStatus, LotStatus, DirectSaleOfferStatus, Auction, AuctionStage, AuctionType } from '@/types';
+import { FileText, Clock, FileWarning, CheckCircle2, ShieldAlert, HelpCircle, FileUp, CheckCircle, Gavel, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { isPast, isFuture } from 'date-fns';
+import React from 'react';
 
 // ============================================================================
 // PURE HELPER FUNCTIONS (CLIENT & SERVER SAFE)
@@ -82,7 +83,7 @@ export const getAuctionStatusText = (status: AuctionStatus | LotStatus | UserDoc
   }
 };
 
-export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus): string => {
+export const getLotStatusColor = (status: LotStatus | DirectSaleOfferStatus | string): string => {
   switch (status) {
     case 'ABERTO_PARA_LANCES':
     case 'ACTIVE': 
@@ -120,6 +121,17 @@ export const getAuctionStatusColor = (status: AuctionStatus | undefined): string
     default:
       return 'bg-gray-300 text-gray-800';
   }
+};
+
+export const getAuctionTypeDisplayData = (type?: AuctionType) => {
+    if (!type) return null;
+    switch (type) {
+      case 'JUDICIAL': return { label: 'Judicial', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
+      case 'PARTICULAR': return { label: 'Particular', icon: React.createElement(Gavel, { className: "h-3 w-3" }) };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: React.createElement(TomadaPrecosIcon, { className: "h-3 w-3" }) };
+      default: return null;
+    }
 };
 
 export const getPaymentStatusText = (status: PaymentStatus): string => getAuctionStatusText(status);
@@ -210,7 +222,7 @@ export function getEffectiveLotEndDate(lot: Lot, auction?: Auction): Date | null
         // Find the first stage that hasn't ended yet
         const upcomingOrActiveStage = auction.auctionStages
             .filter(stage => stage.endDate && !isPast(new Date(stage.endDate)))
-            .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+            .sort((a, b) => new Date(a.startDate as Date).getTime() - new Date(b.startDate as Date).getTime())[0];
         
         if (upcomingOrActiveStage?.endDate) {
             return new Date(upcomingOrActiveStage.endDate);
@@ -253,7 +265,7 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
   
   // If multiple stages are active, return the one that started most recently
   if (activeStages.length > 1) {
-    return activeStages.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime())[0];
+    return activeStages.sort((a, b) => new Date(b.startDate as Date).getTime() - new Date(a.startDate as Date).getTime())[0];
   }
 
   return activeStages[0] || null;
@@ -269,12 +281,12 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
     if (!lot) return null;
 
     // If there's a specific price for the active stage, use it
-    if (activeStageId && lot.stagePrices) {
-        const stagePrice = lot.stagePrices.find(p => p.auctionStageId === activeStageId);
+    if (activeStageId && lot.stageDetails) {
+        const stagePrice = lot.stageDetails.find(p => p.stageId === activeStageId);
         if (stagePrice) {
             return {
                 initialBid: stagePrice.initialBid,
-                increment: stagePrice.increment,
+                increment: stagePrice.bidIncrement,
             };
         }
     }
@@ -282,6 +294,6 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
     // Fallback to the lot's main price details
     return {
         initialBid: lot.initialPrice,
-        increment: lot.increment,
+        increment: lot.bidIncrementStep,
     };
 };

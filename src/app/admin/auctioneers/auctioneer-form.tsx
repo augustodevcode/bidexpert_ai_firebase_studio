@@ -24,17 +24,16 @@ import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-rea
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { consultaCepAction } from '@/lib/actions/cep';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 interface AuctioneerFormProps {
   initialData?: AuctioneerProfileInfo | null;
   onSubmitAction: (data: AuctioneerFormValues) => Promise<any>;
-  onUpdateSuccess?: () => void;
 }
 
 const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   initialData,
   onSubmitAction,
-  onUpdateSuccess,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -116,6 +115,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     }
     setIsCepLoading(false);
   }
+  
+  const validLogoUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   return (
     <>
@@ -210,7 +211,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>CEP</FormLabel>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
                             <FormControl>
                                 <Input 
                                     placeholder="00000-000"
@@ -224,8 +225,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                                     }}
                                 />
                             </FormControl>
-                            <Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading}>
-                                {isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}
+                            <Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading} className="w-full sm:w-auto">
+                                {isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar Endereço'}
                             </Button>
                         </div>
                         <FormMessage />
@@ -245,7 +246,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                     </FormItem>
                   )}
                 />
-              <div className="grid md:grid-cols-3 gap-6">
+              <div className="grid md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="city"
@@ -278,8 +279,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                   <FormLabel>Logo do Leiloeiro</FormLabel>
                   <div className="flex items-center gap-4">
                     <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                      {logoUrlPreview ? (
-                        <Image src={logoUrlPreview} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo leiloeiro" />
+                      {validLogoUrl ? (
+                        <Image src={validLogoUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo leiloeiro" />
                       ) : (
                         <div className="flex items-center justify-center h-full text-muted-foreground">
                           <ImageIcon className="h-8 w-8" />
@@ -288,7 +289,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                     </div>
                     <div className="flex-grow space-y-2">
                       <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
-                        {logoUrlPreview ? 'Alterar Logo' : 'Escolher da Biblioteca'}
+                        {validLogoUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}
                       </Button>
                       <FormField
                         control={form.control}

@@ -1,5 +1,5 @@
 // tests/judicial-process.test.ts
-import { describe, test, beforeAll, afterAll, it, expect } from 'vitest';
+import { test, describe, beforeAll, afterAll, it } from 'vitest';
 import assert from 'node:assert';
 import { JudicialProcessService } from '@/services/judicial-process.service';
 import { prisma } from '@/lib/prisma';

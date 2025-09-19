@@ -1,18 +1,19 @@
-// src/app/admin/lots/[lotId]/edit/page.tsx
+
 'use client';
 
-import LotForm from '../../lot-form';
-import { getLot, updateLot, type LotFormData, finalizeLot } from '../../actions';
-import { getBens as getBensForLotting } from '@/app/admin/bens/actions';
+import { getLot, updateLot, finalizeLot } from '../../actions';
+import { getAuction } from '@/app/admin/auctions/actions';
+import LotForm, { type LotFormData } from '../../lot-form';
+import { getBensForLotting } from '@/app/admin/bens/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
-import { getAuctions, getAuction } from '@/app/admin/auctions/actions';
+import { getAuctions as getAllAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
-import { notFound, useRouter, useParams } from 'next/navigation';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, PlatformSettings, LotCategory, SellerProfileInfo } from '@/types';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { notFound, useParams } from 'next/navigation';
+import type { Lot, Auction, Bem, StateInfo, CityInfo, LotCategory, SellerProfileInfo } from '@/types';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CheckCircle, FileSignature, Loader2, Gavel, Repeat } from 'lucide-react';
+import { CheckCircle, Loader2, Gavel, Repeat } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,13 +28,12 @@ import {
 import React, { useEffect, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
-import RelistLotModal from '../../relist-lot-modal'; // Importar o novo modal
+import RelistLotModal from '../../relist-lot-modal';
 import Link from 'next/link';
 
 export default function EditLotPage() {
   const params = useParams();
   const lotId = params.lotId as string;
-  const router = useRouter();
   const { toast } = useToast();
 
   const [lot, setLot] = useState<Lot | null>(null);
@@ -45,7 +45,7 @@ export default function EditLotPage() {
   const [availableBens, setAvailableBens] = useState<Bem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
-  const [isRelistModalOpen, setIsRelistModalOpen] = useState(false); // Estado para o novo modal
+  const [isRelistModalOpen, setIsRelistModalOpen] = useState(false);
 
   const fetchPageData = useCallback(async () => {
     if (!lotId) return;
@@ -64,7 +64,7 @@ export default function EditLotPage() {
 
       const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedBens, fetchedSellers] = await Promise.all([
         getLotCategories(),
-        getAuctions(),
+        getAllAuctions(),
         getStates(),
         getCities(),
         getBensForLotting(filterForBens),
@@ -118,8 +118,8 @@ export default function EditLotPage() {
         </Button>
       )
     });
-    fetchPageData(); // Re-fetch data for the current (original) lot
-    setIsRelistModalOpen(false); // Close the modal
+    fetchPageData();
+    setIsRelistModalOpen(false);
   };
 
   const canFinalize = lot && (lot.status === 'ABERTO_PARA_LANCES' || lot.status === 'ENCERRADO');
@@ -167,7 +167,7 @@ export default function EditLotPage() {
                           <AlertDialogHeader>
                             <AlertDialogTitle>Confirmar Finalização?</AlertDialogTitle>
                             <AlertDialogDescription>
-                              Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para "Vendido" (ou "Não Vendido") e notificar o vencedor. Esta ação não pode ser desfeita.
+                              Esta ação irá determinar o vencedor com base no lance mais alto, atualizar o status do lote para &quot;Vendido&quot; (ou &quot;Não Vendido&quot;) e notificar o vencedor. Esta ação não pode ser desfeita.
                             </AlertDialogDescription>
                           </AlertDialogHeader>
                           <AlertDialogFooter>

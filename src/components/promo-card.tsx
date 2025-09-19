@@ -1,4 +1,5 @@
 
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -24,7 +25,7 @@ export default function PromoCard({
   bgColorClass = 'bg-secondary/30',
 }: PromoCardProps) {
   return (
-    <Link href={link} className="block group">
+    <Link href={link} className="block group h-full" data-ai-id={`promo-card-${dataAiHint.replace(/\s/g, '-')}`}>
       <Card className={`overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full ${bgColorClass}`}>
         <CardContent className="p-6 flex flex-col md:flex-row items-center gap-6 h-full">
           <div className="flex-1 text-center md:text-left">

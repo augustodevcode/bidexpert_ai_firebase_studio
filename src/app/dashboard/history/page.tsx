@@ -1,5 +1,4 @@
-
-
+// src/app/dashboard/history/page.tsx
 'use client';
 
 import Link from 'next/link';
@@ -8,15 +7,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { History, Eye, XCircle, AlertCircle, Loader2 } from 'lucide-react';
-import { getLotStatusColor, getAuctionStatusText } from '@/lib/sample-data-helpers';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { getRecentlyViewedIds, removeRecentlyViewedId } from '@/lib/recently-viewed-store';
+import { getRecentlyViewedIds, removeRecentlyViewedId } from '@/lib/recently-viewed-store'; 
 import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getAuctionsByIds } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import LotCard from '@/components/lot-card';
+import UniversalCard from '@/components/universal-card';
 
 
 export default function BrowsingHistoryPage() {
@@ -29,23 +27,27 @@ export default function BrowsingHistoryPage() {
   const loadHistory = useCallback(async () => {
     setIsLoading(true);
     const settings = await getPlatformSettings();
-    setPlatformSettings(settings);
+    if (settings) {
+      setPlatformSettings(settings as PlatformSettings);
+    }
+
 
     const viewedIds = getRecentlyViewedIds();
     if (viewedIds.length > 0) {
-      const viewedLotsData = await getLotsByIds(viewedIds);
+      const favoritedLotsData = await getLotsByIds(viewedIds);
       
       const sortedViewedLots = viewedIds
-        .map(id => viewedLotsData.find(lot => lot.id === id))
+        .map(id => favoritedLotsData.find(lot => lot.id === id))
         .filter((lot): lot is Lot => !!lot);
         
       setViewedLots(sortedViewedLots);
       
-      const auctionIds = Array.from(new Set(viewedLotsData.map(lot => lot.auctionId)));
+      const auctionIds = Array.from(new Set(favoritedLotsData.map(lot => lot.auctionId)));
       if (auctionIds.length > 0) {
         const auctionsData = await getAuctionsByIds(auctionIds);
         setAuctionsMap(new Map(auctionsData.map(a => [a.id, a])));
       }
+
     } else {
       setViewedLots([]);
       setAuctionsMap(new Map());
@@ -68,15 +70,43 @@ export default function BrowsingHistoryPage() {
 
   if (isLoading || !platformSettings) {
     return (
-        <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-4 text-muted-foreground">Carregando histórico...</p>
+        <div className="space-y-8" data-ai-id="my-favorites-page-container">
+        <Card className="shadow-lg">
+            <CardHeader>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <History className="h-7 w-7 mr-3 text-primary" />
+                Histórico de Navegação
+            </CardTitle>
+            <CardDescription>
+                Lotes que você visualizou recentemente.
+            </CardDescription>
+            </CardHeader>
+            <CardContent className="animate-pulse" data-ai-id="my-history-loading-state">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {[1,2,3].map(i => (
+                        <Card key={i} className="overflow-hidden">
+                            <div className="relative aspect-video bg-muted rounded-t-lg"></div>
+                            <CardContent className="p-4 space-y-2">
+                                <div className="h-5 bg-muted rounded w-3/4"></div>
+                                <div className="h-4 bg-muted rounded w-1/2"></div>
+                                <div className="h-4 bg-muted rounded w-1/3"></div>
+                            </CardContent>
+                            <CardFooter className="p-4 border-t flex gap-2">
+                                <div className="h-9 bg-muted rounded w-1/2"></div>
+                                <div className="h-9 bg-muted rounded w-1/2"></div>
+                            </CardFooter>
+                        </Card>
+                    ))}
+                </div>
+            </CardContent>
+        </Card>
         </div>
     );
   }
 
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8" data-ai-id="browsing-history-page-container">
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -89,7 +119,7 @@ export default function BrowsingHistoryPage() {
         </CardHeader>
         <CardContent>
           {viewedLots.length === 0 ? (
-            <div className="text-center py-12 bg-secondary/30 rounded-lg">
+            <div className="text-center py-12 bg-secondary/30 rounded-lg" data-ai-id="browsing-history-empty-state">
               <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-xl font-semibold text-muted-foreground">Nenhum Item no Histórico</h3>
               <p className="text-sm text-muted-foreground mt-2">
@@ -100,14 +130,15 @@ export default function BrowsingHistoryPage() {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-ai-id="browsing-history-grid">
               {viewedLots.map((lot) => {
                 const parentAuction = auctionsMap.get(lot.auctionId);
                 return (
                   <div key={lot.id} className="relative group/history">
-                    <LotCard 
-                      lot={lot} 
-                      auction={parentAuction} 
+                    <UniversalCard 
+                      item={lot} 
+                      type="lot"
+                      auction={parentAuction}
                       platformSettings={platformSettings} 
                       onUpdate={loadHistory}
                     />

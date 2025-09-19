@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -16,7 +17,7 @@ interface FeaturedSellersProps {
 function SellerCard({ seller }: { seller: SellerProfileInfo }) {
   const sellerInitial = seller.name ? seller.name.charAt(0).toUpperCase() : 'S';
   return (
-    <div className="p-1 h-full">
+    <div className="p-1 h-full" data-ai-id={`seller-card-${seller.id}`}>
       <Link href={`/sellers/${seller.slug || seller.publicId || seller.id}`} className="block h-full">
         <Card className="h-full flex flex-col items-center justify-center p-4 hover:shadow-md transition-shadow duration-200">
           <div className="relative h-16 w-full mb-2">
@@ -25,7 +26,7 @@ function SellerCard({ seller }: { seller: SellerProfileInfo }) {
               alt={`Logo ${seller.name}`}
               fill
               className="object-contain"
-              data-ai-hint={seller.dataAiHintLogo || "logo empresa"}
+              data-ai-hint={seller.name === 'Banco Bradesco S.A.' ? 'Logotipo do banco bradesco' : (seller.dataAiHintLogo || "logo empresa")}
             />
           </div>
           <p className="text-xs text-center font-medium text-muted-foreground group-hover:text-primary transition-colors">
@@ -52,7 +53,7 @@ export default function FeaturedSellers({ sellers }: FeaturedSellersProps) {
   }
 
   return (
-    <section className="space-y-6">
+    <section className="space-y-6" data-ai-id="homepage-featured-sellers-section">
        <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold flex items-center"><Building className="mr-3 h-7 w-7 text-primary"/> Vendedores</h2>
         <div className="flex items-center gap-2">

@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 export default function TermsPage() {
   return (
@@ -10,7 +11,7 @@ export default function TermsPage() {
         <p className="text-lg text-muted-foreground">
           Please read these terms carefully before using BidExpert.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">Last Updated: {new Date().toLocaleDateString()}</p>
+        <p className="text-sm text-muted-foreground mt-2">Last Updated: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
       </section>
 
       <Card className="shadow-lg">
@@ -18,7 +19,7 @@ export default function TermsPage() {
           <CardTitle className="text-xl font-semibold">1. Acceptance of Terms</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>By accessing or using the BidExpert platform ("Service"), you agree to be bound by these Terms of Service ("Terms"). If you disagree with any part of the terms, then you may not access the Service.</p>
+          <p>By accessing or using the BidExpert platform (&quot;Service&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you disagree with any part of the terms, then you may not access the Service.</p>
         </CardContent>
       </Card>
 

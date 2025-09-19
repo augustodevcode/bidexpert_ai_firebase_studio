@@ -65,4 +65,3 @@ test.describe('Judicial District Service E2E Tests', () => {
         assert.strictEqual(createdDistrictFromDb.courtId, newDistrictData.courtId, 'District courtId should match');
         assert.strictEqual(createdDistrictFromDb.stateId, newDistrictData.stateId, 'District stateId should match');
     });
-});

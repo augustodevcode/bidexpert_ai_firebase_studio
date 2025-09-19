@@ -33,30 +33,33 @@ const testData = {
 
 let createdAuction: Auction;
 let createdLot: Lot;
+let tenant: any;
 
 async function createTestData() {
+    tenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `test-tenant-${testRunId}` } });
+
     const category = await prisma.lotCategory.create({
         data: { name: testData.category.name, slug: slugify(testData.category.name), hasSubcategories: false }
     });
 
     const auctioneer = await prisma.auctioneer.create({
-        data: { name: testData.auctioneer.name, slug: slugify(testData.auctioneer.name), publicId: `auct-pub-${testRunId}` }
+        data: { name: testData.auctioneer.name, slug: slugify(testData.auctioneer.name), publicId: `auct-pub-${testRunId}`, tenantId: tenant.id }
     });
 
     const seller = await prisma.seller.create({
-        data: { name: testData.seller.name, slug: slugify(testData.seller.name), publicId: `seller-pub-${testRunId}`, isJudicial: false }
+        data: { name: testData.seller.name, slug: slugify(testData.seller.name), publicId: `seller-pub-${testRunId}`, isJudicial: false, tenantId: tenant.id }
     });
     
-    const auctionResult = await auctionService.createAuction({
+    const auctionResult = await auctionService.createAuction(tenant.id, {
         ...testData.auction,
         auctioneerId: auctioneer.id,
         sellerId: seller.id,
         categoryId: category.id,
-        auctionDate: new Date(),
+        auctionStages: [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 1000 * 60 * 60 * 24 * 5)}],
     } as any);
     
     assert.ok(auctionResult.success && auctionResult.auctionId, 'Failed to create test auction');
-    createdAuction = (await auctionService.getAuctionById(auctionResult.auctionId))!;
+        createdAuction = (await auctionService.getAuctionById(tenant.id, auctionResult.auctionId))!;
     
     const lotResult = await lotService.createLot({
         ...testData.lot,
@@ -81,6 +84,7 @@ async function cleanupTestData() {
     await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
     await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+    await prisma.tenant.deleteMany({ where: { name: { contains: testRunId } } });
   } catch (e) {
     console.error(`Error during data-validation cleanup:`, e);
   }
@@ -100,7 +104,7 @@ describe('Data Validation for UI Components (Service-Layer)', () => {
 
     it('should fetch auction data with all necessary details for card display', async () => {
         console.log('--- Test: Validating Auction Data for Card ---');
-        const fetchedAuction = await auctionService.getAuctionById(createdAuction.id);
+        const fetchedAuction = await auctionService.getAuctionById(tenant.id, createdAuction.id);
 
         assert.ok(fetchedAuction, 'Fetched auction should not be null');
         assert.strictEqual(fetchedAuction.title, testData.auction.title, 'Title should match');
