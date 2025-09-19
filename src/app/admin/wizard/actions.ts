@@ -39,8 +39,6 @@ export async function getWizardInitialData() {
   try {
     const tenantId = await getTenantIdFromSession();
 
-    // A maioria dessas ações agora aceita um booleano `isPublicCall` ou já obtém o tenant da sessão.
-    // Vamos garantir que estamos chamando-as da maneira correta para o contexto do admin logado.
     const [
       courts,
       districts,
@@ -51,14 +49,14 @@ export async function getWizardInitialData() {
       availableBens,
       categories
     ] = await Promise.all([
-      getCourts(), // Globais
-      getJudicialDistricts(), // Globais
-      getJudicialBranches(), // Globais
+      getCourts(),
+      getJudicialDistricts(),
+      getJudicialBranches(),
       getJudicialProcesses(tenantId),
-      getAuctioneers(false, tenantId), // Passando tenantId explicitamente
-      getSellers(false, tenantId), // Passando tenantId explicitamente
-      getBens({ tenantId }), // Passando filtro de tenant
-      getLotCategories(), // Globais
+      getAuctioneers(false, tenantId),
+      getSellers(false, tenantId),
+      getBens({ tenantId }),
+      getLotCategories(),
     ]);
 
     return {
