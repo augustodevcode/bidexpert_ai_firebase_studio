@@ -13,7 +13,15 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     if (!user) return null;
 
     const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
-    const permissions = Array.from(new Set(roles.flatMap((r: any) => (r.permissions as string)?.split(',') || [])));
+        const permissions = Array.from(new Set(roles.flatMap((r: any) => {
+        if (typeof r.permissions === 'string') {
+            return r.permissions.split(',');
+        }
+        if (Array.isArray(r.permissions)) {
+            return r.permissions;
+        }
+        return [];
+    })));
     const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
 
     return {
@@ -40,6 +48,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   try {
     // Correção: Usar a instância base do prisma para buscar um usuário global por email.
+    console.log(`[Login Action] Tentativa de login para o email: ${email}`);
     const user = await basePrisma.user.findUnique({
         where: { email },
         include: {
@@ -49,6 +58,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     });
 
     if (!user || !user.password) {
+      console.log(`[Login Action] Falha: Usuário com email '${email}' não encontrado.`);
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
@@ -66,12 +76,15 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
 
     if (tenantId && !userBelongsToTenant) {
+        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
         return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
     }
 
+    console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
     const isPasswordValid = await bcryptjs.compare(password, user.password);
 
     if (!isPasswordValid) {
+        console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
         return { success: false, message: 'Credenciais inválidas.' };
     }
 

@@ -25,7 +25,15 @@ export class UserService {
     if (!user) return null;
 
     const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
-    const permissions = Array.from(new Set(roles.flatMap((r: any) => (r.permissions as string)?.split(',') || [])));
+        const permissions = Array.from(new Set(roles.flatMap((r: any) => {
+        if (typeof r.permissions === 'string') {
+            return r.permissions.split(',');
+        }
+        if (Array.isArray(r.permissions)) {
+            return r.permissions;
+        }
+        return [];
+    })));
     const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
     
     return {

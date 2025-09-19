@@ -5,10 +5,10 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [
     tsconfigPaths(),
-    react(),
+    
   ],
   test: {
-    environment: 'jsdom',
+    environment: 'node',
     globals: true,
     exclude: [
       '**/node_modules/**',

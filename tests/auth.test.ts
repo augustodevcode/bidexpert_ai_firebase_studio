@@ -1,5 +1,16 @@
+// @vitest-environment node
 // tests/auth.test.ts
-import { describe, it, beforeAll, afterAll, expect } from 'vitest';
+import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
+
+// Mock server-only to allow testing server actions
+vi.mock('server-only', () => ({}));
+vi.mock('next/headers', () => ({
+  cookies: () => ({
+    set: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+  }),
+}));
 import assert from 'node:assert';
 import { login } from '@/app/auth/actions';
 import { prisma } from '@/lib/prisma';
@@ -25,6 +36,18 @@ describe('Authentication (Login) E2E Test', () => {
             where: { id: '1' },
             update: {},
             create: { id: '1', name: 'Landlord', subdomain: 'www' },
+        });
+
+        await prisma.role.upsert({
+            where: { nameNormalized: 'ADMINISTRATOR' },
+            update: {},
+            create: {
+                id: 'role-admin',
+                name: 'Administrator',
+                nameNormalized: 'ADMINISTRATOR',
+                description: 'Acesso total a todas as funcionalidades.',
+                permissions: ['manage_all'],
+            },
         });
 
         const adminRole = await roleRepository.findByNormalizedName('ADMINISTRATOR');
