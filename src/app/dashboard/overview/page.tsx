@@ -1,4 +1,11 @@
 // src/app/dashboard/overview/page.tsx
+/**
+ * @fileoverview Página "Visão Geral" do Painel do Usuário (Arrematante).
+ * Este componente de cliente serve como a página inicial do dashboard,
+ * exibindo um resumo das principais informações e atividades do usuário, como
+ * status da habilitação, lances ativos, arremates pendentes, e listas
+ * de lotes recomendados e próximos do encerramento.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

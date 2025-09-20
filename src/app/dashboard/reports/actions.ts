@@ -1,4 +1,10 @@
 // src/app/dashboard/reports/actions.ts
+/**
+ * @fileoverview Server Actions para a página de Relatórios do Painel do Usuário.
+ * Contém a lógica de backend para buscar e agregar dados de performance
+ * de um usuário específico, como total gasto, lotes arrematados e distribuição
+ * de gastos por categoria, alimentando os gráficos e KPIs do dashboard do usuário.
+ */
 'use server';
 
 import { prisma } from '@/lib/prisma';

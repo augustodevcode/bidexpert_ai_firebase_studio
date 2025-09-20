@@ -1,4 +1,11 @@
 // src/app/dashboard/documents/page.tsx
+/**
+ * @fileoverview Página "Meus Documentos" do Painel do Usuário.
+ * Este componente de cliente gerencia a interface para o usuário enviar e
+ * visualizar seus documentos de habilitação. Ele busca os tipos de documentos
+ * necessários e os documentos já enviados, exibe o status atual de habilitação
+ * e fornece um componente de upload para cada tipo de documento.
+ */
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';

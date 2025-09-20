@@ -1,4 +1,11 @@
 // src/app/dashboard/wins/page.tsx
+/**
+ * @fileoverview Página "Meus Arremates" do Painel do Usuário.
+ * Este componente de cliente busca e exibe uma lista de todos os lotes que
+ * o usuário logado arrematou. Para cada arremate, ele mostra detalhes do
+ * lote, status do pagamento e oferece ações contextuais, como "Pagar Agora"
+ * para itens pendentes ou "Gerar Termo de Arrematação" para itens pagos.
+ */
 'use client';
 
 import React from 'react';
@@ -250,7 +257,7 @@ function WinsPageContent() {
 
 export default function MyWinsPage() {
     return (
-        <React.Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+        <React.Suspense fallback={<div className="flex justify-center items-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
             <WinsPageContent />
         </React.Suspense>
     );

@@ -1,4 +1,11 @@
 // src/app/dashboard/reports/page.tsx
+/**
+ * @fileoverview Página "Meus Relatórios" do Painel do Usuário.
+ * Este componente de cliente busca e exibe um resumo do desempenho de
+ * lances e arremates do usuário logado. Ele apresenta métricas chave como
+ * total gasto, número de lotes arrematados e um gráfico de pizza mostrando
+ * a distribuição dos gastos por categoria.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

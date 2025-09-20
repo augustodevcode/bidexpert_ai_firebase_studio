@@ -1,4 +1,11 @@
 // src/app/dashboard/notifications/page.tsx
+/**
+ * @fileoverview Página de Notificações do Painel do Usuário.
+ * Este componente de cliente é responsável por buscar e exibir a lista de
+ * notificações do usuário logado. Ele permite que o usuário veja novas
+ * mensagens e alertas, clique para navegar até o conteúdo relevante e marca
+ * automaticamente as notificações como lidas após a interação.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

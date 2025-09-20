@@ -1,5 +1,11 @@
-
 // src/app/dashboard/favorites/page.tsx
+/**
+ * @fileoverview Página "Meus Favoritos" do Painel do Usuário.
+ * Este componente de cliente gerencia a exibição dos lotes que o usuário
+ * marcou como favoritos. Ele lê os IDs dos lotes do `localStorage`, busca os
+ * dados completos desses lotes no servidor, e permite ao usuário remover
+ * itens de sua lista de favoritos, atualizando tanto a UI quanto o `localStorage`.
+ */
 'use client';
 
 import Link from 'next/link';
@@ -29,7 +35,7 @@ export default function FavoriteLotsPage() {
   const loadFavorites = useCallback(async () => {
     setIsLoading(true);
     const settings = await getPlatformSettings();
-    setPlatformSettings(settings as PlatformSettings);
+    if(settings) setPlatformSettings(settings as PlatformSettings);
 
     const favoriteIds = getFavoriteLotIdsFromStorage();
     if (favoriteIds.length > 0) {

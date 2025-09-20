@@ -1,4 +1,13 @@
 // src/app/dashboard/layout.tsx
+/**
+ * @fileoverview Layout principal para o Painel do Usuário.
+ * Este componente de cliente envolve todas as páginas do dashboard do arrematante,
+ * como "Meus Lances" e "Meus Arremates". Ele é responsável por verificar a
+ * autenticação do usuário, exibindo um estado de carregamento ou redirecionando
+ * para o login se o usuário não estiver autenticado. Uma vez autenticado,
+ * ele renderiza a barra lateral específica do usuário (`DashboardSidebar`)
+ * e o conteúdo da página solicitada.
+ */
 'use client';
 
 import { useEffect } from 'react';

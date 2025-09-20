@@ -1,6 +1,9 @@
 // src/app/dashboard/wins/actions.ts
 /**
- * @fileoverview Server Action for fetching lots a user has won.
+ * @fileoverview Server Actions para a página "Meus Arremates".
+ * Contém a lógica de backend para buscar todos os lotes que um usuário
+ * específico arrematou, retornando uma lista de registros de `UserWin`
+ * com os detalhes do lote e do leilão para exibição no painel do usuário.
  */
 'use server';
 

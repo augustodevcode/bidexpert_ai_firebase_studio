@@ -1,4 +1,11 @@
 // src/app/dashboard/bids/page.tsx
+/**
+ * @fileoverview Página "Meus Lances" do Painel do Usuário.
+ * Este componente de cliente busca e exibe uma lista de todos os lances
+ * que o usuário logado já fez, mostrando o status atual de cada um
+ * (ex: ganhando, superado, arrematado). Permite ao usuário acompanhar
+ * rapidamente suas disputas ativas e seu histórico de lances.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

@@ -1,5 +1,12 @@
-
 // src/app/profile/edit/page.tsx
+/**
+ * @fileoverview Página de Edição de Perfil do Usuário.
+ * Este componente de cliente permite que um usuário autenticado edite suas
+ * próprias informações de perfil. Ele busca os dados atuais do usuário,
+ * renderiza o `ProfileForm` com essas informações e gerencia a submissão
+ * dos dados atualizados através de uma server action, além de lidar com
+ * o estado de carregamento e erros.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

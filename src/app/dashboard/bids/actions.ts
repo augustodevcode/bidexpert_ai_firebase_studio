@@ -1,7 +1,9 @@
+// src/app/dashboard/bids/actions.ts
 /**
- * @fileoverview Server Actions for fetching a user's bidding activity.
- * Provides a function to get all bids made by a specific user, along with
- * the current status of each bid (e.g., winning, losing, won).
+ * @fileoverview Server Actions para a página "Meus Lances".
+ * Contém a lógica de backend para buscar todos os lances feitos por um usuário
+ * específico, enriquecendo os dados com o status atual de cada lance (ganhando,
+ * perdendo, arrematado, etc.) para exibição no painel do usuário.
  */
 'use server';
 

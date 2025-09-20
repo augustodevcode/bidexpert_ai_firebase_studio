@@ -1,8 +1,10 @@
 // src/app/dashboard/documents/actions.ts
 /**
- * @fileoverview Server Actions for managing user documents and habilitation status.
- * Provides functions to fetch required document types, user's submitted documents,
- * and to save a newly uploaded document, linking it to the user.
+ * @fileoverview Server Actions para o gerenciamento de documentos do usuário.
+ * Este arquivo contém a lógica para buscar os tipos de documentos exigidos pela
+ * plataforma, buscar os documentos que um usuário específico já enviou, e
+ * salvar um novo documento enviado, associando-o ao usuário e ao tipo correto,
+ * além de atualizar o status de habilitação do usuário.
  */
 'use server';
 

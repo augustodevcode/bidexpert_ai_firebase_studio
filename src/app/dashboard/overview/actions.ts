@@ -1,4 +1,10 @@
 // src/app/dashboard/overview/actions.ts
+/**
+ * @fileoverview Server Actions para a página de "Visão Geral" do Painel do Usuário.
+ * Fornece a lógica de backend para buscar e agregar dados resumidos da atividade
+ * do usuário, como lotes prestes a encerrar, itens recomendados e contagens
+ * de arremates e lances ativos, alimentando os cards e listas da página principal do dashboard.
+ */
 'use server';
 
 import { prisma } from '@/lib/prisma';

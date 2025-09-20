@@ -1,9 +1,10 @@
-
 // src/app/dashboard/notifications/actions.ts
 /**
- * @fileoverview Server Actions for managing user Notifications.
- * Provides functions to fetch notifications for a user, get the count of unread notifications,
- * and mark specific notifications as read.
+ * @fileoverview Server Actions para o gerenciamento de notificações do usuário.
+ * Este arquivo define as funções que o cliente pode chamar para interagir com as
+ * notificações no servidor. Inclui ações para buscar a lista de notificações
+ * de um usuário, obter a contagem de notificações não lidas e marcar uma
+ * notificação específica como lida.
  */
 'use server';
 

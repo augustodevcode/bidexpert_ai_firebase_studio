@@ -1,5 +1,12 @@
-
-      'use client';
+// src/app/profile/page.tsx
+/**
+ * @fileoverview Página "Meu Perfil" do Painel do Usuário.
+ * Este componente de cliente exibe as informações de perfil do usuário logado.
+ * Ele busca os dados do contexto de autenticação e os apresenta em seções
+ * organizadas, como informações da conta, pessoais e de endereço. Inclui
+ * também um link para a página de edição de perfil.
+ */
+'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';

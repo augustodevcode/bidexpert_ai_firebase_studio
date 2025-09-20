@@ -1,4 +1,11 @@
 // src/app/dashboard/history/page.tsx
+/**
+ * @fileoverview Página "Histórico de Navegação" do Painel do Usuário.
+ * Este componente de cliente exibe os lotes que o usuário visualizou
+ * recentemente. Ele busca os IDs dos lotes do `localStorage`, carrega os dados
+ * completos do servidor e permite ao usuário remover itens do seu histórico,
+ * interagindo com o `localStorage` para persistir as alterações.
+ */
 'use client';
 
 import Link from 'next/link';
