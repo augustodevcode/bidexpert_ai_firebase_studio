@@ -1,4 +1,11 @@
 // src/app/admin/judicial-processes/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade JudicialProcess (Processo Judicial).
+ * Este arquivo funciona como a camada de Controller para todas as operações de CRUD
+ * relacionadas a processos judiciais, garantindo a aplicação correta do contexto
+ * de tenant e revalidando o cache do Next.js quando ocorrem mutações de dados.
+ * Ele delega a lógica de negócio para a `JudicialProcessService`.
+ */
 'use server';
 
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';

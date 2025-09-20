@@ -1,4 +1,10 @@
 // src/app/admin/judicial-processes/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Processos Judiciais. Inclui renderização para o número
+ * do processo, entidades relacionadas (tribunal, comarca, vara) e um menu de
+ * ações para edição e exclusão.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

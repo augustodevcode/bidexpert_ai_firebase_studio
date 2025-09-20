@@ -1,4 +1,9 @@
 // src/app/admin/judicial-processes/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Processos Judiciais.
+ * Utiliza o componente DataTable para exibir os processos de forma interativa,
+ * permitindo busca, ordenação, filtros facetados e ações como exclusão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

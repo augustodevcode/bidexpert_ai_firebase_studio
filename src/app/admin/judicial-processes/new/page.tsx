@@ -1,4 +1,10 @@
 // src/app/admin/judicial-processes/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Processo Judicial.
+ * Este componente Server-Side busca todos os dados necessários para popular
+ * os seletores do formulário (tribunais, comarcas, varas, comitentes) e
+ * renderiza o `JudicialProcessForm`, passando a ação de criação para o componente.
+ */
 import JudicialProcessForm from '../judicial-process-form';
 import { createJudicialProcessAction } from '../actions';
 import { getCourts } from '@/app/admin/courts/actions';

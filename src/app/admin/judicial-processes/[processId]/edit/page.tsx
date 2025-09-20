@@ -1,4 +1,11 @@
 // src/app/admin/judicial-processes/[processId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para um Processo Judicial específico.
+ * Este componente Server-Side busca os dados iniciais do processo a ser editado,
+ * bem como as listas de entidades relacionadas (tribunais, comarcas, varas, comitentes)
+ * para popular os seletores do formulário. A ação de atualização (`handleUpdateProcess`)
+ * é então passada como prop para o `JudicialProcessForm`.
+ */
 import JudicialProcessForm from '../../judicial-process-form';
 import { getJudicialProcess, updateJudicialProcessAction, type JudicialProcessFormValues } from '../../actions';
 import { getCourts } from '@/app/admin/courts/actions';

@@ -1,4 +1,12 @@
 // src/app/admin/judicial-processes/judicial-process-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Processos Judiciais.
+ * Utiliza `react-hook-form` e Zod para gerenciamento de estado e validação. Inclui
+ * seletores de entidade para Tribunal, Comarca e Vara, com lógica para filtrar as
+ * opções de forma dependente (ex: mostrar apenas comarcas de um tribunal).
+ * Permite também a gestão dinâmica de 'partes' do processo e tem integração com
+ * um fluxo de IA para extração de dados de documentos.
+ */
 'use client';
 
 import * as React from 'react';

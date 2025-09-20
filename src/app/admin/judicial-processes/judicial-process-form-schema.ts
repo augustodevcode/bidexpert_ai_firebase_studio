@@ -1,4 +1,10 @@
 // src/app/admin/judicial-processes/judicial-process-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de Processos Judiciais. Garante a integridade dos dados, incluindo o número
+ * do processo, a vinculação com as entidades judiciárias (tribunal, comarca, vara)
+ * e a validação de um array de partes envolvidas.
+ */
 import * as z from 'zod';
 import { ProcessPartyType } from '@/types';
 
