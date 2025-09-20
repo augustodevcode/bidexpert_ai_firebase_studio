@@ -1,3 +1,4 @@
+
 // src/app/search/page.tsx
 'use client';
 
@@ -18,7 +19,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getDirectSaleOffers } from './actions';
+import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
@@ -33,7 +34,6 @@ const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
-
 
 const sortOptionsAuctions = [
   { value: 'relevance', label: 'Relevância' },
@@ -114,29 +114,42 @@ export default function SearchPage() {
     async function fetchSharedData() {
       setIsFilterDataLoading(true);
       try {
-        const [categories, sellers, settings, makes, models] = await Promise.all([
+        const [categories, offers, sellers, settings, makes, models] = await Promise.all([
           getCategories(),
+          getDirectSaleOffers(),
           getSellers(),
           getPlatformSettings(),
           getVehicleMakes(),
           getVehicleModels()
         ]);
         
+        setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
-        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
         setPlatformSettings(settings as PlatformSettings);
-        setItemsPerPage(settings.searchItemsPerPage || 12);
+        if(settings) setItemsPerPage(settings.searchItemsPerPage || 12);
         setAllMakesForFilter(makes);
         setAllModelsForFilter(models);
+
+        const locations = new Set<string>();
+        offers.forEach(offer => {
+          if (offer.locationCity && offer.locationState) locations.add(`${offer.locationCity} - ${offer.locationState}`);
+          else if (offer.locationCity) locations.add(offer.locationCity);
+          else if (offer.locationState) locations.add(offer.locationState);
+        });
+        setUniqueLocationsForFilter(Array.from(locations).sort());
+        
+        setUniqueSellersForFilter(sellers.map(s => s.name).sort());
+
       } catch (error) {
         console.error("Error fetching shared filter data:", error);
       } finally {
         setIsFilterDataLoading(false);
+        setIsLoading(false);
       }
     }
     fetchSharedData();
   }, []);
-
+  
   // Effect to fetch main content data based on the active tab
   useEffect(() => {
     async function fetchContentData() {
@@ -485,11 +498,10 @@ export default function SearchPage() {
     }
   }
 
-  if (isFilterDataLoading) {
+  if (isFilterDataLoading || !platformSettings) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-muted-foreground">Carregando filtros...</p>
       </div>
     );
   }
@@ -499,8 +511,33 @@ export default function SearchPage() {
       <div className="flex items-center text-sm text-muted-foreground">
         <Link href="/" className="hover:text-primary">Home</Link>
         <ChevronRight className="h-4 w-4 mx-1" />
-        <span className="text-foreground font-medium">Resultados da Busca</span>
+        <span className="text-foreground font-medium">Busca</span>
       </div>
+
+      <Card className="shadow-lg p-6 bg-secondary/30">
+        <div className="text-center mb-6">
+          <ShoppingCart className="h-12 w-12 mx-auto text-primary mb-3" />
+          <h1 className="text-3xl font-bold font-headline">Explore & Encontre</h1>
+          <p className="text-muted-foreground mt-2">
+            Use nossa busca avançada para encontrar leilões, lotes e ofertas de venda direta.
+          </p>
+        </div>
+        <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
+            <div className="relative flex-grow w-full">
+                <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                type="search"
+                placeholder="Buscar por palavra-chave..."
+                className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button type="submit" className="h-12 w-full md:w-auto">
+              <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
+            </Button>
+        </form>
+      </Card>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
