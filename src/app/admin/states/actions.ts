@@ -1,5 +1,11 @@
-
 // src/app/admin/states/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade State (Estado).
+ * Este arquivo define as funções que o cliente pode chamar para interagir com
+ * os dados dos estados no servidor. Atua como a camada de Controller que interage
+ * com o StateService, aplicando a lógica de negócio e gerenciando a revalidação
+ * do cache quando os dados são modificados.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

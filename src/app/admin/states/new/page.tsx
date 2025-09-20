@@ -1,5 +1,10 @@
-
-
+// src/app/admin/states/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Estado.
+ * Este componente Server-Side renderiza o `StateForm` para entrada de dados
+ * e passa a server action `createState` para persistir o novo registro,
+ * permitindo a adição de novos estados na plataforma.
+ */
 import StateForm from '../state-form';
 import { createState, type StateFormData } from '../actions';
 
@@ -18,4 +23,3 @@ export default async function NewStatePage() {
     />
   );
 }
-    

@@ -1,4 +1,9 @@
 // src/app/admin/states/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Estados.
+ * Utiliza o componente DataTable para exibir os estados de forma interativa,
+ * permitindo busca, ordenação e ações como edição e exclusão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

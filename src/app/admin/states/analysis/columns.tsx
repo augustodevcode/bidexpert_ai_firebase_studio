@@ -1,4 +1,9 @@
 // src/app/admin/states/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance dos Estados. Inclui formatação de moeda,
+ * percentual e renderização das principais cidades e categorias por faturamento.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

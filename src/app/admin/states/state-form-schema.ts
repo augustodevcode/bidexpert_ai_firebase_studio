@@ -1,4 +1,10 @@
-
+// src/app/admin/states/state-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Estados. Este schema é usado pelo `react-hook-form`
+ * para garantir que os dados do formulário, como nome e UF, sejam consistentes
+ * e válidos antes de serem enviados para as server actions.
+ */
 import * as z from 'zod';
 
 export const stateFormSchema = z.object({
@@ -15,4 +21,3 @@ export const stateFormSchema = z.object({
 });
 
 export type StateFormValues = z.infer<typeof stateFormSchema>;
-    

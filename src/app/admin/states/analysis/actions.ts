@@ -1,7 +1,9 @@
 // src/app/admin/states/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the State Analysis Dashboard.
- * Provides functions to aggregate key statistics for auction/lot performance by state.
+ * @fileoverview Server Actions para o Dashboard de Análise de Estados.
+ * Contém funções para agregar estatísticas chave de performance por estado,
+ * como faturamento total, número de lotes vendidos, taxa de venda e identificação
+ * das cidades e categorias de maior destaque dentro de cada estado.
  */
 'use server';
 

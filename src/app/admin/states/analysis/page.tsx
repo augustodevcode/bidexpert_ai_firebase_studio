@@ -1,4 +1,9 @@
 // src/app/admin/states/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Estados.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras
+ * com o faturamento dos principais estados e uma tabela de dados detalhada.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

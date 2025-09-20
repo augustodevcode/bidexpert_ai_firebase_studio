@@ -1,4 +1,9 @@
-
+// src/app/admin/states/state-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Estados.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação,
+ * garantindo que nome e UF do estado sejam fornecidos corretamente.
+ */
 'use client';
 
 import * as React from 'react';
@@ -19,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { stateFormSchema, type StateFormValues } from './state-form-schema';
 import type { StateInfo } from '@/types';
-import { Loader2, Save, Landmark } from 'lucide-react'; // Alterado Icon para Landmark ou outro mais adequado
+import { Loader2, Save, Landmark } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 
 interface StateFormProps {
@@ -46,7 +51,6 @@ export default function StateForm({
     defaultValues: {
       name: initialData?.name || '',
       uf: initialData?.uf || '',
-      // cityCount não é editável aqui
     },
   });
 
