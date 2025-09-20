@@ -18,10 +18,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
-
-// Server Actions
-import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -30,6 +26,8 @@ import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 import UniversalListItem from '@/components/universal-list-item';
 import UniversalCard from '@/components/universal-card';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
 
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
@@ -105,6 +103,7 @@ export default function SearchPage() {
   const [currentSearchType, setCurrentSearchType] = useState<'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos'>( (searchParamsHook.get('type') as any) || 'auctions');
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortByState] = useState<string>('relevance');
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
   

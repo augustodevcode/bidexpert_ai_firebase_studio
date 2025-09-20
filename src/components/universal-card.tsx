@@ -1,10 +1,11 @@
+
 // src/components/universal-card.tsx
 'use client';
 
 import * as React from 'react';
 import type { Auction, Lot, PlatformSettings } from '@/types';
-import AuctionCard from '@/components/auction-card'; // Corrigido para o caminho com alias correto
-import LotCard from './lot-card'; // Corrigido para caminho relativo
+import AuctionCard from '@/components/cards/auction-card';
+import LotCard from '@/components/cards/lot-card';
 
 type Item = Partial<Auction & Lot>;
 

@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/page.tsx
 'use client';
 
@@ -8,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { getLots, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '../settings/actions';
-import type { Lot, Auction, PlatformSettings } from '@/types';
+import type { Auction, Lot, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -51,14 +52,20 @@ export default function AdminLotsPage() {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
 
-  const sortOptions = [
-    { value: 'endDate_asc', label: 'Encerramento Próximo' },
-    { value: 'price_desc', label: 'Maior Valor' },
-    { value: 'price_asc', label: 'Menor Valor' },
-    { value: 'bidsCount_desc', label: 'Mais Lances' },
-    { value: 'views_desc', label: 'Mais Vistos' },
-  ];
-
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const lotToDelete = allLots.find(lot => lot.id === id);
+      const result = await deleteLot(id, lotToDelete?.auctionId);
+      if (result.success) {
+        toast({ title: "Sucesso", description: result.message });
+        setRefetchTrigger(prev => prev + 1);
+      } else {
+        toast({ title: "Erro", description: result.message, variant: "destructive" });
+      }
+    },
+    [toast, allLots]
+  );
+  
   const renderLotList = (lots: Lot[]) => {
       if (!platformSettings) return null;
       return (
@@ -67,9 +74,9 @@ export default function AdminLotsPage() {
             totalItemsCount={lots.length}
             renderGridItem={(item) => <UniversalCard item={item} type="lot" auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
             renderListItem={(item) => <UniversalListItem item={item} type="lot" auction={allAuctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings} onUpdate={() => setRefetchTrigger(p => p+1)}/>}
-            sortOptions={sortOptions}
+            sortOptions={[]}
             initialSortBy="endDate_asc"
-            onSortChange={() => {}} // Sorting is handled locally if needed, or can be passed
+            onSortChange={() => {}}
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
