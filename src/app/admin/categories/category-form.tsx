@@ -1,4 +1,10 @@
-
+// src/app/admin/categories/category-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Categorias de Lotes.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * Inclui campos para todas as informações do perfil da categoria, como nome,
+ * descrição e imagens associadas (logo, capa, mega menu).
+ */
 'use client';
 
 import * as React from 'react';

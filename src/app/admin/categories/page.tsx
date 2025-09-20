@@ -1,4 +1,10 @@
 // src/app/admin/categories/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Categorias de Lotes.
+ * Utiliza o componente DataTable para exibir os dados, mas com a funcionalidade
+ * de CRUD desativada, servindo como uma tela de visualização para manter
+ * a consistência dos dados da plataforma.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

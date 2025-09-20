@@ -1,15 +1,17 @@
-
+// src/app/admin/categories/new/page.tsx
+/**
+ * @fileoverview Página para criação de uma nova Categoria de Lote.
+ * Este componente Server-Side renderiza o `CategoryForm` para entrada de dados
+ * e passa a server action `createLotCategory` para persistir o novo registro.
+ */
 import CategoryForm from '../category-form';
 import { createLotCategory } from '../actions';
-import { useAuth } from '@/contexts/auth-context'; // To pass userId for role check
 
 export default function NewCategoryPage() {
-  // const { user } = useAuth(); // In a real scenario, get user for role check in action
 
   async function handleCreateCategory(data: { name: string; description?: string }) {
     'use server';
-    // return createLotCategory(data, user?.uid);
-    return createLotCategory(data); // Simplified for now, action has placeholder role check
+    return createLotCategory(data);
   }
 
   return (

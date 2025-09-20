@@ -1,4 +1,9 @@
 // src/app/admin/categories/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Categorias de Lotes. Inclui cabeçalhos, renderização de células
+ * com links, e uma indicação visual se a categoria possui ou não subcategorias.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -1,4 +1,10 @@
 // src/app/admin/categories/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Categorias.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * o faturamento das principais categorias e uma tabela detalhada com os dados,
+ * além de uma análise gerada por IA.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

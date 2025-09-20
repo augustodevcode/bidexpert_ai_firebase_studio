@@ -1,7 +1,9 @@
 // src/app/admin/categories/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Lot Category Analysis Dashboard.
- * Provides functions to aggregate key statistics for lot category performance.
+ * @fileoverview Server Actions para o Dashboard de Análise de Categorias de Lotes.
+ * Contém funções para agregar estatísticas chave de performance, como faturamento
+ * total, número de lotes vendidos e ticket médio por categoria, permitindo uma
+ * visão clara de quais categorias são mais rentáveis.
  */
 'use server';
 

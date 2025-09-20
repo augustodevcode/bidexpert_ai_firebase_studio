@@ -1,4 +1,9 @@
 // src/app/admin/categories/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance das categorias de lotes. Inclui formatação
+ * de moeda e links para as páginas de edição de cada categoria.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
