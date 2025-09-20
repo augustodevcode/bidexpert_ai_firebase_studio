@@ -1,20 +1,18 @@
 
 /// Modelo base para todos os usuários da plataforma.
 model User {
-  id                  String               @id @default(cuid())
-  email               String               @unique
+  id                  String   @id @default(cuid())
+  email               String   @unique
   password            String?
   fullName            String?
-  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
-  accountType         AccountType          @default(PHYSICAL)
-  avatarUrl           String?
-  dataAiHint          String?              @db.VarChar(100)
-  cpf                 String?              @unique
+  cpf                 String?  @unique
   rgNumber            String?
-  rgIssuer            String?
+  rgIssuer          String?
   rgIssueDate         DateTime?
   rgState             String?
   dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
   gender              String?
   profession          String?
   nationality         String?
@@ -22,8 +20,10 @@ model User {
   propertyRegime      String?
   spouseName          String?
   spouseCpf           String?
-  cellPhone           String?
-  homePhone           String?
+  habilitationStatus  String?  @default("PENDING_DOCUMENTS")
+  accountType         String   @default("PHYSICAL")
+  avatarUrl           String?
+  dataAiHint          String?
   zipCode             String?
   street              String?
   number              String?
@@ -31,30 +31,22 @@ model User {
   neighborhood        String?
   city                String?
   state               String?
-  optInMarketing      Boolean              @default(false)
+  optInMarketing      Boolean  @default(false)
   badges              Json?
-  roles               UsersOnRoles[]
-  tenants             UsersOnTenants[]
+  sellerId            String?  @unique
+  seller              Seller?
+  auctioneerId        String?  @unique
+  auctioneer          Auctioneer?
   bids                Bid[]
   wins                UserWin[]
   maxBids             UserLotMaxBid[]
   documents           UserDocument[]
   notifications       Notification[]
   uploadedMedia       MediaItem[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  answeredQuestions   LotQuestion[]        @relation("AnsweredBy")
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
-
-  razaoSocial       String?
-  cnpj              String? @unique
-  inscricaoEstadual String?
-  website           String?
-  responsibleName   String?
-  responsibleCpf    String?
-
-  @@index([email])
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }
 
 /// Tabela de junção para a relação muitos-para-muitos entre User e Role.
@@ -71,36 +63,37 @@ model UsersOnRoles {
 
 /// Define os perfis de usuário e suas permissões.
 model Role {
-  id           String         @id @default(cuid())
-  name         String         @unique
-  nameNormalized String       @unique
-  description  String?
-  permissions  String[]
-  users        UsersOnRoles[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  id              String   @id @default(cuid())
+  name            String   @unique
+  nameNormalized  String   @unique
+  description     String?
+  permissions     String[] @default([])
+  users           UsersOnRoles[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
-  id              String           @id @default(cuid())
-  name            String
-  subdomain       String           @unique
-  domain          String?          @unique
-  users           UsersOnTenants[]
-  auctions        Auction[]
-  lots            Lot[]
-  bens            Bem[]
-  sellers         Seller[]
-  auctioneers     Auctioneer[]
+  id        String   @id @default(cuid())
+  name      String
+  subdomain String   @unique
+  domain    String?  @unique
+  users     UsersOnTenants[]
+  auctions  Auction[]
+  lots      Lot[]
+  bens      Bem[]
+  sellers   Seller[]
+  auctioneers Auctioneer[]
   judicialProcesses JudicialProcess[]
-  reports         Report[]
-  platformSettings PlatformSettings[]
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-
-  @@index([subdomain])
+  bids      Bid[]
+  notifications Notification[]
+  reports   Report[] // Relação inversa adicionada aqui
+  settings  PlatformSettings?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
+
 
 /// Tabela de junção para a relação muitos-para-muitos entre User e Tenant.
 model UsersOnTenants {
