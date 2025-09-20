@@ -337,21 +337,24 @@ enum BemStatus {
   INATIVADO
 }
 
+/// Representa um lance feito por um usuário em um lote.
 model Bid {
-  id            String   @id @default(cuid())
-  lotId         String
-  auctionId     String
-  bidderId      String
-  bidderDisplay String?
+  id            String   @id @default(uuid())
   amount        Decimal  @db.Decimal(15, 2)
   timestamp     DateTime @default(now())
+  bidderDisplay String?
 
-  lot     Lot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidder  User    @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  // Relações
+  lot       Lot    @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId     String
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  auctionId String
+  bidder    User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+  bidderId  String
 
-  @@index([lotId])
-  @@index([bidderId])
+  // Multi-Tenant
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId String
 }
 
 model City {
@@ -899,19 +902,23 @@ model Tenant {
   id        String   @id @default(uuid())
   name      String
   subdomain String   @unique
-  domain    String?
+  domain    String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users    UsersOnTenants[]
-  auctions Auction[]
-  lots     Lot[]
-  bens     Bem[]
-  sellers  Seller[]
-  bids     Bid[]
-  reports  Report[] // Relação inversa adicionada aqui
-
-  @@index([subdomain])
+  // Relações inversas
+  users             UsersOnTenants[]
+  auctions          Auction[]
+  lots              Lot[]
+  bens              Bem[]
+  sellers           Seller[]
+  auctioneers       Auctioneer[]
+  judicialProcesses JudicialProcess[]
+  directSaleOffers  DirectSaleOffer[]
+  notifications     Notification[]
+  bids              Bid[]
+  reports           Report[]
+  platformSettings  PlatformSettings?
 }
 
 model User {
