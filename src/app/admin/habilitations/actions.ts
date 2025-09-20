@@ -1,5 +1,10 @@
-
 // src/app/admin/habilitations/actions.ts
+/**
+ * @fileoverview Server Actions para o gerenciamento de habilitações de usuários.
+ * Este arquivo contém a lógica de backend para buscar solicitações de habilitação,
+ * aprovar ou rejeitar documentos individuais, e habilitar usuários para leilões
+ * específicos, servindo como a camada de controller para estas operações críticas.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

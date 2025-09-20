@@ -1,4 +1,10 @@
 // src/app/admin/habilitations/[userId]/document-review-client.tsx
+/**
+ * @fileoverview Componente do lado do cliente para a revisão de documentos de um usuário.
+ * Este componente lida com a interatividade da página, como exibir documentos,
+ * abrir modais para rejeição e chamar as server actions para aprovar ou
+ * rejeitar os documentos enviados pelo usuário.
+ */
 'use client';
 
 import { useState } from 'react';

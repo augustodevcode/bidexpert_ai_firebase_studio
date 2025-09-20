@@ -1,4 +1,9 @@
 // src/app/admin/habilitations/page.tsx
+/**
+ * @fileoverview Página principal para o gerenciamento de habilitações de usuários.
+ * Exibe uma lista de usuários com status de habilitação pendente ou em análise,
+ * permitindo que os administradores acessem a tela de revisão de documentos.
+ */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';

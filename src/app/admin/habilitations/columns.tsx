@@ -1,4 +1,9 @@
 // src/app/admin/habilitations/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de solicitações de habilitação. Inclui renderização de status
+ * com badges e links para a página detalhada de revisão de documentos do usuário.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

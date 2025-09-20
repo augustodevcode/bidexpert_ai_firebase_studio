@@ -1,4 +1,10 @@
 // src/app/admin/habilitations/[userId]/page.tsx
+/**
+ * @fileoverview Página de revisão de documentos para um usuário específico.
+ * Este componente Server-Side busca os dados do usuário e seus documentos
+ * e os passa para o componente de cliente `DocumentReviewClient`, que
+ * gerencia a lógica de interação da UI.
+ */
 import { getUserProfileData } from '@/app/admin/users/actions';
 import { getUserDocumentsForReview } from '../actions';
 import { notFound } from 'next/navigation';
