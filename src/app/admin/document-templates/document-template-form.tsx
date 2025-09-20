@@ -1,5 +1,11 @@
-
 // src/app/admin/document-templates/document-template-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar
+ * Templates de Documentos. Utiliza `react-hook-form` para gerenciar o estado
+ * e `zod` para validação. O formulário inclui um editor de texto para o conteúdo
+ * HTML e um painel lateral que exibe as variáveis Handlebars disponíveis
+ * para o tipo de template selecionado, facilitando a criação de documentos dinâmicos.
+ */
 'use client';
 
 import * as React from 'react';

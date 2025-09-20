@@ -1,5 +1,10 @@
-
 // src/app/admin/document-templates/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Templates de Documentos.
+ * Utiliza o componente DataTable para exibir os templates de forma interativa,
+ * permitindo busca, ordenação e ações como edição e exclusão. Fornece o ponto
+ * de entrada para a administração dos modelos de documentos que serão gerados pela plataforma.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

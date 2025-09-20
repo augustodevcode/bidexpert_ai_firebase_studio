@@ -1,5 +1,10 @@
-
 // src/app/admin/document-templates/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Template de Documento.
+ * Este componente Server-Side renderiza o `DocumentTemplateForm` para entrada de dados
+ * e passa a server action `createDocumentTemplate` para persistir o novo registro,
+ * permitindo que um administrador crie novos modelos de documentos para o sistema.
+ */
 import DocumentTemplateForm from '../document-template-form';
 import { createDocumentTemplate } from '../actions';
 import type { DocumentTemplateFormData } from '../document-template-form-schema';

@@ -1,5 +1,10 @@
-
 // src/app/admin/document-templates/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Templates de Documentos. Inclui cabeçalhos de coluna,
+ * formatação de células para tipo e data, e um menu de ações (editar, excluir)
+ * para cada registro, garantindo uma interface de gerenciamento clara.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

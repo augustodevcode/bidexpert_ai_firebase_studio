@@ -1,4 +1,11 @@
 // src/app/admin/document-templates/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade DocumentTemplate.
+ * Este arquivo exporta funções que o cliente pode chamar para executar
+ * operações de CRUD (Criar, Ler, Atualizar, Excluir) em templates de documentos.
+ * Cada ação atua como um controller, invocando o DocumentTemplateService
+ * para aplicar a lógica de negócio e interagir com o banco de dados.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -16,6 +23,7 @@ export async function getDocumentTemplate(id: string): Promise<DocumentTemplate 
     return documentTemplateService.getDocumentTemplateById(id);
 }
 
+// Renamed to avoid conflict with a potential type definition.
 export async function getDocumentTemplateAction(id: string): Promise<DocumentTemplate | null> {
     return getDocumentTemplate(id);
 }
