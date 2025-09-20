@@ -1,4 +1,9 @@
 // src/app/checkout/[winId]/checkout-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de checkout. Garante que os dados do cartão de crédito sejam válidos e que
+ * o método de pagamento selecionado seja consistente com os dados fornecidos.
+ */
 import * as z from 'zod';
 
 const cardSchema = z.object({

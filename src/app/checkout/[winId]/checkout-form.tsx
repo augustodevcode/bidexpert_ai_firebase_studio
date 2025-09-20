@@ -1,5 +1,11 @@
-
 // src/app/checkout/[winId]/checkout-form.tsx
+/**
+ * @fileoverview Componente de formulário para o checkout.
+ * Este componente de cliente renderiza a interface para o usuário inserir seus
+ * dados de pagamento (cartão de crédito ou parcelamento). Ele utiliza `react-hook-form`
+ * e `zod` para validação e gerencia o estado de submissão, chamando a
+ * `processPaymentAction` para finalizar a transação.
+ */
 'use client';
 
 import * as React from 'react';

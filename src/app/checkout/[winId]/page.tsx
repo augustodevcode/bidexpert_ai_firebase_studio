@@ -1,4 +1,11 @@
 // src/app/checkout/[winId]/page.tsx
+/**
+ * @fileoverview Página de servidor para o checkout de um lote arrematado.
+ * Este componente busca os dados do arremate (`UserWin`) e as configurações
+ * da plataforma no servidor. Ele renderiza o resumo do pedido e o formulário
+ * de pagamento, passando os dados necessários para o componente de cliente
+ * `CheckoutForm` para interação.
+ */
 import { notFound, redirect } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';

@@ -1,4 +1,10 @@
 // src/app/checkout/[winId]/loading.tsx
+/**
+ * @fileoverview Componente de esqueleto de carregamento para a página de checkout.
+ * Exibe uma representação visual da estrutura da página (resumo do pedido e
+ * formulário de pagamento) enquanto os dados do arremate estão sendo carregados,
+ * melhorando a experiência do usuário ao fornecer um feedback visual imediato.
+ */
 import { Loader2 } from 'lucide-react';
 import { Card, CardHeader, CardContent, CardFooter } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';

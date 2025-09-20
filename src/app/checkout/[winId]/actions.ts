@@ -1,5 +1,10 @@
-
 // src/app/checkout/[winId]/actions.ts
+/**
+ * @fileoverview Server Actions para a página de checkout.
+ * Este arquivo contém a lógica de backend para buscar os detalhes de um lote arrematado
+ * e processar o pagamento, seja à vista ou criando registros de parcelamento.
+ * Ele interage com o `UserWinService` para garantir a consistência dos dados.
+ */
 'use server';
 
 import { getPrismaInstance } from '@/lib/prisma';
