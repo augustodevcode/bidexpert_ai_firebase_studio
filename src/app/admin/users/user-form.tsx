@@ -54,14 +54,23 @@ export default function UserForm({
       fullName: initialData?.fullName || '',
       email: initialData?.email || '',
       password: '', // Senha sempre vazia no formulário de admin por segurança
-      roleId: initialRoleIds.length > 0 ? initialRoleIds[0] : null, // Apenas para compatibilidade
+      // **CORREÇÃO:** Usa o primeiro ID do array, ou null, para o Select.
+      // O formulário de perfis múltiplos cuidará de atribuir os outros.
+      roleId: initialRoleIds.length > 0 ? initialRoleIds[0] : null, 
     },
   });
 
   async function onSubmit(values: UserFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(values);
+      // Garante que o roleId seja enviado como um array, mesmo que o select só pegue um.
+      const dataToSubmit = {
+        ...values,
+        roleIds: values.roleId ? [values.roleId] : [],
+      };
+      
+      const result = await onSubmitAction(dataToSubmit);
+
       if (result.success) {
         toast({
           title: 'Sucesso!',

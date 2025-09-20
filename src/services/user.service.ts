@@ -1,4 +1,3 @@
-
 // src/services/user.service.ts
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
@@ -127,7 +126,15 @@ export class UserService {
 
   async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     try {
-        await this.userRepository.update(userId, data);
+        const { password, ...profileData } = data;
+        const dataToUpdate: Partial<Prisma.UserUpdateInput> = { ...profileData };
+
+        // **CORREÇÃO:** Somente atualiza a senha se um novo valor válido for fornecido.
+        if (password && password.length >= 6) {
+          dataToUpdate.password = await bcrypt.hash(password, 10);
+        }
+
+        await this.userRepository.update(userId, dataToUpdate);
         return { success: true, message: "Perfil atualizado com sucesso."};
     } catch (error: any) {
         console.error(`Error updating user profile for ${userId}:`, error);
