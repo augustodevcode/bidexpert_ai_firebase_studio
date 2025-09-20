@@ -62,8 +62,11 @@ export default function SellerDetailsPage() {
               getAuctionsBySellerSlug(sellerIdSlug),
               getPlatformSettings()
           ]);
-          setPlatformSettings(settings);
-          setLotItemsPerPage(settings.searchItemsPerPage || 6);
+          if(settings) {
+            setPlatformSettings(settings as PlatformSettings);
+            setLotItemsPerPage(settings.searchItemsPerPage || 6);
+          }
+
 
           if (!foundSeller) {
             setError(`Comitente com slug/publicId "${sellerIdSlug}" não encontrado.`);

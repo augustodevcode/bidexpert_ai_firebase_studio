@@ -1,5 +1,4 @@
-
-
+// src/app/category/[categorySlug]/category-display.tsx
 'use client'; 
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -13,18 +12,16 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Lot, LotCategory, PlatformSettings, SellerProfileInfo, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
-import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
 import type { ActiveFilters } from '@/components/sidebar-filters';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { LayoutGrid, List, SlidersHorizontal, Loader2, ChevronRight, AlertCircle } from 'lucide-react';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { Card, CardContent } from '@/components/ui/card';
+import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
+import { Card } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getCategoryAssets } from '@/lib/ui-helpers';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -55,6 +52,8 @@ const initialFiltersState: ActiveFilters = {
   priceRange: [0, 1000000],
   locations: [],
   sellers: [],
+  makes: [],
+  models: [],
   startDate: undefined,
   endDate: undefined,
   status: [],
@@ -92,14 +91,14 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         const [categories, platform, lots, sellers, auctions] = await Promise.all([
           getLotCategories(),
           getPlatformSettings(),
-          getLots(),
-          getSellers(),
-          getAuctions(),
+          getLots(undefined, true), // Public Call
+          getSellers(true), // Public Call
+          getAuctions(true), // Public Call
         ]);
         
         setAllAuctions(auctions);
         setAllCategoriesForFilter(categories);
-        setPlatformSettings(platform);
+        setPlatformSettings(platform as PlatformSettings);
         setAllLots(lots);
 
         const foundCategory = categories.find(cat => cat.slug === categorySlug);
@@ -192,7 +191,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         case 'views_desc':
           return (b.views || 0) - (a.views || 0);
         case 'id_desc': 
-          return b.id.localeCompare(a.id);
+          return b.id.localeCompare(String(a.id));
         case 'relevance':
         default:
           if (a.status === 'ABERTO_PARA_LANCES' && b.status !== 'ABERTO_PARA_LANCES') return -1;
@@ -204,12 +203,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
   const renderGridItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <LotCard lot={item} auction={parentAuction} platformSettings={platformSettings!} />;
+    return <UniversalCard item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   const renderListItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <LotListItem lot={item} auction={parentAuction} platformSettings={platformSettings!} />;
+    return <UniversalListItem item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   if (isLoading || !platformSettings) {
@@ -271,9 +270,10 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
             sellers={uniqueSellersForFilter}
-            onFilterSubmit={handleFilterSubmit}
+            onFilterSubmit={handleFilterSubmit as any}
             onFilterReset={handleFilterReset}
             initialFilters={activeFilters}
+            filterContext="lots"
             disableCategoryFilter={true}
           />
         </aside>

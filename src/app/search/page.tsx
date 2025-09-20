@@ -124,7 +124,7 @@ export default function SearchPage() {
         
         setAllCategoriesForFilter(categories);
         setUniqueSellersForFilter(sellers.map(s => s.name).sort());
-        setPlatformSettings(settings);
+        setPlatformSettings(settings as PlatformSettings);
         setItemsPerPage(settings.searchItemsPerPage || 12);
         setAllMakesForFilter(makes);
         setAllModelsForFilter(models);
@@ -452,7 +452,7 @@ export default function SearchPage() {
         <UniversalCard
             key={`${itemType}-${item.id}-${index}`}
             item={item}
-            type={itemType as 'auction' | 'lot'} // Cast as UniversalCard only handles these two for now
+            type={itemType as 'auction' | 'lot'}
             platformSettings={platformSettings}
             parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
         />
@@ -468,7 +468,7 @@ export default function SearchPage() {
         <UniversalListItem
             key={`${itemType}-list-${item.id}-${index}`}
             item={item}
-            type={itemType as 'auction' | 'lot'} // Cast as UniversalListItem only handles these two for now
+            type={itemType as 'auction' | 'lot'} 
             platformSettings={platformSettings}
             parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
         />
@@ -534,7 +534,7 @@ export default function SearchPage() {
               sortOptions={currentSortOptions}
               initialSortBy={sortBy}
               onSortChange={setSortByState}
-              platformSettings={platformSettings}
+              platformSettings={platformSettings!}
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
               emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
