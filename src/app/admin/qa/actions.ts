@@ -19,13 +19,19 @@ const execPromise = util.promisify(exec);
 // Helper function to read project context files for the AI
 async function getProjectContextForAI(): Promise<string> {
     try {
-        const rulesPath = path.join(process.cwd(), 'src/airules.MD'); 
-        const schemaPath = path.join(process.cwd(), 'prisma/schema.prisma');
+        const rulesPath = path.join(process.cwd(), 'src/airules.MD');
+        const headerPath = path.join(process.cwd(), 'prisma/header.prisma');
+        const modelsDir = path.join(process.cwd(), 'prisma/models');
+
+        const rulesContent = await fs.readFile(rulesPath, 'utf-8');
+        let schemaContent = await fs.readFile(headerPath, 'utf-8');
         
-        const [rulesContent, schemaContent] = await Promise.all([
-            fs.readFile(rulesPath, 'utf-8'),
-            fs.readFile(schemaPath, 'utf-8')
-        ]);
+        const modelFiles = await fs.readdir(modelsDir);
+        for (const file of modelFiles) {
+            if (file.endsWith('.prisma')) {
+                schemaContent += "\n" + await fs.readFile(path.join(modelsDir, file), 'utf-8');
+            }
+        }
 
         return `
             **Project Rules (airules.MD):**
@@ -33,7 +39,7 @@ async function getProjectContextForAI(): Promise<string> {
 
             ---
 
-            **Database Schema (prisma/schema.prisma):**
+            **Database Schema (prisma/schema.prisma - built from parts):**
             ${schemaContent}
         `;
     } catch (error) {
