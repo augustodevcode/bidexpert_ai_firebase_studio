@@ -28,13 +28,15 @@
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
 - **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
 - **Item 24: Unificação dos Componentes de Card (UniversalCard):** Criado o `UniversalCard` e `UniversalListItem` e refatoradas as páginas principais (`HomePage`, `SearchPage`, `CategoryPage`, etc.) para usá-los.
+- **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
+- **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 
 ## DOING
 - **Item 27: Refatorar Testes de Integração e E2E:**
     - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada, garantindo que eles chamem as `Server Actions` em vez dos serviços diretamente, e simulem o contexto de tenant.
-    - **Status Atual:** A refatoração dos testes de entidade e do wizard está concluída. O teste `bidding-e2e` está em andamento.
+    - **Status Atual:** Refatoração do teste `wizard-e2e.test.ts` concluída. Próximo passo é continuar com os demais arquivos de teste.
 
 ## NEXT
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos testes.
+- **Item 28: Concluir Refatoração dos Testes:** Aplicar o padrão de chamada de `Server Actions` a todos os testes de entidade restantes (ex: `user.test.ts`, `seller.test.ts`, etc.).
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

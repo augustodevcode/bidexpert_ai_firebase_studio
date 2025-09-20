@@ -40,7 +40,7 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **Jornada do Arrematante** | Fluxo completo do usuário final, do cadastro ao arremate. | `User`, `Bid`, `UserWin`, `UserDocument`, `AuctionHabilitation`|
 | **Vendas Diretas** | Módulo para ofertas de compra direta, sem a dinâmica de leilão. | `DirectSaleOffer` |
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
-| **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` |
+| **Relatórios e Análise** | **[CONCLUÍDO]** Geração e visualização de dashboards de performance para todas as entidades principais. | `Report`, `DataSource` |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Bem` |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
@@ -138,7 +138,5 @@ Baseado na estrutura de `src/app`:
 *   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
 *   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
-*   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
+*   **Testes são Essenciais:** **[IMPORTANTE]** Após a refatoração, todos os novos testes de integração **devem** ser escritos para chamar as `Server Actions` (ex: `createAuction`) em vez dos serviços diretamente (`auctionService.createAuction`). Use o helper `callActionAsUser` (em `tests/test-utils.ts`) para simular o contexto de usuário e tenant corretamente.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-
-``` 
