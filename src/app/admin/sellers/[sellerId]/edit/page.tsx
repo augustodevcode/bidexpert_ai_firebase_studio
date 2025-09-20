@@ -12,9 +12,11 @@ import { useToast } from '@/hooks/use-toast';
 import { getSellerDashboardDataAction } from '../../analysis/actions';
 import type { SellerDashboardData } from '@/services/seller.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Loader2 } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout'; 
+import type { SellerProfileInfo } from '@/types';
+
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -42,10 +44,39 @@ function SellerDashboardSection({ sellerId }: { sellerId: string }) {
         fetchData();
     }, [sellerId]);
 
-    // ... (O conteúdo da dashboard section permanece o mesmo)
+    if (isLoading) {
+        return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;
+    }
+    
+    if (!dashboardData) {
+        return <p>Não foi possível carregar os dados de performance para este comitente.</p>;
+    }
+    
     return (
         <div className="space-y-4">
-             {/* ... */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={BarChart3} />
+                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={TrendingUp} />
+                <StatCard title="Total de Leilões" value={dashboardData.totalAuctions} icon={Gavel} />
+                <StatCard title="Total de Lotes" value={dashboardData.totalLots} icon={Package} />
+            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Faturamento Mensal</CardTitle>
+                </CardHeader>
+                <CardContent className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RechartsBarChart data={dashboardData.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" stroke="#888888" fontSize={10} />
+                            <YAxis stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                            <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                            <Legend />
+                            <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </RechartsBarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
         </div>
     )
 }
@@ -56,12 +87,12 @@ export default function EditSellerPage() {
   const router = useRouter();
   const { toast } = useToast();
   
-  const [seller, setSeller] = useState<SellerFormData | null>(null);
+  const [seller, setSeller] = useState<SellerProfileInfo | null>(null);
   const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const formRef = React.useRef<any>(null); // Ref para o formulário
+  const formRef = React.useRef<any>(null);
 
   const fetchPageData = useCallback(async () => {
       if (!sellerId) return;
@@ -76,7 +107,7 @@ export default function EditSellerPage() {
             notFound();
             return;
         }
-        setSeller(sellerData);
+        setSeller(sellerData as SellerProfileInfo);
         setJudicialBranches(branchesData);
       } catch (e) {
           console.error("Error fetching seller data", e);

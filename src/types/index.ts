@@ -77,6 +77,7 @@ export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' 
   isFeaturedOnMarketplace?: boolean;
   additionalTriggers?: string[];
   dataAiHint?: string;
+  autoRelistSettings?: any;
 };
 export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue'> & {
   bens?: Bem[];
@@ -108,7 +109,11 @@ export type JudicialDistrict = PmJudicialDistrict & { courtName?: string, stateU
 export type JudicialBranch = PmJudicialBranch & { districtName?: string, stateUf?: string };
 export type ProcessParty = PmJudicialParty;
 export type StateInfo = PmState & { cityCount?: number };
-export type CityInfo = PmCity & { stateUf?: string };
+export type CityInfo = Omit<PmCity, 'latitude' | 'longitude'> & { 
+    stateUf?: string,
+    latitude?: number | null,
+    longitude?: number | null,
+};
 export type MediaItem = PmMediaItem;
 export type DataSource = PmDataSource;
 export type Report = PmReport;
@@ -145,7 +150,7 @@ export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPubl
   themes?: Theme[];
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;
-  variableIncrementTable?: PmVariableIncrementTable[] | null;
+  variableIncrementTable?: PmVariableIncrementRule[] | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
   homepageSections?: any[] | null;

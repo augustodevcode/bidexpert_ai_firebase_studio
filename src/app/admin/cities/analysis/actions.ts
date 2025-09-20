@@ -6,6 +6,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
+import type { Prisma as PrismaTypes } from '@prisma/client';
 
 export interface CityPerformanceData {
   id: string;
@@ -44,9 +45,12 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
 
     return citiesWithLots.map(city => {
       const lotsSoldCount = city.lots.length;
-      const totalRevenue = city.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalRevenue = city.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLots = city._count.lots;
       const salesRate = totalLots > 0 ? (lotsSoldCount / totalLots) * 100 : 0;
+      const latitude = city.latitude ? Number(city.latitude) : null;
+      const longitude = city.longitude ? Number(city.longitude) : null;
+
 
       return {
         id: city.id,
@@ -56,8 +60,8 @@ export async function getCitiesPerformanceAction(): Promise<CityPerformanceData[
         lotsSoldCount,
         totalRevenue,
         salesRate,
-        latitude: city.latitude,
-        longitude: city.longitude,
+        latitude,
+        longitude,
       };
     }).sort((a, b) => b.totalRevenue - a.totalRevenue); // Sort by revenue descending
     

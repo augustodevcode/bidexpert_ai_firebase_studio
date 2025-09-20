@@ -4,8 +4,6 @@
 import type { ColumnDef } from '@tanstack/react-table';
 import type { CityPerformanceData } from './actions';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { Button } from '@/components/ui/button';
-import { Eye } from 'lucide-react';
 import Link from 'next/link';
 
 export const createCityAnalysisColumns = (): ColumnDef<CityPerformanceData>[] => [

@@ -4,7 +4,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { getCitiesPerformanceAction, type CityPerformanceData } from './actions';
 import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
-import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, MapPin, Loader2, Package, TrendingUp, BarChart3, Map as MapIcon, Globe, BrainCircuit } from 'lucide-react';

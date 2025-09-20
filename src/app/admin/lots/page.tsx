@@ -11,7 +11,9 @@ import { getPlatformSettings } from '../settings/actions';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 

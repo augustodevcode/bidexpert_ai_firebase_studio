@@ -15,6 +15,8 @@ import { getPlatformSettings } from '../settings/actions';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth
+import { hasPermission } from '@/lib/permissions';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
