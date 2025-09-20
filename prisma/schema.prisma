@@ -391,6 +391,16 @@ model Court {
   auctions          Auction[]           @relation(map: "CourtAuctions")
 }
 
+/// @Model {label: "Fonte de Dados de Relatório", icon: "database"}
+model DataSource {
+  id        String @id @default(cuid())
+  name      String
+  modelName String @unique
+  fields    Json
+
+  @@map("data_sources")
+}
+
 
 model DirectSaleOffer {
   id                   String                @id @default(cuid())
@@ -1068,4 +1078,18 @@ model VehicleModel {
 
   @@unique([makeId, name])
   @@index([slug])
+}
+
+/// Modelo para armazenar definições de relatórios customizados
+model Report {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  definition  Json
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
 }
