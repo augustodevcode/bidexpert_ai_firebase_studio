@@ -1,4 +1,10 @@
 // src/components/admin/lots/relist-lot-modal.tsx
+/**
+ * @fileoverview Componente de modal para a funcionalidade de relistagem de lotes.
+ * Este modal permite que o usuário selecione um novo leilão de destino e aplique
+ * um desconto opcional ao criar uma nova versão de um lote que não foi vendido.
+ * Ele interage com a `relistLotAction` para executar a lógica no servidor.
+ */
 'use client';
 
 import { useState } from 'react';

@@ -1,4 +1,11 @@
 // src/app/admin/lots/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Lot (Lote).
+ * Este arquivo funciona como a camada de Controller para todas as operações
+ * de CRUD e outras lógicas de negócio relacionadas a lotes. Ele interage com
+ * a LotService e a BemService para manipular dados, garantindo a aplicação
+ * do contexto de tenant e a revalidação de cache do Next.js quando necessário.
+ */
 'use server';
 
 import type { Lot, Bem, LotFormData } from '@/types';

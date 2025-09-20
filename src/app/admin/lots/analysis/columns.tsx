@@ -1,5 +1,9 @@
-
 // src/app/admin/lots/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance dos lotes. Inclui formatação de status,
+ * preço, contagem de lances e links para as páginas de detalhes.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

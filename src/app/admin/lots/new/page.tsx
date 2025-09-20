@@ -1,4 +1,11 @@
 // src/app/admin/lots/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Lote.
+ * Este componente Server-Side é responsável por buscar os dados iniciais
+ * necessários para popular os seletores do formulário de lote, como categorias,
+ * leilões, comitentes, e bens disponíveis. Ele renderiza o `LotForm` e passa a
+ * ação `createLot` para persistir o novo registro.
+ */
 import LotForm from '../lot-form';
 import { createLot, type LotFormData } from '../actions';
 import { getAuctions } from '@/app/admin/auctions/actions';

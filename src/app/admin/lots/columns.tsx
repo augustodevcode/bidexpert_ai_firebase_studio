@@ -1,3 +1,10 @@
+// src/app/admin/lots/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Lotes. Inclui cabeçalhos, renderização de células com
+ * links, formatação de status e preço, e um menu de ações para cada linha
+ * (editar, excluir, etc.).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

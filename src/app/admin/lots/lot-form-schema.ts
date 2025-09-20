@@ -1,4 +1,11 @@
 // src/app/admin/lots/lot-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Lotes. Este schema é usado pelo `react-hook-form`
+ * para garantir que os dados do formulário sejam consistentes e válidos antes
+ * de serem enviados para as server actions, incluindo a validação dos detalhes
+ * de preço para cada etapa do leilão.
+ */
 import * as z from 'zod';
 import { lotStatusValues } from '@/lib/zod-enums';
 

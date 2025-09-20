@@ -1,4 +1,11 @@
 // src/app/admin/lots/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Lotes.
+ * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * permitindo busca, ordenação e alternância entre visualização em grade e lista.
+ * É responsável por buscar os dados iniciais de todos os lotes, leilões e
+ * configurações da plataforma para renderização no lado do cliente.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -16,6 +23,8 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
+import { useAuth } from '@/contexts/auth-context'; // Import useAuth
+import { hasPermission } from '@/lib/permissions';
 
 export default function AdminLotsPage() {
   const [allLots, setAllLots] = useState<Lot[]>([]);

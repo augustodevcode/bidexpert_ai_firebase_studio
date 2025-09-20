@@ -1,4 +1,10 @@
 // src/app/admin/lots/relist-lot-action.ts
+/**
+ * @fileoverview Server Action para a relistagem de um lote.
+ * Este arquivo contém a lógica de backend para criar um novo lote baseado em
+ * um lote existente que não foi vendido. Ele delega a complexidade da
+ * regra de negócio para a `RelistService`.
+ */
 'use server';
 
 import { RelistService } from '@/services/relist.service';

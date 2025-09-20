@@ -1,4 +1,11 @@
-
+// src/app/admin/lots/[lotId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para um Lote específico.
+ * Este componente Server-Side é responsável por buscar todos os dados necessários
+ * para a edição de um lote, incluindo o próprio lote, categorias, leilões,
+ * comitentes, bens disponíveis, estados e cidades. Ele então renderiza o
+ * `LotForm` e passa as funções de ação para atualização e finalização do lote.
+ */
 'use client';
 
 import { getLot, updateLot, finalizeLot } from '../../actions';

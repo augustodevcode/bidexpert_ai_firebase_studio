@@ -1,4 +1,11 @@
 // src/app/admin/lots/lot-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Lotes.
+ * Utiliza `react-hook-form` e Zod para gerenciamento de estado e validação.
+ * O formulário é altamente dinâmico, permitindo a vinculação de Bens,
+ * gerenciamento de mídia, seleção de leilão/categoria, e configuração de
+ * preços específicos por etapa do leilão.
+ */
 'use client';
 
 import * as React from 'react';
@@ -281,7 +288,7 @@ export default function LotForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)}>
+        <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="space-y-6">
                 <Card className="shadow-lg">
                     <CardHeader>
@@ -305,7 +312,7 @@ export default function LotForm({
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Nº do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A-5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Nº do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="condition" render={({ field }) => (<FormItem><FormLabel>Condição</FormLabel><FormControl><Input placeholder="Ex: Novo, Usado, Sucata" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                             </TabsContent>

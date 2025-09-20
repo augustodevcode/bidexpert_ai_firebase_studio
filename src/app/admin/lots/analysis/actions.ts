@@ -1,8 +1,9 @@
-
 // src/app/admin/lots/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Lot Analysis Dashboard.
- * Provides functions to aggregate key statistics for lot performance.
+ * @fileoverview Server Actions para o Dashboard de Análise de Lotes.
+ * Este arquivo contém a lógica para buscar e agregar dados de performance
+ * de todos os lotes, como contagem de lances e nomes de entidades relacionadas,
+ * para serem exibidos na tabela de análise.
  */
 'use server';
 
@@ -55,4 +56,3 @@ export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> 
     throw new Error("Falha ao buscar dados de performance dos lotes.");
   }
 }
-

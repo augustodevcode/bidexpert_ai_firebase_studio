@@ -1,5 +1,10 @@
-
 // src/app/admin/lots/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Lotes.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * os lotes mais disputados (por número de lances) e uma tabela de dados detalhada
+ * com todos os lotes da plataforma, além de uma análise gerada por IA.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
