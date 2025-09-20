@@ -40,7 +40,7 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **Jornada do Arrematante** | Fluxo completo do usuário final, do cadastro ao arremate. | `User`, `Bid`, `UserWin`, `UserDocument`, `AuctionHabilitation`|
 | **Vendas Diretas** | Módulo para ofertas de compra direta, sem a dinâmica de leilão. | `DirectSaleOffer` |
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
-| **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `Report`, `ReportShare` |
+| **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Bem` |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
@@ -124,6 +124,12 @@ Baseado na estrutura de `src/app`:
 *   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriado (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
 *   **Não Uso Direto:** Os componentes `AuctionCard` e `LotCard` não devem ser importados ou utilizados diretamente nas páginas. As páginas devem interagir apenas com os componentes universais.
 
+### 5.3. Fontes de Dados para Relatórios
+
+*   **Modelo `DataSource`:** A tabela `DataSource` no banco de dados é a fonte da verdade para as variáveis disponíveis no `BidReportBuilder`.
+*   **Seeding:** O script `seed-db.ts` é responsável por popular a tabela `DataSource` com metadados dos principais modelos da aplicação (`Auction`, `Lot`, `User`, `Seller`, etc.).
+*   **Estrutura:** Cada registro em `DataSource` define um `name` (amigável, ex: "Leilões"), um `modelName` (do Prisma, ex: "Auction") e um JSON `fields` que lista as colunas (`name` e `type`) que podem ser usadas como variáveis no relatório (ex: `{{Auction.title}}`).
+
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
@@ -133,4 +139,6 @@ Baseado na estrutura de `src/app`:
 *   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
+*   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
 
+``` 

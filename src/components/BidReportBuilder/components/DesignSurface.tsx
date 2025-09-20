@@ -3,6 +3,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ReportElement } from '../index';
+import ChartComponent from './ChartComponent';
+import TableComponent from './TableComponent';
 
 
 interface DesignSurfaceProps {
@@ -73,6 +75,18 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [draggingElement]);
 
+  const renderElementContent = (element: ReportElement) => {
+    switch (element.type) {
+      case 'Chart':
+        return <ChartComponent />;
+      case 'Table':
+        return <TableComponent />;
+      case 'TextBox':
+      default:
+        return <p className="text-xs truncate pointer-events-none">{element.content}</p>;
+    }
+  };
+
   return (
     <div 
         ref={surfaceRef} 
@@ -97,11 +111,11 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({
             cursor: draggingElement?.id === el.id ? 'grabbing' : 'grab'
           }}
           className={cn(
-            "p-2 bg-slate-100/80 hover:border-primary-light transition-all",
+            "p-2 bg-slate-100/80 hover:border-primary-light transition-all overflow-hidden",
              selectedElementId === el.id ? 'border-2 border-primary ring-2 ring-primary/30 z-10' : 'border border-dashed border-muted-foreground'
           )}
         >
-          <p className="text-xs truncate pointer-events-none">{el.content} ({el.type})</p>
+          {renderElementContent(el)}
         </div>
       ))}
     </div>
