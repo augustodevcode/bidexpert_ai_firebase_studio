@@ -1,7 +1,9 @@
 // src/app/admin/reports/actions.ts
 /**
- * @fileoverview Server Actions for the main admin reports page.
- * Provides functions to aggregate key statistics for the platform overview.
+ * @fileoverview Server Actions para a página principal de relatórios do administrador.
+ * Fornece funções que agregam estatísticas chave de toda a plataforma, como
+ * contagens totais, faturamento, e dados para gráficos de desempenho, servindo
+ * como a fonte de dados para o dashboard geral.
  */
 'use server';
 
@@ -15,9 +17,10 @@ import { ReportService } from '@/services/report.service';
 const reportService = new ReportService();
 
 /**
- * Fetches key statistics for the admin dashboard.
- * Counts total users, auctions, lots, and sellers.
- * @returns {Promise<AdminReportData>} A promise that resolves to an object with platform statistics.
+ * Busca estatísticas chave para o dashboard de administração.
+ * Conta totais de usuários, leilões, lotes, comitentes e calcula métricas
+ * como faturamento, novos usuários, e dados para gráficos.
+ * @returns {Promise<AdminReportData>} Um objeto com as estatísticas da plataforma.
  */
 export async function getAdminReportDataAction(): Promise<AdminReportData> {
   const [

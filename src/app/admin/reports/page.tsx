@@ -1,4 +1,11 @@
 // src/app/admin/reports/page.tsx
+/**
+ * @fileoverview Componente de cliente para a página de Relatórios Gerais.
+ * Este componente busca e exibe as principais métricas de desempenho (KPIs)
+ * da plataforma, como faturamento, número de usuários e leilões, em cartões
+ * de estatísticas e gráficos de vendas e categorias, fornecendo uma visão
+ * geral da saúde do negócio.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
