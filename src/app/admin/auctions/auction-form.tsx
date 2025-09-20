@@ -1,4 +1,11 @@
 // src/app/admin/auctions/auction-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Leilões.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * É um componente complexo que inclui seletores de entidade, campos dinâmicos
+ * para diferentes métodos de leilão, e gerenciamento de etapas/praças.
+ * É usado tanto na página de edição/criação de leilão quanto no Wizard.
+ */
 'use client';
 
 import React, { useEffect, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';

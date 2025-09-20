@@ -1,4 +1,11 @@
 // src/app/admin/auctions/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Auction (Leilão).
+ * Este arquivo exporta funções que lidam com a criação, leitura, atualização
+ * e exclusão (CRUD) de leilões. Atua como a camada de Controller que interage
+ * com a AuctionService, lida com o contexto de tenant e revalida o cache do Next.js
+ * quando necessário.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

@@ -1,4 +1,10 @@
 // src/app/admin/auctions/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Leilões.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), gráficos de desempenho e
+ * uma tabela detalhada com os dados de todos os leilões, além de uma análise gerada por IA.
+ * Inclui também um gráfico de Gantt para visualização da linha do tempo dos leilões.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

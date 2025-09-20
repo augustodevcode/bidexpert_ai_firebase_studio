@@ -1,4 +1,10 @@
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
+/**
+ * @fileoverview Página para edição e visualização de um Leilão específico.
+ * Permite alternar entre o modo de visualização (exibindo dashboards de performance)
+ * e o modo de edição (usando o AuctionForm). Centraliza o gerenciamento completo de um
+ * leilão, incluindo seus lotes e análise de dados.
+ */
 'use client'; 
 
 import AuctionForm from '../../auction-form';

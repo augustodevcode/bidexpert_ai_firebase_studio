@@ -1,4 +1,11 @@
 // src/app/admin/auctions/auction-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Leilões. Este schema é usado pelo `react-hook-form`
+ * para garantir que os dados do formulário sejam consistentes e válidos antes
+ * de serem enviados para as server actions. Inclui validações complexas como
+ * a ordem das datas das praças e campos condicionais para métodos de leilão.
+ */
 import * as z from 'zod';
 import type { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod } from '@/types';
 import { auctionStatusValues, auctionTypeValues, auctionParticipationValues, auctionMethodValues } from '@/lib/zod-enums';

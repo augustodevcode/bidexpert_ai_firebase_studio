@@ -1,7 +1,9 @@
 // src/app/admin/auctions/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Auction Analysis Dashboard.
- * Provides functions to aggregate key statistics for auction performance.
+ * @fileoverview Server Actions para o Dashboard de Análise de Leilões.
+ * Contém funções para agregar estatísticas chave de performance dos leilões,
+ * como faturamento total, taxa de vendas, e dados para gráficos. Também invoca
+ * fluxos de IA para gerar análises textuais sobre os dados de desempenho.
  */
 'use server';
 
@@ -10,7 +12,7 @@ import type { AuctionPerformanceData, AuctionDashboardData, Auction } from '@/ty
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { formatInSaoPaulo, nowInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 /**
  * Fetches and aggregates performance data for all auctions.

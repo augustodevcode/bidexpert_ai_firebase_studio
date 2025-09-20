@@ -1,4 +1,10 @@
 // src/app/admin/auctions/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Leilão.
+ * Este componente busca os dados necessários para os seletores (categorias,
+ * leiloeiros, etc.) e renderiza o `AuctionForm` para entrada de dados.
+ * Utiliza a server action `createAuction` para persistir o novo registro.
+ */
 'use client';
 
 import AuctionForm from '../auction-form';

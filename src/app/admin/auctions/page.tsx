@@ -1,4 +1,10 @@
 // src/app/admin/auctions/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Leilões.
+ * Utiliza o componente SearchResultsFrame para exibir os dados em grade ou lista,
+ * permitindo busca e ordenação. É responsável por buscar os dados iniciais
+ * de leilões e configurações da plataforma.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

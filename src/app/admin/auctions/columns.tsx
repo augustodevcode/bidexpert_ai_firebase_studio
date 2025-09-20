@@ -1,4 +1,11 @@
 // src/app/admin/auctions/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Leilões. Inclui cabeçalhos, renderização de células com
+ * links, e um menu de ações para cada linha (editar, excluir, etc.). Demonstra
+ * o uso do componente `DataTableColumnHeader` para ordenação e a lógica para
+ * desabilitar a exclusão de leilões que não estão em um estado seguro para remoção.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
