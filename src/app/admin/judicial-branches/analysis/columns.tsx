@@ -31,6 +31,11 @@ export const createBranchAnalysisColumns = (): ColumnDef<BranchPerformanceData>[
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lotes Vendidos" />,
     cell: ({ row }) => <div className="text-center">{row.getValue("totalLotsSold")}</div>,
   },
+    {
+    accessorKey: "salesRate",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Taxa Venda (%)" />,
+    cell: ({ row }) => <div className="text-right font-medium">{`${Number(row.getValue("salesRate")).toFixed(1)}%`}</div>,
+  },
   {
     accessorKey: "totalRevenue",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Faturamento Total" />,
