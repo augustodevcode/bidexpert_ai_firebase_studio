@@ -22,7 +22,7 @@ The platform is designed to serve multiple "tenants" (auction houses), each with
 
 ### MVC with Service Layer
 
--   **Model:** Managed by **Prisma ORM**, with the schema defined in `prisma/schema.prisma`.
+-   **Model:** Managed by **Prisma ORM**, with the schema defined modularly in the `prisma/models/` directory.
 -   **Views:** Implemented using **Next.js with React Server Components** (`.tsx` files).
 -   **Controllers:** Handled by **Next.js Server Actions** (`/actions.ts` files).
 -   **Services:** Contain the core business logic (`/services/*.ts` files).
@@ -46,7 +46,7 @@ This project uses **Prisma ORM** as its data access layer with **MySQL**.
 
 To keep the project organized, the Prisma schema is modularized.
 
--   **Source of Truth:** All data models (`model`) and enumerations (`enum`) are located in individual `.prisma` files inside the `prisma/models/` directory. **You should edit these files, not `schema.prisma`.**
+-   **Source of Truth:** All data models (`model`) and enumerations (`enum`) are located in individual `.prisma` files inside the `prisma/models/` directory. **You should edit these files, not `prisma/schema.prisma`.**
 -   **Build Process:** The main `prisma/schema.prisma` file is **automatically generated**. A script (`scripts/build-prisma-schema.ts`) runs before any `dev` or `build` command to combine all modular files into the final schema file that Prisma uses.
 
 ### 3. Database Initialization & Seeding

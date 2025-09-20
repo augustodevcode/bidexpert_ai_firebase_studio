@@ -36,9 +36,15 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 **Rationale:** Using Prisma as the single source of truth for database interactions provides type safety, simplifies queries, and allows the application to seamlessly switch between different SQL databases.
 
-## 4. Schema and Migrations
+## 4. Modular Prisma Schema Architecture
 
-**Rule:** The single source of truth for the database schema is `prisma/schema.prisma`. Any necessary schema changes must be made in this file. During development, the schema should be synchronized with the database by running `npm run db:push`.
+**Rule:** To maintain organization and readability, the Prisma schema is modularized.
+- **Models Directory:** All Prisma models (`model`) and enumerations (`enum`) **must** be defined in individual `.prisma` files within the `prisma/models/` directory.
+- **Header File:** The `prisma/header.prisma` file contains the `generator` and `datasource` blocks.
+- **Build Process:** The script `scripts/build-prisma-schema.ts` is responsible for reading the header and all files in `prisma/models/`, concatenating them, and generating the final `prisma/schema.prisma` file. This script is executed automatically by `npm run dev`, `npm run build`, and `npm run db:push`.
+- **Editing:** Schema changes **must** be made in the individual files within `prisma/models/`, not directly in `prisma/schema.prisma`.
+
+**Rationale:** This approach prevents a monolithic and unwieldy `schema.prisma` file, making it easier to maintain and locate specific data models.
 
 ## 5. MVC with Service Layer Architecture
 
@@ -69,7 +75,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rationale:** Clear and consistent naming is fundamental for code quality.
 
 ### 7.3. HTML Element Identification
-**Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, and contextually relevant name.
+**Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, e contextually relevant name.
 
 **Rationale:** This convention is essential for the AI to reliably identify and manipulate specific UI elements.
 
