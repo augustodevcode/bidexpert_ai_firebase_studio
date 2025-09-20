@@ -1,0 +1,85 @@
+// prisma/models/user.prisma
+
+model User {
+  id                  String           @id @default(uuid())
+  email               String           @unique
+  password            String?
+  fullName            String?
+  roleId              String?
+  sellerId            String?
+  habilitationStatus  String           @default("PENDING_DOCUMENTS") // PENDING_DOCUMENTS, PENDING_ANALYSIS, HABILITADO, REJECTED
+  accountType         String           @default("PHYSICAL") // PHYSICAL, LEGAL
+  avatarUrl           String?
+  dataAiHint          String?          @db.VarChar(100)
+  badges              Json?
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  documents           UserDocument[]
+  bids                Bid[]
+  wins                UserWin[]
+  maxBids             UserLotMaxBid[]
+  notifications       Notification[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  mediaItems          MediaItem[]      @relation("UploadedBy")
+  answeredQuestions   LotQuestion[]    @relation("AnsweredBy")
+
+  @@map("users")
+}
+
+model UsersOnRoles {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([userId, roleId])
+}
+
+model Role {
+  id              String         @id @default(uuid())
+  name            String         @unique
+  nameNormalized  String         @unique
+  description     String?
+  permissions     String[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  users           UsersOnRoles[]
+}
+
+model Tenant {
+  id                  String              @id @default(uuid())
+  name                String
+  subdomain           String              @unique
+  domain              String?
+  users               UsersOnTenants[]
+  auctions            Auction[]
+  lots                Lot[]
+  bens                Bem[]
+  sellers             Seller[]
+  auctioneers         Auctioneer[]
+  judicialProcesses   JudicialProcess[]
+  bids                Bid[]
+  notifications       Notification[]
+  directSaleOffers    DirectSaleOffer[]
+  reports             Report[]
+  platformSettings    PlatformSettings?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UsersOnTenants {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId   String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([userId, tenantId])
+}
