@@ -15,8 +15,8 @@ import { getPlatformSettings } from '../settings/actions';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/cards/universal-card';
-import UniversalListItem from '@/components/cards/universal-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
@@ -58,7 +58,7 @@ export default function AdminAuctionsPage() {
     } else {
       toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
     }
-  }, [toast]);
+  }, [toast, fetchPageData]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
     if (selectedItems.length === 0) return;

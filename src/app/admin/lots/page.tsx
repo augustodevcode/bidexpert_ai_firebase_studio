@@ -14,8 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/cards/universal-card';
-import UniversalListItem from '@/components/cards/universal-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 
 export default function AdminLotsPage() {
   const [allLots, setAllLots] = useState<Lot[]>([]);

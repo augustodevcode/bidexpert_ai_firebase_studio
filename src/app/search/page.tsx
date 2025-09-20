@@ -1,4 +1,3 @@
-
 // src/app/search/page.tsx
 'use client';
 
@@ -19,7 +18,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getDirectSaleOffers } from '@/app/direct-sales/actions';
+import { getDirectSaleOffers } from './actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
@@ -502,24 +501,6 @@ export default function SearchPage() {
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground font-medium">Resultados da Busca</span>
       </div>
-
-      <Card className="shadow-lg p-6 bg-secondary/30">
-        <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full">
-            <div className="relative flex-grow w-full">
-                <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                type="search"
-                placeholder="Buscar por palavra-chave, ID..."
-                className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
-            <Button type="submit" className="h-12 w-full md:w-auto">
-              <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
-            </Button>
-        </form>
-      </Card>
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">

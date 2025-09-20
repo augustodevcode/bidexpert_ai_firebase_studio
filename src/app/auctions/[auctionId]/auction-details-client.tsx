@@ -8,8 +8,8 @@ import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import UniversalCard from '@/components/cards/universal-card';
-import UniversalListItem from '@/components/cards/universal-list-item';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
@@ -289,10 +289,10 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
             </Card>
              {auction.documentsUrl && (
                   <Card className="shadow-md">
-                      <CardHeader>
-                          <CardTitle className="text-lg flex items-center"><FileText className="mr-2 h-5 w-5 text-primary" /> Documentos do Leilão</CardTitle>
+                      <CardHeader className="p-3">
+                          <CardTitle className="text-md font-semibold flex items-center"><FileText className="mr-2 h-4 w-4 text-primary" /> Documentos do Leilão</CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="p-3 pt-0">
                           <Button variant="link" asChild className="p-0 h-auto text-primary">
                               <a href={auction.documentsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center text-sm">
                                   Ver Edital Completo <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
