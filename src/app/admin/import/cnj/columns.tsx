@@ -1,4 +1,10 @@
 // src/app/admin/import/cnj/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe os resultados da busca de processos na API do CNJ. Esta configuração
+ * é crucial para mapear os dados aninhados retornados pela API (ex: `_source.numeroProcesso`)
+ * para as células corretas da tabela, utilizando a propriedade `accessorFn`.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

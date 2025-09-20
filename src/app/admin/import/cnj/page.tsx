@@ -1,4 +1,11 @@
 // src/app/admin/import/cnj/page.tsx
+/**
+ * @fileoverview Página de interface do usuário para a importação de processos
+ * judiciais a partir da base de dados do Datajud (CNJ). Permite ao administrador
+ * buscar processos por número único ou por classe/órgão, visualizar os resultados
+ * em uma tabela, selecionar processos de interesse e importá-los para a plataforma
+ * com um único clique.
+ */
 'use client';
 
 import * as React from 'react';
@@ -102,7 +109,7 @@ export default function CnjImportPage() {
       const result = await importCnjProcesses(sourcesToImport);
        toast({
         title: "Importação Concluída",
-        description: `${result.successCount} processos importados com sucesso. ${result.errorCount} falharam.`,
+        description: `${result.successCount} processos importados com sucesso. ${result.errorCount > 0 ? `${result.errorCount} falharam.` : ''}`,
         variant: result.errorCount > 0 ? "default" : "default"
       });
       if (result.successCount > 0) {
@@ -140,11 +147,11 @@ export default function CnjImportPage() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2 space-y-1">
                   <Label htmlFor="processNumber">Número Único do Processo</Label>
-                  <Input id="processNumber" value={processNumber} onChange={(e) => setProcessNumber(e.target.value)} required />
+                  <Input id="processNumber" value={processNumber} onChange={(e) => setProcessNumber(e.target.value)} required disabled={isLoading} />
                 </div>
                  <div className="space-y-1">
                   <Label htmlFor="tribunalNumber">Tribunal</Label>
-                  <Input id="tribunalNumber" value={tribunal} onChange={(e) => setTribunal(e.target.value)} required placeholder="Ex: trf1, tjdft" />
+                  <Input id="tribunalNumber" value={tribunal} onChange={(e) => setTribunal(e.target.value)} required placeholder="Ex: trf1, tjdft" disabled={isLoading} />
                 </div>
               </div>
               <Button type="submit" disabled={isLoading}>
@@ -159,15 +166,15 @@ export default function CnjImportPage() {
                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                  <div className="space-y-1">
                   <Label htmlFor="classCode">Código da Classe</Label>
-                  <Input id="classCode" value={classCode} onChange={(e) => setClassCode(e.target.value)} required placeholder="Ex: 1116"/>
+                  <Input id="classCode" value={classCode} onChange={(e) => setClassCode(e.target.value)} required placeholder="Ex: 1116" disabled={isLoading}/>
                 </div>
                  <div className="space-y-1">
                   <Label htmlFor="courtCode">Código do Órgão Julgador</Label>
-                  <Input id="courtCode" value={courtCode} onChange={(e) => setCourtCode(e.target.value)} required placeholder="Ex: 13597"/>
+                  <Input id="courtCode" value={courtCode} onChange={(e) => setCourtCode(e.target.value)} required placeholder="Ex: 13597" disabled={isLoading}/>
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="tribunalClass">Tribunal</Label>
-                  <Input id="tribunalClass" value={tribunalClass} onChange={(e) => setTribunalClass(e.target.value)} required placeholder="Ex: tjdft"/>
+                  <Input id="tribunalClass" value={tribunalClass} onChange={(e) => setTribunalClass(e.target.value)} required placeholder="Ex: tjdft" disabled={isLoading}/>
                 </div>
               </div>
               <Button type="submit" disabled={isLoading}>

@@ -1,4 +1,11 @@
 // src/app/admin/import/cnj/actions.ts
+/**
+ * @fileoverview Server Actions para a funcionalidade de importação de processos
+ * a partir da API Datajud do CNJ (Conselho Nacional de Justiça). Este arquivo
+ * encapsula a lógica de comunicação com o serviço externo, incluindo a montagem
+ * das queries, tratamento da autenticação via API Key, e a transformação dos
+ * dados recebidos para o formato da plataforma antes de importá-los.
+ */
 'use server';
 
 import type { CnjSearchResponse, CnjProcessSource, CnjHit } from '@/types';
@@ -7,6 +14,12 @@ import { revalidatePath } from 'next/cache';
 
 const API_BASE_URL = 'https://api-publica.datajud.cnj.jus.br';
 
+/**
+ * Função central para realizar requisições à API do Datajud.
+ * @param queryBody O corpo da requisição para a busca Elasticsearch do CNJ.
+ * @param tribunal A sigla do tribunal a ser consultado (ex: 'trf1', 'tjdft').
+ * @returns A resposta completa da API do CNJ.
+ */
 async function fetchProcessFromCnj(queryBody: any, tribunal: string): Promise<CnjSearchResponse> {
   const apiKey = process.env.DATAJUD_API_KEY;
   if (!apiKey) {
@@ -42,6 +55,12 @@ async function fetchProcessFromCnj(queryBody: any, tribunal: string): Promise<Cn
   }
 }
 
+/**
+ * Busca um processo específico pelo seu número único no Datajud.
+ * @param processNumber O número do processo a ser buscado.
+ * @param tribunal A sigla do tribunal.
+ * @returns A resposta da API do CNJ.
+ */
 export async function searchByProcessNumber(processNumber: string, tribunal: string): Promise<CnjSearchResponse> {
     const query = {
         "query": {
@@ -53,6 +72,15 @@ export async function searchByProcessNumber(processNumber: string, tribunal: str
     return fetchProcessFromCnj(query, tribunal);
 }
 
+/**
+ * Busca processos em lote por código de classe e órgão julgador.
+ * @param classCode Código da classe processual.
+ * @param courtCode Código do órgão julgador.
+ * @param tribunal Sigla do tribunal.
+ * @param size Quantidade de resultados por página.
+ * @param searchAfter Array para paginação em buscas profundas.
+ * @returns A resposta da API do CNJ.
+ */
 export async function searchByClassAndCourt(classCode: string, courtCode: string, tribunal: string, size = 100, searchAfter?: (string | number)[]): Promise<CnjSearchResponse> {
     const query: any = {
         "size": size,
@@ -76,6 +104,12 @@ export async function searchByClassAndCourt(classCode: string, courtCode: string
     return fetchProcessFromCnj(query, tribunal);
 }
 
+/**
+ * Importa uma lista de processos do CNJ para o banco de dados local.
+ * Transforma os dados do formato do CNJ para o formato da aplicação.
+ * @param processes Array de processos no formato `CnjProcessSource`.
+ * @returns Um contador de sucessos e erros.
+ */
 export async function importCnjProcesses(processes: CnjProcessSource[]): Promise<{ successCount: number; errorCount: number }> {
   let successCount = 0;
   let errorCount = 0;
@@ -93,15 +127,14 @@ export async function importCnjProcesses(processes: CnjProcessSource[]): Promise
         parties.push({ name: 'Réu Desconhecido', partyType: 'REU' });
       }
 
+      // Mapeamento simplificado que assume que os IDs do CNJ podem ser usados diretamente
+      // ou que a lógica de `createJudicialProcessAction` pode encontrá-los.
       const processData = {
         processNumber: process.numeroProcesso,
         isElectronic: process.formato.nome.toLowerCase() === 'eletrônico',
-        // These will need to be found or created in our DB based on the names/codes.
-        // This is a complex step that requires mapping CNJ codes to our internal IDs.
-        // For this implementation, we will pass placeholders and assume they can be resolved later.
         courtId: process.tribunal,
         districtId: String(process.orgaoJulgador.codigo),
-        branchId: String(process.orgaoJulgador.codigo), // Often the same in CNJ data structure
+        branchId: String(process.orgaoJulgador.codigo),
         parties: parties,
       };
 
