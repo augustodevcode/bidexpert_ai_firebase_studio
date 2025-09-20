@@ -41,13 +41,14 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelectImage }) => {
     }, [searchTerm]);
 
     return (
-        <div className="p-4 h-full flex flex-col">
+        <div className="p-4 h-full flex flex-col" data-ai-id="report-media-library-panel">
             <h3 className="text-md font-semibold border-b pb-2 mb-2">Biblioteca de Mídia</h3>
              <Input 
                 placeholder="Buscar imagem..." 
                 className="mb-3 h-8 text-xs"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                data-ai-id="media-library-search-input"
             />
             <ScrollArea className="flex-grow">
                  <div className="grid grid-cols-2 gap-2">
@@ -56,6 +57,7 @@ const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelectImage }) => {
                             key={image.id} 
                             className="relative aspect-video rounded-md overflow-hidden cursor-pointer group"
                             onClick={() => onSelectImage(image)}
+                            data-ai-id={`media-library-item-${image.id}`}
                          >
                             <Image src={image.src} alt={image.alt} fill className="object-cover group-hover:scale-105 transition-transform"/>
                              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-end p-1">
