@@ -34,9 +34,9 @@
 ## DOING
 - **Item 27: Refatorar Testes de Integração e E2E:**
     - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada, garantindo que eles chamem as `Server Actions` em vez dos serviços diretamente, e simulem o contexto de tenant.
-    - **Status Atual:** Testes de `bidding-e2e`, `wizard-e2e`, `user`, `seller`, e `auctioneer` refatorados. Próximo passo é continuar com os demais arquivos de teste de entidade.
+    - **Status Atual:** Testes de `bidding-e2e`, `wizard-e2e`, `user`, `seller`, `auctioneer`, `auction`, `lot`, e `judicial-process` refatorados. Próximo passo é continuar com os demais arquivos de teste de entidade.
 
 ## NEXT
-- **Item 28: Concluir Refatoração dos Testes:** Aplicar o padrão de chamada de `Server Actions` a todos os testes de entidade restantes (ex: `category.test.ts`, `judicial-process.test.ts`, etc.).
+- **Item 28: Concluir Refatoração dos Testes:** Aplicar o padrão de chamada de `Server Actions` a todos os testes de entidade restantes (ex: `category.test.ts`, `bem.test.ts`, etc.).
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

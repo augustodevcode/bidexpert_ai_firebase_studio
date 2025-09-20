@@ -14,6 +14,7 @@ import { createBem, deleteBem } from '@/app/admin/bens/actions';
 import { createRole, getRoles } from '@/app/admin/roles/actions';
 import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
 import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import { createAuctioneer } from '@/app/admin/auctioneers/actions';
 
 
 export async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
@@ -58,7 +59,8 @@ export async function createTestPrerequisites(testRunId: string, prefix: string)
     const unauthorizedUserProfile = await callActionAsUser(getUserProfileData, null, unauthorizedUser.userId!);
     
     const category = await prisma.lotCategory.create({ data: { name: `Cat ${prefix} ${testRunId}`, slug: `cat-${prefix}-${testRunId}`, hasSubcategories: false } });
-    const auctioneer = await callActionAsUser(createAuctioneer, adminUser, { name: `Auctioneer ${prefix} ${testRunId}`, publicId: `auct-pub-${prefix}-${testRunId}`, slug: `auct-${prefix}-${testRunId}` } as any).then(res => prisma.auctioneer.findUnique({where: {id: res.auctioneerId}}));
+    const auctioneerRes = await callActionAsUser(createAuctioneer, adminUser, { name: `Auctioneer ${prefix} ${testRunId}` } as any);
+    const auctioneer = (await prisma.auctioneer.findUnique({where: {id: auctioneerRes.auctioneerId}}))!;
     
     const uniqueUf = `${prefix.substring(0,1).toUpperCase()}${testRunId.substring(0, 1).toUpperCase()}`;
     const state = await prisma.state.upsert({ where: { uf: uniqueUf }, update: {}, create: { name: `State ${prefix} ${testRunId}`, uf: uniqueUf, slug: `st-${prefix}-${testRunId}` } });
