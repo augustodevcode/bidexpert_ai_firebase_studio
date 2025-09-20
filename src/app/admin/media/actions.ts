@@ -1,5 +1,11 @@
-
 // src/app/admin/media/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade MediaItem.
+ * Este arquivo define as funções que o cliente pode chamar para executar
+ * operações de CRUD (Criar, Ler, Atualizar, Excluir) nos itens de mídia
+ * da plataforma. Ele atua como a camada de Controller, invocando o MediaService
+ * para aplicar a lógica de negócio e interagir com o banco de dados e o sistema de arquivos.
+ */
 'use server';
 
 import type { MediaItem } from '@/types';

@@ -1,4 +1,10 @@
 // src/app/admin/media/upload/page.tsx
+/**
+ * @fileoverview Página para upload de múltiplos arquivos de mídia.
+ * Este componente utiliza `react-dropzone` para criar uma área de arrastar e soltar
+ * (drag-and-drop), valida os arquivos no lado do cliente (tamanho e tipo) e os
+ * envia para uma rota de API (`/api/upload`) para processamento e armazenamento.
+ */
 'use client';
 
 import React, { useState, useRef, useCallback } from 'react';
@@ -12,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import type { MediaItem } from '@/types';
-import { useAuth } from '@/contexts/auth-context'; // Import useAuth hook
+import { useAuth } from '@/contexts/auth-context';
 
 interface UploadError {
   fileName: string;
@@ -33,7 +39,7 @@ const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
 export default function AdvancedMediaUploadPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const { userProfileWithPermissions } = useAuth(); // Get user from auth context
+  const { userProfileWithPermissions } = useAuth();
   
   const [files, setFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,8 +124,9 @@ export default function AdvancedMediaUploadPage() {
     setUploadResult(null);
     const formData = new FormData();
     files.forEach(file => formData.append('files', file));
-    formData.append('userId', userProfileWithPermissions.id); // Add the logged-in user's ID
-
+    formData.append('userId', userProfileWithPermissions.id);
+    formData.append('path', 'media');
+    
     try {
         const response = await fetch('/api/upload', {
             method: 'POST',

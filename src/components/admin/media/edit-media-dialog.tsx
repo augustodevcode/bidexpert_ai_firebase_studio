@@ -1,4 +1,10 @@
-
+// src/components/admin/media/edit-media-dialog.tsx
+/**
+ * @fileoverview Componente de diálogo modal para editar os metadados de um item de mídia.
+ * Permite que um administrador atualize o título, texto alternativo (alt text),
+ * legenda e descrição de um arquivo existente na biblioteca, melhorando o SEO
+ * e a acessibilidade.
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

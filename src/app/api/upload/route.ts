@@ -1,4 +1,11 @@
 // src/app/api/upload/route.ts
+/**
+ * @fileoverview Rota de API para o upload de arquivos de mídia.
+ * Este endpoint lida com a recepção de arquivos via POST, realiza validações
+ * de tamanho e tipo, salva os arquivos fisicamente no servidor em um diretório
+ * público e cria um registro correspondente no banco de dados através do MediaService.
+ * Ele é projetado para ser chamado por componentes de front-end como o `AdvancedMediaUploadPage`.
+ */
 import { NextRequest, NextResponse } from 'next/server';
 import { MediaService } from '@/services/media.service';
 import type { MediaItem } from '@/types';

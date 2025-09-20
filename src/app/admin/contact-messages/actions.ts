@@ -1,5 +1,11 @@
-
 // src/app/admin/contact-messages/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade ContactMessage.
+ * Este arquivo exporta as funções que permitem ao painel de administração
+ * interagir com as mensagens enviadas pelo formulário de contato público.
+ * As ações incluem buscar, marcar como lida e excluir mensagens, delegando
+ * a lógica de negócio para o `ContactMessageService`.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

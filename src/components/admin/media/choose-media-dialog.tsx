@@ -1,4 +1,11 @@
-
+// src/components/admin/media/choose-media-dialog.tsx
+/**
+ * @fileoverview Componente de diálogo modal para escolher ou enviar mídia.
+ * Este componente oferece uma interface unificada com abas para que o usuário
+ * possa tanto selecionar um item existente da biblioteca quanto enviar um novo
+ * arquivo. É usado em vários formulários (Lotes, Bens, Categorias) para
+ * associar imagens a diferentes entidades.
+ */
 'use client';
 
 import { useState, useEffect, type FormEvent, useRef } from 'react';
@@ -15,6 +22,7 @@ import Image from 'next/image';
 import { UploadCloud, Loader2, ImagePlus, FileText, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Card } from '@/components/ui/card';
+import { useAuth } from '@/contexts/auth-context';
 
 interface UploadResult {
   success: boolean;
@@ -34,11 +42,17 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const fileInputRefTab = useRef<HTMLInputElement>(null);
+  const { userProfileWithPermissions } = useAuth(); // Obter usuário autenticado
 
   const processFilesForTab = async (files: FileList | null) => {
     if (!files || files.length === 0) {
       toast({ title: 'Nenhum arquivo selecionado', variant: 'destructive'});
       return;
+    }
+
+    if (!userProfileWithPermissions?.id) {
+        toast({ title: "Usuário não autenticado", description: "Faça login para enviar arquivos.", variant: "destructive" });
+        return;
     }
     
     setIsLoading(true);
@@ -46,6 +60,7 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
     Array.from(files).forEach(file => {
       formData.append('files', file);
     });
+    formData.append('userId', userProfileWithPermissions.id);
 
     try {
         const response = await fetch('/api/upload', {
@@ -62,7 +77,6 @@ function MediaUploadTab({ onUploadComplete }: { onUploadComplete: (uploadedItems
           });
           onUploadComplete(result.items);
         } else {
-          // Handle partial successes or full failures
            const errorMessage = result.errors ? result.errors.map(e => `${e.fileName}: ${e.message}`).join(', ') : result.message;
            throw new Error(errorMessage || `Erro HTTP: ${response.status}`);
         }

@@ -1,3 +1,10 @@
+// src/app/admin/media/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a DataTable que exibe
+ * a Biblioteca de Mídia. Inclui renderização de miniaturas de imagem,
+ * informações do arquivo (título, tipo, tamanho) e um menu de ações
+ * para edição de metadados e exclusão.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -99,7 +106,7 @@ export const createColumns = ({
     header: ({ column }) => <DataTableColumnHeader column={column} title="Tamanho" />,
     cell: ({ row }) => {
         const bytes = row.original.sizeBytes;
-        if (bytes === 0) return '0 Bytes';
+        if (!bytes || bytes === 0) return '0 Bytes';
         const k = 1024;
         const sizes = ['Bytes', 'KB', 'MB', 'GB'];
         const i = Math.floor(Math.log(bytes) / Math.log(k));

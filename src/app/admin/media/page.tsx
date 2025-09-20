@@ -1,4 +1,9 @@
 // src/app/admin/media/page.tsx
+/**
+ * @fileoverview Página principal para o gerenciamento da Biblioteca de Mídia.
+ * Exibe uma DataTable com todos os itens de mídia, permitindo busca, ordenação
+ * e ações como exclusão e edição de metadados através de um modal.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
