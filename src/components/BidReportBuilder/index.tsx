@@ -5,7 +5,7 @@ import React from 'react';
 import Toolbar from './components/Toolbar';
 import DesignSurface from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
-import DataSourceManager from './components/DataSourceManager'; // Alterado de VariablePanel
+import DataSourceManager from './components/DataSourceManager';
 import MediaLibrary from './components/MediaLibrary';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
