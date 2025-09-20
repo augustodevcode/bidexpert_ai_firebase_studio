@@ -1,3 +1,11 @@
+// src/app/faq/page.tsx
+/**
+ * @fileoverview Página de Perguntas Frequentes (FAQ).
+ * Este componente estático exibe uma lista de perguntas e respostas comuns
+ * sobre a plataforma, utilizando um componente de `Accordion` para uma
+ * experiência de usuário interativa e organizada. O conteúdo é definido
+ * diretamente no arquivo para simplicidade.
+ */
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { HelpCircle } from 'lucide-react';
 

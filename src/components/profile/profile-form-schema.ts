@@ -1,4 +1,11 @@
 // src/components/profile/profile-form-schema.ts
+/**
+ * @fileoverview Schema de validação Zod unificado para formulários de perfil de usuário.
+ * Este schema define as regras para todos os campos que podem ser editados tanto
+ * pelo próprio usuário em seu painel quanto por um administrador. Ele é utilizado
+ * pelo componente reutilizável `ProfileForm` para garantir a consistência e
+ * integridade dos dados antes da submissão.
+ */
 import * as z from 'zod';
 import type { AccountType } from '@/types';
 

@@ -1,4 +1,11 @@
 // src/components/profile/profile-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para editar perfis de usuário.
+ * Este componente centraliza a lógica e a interface para a edição de dados de
+ * perfil, podendo ser usado tanto pelo usuário final (em seu dashboard) quanto
+ * por um administrador (no painel de admin). Ele adapta sua aparência e
+ * comportamento com base no `context` fornecido.
+ */
 'use client';
 
 import * as React from 'react';

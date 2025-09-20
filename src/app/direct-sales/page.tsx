@@ -25,7 +25,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
-import { getDirectSaleOffers } from './actions';
+import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
@@ -89,21 +89,24 @@ export default function DirectSalesPage() {
   });
   
   const [isLoading, setIsLoading] = useState(true);
+  const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
+    async function fetchSharedData() {
+      setIsFilterDataLoading(true);
       try {
-        const [categories, offers, sellers, settings] = await Promise.all([
+        const [categories, offers, sellers, settings, makes, models] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
           getSellers(),
-          getPlatformSettings()
+          getPlatformSettings(),
+          getVehicleMakes(),
+          getVehicleModels()
         ]);
         
         setAllOffers(offers);
         setAllCategoriesForFilter(categories);
-        setPlatformSettings(settings);
+        setPlatformSettings(settings as PlatformSettings);
 
         const locations = new Set<string>();
         offers.forEach(offer => {
@@ -118,10 +121,11 @@ export default function DirectSalesPage() {
       } catch (error) {
         console.error("Error fetching data for direct sales:", error);
       } finally {
+        setIsFilterDataLoading(false);
         setIsLoading(false);
       }
     }
-    fetchData();
+    fetchSharedData();
   }, []);
   
   const handleFilterSubmit = (filters: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; }) => {
@@ -194,7 +198,7 @@ export default function DirectSalesPage() {
   const renderGridItem = (item: DirectSaleOffer) => <UniversalCard item={item} type="lot" platformSettings={platformSettings!} />;
   const renderListItem = (item: DirectSaleOffer) => <DirectSaleOfferListItem offer={item as DirectSaleOffer} />;
 
-  if (isLoading || !platformSettings) {
+  if (isFilterDataLoading || !platformSettings) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

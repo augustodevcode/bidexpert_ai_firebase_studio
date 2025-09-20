@@ -1,4 +1,12 @@
-      'use client';
+// src/app/contact/page.tsx
+/**
+ * @fileoverview Página pública de "Contato".
+ * Este componente de cliente renderiza o formulário de contato, permitindo que
+ * usuários e visitantes enviem mensagens para a equipe da plataforma. Ele
+ * gerencia o estado do formulário, a submissão dos dados para a server action
+ * `saveContactMessage`, e exibe feedback (toasts) para o usuário.
+ */
+'use client';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';

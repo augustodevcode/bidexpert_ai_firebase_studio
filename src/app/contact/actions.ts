@@ -1,4 +1,10 @@
 // src/app/contact/actions.ts
+/**
+ * @fileoverview Server Action para o formulário de contato público.
+ * Este arquivo contém a lógica de backend para receber os dados do formulário
+ * de contato, validar as informações e salvar a mensagem no banco de dados
+ * utilizando o `ContactMessageService`.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -24,6 +30,7 @@ export async function saveContactMessage(formData: FormData): Promise<{ success:
   const result = await contactMessageService.saveMessage({ name, email, subject, message });
 
   if (result.success) {
+    // Revalida o cache da página de administração de mensagens para que a nova mensagem apareça imediatamente.
     revalidatePath('/admin/contact-messages');
     return { success: true, message: 'Sua mensagem foi enviada com sucesso!' };
   } else {

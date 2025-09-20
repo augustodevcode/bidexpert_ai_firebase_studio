@@ -1,3 +1,11 @@
+// src/app/sell-with-us/page.tsx
+/**
+ * @fileoverview Página "Venda Conosco" da plataforma.
+ * Este componente estático descreve o processo e os benefícios de vender itens
+ * através da BidExpert. Ele detalha os passos do processo, desde o cadastro
+ * inicial até a finalização do leilão, e inclui um call-to-action para que
+ * potenciais vendedores entrem em contato.
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, FileText, Handshake, Rocket } from 'lucide-react';

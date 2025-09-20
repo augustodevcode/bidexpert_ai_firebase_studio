@@ -1,5 +1,12 @@
-
 // src/app/map-search/page.tsx
+/**
+ * @fileoverview Página de busca por mapa.
+ * Este componente de cliente oferece uma experiência de busca interativa onde
+ * os resultados (lotes ou leilões) são exibidos tanto em uma lista quanto em
+ * um mapa geográfico. O componente gerencia o estado da busca, os filtros,
+ * a interação com o mapa (zoom, arrastar) e atualiza os resultados dinamicamente
+ * com base na área visível do mapa.
+ */
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

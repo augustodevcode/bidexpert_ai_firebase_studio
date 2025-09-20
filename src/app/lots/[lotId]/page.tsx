@@ -1,10 +1,11 @@
 // src/app/lots/[lotId]/page.tsx
 /**
  * @fileoverview Página de redirecionamento para detalhes de um lote.
- * Esta página captura requisições para a rota `/lots/[lotId]` e as redireciona
- * permanentemente para a URL canônica `/auctions/[auctionId]/lots/[lotId]`.
+ * Este componente Server-Side captura requisições para a rota `/lots/[lotId]`
+ * e as redireciona permanentemente para a URL canônica `/auctions/[auctionId]/lots/[lotId]`.
  * Isso é crucial para SEO e para manter uma estrutura de URL consistente,
- * evitando conteúdo duplicado.
+ * evitando conteúdo duplicado e garantindo que o usuário sempre veja o lote
+ * no contexto do seu leilão.
  */
 import { notFound, redirect } from 'next/navigation';
 import { getLot, getLots } from '@/app/admin/lots/actions';
@@ -18,7 +19,7 @@ export default async function LotRedirectPage({ params }: { params: { lotId: str
   }
 
   // Fetch the lot using the provided ID (could be publicId or internal ID)
-  const lot = await getLot(lotId);
+  const lot = await getLot(lotId, true); // Use public call for this redirect logic
 
   if (lot && lot.auctionId) {
     // If lot is found, redirect to its canonical URL
@@ -44,7 +45,7 @@ export default async function LotRedirectPage({ params }: { params: { lotId: str
 // This helps with SEO and faster loads for known lots.
 export async function generateStaticParams() {
   try {
-    const lots = await getLots(); 
+    const lots = await getLots(undefined, true); // Public call
     // Limit to a reasonable number for build time, e.g., the first 50 lots
     return lots.slice(0, 50).map((lot) => ({ 
       lotId: lot.publicId || lot.id,

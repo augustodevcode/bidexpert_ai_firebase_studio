@@ -1,4 +1,10 @@
-
+// src/app/auction-safety-tips/page.tsx
+/**
+ * @fileoverview Página estática com Dicas de Segurança para Leilões.
+ * Este componente visa educar o usuário sobre as melhores práticas para
+ * participar de leilões online de forma segura, cobrindo tópicos como
+ * a verificação de documentos, inspeção de bens e cuidados com fraudes.
+ */
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ShieldCheck, ZoomIn, FileText, Users, MessageSquareWarning } from 'lucide-react';
 import Link from 'next/link';

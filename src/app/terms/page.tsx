@@ -1,3 +1,11 @@
+// src/app/terms/page.tsx
+/**
+ * @fileoverview Página de Termos de Serviço da plataforma.
+ * Este componente estático renderiza o conteúdo legal dos termos de uso,
+ * detalhando as regras e responsabilidades de usuários, vendedores e da
+ * própria plataforma. É uma página essencial para a conformidade legal
+ * do serviço.
+ */
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
@@ -7,75 +15,75 @@ export default function TermsPage() {
     <div className="max-w-3xl mx-auto space-y-8">
       <section className="text-center py-12">
         <FileText className="mx-auto h-12 w-12 text-primary mb-4" />
-        <h1 className="text-4xl font-bold mb-4 font-headline">Terms of Service</h1>
+        <h1 className="text-4xl font-bold mb-4 font-headline">Termos de Serviço</h1>
         <p className="text-lg text-muted-foreground">
-          Please read these terms carefully before using BidExpert.
+          Por favor, leia estes termos cuidadosamente antes de usar o BidExpert.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">Last Updated: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
+        <p className="text-sm text-muted-foreground mt-2">Última Atualização: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
       </section>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">1. Acceptance of Terms</CardTitle>
+          <CardTitle className="text-xl font-semibold">1. Aceitação dos Termos</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>By accessing or using the BidExpert platform (&quot;Service&quot;), you agree to be bound by these Terms of Service (&quot;Terms&quot;). If you disagree with any part of the terms, then you may not access the Service.</p>
+          <p>Ao acessar ou usar a plataforma BidExpert (&quot;Serviço&quot;), você concorda em se vincular a estes Termos de Serviço (&quot;Termos&quot;). Se você não concorda com qualquer parte dos termos, então você não pode acessar o Serviço.</p>
         </CardContent>
       </Card>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">2. User Accounts</CardTitle>
+          <CardTitle className="text-xl font-semibold">2. Contas de Usuário</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>When you create an account with us, you must provide information that is accurate, complete, and current at all times. Failure to do so constitutes a breach of the Terms, which may result in immediate termination of your account on our Service.</p>
-          <p>You are responsible for safeguarding the password that you use to access the Service and for any activities or actions under your password, whether your password is with our Service or a third-party service.</p>
+          <p>Ao criar uma conta conosco, você deve fornecer informações precisas, completas e atuais em todos os momentos. A falha em fazer isso constitui uma violação dos Termos, o que pode resultar na rescisão imediata de sua conta em nosso Serviço.</p>
+          <p>Você é responsável por proteger a senha que você usa para acessar o Serviço e por quaisquer atividades ou ações sob sua senha, quer sua senha esteja com nosso Serviço ou com um serviço de terceiros.</p>
         </CardContent>
       </Card>
       
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">3. Auctions and Bidding</CardTitle>
+          <CardTitle className="text-xl font-semibold">3. Leilões e Lances</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>Sellers are responsible for the accuracy of their listings. Buyers are responsible for reviewing item descriptions and placing bids carefully. All bids are binding.</p>
-          <p>BidExpert reserves the right to cancel auctions or bids at its discretion if fraudulent activity is suspected or if there is a violation of these Terms.</p>
+          <p>Os vendedores são responsáveis pela precisão de seus anúncios. Os compradores são responsáveis por revisar as descrições dos itens e dar lances com cuidado. Todos os lances são vinculativos.</p>
+          <p>O BidExpert se reserva o direito de cancelar leilões ou lances a seu critério se houver suspeita de atividade fraudulenta ou se houver violação destes Termos.</p>
         </CardContent>
       </Card>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">4. AI-Powered Guidance</CardTitle>
+          <CardTitle className="text-xl font-semibold">4. Orientação por IA</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>The AI-powered auction guidance tools are provided for informational purposes only. BidExpert makes no guarantees regarding the accuracy or effectiveness of these suggestions. Sellers are ultimately responsible for their listing details and auction strategies.</p>
+          <p>As ferramentas de orientação para leilões alimentadas por IA são fornecidas apenas para fins informativos. O BidExpert não oferece garantias quanto à precisão ou eficácia dessas sugestões. Os vendedores são os responsáveis finais pelos detalhes de seus anúncios e estratégias de leilão.</p>
         </CardContent>
       </Card>
       
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">5. Limitation of Liability</CardTitle>
+          <CardTitle className="text-xl font-semibold">5. Limitação de Responsabilidade</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>In no event shall BidExpert, nor its directors, employees, partners, agents, suppliers, or affiliates, be liable for any indirect, incidental, special, consequential or punitive damages, including without limitation, loss of profits, data, use, goodwill, or other intangible losses, resulting from your access to or use of or inability to access or use the Service.</p>
+          <p>Em nenhum caso o BidExpert, nem seus diretores, funcionários, parceiros, agentes, fornecedores ou afiliados, serão responsáveis por quaisquer danos indiretos, incidentais, especiais, consequenciais ou punitivos, incluindo, sem limitação, perda de lucros, dados, uso, boa vontade ou outras perdas intangíveis, resultantes de seu acesso ou uso ou incapacidade de acessar ou usar o Serviço.</p>
         </CardContent>
       </Card>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">6. Changes to Terms</CardTitle>
+          <CardTitle className="text-xl font-semibold">6. Alterações nos Termos</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>We reserve the right, at our sole discretion, to modify or replace these Terms at any time. We will try to provide at least 30 days notice prior to any new terms taking effect. What constitutes a material change will be determined at our sole discretion.</p>
+          <p>Reservamo-nos o direito, a nosso exclusivo critério, de modificar ou substituir estes Termos a qualquer momento. Tentaremos fornecer um aviso de pelo menos 30 dias antes que quaisquer novos termos entrem em vigor. O que constitui uma alteração material será determinado a nosso exclusivo critério.</p>
         </CardContent>
       </Card>
 
        <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold">7. Contact Us</CardTitle>
+          <CardTitle className="text-xl font-semibold">7. Contato</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>If you have any questions about these Terms, please contact us at support@bidexpert.com.</p>
+          <p>Se você tiver alguma dúvida sobre estes Termos, entre em contato conosco em suporte@bidexpert.com.</p>
         </CardContent>
       </Card>
     </div>
