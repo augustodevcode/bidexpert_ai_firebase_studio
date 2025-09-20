@@ -1,5 +1,11 @@
-
 // src/app/admin/judicial-districts/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade JudicialDistrict (Comarca).
+ * Este arquivo centraliza todas as operações de back-end (CRUD) relacionadas
+ * às comarcas, como buscar, criar, atualizar e excluir. Ele atua como a camada
+ * de Controller que interage com a JudicialDistrictService para aplicar a
+ * lógica de negócio e persistir dados.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

@@ -1,4 +1,9 @@
 // src/app/admin/judicial-districts/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance das Comarcas. Inclui formatação de moeda,
+ * renderização de números e links para as páginas de detalhes de cada comarca.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -1,4 +1,10 @@
 // src/app/admin/judicial-districts/new/page.tsx
+/**
+ * @fileoverview Página para criação de uma nova Comarca Judicial.
+ * Este componente Server-Side busca os dados necessários para os seletores do
+ * formulário (a lista de estados e tribunais) e renderiza o `JudicialDistrictForm`
+ * para a entrada de dados.
+ */
 import JudicialDistrictForm from '../judicial-district-form';
 import { createJudicialDistrict } from '../actions';
 import { getStates } from '@/app/admin/states/actions';

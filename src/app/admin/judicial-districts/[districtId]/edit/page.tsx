@@ -1,4 +1,11 @@
 // src/app/admin/judicial-districts/[districtId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para uma Comarca específica.
+ * Este componente Server-Side busca os dados iniciais da comarca a ser editada
+ * e as listas de tribunais e estados para popular os seletores no formulário.
+ * A ação de atualização (`handleUpdateDistrict`) é então passada para o
+ * componente de formulário.
+ */
 import JudicialDistrictForm from '../../judicial-district-form';
 import { getJudicialDistrict, updateJudicialDistrict } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';

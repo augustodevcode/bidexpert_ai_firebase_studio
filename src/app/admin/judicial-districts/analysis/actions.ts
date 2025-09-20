@@ -1,6 +1,8 @@
 // src/app/admin/judicial-districts/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Judicial District Analysis Dashboard.
+ * @fileoverview Server Actions para o Dashboard de Análise de Comarcas.
+ * Contém a lógica de backend para buscar e agregar dados de performance
+ * de todas as comarcas, como faturamento total, número de leilões e lotes.
  */
 'use server';
 

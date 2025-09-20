@@ -1,4 +1,9 @@
 // src/app/admin/judicial-districts/judicial-district-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Comarcas Judiciais. Garante a integridade dos dados, como
+ * a obrigatoriedade do nome e da associação com um Tribunal e Estado.
+ */
 import * as z from 'zod';
 
 export const judicialDistrictFormSchema = z.object({

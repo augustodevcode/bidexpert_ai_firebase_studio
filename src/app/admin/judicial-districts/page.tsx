@@ -1,4 +1,9 @@
 // src/app/admin/judicial-districts/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Comarcas Judiciais.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação e ações como exclusão em massa e individual.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

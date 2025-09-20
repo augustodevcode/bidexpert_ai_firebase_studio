@@ -1,4 +1,9 @@
-// src/app/admin/judicial-districts/judicial-district-form.tsx
+// src/components/admin/judicial-districts/judicial-district-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Comarcas.
+ * Utiliza `react-hook-form` para gerenciamento de estado, Zod para validação e
+ * o `EntitySelector` para permitir a seleção de um estado e tribunal da lista.
+ */
 'use client';
 
 import * as React from 'react';
