@@ -1,38 +1,26 @@
 // src/components/BidReportBuilder/components/DataSourceManager.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
-import { useDrag } from 'react-dnd';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { getDataSourcesAction } from '@/app/admin/datasources/actions';
 import type { DataSource } from '@prisma/client';
 import { Loader2 } from 'lucide-react';
-
-interface Variable {
-    name: string;
-    value: string;
-}
+import { Button } from '@/components/ui/button';
 
 interface DraggableVariableProps {
   name: string;
   value: string;
+  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
-const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'REPORT_ELEMENT',
-    item: { type: 'TextBox', content: value },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }));
-
+const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value, onDragStart }) => {
   return (
     <div
-      ref={drag}
+      draggable
+      onDragStart={onDragStart}
       className="p-2 border rounded-md bg-secondary/60 hover:bg-secondary cursor-grab active:cursor-grabbing text-xs"
-      style={{ opacity: isDragging ? 0.5 : 1 }}
       title={`Arraste para adicionar a variável ${name}`}
       data-ai-id={`draggable-variable-${name.toLowerCase().replace(/\s/g, '-')}`}
     >
@@ -42,7 +30,13 @@ const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value }) =>
   );
 };
 
-export default function DataSourceManager() {
+
+interface DataSourceManagerProps {
+    onAddElement: (type: string, x?: number, y?: number, content?: string) => void;
+}
+
+
+export default function DataSourceManager({ onAddElement }: DataSourceManagerProps) {
     const [dataSources, setDataSources] = useState<DataSource[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -75,6 +69,11 @@ export default function DataSourceManager() {
 
     }, [searchTerm, dataSources]);
 
+    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, content: string) => {
+        e.dataTransfer.setData('text/plain', content);
+    };
+
+
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -100,7 +99,12 @@ export default function DataSourceManager() {
                             <AccordionTrigger className="text-sm py-2">{source.name}</AccordionTrigger>
                             <AccordionContent className="space-y-2">
                                 {(source.fields as any[]).map(field => (
-                                    <DraggableVariable key={`${source.modelName}.${field.name}`} name={field.name} value={`{{${source.modelName}.${field.name}}}`} />
+                                     <DraggableVariable 
+                                        key={`${source.modelName}.${field.name}`} 
+                                        name={field.name} 
+                                        value={`{{${source.modelName}.${field.name}}}`}
+                                        onDragStart={(e) => handleDragStart(e, `{{${source.modelName}.${field.name}}}`)}
+                                     />
                                 ))}
                             </AccordionContent>
                         </AccordionItem>

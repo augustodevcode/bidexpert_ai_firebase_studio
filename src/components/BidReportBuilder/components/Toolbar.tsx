@@ -4,33 +4,25 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Text, BarChart, Image as ImageIcon, GanttChartSquare, Save, FolderOpen, FileOutput } from 'lucide-react';
-import { useDrag } from 'react-dnd';
 
 interface ToolbarButtonProps {
   label: string;
   icon: React.ElementType;
   elementType: string;
+  onAdd: (type: string) => void;
 }
 
-const ToolbarButton: React.FC<ToolbarButtonProps> = ({ label, icon: Icon, elementType }) => {
-  const [{ isDragging }, drag] = useDrag(() => ({
-    type: 'REPORT_ELEMENT',
-    item: { type: elementType },
-    collect: (monitor) => ({
-      isDragging: !!monitor.isDragging(),
-    }),
-  }));
-
+const ToolbarButton: React.FC<ToolbarButtonProps> = ({ label, icon: Icon, elementType, onAdd }) => {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            ref={drag}
             variant="ghost"
             size="sm"
-            className={`h-9 cursor-grab ${isDragging ? 'opacity-50' : 'opacity-100'}`}
+            className="h-9"
             aria-label={label}
+            onClick={() => onAdd(elementType)}
           >
             <Icon className="h-4 w-4 mr-1.5" />
             {label}
@@ -45,19 +37,20 @@ const ToolbarButton: React.FC<ToolbarButtonProps> = ({ label, icon: Icon, elemen
 };
 
 interface ToolbarProps {
+    onAddElement: (type: string) => void;
     onSave: () => void;
     onLoad: () => void;
     onExport: () => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ onSave, onLoad, onExport }) => {
+const Toolbar: React.FC<ToolbarProps> = ({ onAddElement, onSave, onLoad, onExport }) => {
   return (
     <div className="p-2 border-b flex items-center gap-2 flex-wrap bg-card rounded-t-lg" data-ai-id="report-toolbar">
       <div className="flex items-center gap-1 border-r pr-2 mr-2">
-         <ToolbarButton label="Texto" icon={Text} elementType="TextBox" />
-         <ToolbarButton label="Gráfico" icon={BarChart} elementType="Chart" />
-         <ToolbarButton label="Imagem" icon={ImageIcon} elementType="Image" />
-         <ToolbarButton label="Tabela" icon={GanttChartSquare} elementType="Table" />
+         <ToolbarButton label="Texto" icon={Text} elementType="TextBox" onAdd={onAddElement} />
+         <ToolbarButton label="Gráfico" icon={BarChart} elementType="Chart" onAdd={onAddElement} />
+         <ToolbarButton label="Imagem" icon={ImageIcon} elementType="Image" onAdd={onAddElement} />
+         <ToolbarButton label="Tabela" icon={GanttChartSquare} elementType="Table" onAdd={onAddElement} />
       </div>
        <div className="flex items-center gap-1 ml-auto">
         <TooltipProvider>

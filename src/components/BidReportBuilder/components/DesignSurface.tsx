@@ -1,7 +1,6 @@
 // src/components/BidReportBuilder/components/DesignSurface.tsx
 'use client';
-import React from 'react';
-import { useDrop } from 'react-dnd';
+import React, { useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import type { ReportElement } from '../index';
 
@@ -11,52 +10,94 @@ interface DesignSurfaceProps {
   onAddElement: (type: string, x: number, y: number, content?: string) => void;
   onSelectElement: (element: ReportElement | null) => void;
   selectedElementId: string | null;
+  onElementChange: (id: string, props: Partial<ReportElement>) => void;
 }
 
-// Design surface where the report elements are dragged.
-const DesignSurface: React.FC<DesignSurfaceProps> = ({ elements, onAddElement, onSelectElement, selectedElementId }) => {
-  const surfaceRef = React.useRef<HTMLDivElement>(null);
+const DesignSurface: React.FC<DesignSurfaceProps> = ({ 
+  elements, 
+  onAddElement, 
+  onSelectElement, 
+  selectedElementId,
+  onElementChange
+}) => {
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const [draggingElement, setDraggingElement] = useState<{ id: string, offsetX: number, offsetY: number } | null>(null);
 
-  const [, drop] = useDrop(() => ({
-    accept: 'REPORT_ELEMENT',
-    drop: (item: { type: string; content?: string }, monitor) => {
-      const offset = monitor.getClientOffset();
-      if (offset && surfaceRef.current) {
-        const surfaceRect = surfaceRef.current.getBoundingClientRect();
-        const x = offset.x - surfaceRect.left;
-        const y = offset.y - surfaceRect.top;
-        onAddElement(item.type, x, y, item.content);
-      }
-    },
-  }));
 
-  // Attach the ref to the drop target
-  drop(surfaceRef);
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const content = e.dataTransfer.getData('text/plain');
+    if (surfaceRef.current) {
+        const rect = surfaceRef.current.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        onAddElement('TextBox', x, y, content);
+    }
+  };
+  
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+  };
+  
+  const handleElementMouseDown = (e: React.MouseEvent<HTMLDivElement>, el: ReportElement) => {
+    e.stopPropagation();
+    onSelectElement(el);
+    const offsetX = e.clientX - el.x;
+    const offsetY = e.clientY - el.y;
+    setDraggingElement({ id: el.id, offsetX, offsetY });
+  };
+  
+  const handleMouseMove = (e: MouseEvent) => {
+    if (draggingElement && surfaceRef.current) {
+      const rect = surfaceRef.current.getBoundingClientRect();
+      const newX = e.clientX - draggingElement.offsetX - rect.left;
+      const newY = e.clientY - draggingElement.offsetY - rect.top;
+      onElementChange(draggingElement.id, { x: Math.max(0, newX), y: Math.max(0, newY) });
+    }
+  };
+  
+  const handleMouseUp = () => {
+    setDraggingElement(null);
+  };
+
+  useEffect(() => {
+    if (draggingElement) {
+        window.addEventListener('mousemove', handleMouseMove);
+        window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draggingElement]);
 
   return (
     <div 
         ref={surfaceRef} 
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
         data-ai-id="report-design-surface"
         className="relative w-full h-full bg-white shadow-inner overflow-auto p-4" 
         style={{ cursor: 'crosshair', backgroundImage: 'radial-gradient(circle, #E5E5E5 1px, transparent 1px)', backgroundSize: '15px 15px' }}
-        onClick={() => onSelectElement(null)} // Deselect when clicking outside
+        onClick={() => onSelectElement(null)} 
     >
       <h2 className="text-center text-sm text-muted-foreground sr-only">Área de Design</h2>
        {elements.map((el) => (
         <div 
           key={el.id}
-          onClick={(e) => { e.stopPropagation(); onSelectElement(el); }}
+          onMouseDown={(e) => handleElementMouseDown(e, el)}
           style={{ 
             position: 'absolute', 
             left: `${el.x}px`, 
             top: `${el.y}px`, 
             width: `${el.width}px`,
             height: `${el.height}px`,
-            cursor: 'move'
+            cursor: draggingElement?.id === el.id ? 'grabbing' : 'grab'
           }}
           className={cn(
             "p-2 bg-slate-100/80 hover:border-primary-light transition-all",
-             selectedElementId === el.id ? 'border-2 border-primary ring-2 ring-primary/30' : 'border border-dashed border-muted-foreground'
+             selectedElementId === el.id ? 'border-2 border-primary ring-2 ring-primary/30 z-10' : 'border border-dashed border-muted-foreground'
           )}
         >
           <p className="text-xs truncate pointer-events-none">{el.content} ({el.type})</p>
