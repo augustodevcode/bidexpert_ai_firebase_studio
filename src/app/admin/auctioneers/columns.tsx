@@ -1,4 +1,9 @@
 // src/app/admin/auctioneers/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Leiloeiros. Inclui cabeçalhos, renderização de células
+ * com links, e um menu de ações para cada linha (editar, excluir, etc.).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

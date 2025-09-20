@@ -1,4 +1,10 @@
 // src/app/admin/auctioneers/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Auctioneer (Leiloeiro).
+ * Este arquivo exporta funções que lidam com a criação, leitura, atualização,
+ * e exclusão (CRUD) de leiloeiros, atuando como a camada de Controller que
+ * interage com a AuctioneerService e lida com o contexto de tenant e revalidação de cache.
+ */
 'use server';
 
 import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';

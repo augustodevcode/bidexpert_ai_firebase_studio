@@ -1,4 +1,10 @@
-
+// src/app/admin/auctioneers/auctioneer-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Leiloeiros. Este schema é usado pelo `react-hook-form`
+ * para garantir que os dados do formulário sejam consistentes e válidos antes
+ * de serem enviados para as server actions.
+ */
 import * as z from 'zod';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();

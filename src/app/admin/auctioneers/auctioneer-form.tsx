@@ -1,4 +1,10 @@
 // src/app/admin/auctioneers/auctioneer-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Leiloeiros.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * Inclui campos para todas as informações do perfil do leiloeiro, como dados
+ * de contato, endereço, logo e integração com a biblioteca de mídia.
+ */
 'use client';
 
 import * as React from 'react';

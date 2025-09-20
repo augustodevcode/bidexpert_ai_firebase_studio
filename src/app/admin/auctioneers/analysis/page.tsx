@@ -1,4 +1,9 @@
 // src/app/admin/auctioneers/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Leiloeiros.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), gráficos de desempenho e
+ * uma tabela detalhada com os dados de todos os leiloeiros, além de uma análise gerada por IA.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

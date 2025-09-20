@@ -1,4 +1,9 @@
 // src/app/admin/auctioneers/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Leiloeiro.
+ * Este componente renderiza o `AuctioneerForm` para entrada de dados e utiliza
+ * a server action `createAuctioneer` para persistir o novo registro no banco de dados.
+ */
 'use client';
 import { useRouter } from 'next/navigation';
 import AuctioneerForm from '../auctioneer-form';

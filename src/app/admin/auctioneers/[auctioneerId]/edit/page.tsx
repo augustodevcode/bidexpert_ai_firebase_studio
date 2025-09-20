@@ -1,4 +1,10 @@
 // src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
+/**
+ * @fileoverview Página para edição e visualização de um Leiloeiro específico.
+ * Permite alternar entre o modo de visualização e o modo de edição dos dados
+ * do leiloeiro através do `FormPageLayout`. Também exibe um dashboard de
+ * performance individual para o leiloeiro selecionado.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';

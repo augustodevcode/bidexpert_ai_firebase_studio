@@ -1,7 +1,9 @@
 // src/app/admin/auctioneers/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Auctioneer Analysis Dashboard.
- * Provides functions to aggregate key statistics for auctioneer performance.
+ * @fileoverview Server Actions para o Dashboard de Análise de Leiloeiros.
+ * Contém funções para agregar estatísticas chave de performance dos leiloeiros,
+ * como faturamento total, taxa de vendas, e dados para gráficos. Também invoca
+ * fluxos de IA para gerar análises textuais sobre os dados de desempenho.
  */
 'use server';
 

@@ -1,4 +1,9 @@
 // src/app/admin/auctioneers/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Leiloeiros.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação e ações como edição e exclusão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
