@@ -1,4 +1,12 @@
 // src/app/admin/qa/page.tsx
+/**
+ * @fileoverview Página de Quality Assurance (QA) para administradores.
+ * Este componente de cliente fornece uma interface para executar vários testes
+ * automatizados (E2E, unidade, validação) com o clique de um botão. Ele
+ * gerencia o estado de execução de cada teste, exibe a saída do console
+ * e, em caso de falha, mostra a análise e recomendação gerada pela IA,
+ * tornando-o um painel central para garantir a saúde da aplicação.
+ */
 'use client';
 
 import { useState } from 'react';

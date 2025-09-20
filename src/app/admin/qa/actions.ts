@@ -1,9 +1,10 @@
 // src/app/admin/qa/actions.ts
 /**
- * @fileoverview Server Actions for the Quality Assurance (QA) panel.
- * These actions execute predefined test scripts using `node:child_process`
- * and return the stdout and stderr for display in the UI.
- * If a test fails, it invokes an AI flow to analyze the error and provide a recommendation.
+ * @fileoverview Server Actions para o painel de Quality Assurance (QA).
+ * Este arquivo define funções que executam scripts de teste predefinidos
+ * (usando `node:child_process`) e retornam a saída (stdout e stderr) para a UI.
+ * Em caso de falha, ele invoca um fluxo de IA (Genkit) para analisar o log de erro
+ * e fornecer uma recomendação de correção, automatizando a primeira etapa do debugging.
  */
 'use server';
 
@@ -28,12 +29,12 @@ async function getProjectContextForAI(): Promise<string> {
 
         return `
             **Project Rules (airules.MD):**
-            ${rulesContent}
+            ${'${rulesContent}'}
 
             ---
 
             **Database Schema (prisma/schema.prisma):**
-            ${schemaContent}
+            ${'${schemaContent}'}
         `;
     } catch (error) {
         console.error("Error reading project context for AI:", error);
@@ -125,7 +126,7 @@ export async function analyzeErrorLogAction(errorLog: string): Promise<{ success
     return {
       success: false,
       analysis: "Falha na Análise",
-      recommendation: `Não foi possível conectar ao serviço de IA para analisar o erro: ${error.message}`
+      recommendation: `Não foi possível conectar ao serviço de IA para analisar o erro: ${'${error.message}'}`
     };
   }
 }
