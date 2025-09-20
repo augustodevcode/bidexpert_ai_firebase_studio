@@ -217,11 +217,13 @@ function SidebarContent() {
 }
 
 export default function AdminSidebar() {
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
   return (
     <>
       {/* Mobile Sidebar */}
       <div className="md:hidden">
-        <Sheet>
+        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm">
               <Menu className="h-5 w-5" />
