@@ -65,7 +65,8 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
  * @returns {Promise<SellerDashboardData | null>} The dashboard data or null if not found.
  */
 export async function getSellerDashboardDataAction(sellerId: string): Promise<SellerDashboardData | null> {
-    return sellerService.getSellerDashboardData(sellerId);
+    const tenantId = '1'; // Assuming public data for now, will need tenant context
+    return sellerService.getSellerDashboardData(tenantId, sellerId);
 }
 
 

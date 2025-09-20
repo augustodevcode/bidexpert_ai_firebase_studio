@@ -134,7 +134,7 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { categoryId, auctioneerId, sellerId, stages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
@@ -156,17 +156,17 @@ export class AuctionService {
         
         if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
 
-        const derivedAuctionDate = (stages && stages.length > 0 && stages[0].startDate) ? stages[0].startDate : (data.auctionDate || undefined);
+        const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
         if (derivedAuctionDate) {
             dataToUpdate.auctionDate = derivedAuctionDate;
         }
 
         await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
 
-        if (stages) {
+        if (auctionStages) {
             await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
             await tx.auctionStage.createMany({
-                data: stages.map(stage => ({
+                data: auctionStages.map(stage => ({
                     name: stage.name,
                     startDate: new Date(stage.startDate as Date),
                     endDate: new Date(stage.endDate as Date),
