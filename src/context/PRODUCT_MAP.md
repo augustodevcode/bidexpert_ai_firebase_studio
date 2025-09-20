@@ -121,7 +121,7 @@ Baseado na estrutura de `src/app`:
 ### 5.2. Componentes de Exibição Unificados
 
 *   **Padrão `UniversalCard` e `UniversalListItem`:** Para garantir consistência visual e manutenibilidade, a exibição de itens em formato de card ou de lista (como em páginas de busca, dashboards e páginas de categoria) **deve** utilizar os componentes `UniversalCard.tsx` e `UniversalListItem.tsx`, respectivamente.
-*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriado (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
+*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriadovação (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
 *   **Não Uso Direto:** Os componentes `AuctionCard` e `LotCard` não devem ser importados ou utilizados diretamente nas páginas. As páginas devem interagir apenas com os componentes universais.
 
 ### 5.3. Fontes de Dados para Relatórios
@@ -140,4 +140,4 @@ Baseado na estrutura de `src/app`:
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** **[IMPORTANTE]** Após a refatoração, todos os novos testes de integração **devem** ser escritos para chamar as `Server Actions` (ex: `createAuction`) em vez dos serviços diretamente (`auctionService.createAuction`). Use o helper `callActionAsUser` (em `tests/test-utils.ts`) para simular o contexto de usuário e tenant corretamente.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-
+*   **Construtor de Relatórios:** Para trabalhar no construtor de relatórios (`/admin/report-builder`), execute `npm run db:seed` para garantir que o modelo `DataSource` esteja populado no banco de dados. Sem isso, o painel de "Variáveis" ficará vazio.
