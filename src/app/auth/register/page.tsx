@@ -1,4 +1,12 @@
 // src/app/auth/register/page.tsx
+/**
+ * @fileoverview Página de Registro de Novos Usuários.
+ * Este componente de cliente gerencia o formulário de registro, que é dinâmico
+ * e se adapta ao tipo de conta selecionado (Pessoa Física ou Jurídica).
+ * Ele utiliza `react-hook-form` e `zod` para validação de dados em tempo real,
+ * lida com o upload de documentos de habilitação e chama a server action
+ * `createUser` para efetivar o cadastro do novo usuário no sistema.
+ */
 'use client';
 
 import Link from 'next/link';

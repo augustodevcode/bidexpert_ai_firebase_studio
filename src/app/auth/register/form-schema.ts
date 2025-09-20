@@ -1,4 +1,11 @@
 // src/app/auth/register/form-schema.ts
+/**
+ * @fileoverview Schema de validação Zod para o formulário de registro de novos usuários.
+ * Define as regras para todos os campos do formulário, incluindo validações
+ * condicionais baseadas no tipo de conta (Pessoa Física ou Jurídica).
+ * Utiliza o `superRefine` para validações complexas que dependem de múltiplos campos,
+ * como a confirmação de email e senha.
+ */
 import * as z from 'zod';
 
 const passwordSchema = z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres." });

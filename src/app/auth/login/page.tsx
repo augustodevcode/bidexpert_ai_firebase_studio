@@ -1,4 +1,12 @@
 // src/app/auth/login/page.tsx
+/**
+ * @fileoverview Página de Login de Usuários.
+ * Este componente de cliente renderiza o formulário de login e gerencia a lógica de
+ * submissão. Ele interage com a `login` server action para autenticar o usuário.
+ * Uma característica importante é o tratamento do cenário multi-tenant: se um
+ * usuário pertence a múltiplos "espaços de trabalho" (tenants), a UI apresenta
+ * um seletor para que o usuário escolha em qual tenant deseja logar.
+ */
 'use client';
 
 import Link from 'next/link';

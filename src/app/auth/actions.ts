@@ -1,4 +1,11 @@
 // src/app/auth/actions.ts
+/**
+ * @fileoverview Server Actions para autenticação de usuários.
+ * Este arquivo contém a lógica de backend para os processos de login e logout,
+ * bem como para a recuperação de informações do usuário logado. As ações interagem
+ * com a camada de serviço e com a biblioteca de sessão (jose) para validar
+* credenciais, criar e destruir sessões seguras em cookies.
+ */
 'use server';
 
 import { redirect } from 'next/navigation';
@@ -8,6 +15,13 @@ import { revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma'; // Use a instância base para operações globais de usuário
 
+/**
+ * Formata um objeto de usuário bruto do Prisma para o tipo `UserProfileWithPermissions`,
+ * enriquecendo-o com uma lista de permissões consolidadas de seus perfis e uma
+ * lista de nomes de perfis para fácil acesso.
+ * @param {any} user - O objeto de usuário retornado pelo Prisma, incluindo `roles` e `tenants`.
+ * @returns {UserProfileWithPermissions | null} O perfil formatado ou null se o usuário for inválido.
+ */
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
 
@@ -36,6 +50,14 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     };
 }
 
+/**
+ * Realiza o processo de login de um usuário.
+ * Valida as credenciais, verifica a associação ao tenant (se aplicável), e cria
+ * uma sessão segura em caso de sucesso. Lida com o cenário multi-tenant, onde um
+ * usuário pode pertencer a múltiplos "workspaces".
+ * @param {FormData} formData - Os dados do formulário de login.
+ * @returns {Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }>} O resultado da operação de login.
+ */
 export async function login(formData: FormData): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
   const email = formData.get('email') as string;
   const password = formData.get('password') as string;
@@ -98,6 +120,10 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
   }
 }
 
+/**
+ * Realiza o logout do usuário, destruindo a sessão e o cookie associado.
+ * @returns {Promise<{success: boolean, message: string}>} O resultado da operação.
+ */
 export async function logout(): Promise<{ success: boolean; message: string }> {
   try {
     await deleteSessionFromCookie();
@@ -108,10 +134,18 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
   }
 }
 
+/**
+ * Obtém a sessão atual do usuário a partir do cookie.
+ * @returns {Promise<any | null>} O payload da sessão decodificado ou null.
+ */
 export async function getSession() {
     return await getSessionFromCookie();
 }
 
+/**
+ * Obtém o perfil completo do usuário autenticado na sessão atual.
+ * @returns {Promise<UserProfileWithPermissions | null>} O perfil completo do usuário ou null.
+ */
 export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
     const session = await getSessionFromCookie();
     if (!session?.userId) {
