@@ -29,6 +29,16 @@ async function createSearchTestData() {
     
     testTenant = await prisma.tenant.create({ data: { name: `Search Test Tenant ${testRunId}`, subdomain: `search-${testRunId}` }});
 
+    const [stateSP, stateRJ] = await prisma.$transaction([
+        prisma.state.create({ data: { name: 'São Paulo', uf: `S${testRunId.slice(0,1)}`, slug: `sp-${testRunId}` } }),
+        prisma.state.create({ data: { name: 'Rio de Janeiro', uf: `R${testRunId.slice(0,1)}`, slug: `rj-${testRunId}` } })
+    ]);
+
+    const [citySP, cityRJ] = await prisma.$transaction([
+        prisma.city.create({ data: { name: 'São Paulo', slug: `sao-paulo-${testRunId}`, stateId: stateSP.id } }),
+        prisma.city.create({ data: { name: 'Rio de Janeiro', slug: `rio-de-janeiro-${testRunId}`, stateId: stateRJ.id } })
+    ]);
+
     [category1, category2] = await prisma.$transaction([
         prisma.lotCategory.create({ data: { name: `Veículos ${testRunId}`, slug: `veiculos-${testRunId}`, hasSubcategories: false } }),
         prisma.lotCategory.create({ data: { name: `Imóveis ${testRunId}`, slug: `imoveis-${testRunId}`, hasSubcategories: false } })
@@ -43,13 +53,54 @@ async function createSearchTestData() {
     );
     
     const now = new Date();
-    const endDate = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
 
     const [auc1, auc2, auc3] = await tenantContext.run({ tenantId: testTenant.id }, async () => {
         return prisma.$transaction([
-            prisma.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: now, auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.550520, longitude: -46.633308, tenantId: testTenant.id } as any }),
-            prisma.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category2.id, city: 'Rio de Janeiro', state: 'RJ', latitude: -22.906847, longitude: -43.172896, tenantId: testTenant.id } as any }),
-            prisma.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: now, auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.5613, longitude: -46.6800, tenantId: testTenant.id } as any })
+            prisma.auction.create({ data: { 
+                title: `Leilão de Carros SP ${testRunId}`, 
+                slug: `leilao-carros-sp-${testRunId}`, 
+                publicId: `pub-auc-1-${testRunId}`, 
+                status: 'ABERTO_PARA_LANCES', 
+                auctionDate: now, 
+                auctioneer: { connect: { id: auctioneer1.id } },
+                seller: { connect: { id: seller1.id } },
+                category: { connect: { id: category1.id } },
+                city: { connect: { id: citySP.id } },
+                state: { connect: { id: stateSP.id } },
+                latitude: -23.550520, 
+                longitude: -46.633308, 
+                tenant: { connect: { id: testTenant.id } }
+            } }),
+            prisma.auction.create({ data: { 
+                title: `Leilão de Apartamentos RJ ${testRunId}`, 
+                slug: `leilao-apartamentos-rj-${testRunId}`, 
+                publicId: `pub-auc-2-${testRunId}`, 
+                status: 'EM_BREVE', 
+                auctionDate: new Date(Date.now() + 86400000), 
+                auctioneer: { connect: { id: auctioneer1.id } },
+                seller: { connect: { id: seller1.id } },
+                category: { connect: { id: category2.id } },
+                city: { connect: { id: cityRJ.id } },
+                state: { connect: { id: stateRJ.id } },
+                latitude: -22.906847, 
+                longitude: -43.172896, 
+                tenant: { connect: { id: testTenant.id } }
+            } }),
+            prisma.auction.create({ data: { 
+                title: `Leilão Misto SP ${testRunId}`, 
+                slug: `leilao-misto-sp-${testRunId}`, 
+                publicId: `pub-auc-3-${testRunId}`, 
+                status: 'ABERTO_PARA_LANCES', 
+                auctionDate: now, 
+                auctioneer: { connect: { id: auctioneer1.id } },
+                seller: { connect: { id: seller1.id } },
+                category: { connect: { id: category1.id } },
+                city: { connect: { id: citySP.id } },
+                state: { connect: { id: stateSP.id } },
+                latitude: -23.5613, 
+                longitude: -46.6800, 
+                tenant: { connect: { id: testTenant.id } }
+            } })
         ]);
     });
     auction1 = auc1;
@@ -58,10 +109,10 @@ async function createSearchTestData() {
 
     [lot1, lot2, lot3, lot4] = await tenantContext.run({ tenantId: testTenant.id }, async () => {
         return prisma.$transaction([
-            prisma.lot.create({ data: { title: `Ford Ka 2019 ${testRunId}`, publicId: `pub-lot-1-${testRunId}`, auctionId: auction1.id, price: 35000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.550520, longitude: -46.633308, tenantId: testTenant.id } as any }),
-            prisma.lot.create({ data: { title: `Apartamento 2 Quartos ${testRunId}`, publicId: `pub-lot-2-${testRunId}`, auctionId: auction2.id, price: 250000, type: category2.name, categoryId: category2.id, status: 'EM_BREVE', cityName: 'Rio de Janeiro', stateUf: 'RJ', latitude: -22.906847, longitude: -43.172896, tenantId: testTenant.id } as any }),
-            prisma.lot.create({ data: { title: `Ford Maverick Antigo ${testRunId}`, publicId: `pub-lot-3-${testRunId}`, auctionId: auction3.id, price: 95000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.5613, longitude: -46.6800, tenantId: testTenant.id } as any }),
-            prisma.lot.create({ data: { title: `Terreno sem Coordenadas ${testRunId}`, publicId: `pub-lot-4-${testRunId}`, auctionId: auction3.id, price: 120000, type: category2.name, categoryId: category2.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', tenantId: testTenant.id } as any })
+            prisma.lot.create({ data: { title: `Ford Ka 2019 ${testRunId}`, publicId: `pub-lot-1-${testRunId}`, slug: `ford-ka-2019-${testRunId}`, auctionId: auction1.id, price: 35000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.550520, longitude: -46.633308, tenantId: testTenant.id } }),
+            prisma.lot.create({ data: { title: `Apartamento 2 Quartos ${testRunId}`, publicId: `pub-lot-2-${testRunId}`, slug: `apartamento-2-quartos-${testRunId}`, auctionId: auction2.id, price: 250000, type: category2.name, categoryId: category2.id, status: 'EM_BREVE', cityName: 'Rio de Janeiro', stateUf: 'RJ', latitude: -22.906847, longitude: -43.172896, tenantId: testTenant.id } }),
+            prisma.lot.create({ data: { title: `Ford Maverick Antigo ${testRunId}`, publicId: `pub-lot-3-${testRunId}`, slug: `ford-maverick-antigo-${testRunId}`, auctionId: auction3.id, price: 95000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.5613, longitude: -46.6800, tenantId: testTenant.id } }),
+            prisma.lot.create({ data: { title: `Terreno sem Coordenadas ${testRunId}`, publicId: `pub-lot-4-${testRunId}`, slug: `terreno-sem-coordenadas-${testRunId}`, auctionId: auction3.id, price: 120000, type: category2.name, categoryId: category2.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', tenantId: testTenant.id } })
         ]);
     });
     console.log(`[Search Service Test] Test data created.`);

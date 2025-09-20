@@ -39,7 +39,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 ## 4. Modular Prisma Schema Architecture
 
 **Rule:** To maintain organization and readability, the Prisma schema is modularized.
-- **Models Directory:** All Prisma models (`model`) and enumerations (`enum`) **must** be defined in individual `.prisma` files within the `prisma/models/` directory.
+- **Models Directory:** All Prisma models (`model`) and enumerations (`enum`) **must** be defined in individual `.prisma` files within the `prisma/models/` directory. Each file should ideally contain only one model.
 - **Header File:** The `prisma/header.prisma` file contains the `generator` and `datasource` blocks.
 - **Build Process:** The script `scripts/build-prisma-schema.ts` is responsible for reading the header and all files in `prisma/models/`, concatenating them, and generating the final `prisma/schema.prisma` file. This script is executed automatically by `npm run dev`, `npm run build`, and `npm run db:push`.
 - **Editing:** Schema changes **must** be made in the individual files within `prisma/models/`, not directly in `prisma/schema.prisma`.
@@ -64,17 +64,33 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 
 ## 7. Code Quality and Naming Conventions
 
-### 7.1. Form Component Standardization
+### 7.1. File Header Comments (New Rule)
+**Rule:** Every code file (e.g., `.ts`, `.tsx`, `.js`) **must** begin with a block comment that clearly and concisely explains the file's purpose and its primary responsibilities within the application architecture.
+
+**Example (`src/services/auction.service.ts`):**
+```typescript
+// src/services/auction.service.ts
+/**
+ * @fileoverview This file contains the AuctionService class, which encapsulates
+ * the core business logic for managing auctions. It acts as an intermediary
+ * between the server actions (controllers) and the auction repository (data access layer).
+ * Responsibilities include creating, updating, validating, and fetching auction data.
+ */
+```
+
+**Rationale:** This ensures that any developer (or AI) can quickly understand the role of each file, reducing ambiguity and improving maintainability. It also provides crucial context for AI-assisted development and analysis.
+
+### 7.2. Form Component Standardization
 **Rule:** For all CRUD forms, any field representing a foreign key relationship (e.g., selecting a `seller` for an `auction`) **must** use the custom `EntitySelector` component.
 
 **Rationale:** This ensures a consistent, powerful, and user-friendly interface across the entire admin panel.
 
-### 7.2. JavaScript/TypeScript Naming
+### 7.3. JavaScript/TypeScript Naming
 **Rule:** All new or modified functions, variables, and components must have names that are descriptive, human-readable, and contextually relevant, preferably in Portuguese.
 
 **Rationale:** Clear and consistent naming is fundamental for code quality.
 
-### 7.3. HTML Element Identification
+### 7.4. HTML Element Identification
 **Rule:** All new HTML elements created must have a `data-ai-id` attribute with a unique, human-readable, e contextually relevant name.
 
 **Rationale:** This convention is essential for the AI to reliably identify and manipulate specific UI elements.

@@ -82,21 +82,23 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : utcToZonedTime(new Date(), 'America/Sao_Paulo');
 
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, ...restOfData } = data;
+
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         const createdAuction = await tx.auction.create({
           data: {
-            ...(data as any),
+            ...(restOfData as any),
             publicId: `AUC-${uuidv4()}`,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            auctioneer: { connect: { id: data.auctioneerId } },
-            seller: { connect: { id: data.sellerId } },
-            category: data.categoryId ? { connect: { id: data.categoryId } } : undefined,
+            auctioneer: { connect: { id: auctioneerId } },
+            seller: { connect: { id: sellerId } },
+            category: categoryId ? { connect: { id: categoryId } } : undefined,
             tenant: { connect: { id: tenantId } },
-            city: data.cityId ? { connect: { id: data.cityId } } : undefined,
-            state: data.stateId ? { connect: { id: data.stateId } } : undefined,
-            judicialProcess: data.judicialProcessId ? { connect: { id: data.judicialProcessId } } : undefined,
+            city: cityId ? { connect: { id: cityId } } : undefined,
+            state: stateId ? { connect: { id: stateId } } : undefined,
+            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
           }
         });
 

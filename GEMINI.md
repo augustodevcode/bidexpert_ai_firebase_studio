@@ -33,7 +33,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 ## 5. Estrutura Modular do Schema Prisma
 
 **Regra:** Para manter a organização e a legibilidade do modelo de dados, o schema do Prisma é modularizado.
-- **Diretório de Modelos:** Todos os modelos (`model`) e enumerações (`enum`) do Prisma **devem** ser definidos em arquivos `.prisma` individuais dentro do diretório `prisma/models/`.
+- **Diretório de Modelos:** Todos os modelos (`model`) e enumerações (`enum`) do Prisma **devem** ser definidos em arquivos `.prisma` individuais dentro do diretório `prisma/models/`. Cada arquivo deve conter apenas um modelo.
 - **Arquivo Principal:** O arquivo `prisma/schema.prisma` é um arquivo **gerado** e não deve ser editado diretamente. Ele contém o cabeçalho de configuração (`generator`, `datasource`) e é populado pelo script de build.
 - **Processo de Build:** O script `scripts/build-prisma-schema.ts` é responsável por ler todos os arquivos em `prisma/models/`, concatená-los e gerar o arquivo `prisma/schema.prisma` final.
 - **Execução:** Este script é executado automaticamente pelos comandos `npm run dev`, `npm run build` e `npm run db:push`, garantindo que o Prisma sempre opere com o schema mais recente.
@@ -95,15 +95,23 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Estas regras garantem que segredos e configurações críticas do ambiente sejam sempre gerenciados e validados por um humano, prevenindo a exposição acidental de dados sensíveis ou a quebra do ambiente por configurações incorretas ou remoção de variáveis essenciais.
 
-## 11. Estratégia de Testes para Aplicação de Leilões Full-Stack
+## 11. Comentários de Cabeçalho nos Arquivos (Nova Regra)
 
-A estratégia de testes está documentada no arquivo `README.md` e deve ser seguida para garantir a qualidade e estabilidade do código. Ela cobre:
+**Regra:** Todo arquivo de código-fonte (ex: `.ts`, `.tsx`) **deve** começar com um comentário em bloco (docblock) que explica de forma clara e concisa o propósito do arquivo e suas principais responsabilidades dentro da arquitetura da aplicação.
 
--   **Camadas e Tipos de Teste:** Unitário, Integração e End-to-End (E2E).
--   **Consistência de Schemas:** Uso de migrations e geradores automáticos para manter Prisma e Zod sincronizados.
--   **Cobertura de Funcionalidades:** Testes para todos os fluxos críticos do leilão.
--   **Estratégia de Banco de Testes:** Uso de um banco de dados real e isolado para testes.
--   **Ferramentas Recomendadas:** Vitest, Playwright, Supertest, etc.
--   **Integração com Firebase Studio:** Como testar a aplicação no ambiente de desenvolvimento.
--   **Organização e CI:** Estrutura de pastas, scripts e configuração de Integração Contínua.
--   **Princípio da Cobertura Contínua:** Toda nova funcionalidade deve ser acompanhada por testes.
+**Exemplo (`src/services/auction.service.ts`):**
+```typescript
+// src/services/auction.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe AuctionService, que encapsula
+ * a lógica de negócio principal para o gerenciamento de leilões. Atua como um
+ * intermediário entre as server actions (controllers) e o repositório de leilões (camada de dados).
+ * Responsabilidades incluem criar, atualizar, validar e buscar dados de leilões.
+ */
+```
+
+**Justificativa:** Esta prática garante que qualquer desenvolvedor (ou IA) possa entender rapidamente o papel de cada arquivo, reduzindo a ambiguidade e melhorando a manutenibilidade. Além disso, fornece um contexto crucial para o desenvolvimento e análise assistidos por IA.
+
+## 12. Estratégia de Testes para Aplicação de Leilões Full-Stack
+
+A estratégia de testes está documentada no arquivo `README.md` e deve ser seguida para garantir a qualidade e estabilidade do código.
