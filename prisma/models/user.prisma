@@ -1,54 +1,68 @@
 /// Modelo base para todos os usuários da plataforma.
 model User {
-  id                  String   @id @default(uuid())
-  publicId            String?  @unique @map("public_id")
-  email               String   @unique
-  password            String?
-  fullName            String?  @map("full_name")
-  avatarUrl           String?  @map("avatar_url")
-  dataAiHint          String?  @map("data_ai_hint")
-  habilitationStatus  String   @default("PENDING_DOCUMENTS") @map("habilitation_status")
-  accountType         String   @default("PHYSICAL") @map("account_type")
-  cpf                 String?
-  rgNumber            String?  @map("rg_number")
-  rgIssuer            String?  @map("rg_issuer")
-  rgIssueDate         DateTime? @map("rg_issue_date")
-  rgState             String?  @map("rg_state")
-  dateOfBirth         DateTime? @map("date_of_birth")
-  gender              String?
-  profession          String?
-  nationality         String?
-  maritalStatus       String?  @map("marital_status")
-  propertyRegime      String?  @map("property_regime")
-  spouseName          String?  @map("spouse_name")
-  spouseCpf           String?  @map("spouse_cpf")
-  cellPhone           String?  @map("cell_phone")
-  homePhone           String?  @map("home_phone")
-  zipCode             String?  @map("zip_code")
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  city                String?
-  state               String?
-  optInMarketing      Boolean  @default(false) @map("opt_in_marketing")
-  badges              Json?
-  sellerId            String?  @unique
-  auctioneerId        String?  @unique
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
+  id                    String           @id @default(cuid())
+  email                 String           @unique
+  password              String?
+  fullName              String?
+  roleId                String? // Campo legado, mantido para referência, mas não usado ativamente para FK.
+  sellerId              String?          @unique // Se o usuário é um comitente, o ID do comitente.
+  habilitationStatus    UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType           AccountType      @default(PHYSICAL)
+  avatarUrl             String?
+  dataAiHint            String?          @db.VarChar(100)
+  badges                Json?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
 
+  cpf                 String?   @unique @db.VarChar(14)
+  rgNumber            String?   @db.VarChar(20)
+  rgIssuer            String?   @db.VarChar(50)
+  rgIssueDate         DateTime?
+  rgState             String?   @db.VarChar(2)
+  dateOfBirth         DateTime?
+  cellPhone           String?   @db.VarChar(20)
+  homePhone           String?   @db.VarChar(20)
+  gender              String?   @db.VarChar(30)
+  profession          String?   @db.VarChar(100)
+  nationality         String?   @db.VarChar(50)
+  maritalStatus       String?   @db.VarChar(50)
+  propertyRegime      String?   @db.VarChar(50)
+  spouseName          String?   @db.VarChar(150)
+  spouseCpf           String?   @db.VarChar(14)
+
+  // Campos para Pessoa Jurídica / Comitente
+  razaoSocial           String?   @db.VarChar(150)
+  cnpj                  String?   @unique @db.VarChar(18)
+  inscricaoEstadual     String?   @db.VarChar(30)
+  website               String?   @db.VarChar(255)
+  responsibleName       String?   @db.VarChar(150)
+  responsibleCpf        String?   @db.VarChar(14)
+  
+  // Endereço (comum)
+  zipCode               String?   @db.VarChar(10)
+  street                String?   @db.VarChar(200)
+  number                String?   @db.VarChar(20)
+  complement            String?   @db.VarChar(100)
+  neighborhood          String?   @db.VarChar(100)
+  city                  String?   @db.VarChar(100)
+  state                 String?   @db.VarChar(50)
+
+  optInMarketing        Boolean   @default(false)
+
+  // Relações
   roles         UsersOnRoles[]
   tenants       UsersOnTenants[]
+  seller        Seller?
+  auctioneer    Auctioneer?
   documents     UserDocument[]
   bids          Bid[]
   wins          UserWin[]
   maxBids       UserLotMaxBid[]
   notifications Notification[]
-  mediaItems    MediaItem[]    @relation("UploadedBy")
   reviews       Review[]
-  questions     LotQuestion[]  @relation("QuestionByUser")
-  answers       LotQuestion[]  @relation("AnsweredByUser")
+  questions     LotQuestion[]
+  mediaItems    MediaItem[]    @relation("UploadedByUser")
+  answeredQuestions LotQuestion[] @relation("AnsweredByUser")
 
-  @@map("users")
+  @@index([sellerId])
 }
