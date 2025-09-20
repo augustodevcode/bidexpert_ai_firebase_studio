@@ -1,4 +1,10 @@
-
+// src/app/admin/cities/city-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Cidades. Este schema é usado pelo `react-hook-form`
+ * para garantir que os dados do formulário sejam consistentes e válidos antes
+ * de serem enviados para as server actions.
+ */
 import * as z from 'zod';
 
 export const cityFormSchema = z.object({
@@ -18,4 +24,3 @@ export const cityFormSchema = z.object({
 });
 
 export type CityFormValues = z.infer<typeof cityFormSchema>;
-    

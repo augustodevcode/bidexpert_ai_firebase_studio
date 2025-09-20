@@ -1,4 +1,9 @@
 // src/app/admin/cities/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Cidades.
+ * Exibe um dashboard com KPIs, um mapa de calor de faturamento, um gráfico de
+ * barras com as cidades de maior receita e uma tabela de dados detalhada.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

@@ -1,4 +1,9 @@
 // src/app/admin/cities/city-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Cidades.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * Inclui um seletor de entidade para associar a cidade a um estado.
+ */
 'use client';
 
 import * as React from 'react';

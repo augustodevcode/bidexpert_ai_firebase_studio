@@ -1,5 +1,11 @@
-
 // src/app/admin/cities/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade City (Cidade).
+ * Este arquivo exporta funções que lidam com a criação, leitura, atualização
+ * e exclusão (CRUD) de cidades. As ações interagem com a CityService para
+ * aplicar a lógica de negócio e persistir os dados, além de revalidar
+ * o cache do Next.js quando necessário.
+ */
 'use server';
 
 import { prisma } from '@/lib/prisma';

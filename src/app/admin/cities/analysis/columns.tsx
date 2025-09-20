@@ -1,4 +1,9 @@
 // src/app/admin/cities/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance das Cidades. Inclui formatação de moeda,
+ * percentual e links para as páginas de detalhes.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

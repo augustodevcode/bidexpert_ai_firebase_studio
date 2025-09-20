@@ -1,4 +1,10 @@
 // src/app/admin/cities/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Cidades.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros facetados por UF e ações como
+ * exclusão em massa e individual.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -74,8 +80,8 @@ export default function AdminCitiesPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
   
   const stateOptions = useMemo(() => 
-    [...new Set(cities.map(c => c.stateUf))]
-      .map(uf => ({ value: uf, label: uf })),
+    [...new Set(cities.map(c => c.stateUf).filter(Boolean))]
+      .map(uf => ({ value: uf!, label: uf! })),
   [cities]);
 
   const facetedFilterColumns = useMemo(() => [

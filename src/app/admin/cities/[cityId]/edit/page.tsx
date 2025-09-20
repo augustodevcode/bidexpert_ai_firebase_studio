@@ -1,4 +1,10 @@
 // src/app/admin/cities/[cityId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para uma Cidade específica.
+ * Este componente Server-Side busca os dados iniciais da cidade a ser editada,
+ * bem como a lista de todos os estados para popular o seletor no formulário.
+ * A ação de atualização (`handleUpdateCity`) é passada para o `CityForm`.
+ */
 import CityForm from '../../city-form';
 import { getCity, updateCity, type CityFormData } from '../../actions';
 import { getStates } from '@/app/admin/states/actions'; 

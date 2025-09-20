@@ -1,4 +1,10 @@
-
+// src/app/admin/cities/new/page.tsx
+/**
+ * @fileoverview Página para criação de uma nova Cidade.
+ * Este componente Server-Side busca os dados necessários para os seletores do formulário
+ * (neste caso, a lista de estados) e renderiza o `CityForm` para a
+ * entrada de dados, passando a server action `createCity` para persistir o novo registro.
+ */
 import CityForm from '../city-form';
 import { createCity, type CityFormData } from '../actions';
 import { getStates } from '@/app/admin/states/actions'; // Importar getStates
@@ -21,4 +27,3 @@ export default async function NewCityPage() {
     />
   );
 }
-    
