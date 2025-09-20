@@ -1,108 +1,54 @@
-
 /// Modelo base para todos os usuários da plataforma.
 model User {
-  id                  String   @id @default(cuid())
+  id                  String   @id @default(uuid())
+  publicId            String?  @unique @map("public_id")
   email               String   @unique
   password            String?
-  fullName            String?
-  cpf                 String?  @unique
-  rgNumber            String?
-  rgIssuer          String?
-  rgIssueDate         DateTime?
-  rgState             String?
-  dateOfBirth         DateTime?
-  cellPhone           String?
-  homePhone           String?
+  fullName            String?  @map("full_name")
+  avatarUrl           String?  @map("avatar_url")
+  dataAiHint          String?  @map("data_ai_hint")
+  habilitationStatus  String   @default("PENDING_DOCUMENTS") @map("habilitation_status")
+  accountType         String   @default("PHYSICAL") @map("account_type")
+  cpf                 String?
+  rgNumber            String?  @map("rg_number")
+  rgIssuer            String?  @map("rg_issuer")
+  rgIssueDate         DateTime? @map("rg_issue_date")
+  rgState             String?  @map("rg_state")
+  dateOfBirth         DateTime? @map("date_of_birth")
   gender              String?
   profession          String?
   nationality         String?
-  maritalStatus       String?
-  propertyRegime      String?
-  spouseName          String?
-  spouseCpf           String?
-  habilitationStatus  String?  @default("PENDING_DOCUMENTS")
-  accountType         String   @default("PHYSICAL")
-  avatarUrl           String?
-  dataAiHint          String?
-  zipCode             String?
+  maritalStatus       String?  @map("marital_status")
+  propertyRegime      String?  @map("property_regime")
+  spouseName          String?  @map("spouse_name")
+  spouseCpf           String?  @map("spouse_cpf")
+  cellPhone           String?  @map("cell_phone")
+  homePhone           String?  @map("home_phone")
+  zipCode             String?  @map("zip_code")
   street              String?
   number              String?
   complement          String?
   neighborhood        String?
   city                String?
   state               String?
-  optInMarketing      Boolean  @default(false)
+  optInMarketing      Boolean  @default(false) @map("opt_in_marketing")
   badges              Json?
   sellerId            String?  @unique
-  seller              Seller?
   auctioneerId        String?  @unique
-  auctioneer          Auctioneer?
-  bids                Bid[]
-  wins                UserWin[]
-  maxBids             UserLotMaxBid[]
-  documents           UserDocument[]
-  notifications       Notification[]
-  uploadedMedia       MediaItem[]
-  roles               UsersOnRoles[]
-  tenants             UsersOnTenants[]
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-}
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
 
-/// Tabela de junção para a relação muitos-para-muitos entre User e Role.
-model UsersOnRoles {
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId     String
-  assignedAt DateTime @default(now())
-  assignedBy String
-
-  @@id([userId, roleId])
-}
-
-/// Define os perfis de usuário e suas permissões.
-model Role {
-  id              String   @id @default(cuid())
-  name            String   @unique
-  nameNormalized  String   @unique
-  description     String?
-  permissions     String[] @default([])
-  users           UsersOnRoles[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-/// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
-model Tenant {
-  id        String   @id @default(cuid())
-  name      String
-  subdomain String   @unique
-  domain    String?  @unique
-  users     UsersOnTenants[]
-  auctions  Auction[]
-  lots      Lot[]
-  bens      Bem[]
-  sellers   Seller[]
-  auctioneers Auctioneer[]
-  judicialProcesses JudicialProcess[]
-  bids      Bid[]
+  roles         UsersOnRoles[]
+  tenants       UsersOnTenants[]
+  documents     UserDocument[]
+  bids          Bid[]
+  wins          UserWin[]
+  maxBids       UserLotMaxBid[]
   notifications Notification[]
-  reports   Report[] // Relação inversa adicionada aqui
-  settings  PlatformSettings?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
+  mediaItems    MediaItem[]    @relation("UploadedBy")
+  reviews       Review[]
+  questions     LotQuestion[]  @relation("QuestionByUser")
+  answers       LotQuestion[]  @relation("AnsweredByUser")
 
-
-/// Tabela de junção para a relação muitos-para-muitos entre User e Tenant.
-model UsersOnTenants {
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId   String
-  assignedAt DateTime @default(now())
-  assignedBy String
-
-  @@id([userId, tenantId])
+  @@map("users")
 }

@@ -1,0 +1,12 @@
+/// Tabela de junção para a relação muitos-para-muitos entre User e Role.
+model UsersOnRoles {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String   @map("user_id")
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId     String   @map("role_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+  assignedBy String   @map("assigned_by")
+
+  @@id([userId, roleId])
+  @@map("users_on_roles")
+}
