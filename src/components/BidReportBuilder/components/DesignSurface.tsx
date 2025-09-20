@@ -7,7 +7,7 @@ import type { ReportElement } from '../index';
 
 interface DesignSurfaceProps {
   elements: ReportElement[];
-  onAddElement: (type: string, x: number, y: number, content?: string) => void;
+  onAddElement: (type: 'TextBox' | 'Image' | 'Chart' | 'Table', x: number, y: number, content?: string) => void;
   onSelectElement: (element: ReportElement | null) => void;
   selectedElementId: string | null;
   onElementChange: (id: string, props: Partial<ReportElement>) => void;
@@ -23,11 +23,10 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({
   const surfaceRef = useRef<HTMLDivElement>(null);
   const [draggingElement, setDraggingElement] = useState<{ id: string, offsetX: number, offsetY: number } | null>(null);
 
-
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     const content = e.dataTransfer.getData('text/plain');
-    if (surfaceRef.current) {
+    if (surfaceRef.current && content) {
         const rect = surfaceRef.current.getBoundingClientRect();
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
@@ -37,21 +36,23 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
   };
   
   const handleElementMouseDown = (e: React.MouseEvent<HTMLDivElement>, el: ReportElement) => {
     e.stopPropagation();
     onSelectElement(el);
-    const offsetX = e.clientX - el.x;
-    const offsetY = e.clientY - el.y;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const offsetY = e.clientY - rect.top;
     setDraggingElement({ id: el.id, offsetX, offsetY });
   };
   
   const handleMouseMove = (e: MouseEvent) => {
     if (draggingElement && surfaceRef.current) {
       const rect = surfaceRef.current.getBoundingClientRect();
-      const newX = e.clientX - draggingElement.offsetX - rect.left;
-      const newY = e.clientY - draggingElement.offsetY - rect.top;
+      const newX = e.clientX - rect.left - draggingElement.offsetX;
+      const newY = e.clientY - rect.top - draggingElement.offsetY;
       onElementChange(draggingElement.id, { x: Math.max(0, newX), y: Math.max(0, newY) });
     }
   };

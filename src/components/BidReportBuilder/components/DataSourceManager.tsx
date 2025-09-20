@@ -12,14 +12,17 @@ import { Button } from '@/components/ui/button';
 interface DraggableVariableProps {
   name: string;
   value: string;
-  onDragStart: (e: React.DragEvent<HTMLDivElement>) => void;
 }
 
-const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value, onDragStart }) => {
+const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value }) => {
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>) => {
+    e.dataTransfer.setData('text/plain', value);
+  };
+    
   return (
     <div
       draggable
-      onDragStart={onDragStart}
+      onDragStart={handleDragStart}
       className="p-2 border rounded-md bg-secondary/60 hover:bg-secondary cursor-grab active:cursor-grabbing text-xs"
       title={`Arraste para adicionar a variável ${name}`}
       data-ai-id={`draggable-variable-${name.toLowerCase().replace(/\s/g, '-')}`}
@@ -62,18 +65,14 @@ export default function DataSourceManager({ onAddElement }: DataSourceManagerPro
 
         return dataSources.map(source => {
             const fields = (source.fields as any[]).filter(field =>
-                field.name.toLowerCase().includes(lowercasedFilter)
+                field.name.toLowerCase().includes(lowercasedFilter) ||
+                source.name.toLowerCase().includes(lowercasedFilter)
             );
             return { ...source, fields };
         }).filter(source => source.fields.length > 0);
 
     }, [searchTerm, dataSources]);
-
-    const handleDragStart = (e: React.DragEvent<HTMLDivElement>, content: string) => {
-        e.dataTransfer.setData('text/plain', content);
-    };
-
-
+    
     if (isLoading) {
         return (
             <div className="flex justify-center items-center h-full">
@@ -103,7 +102,6 @@ export default function DataSourceManager({ onAddElement }: DataSourceManagerPro
                                         key={`${source.modelName}.${field.name}`} 
                                         name={field.name} 
                                         value={`{{${source.modelName}.${field.name}}}`}
-                                        onDragStart={(e) => handleDragStart(e, `{{${source.modelName}.${field.name}}}`)}
                                      />
                                 ))}
                             </AccordionContent>
