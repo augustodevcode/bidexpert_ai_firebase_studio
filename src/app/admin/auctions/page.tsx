@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -16,8 +15,8 @@ import { getPlatformSettings } from '../settings/actions';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import UniversalCard from '@/components/cards/universal-card';
+import UniversalListItem from '@/components/cards/universal-list-item';
 
 export default function AdminAuctionsPage() {
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);

@@ -1,4 +1,4 @@
-
+// src/app/auctions/[auctionId]/auction-details-client.tsx
 'use client';
 import React from 'react';
 
@@ -8,8 +8,8 @@ import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import UniversalCard from '@/components/cards/universal-card';
+import UniversalListItem from '@/components/cards/universal-list-item';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';

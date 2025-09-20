@@ -115,15 +115,14 @@ Baseado na estrutura de `src/app`:
 ### 5.1. **[NOVO]** Isolamento de Dados (Multi-Tenancy)
 
 *   **`tenantId` Mandatório:** Todas as tabelas que contêm dados de um leiloeiro específico (leilões, lotes, bens, comitentes, usuários do leiloeiro, lances, etc.) **devem** ter uma coluna `tenantId`.
-*   **Filtragem Automática:** Todas as queries (leituras, escritas, atualizações, exclusões) realizadas na plataforma **devem** ser automaticamente filtradas pelo `tenantId` do usuário logado ou do contexto do subdomínio acessado. Isso é garantido pelo `Prisma Middleware` em `src/lib/prisma.ts`.
+*   **Filtragem Automática:** Todas as queries (leituras, escritas, atualizações, exclusões) realizadas na plataforma **devem** ser automaticamente filtradas pelo `tenantId` do usuário logado ou do contexto do subdomínio acessado.
 *   **Segurança:** Um usuário de um `tenantId` **NUNCA** deve conseguir visualizar, modificar ou acessar dados pertencentes a outro `tenant_id`.
 
-### 5.2. **[NOVO]** Separação de Responsabilidades (Services)
+### 5.2. Componentes de Exibição Unificados
 
-*   A lógica de negócio deve residir na camada de **Serviço** (`src/services/*.service.ts`).
-*   Uma `Server Action` (`src/app/**/actions.ts`) deve ser "burra", servindo apenas como um ponto de entrada que chama o serviço correspondente.
-*   Um serviço **não deve** chamar o repositório de outra entidade diretamente. Por exemplo, `AuctioneerService` não deve chamar `LotRepository`. Se precisar de dados de lotes, ele deve chamar o `LotService`. Isso garante o encapsulamento e a manutenibilidade.
-*   Funções que buscam dados para páginas públicas (não autenticadas) devem ter um parâmetro `isPublicCall: boolean = false` e usar um mecanismo para obter o `tenantId` do contexto público (geralmente via `headers` injetados pelo middleware) ou usar o padrão '1' (Landlord).
+*   **Padrão `UniversalCard` e `UniversalListItem`:** Para garantir consistência visual e manutenibilidade, a exibição de itens em formato de card ou de lista (como em páginas de busca, dashboards e páginas de categoria) **deve** utilizar os componentes `UniversalCard.tsx` e `UniversalListItem.tsx`, respectivamente.
+*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriado (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
+*   **Não Uso Direto:** Os componentes `AuctionCard` e `LotCard` não devem ser importados ou utilizados diretamente nas páginas. As páginas devem interagir apenas com os componentes universais.
 
 ---
 
@@ -132,4 +131,6 @@ Baseado na estrutura de `src/app`:
 *   **Sempre Use o Contexto de Tenant:** Ao criar novas `Server Actions` ou serviços, sempre utilize a função `getTenantIdFromRequest` para garantir que todas as operações sejam executadas no contexto do tenant correto.
 *   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
 *   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
+*   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
+

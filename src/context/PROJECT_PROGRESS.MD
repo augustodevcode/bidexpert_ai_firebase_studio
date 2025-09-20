@@ -1,47 +1,40 @@
 # Project Progress - BidExpert
 
 ## DONE
-- **Item 1:** **Core Architecture Refactoring:** Fully migrated the application to a layered MVC + Service + Repository architecture using Prisma ORM.
-- **Item 2:** **Comprehensive Admin Panel:** Implemented full CRUD functionality for all major entities.
-- **Item 3 & 12:** **Full Test Coverage:** Expanded the E2E test suite to cover all remaining entities and user flows.
-- **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard and the Consignor Dashboard.
-- **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views.
+- **Item 1:** **Core Architecture Refactoring:** Fully migrated the application to a layered MVC + Service + Repository architecture using Prisma ORM. This standardized data access and improved maintainability.
+- **Item 2:** **Comprehensive Admin Panel:** Implemented full CRUD functionality for all major entities (`Auctions`, `Lots`, `Users`, `Sellers`, `Auctioneers`, `Categories`, `Judicial Entities`, etc.).
+- **Item 3 & 12:** **Full Test Coverage:** Expanded the E2E test suite to cover all remaining entities and user flows. This includes the expanded scenarios requested.
+- **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`) and the Consignor Dashboard (`/consignor-dashboard/*`).
+- **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
-- **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets and improved the workflow.
-- **Item 8:** **Full AI Integration:** Connecting UI to Genkit AI flows for listing suggestions and predictions.
-- **Item 9:** **PDF Document Generation:** Implemented server-side logic using Puppeteer for document generation.
-- **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status.
-- **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments.
-- **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload and AI data extraction.
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** Fully implemented all analysis dashboards.
-- **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Completed.
-- **Item 16: Lógica de Relistagem de Lotes:** Implemented.
-- **Item 17: Reloteamento de Bens:** Implemented.
-- **Item 18: Implementação de Pagamento Parcelado:** Implemented.
-- **Item 23: Implementar Lógica de Precificação por Etapa:** Completed.
-- **Item 19: Padronização de Identificadores `data-ai-id`:** Completed.
-- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):**
-    - **Status:**
-        - **Arquitetura de Dados (Conforme):** Refatorado para garantir que `actions` não chamem repositórios diretamente.
-        - **Padrão Controller-Service-Repository (Conforme):** A separação de camadas foi reforçada.
-        - **Padronização de Nomenclatura (Em Andamento):** Conversão gradual do código para português, com o módulo BidReportBuilder completo.
-        - **Auditoria do `EntitySelector` (Conforme):** Todos os formulários de admin que lidam com relacionamentos foram auditados e atualizados para usar o componente `EntitySelector` padronizado.
-- **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** Completed.
-- **Item 24: Unificação dos Componentes de Card (UniversalCard):** Completed.
-- **Item 26: Adicionar Atalho de Mapa nos Cards:** Completed.
+- **Item 7:** **Auction Creation Wizard Enhancement:** Refactored the auction wizard to correctly filter assets based on auction type (judicial vs. extrajudicial) and improved the workflow visualization.
+- **Item 8:** **Full AI Integration:** Connecting the UI to the existing Genkit AI flows (`suggest-listing-details`, `predict-opening-value`) to provide listing suggestions and predictions to users during the auction creation process.
+- **Item 9:** **PDF Document Generation:** Implemented the server-side logic using Puppeteer to generate PDF documents for winning bid terms, accessible from both the admin and user dashboards.
+- **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
+- **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
+- **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
+    - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
+    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+    - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+    - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
+- **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
+- **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
+- **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
+- **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
+- **Item 23: Implementar Lógica de Precificação por Etapa:** Refatorada a base de dados (Prisma), serviços e a interface de usuário (formulários, páginas de detalhe) para suportar a definição de preços (lance inicial, incremento) por etapa/praça do leilão, em vez de um valor fixo no lote.
+- **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
+- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
+- **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
+- **Item 24: Unificação dos Componentes de Card (UniversalCard):** Criado o `UniversalCard` e `UniversalListItem` e refatoradas as páginas principais (`HomePage`, `SearchPage`, `CategoryPage`, etc.) para usá-los.
 
 ## DOING
-- **Item 20 (Continuação): Auditoria e Refatoração Arquitetural (Análise de GAPs)**
-    - **Objetivo:** Finalizar as tarefas de auditoria para garantir a consistência total do código com as regras de arquitetura.
-    - **Status Atual:**
-        - **Padronização de Nomenclatura (Em Andamento):** Continuar a tradução de nomes de arquivos, funções e variáveis para português.
-        - **Consistência de `data-ai-id` (Pendente):** Próximo passo será garantir a aplicação consistente do atributo `data-ai-id` em todos os elementos estruturais e interativos.
+- **Item 27: Refatorar Testes de Integração e E2E:**
+    - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada, garantindo que eles chamem as `Server Actions` em vez dos serviços diretamente, e simulem o contexto de tenant.
+    - **Status Atual:** A refatoração dos testes de entidade e do wizard está concluída. O teste `bidding-e2e` está em andamento.
 
 ## NEXT
-- **Item 27: Refatorar Testes de Integração e E2E:**
-    - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada.
-    - **Tarefas:**
-        - Modificar testes para chamar `Server Actions` como ponto de entrada.
-        - Garantir que os `mocks` e o `setup` dos testes reflitam a nova estrutura.
-        - Validar a lógica de negócio que foi movida para a camada de serviço.
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
+- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos testes.
+- **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
+- **Documentação Final:** Gerar a documentação final do projeto e da API.

@@ -1,4 +1,3 @@
-
 // src/app/admin/lots/page.tsx
 'use client';
 
@@ -14,8 +13,9 @@ import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
+import UniversalCard from '@/components/cards/universal-card';
+import UniversalListItem from '@/components/cards/universal-list-item';
 
 export default function AdminLotsPage() {
   const [allLots, setAllLots] = useState<Lot[]>([]);
@@ -51,20 +51,6 @@ export default function AdminLotsPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
-
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const lotToDelete = allLots.find(lot => lot.id === id);
-      const result = await deleteLot(id, lotToDelete?.auctionId);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(prev => prev + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast, allLots]
-  );
   
   const renderLotList = (lots: Lot[]) => {
       if (!platformSettings) return null;
