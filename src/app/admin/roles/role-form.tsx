@@ -1,4 +1,10 @@
-
+// src/app/admin/roles/role-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar
+ * Perfis de Usuário (Roles). Utiliza `react-hook-form` e Zod para validação
+ * e exibe uma lista de permissões agrupadas, permitindo uma configuração
+ * granular e intuitiva dos direitos de acesso para cada perfil.
+ */
 'use client';
 
 import * as React from 'react';

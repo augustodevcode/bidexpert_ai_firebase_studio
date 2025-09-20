@@ -1,5 +1,10 @@
-
-
+// src/app/admin/roles/role-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário de
+ * criação e edição de Perfis de Usuário (Roles). Também exporta uma lista
+ * `predefinedPermissions` que serve como a fonte da verdade para todas as
+ * permissões disponíveis no sistema, facilitando a consistência e manutenção.
+ */
 import * as z from 'zod';
 
 export const predefinedPermissions = [
@@ -80,10 +85,14 @@ export const predefinedPermissions = [
   { id: 'manage_payments', label: 'Arrematante: Gerenciar Pagamentos', group: 'Arrematante' },
   { id: 'schedule_retrieval', label: 'Arrematante: Agendar Retirada', group: 'Arrematante' },
   // Role-specific groups
+  { id: 'consignor_dashboard:view', label: 'Comitente: Ver Painel', group: 'Comitente'},
   { id: 'view_reports', label: 'Comitente: Ver Relatórios', group: 'Comitente'},
   { id: 'conduct_auctions', label: 'Leiloeiro: Conduzir Leilões (Auditório)', group: 'Leiloeiro'},
   // Generic Admin / All Access
   { id: 'manage_all', label: 'Acesso Total (Administrador)', group: 'Geral'},
+  // Tenant-specific Admin
+  { id: 'manage_tenant_users', label: 'Admin Tenant: Gerenciar Usuários do Tenant', group: 'Tenant Admin' },
+  { id: 'manage_tenant_auctions', label: 'Admin Tenant: Gerenciar Leilões do Tenant', group: 'Tenant Admin' },
 ] as const;
 
 

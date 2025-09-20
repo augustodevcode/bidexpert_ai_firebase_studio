@@ -1,4 +1,10 @@
 // src/app/admin/roles/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Role (Perfil de Usuário).
+ * Este arquivo centraliza as operações de back-end para criar, ler, atualizar e
+ * excluir perfis, atuando como a camada de controller que interage com a
+ * RoleService para aplicar a lógica de negócio e as regras de permissão.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

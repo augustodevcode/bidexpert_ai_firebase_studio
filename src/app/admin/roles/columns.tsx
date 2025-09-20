@@ -1,4 +1,10 @@
 // src/app/admin/roles/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Perfis de Usuário. Inclui renderização de permissões,
+ * indicação de perfis protegidos (que não podem ser excluídos), e o menu
+ * de ações para cada linha (editar, excluir).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
@@ -17,7 +23,7 @@ import type { Role } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Checkbox } from '@/components/ui/checkbox';
 
-const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+const PROTECTED_ROLES = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'TENANT_ADMIN'];
 
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<Role>[] => [
@@ -76,7 +82,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     id: "actions",
     cell: ({ row }) => {
       const role = row.original;
-      const isProtected = PROTECTED_ROLES.includes(role.name_normalized);
+      const isProtected = PROTECTED_ROLES.includes(role.nameNormalized);
 
       return (
         <div className="flex items-center justify-end gap-1">

@@ -1,4 +1,10 @@
-
+// src/app/admin/roles/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Perfil de Usuário.
+ * Este componente Server-Side renderiza o `RoleForm` para entrada de dados
+ * e passa a server action `createRole` para persistir o novo registro,
+ * permitindo a criação de novos papéis com diferentes conjuntos de permissões.
+ */
 import RoleForm from '../role-form';
 import { createRole, type RoleFormData } from '../actions';
 
@@ -17,5 +23,3 @@ export default async function NewRolePage() {
     />
   );
 }
-
-    

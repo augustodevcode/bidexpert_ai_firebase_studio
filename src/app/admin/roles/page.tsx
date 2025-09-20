@@ -1,4 +1,10 @@
 // src/app/admin/roles/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Perfis de Usuário (Roles).
+ * Utiliza o componente DataTable para exibir os perfis de forma interativa,
+ * permitindo busca e ações de edição e exclusão. Protege perfis essenciais
+ * do sistema contra exclusão para manter a integridade da plataforma.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -12,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
 
-const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER'];
+const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'TENANT_ADMIN'];
 
 export default function AdminRolesPage() {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -77,7 +83,7 @@ export default function AdminRolesPage() {
     }
     fetchPageData();
   }, [toast, fetchPageData]);
-
+  
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   return (
