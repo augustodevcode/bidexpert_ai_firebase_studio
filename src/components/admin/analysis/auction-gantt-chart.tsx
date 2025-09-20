@@ -53,27 +53,28 @@ export default function AuctionGanttChart({ auctions }: { auctions: AuctionPerfo
     }
 
     const allDates = auctions.flatMap(a => [
-        new Date(a.auctionDate),
-        ...(a.auctionStages || []).map(s => new Date(s.endDate))
-    ]);
+        new Date(a.auctionDate as string | Date),
+        ...(a.auctionStages || []).map(s => new Date(s.endDate as string | Date))
+    ]).filter(d => !isNaN(d.getTime()));
+
+    if (allDates.length === 0) {
+        return { chartData: [], domain: [0,0] };
+    }
 
     const minDate = Math.min(...allDates.map(d => d.getTime()));
     const maxDate = Math.max(...allDates.map(d => d.getTime()));
 
     const ganttData: GanttChartData[] = auctions
-        .filter(a => a.auctionDate)
+        .filter(a => a.auctionDate && !isNaN(new Date(a.auctionDate as string | Date).getTime()))
         .map(auction => {
-            const start = new Date(auction.auctionDate);
+            const start = new Date(auction.auctionDate as string | Date);
             const end = auction.auctionStages && auction.auctionStages.length > 0 
-                ? new Date(Math.max(...auction.auctionStages.map(s => new Date(s.endDate).getTime())))
+                ? new Date(Math.max(...auction.auctionStages.map(s => new Date(s.endDate as string | Date).getTime())))
                 : start;
             
-            const startDay = differenceInDays(start, minDate);
-            const endDay = differenceInDays(end, minDate);
-
             const stages = auction.auctionStages?.map((stage, index) => {
-                const stageStart = index > 0 ? new Date(auction.auctionStages![index-1].endDate) : start;
-                const stageEnd = new Date(stage.endDate);
+                const stageStart = index > 0 && auction.auctionStages?.[index -1]?.endDate ? new Date(auction.auctionStages[index -1].endDate as string | Date) : start;
+                const stageEnd = new Date(stage.endDate as string | Date);
                 return {
                     name: stage.name,
                     range: [stageStart.getTime(), stageEnd.getTime()]

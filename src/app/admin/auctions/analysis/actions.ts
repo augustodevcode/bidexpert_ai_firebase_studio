@@ -6,7 +6,7 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import type { AuctionPerformanceData, AuctionDashboardData } from '@/types';
+import type { AuctionPerformanceData, AuctionDashboardData, Auction } from '@/types';
 import { format, subDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
@@ -27,6 +27,9 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
           where: { status: 'VENDIDO' },
           select: { price: true },
         },
+        seller: { select: { name: true } },
+        auctioneer: { select: { name: true } },
+        stages: true, // Incluir os estágios
       },
     });
 
@@ -39,6 +42,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
 
       return {
         id: auction.id,
+        publicId: auction.publicId,
         title: auction.title,
         status: auction.status,
         totalLots,
@@ -46,8 +50,10 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
         totalRevenue,
         averageTicket,
         salesRate,
-        auctionDate: auction.auctionDate, // Passando a data para o Gantt
-        auctionStages: auction.auctionStages, // Passando as etapas para o Gantt
+        sellerName: auction.seller?.name,
+        auctioneerName: auction.auctioneer?.name,
+        auctionDate: auction.auctionDate, 
+        auctionStages: auction.stages,
       };
     });
   } catch (error: any) {
@@ -55,6 +61,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
     throw new Error("Falha ao buscar dados de performance dos leilões.");
   }
 }
+
 
 /**
  * Fetches and aggregates performance data for a single auction.
@@ -94,7 +101,7 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
         soldLots.forEach(lot => {
             const categoryName = lot.category?.name || 'Sem Categoria';
             const currentRevenue = revenueByCategoryMap.get(categoryName) || 0;
-            revenueByCategoryMap.set(categoryName, currentRevenue + (lot.price || 0));
+            revenueByCategoryMap.set(categoryName, currentRevenue + (lot.price ? Number(lot.price) : 0));
         });
         const revenueByCategory = Array.from(revenueByCategoryMap, ([name, Faturamento]) => ({ name, Faturamento }))
             .sort((a,b) => b.Faturamento - a.Faturamento);

@@ -102,7 +102,7 @@ export default function AuctionAnalysisPage() {
 
   const statusOptions = useMemo(() => 
     [...new Set(performanceData.map(a => a.status))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+      .map(status => ({ value: status!, label: getAuctionStatusText(status) })),
   [performanceData]);
 
   const facetedFilterColumns = useMemo(() => [

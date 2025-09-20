@@ -1,4 +1,3 @@
-
 // src/app/admin/auctions/[auctionId]/edit/page.tsx
 'use client'; 
 
@@ -281,12 +280,6 @@ export default function EditAuctionPage() {
             formTitle=""
             formDescription=""
             submitButtonText="Salvar Alterações"
-            isViewMode={isViewMode}
-            onUpdateSuccess={() => {
-                fetchPageData();
-                setIsViewMode(true);
-            }}
-            onCancelEdit={() => setIsViewMode(true)}
           />
         </FormPageLayout>
 
@@ -352,4 +345,3 @@ export default function EditAuctionPage() {
     </>
   );
 }
-    

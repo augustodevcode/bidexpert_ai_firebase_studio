@@ -238,6 +238,7 @@ export interface AdminReportData {
 }
 export interface AuctionPerformanceData {
   id: string;
+  publicId?: string | null;
   title: string;
   status: Auction['status'];
   totalLots: number;
@@ -245,7 +246,12 @@ export interface AuctionPerformanceData {
   totalRevenue: number;
   averageTicket: number;
   salesRate: number;
+  sellerName?: string | null;
+  auctioneerName?: string | null;
+  auctionDate?: Date | string | null;
+  auctionStages?: AuctionStage[] | null;
 }
+
 export interface AuctionDashboardData {
   totalRevenue: number;
   totalBids: number;
