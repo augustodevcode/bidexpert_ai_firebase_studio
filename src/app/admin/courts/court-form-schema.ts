@@ -1,5 +1,9 @@
-
 // src/app/admin/courts/court-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Tribunais. Garante que os dados como nome, UF e website
+ * sejam consistentes antes do envio para o servidor.
+ */
 import * as z from 'zod';
 
 const optionalUrlSchema = z.string().url({ message: "URL inválida." }).or(z.literal('')).optional().nullable();

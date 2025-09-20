@@ -1,5 +1,11 @@
-
 // src/app/admin/courts/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Court (Tribunal).
+ * Este arquivo exporta as funções que o cliente pode chamar para interagir
+ * com os dados dos tribunais no servidor. Ele atua como a camada de Controller,
+ * recebendo as requisições, chamando o CourtService para aplicar a lógica de negócio
+ * e persistir os dados, e lidando com a revalidação de cache do Next.js.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

@@ -1,4 +1,10 @@
 // src/app/admin/courts/[courtId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para um Tribunal específico.
+ * Este componente Server-Side busca os dados iniciais do tribunal a ser editado
+ * e a lista de estados para o seletor. A ação de atualização (`handleUpdateCourt`)
+ * é então passada como prop para o `CourtForm`.
+ */
 import CourtForm from '../../court-form';
 import { getCourt, updateCourt } from '../../actions';
 import { getStates } from '@/app/admin/states/actions';

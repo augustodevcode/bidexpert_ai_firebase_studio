@@ -1,4 +1,9 @@
 // src/app/admin/courts/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Tribunais.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * o faturamento dos principais tribunais, uma tabela de dados detalhada e uma análise gerada por IA.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';

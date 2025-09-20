@@ -1,4 +1,9 @@
 // src/app/admin/courts/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Tribunal.
+ * Este componente Server-Side busca os dados necessários para os seletores
+ * (a lista de estados) e renderiza o `CourtForm` para a entrada de dados.
+ */
 import CourtForm from '../court-form';
 import { createCourt } from '../actions';
 import { getStates } from '@/app/admin/states/actions';

@@ -1,4 +1,9 @@
 // src/app/admin/courts/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance dos Tribunais. Inclui formatação de moeda,
+ * renderização de números e links para as páginas de detalhes.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

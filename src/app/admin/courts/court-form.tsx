@@ -1,4 +1,9 @@
 // src/app/admin/courts/court-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Tribunais.
+ * Utiliza `react-hook-form` para gerenciamento de estado, Zod para validação e
+ * o `EntitySelector` para permitir a seleção de um estado da lista existente.
+ */
 'use client';
 
 import * as React from 'react';
@@ -8,7 +13,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
