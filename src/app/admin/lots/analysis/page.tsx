@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/analysis/page.tsx
 'use client';
 

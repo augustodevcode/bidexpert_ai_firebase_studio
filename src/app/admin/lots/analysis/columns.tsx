@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/analysis/columns.tsx
 'use client';
 

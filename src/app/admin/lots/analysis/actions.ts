@@ -1,3 +1,4 @@
+
 // src/app/admin/lots/analysis/actions.ts
 /**
  * @fileoverview Server Actions for the Lot Analysis Dashboard.
@@ -54,3 +55,4 @@ export async function getLotsPerformanceAction(): Promise<LotPerformanceData[]> 
     throw new Error("Falha ao buscar dados de performance dos lotes.");
   }
 }
+
