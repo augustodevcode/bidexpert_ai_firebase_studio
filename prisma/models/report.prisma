@@ -1,9 +1,9 @@
-// prisma/models/report.prisma
 
+/// Modelo para armazenar relatórios salvos pelo construtor.
 model Report {
   id          String   @id @default(cuid())
   name        String
-  description String?
+  description String?  @db.Text
   definition  Json
   tenantId    String
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
