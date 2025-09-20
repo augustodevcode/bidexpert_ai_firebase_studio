@@ -1,4 +1,10 @@
 // src/app/admin/judicial-branches/judicial-branch-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Varas Judiciais.
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * Inclui o `EntitySelector` para permitir a seleção de uma comarca existente
+ * e busca dinâmica de dados para manter as opções atualizadas.
+ */
 'use client';
 
 import * as React from 'react';

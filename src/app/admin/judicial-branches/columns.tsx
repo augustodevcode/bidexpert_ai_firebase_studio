@@ -1,4 +1,9 @@
 // src/app/admin/judicial-branches/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Varas Judiciais. Inclui cabeçalhos, renderização de células
+ * com links, e um menu de ações para cada linha (editar, excluir).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -1,10 +1,17 @@
 // src/app/admin/judicial-branches/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance das Varas Judiciais. Inclui formatação
+ * de moeda, percentuais e links para as páginas de detalhes de cada vara.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
 import type { BranchPerformanceData } from './actions';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { Eye } from 'lucide-react';
 
 export const createBranchAnalysisColumns = (): ColumnDef<BranchPerformanceData>[] => [
   {

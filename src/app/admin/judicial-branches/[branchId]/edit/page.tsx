@@ -1,4 +1,11 @@
 // src/app/admin/judicial-branches/[branchId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para uma Vara Judicial específica.
+ * Este componente Server-Side busca os dados iniciais da vara a ser editada
+ * e a lista completa de comarcas para popular o seletor no formulário. A ação de
+ * atualização (`handleUpdateBranch`) também é definida aqui e passada como prop
+ * para o `JudicialBranchForm`.
+ */
 import JudicialBranchForm from '../../judicial-branch-form';
 import { getJudicialBranch, updateJudicialBranch } from '../../actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';

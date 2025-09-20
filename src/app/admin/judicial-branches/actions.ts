@@ -1,5 +1,11 @@
-
 // src/app/admin/judicial-branches/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade JudicialBranch (Vara Judicial).
+ * Este arquivo define as funções que o cliente pode chamar para executar
+ * operações de CRUD (Criar, Ler, Atualizar, Excluir) nas varas. As ações
+ * invocam a JudicialBranchService para aplicar a lógica de negócio, garantir
+ * a consistência dos dados e revalidar o cache quando necessário.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

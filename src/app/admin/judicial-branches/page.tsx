@@ -1,4 +1,9 @@
 // src/app/admin/judicial-branches/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Varas Judiciais.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros por comarca e ações como exclusão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

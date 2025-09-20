@@ -1,6 +1,9 @@
 // src/app/admin/judicial-branches/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Judicial Branch Analysis Dashboard.
+ * @fileoverview Server Actions para o Dashboard de Análise de Varas Judiciais.
+ * Este arquivo contém a lógica para buscar e agregar dados de performance de
+ * todas as varas judiciais, calculando métricas chave como faturamento,
+ * número de processos, leilões, lotes vendidos, taxa de venda e ticket médio.
  */
 'use server';
 
@@ -33,7 +36,7 @@ export async function getBranchesPerformanceAction(): Promise<BranchPerformanceD
           include: {
             lots: {
               where: { status: 'VENDIDO' },
-              select: { price: true },
+              select: { price: true, updatedAt: true }
             },
             _count: {
               select: { lots: true },

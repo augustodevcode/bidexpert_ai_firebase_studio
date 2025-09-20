@@ -1,4 +1,9 @@
 // src/app/admin/judicial-branches/judicial-branch-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Varas Judiciais. Garante a integridade dos dados, como
+ * a obrigatoriedade do nome e da associação com uma Comarca.
+ */
 import * as z from 'zod';
 
 export const judicialBranchFormSchema = z.object({
