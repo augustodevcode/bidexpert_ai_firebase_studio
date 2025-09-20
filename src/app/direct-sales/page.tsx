@@ -1,4 +1,11 @@
 // src/app/direct-sales/page.tsx
+/**
+ * @fileoverview Página de listagem e busca para Ofertas de Venda Direta.
+ * Este componente de cliente é a interface principal para que os usuários
+ * encontrem produtos com preço fixo ou que aceitam propostas. Ele gerencia
+ * o estado de busca e filtros, busca os dados via server actions e renderiza
+ * os resultados usando o `SearchResultsFrame`.
+ */
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -10,9 +17,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/sidebar-filters'; 
-import type { DirectSaleOffer, LotCategory, DirectSaleOfferType, PlatformSettings } from '@/types';
+import type { DirectSaleOffer, LotCategory, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
@@ -20,8 +28,13 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from './actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
+import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 import UniversalCard from '@/components/universal-card';
 import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
+
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -179,7 +192,7 @@ export default function DirectSalesPage() {
   };
 
   const renderGridItem = (item: DirectSaleOffer) => <UniversalCard item={item} type="lot" platformSettings={platformSettings!} />;
-    const renderListItem = (item: DirectSaleOffer) => <UniversalListItem item={item} type="lot" platformSettings={platformSettings!} />;
+  const renderListItem = (item: DirectSaleOffer) => <DirectSaleOfferListItem offer={item as DirectSaleOffer} />;
 
   if (isLoading || !platformSettings) {
     return (

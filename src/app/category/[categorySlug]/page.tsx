@@ -1,4 +1,10 @@
-
+// src/app/category/[categorySlug]/page.tsx
+/**
+ * @fileoverview Página de servidor que serve como ponto de entrada para a exibição de uma categoria.
+ * Este componente é responsável por receber o slug da categoria da URL, buscar
+ * os dados iniciais do lado do servidor (se necessário) e renderizar o componente
+ * de cliente `CategoryDisplay`, que lida com toda a lógica interativa e de busca de dados.
+ */
 import CategoryDisplay from './category-display'; 
 import { getLotCategories } from '@/app/admin/categories/actions';
 
@@ -20,4 +26,3 @@ export async function generateStaticParams() {
     return []; 
   }
 }
-    

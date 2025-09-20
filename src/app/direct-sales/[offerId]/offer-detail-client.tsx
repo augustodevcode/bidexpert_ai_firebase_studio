@@ -1,4 +1,10 @@
-
+// src/app/direct-sales/[offerId]/offer-detail-client.tsx
+/**
+ * @fileoverview Componente de cliente para a página de detalhes de uma Oferta de Venda Direta.
+ * Responsável por renderizar todas as informações da oferta, gerenciar a galeria
+ * de imagens e lidar com as interações do usuário, como a simulação de compra
+ * imediata e o envio de propostas.
+ */
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';

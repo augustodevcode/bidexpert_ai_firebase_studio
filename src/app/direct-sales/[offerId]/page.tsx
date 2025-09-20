@@ -1,5 +1,9 @@
-
 // src/app/direct-sales/[offerId]/page.tsx
+/**
+ * @fileoverview Página de servidor para renderização inicial dos detalhes de uma Oferta de Venda Direta.
+ * Este componente busca os dados da oferta no servidor e os passa para o componente
+ * de cliente `OfferDetailClient`, que lida com a renderização interativa.
+ */
 import OfferDetailClient from './offer-detail-client';
 import { getDirectSaleOffer } from '../actions';
 import { Button } from '@/components/ui/button';

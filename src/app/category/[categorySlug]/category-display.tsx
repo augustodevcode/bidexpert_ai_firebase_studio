@@ -1,4 +1,10 @@
 // src/app/category/[categorySlug]/category-display.tsx
+/**
+ * @fileoverview Componente de cliente que renderiza o conteúdo de uma página de categoria.
+ * É responsável por buscar todos os dados necessários (lotes, categorias, filtros),
+ * gerenciar o estado da UI (filtros, ordenação, paginação) e exibir os
+ * resultados para a categoria específica definida pelo slug na URL.
+ */
 'use client'; 
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

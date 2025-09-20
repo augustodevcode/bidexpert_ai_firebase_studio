@@ -1,5 +1,11 @@
-
 // src/app/lots/[lotId]/page.tsx
+/**
+ * @fileoverview Página de redirecionamento para detalhes de um lote.
+ * Esta página captura requisições para a rota `/lots/[lotId]` e as redireciona
+ * permanentemente para a URL canônica `/auctions/[auctionId]/lots/[lotId]`.
+ * Isso é crucial para SEO e para manter uma estrutura de URL consistente,
+ * evitando conteúdo duplicado.
+ */
 import { notFound, redirect } from 'next/navigation';
 import { getLot, getLots } from '@/app/admin/lots/actions';
 import { Loader2 } from 'lucide-react';
