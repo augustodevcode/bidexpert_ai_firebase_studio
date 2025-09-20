@@ -1,3 +1,10 @@
+// src/app/sellers/page.tsx
+/**
+ * @fileoverview Página de listagem pública de todos os Comitentes (Vendedores).
+ * Este componente Server-Side busca os perfis de todos os comitentes ativos
+ * na plataforma e os exibe em um layout de cards, permitindo que os usuários
+ * descubram e naveguem para as páginas de perfil de cada vendedor.
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';

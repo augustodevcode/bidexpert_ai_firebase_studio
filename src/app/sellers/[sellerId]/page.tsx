@@ -1,4 +1,11 @@
 // src/app/sellers/[sellerId]/page.tsx
+/**
+ * @fileoverview Página de perfil público de um Comitente (Vendedor).
+ * Este componente de cliente renderiza a página de detalhes de um vendedor específico,
+ * incluindo suas informações, leilões recentes e uma lista paginada e filtrável
+ * de todos os seus lotes. Ele busca os dados necessários através de server actions
+ * e gerencia a interatividade da UI, como ordenação e paginação.
+ */
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';
