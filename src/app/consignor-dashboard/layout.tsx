@@ -1,4 +1,12 @@
 // src/app/consignor-dashboard/layout.tsx
+/**
+ * @fileoverview Layout principal para o Painel do Comitente.
+ * Este componente de cliente envolve todas as páginas do dashboard do comitente.
+ * Ele é responsável por verificar a autenticação e as permissões do usuário,
+ * exibindo um estado de carregamento ou uma mensagem de acesso negado se
+ * as condições não forem atendidas. Se o acesso for permitido, ele renderiza
+ * a barra lateral (`ConsignorSidebar`) e o conteúdo da página filha.
+ */
 'use client';
 
 import { useEffect } from 'react';

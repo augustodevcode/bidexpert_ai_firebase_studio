@@ -1,4 +1,10 @@
 // src/app/consignor-dashboard/direct-sales/new/page.tsx
+/**
+ * @fileoverview Página para um Comitente logado criar uma nova Oferta de Venda Direta.
+ * Este componente de cliente carrega os dados necessários (categorias e o perfil
+ * do próprio comitente) e renderiza o `DirectSaleForm`, pré-populando e
+ * restringindo a seleção de vendedor ao usuário atual.
+ */
 'use client';
 
 import { useState, useEffect } from 'react';

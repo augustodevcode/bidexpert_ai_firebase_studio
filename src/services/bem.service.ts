@@ -1,17 +1,33 @@
 // src/services/bem.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe BemService, que encapsula a lógica
+ * de negócio para o gerenciamento de Bens. "Bens" são os ativos individuais
+ * (como um carro ou um apartamento) antes de serem agrupados em lotes para leilão.
+ * O serviço interage com o repositório para realizar operações de CRUD e
+ * aplica validações, como verificar se um bem pode ser excluído.
+ */
 import { BemRepository } from '@/repositories/bem.repository';
 import type { Bem, BemFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma } from '@/lib/prisma'; // Import prisma directly
+import { getPrismaInstance } from '@/lib/prisma';
 
 export class BemService {
   private repository: BemRepository;
+  private prisma;
 
   constructor() {
     this.repository = new BemRepository();
+    this.prisma = getPrismaInstance();
   }
 
+  /**
+   * Mapeia os dados brutos de um bem do Prisma para o tipo Bem definido na aplicação.
+   * Realiza conversões de tipo (Decimal para number) e enriquece o objeto com
+   * nomes de entidades relacionadas.
+   * @param {any[]} bens - Array de bens brutos do banco de dados.
+   * @returns {Bem[]} Um array de bens formatados.
+   */
   private mapBensWithDetails(bens: any[]): Bem[] {
     return bens.map(bem => ({
       ...bem,
@@ -27,25 +43,45 @@ export class BemService {
     }));
   }
 
+  /**
+   * Busca bens com base em filtros, como ID do processo judicial, ID do comitente e tenant.
+   * @param {object} filter - Filtros a serem aplicados na busca.
+   * @returns {Promise<Bem[]>} Uma lista de bens.
+   */
   async getBens(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string }): Promise<Bem[]> {
     const bens = await this.repository.findAll(filter);
     return this.mapBensWithDetails(bens);
   }
 
+  /**
+   * Busca um bem específico pelo seu ID.
+   * @param {string} id - O ID do bem.
+   * @returns {Promise<Bem | null>} O bem encontrado ou null.
+   */
   async getBemById(id: string): Promise<Bem | null> {
     const bem = await this.repository.findById(id);
     if (!bem) return null;
     return this.mapBensWithDetails([bem])[0];
   }
 
+  /**
+   * Busca uma lista de bens pelos seus IDs.
+   * @param {string[]} ids - Um array de IDs de bens.
+   * @returns {Promise<Bem[]>} Uma lista de bens.
+   */
   async getBensByIds(ids: string[]): Promise<Bem[]> {
     const bens = await this.repository.findByIds(ids);
     return this.mapBensWithDetails(bens);
   }
 
+  /**
+   * Cria um novo bem.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {BemFormData} data - Os dados do formulário do novo bem.
+   * @returns {Promise<{success: boolean; message: string; bemId?: string;}>} O resultado da operação.
+   */
   async createBem(tenantId: string, data: BemFormData): Promise<{ success: boolean; message: string; bemId?: string; }> {
     try {
-      // Destructure to separate relation IDs from the rest of the data
       const { categoryId, subcategoryId, judicialProcessId, sellerId, ...bemData } = data;
 
       const dataToCreate: Prisma.BemCreateInput = {
@@ -67,6 +103,12 @@ export class BemService {
     }
   }
 
+  /**
+   * Atualiza um bem existente.
+   * @param {string} id - O ID do bem a ser atualizado.
+   * @param {Partial<BemFormData>} data - Os dados a serem modificados.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
   async updateBem(id: string, data: Partial<BemFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const { categoryId, subcategoryId, judicialProcessId, sellerId, ...bemData } = data;
@@ -85,10 +127,14 @@ export class BemService {
     }
   }
 
+  /**
+   * Exclui um bem, verificando antes se ele está vinculado a um lote ativo.
+   * @param {string} id - O ID do bem a ser excluído.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
   async deleteBem(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // Check if the Bem is part of any active or sold lots
-      const linkedLots = await prisma.lotBens.findMany({
+      const linkedLots = await this.prisma.lotBens.findMany({
         where: { bemId: id },
         include: { lot: { select: { status: true } } }
       });

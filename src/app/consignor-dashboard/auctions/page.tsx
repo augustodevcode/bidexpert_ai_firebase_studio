@@ -1,4 +1,11 @@
 // src/app/consignor-dashboard/auctions/page.tsx
+/**
+ * @fileoverview Página "Meus Leilões" dentro do Painel do Comitente.
+ * Este componente de cliente é responsável por buscar e exibir uma lista
+ * dos leilões associados ao comitente logado. Permite que o vendedor
+ * acompanhe o status e performance de seus próprios leilões. Para administradores,
+ * inclui um seletor para visualizar os leilões de qualquer comitente.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

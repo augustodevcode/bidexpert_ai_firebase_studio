@@ -1,4 +1,11 @@
 // src/app/consignor-dashboard/lots/page.tsx
+/**
+ * @fileoverview Página "Meus Lotes" dentro do Painel do Comitente.
+ * Este componente de cliente é responsável por buscar e exibir todos os lotes
+ * vinculados ao comitente logado, utilizando uma tabela de dados com
+ * funcionalidades de busca e filtro. Para administradores, permite
+ * visualizar os lotes de qualquer comitente através de um seletor.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

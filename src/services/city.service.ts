@@ -1,4 +1,11 @@
 // src/services/city.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe CityService, que encapsula a
+ * lógica de negócio para o gerenciamento de Cidades. Ele interage com o
+ * repositório de cidades e estados para realizar operações de CRUD, garantindo
+ * a consistência dos dados, como a denormalização da sigla do estado (UF) e
+ * validação de unicidade de códigos do IBGE.
+ */
 import { CityRepository } from '@/repositories/city.repository';
 import { StateRepository } from '@/repositories/state.repository';
 import type { CityInfo, CityFormData } from '@/types';
@@ -14,6 +21,11 @@ export class CityService {
     this.stateRepository = new StateRepository();
   }
 
+  /**
+   * Busca todas as cidades, opcionalmente filtrando por estado, e denormaliza a UF.
+   * @param {string} [stateIdFilter] - O ID do estado para filtrar as cidades.
+   * @returns {Promise<CityInfo[]>} Uma lista de cidades.
+   */
   async getCities(stateIdFilter?: string): Promise<CityInfo[]> {
     const cities = await this.cityRepository.findAll(stateIdFilter);
     return cities.map(city => ({
@@ -22,6 +34,11 @@ export class CityService {
     }));
   }
 
+  /**
+   * Busca uma cidade específica pelo seu ID.
+   * @param {string} id - O ID da cidade.
+   * @returns {Promise<CityInfo | null>} A cidade encontrada ou null.
+   */
   async getCityById(id: string): Promise<CityInfo | null> {
     const city = await this.cityRepository.findById(id);
     if (!city) return null;
@@ -31,6 +48,12 @@ export class CityService {
     };
   }
 
+  /**
+   * Cria uma nova cidade, garantindo a associação correta com o estado e a
+   * unicidade do código IBGE.
+   * @param {CityFormData} data - Os dados do formulário da nova cidade.
+   * @returns {Promise<{success: boolean; message: string; cityId?: string;}>} O resultado da operação.
+   */
   async createCity(data: CityFormData): Promise<{ success: boolean; message: string; cityId?: string; }> {
     try {
       const parentState = await this.stateRepository.findById(data.stateId);
@@ -61,6 +84,12 @@ export class CityService {
     }
   }
 
+  /**
+   * Atualiza uma cidade existente.
+   * @param {string} id - O ID da cidade a ser atualizada.
+   * @param {Partial<CityFormData>} data - Os dados a serem modificados.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
   async updateCity(id: string, data: Partial<CityFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const dataToUpdate: Prisma.CityUpdateInput = {};
@@ -83,6 +112,11 @@ export class CityService {
     }
   }
 
+  /**
+   * Exclui uma cidade do banco de dados.
+   * @param {string} id - O ID da cidade a ser excluída.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
   async deleteCity(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // In a real app, you would check for dependencies (e.g., lots, users in this city)

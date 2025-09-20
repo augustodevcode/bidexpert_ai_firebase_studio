@@ -1,4 +1,11 @@
 // src/app/consignor-dashboard/overview/page.tsx
+/**
+ * @fileoverview Página de "Visão Geral" do Painel do Comitente.
+ * Este componente de cliente serve como a página inicial para vendedores,
+ * exibindo um resumo de suas métricas de performance (KPIs), como leilões
+ * ativos e faturamento, além de uma lista de seus próximos leilões.
+ * Para administradores, permite a visualização do painel de qualquer comitente.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,7 +21,7 @@ import { getConsignorDashboardStatsAction } from '../reports/actions';
 import type { Auction, Lot, SellerProfileInfo, ConsignorDashboardStats } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/sample-data-helpers';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { hasPermission } from '@/lib/permissions';
@@ -85,8 +92,10 @@ export default function ConsignorOverviewPage() {
     if (!authLoading && targetSellerId) {
       fetchConsignorData(targetSellerId);
     } else if (!authLoading) {
-      setError("Perfil de comitente não encontrado ou não vinculado à sua conta.");
       setIsLoading(false);
+       if (!isUserAdmin) {
+        setError("Você precisa ter um perfil de comitente vinculado para ver esta página.");
+       }
     }
   }, [userProfileWithPermissions, authLoading, fetchConsignorData, isUserAdmin, selectedSellerId, allSellers.length]);
 
@@ -159,7 +168,7 @@ export default function ConsignorOverviewPage() {
                 <CardHeader><CardTitle className="text-xl font-semibold">Performance de Vendas (Últimos Meses)</CardTitle></CardHeader>
                 <CardContent className="h-72">
                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={stats?.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                      <LineChart data={stats?.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="name" stroke="#888888" fontSize={12} />
                         <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />

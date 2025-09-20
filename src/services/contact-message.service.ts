@@ -1,4 +1,10 @@
 // src/services/contact-message.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe ContactMessageService, que encapsula
+ * a lógica de negócio para o gerenciamento de mensagens de contato. Ele serve como
+ * intermediário entre as actions e o repositório, permitindo salvar, buscar,
+ * atualizar o status de leitura e excluir mensagens enviadas pelo formulário público.
+ */
 import { ContactMessageRepository } from '@/repositories/contact-message.repository';
 import type { ContactMessage } from '@/types';
 

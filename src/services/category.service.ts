@@ -1,4 +1,11 @@
 // src/services/category.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe CategoryService, responsável por
+ * encapsular a lógica de negócio para o gerenciamento de Categorias de Lotes.
+ * Atua como um intermediário entre as server actions (controllers) e o repositório
+ * de categorias, aplicando regras como a geração de `slug` e validação de
+ * unicidade de nomes.
+ */
 import { CategoryRepository } from '@/repositories/category.repository';
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

@@ -1,4 +1,11 @@
 // src/app/consignor-dashboard/financial/page.tsx
+/**
+ * @fileoverview Página "Financeiro" dentro do Painel do Comitente.
+ * Exibe um resumo financeiro com KPIs (Key Performance Indicators) como
+ * faturamento bruto, comissão e valor líquido. Apresenta também uma tabela
+ * detalhada com todos os lotes vendidos, seus valores e status de pagamento.
+ * Permite a administradores visualizar os dados de comitentes específicos.
+ */
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';

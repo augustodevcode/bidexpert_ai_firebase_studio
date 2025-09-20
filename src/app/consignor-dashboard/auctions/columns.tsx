@@ -1,4 +1,9 @@
 // src/app/consignor-dashboard/auctions/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * na página "Meus Leilões" do Painel do Comitente. A configuração inclui
+ * renderização de status, faturamento e ações relevantes para o vendedor.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

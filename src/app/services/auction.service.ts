@@ -1,0 +1,266 @@
+// src/services/auction.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe AuctionService, que encapsula
+ * a lógica de negócio principal para o gerenciamento de leilões. Atua como um
+ * intermediário entre as server actions (controllers) e o repositório de leilões
+ * (camada de dados), garantindo a aplicação de regras de negócio e validações.
+ */
+import { AuctionRepository } from '@/repositories/auction.repository';
+import type { Auction, AuctionFormData, LotCategory } from '@/types';
+import { slugify } from '@/lib/ui-helpers';
+import type { Prisma } from '@prisma/client';
+import { PrismaClientValidationError } from '@prisma/client/runtime/library';
+import { v4 as uuidv4 } from 'uuid';
+import { utcToZonedTime } from 'date-fns-tz';
+import { getPrismaInstance } from '@/lib/prisma';
+
+export class AuctionService {
+  private auctionRepository: AuctionRepository;
+  private prisma;
+
+  constructor() {
+    this.auctionRepository = new AuctionRepository();
+    this.prisma = getPrismaInstance();
+  }
+
+  /**
+   * Mapeia os dados brutos do leilão do Prisma para o tipo Auction definido na aplicação.
+   * Realiza conversões de tipo (ex: Decimal para number) e calcula campos derivados.
+   * @param {any[]} auctions - Array de leilões brutos do banco de dados.
+   * @returns {Auction[]} Um array de leilões formatados.
+   */
+  private mapAuctionsWithDetails(auctions: any[]): Auction[] {
+    return auctions.map(a => ({
+      ...a,
+      initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
+      estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
+      achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
+      decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : undefined,
+      floorPrice: a.floorPrice ? Number(a.floorPrice) : undefined,
+      latitude: a.latitude ? Number(a.latitude) : null,
+      longitude: a.longitude ? Number(a.longitude) : null,
+      totalLots: a._count?.lots ?? a.lots?.length ?? 0,
+      seller: a.seller ? { ...a.seller } : null,
+      auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
+      category: a.category ? { ...a.category } : null,
+      sellerName: a.seller?.name,
+      auctioneerName: a.auctioneer?.name,
+      categoryName: a.category?.name,
+      stages: a.stages || [],
+      lots: (a.lots || []).map((lot: any) => ({
+        ...lot,
+        price: Number(lot.price),
+        initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+        secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+        bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+        evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+      }))
+    }));
+  }
+
+  /**
+   * Busca todos os leilões para um determinado tenant.
+   * @param {string} tenantId - O ID do tenant.
+   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   */
+  async getAuctions(tenantId: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findAll(tenantId);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
+  /**
+   * Busca um leilão específico por ID ou publicId, respeitando o tenantId se fornecido.
+   * @param {string | undefined} tenantId - O ID do tenant (opcional para chamadas públicas).
+   * @param {string} id - O ID ou publicId do leilão.
+   * @returns {Promise<Auction | null>} O leilão encontrado ou null.
+   */
+  async getAuctionById(tenantId: string | undefined, id: string): Promise<Auction | null> {
+    const auction = await this.auctionRepository.findById(tenantId, id);
+    if (!auction) return null;
+    return this.mapAuctionsWithDetails([auction])[0];
+  }
+
+  /**
+   * Busca múltiplos leilões por seus IDs.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {string[]} ids - Um array de IDs de leilões.
+   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   */
+  async getAuctionsByIds(tenantId: string, ids: string[]): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findByIds(tenantId, ids);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
+  /**
+   * Busca leilões por slug ou ID do leiloeiro.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {string} auctioneerSlug - O slug ou ID do leiloeiro.
+   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   */
+  async getAuctionsByAuctioneerSlug(tenantId: string, auctioneerSlug: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findByAuctioneerSlug(tenantId, auctioneerSlug);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
+  /**
+   * Busca leilões por slug ou ID do comitente.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {string} sellerSlugOrPublicId - O slug, ID ou publicId do comitente.
+   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   */
+   async getAuctionsBySellerSlug(tenantId: string, sellerSlugOrPublicId: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findBySellerSlug(tenantId, sellerSlugOrPublicId);
+    return this.mapAuctionsWithDetails(auctions);
+  }
+
+  /**
+   * Cria um novo leilão com seus estágios (praças) dentro de uma transação.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {Partial<AuctionFormData>} data - Os dados do formulário do leilão.
+   * @returns {Promise<{success: boolean; message: string; auctionId?: string;}>} O resultado da operação.
+   */
+  async createAuction(tenantId: string, data: Partial<AuctionFormData & { auctionStages?: any[], onlineUrl?: string }>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+    try {
+      if (!data.title) throw new Error("O título do leilão é obrigatório.");
+      if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
+      if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
+
+      const derivedAuctionDate = (data.auctionStages && data.auctionStages.length > 0 && data.auctionStages[0].startDate)
+        ? new Date(data.auctionStages[0].startDate as Date)
+        : utcToZonedTime(new Date(), 'America/Sao_Paulo');
+
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, ...restOfData } = data;
+
+      const newAuction = await this.prisma.$transaction(async (tx: any) => {
+        const createdAuction = await tx.auction.create({
+          data: {
+            ...(restOfData as any),
+            publicId: `AUC-${uuidv4()}`,
+            slug: slugify(data.title!),
+            auctionDate: derivedAuctionDate,
+            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+            auctioneer: { connect: { id: auctioneerId } },
+            seller: { connect: { id: sellerId } },
+            category: categoryId ? { connect: { id: categoryId } } : undefined,
+            tenant: { connect: { id: tenantId } },
+            city: cityId ? { connect: { id: cityId } } : undefined,
+            state: stateId ? { connect: { id: stateId } } : undefined,
+            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
+          }
+        });
+
+        if (data.auctionStages && data.auctionStages.length > 0) {
+          await tx.auctionStage.createMany({
+            data: data.auctionStages.map((stage: any) => ({
+              name: stage.name,
+              startDate: new Date(stage.startDate as Date),
+              endDate: new Date(stage.endDate as Date),
+              initialPrice: stage.initialPrice,
+              auctionId: createdAuction.id,
+            })),
+          });
+        }
+
+        return createdAuction;
+      });
+
+      return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
+
+    } catch (error: any) {
+      console.error("Error in AuctionService.createAuction:", error);
+      if (error instanceof PrismaClientValidationError) {
+         return { success: false, message: `Falha de validação ao criar leilão: ${error.message}` };
+      }
+      return { success: false, message: `Falha ao criar leilão: ${error.message}` };
+    }
+  }
+
+  /**
+   * Atualiza um leilão existente e seus estágios.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {string} id - O ID do leilão a ser atualizado.
+   * @param {Partial<AuctionFormData>} data - Os dados a serem atualizados.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
+  async updateAuction(tenantId: string, id: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; }> {
+    try {
+      const auctionToUpdate = await this.auctionRepository.findById(tenantId, id);
+      if (!auctionToUpdate) {
+        return { success: false, message: 'Leilão não encontrado para este tenant.' };
+      }
+      const internalId = auctionToUpdate.id;
+
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
+
+      await this.prisma.$transaction(async (tx: any) => {
+        const dataToUpdate: Prisma.AuctionUpdateInput = {
+            ...(restOfData as any),
+        };
+        
+        if (data.title) dataToUpdate.slug = slugify(data.title);
+        
+        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
+        if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
+        if (cityId) dataToUpdate.city = { connect: {id: cityId }};
+        if (stateId) dataToUpdate.state = { connect: {id: stateId }};
+        if (judicialProcessId) {
+          dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
+        } else if (data.hasOwnProperty('judicialProcessId')) {
+          dataToUpdate.judicialProcess = { disconnect: true };
+        }
+        
+        if (data.softCloseMinutes) dataToUpdate.softCloseMinutes = Number(data.softCloseMinutes);
+
+        const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate) ? auctionStages[0].startDate : (data.auctionDate || undefined);
+        if (derivedAuctionDate) {
+            dataToUpdate.auctionDate = derivedAuctionDate;
+        }
+
+        await tx.auction.update({ where: { id: internalId }, data: dataToUpdate });
+
+        if (auctionStages) {
+            await tx.auctionStage.deleteMany({ where: { auctionId: internalId } });
+            await tx.auctionStage.createMany({
+                data: auctionStages.map(stage => ({
+                    name: stage.name,
+                    startDate: new Date(stage.startDate as Date),
+                    endDate: new Date(stage.endDate as Date),
+                    initialPrice: stage.initialPrice,
+                    auctionId: internalId,
+                })),
+            });
+        }
+      });
+
+      return { success: true, message: 'Leilão atualizado com sucesso.' };
+      
+    } catch (error: any) {
+      console.error(`Error in AuctionService.updateAuction for id ${id}:`, error);
+      return { success: false, message: `Falha ao atualizar leilão: ${error.message}` };
+    }
+  }
+
+  /**
+   * Exclui um leilão, mas apenas se ele não tiver lotes associados.
+   * @param {string} tenantId - O ID do tenant.
+   * @param {string} id - O ID do leilão a ser excluído.
+   * @returns {Promise<{success: boolean; message: string;}>} O resultado da operação.
+   */
+  async deleteAuction(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const lotCount = await this.auctionRepository.countLots(tenantId, id);
+      if (lotCount > 0) {
+        return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
+      }
+      await this.prisma.$transaction(async (tx: any) => {
+          await tx.auctionStage.deleteMany({ where: { auctionId: id }});
+          await tx.auction.delete({ where: { id, tenantId } });
+      });
+      return { success: true, message: 'Leilão excluído com sucesso.' };
+    } catch (error: any) {
+      console.error(`Error in AuctionService.deleteAuction for id ${id}:`, error);
+      return { success: false, message: `Falha ao excluir leilão: ${error.message}` };
+    }
+  }
+}

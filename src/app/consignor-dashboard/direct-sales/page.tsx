@@ -1,4 +1,10 @@
 // src/app/consignor-dashboard/direct-sales/page.tsx
+/**
+ * @fileoverview Página "Minhas Vendas Diretas" dentro do Painel do Comitente.
+ * Exibe uma lista de ofertas de venda direta criadas pelo comitente logado,
+ * permitindo o gerenciamento e acompanhamento de suas ofertas. Para administradores,
+ * oferece um seletor para visualizar as ofertas de qualquer comitente.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -69,7 +75,8 @@ export default function ConsignorDirectSalesPage() {
     }
   }, [authLoading, fetchOffers, refetchTrigger]);
   
-  const handleDelete = useCallback(async (id: string) => {
+  const handleDelete = useCallback(
+    async (id: string) => {
       const result = await deleteDirectSaleOffer(id);
       if (result.success) {
         toast({ title: "Sucesso", description: result.message });

@@ -1,10 +1,13 @@
+// src/app/consignor-dashboard/reports/actions.ts
 /**
- * @fileoverview Server Action for the Consignor Dashboard's reports/overview page.
- * Aggregates statistics for a specific consignor's sales performance.
+ * @fileoverview Server Action para o dashboard de relatórios do comitente.
+ * Esta ação agrega estatísticas de desempenho para um comitente específico,
+ * calculando totais de lotes, vendas, faturamento e dados de vendas mensais
+ * para alimentar os gráficos e KPIs do painel.
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { ConsignorDashboardStats } from '@/types';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -14,6 +17,7 @@ import { getSession } from '@/app/auth/actions';
 /**
  * Fetches and calculates key performance indicators for a consignor's dashboard.
  * This includes total lots, sold lots, sales value, and sales rate.
+ * The data is fetched within the context of the currently authenticated tenant.
  * @param {string} sellerId - The ID of the seller/consignor.
  * @returns {Promise<ConsignorDashboardStats>} A promise resolving to the aggregated stats object.
  */
@@ -25,8 +29,8 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
         return emptyStats;
     }
 
-    const session = await getSession();
-    const tenantId = session?.tenantId;
+    const prisma = getPrismaInstance();
+    const tenantId = (await getSession())?.tenantId;
 
     if (!tenantId) {
         console.warn("[Action - getConsignorDashboardStats] No tenantId found in session.");
@@ -36,7 +40,7 @@ export async function getConsignorDashboardStatsAction(sellerId: string): Promis
     const allLots = await prisma.lot.findMany({
         where: { 
             sellerId: sellerId,
-            tenantId: tenantId // Ensure data is fetched from the correct tenant
+            tenantId: tenantId,
         },
         select: { status: true, price: true, createdAt: true }
     });

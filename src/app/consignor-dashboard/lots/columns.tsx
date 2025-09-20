@@ -1,4 +1,10 @@
 // src/app/consignor-dashboard/lots/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * na página "Meus Lotes" do Painel do Comitente. Esta configuração inclui
+ * colunas para título, status, preço, número de lances e ações relevantes,
+ * como editar ou visualizar o lote publicamente.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

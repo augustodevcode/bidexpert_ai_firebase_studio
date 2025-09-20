@@ -1,7 +1,13 @@
 // src/app/consignor-dashboard/settings/page.tsx
+/**
+ * @fileoverview Página de Configurações do Painel do Comitente.
+ * Este componente permite que um comitente edite seu próprio perfil.
+ * Para administradores, oferece um seletor para editar o perfil de qualquer
+ * comitente cadastrado, agindo como um atalho de administração.
+ */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '@/contexts/auth-context';
 import { getSeller, getSellers } from '@/app/admin/sellers/actions';
 import { updateConsignorProfile } from '../actions';
@@ -15,6 +21,7 @@ import { hasPermission } from '@/lib/permissions';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
+import FormPageLayout from '@/components/admin/form-page-layout';
 
 /**
  * Page for consignors or admins to edit seller profile settings.
@@ -23,6 +30,7 @@ export default function ConsignorSettingsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const router = useRouter();
+  const formRef = useRef<any>(null);
 
   const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
@@ -30,13 +38,14 @@ export default function ConsignorSettingsPage() {
   const [judicialBranches, setJudicialBranches] = useState<JudicialBranch[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
 
   // Fetch all sellers if the user is an admin
   useEffect(() => {
     if (isUserAdmin) {
-      getSellers().then(sellers => {
+      getSellers(true).then(sellers => { // Public call for admin
         setAllSellers(sellers);
         if (!selectedSellerId && sellers.length > 0) {
           setSelectedSellerId(sellers[0].id);
@@ -91,17 +100,30 @@ export default function ConsignorSettingsPage() {
     }
   }, [authLoading, userProfileWithPermissions, fetchData, isUserAdmin, selectedSellerId]);
 
-  // Handler for form submission
   const handleUpdate = async (data: SellerFormData) => {
+    setIsSubmitting(true);
     const sellerIdToUpdate = isUserAdmin ? selectedSellerId : userProfileWithPermissions?.sellerId;
     if (!sellerIdToUpdate) {
-      return { success: false, message: 'ID do comitente não encontrado. Não é possível salvar.' };
+      toast({ title: 'Erro', description: 'ID do comitente não encontrado.', variant: 'destructive'});
+      setIsSubmitting(false);
+      return;
     }
-    return updateConsignorProfile(sellerIdToUpdate, data);
+    const result = await updateConsignorProfile(sellerIdToUpdate, data);
+    
+     if (result.success) {
+      toast({ title: 'Sucesso!', description: 'Perfil atualizado.' });
+      fetchData(sellerIdToUpdate); // Refetch data to show updates
+    } else {
+      toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
+    }
+    setIsSubmitting(false);
   };
   
-  // Render loading state
-  if (authLoading || (isLoading && !sellerProfile)) {
+  const handleSaveTrigger = () => {
+    formRef.current?.requestSubmit();
+  }
+
+  if (authLoading || isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -109,16 +131,14 @@ export default function ConsignorSettingsPage() {
     );
   }
   
-  // Render error or empty state
-  if (error || (!isUserAdmin && !userProfileWithPermissions?.sellerId)) {
+  if (error) {
      return (
         <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-destructive">{error || "Perfil de comitente não encontrado na sua conta."}</h2>
+            <h2 className="text-xl font-semibold text-destructive">{error}</h2>
         </div>
      );
   }
-
-  // Admin view without any sellers to select
+  
   if (isUserAdmin && allSellers.length === 0 && !isLoading) {
       return (
         <div className="text-center py-12">
@@ -154,19 +174,25 @@ export default function ConsignorSettingsPage() {
       )}
 
       {sellerProfile ? (
-        <SellerForm
-          initialData={sellerProfile}
-          judicialBranches={judicialBranches}
-          onSubmitAction={handleUpdate}
-          formTitle="Minhas Configurações de Comitente"
+        <FormPageLayout
+          formTitle="Configurações do Perfil de Comitente"
           formDescription="Atualize os detalhes do seu perfil público de vendedor."
-          submitButtonText="Salvar Alterações"
-          successRedirectPath="/consignor-dashboard/overview"
-        />
+          icon={Users}
+          isViewMode={false} // Always in edit mode here
+          isSubmitting={isSubmitting}
+          onSave={handleSaveTrigger}
+          onCancel={() => router.back()}
+        >
+            <SellerForm
+                ref={formRef}
+                initialData={sellerProfile}
+                judicialBranches={judicialBranches}
+                onSubmitAction={handleUpdate}
+            />
+        </FormPageLayout>
       ) : (
-        // Show a loader while the selected seller's profile is being fetched
         <div className="flex justify-center items-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          {isLoading ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : <p>Selecione um comitente para ver os detalhes.</p>}
         </div>
       )}
     </div>

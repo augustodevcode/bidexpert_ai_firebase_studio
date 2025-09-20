@@ -1,4 +1,10 @@
 // src/app/consignor-dashboard/reports/page.tsx
+/**
+ * @fileoverview Página de Relatórios do Painel do Comitente.
+ * Este componente de cliente busca e exibe um resumo do desempenho de vendas
+ * do comitente logado, incluindo faturamento, taxa de sucesso, lotes ativos
+ * e um gráfico de vendas mensais.
+ */
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -82,38 +88,26 @@ export default function ConsignorReportsPage() {
             Meus Relatórios de Desempenho
           </CardTitle>
           <CardDescription>
-            Acompanhe a performance de seus itens na plataforma.
+            Acompanhe seu histórico de vendas e faturamento na plataforma.
           </CardDescription>
         </CardHeader>
       </Card>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Faturamento Bruto Total</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Faturamento Bruto Total</CardTitle><DollarSign className="h-4 w-4 text-muted-foreground" /></CardHeader>
             <CardContent><div className="text-2xl font-bold">R$ {stats.totalSalesValue.toLocaleString('pt-BR')}</div></CardContent>
         </Card>
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Lotes Vendidos</CardTitle>
-                <Gavel className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Total de Lotes Vendidos</CardTitle><Gavel className="h-4 w-4 text-muted-foreground" /></CardHeader>
             <CardContent><div className="text-2xl font-bold">+{stats.soldLots}</div></CardContent>
         </Card>
          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle><TrendingUp className="h-4 w-4 text-muted-foreground" /></CardHeader>
             <CardContent><div className="text-2xl font-bold">{stats.salesRate.toFixed(1)}%</div></CardContent>
         </Card>
          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Lotes Ativos</CardTitle>
-                <ListChecks className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2"><CardTitle className="text-sm font-medium">Lotes Ativos</CardTitle><ListChecks className="h-4 w-4 text-muted-foreground" /></CardHeader>
             <CardContent><div className="text-2xl font-bold">{stats.activeLots}</div></CardContent>
         </Card>
       </div>
@@ -131,7 +125,7 @@ export default function ConsignorReportsPage() {
                 <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${value/1000}k`} />
                 <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
                 <Legend />
-                <Line type="monotone" dataKey="Sales" name="Suas Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="sales" name="Suas Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
               </ReLineChart>
             </ResponsiveContainer>
           </CardContent>

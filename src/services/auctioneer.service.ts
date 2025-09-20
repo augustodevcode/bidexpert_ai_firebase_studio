@@ -1,13 +1,19 @@
 // src/services/auctioneer.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe AuctioneerService, que encapsula
+ * a lógica de negócio para o gerenciamento de Leiloeiros. Atua como um
+ * intermediário entre as server actions (controllers) e o repositório de leiloeiros,
+ * garantindo a aplicação de regras como a geração de slug e a validação de dados.
+ */
 import { AuctioneerRepository } from '@/repositories/auctioneer.repository';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { getPrismaInstance } from '@/lib/prisma'; // Import the instance getter
+import { getPrismaInstance } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
 
 export interface AuctioneerDashboardData {
   totalRevenue: number;

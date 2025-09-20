@@ -1,4 +1,10 @@
 // src/app/consignor-dashboard/financial/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * na página financeira do Painel do Comitente. A configuração inclui formatação
+ * de moeda para valores de arremate, comissão e valor líquido, além de badges
+ * para o status do pagamento.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
