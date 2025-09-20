@@ -1,12 +1,17 @@
-// components/BidReportBuilder/components/PainelPropriedades.js
+// src/components/BidReportBuilder/components/PropertiesPanel.tsx
 'use client';
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import type { ReportElement } from '../index';
 
-// Painel que exibe e edita as propriedades de um elemento selecionado.
-const PainelPropriedades = ({ selectedElement, onElementChange }) => {
+interface PropertiesPanelProps {
+  selectedElement: ReportElement | null;
+  onElementChange: (elementId: string, newProps: Partial<ReportElement>) => void;
+}
+
+const PropertiesPanel: React.FC<PropertiesPanelProps> = ({ selectedElement, onElementChange }) => {
   if (!selectedElement) {
     return (
       <div className="p-4 text-sm text-muted-foreground h-full flex items-center justify-center text-center">
@@ -15,9 +20,7 @@ const PainelPropriedades = ({ selectedElement, onElementChange }) => {
     );
   }
   
-  // Handlers para cada propriedade
-  const handleChange = (prop, value) => {
-    // Para inputs numéricos, garantir que o valor seja um número
+  const handleChange = (prop: keyof ReportElement, value: any) => {
     const finalValue = ['x', 'y', 'width', 'height'].includes(prop) ? parseInt(value, 10) || 0 : value;
     onElementChange(selectedElement.id, { [prop]: finalValue });
   };
@@ -41,7 +44,7 @@ const PainelPropriedades = ({ selectedElement, onElementChange }) => {
             value={selectedElement.content} 
             onChange={(e) => handleChange('content', e.target.value)} 
             className="w-full p-1 border rounded text-xs" 
-            rows="3" 
+            rows={3} 
           />
         </div>
         <div className="grid grid-cols-2 gap-2">
@@ -69,4 +72,4 @@ const PainelPropriedades = ({ selectedElement, onElementChange }) => {
   );
 };
 
-export default PainelPropriedades;
+export default PropertiesPanel;

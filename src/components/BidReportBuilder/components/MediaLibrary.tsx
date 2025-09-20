@@ -1,22 +1,30 @@
-// components/BidReportBuilder/components/BibliotecaMidia.js
+// src/components/BidReportBuilder/components/MediaLibrary.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 
-// Dados de exemplo para as imagens
-const sampleImages = [
-    { id: 1, src: 'https://placehold.co/300x200.png', alt: 'Imagem de Imóvel' },
-    { id: 2, src: 'https://placehold.co/300x200.png', alt: 'Imagem de Veículo' },
-    { id: 3, src: 'https://placehold.co/300x200.png', alt: 'Logo Comitente A' },
-    { id: 4, src: 'https://placehold.co/300x200.png', alt: 'Logo Leiloeiro B' },
-    { id: 5, src: 'https://placehold.co/300x200.png', alt: 'Item Industrial' },
-    { id: 6, src: 'https://placehold.co/300x200.png', alt: 'Arte Abstrata' },
+interface SampleImage {
+    id: number;
+    src: string;
+    alt: string;
+}
+
+const sampleImages: SampleImage[] = [
+    { id: 1, src: 'https://placehold.co/300x200.png?text=Imovel', alt: 'Imagem de Imóvel' },
+    { id: 2, src: 'https://placehold.co/300x200.png?text=Veiculo', alt: 'Imagem de Veículo' },
+    { id: 3, src: 'https://placehold.co/300x200.png?text=Logo+A', alt: 'Logo Comitente A' },
+    { id: 4, src: 'https://placehold.co/300x200.png?text=Logo+B', alt: 'Logo Leiloeiro B' },
+    { id: 5, src: 'https://placehold.co/300x200.png?text=Industrial', alt: 'Item Industrial' },
+    { id: 6, src: 'https://placehold.co/300x200.png?text=Arte', alt: 'Arte Abstrata' },
 ];
 
-// Painel que exibe a biblioteca de mídia.
-const BibliotecaMidia = ({ onSelectImage }) => {
+interface MediaLibraryProps {
+    onSelectImage: (image: SampleImage) => void;
+}
+
+const MediaLibrary: React.FC<MediaLibraryProps> = ({ onSelectImage }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [images, setImages] = useState(sampleImages);
 
@@ -25,7 +33,6 @@ const BibliotecaMidia = ({ onSelectImage }) => {
             setImages(sampleImages);
             return;
         }
-
         const lowercasedFilter = searchTerm.toLowerCase();
         const filtered = sampleImages.filter(image => 
             image.alt.toLowerCase().includes(lowercasedFilter)
@@ -62,4 +69,4 @@ const BibliotecaMidia = ({ onSelectImage }) => {
     );
 };
 
-export default BibliotecaMidia;
+export default MediaLibrary;

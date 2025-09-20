@@ -1,11 +1,10 @@
-// components/BidReportBuilder/components/VariablePanel.tsx
+// src/components/BidReportBuilder/components/VariablePanel.tsx
 'use client';
 import React, { useState, useEffect } from 'react';
 import { useDrag } from 'react-dnd';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
 
 interface Variable {
     name: string;
@@ -68,8 +67,6 @@ const DraggableVariable: React.FC<DraggableVariableProps> = ({ name, value }) =>
   );
 };
 
-
-// Panel that displays and allows dragging of data variables into the report.
 const VariablePanel = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filteredVariables, setFilteredVariables] = useState<VariableGroup[]>(sampleVariables);

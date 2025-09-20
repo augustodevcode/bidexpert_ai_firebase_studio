@@ -14,7 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-interface ReportElement {
+// Type Definitions
+export interface ReportElement {
     id: string;
     type: 'TextBox' | 'Image' | 'Chart' | 'Table';
     content: string;
@@ -25,15 +26,11 @@ interface ReportElement {
     imageUrl?: string;
 }
 
-interface ReportDefinition {
+export interface ReportDefinition {
     elements: ReportElement[];
 }
 
-/**
- * Main component of the Report Builder.
- * Orchestrates the interaction between the toolbar, design surface,
- * properties panel, and preview.
- */
+
 const BidReportBuilder = () => {
     const [reportDefinition, setReportDefinition] = React.useState<ReportDefinition>({ elements: [] });
     const [selectedElement, setSelectedElement] = React.useState<ReportElement | null>(null);

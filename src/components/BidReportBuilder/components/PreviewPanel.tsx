@@ -1,14 +1,17 @@
-// components/BidReportBuilder/components/PainelVisualizacao.js
+// src/components/BidReportBuilder/components/PreviewPanel.tsx
 'use client';
 import React from 'react';
+import type { ReportDefinition } from '../index';
 
-// Painel que mostra uma pré-visualização do relatório.
-const PainelVisualizacao = ({ reportDefinition }) => {
+interface PreviewPanelProps {
+  reportDefinition: ReportDefinition;
+}
+
+const PreviewPanel: React.FC<PreviewPanelProps> = ({ reportDefinition }) => {
   return (
     <div className="p-4 h-full overflow-y-auto">
       <h3 className="text-md font-semibold border-b pb-2 mb-2">Pré-Visualização</h3>
       <div className="bg-white p-4 shadow-sm h-full">
-         {/* Renderização simulada baseada na definição do relatório */}
         {reportDefinition.elements.length === 0 && (
             <p className="text-sm text-muted-foreground text-center pt-8">A pré-visualização aparecerá aqui.</p>
         )}
@@ -22,4 +25,4 @@ const PainelVisualizacao = ({ reportDefinition }) => {
   );
 };
 
-export default PainelVisualizacao;
+export default PreviewPanel;
