@@ -1,0 +1,9 @@
+/// @model(timestamps: true)
+model DataSource {
+  id        String @id @default(uuid())
+  name      String @unique /// Nome amigável da fonte de dados (ex: "Leilões", "Lotes")
+  modelName String @unique /// Nome do modelo Prisma correspondente (ex: "auction", "lot")
+  fields    Json   /// JSON array com os campos e seus tipos (ex: [{ "name": "title", "type": "string" }])
+
+  @@map("dataSources")
+}

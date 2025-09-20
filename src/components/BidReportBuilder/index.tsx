@@ -5,8 +5,7 @@ import React from 'react';
 import Toolbar from './components/Toolbar';
 import DesignSurface from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
-import PreviewPanel from './components/PreviewPanel';
-import VariablePanel from './components/VariablePanel';
+import DataSourceManager from './components/DataSourceManager'; // Alterado de VariablePanel
 import MediaLibrary from './components/MediaLibrary';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -154,7 +153,7 @@ const BidReportBuilder = () => {
                          <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
                             <TabsList className="flex-shrink-0 mx-2 mt-2">
                                 <TabsTrigger value="properties" className="flex-1 text-xs">Propriedades</TabsTrigger>
-                                <TabsTrigger value="variables" className="flex-1 text-xs">Variáveis</TabsTrigger>
+                                <TabsTrigger value="datasources" className="flex-1 text-xs">Dados</TabsTrigger>
                                 <TabsTrigger value="media" className="flex-1 text-xs">Mídia</TabsTrigger>
                             </TabsList>
                             <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
@@ -163,8 +162,8 @@ const BidReportBuilder = () => {
                                     onElementChange={handleElementChange}
                                 />
                             </TabsContent>
-                            <TabsContent value="variables" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
-                                <VariablePanel />
+                            <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
+                                <DataSourceManager />
                             </TabsContent>
                              <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
                                 <MediaLibrary onSelectImage={handleSelectImage} />
