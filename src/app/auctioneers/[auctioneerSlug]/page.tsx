@@ -1,5 +1,11 @@
-
 // src/app/auctioneers/[auctioneerSlug]/page.tsx
+/**
+ * @fileoverview Página de perfil público de um Leiloeiro.
+ * Este componente de cliente renderiza a página de detalhes de um leiloeiro
+ * específico, incluindo suas informações de perfil, leilões recentes em carrossel,
+ * e uma lista paginada e filtrável de todos os seus leilões. Ele busca os dados
+ * necessários através de server actions e gerencia toda a interatividade da UI.
+ */
 'use client';
 
 import { useEffect, useState, useMemo, useCallback } from 'react';

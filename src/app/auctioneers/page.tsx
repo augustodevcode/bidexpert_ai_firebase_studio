@@ -1,4 +1,10 @@
 // src/app/auctioneers/page.tsx
+/**
+ * @fileoverview Página de listagem pública de todos os Leiloeiros.
+ * Este componente Server-Side busca os perfis de todos os leiloeiros ativos
+ * na plataforma e os exibe em um layout de cards, permitindo que os usuários
+ * descubram e naveguem para as páginas de perfil de cada profissional.
+ */
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -8,6 +14,8 @@ import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import type { AuctioneerProfileInfo } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { isValidImageUrl } from '@/lib/ui-helpers';
+import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 
 const getAuctioneerInitial = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'L';
