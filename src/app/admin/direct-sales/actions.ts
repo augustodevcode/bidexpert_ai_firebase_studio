@@ -1,4 +1,11 @@
 // src/app/admin/direct-sales/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade DirectSaleOffer (Venda Direta).
+ * Este arquivo define as funções que o cliente pode chamar para interagir
+ * com os dados de ofertas de venda direta. Ele atua como a camada de Controller,
+ * recebendo as requisições, chamando o DirectSaleOfferService para aplicar
+ * a lógica de negócio e revalidando o cache quando necessário.
+ */
 'use server';
 
 import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';

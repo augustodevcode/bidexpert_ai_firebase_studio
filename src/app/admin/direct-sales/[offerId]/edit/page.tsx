@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/[offerId]/edit/page.tsx
+/**
+ * @fileoverview Página de edição para uma Oferta de Venda Direta específica.
+ * Este componente Server-Side busca os dados da oferta a ser editada, bem como
+ * as listas de categorias e vendedores para popular os seletores do formulário.
+ */
 import DirectSaleForm from '../../direct-sale-form';
 import { getDirectSaleOffer, updateDirectSaleOffer, type DirectSaleOfferFormData } from '../../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';

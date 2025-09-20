@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/direct-sale-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Ofertas de Venda Direta. Garante que os dados sejam
+ * consistentes, como a obrigatoriedade do preço para ofertas de "Compra Imediata".
+ */
 import * as z from 'zod';
 import type { DirectSaleOfferStatus, DirectSaleOfferType } from '@/types';
 

@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Ofertas de Venda Direta.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros facetados e ações como exclusão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';

@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/direct-sale-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Ofertas de Venda Direta.
+ * Utiliza `react-hook-form` e Zod para gerenciamento de estado e validação,
+ * incluindo campos condicionais baseados no tipo de oferta selecionado.
+ */
 'use client';
 
 import * as React from 'react';

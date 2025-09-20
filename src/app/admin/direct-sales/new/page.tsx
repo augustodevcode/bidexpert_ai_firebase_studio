@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/new/page.tsx
+/**
+ * @fileoverview Página para criação de uma nova Oferta de Venda Direta.
+ * Este componente Server-Side busca os dados necessários para os seletores do formulário
+ * (categorias e vendedores) e renderiza o `DirectSaleForm` para a entrada de dados.
+ */
 import DirectSaleForm from '../direct-sale-form';
 import { createDirectSaleOffer, type DirectSaleOfferFormData } from '../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';

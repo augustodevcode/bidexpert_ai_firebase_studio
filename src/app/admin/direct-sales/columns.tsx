@@ -1,4 +1,9 @@
 // src/app/admin/direct-sales/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Ofertas de Venda Direta. Inclui formatação de status,
+ * preço e um menu de ações para cada linha (editar, excluir).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
