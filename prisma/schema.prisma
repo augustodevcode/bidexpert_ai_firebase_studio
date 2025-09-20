@@ -894,23 +894,24 @@ model Subcategory {
   bens               Bem[]
 }
 
+/// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
-  id              String             @id @default(cuid())
-  name            String
-  subdomain       String             @unique
-  domain          String?            @unique
-  settings        PlatformSettings[]
-  users           UsersOnTenants[]
-  createdAt       DateTime           @default(now())
-  updatedAt       DateTime           @updatedAt
-  auctions        Auction[]
-  lots            Lot[]
-  bens            Bem[]
-  directSaleOffers DirectSaleOffer[]
-  judicialProcesses JudicialProcess[]
-  notifications   Notification[]
-  sellers         Seller[]
-  auctioneers     Auctioneer[]
+  id        String   @id @default(uuid())
+  name      String
+  subdomain String   @unique
+  domain    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users    UsersOnTenants[]
+  auctions Auction[]
+  lots     Lot[]
+  bens     Bem[]
+  sellers  Seller[]
+  bids     Bid[]
+  reports  Report[] // Relação inversa adicionada aqui
+
+  @@index([subdomain])
 }
 
 model User {

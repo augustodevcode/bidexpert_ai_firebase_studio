@@ -3,17 +3,21 @@ model Tenant {
   id        String   @id @default(uuid())
   name      String
   subdomain String   @unique
-  domain    String?
+  domain    String?  @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  users    UsersOnTenants[]
-  auctions Auction[]
-  lots     Lot[]
-  bens     Bem[]
-  sellers  Seller[]
-  bids     Bid[]
-  reports  Report[] // Relação inversa adicionada aqui
-
-  @@index([subdomain])
+  // Relações inversas
+  users             UsersOnTenants[]
+  auctions          Auction[]
+  lots              Lot[]
+  bens              Bem[]
+  sellers           Seller[]
+  auctioneers       Auctioneer[]
+  judicialProcesses JudicialProcess[]
+  directSaleOffers  DirectSaleOffer[]
+  notifications     Notification[]
+  bids              Bid[]
+  reports           Report[]
+  platformSettings  PlatformSettings?
 }
