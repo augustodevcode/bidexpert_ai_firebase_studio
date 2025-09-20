@@ -29,12 +29,12 @@ async function getProjectContextForAI(): Promise<string> {
 
         return `
             **Project Rules (airules.MD):**
-            ${'${rulesContent}'}
+            ${rulesContent}
 
             ---
 
             **Database Schema (prisma/schema.prisma):**
-            ${'${schemaContent}'}
+            ${schemaContent}
         `;
     } catch (error) {
         console.error("Error reading project context for AI:", error);
@@ -110,27 +110,38 @@ ${analysisResult.recommendation}
 
 /**
  * Action to analyze a generic error log with AI.
+ * NOTE: Server log fetching is temporarily disabled due to a build issue.
+ * @param clientErrorLog The error message displayed on the client-side toast.
  */
-export async function analyzeErrorLogAction(errorLog: string): Promise<{ success: boolean; analysis: string; recommendation: string }> {
+export async function analyzeErrorWithLogsAction(clientErrorLog: string): Promise<{ success: boolean; analysis: string; recommendation: string }> {
   try {
     const projectContext = await getProjectContextForAI();
-    console.log("[analyzeErrorLogAction] Calling AI to analyze generic error...");
+    console.log("[analyzeErrorWithLogsAction] Analyzing client-side error log.");
+    
+    // Temporarily disabled fetching server logs. We'll only use the client error.
+    const fullErrorContext = `
+      **Client-Side Error Message:**
+      ${clientErrorLog}
+    `;
+    
+    console.log("[analyzeErrorWithLogsAction] Calling AI to analyze error context...");
     const result = await analyzeErrorLog({
-      errorLog: errorLog,
+      errorLog: fullErrorContext,
       projectContext: projectContext,
     });
-    console.log("[analyzeErrorLogAction] AI analysis complete.", result);
+    
+    console.log("[analyzeErrorWithLogsAction] AI analysis complete.", result);
     return { success: true, ...result };
+
   } catch (error: any) {
-    console.error("[analyzeErrorLogAction] Error calling AI analysis for error log:", error);
+    console.error("[analyzeErrorWithLogsAction] Error during AI analysis:", error);
     return {
       success: false,
       analysis: "Falha na Análise",
-      recommendation: `Não foi possível conectar ao serviço de IA para analisar o erro: ${'${error.message}'}`
+      recommendation: `Não foi possível analisar o erro: ${error.message}`
     };
   }
 }
-
 
 export async function runBiddingEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
     const testFile = 'tests/bidding-e2e.test.ts';

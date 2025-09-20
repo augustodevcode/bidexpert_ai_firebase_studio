@@ -14,7 +14,7 @@ import {
 import { Button } from "./button"
 import { Copy, Check, BrainCircuit, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
+import { analyzeErrorWithLogsAction } from "@/app/admin/qa/actions"
 import { Alert, AlertDescription, AlertTitle } from "./alert"
 import { ScrollArea } from "./scroll-area" // Importando a ScrollArea
 
@@ -47,7 +47,7 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
       setIsLoading(true);
       setAnalysisResult(null);
       setHasCopiedForAI(false); // Reset copy status when modal opens
-      analyzeErrorLogAction(errorLog)
+      analyzeErrorWithLogsAction(errorLog)
         .then(result => {
           if (result.success) {
             setAnalysisResult({ analysis: result.analysis, recommendation: result.recommendation });
@@ -133,16 +133,9 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
         navigator.clipboard.writeText(fullErrorText);
       } catch (err) {
         console.error("Failed to copy text to clipboard:", err);
-        // Opcional: Mostrar uma mensagem para o usuário que a cópia falhou
-        // Por exemplo, usando um toast diferente ou um alerta.
-        // toast({
-        //   title: "Falha ao copiar",
-        //   description: "Por favor, copie o texto manualmente.",
-        //   variant: "destructive",
-        // });
       }
       setHasCopied(true);
-      setTimeout(() => setHasCopied(false), 2000); // Reset icon after 2 seconds
+      setTimeout(() => setHasCopied(false), 2000);
     }
   };
 
