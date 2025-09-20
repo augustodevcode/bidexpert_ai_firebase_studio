@@ -28,6 +28,89 @@ const brazilianStates = [
   { name: 'Tocantins', uf: 'TO' }
 ];
 
+async function seedDataSources() {
+    console.log('[DB SEED] Seeding Data Sources for Report Builder...');
+    
+    const dataSources = [
+        {
+            name: 'Leilões',
+            modelName: 'Auction',
+            fields: [
+                { name: 'title', type: 'String' },
+                { name: 'status', type: 'String' },
+                { name: 'auctionDate', type: 'DateTime' },
+                { name: 'endDate', type: 'DateTime' },
+                { name: 'totalLots', type: 'Int' },
+                { name: 'initialOffer', type: 'Decimal' },
+                { name: 'visits', type: 'Int' },
+            ]
+        },
+        {
+            name: 'Lotes',
+            modelName: 'Lot',
+            fields: [
+                { name: 'title', type: 'String' },
+                { name: 'number', type: 'String' },
+                { name: 'status', type: 'String' },
+                { name: 'price', type: 'Decimal' },
+                { name: 'initialPrice', type: 'Decimal' },
+                { name: 'bidsCount', type: 'Int' },
+                { name: 'views', type: 'Int' },
+                { name: 'auctionName', type: 'String' },
+            ]
+        },
+        {
+            name: 'Usuários',
+            modelName: 'User',
+            fields: [
+                { name: 'fullName', type: 'String' },
+                { name: 'email', type: 'String' },
+                { name: 'habilitationStatus', type: 'String' },
+                { name: 'accountType', type: 'String' },
+            ]
+        },
+        {
+            name: 'Comitentes',
+            modelName: 'Seller',
+            fields: [
+                { name: 'name', type: 'String' },
+                { name: 'contactName', type: 'String' },
+                { name: 'email', type: 'String' },
+                { name: 'city', type: 'String' },
+                { name: 'state', type: 'String' },
+            ]
+        },
+         {
+            name: 'Leiloeiros',
+            modelName: 'Auctioneer',
+            fields: [
+                { name: 'name', type: 'String' },
+                { name: 'registrationNumber', type: 'String' },
+                { name: 'email', type: 'String' },
+                { name: 'city', type: 'String' },
+                { name: 'state', type: 'String' },
+            ]
+        },
+    ];
+
+    for (const source of dataSources) {
+        await prisma.dataSource.upsert({
+            where: { modelName: source.modelName },
+            update: {
+                fields: source.fields,
+                name: source.name,
+            },
+            create: {
+                name: source.name,
+                modelName: source.modelName,
+                fields: source.fields,
+            },
+        });
+    }
+
+    console.log(`[DB SEED] ✅ SUCCESS: ${dataSources.length} data sources processed.`);
+}
+
 async function seedEssentialData() {
   console.log('--- [DB SEED] Starting essential data seeding ---');
   
@@ -77,6 +160,7 @@ async function seedEssentialData() {
             showRelatedLotsOnLotDetail: true,
             relatedLotsCount: 4,
             defaultListItemsPerPage: 10,
+            homepageSections: [],
         }
     });
     console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
@@ -157,6 +241,7 @@ async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
     try {
         await seedEssentialData();
+        await seedDataSources();
         console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
     } catch (error) {
         console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
