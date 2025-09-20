@@ -69,6 +69,8 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   try {
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
+    // **CORREÇÃO:** Usa a instância base do Prisma para a busca inicial do usuário.
+    // A validação de e-mail/senha deve ser global, antes do contexto de tenant ser aplicado.
     const user = await basePrisma.user.findUnique({
         where: { email },
         include: {
