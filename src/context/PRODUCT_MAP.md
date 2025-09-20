@@ -140,3 +140,4 @@ Baseado na estrutura de `src/app`:
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** **[IMPORTANTE]** Após a refatoração, todos os novos testes de integração **devem** ser escritos para chamar as `Server Actions` (ex: `createAuction`) em vez dos serviços diretamente (`auctionService.createAuction`). Use o helper `callActionAsUser` (em `tests/test-utils.ts`) para simular o contexto de usuário e tenant corretamente.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
+
