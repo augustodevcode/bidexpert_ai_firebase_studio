@@ -6,12 +6,12 @@ import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Gavel, BarChart3 } from 'lucide-react';
+import { Gavel, BarChart3, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
 import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout';
 
@@ -28,7 +28,60 @@ const StatCard = ({ title, value, icon: Icon }: { title: string, value: string |
 );
 
 function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) {
-    // ... (conteúdo existente, sem alterações)
+    const [dashboardData, setDashboardData] = useState<AuctioneerDashboardData | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        async function fetchData() {
+            setIsLoading(true);
+            try {
+                const data = await getAuctioneerDashboardDataAction(auctioneerId);
+                setDashboardData(data);
+            } catch (e) {
+                console.error("Failed to fetch auctioneer dashboard data:", e);
+                setDashboardData(null);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+        fetchData();
+    }, [auctioneerId]);
+
+    if (isLoading) {
+        return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;
+    }
+    
+    if (!dashboardData) {
+        return <p>Não foi possível carregar os dados de performance para este leiloeiro.</p>;
+    }
+    
+    return (
+        <div className="space-y-4">
+             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={Gavel} />
+                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={Gavel} />
+                <StatCard title="Total de Leilões" value={dashboardData.totalAuctions} icon={Gavel} />
+                <StatCard title="Total de Lotes" value={dashboardData.totalLots} icon={Gavel} />
+            </div>
+             <Card>
+                <CardHeader>
+                    <CardTitle>Faturamento Mensal</CardTitle>
+                </CardHeader>
+                <CardContent className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                        <RechartsBarChart data={dashboardData.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="name" stroke="#888888" fontSize={10} />
+                            <YAxis stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                            <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                            <Legend />
+                            <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </RechartsBarChart>
+                    </ResponsiveContainer>
+                </CardContent>
+            </Card>
+        </div>
+    )
 }
 
 export default function EditAuctioneerPage() {

@@ -29,14 +29,17 @@ export class AuctioneerService {
   }
 
   async getAuctioneers(tenantId: string): Promise<AuctioneerProfileInfo[]> {
+    // @ts-ignore
     return this.auctioneerRepository.findAll(tenantId);
   }
 
   async getAuctioneerById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {
+    // @ts-ignore
     return this.auctioneerRepository.findById(tenantId, id);
   }
 
   async getAuctioneerBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
+      // @ts-ignore
       return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
   }
 

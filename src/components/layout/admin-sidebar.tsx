@@ -80,7 +80,7 @@ const judicialManagementItems = [
 ]
 
 const platformManagementItems = [
-  { title: 'Tenants (Leiloeiros)', href: '/admin/tenants', icon: Briefcase }, // Adicionado
+  { title: 'Tenants (Leiloeiros)', href: '/admin/tenants', icon: Briefcase },
   { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
   { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
   { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: FileSpreadsheet },
@@ -236,7 +236,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* Desktop Sidebar */}
-      <aside data-ai-id="admin-sidebar" className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">
+      <aside className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">
          <SidebarContent />
       </aside>
     </>
