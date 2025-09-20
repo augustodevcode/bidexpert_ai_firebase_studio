@@ -109,15 +109,12 @@ export default function LoginPage() {
             ) : (
                 <>
                     <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} data-ai-id="auth-login-email-input" />
+                      <Label htmlFor="email">Email</Label>
+                      <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} data-ai-id="auth-login-email-input" />
                     </div>
                     <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                        <Label htmlFor="password">Senha</Label>
-                        <Link href="/auth/forgot-password" className="text-sm text-primary hover:underline">Esqueceu a senha?</Link>
-                    </div>
-                    <Input id="password" name="password" type="password" required disabled={isLoading} data-ai-id="auth-login-password-input" />
+                      <Label htmlFor="password">Senha</Label>
+                      <Input id="password" name="password" type="password" required disabled={isLoading} data-ai-id="auth-login-password-input" />
                     </div>
                 </>
             )}
@@ -127,14 +124,19 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
               {isLoading ? <Loader2 className="animate-spin" /> : (userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login')}
             </Button>
-            <p className="text-sm text-center text-muted-foreground">
-              Não tem uma conta?{' '}
-              <Link href="/auth/register" className="font-medium text-primary hover:underline">
-                Registre-se
-              </Link>
-            </p>
           </CardFooter>
         </form>
+         <div className="text-center text-sm pb-6 px-6">
+              <Link href="/auth/forgot-password" className="text-primary hover:underline">
+                Esqueceu a senha?
+              </Link>
+              <p className="text-muted-foreground mt-4">
+                Não tem uma conta?{' '}
+                <Link href="/auth/register" className="font-medium text-primary hover:underline">
+                  Registre-se
+                </Link>
+              </p>
+          </div>
       </Card>
     </div>
   );
