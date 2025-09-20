@@ -1,3 +1,5 @@
+// prisma/models/report.prisma
+
 model Report {
   id          String   @id @default(cuid())
   name        String
