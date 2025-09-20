@@ -1,0 +1,82 @@
+/// Representa um evento de leilão, que pode conter múltiplos lotes.
+model Auction {
+  id                          String                @id @default(cuid())
+  publicId                    String                @unique @default(uuid())
+  slug                        String                @unique
+  title                       String
+  description                 String?               @db.Text
+  status                      String                @default("RASCUNHO")
+  auctionDate                 DateTime?
+  endDate                     DateTime?
+  visits                      Int                   @default(0)
+  totalLots                   Int                   @default(0)
+  totalHabilitatedUsers       Int                   @default(0)
+  initialOffer                Decimal?              @db.Decimal(15, 2)
+  achievedRevenue             Decimal?              @db.Decimal(15, 2)
+  isFeaturedOnMarketplace     Boolean?              @default(false)
+  marketplaceAnnouncementTitle String?
+  additionalTriggers          String[]
+  dataAiHint                  String?
+  documentsUrl                String?
+  evaluationReportUrl         String?
+  auctionCertificateUrl       String?
+  onlineUrl                   String?
+  address                     String?
+  zipCode                     String?
+  latitude                    Decimal?              @db.Decimal(10, 8)
+  longitude                   Decimal?              @db.Decimal(11, 8)
+  imageUrl                    String?
+  imageMediaId                String?
+  auctionType                 String? // JUDICIAL, EXTRAJUDICIAL, PARTICULAR, TOMADA_DE_PRECOS
+  auctionMethod               String                @default("STANDARD") // STANDARD, DUTCH, SILENT
+  participation               String                @default("ONLINE") // ONLINE, PRESENCIAL, HIBRIDO
+  sellingBranch               String?
+  automaticBiddingEnabled     Boolean?              @default(false)
+  allowInstallmentBids        Boolean?              @default(true)
+  silentBiddingEnabled        Boolean?              @default(false)
+  softCloseEnabled            Boolean?              @default(false)
+  softCloseMinutes            Int?                  @default(2)
+  estimatedRevenue            Decimal?              @db.Decimal(15, 2)
+  decrementAmount             Decimal?              @db.Decimal(10, 2)
+  decrementIntervalSeconds    Int?
+  floorPrice                  Decimal?              @db.Decimal(15, 2)
+  autoRelistSettings          Json?
+  
+  lots                        Lot[]
+  bids                        Bid[]
+  habilitations               AuctionHabilitation[]
+  stages                      AuctionStage[]
+
+  tenantId                    String
+  tenant                      Tenant                @relation(fields: [tenantId], references: [id])
+  
+  categoryId                  String?
+  category                    LotCategory?          @relation(fields: [categoryId], references: [id])
+
+  auctioneerId                String?
+  auctioneer                  Auctioneer?           @relation(fields: [auctioneerId], references: [id])
+  
+  sellerId                    String?
+  seller                      Seller?               @relation(fields: [sellerId], references: [id])
+  
+  judicialProcessId           String?
+  judicialProcess             JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
+
+  courtId                     String?
+  court                       Court?                @relation(fields: [courtId], references: [id])
+
+  districtId                  String?
+  district                    JudicialDistrict?     @relation(fields: [districtId], references: [id])
+
+  branchId                    String?
+  branch                      JudicialBranch?       @relation(fields: [branchId], references: [id])
+
+  cityId                      String?
+  city                        City?                 @relation(fields: [cityId], references: [id])
+
+  stateId                     String?
+  state                       State?                @relation(fields: [stateId], references: [id])
+
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
+}

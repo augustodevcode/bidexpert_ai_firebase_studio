@@ -1,0 +1,177 @@
+/// Representa um bem individual que pode ser agrupado em um lote.
+model Bem {
+  id                          String          @id @default(cuid())
+  publicId                    String?         @unique @default(uuid())
+  title                       String
+  description                 String?         @db.Text
+  status                      String          @default("DISPONIVEL") // DISPONIVEL, LOTEADO, VENDIDO, REMOVIDO, INATIVADO
+  evaluationValue             Decimal?        @db.Decimal(15, 2)
+  imageUrl                    String?
+  imageMediaId                String?
+  galleryImageUrls            Json?
+  mediaItemIds                Json?
+  dataAiHint                  String?
+  locationCity                String?
+  locationState               String?
+  address                     String?
+  latitude                    Decimal?        @db.Decimal(10, 8)
+  longitude                   Decimal?        @db.Decimal(11, 8)
+
+  lots                        LotBens[]
+
+  tenantId                    String
+  tenant                      Tenant          @relation(fields: [tenantId], references: [id])
+
+  categoryId                  String?
+  category                    LotCategory?    @relation(fields: [categoryId], references: [id])
+  
+  subcategoryId               String?
+  subcategory                 Subcategory?    @relation(fields: [subcategoryId], references: [id])
+  
+  judicialProcessId           String?
+  judicialProcess             JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  
+  sellerId                    String?
+  seller                      Seller?         @relation(fields: [sellerId], references: [id])
+
+  // --- Campos Específicos por Categoria ---
+
+  // Veículos
+  plate                       String?
+  make                        String?
+  model                       String?
+  version                     String?
+  year                        Int?
+  modelYear                   Int?
+  mileage                     Int?
+  color                       String?
+  fuelType                    String?
+  transmissionType            String?
+  bodyType                    String?
+  vin                         String?         @unique
+  renavam                     String?         @unique
+  enginePower                 String?
+  numberOfDoors               Int?
+  vehicleOptions              String?
+  detranStatus                String?
+  debts                       String?
+  runningCondition            String?
+  bodyCondition               String?
+  tiresCondition              String?
+  hasKey                      Boolean?
+  vehicleMakeId               String?
+  vehicleModelId              String?
+  vehicleMake                 VehicleMake?    @relation(fields: [vehicleMakeId], references: [id], onDelete: SetNull)
+  vehicleModel                VehicleModel?   @relation(fields: [vehicleModelId], references: [id], onDelete: SetNull)
+
+  // Imóveis
+  propertyRegistrationNumber  String?
+  iptuNumber                  String?
+  isOccupied                  Boolean?
+  totalArea                   Decimal?        @db.Decimal(10, 2)
+  builtArea                   Decimal?        @db.Decimal(10, 2)
+  bedrooms                    Int?
+  suites                      Int?
+  bathrooms                   Int?
+  parkingSpaces               Int?
+  constructionType            String?
+  finishes                    String?         @db.Text
+  infrastructure              String?         @db.Text
+  condoDetails                String?         @db.Text
+  improvements                String?         @db.Text
+  topography                  String?
+  liensAndEncumbrances        String?         @db.Text
+  propertyDebts               String?         @db.Text
+  unregisteredRecords         String?         @db.Text
+  hasHabiteSe                 Boolean?
+  zoningRestrictions          String?
+  amenities                   Json?
+
+  // Eletrônicos
+  brand                       String?
+  serialNumber                String?
+  itemCondition               String?
+  specifications              String?         @db.Text
+  includedAccessories         String?         @db.Text
+  batteryCondition            String?
+  hasInvoice                  Boolean?
+  hasWarranty                 Boolean?
+  repairHistory               String?         @db.Text
+
+  // Eletrodomésticos
+  applianceCapacity           String?
+  voltage                     String?
+  applianceType               String?
+  additionalFunctions         String?
+
+  // Máquinas e Equipamentos
+  hoursUsed                   Int?
+  engineType                  String?
+  capacityOrPower             String?
+  maintenanceHistory          String?         @db.Text
+  installationLocation        String?
+  compliesWithNR              String?
+  operatingLicenses           String?
+
+  // Semoventes
+  breed                       String?
+  age                         String?
+  sex                         String?
+  weight                      String?
+  individualId                String?
+  purpose                     String?
+  sanitaryCondition           String?
+  lineage                     String?
+  isPregnant                  Boolean?
+  specialSkills               String?
+  gtaDocument                 String?
+  breedRegistryDocument       String?
+
+  // Móveis e Utensílios
+  furnitureType               String?
+  material                    String?
+  style                       String?
+  dimensions                  String?
+  pieceCount                  Int?
+
+  // Joias e Relógios
+  jewelryType                 String?
+  metal                       String?
+  gemstones                   String?
+  totalWeight                 String?
+  jewelrySize                 String?
+  authenticityCertificate     String?
+
+  // Obras de Arte
+  workType                    String?
+  artist                      String?
+  period                      String?
+  technique                   String?
+  provenance                  String?
+
+  // Embarcações
+  boatType                    String?
+  boatLength                  String?
+  hullMaterial                String?
+  onboardEquipment            String?
+
+  // Alimentos e Bebidas
+  productName                 String?
+  quantity                    String?
+  packagingType               String?
+  expirationDate              DateTime?
+  storageConditions           String?
+
+  // Metais e Pedras Preciosas
+  preciousMetalType           String?
+  purity                      String?
+
+  // Bens Florestais
+  forestGoodsType             String?
+  volumeOrQuantity            String?
+  species                     String?
+  dofNumber                   String?
+
+  createdAt                   DateTime        @default(now())
+  updatedAt                   DateTime        @updatedAt
+}

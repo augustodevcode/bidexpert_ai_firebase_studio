@@ -1,0 +1,68 @@
+/// Modelo base para todos os usuários da plataforma.
+model User {
+  id                  String             @id @default(cuid())
+  email               String             @unique
+  password            String?
+  fullName            String?
+  cpf                 String?            @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+  optInMarketing      Boolean            @default(false)
+  
+  // Endereço
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+
+  // Configurações
+  avatarUrl           String?
+  dataAiHint          String?
+  habilitationStatus  String             @default("PENDING_DOCUMENTS") // PENDING_DOCUMENTS, PENDING_ANALYSIS, HABILITADO, REJECTED, BLOCKED
+  accountType         String             @default("PHYSICAL") // PHYSICAL, LEGAL, DIRECT_SALE_CONSIGNOR
+  badges              String[]           @default([])
+  
+  // PJ Info
+  razaoSocial         String?
+  cnpj                String?            @unique
+  inscricaoEstadual   String?
+  website             String?
+  responsibleName     String?
+  responsibleCpf      String?
+
+  // Relações
+  bids                Bid[]
+  wins                UserWin[]
+  maxBids             UserLotMaxBid[]
+  notifications       Notification[]
+  documents           UserDocument[]
+  uploadedMedia       MediaItem[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  answeredQuestions   LotQuestion[]      @relation("AnsweredBy")
+  
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+
+  // Relações diretas (opcional)
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
