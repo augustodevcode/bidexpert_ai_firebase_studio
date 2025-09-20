@@ -3,7 +3,7 @@
 ## DONE
 - **Item 1:** **Core Architecture Refactoring:** Fully migrated the application to a layered MVC + Service + Repository architecture using Prisma ORM. This standardized data access and improved maintainability.
 - **Item 2:** **Comprehensive Admin Panel:** Implemented full CRUD functionality for all major entities (`Auctions`, `Lots`, `Users`, `Sellers`, `Auctioneers`, `Categories`, `Judicial Entities`, etc.).
-- **Item 3 & 12:** **Full Test Coverage:** Expanded the E2E test suite to cover all remaining entities and user flows, ensuring complete application stability. This includes the expanded scenarios requested.
+- **Item 3 & 12:** **Full Test Coverage:** Expanded the E2E test suite to cover all remaining entities and user flows. This includes the expanded scenarios requested.
 - **Item 4:** **Functional Dashboards:** Built and populated with data the main User Dashboard (`/dashboard/*`) and the Consignor Dashboard (`/consignor-dashboard/*`).
 - **Item 5:** **Public-Facing Pages:** Developed key public pages including the Homepage, Search, and detailed views for auctions, lots, sellers, and auctioneers.
 - **Item 6:** **User Authentication & Permissions:** Implemented a secure session-based authentication system with a granular, role-based permission model.
@@ -25,17 +25,16 @@
 - **Item 18: Implementação de Pagamento Parcelado:** Criado o fluxo de checkout e um painel financeiro para pagamentos parcelados, incluindo um novo perfil de usuário "Financeiro".
 - **Item 23: Implementar Lógica de Precificação por Etapa:** Refatorada a base de dados (Prisma), serviços e a interface de usuário (formulários, páginas de detalhe) para suportar a definição de preços (lance inicial, incremento) por etapa/praça do leilão, em vez de um valor fixo no lote.
 - **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
+- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
+- **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
+- **Item 24: Unificação dos Componentes de Card (UniversalCard):** Criado o `UniversalCard` e `UniversalListItem` e refatoradas as páginas principais (`HomePage`, `SearchPage`, `CategoryPage`, etc.) para usá-los.
 
 ## DOING
-- **(Nenhum item em andamento no momento)**
+- **Item 27: Refatorar Testes de Integração e E2E:**
+    - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada, garantindo que eles chamem as `Server Actions` em vez dos serviços diretamente, e simulem o contexto de tenant.
+    - **Status Atual:** Refatoração do teste `bidding-e2e.test.ts` concluída. Próximo passo é continuar com os demais arquivos de teste.
 
 ## NEXT
-- **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs)**
-    - **Objetivo:** Corrigir as lacunas entre as regras de arquitetura definidas e a implementação atual do código.
-    - **Relatório de Análise:**
-        - **Arquitetura de Dados (Não Conforme):** Chamadas diretas ao `prisma` foram encontradas em Server Actions. É necessário refatorar para que todas as chamadas passem pelas classes de Repositório.
-        - **Padrão Controller-Service-Repository (Não Conforme):** A separação de camadas não é rigorosa. As Server Actions (Controllers) pulam a camada de Serviço e/ou Repositório. É preciso auditar e corrigir os fluxos de dados.
-        - **Nomenclatura (Parcialmente Conforme):** O código mistura português e inglês. É preciso padronizar para português em todo novo código.
-        - **Atributos de Teste/IA (Não Conforme):** Falta padronização e aplicação consistente do atributo `data-ai-id` em elementos estruturais.
-        - **Uso do EntitySelector (Não Verificado):** É preciso auditar todos os formulários de admin para garantir que o componente `EntitySelector` está sendo usado para todos os relacionamentos, em vez de um `<select>` padrão.
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos itens acima.
+- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos testes.
+- **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
+- **Documentação Final:** Gerar a documentação final do projeto e da API.
