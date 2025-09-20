@@ -1,3 +1,11 @@
+// src/app/auctions/create/actions.ts
+/**
+ * @fileoverview Server Actions para a página (hipotética) de criação de leilões.
+ * Este arquivo define as funções que interagem com os fluxos de IA da Genkit para
+ * fornecer sugestões inteligentes durante o processo de criação de um leilão.
+ * As ações incluem sugerir detalhes do anúncio, prever o valor de abertura e
+ * encontrar anúncios similares para inspiração.
+ */
 'use server';
 
 import { 

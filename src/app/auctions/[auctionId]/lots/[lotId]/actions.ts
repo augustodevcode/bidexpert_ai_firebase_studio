@@ -1,8 +1,11 @@
 // src/app/auctions/[auctionId]/lots/[lotId]/actions.ts
 /**
- * @fileoverview Server Actions for the Lot Detail page.
- * Contains logic for placing bids, managing max bids, and fetching related data
- * like bid history, reviews, and questions for a specific lot.
+ * @fileoverview Server Actions para a página de detalhes de um Lote.
+ * Este arquivo contém a lógica de backend que pode ser chamada diretamente do
+ * cliente. As responsabilidades incluem: registrar um lance (`placeBidOnLot`),
+ * definir um lance máximo (`placeMaxBid`), buscar o histórico de lances e
+ * gerenciar o sistema de perguntas e respostas. As ações interagem com a
+ * camada de serviço (`LotService`) para executar a lógica de negócio principal.
  */
 'use server';
 
@@ -115,7 +118,8 @@ export async function answerQuestionOnLot(
 export async function getSellerDetailsForLotPage(sellerIdOrPublicIdOrSlug?: string): Promise<SellerProfileInfo | null> {
     if (!sellerIdOrPublicIdOrSlug) return null;
     try {
-        return sellerService.getSellerBySlug('1', sellerIdOrPublicIdOrSlug); // Always public data
+        // As páginas públicas sempre buscam dados do tenant "Landlord"
+        return sellerService.getSellerBySlug('1', sellerIdOrPublicIdOrSlug);
     } catch(error) {
         console.error("Error fetching seller details:", error);
         return null;
@@ -128,8 +132,6 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
         return { success: false, message: 'Dados insuficientes para gerar o termo. Verifique se o lote foi finalizado e possui um vencedor.' };
     }
     
-    // Using prisma directly here is acceptable as it's a one-off query for a supporting entity.
-    // Ideally, this would be in a UserService, but for simplicity, we keep it here.
     const { prisma } = await import('@/lib/prisma');
     const winner = await prisma.user.findUnique({ where: { id: lot.winnerId } });
     if (!winner) {

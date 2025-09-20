@@ -1,4 +1,12 @@
-
+// src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx
+/**
+ * @fileoverview Componente principal do lado do cliente para a página de detalhes de um lote.
+ * Este componente é responsável por renderizar todas as informações do lote,
+ * gerenciar o estado da UI (como a imagem exibida na galeria), e orquestrar
+ * a interatividade do usuário, como favoritar, compartilhar e navegar entre
+ * as abas de descrição, especificações, perguntas e avaliações. Ele também
+ * renderiza o painel de lances (`BiddingPanel`).
+ */
 'use client';
 
 import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid } from '@/types';

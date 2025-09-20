@@ -1,4 +1,12 @@
-
+// src/app/auctions/[auctionId]/live/virtual-auditorium-client.tsx
+/**
+ * @fileoverview Componente de cliente para o Auditório Virtual.
+ * Este componente renderiza a interface principal do leilão ao vivo,
+ * orquestrando a exibição do lote atual, o painel de lances, a lista de
+ * próximos lotes, o chat e as informações gerais do leilão. Ele gerencia o
+ * estado da UI, como tela cheia e painéis laterais, e lida com as interações
+ * do usuário, como dar lances e habilitar-se para o leilão.
+ */
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';

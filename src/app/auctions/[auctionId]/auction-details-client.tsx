@@ -1,4 +1,11 @@
 // src/app/auctions/[auctionId]/auction-details-client.tsx
+/**
+ * @fileoverview Componente de cliente que renderiza a página de detalhes de um leilão.
+ * Este componente gerencia a interatividade da página, incluindo a busca de lotes,
+ * a aplicação de filtros (via SidebarFilters), ordenação e paginação dos resultados.
+ * Ele consome dados de leilão, lote e configurações da plataforma para construir uma
+ * experiência de navegação rica e responsiva para o usuário final.
+ */
 'use client';
 import React from 'react';
 

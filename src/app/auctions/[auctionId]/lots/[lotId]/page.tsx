@@ -1,4 +1,12 @@
 // src/app/auctions/[auctionId]/lots/[lotId]/page.tsx
+/**
+ * @fileoverview Página de servidor para renderização inicial dos detalhes de um lote.
+ * Este componente Server-Side é responsável por buscar os dados essenciais para a
+ * exibição de um lote (o lote em si, o leilão pai, configurações da plataforma,
+ * categorias, comitentes e leiloeiros). Ele delega a renderização final e a
+ * interatividade para o componente de cliente `LotDetailClientContent`,
+ * garantindo um carregamento inicial rápido (SSR/SSG).
+ */
 import type { Lot, Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';

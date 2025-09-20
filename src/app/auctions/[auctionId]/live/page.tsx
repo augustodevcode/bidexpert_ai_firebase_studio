@@ -1,5 +1,12 @@
-
 // src/app/auctions/[auctionId]/live/page.tsx
+/**
+ * @fileoverview Página de servidor para carregar os dados iniciais do Auditório Virtual.
+ * Este componente Server-Side busca os dados do leilão, seus lotes, e o estado
+ * de habilitação do usuário. Ele identifica qual lote deve ser exibido como
+ * "atual" (seja pelo parâmetro `lotId` na URL ou pelo primeiro lote ativo) e
+ * passa esses dados para o componente de cliente `VirtualAuditoriumClient`
+ * para renderização e interatividade.
+ */
 'use client'; 
 
 import type { Auction, Lot } from '@/types';

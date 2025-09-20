@@ -1,4 +1,11 @@
 // src/app/auctions/[auctionId]/page.tsx
+/**
+ * @fileoverview Página de servidor para renderização inicial dos detalhes de um leilão.
+ * Este componente Server-Side busca os dados essenciais de um leilão específico,
+ * incluindo seus lotes, e os dados de apoio para filtros (categorias, comitentes).
+ * Ele delega a renderização final e toda a interatividade para o componente
+ * de cliente `AuctionDetailsClient`, garantindo um carregamento inicial rápido (SSR/SSG).
+ */
 import type { Auction, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionDetailsClient from './auction-details-client';
 import { Button } from '@/components/ui/button';
@@ -41,8 +48,8 @@ async function getAuctionPageData(id: string): Promise<{
     return { platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
   }
 
-  // The getAuction service should ideally handle this join.
-  // We'll ensure it's populated here as a safeguard.
+  // A service getAuction já deve incluir os lotes.
+  // Esta é uma salvaguarda caso a inclusão falhe ou seja removida.
   const lotsForAuction = auctionFromDb.lots && auctionFromDb.lots.length > 0 
     ? auctionFromDb.lots 
     : await getLots(auctionFromDb.id, true); // Public call

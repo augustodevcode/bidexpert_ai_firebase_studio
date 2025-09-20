@@ -1,4 +1,10 @@
-
+// src/app/auctions/[auctionId]/live/loading.tsx
+/**
+ * @fileoverview Componente de esqueleto de carregamento para a página do Auditório Virtual.
+ * Exibe uma animação de `spinner` e uma mensagem informativa enquanto os dados
+ * do leilão ao vivo estão sendo buscados no servidor, proporcionando um feedback
+ * visual imediato ao usuário.
+ */
 import { Loader2 } from 'lucide-react';
 
 export default function LiveAuctionLoading() {
