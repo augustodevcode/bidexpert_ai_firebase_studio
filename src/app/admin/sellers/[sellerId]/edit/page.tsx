@@ -1,4 +1,11 @@
 // src/app/admin/sellers/[sellerId]/edit/page.tsx
+/**
+ * @fileoverview Página para edição e visualização de um Comitente (Vendedor) específico.
+ * Este componente de cliente gerencia o estado de visualização e edição,
+ * buscando os dados do comitente e entidades relacionadas (como Varas Judiciais).
+ * Ele renderiza o formulário `SellerForm` para edição e um `SellerDashboardSection`
+ * para exibir os KPIs de performance do comitente.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
@@ -7,7 +14,7 @@ import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../.
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { Button } from '@/components/ui/button';
-import { BarChart3, Users } from 'lucide-react';
+import { BarChart3, Users, Gavel, Package, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellerDashboardDataAction } from '../../analysis/actions';
 import type { SellerDashboardData } from '@/services/seller.service';

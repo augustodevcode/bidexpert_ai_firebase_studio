@@ -1,4 +1,9 @@
 // src/app/admin/sellers/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance dos comitentes. Inclui formatação de moeda,
+ * renderização de números e links para as páginas de detalhes de cada comitente.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

@@ -1,4 +1,12 @@
 // src/app/admin/sellers/seller-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Comitentes (Vendedores).
+ * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
+ * Inclui campos para todas as informações do perfil do comitente, como dados
+ * de contato, endereço, logo, e um seletor de entidade para vincular comitentes
+ * judiciais a Varas Judiciais. Também possui integração com uma API de consulta
+ * de CEP para preenchimento automático de endereço.
+ */
 'use client';
 
 import * as React from 'react';

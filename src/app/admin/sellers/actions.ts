@@ -1,4 +1,12 @@
 // src/app/admin/sellers/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade Seller (Comitente).
+ * Este arquivo funciona como a camada de Controller, expondo funções que o cliente
+ * pode chamar para executar operações de CRUD (Criar, Ler, Atualizar, Excluir)
+ * nos comitentes. Ele delega a lógica de negócio para a `SellerService` e garante
+ * a aplicação do isolamento de dados por tenant e a revalidação do cache do Next.js
+ * quando ocorrem mutações.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';

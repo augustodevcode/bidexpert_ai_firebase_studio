@@ -1,14 +1,16 @@
 // src/app/admin/sellers/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Seller Analysis Dashboard.
- * Provides functions to aggregate key statistics for seller performance.
+ * @fileoverview Server Actions para o Dashboard de Análise de Comitentes (Vendedores).
+ * Contém funções para agregar estatísticas chave de performance dos comitentes,
+ * como faturamento total, taxa de vendas, e dados para gráficos. Também invoca
+ * fluxos de IA para gerar análises textuais sobre os dados de desempenho.
  */
 'use server';
 
 import { prisma } from '@/lib/prisma';
 import { SellerService, type SellerDashboardData } from '@/services/seller.service';
 import { analyzeAuctionData } from '@/ai/flows/analyze-auction-data-flow';
-
+import { getSession } from '@/app/auth/actions';
 
 export interface SellerPerformanceData {
   id: string;
@@ -21,25 +23,39 @@ export interface SellerPerformanceData {
 const sellerService = new SellerService();
 
 /**
- * Fetches and aggregates performance data for all sellers.
+ * Retrieves the session information and tenant ID.
+ */
+async function getTenantId(): Promise<string> {
+    const session = await getSession();
+    if (!session?.tenantId) {
+        throw new Error("Tenant ID não encontrado na sessão.");
+    }
+    return session.tenantId;
+}
+
+
+/**
+ * Fetches and aggregates performance data for all sellers within the current tenant.
  * @returns {Promise<SellerPerformanceData[]>} A promise that resolves to an array of seller performance objects.
  */
 export async function getSellersPerformanceAction(): Promise<SellerPerformanceData[]> {
   try {
+    const tenantId = await getTenantId();
     const sellers = await prisma.seller.findMany({
+      where: { tenantId },
       include: {
         _count: {
           select: { auctions: true, lots: true },
         },
         lots: {
-          where: { status: 'VENDIDO' },
+          where: { status: 'VENDIDO', tenantId },
           select: { price: true },
         },
       },
     });
 
     return sellers.map(seller => {
-      const totalRevenue = seller.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalRevenue = seller.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLotsSold = seller.lots.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 
@@ -60,12 +76,12 @@ export async function getSellersPerformanceAction(): Promise<SellerPerformanceDa
 
 
 /**
- * Fetches dashboard data for a single seller.
+ * Fetches dashboard data for a single seller within the current tenant.
  * @param {string} sellerId - The ID of the seller.
  * @returns {Promise<SellerDashboardData | null>} The dashboard data or null if not found.
  */
 export async function getSellerDashboardDataAction(sellerId: string): Promise<SellerDashboardData | null> {
-    const tenantId = '1'; // Assuming public data for now, will need tenant context
+    const tenantId = await getTenantId();
     return sellerService.getSellerDashboardData(tenantId, sellerId);
 }
 

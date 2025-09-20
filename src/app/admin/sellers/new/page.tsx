@@ -1,4 +1,10 @@
 // src/app/admin/sellers/new/page.tsx
+/**
+ * @fileoverview Página para criação de um novo Comitente (Vendedor).
+ * Este componente de cliente gerencia o estado do formulário e de submissão,
+ * busca dados de Varas Judiciais (se aplicável), e utiliza a server action
+ * `createSeller` para persistir o novo registro no banco de dados.
+ */
 'use client';
 import { useRouter } from 'next/navigation';
 import SellerForm from '../seller-form';

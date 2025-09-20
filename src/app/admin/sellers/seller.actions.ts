@@ -1,4 +1,10 @@
 // src/app/admin/sellers/seller.actions.ts
+/**
+ * @fileoverview Ações de servidor legadas ou específicas de um componente
+ * para a entidade Seller. Este arquivo pode conter ações que foram criadas
+ * para um propósito específico e podem ser refatoradas ou mescladas com o
+ * arquivo principal de actions (`/admin/sellers/actions.ts`) no futuro.
+ */
 'use server';
 
 import { deleteSeller } from './actions';

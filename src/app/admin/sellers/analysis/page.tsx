@@ -1,4 +1,10 @@
 // src/app/admin/sellers/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Comitentes (Vendedores).
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * o faturamento dos principais comitentes, uma tabela detalhada com os dados
+ * de todos os comitentes, e uma análise textual gerada por IA.
+ */
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
