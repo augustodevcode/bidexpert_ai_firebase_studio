@@ -1,7 +1,7 @@
 // src/components/BidReportBuilder/index.tsx
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Toolbar from './components/Toolbar';
 import DesignSurface from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
@@ -12,6 +12,10 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { createReportAction, updateReportAction } from '@/app/admin/reports/actions';
+import ReportSaveDialog from './components/ReportSaveDialog';
+import ReportLoadDialog from './components/ReportLoadDialog';
+import type { Report } from '@/types';
 
 // Type Definitions
 export interface ReportElement {
@@ -30,9 +34,14 @@ export interface ReportDefinition {
 }
 
 const BidReportBuilder = () => {
-    const [reportDefinition, setReportDefinition] = React.useState<ReportDefinition>({ elements: [] });
-    const [selectedElement, setSelectedElement] = React.useState<ReportElement | null>(null);
+    const [reportDefinition, setReportDefinition] = useState<ReportDefinition>({ elements: [] });
+    const [selectedElement, setSelectedElement] = useState<ReportElement | null>(null);
+    const [currentReport, setCurrentReport] = useState<Report | null>(null);
+
     const { toast } = useToast();
+    
+    const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+    const [isLoadModalOpen, setIsLoadModalOpen] = useState(false);
 
     const handleAddElement = (elementType: 'TextBox' | 'Image' | 'Chart' | 'Table', x?: number, y?: number, content?: string) => {
         const newElement: ReportElement = {
@@ -84,47 +93,33 @@ const BidReportBuilder = () => {
         });
     };
 
-    const handleSaveReport = () => {
-        try {
-            localStorage.setItem('bidReportBuilder_save', JSON.stringify(reportDefinition));
-            toast({
-                title: "Relatório Salvo!",
-                description: "Seu layout foi salvo no armazenamento local do seu navegador.",
-            });
-        } catch (error) {
-            toast({
-                title: "Erro ao Salvar",
-                description: "Não foi possível salvar o relatório.",
-                variant: "destructive",
-            });
-        }
-    };
+    const handleSaveReport = async (details: { name: string, description?: string }) => {
+        const dataToSave = {
+            ...details,
+            definition: reportDefinition as any, // Cast to any to match Prisma Json type
+        };
 
-    const handleLoadReport = () => {
-        try {
-            const savedReport = localStorage.getItem('bidReportBuilder_save');
-            if (savedReport) {
-                const parsedReport = JSON.parse(savedReport);
-                setReportDefinition(parsedReport);
-                setSelectedElement(null);
-                toast({
-                    title: "Relatório Carregado!",
-                    description: "Seu layout salvo foi carregado com sucesso.",
-                });
-            } else {
-                 toast({
-                    title: "Nenhum Relatório Salvo",
-                    description: "Não foi encontrado um relatório salvo no seu navegador.",
-                    variant: "default",
-                });
+        const result = currentReport
+            ? await updateReportAction(currentReport.id, dataToSave)
+            : await createReportAction(dataToSave);
+        
+        if (result.success) {
+            toast({ title: "Sucesso!", description: result.message });
+            if (!currentReport && (result as any).report) {
+                setCurrentReport((result as any).report);
             }
-        } catch (error) {
-             toast({
-                title: "Erro ao Carregar",
-                description: "O formato do relatório salvo é inválido.",
-                variant: "destructive",
-            });
+        } else {
+             toast({ title: "Erro ao Salvar", description: result.message, variant: "destructive" });
         }
+        return result.success;
+    };
+    
+    const handleLoadReport = (report: Report) => {
+        setCurrentReport(report);
+        setReportDefinition(report.definition as ReportDefinition);
+        setSelectedElement(null);
+        setIsLoadModalOpen(false);
+        toast({ title: "Relatório Carregado!", description: `O relatório "${report.name}" foi carregado.`});
     };
 
     const handleExportReport = () => {
@@ -135,45 +130,61 @@ const BidReportBuilder = () => {
     };
 
     return (
-        <DndProvider backend={HTML5Backend}>
-            <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
-                <Toolbar onAddElement={handleAddElement} onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
-                <div className="flex flex-grow overflow-hidden">
-                    <main className="flex-grow flex flex-col border-r" data-ai-id="report-builder-main-panel">
-                        <div className="flex-grow relative">
-                            <DesignSurface 
-                                elements={reportDefinition.elements} 
-                                onAddElement={handleAddElement}
-                                onSelectElement={setSelectedElement}
-                                selectedElementId={selectedElement?.id || null}
-                                onElementChange={handleElementChange}
-                            />
-                        </div>
-                    </main>
-                    <aside className="w-80 flex-shrink-0 bg-card border-l flex flex-col" data-ai-id="report-builder-sidebar">
-                         <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
-                            <TabsList className="flex-shrink-0 mx-2 mt-2">
-                                <TabsTrigger value="properties" className="flex-1 text-xs">Propriedades</TabsTrigger>
-                                <TabsTrigger value="datasources" className="flex-1 text-xs">Dados</TabsTrigger>
-                                <TabsTrigger value="media" className="flex-1 text-xs">Mídia</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
-                                <PropertiesPanel 
-                                    selectedElement={selectedElement} 
+        <>
+            <DndProvider backend={HTML5Backend}>
+                <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
+                    <Toolbar onAddElement={handleAddElement} onSave={() => setIsSaveModalOpen(true)} onLoad={() => setIsLoadModalOpen(true)} onExport={handleExportReport} />
+                    <div className="flex flex-grow overflow-hidden">
+                        <main className="flex-grow flex flex-col border-r" data-ai-id="report-builder-main-panel">
+                            <div className="flex-grow relative">
+                                <DesignSurface 
+                                    elements={reportDefinition.elements} 
+                                    onAddElement={handleAddElement}
+                                    onSelectElement={setSelectedElement}
+                                    selectedElementId={selectedElement?.id || null}
                                     onElementChange={handleElementChange}
                                 />
-                            </TabsContent>
-                            <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
-                                <DataSourceManager onAddElement={handleAddElement} />
-                            </TabsContent>
-                             <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
-                                <MediaLibrary onSelectImage={handleSelectImage} />
-                            </TabsContent>
-                        </Tabs>
-                    </aside>
+                            </div>
+                        </main>
+                        <aside className="w-80 flex-shrink-0 bg-card border-l flex flex-col" data-ai-id="report-builder-sidebar">
+                            <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
+                                <TabsList className="flex-shrink-0 mx-2 mt-2">
+                                    <TabsTrigger value="properties" className="flex-1 text-xs">Propriedades</TabsTrigger>
+                                    <TabsTrigger value="datasources" className="flex-1 text-xs">Dados</TabsTrigger>
+                                    <TabsTrigger value="media" className="flex-1 text-xs">Mídia</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
+                                    <PropertiesPanel 
+                                        selectedElement={selectedElement} 
+                                        onElementChange={handleElementChange}
+                                    />
+                                </TabsContent>
+                                <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
+                                    <DataSourceManager onAddElement={handleAddElement} />
+                                </TabsContent>
+                                <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
+                                    <MediaLibrary onSelectImage={handleSelectImage} />
+                                </TabsContent>
+                            </Tabs>
+                        </aside>
+                    </div>
                 </div>
-            </div>
-        </DndProvider>
+            </DndProvider>
+
+            <ReportSaveDialog
+                isOpen={isSaveModalOpen}
+                onClose={() => setIsSaveModalOpen(false)}
+                onSave={handleSaveReport}
+                initialName={currentReport?.name}
+                initialDescription={currentReport?.description}
+            />
+
+            <ReportLoadDialog
+                isOpen={isLoadModalOpen}
+                onClose={() => setIsLoadModalOpen(false)}
+                onLoad={handleLoadReport}
+            />
+        </>
     );
 };
 

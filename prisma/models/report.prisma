@@ -1,0 +1,13 @@
+/// Modelo para armazenar definições de relatórios customizados
+model Report {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  definition  Json
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+}
