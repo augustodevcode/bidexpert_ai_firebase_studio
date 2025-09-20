@@ -1,3 +1,4 @@
+
 // src/app/search/page.tsx
 'use client';
 
@@ -230,7 +231,7 @@ export default function SearchPage() {
     }
     setCurrentSearchType(newSearchType);
     setCurrentPage(1);
-    setItemsPerPage(platformSettings?.searchItemsPerPage || 12);
+    if(platformSettings) setItemsPerPage(platformSettings.searchItemsPerPage || 12);
   }, [searchParamsHook, platformSettings]);
 
 

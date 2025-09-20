@@ -1,3 +1,4 @@
+
 // src/app/admin/auctions/page.tsx
 'use client';
 
@@ -86,7 +87,7 @@ export default function AdminAuctionsPage() {
   
   const statusOptions = useMemo(() => 
     [...new Set(allAuctions.map(a => a.status))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+      .map(status => ({ value: status!, label: getAuctionStatusText(status) })),
   [allAuctions]);
 
   const facetedFilterColumns = useMemo(() => [
@@ -158,6 +159,7 @@ export default function AdminAuctionsPage() {
                     isLoading={isLoading}
                     searchTypeLabel="leilões"
                     facetedFilterColumns={facetedFilterColumns}
+                    initialLayout="list"
                   />
               )}
             </TabsContent>

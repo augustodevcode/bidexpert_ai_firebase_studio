@@ -16,7 +16,6 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 
-
 export default function AdminLotsPage() {
   const [allLots, setAllLots] = useState<Lot[]>([]);
   const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
@@ -111,7 +110,7 @@ export default function AdminLotsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="open">
+          <Tabs defaultValue="open" className="w-full">
             <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 h-auto">
               <TabsTrigger value="open">Abertos ({openLots.length})</TabsTrigger>
               <TabsTrigger value="featured">Destaques ({featuredLots.length})</TabsTrigger>
