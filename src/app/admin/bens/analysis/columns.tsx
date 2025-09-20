@@ -1,4 +1,9 @@
 // src/app/admin/bens/analysis/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a análise de performance dos bens. Inclui formatação de status com
+ * badges, renderização de imagens e links para páginas de detalhes.
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

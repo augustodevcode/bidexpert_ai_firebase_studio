@@ -1,4 +1,10 @@
 // src/app/admin/bens/[bemId]/edit/page.tsx
+/**
+ * @fileoverview Página para edição de um Bem (ativo) específico.
+ * Busca os dados iniciais do bem e as entidades relacionadas (processos,
+ * categorias, comitentes) necessárias para popular os seletores do formulário.
+ * Passa a ação de atualização para o componente `BemForm`.
+ */
 import BemForm from '../../bem-form';
 import { getBem, updateBem } from '../../actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';

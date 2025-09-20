@@ -1,4 +1,11 @@
 // src/app/admin/bens/bem-form-schema.ts
+/**
+ * @fileoverview Define o schema de validação (usando Zod) para o formulário
+ * de criação e edição de Bens (ativos individuais). Este schema é abrangente,
+ * cobrindo campos genéricos e campos específicos para diferentes categorias,
+ * como veículos, imóveis e eletrônicos, garantindo a integridade dos dados
+ * antes do envio para o servidor.
+ */
 import * as z from 'zod';
 import type { Bem } from '@/types';
 

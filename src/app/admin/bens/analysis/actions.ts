@@ -1,6 +1,8 @@
 // src/app/admin/bens/analysis/actions.ts
 /**
- * @fileoverview Server Actions for the Bem (Asset) Analysis Dashboard.
+ * @fileoverview Server Actions para o Dashboard de Análise de Bens.
+ * Contém funções para agregar estatísticas chave de performance do inventário,
+ * como valor total de avaliação, distribuição por categoria e contagem por status.
  */
 'use server';
 

@@ -1,4 +1,9 @@
 // src/app/admin/bens/analysis/page.tsx
+/**
+ * @fileoverview Página do painel de administração para análise de performance de Bens.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), gráficos de distribuição
+ * e uma tabela detalhada com os dados de todos os bens, além de uma análise gerada por IA.
+ */
 'use client';
 
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';

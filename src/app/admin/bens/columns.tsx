@@ -1,4 +1,9 @@
 // src/app/admin/bens/columns.tsx
+/**
+ * @fileoverview Define a estrutura das colunas para a tabela de dados (DataTable)
+ * que exibe a lista de Bens (ativos). Inclui renderização de imagem, status
+ * com badge, e um menu de ações para cada linha (editar, excluir, etc.).
+ */
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';

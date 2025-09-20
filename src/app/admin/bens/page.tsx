@@ -1,4 +1,10 @@
 // src/app/admin/bens/page.tsx
+/**
+ * @fileoverview Página principal para listagem e gerenciamento de Bens (ativos).
+ * Utiliza o componente DataTable para exibir os bens de forma interativa,
+ * permitindo busca, ordenação, exclusão em massa e visualização de detalhes
+ * em um modal.
+ */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
@@ -71,7 +77,7 @@ export default function AdminBensPage() {
     if (successCount > 0) {
       toast({ title: "Exclusão em Massa Concluída", description: `${successCount} bem(ns) excluído(s) com sucesso.` });
     }
-    fetchPageData(); // Always re-fetch data
+    fetchPageData();
   }, [toast, fetchPageData]);
 
   const handleOpenDetails = useCallback((bem: Bem) => {

@@ -1,4 +1,10 @@
 // src/app/admin/bens/bem-form.tsx
+/**
+ * @fileoverview Componente de formulário reutilizável para criar e editar Bens (ativos).
+ * Utiliza `react-hook-form` e Zod para gerenciamento de estado e validação.
+ * Renderiza dinamicamente seções de campos específicas para a categoria do bem selecionada,
+ * como "Veículos" ou "Imóveis", usando abas para organizar a entrada de dados.
+ */
 'use client';
 
 import * as React from 'react';
