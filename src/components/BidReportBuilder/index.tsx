@@ -30,7 +30,6 @@ export interface ReportDefinition {
     elements: ReportElement[];
 }
 
-
 const BidReportBuilder = () => {
     const [reportDefinition, setReportDefinition] = React.useState<ReportDefinition>({ elements: [] });
     const [selectedElement, setSelectedElement] = React.useState<ReportElement | null>(null);
@@ -43,8 +42,8 @@ const BidReportBuilder = () => {
             content: content || `Novo ${elementType}`,
             x: x || 50,
             y: y || 50,
-            width: 150,
-            height: 40
+            width: elementType === 'Table' ? 400 : 150,
+            height: elementType === 'Table' ? 200 : 40
         };
         setReportDefinition(prev => ({ ...prev, elements: [...prev.elements, newElement]}));
         setSelectedElement(newElement);
@@ -138,9 +137,23 @@ const BidReportBuilder = () => {
 
     return (
         <DndProvider backend={HTML5Backend}>
-            <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
+            <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-background rounded-lg border">
+                <Toolbar onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
                 <div className="flex flex-grow overflow-hidden">
-                    <Toolbar onSave={handleSaveReport} onLoad={handleLoadReport} onExport={handleExportReport} />
+                    <aside className="w-80 flex-shrink-0 bg-card border-r flex flex-col" data-ai-id="report-builder-sidebar">
+                         <Tabs defaultValue="variables" className="w-full h-full flex flex-col">
+                            <TabsList className="flex-shrink-0 mx-2 mt-2">
+                                <TabsTrigger value="variables" className="flex-1">Variáveis</TabsTrigger>
+                                <TabsTrigger value="media" className="flex-1">Mídia</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="variables" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
+                                <VariablePanel />
+                            </TabsContent>
+                             <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
+                                <MediaLibrary onSelectImage={handleSelectImage} />
+                            </TabsContent>
+                        </Tabs>
+                    </aside>
                     <main className="flex-grow flex flex-col border-l border-r" data-ai-id="report-builder-main-panel">
                         <div className="flex-grow relative">
                             <DesignSurface 
@@ -150,30 +163,12 @@ const BidReportBuilder = () => {
                                 selectedElementId={selectedElement?.id || null}
                             />
                         </div>
-                        <div className="h-1/3 border-t bg-background" data-ai-id="report-builder-preview-panel">
-                           <PreviewPanel reportDefinition={reportDefinition} />
-                        </div>
                     </main>
-                    <aside className="w-80 flex-shrink-0 bg-background flex flex-col" data-ai-id="report-builder-sidebar">
-                         <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
-                            <TabsList className="flex-shrink-0 mx-2 mt-2">
-                                <TabsTrigger value="properties" className="flex-1">Propriedades</TabsTrigger>
-                                <TabsTrigger value="variables" className="flex-1">Variáveis</TabsTrigger>
-                                <TabsTrigger value="media" className="flex-1">Mídia</TabsTrigger>
-                            </TabsList>
-                            <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
-                                <PropertiesPanel 
-                                    selectedElement={selectedElement} 
-                                    onElementChange={handleElementChange}
-                                />
-                            </TabsContent>
-                            <TabsContent value="variables" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
-                                <VariablePanel />
-                            </TabsContent>
-                             <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
-                                <MediaLibrary onSelectImage={handleSelectImage} />
-                            </TabsContent>
-                        </Tabs>
+                    <aside className="w-72 flex-shrink-0 bg-card border-l" data-ai-id="report-builder-properties-panel">
+                       <PropertiesPanel 
+                            selectedElement={selectedElement} 
+                            onElementChange={handleElementChange}
+                        />
                     </aside>
                 </div>
             </div>
