@@ -17,43 +17,34 @@ export const metadata: Metadata = {
   description: 'Seu parceiro especialista em leilões online.',
 };
 
-function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
-    if (!user) return null;
-    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
-    const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
-    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
-    return {
-        ...user, id: user.id, uid: user.id, roles, tenants,
-        roleIds: roles.map((r: any) => r.id),
-        roleNames: roles.map((r: any) => r.name),
-        permissions, roleName: roles[0]?.name,
-    };
-}
-
-// Esta função agora é a única fonte da verdade para o contexto da aplicação.
-async function getLayoutData() {
+/**
+ * Server-side function to get initial authentication data from the session cookie.
+ * This function avoids hitting the database for every page load.
+ * @returns An object with the initial user profile (from session) and tenant ID.
+ */
+async function getInitialAuthData() {
   const session = await getSession();
   
-  // Se não há sessão, não há usuário nem tenant específico
-  if (!session?.userId) {
+  if (!session) {
     return { initialUser: null, initialTenantId: '1' };
   }
 
-  // Se há sessão, buscamos o usuário completo para popular o AuthProvider
-  const user = await basePrisma.user.findUnique({
-      where: { id: session.userId },
-      include: {
-          roles: { include: { role: true } },
-          tenants: { include: { tenant: true } }
-      }
-  });
+  // The AuthProvider will now be responsible for fetching the full user profile if needed,
+  // but we can pass the session data as the initial state to avoid a loading screen.
+  const initialUserFromSession: Partial<UserProfileWithPermissions> = {
+      id: session.userId,
+      uid: session.userId,
+      email: session.email,
+      roleNames: session.roleNames,
+      permissions: session.permissions,
+  };
 
-  const initialUser = formatUserWithPermissions(user);
-  // O tenantId da sessão tem precedência
-  const initialTenantId = session.tenantId || '1';
-
-  return { initialUser, initialTenantId };
+  return { 
+    initialUser: initialUserFromSession as UserProfileWithPermissions, 
+    initialTenantId: session.tenantId || '1' 
+  };
 }
+
 
 export default async function RootLayout({
   children,
@@ -61,7 +52,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   
-  const { initialUser, initialTenantId } = await getLayoutData();
+  const { initialUser, initialTenantId } = await getInitialAuthData();
 
   // A verificação do setup agora é feita no AppContentWrapper e no middleware
   const isSetupComplete = process.env.NEXT_PUBLIC_FORCE_SETUP !== 'true';
