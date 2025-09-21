@@ -12,4 +12,5 @@ model InstallmentPayment {
 
   @@unique([userWinId, installmentNumber])
   @@index([userWinId])
+  Lot Lot[]
 }

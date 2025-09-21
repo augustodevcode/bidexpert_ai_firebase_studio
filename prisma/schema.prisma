@@ -488,6 +488,7 @@ model InstallmentPayment {
 
   @@unique([userWinId, installmentNumber])
   @@index([userWinId])
+  Lot Lot[]
 }
 
 model JudicialBranch {
@@ -630,7 +631,7 @@ model Lot {
   maxBids         UserLotMaxBid[]
   userWins        UserWin[]
   originalLotId   String?             @map("original_lot_id")
-  originalLot     Lot?                @relation("Relist", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+ @unique  originalLot     Lot?                @relation("Relist", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLot     Lot?                @relation("Relist")
   isRelisted      Boolean             @default(false)
   relistCount     Int                 @default(0)
@@ -1089,25 +1090,6 @@ model VehicleModel {
   @@index([slug])
 }
 
-// prisma/models/lot-question.prisma
-model LotQuestion {
-  id            String    @id @default(cuid())
-  lot           Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  lotId         String
-  auction       Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId     String
-  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId        String
-  userDisplayName String?
-  questionText  String    @db.Text
-  answerText    String?   @db.Text
-  isPublic      Boolean   @default(true)
-  answeredAt    DateTime?
-  answeredByUserDisplayName String?
-  answeredByUserId String?
-  createdAt     DateTime  @default(now())
-}
-
 
 /// @model
 /// @description Armazena tokens temporários para redefinição de senha.
@@ -1133,113 +1115,4 @@ model Report {
   updatedAt   DateTime @updatedAt
 
   @@map("reports")
-}
-
-// prisma/models/review.prisma
-model Review {
-  id              String   @id @default(cuid())
-  rating          Int
-  comment         String?  @db.Text
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userDisplayName String?
-  createdAt       DateTime @default(now())
-  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  lotId           String
-  auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId       String
-}
-
-// prisma/models/state.prisma
-model State {
-  id                String             @id @default(cuid())
-  name              String
-  uf                String             @unique
-  slug              String?            @unique
-  cityCount         Int?               @default(0)
-  createdAt         DateTime?          @default(now())
-  updatedAt         DateTime?          @updatedAt
-  cities            City[]
-  judicialDistricts JudicialDistrict[]
-  auctions          Auction[]
-  lots              Lot[]
-}
-
-// prisma/models/user-lot-max-bid.prisma
-model UserLotMaxBid {
-  id        String   @id @default(cuid())
-  userId    String
-  lotId     String
-  maxAmount Decimal  @db.Decimal(15, 2)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lot  Lot  @relation(fields: [lotId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, lotId])
-}
-
-// prisma/models/user.prisma
-/**
-* Modelo para Usuários. Armazena informações de perfil, autenticação e
-* status de habilitação. É um modelo global, não associado a um tenant específico.
-*/
-model User {
-  id                      String                @id @default(cuid())
-  email                   String                @unique
-  password                String?               @db.Text
-  fullName                String?               @db.Text
-  habilitationStatus      UserHabilitationStatus @default(PENDING_DOCUMENTS)
-  accountType             AccountType           @default(PHYSICAL)
-  avatarUrl               String?               @db.Text
-  dataAiHint              String?               @db.Text
-  badges                  Json?
-  createdAt               DateTime              @default(now())
-  updatedAt               DateTime              @updatedAt
-  cpf                     String?               @db.Text
-  rgNumber                String?               @db.Text
-  rgIssuer                String?               @db.Text
-  rgIssueDate             DateTime?
-  rgState                 String?               @db.Text
-  dateOfBirth             DateTime?
-  cellPhone               String?               @db.Text
-  homePhone               String?               @db.Text
-  gender                  String?               @dbText
-  profession              String?               @db.Text
-  nationality             String?               @db.Text
-  maritalStatus           String?               @db.Text
-  propertyRegime          String?               @db.Text
-  spouseName              String?               @db.Text
-  spouseCpf               String?               @db.Text
-  zipCode                 String?               @db.Text
-  street                  String?               @db.Text
-  number                  String?               @db.Text
-  complement              String?               @db.Text
-  neighborhood            String?               @db.Text
-  city                    String?               @db.Text
-  state                   String?               @db.Text
-  optInMarketing          Boolean?              @default(false)
-  razaoSocial             String?               @db.Text
-  cnpj                    String?               @db.Text
-  inscricaoEstadual       String?               @db.Text
-  website                 String?               @db.Text
-  responsibleName         String?               @db.Text
-  responsibleCpf          String?               @db.Text
-
-  // Relations
-  notifications           Notification[]
-  mediaItems              MediaItem[]
-  documents               UserDocument[]
-  bids                    Bid[]
-  maxBids                 UserLotMaxBid[]
-  sellerProfile           Seller?               @relation("UserSeller")
-  auctioneerProfile       Auctioneer?           @relation("UserAuctioneer")
-  roles                   UsersOnRoles[]
-  tenants                 UsersOnTenants[]
-  wins                    UserWin[]
-  lotsWon                 Lot[]                 @relation("UserWins")
-  auctionHabilitations    AuctionHabilitation[]
-  lotQuestions            LotQuestion[]
-  reviews                 Review[]
-  passwordResetTokens     PasswordResetToken[]
 }

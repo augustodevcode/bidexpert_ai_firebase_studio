@@ -69,7 +69,7 @@ model Lot {
   maxBids         UserLotMaxBid[]
   userWins        UserWin[]
   originalLotId   String?             @map("original_lot_id")
-  originalLot     Lot?                @relation("Relist", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+ @unique  originalLot     Lot?                @relation("Relist", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLot     Lot?                @relation("Relist")
   isRelisted      Boolean             @default(false)
   relistCount     Int                 @default(0)
