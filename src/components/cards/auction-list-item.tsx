@@ -1,22 +1,20 @@
 
 'use client';
 
-import * as React from 'react'; // Adicionado import do React
-import type { Auction, AuctionStage as AuctionStageType } from '@/types';
+import * as React from 'react';
+import type { Auction } from '@/types';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, CalendarDays, Tag, MapPin, ListChecks, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Users, Clock, Star, TrendingUp, Pencil } from 'lucide-react';
-import { format, isPast, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
+import { Eye, MapPin, Tag, Users, Clock, Star, ListChecks } from 'lucide-react';
+import { isPast, differenceInDays } from 'date-fns';
+import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import AuctionStagesTimeline from '../auction/auction-stages-timeline'; // Importando o componente
+import AuctionStagesTimeline from '../auction/auction-stages-timeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
-
 
 interface AuctionListItemProps {
   auction: Auction;
@@ -24,13 +22,9 @@ interface AuctionListItemProps {
 }
 
 export default function AuctionListItem({ auction, onUpdate }: AuctionListItemProps) {
-  const auctionTypeDisplay = auction.auctionType === 'TOMADA_DE_PRECOS' 
-    ? { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3.5 w-3.5" /> }
-    : { label: auction.auctionType || 'Leilão', icon: <AuctionTypeIcon className="h-3.5 w-3.5" /> };
-
+  const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
   const sellerName = auction.seller?.name;
-
 
   const mentalTriggers = React.useMemo(() => {
     const triggers: string[] = [];
@@ -62,7 +56,6 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
-
 
   return (
     <TooltipProvider>
@@ -105,7 +98,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
                         className={`text-xs px-1.5 py-0.5 shadow-sm
                             ${auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO' ? 'bg-green-600 text-white' : ''}
                             ${auction.status === 'EM_BREVE' ? 'bg-blue-500 text-white' : ''}
-                            ${auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO' || auction.status === 'CANCELADO' || auction.status === 'SUSPENSO' || auction.status === 'RASCUNHO' || auction.status === 'EM_PREPARACAO' ? 'bg-gray-500 text-white' : ''}
+                            ${['ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO', 'RASCUNHO', 'EM_PREPARACAO'].includes(auction.status || '') ? 'bg-gray-500 text-white' : ''}
                         `}
                         >
                         {getAuctionStatusText(auction.status)}
@@ -136,10 +129,12 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              <div className="flex items-center">
-                {auctionTypeDisplay.icon && React.cloneElement(auctionTypeDisplay.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
-                <span>{auctionTypeDisplay.label}</span>
-              </div>
+              {auctionTypeDisplay?.iconName && (
+                <div className="flex items-center">
+                  {React.createElement(getAuctionTypeDisplayData(auction.auctionType)!.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
+                  <span>{auctionTypeDisplay.label}</span>
+                </div>
+              )}
               <div className="flex items-center">
                 <Tag className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
                 <span>{auction.category?.name || 'Não especificada'}</span>
