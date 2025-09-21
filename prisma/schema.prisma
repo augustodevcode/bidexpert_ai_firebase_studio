@@ -680,6 +680,7 @@ model LotCategory {
   bens            Bem[]
 
   @@unique([name])
+  DirectSaleOffer DirectSaleOffer[]
 }
 
 
