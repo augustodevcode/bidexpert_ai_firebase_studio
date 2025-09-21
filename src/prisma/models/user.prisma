@@ -1,3 +1,5 @@
+// Modelo para Usuários. Armazena informações de perfil, autenticação e status de habilitação.
+// É um modelo global, não associado a um tenant específico, e suas relações são gerenciadas sem tenantId.
 model User {
   id                      String                @id @default(cuid())
   email                   String                @unique
@@ -5,7 +7,7 @@ model User {
   fullName                String?               @db.Text
   habilitationStatus      UserHabilitationStatus @default(PENDING_DOCUMENTS)
   accountType             AccountType           @default(PHYSICAL)
-  avatarUrl               String?               @db:Text
+  avatarUrl               String?               @db.Text
   dataAiHint              String?               @db.Text
   badges                  Json?
   createdAt               DateTime              @default(now())
@@ -51,9 +53,8 @@ model User {
   roles                   UsersOnRoles[]
   tenants                 UsersOnTenants[]
   wins                    UserWin[]
-  lotsWon                 Lot[]                 @relation("UserWins")
+  lotsWon                 Lot[]                 @relation("LotWinner")
   auctionHabilitations    AuctionHabilitation[]
   lotQuestions            LotQuestion[]
   reviews                 Review[]
-  passwordResetTokens     PasswordResetToken[]
 }
