@@ -85,9 +85,9 @@ export default async function SellersListPage() {
                     <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
                     </div>
                     {seller.memberSince && (
-                    <div className="text-xs">
-                        Membro desde: {formatInSaoPaulo(seller.memberSince as any, 'MM/yyyy')}
-                    </div>
+                      <div className="text-xs">
+                          Membro desde: {format(new Date(seller.memberSince), 'MM/yyyy', { locale: ptBR })}
+                      </div>
                     )}
                 </CardContent>
                 <CardFooter className="p-4 border-t">

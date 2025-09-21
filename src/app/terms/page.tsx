@@ -6,11 +6,21 @@
  * própria plataforma. É uma página essencial para a conformidade legal
  * do serviço.
  */
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
-import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { formatInSaoPaulo } from '@/lib/timezone';
+import { useState, useEffect } from 'react';
 
 export default function TermsPage() {
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  useEffect(() => {
+    // Para evitar hydration mismatch, a data é formatada no lado do cliente
+    setLastUpdated(formatInSaoPaulo(new Date(), 'dd/MM/yyyy'));
+  }, []);
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <section className="text-center py-12">
@@ -19,7 +29,7 @@ export default function TermsPage() {
         <p className="text-lg text-muted-foreground">
           Por favor, leia estes termos cuidadosamente antes de usar o BidExpert.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">Última Atualização: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
+        <p className="text-sm text-muted-foreground mt-2">Última Atualização: {lastUpdated || '...'}</p>
       </section>
 
       <Card className="shadow-lg">

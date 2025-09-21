@@ -5,11 +5,21 @@
  * dos usuários são coletados, usados e protegidos. É uma página essencial
  * para a conformidade com regulamentações de proteção de dados como a LGPD.
  */
+'use client';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
-import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { formatInSaoPaulo } from '@/lib/timezone';
+import { useState, useEffect } from 'react';
 
 export default function PrivacyPage() {
+  const [lastUpdated, setLastUpdated] = useState('');
+
+  useEffect(() => {
+    // Para evitar hydration mismatch, a data é formatada no lado do cliente
+    setLastUpdated(formatInSaoPaulo(new Date(), 'dd/MM/yyyy'));
+  }, []);
+
   return (
     <div className="max-w-3xl mx-auto space-y-8">
       <section className="text-center py-12">
@@ -18,7 +28,7 @@ export default function PrivacyPage() {
         <p className="text-lg text-muted-foreground">
           Sua privacidade é importante para nós. Esta política explica como lidamos com suas informações pessoais.
         </p>
-        <p className="text-sm text-muted-foreground mt-2">Última Atualização: {formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy')}</p>
+        <p className="text-sm text-muted-foreground mt-2">Última Atualização: {lastUpdated || '...'}</p>
       </section>
 
       <Card className="shadow-lg">
