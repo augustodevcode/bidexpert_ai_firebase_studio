@@ -135,6 +135,7 @@ Baseado na estrutura de `src/app`:
 ## 6. Orientações para Futuros Desenvolvedores
 
 *   **Sempre Use o Contexto de Tenant:** Ao criar novas `Server Actions` ou serviços, sempre utilize a função `getTenantIdFromRequest` para garantir que todas as operações sejam executadas no contexto do tenant correto.
+*   **Estrutura Modular do Schema Prisma:** Lembre-se que o arquivo `prisma/schema.prisma` é gerado automaticamente. **Nunca o edite diretamente**. Todas as alterações de modelo devem ser feitas nos arquivos individuais dentro de `prisma/models/`.
 *   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
 *   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.

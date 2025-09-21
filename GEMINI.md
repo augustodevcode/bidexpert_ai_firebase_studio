@@ -34,11 +34,11 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Regra:** Para manter a organização e a legibilidade do modelo de dados, o schema do Prisma é modularizado.
 - **Diretório de Modelos:** Todos os modelos (`model`) e enumerações (`enum`) do Prisma **devem** ser definidos em arquivos `.prisma` individuais dentro do diretório `prisma/models/`. Cada arquivo deve conter apenas um modelo.
-- **Arquivo Principal:** O arquivo `prisma/schema.prisma` é um arquivo **gerado** e não deve ser editado diretamente. Ele contém o cabeçalho de configuração (`generator`, `datasource`) e é populado pelo script de build.
+- **Arquivo Principal:** O arquivo `prisma/schema.prisma` é um arquivo **gerado** e **NÃO DEVE SER EDITADO DIRETAMENTE**. Ele contém o cabeçalho de configuração (`generator`, `datasource`) e é populado pelo script de build.
 - **Processo de Build:** O script `scripts/build-prisma-schema.ts` é responsável por ler todos os arquivos em `prisma/models/`, concatená-los e gerar o arquivo `prisma/schema.prisma` final.
 - **Execução:** Este script é executado automaticamente pelos comandos `npm run dev`, `npm run build` e `npm run db:push`, garantindo que o Prisma sempre opere com o schema mais recente.
 
-**Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos.
+**Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos. Qualquer alteração direta no `schema.prisma` será perdida.
 
 ## 6. Princípio da Não-Regressão e Autorização Humana
 

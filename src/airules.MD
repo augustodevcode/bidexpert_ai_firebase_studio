@@ -7,7 +7,7 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** Any deletion of functionality, components, or significant project alteration **must be explicitly authorized by a human user**. To prevent accidental removal of perfectly functional items while implementing fixes or improvements, the AI must:
 1.  Clearly state its intention to delete or refactor a component/file/feature.
 2.  Provide a brief justification for why this change is necessary.
-3.  Ask for explicit confirmation from the user before proceeding with generating the changes.
+3.  Ask for explicit confirmation from the user before proceeding with a destructive change.
 
 **Rationale:** This principle ensures that the development process is always moving forward and prevents regressions. It maintains a safeguard where the human developer has the final say on any destructive or large-scale changes, preserving the stability and integrity of the project.
 
@@ -16,9 +16,9 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** The application operates under a strict multi-tenant architecture. All data access must be isolated by a `tenantId`.
 
 -   **Tenant Identification:**
-    -   **Subdomain:** The active tenant is primarily identified by the request's subdomain (e.g., `leiloeiro-x.bidexpert.com` resolves to the `tenantId` of "leiloeiro-x"). This is handled by a Next.js middleware.
-    -   **Main Domain (Landlord):** Requests to the main domain (e.g., `bidexpert.com.br` or `www.bidexpert.com.br`) which do not have a subdomain must always resolve to the "Landlord" tenant, which has `id = '1'`.
-    -   **Session:** For authenticated users, the `tenantId` is stored in the session cookie and takes precedence, ensuring the user remains within their selected workspace.
+    -   **Subdomínio:** O tenant ativo é primariamente identificado pelo subdomínio da requisição (ex: `leiloeiro-x.bidexpert.com` resolve para o `tenantId` de "leiloeiro-x"). Isso é gerenciado por um middleware do Next.js.
+    -   **Domínio Principal (Landlord):** Requisições ao domínio principal (ex: `bidexpert.com.br` ou `www.bidexpert.com.br`) que não possuem subdomínio devem sempre resolver para o tenant "Landlord", que tem `id = '1'`.
+    -   **Sessão:** Para usuários autenticados, o `tenantId` é armazenado no cookie de sessão e tem precedência, garantindo que o usuário permaneça em seu espaço de trabalho selecionado.
 
 -   **Schema:** All relevant data models (e.g., `Auction`, `Lot`, `Seller`, etc., but **not** global models like `Role` or `User`) must include a mandatory `tenantId` field to associate the record with a specific tenant.
 
@@ -41,10 +41,10 @@ This document contains specific rules and guidelines for the AI prototyper to fo
 **Rule:** To maintain organization and readability, the Prisma schema is modularized.
 - **Models Directory:** All Prisma models (`model`) and enumerations (`enum`) **must** be defined in individual `.prisma` files within the `prisma/models/` directory. Each file should ideally contain only one model.
 - **Header File:** The `prisma/header.prisma` file contains the `generator` and `datasource` blocks.
-- **Build Process:** The script `scripts/build-prisma-schema.ts` is responsible for reading the header and all files in `prisma/models/`, concatenating them, and generating the final `prisma/schema.prisma` file. This script is executed automatically by `npm run dev`, `npm run build`, and `npm run db:push`.
-- **Editing:** Schema changes **must** be made in the individual files within `prisma/models/`, not directly in `prisma/schema.prisma`.
+- **Build Process:** The script `scripts/build-prisma-schema.ts` is responsible for reading the header and all files in `prisma/models/`, concatenating them, and generating the final `prisma/schema.prisma` file. This script is executed automatically.
+- **Editing:** Schema changes **must** be made in the individual files within `prisma/models/`. The main `prisma/schema.prisma` file **MUST NOT BE EDITED DIRECTLY**, as it is an auto-generated file and any manual changes will be overwritten.
 
-**Rationale:** This approach prevents a monolithic and unwieldy `schema.prisma` file, making it easier to maintain and locate specific data models.
+**Rationale:** This approach prevents a monolithic `schema.prisma` file, making it easier to maintain and locate specific data models, and ensures that the single source of truth for models is their individual files.
 
 ## 5. MVC with Service Layer Architecture
 
