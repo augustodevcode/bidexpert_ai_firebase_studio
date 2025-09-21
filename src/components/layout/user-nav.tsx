@@ -19,35 +19,48 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from '../ui/skeleton';
+import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
 
 
 export default function UserNav() {
   const { userProfileWithPermissions, loading, logout } = useAuth();
   const [isClient, setIsClient] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
-
+  
   useEffect(() => {
     setIsClient(true);
-    // You would typically fetch the notification count from an API
-    // For now, we'll just set a placeholder
-    const fetchCount = () => {
-       // Example: setUnreadNotificationsCount(await getMyNotificationCount());
-       // As a placeholder:
-       if(userProfileWithPermissions) {
-           setUnreadNotificationsCount(5); 
-       } else {
-           setUnreadNotificationsCount(0);
-       }
-    };
-    fetchCount();
-  }, [userProfileWithPermissions]);
+  }, []);
 
-  if (loading || !isClient) {
-    return (
-      <div className="flex items-center space-x-2">
-        <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>
-      </div>
-    );
+  const updateUnreadCount = useCallback(async () => {
+    if (userProfileWithPermissions?.id) {
+        try {
+            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
+            setUnreadNotificationsCount(count);
+        } catch (error) {
+            console.error("Failed to fetch notification count:", error);
+            setUnreadNotificationsCount(0);
+        }
+    } else {
+        setUnreadNotificationsCount(0);
+    }
+  }, [userProfileWithPermissions?.id]);
+
+  useEffect(() => {
+    if (isClient) {
+        updateUnreadCount();
+        window.addEventListener('notifications-updated', updateUnreadCount);
+    }
+    return () => {
+        if(isClient) {
+            window.removeEventListener('notifications-updated', updateUnreadCount);
+        }
+    };
+  }, [isClient, updateUnreadCount]);
+
+
+  if (!isClient || loading) {
+    return <Skeleton className="h-10 w-10 rounded-full" />;
   }
 
   if (userProfileWithPermissions) {
@@ -66,6 +79,11 @@ export default function UserNav() {
               {avatarUrl && <AvatarImage src={avatarUrl} alt={displayName} data-ai-hint="profile avatar small" />}
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
+             {unreadNotificationsCount > 0 && (
+                <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">
+                    {unreadNotificationsCount}
+                </Badge>
+            )}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-64" align="end" forceMount>

@@ -79,7 +79,6 @@ export default function Header() {
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [favoriteCount, setFavoriteCount] = useState(0);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSearchCategorySlug, setSelectedSearchCategorySlug] = useState<string | undefined>(undefined);
@@ -107,27 +106,15 @@ export default function Header() {
     }
   }, [isMobileMenuOpen, setIsMobileMenuOpen]);
 
-  const updateCounts = useCallback(async () => {
+  const updateCounts = useCallback(() => {
     setFavoriteCount(getFavoriteLotIdsFromStorage().length);
-    if (userProfileWithPermissions?.id) {
-        try {
-            const count = await getUnreadNotificationCountAction(userProfileWithPermissions.id);
-            setUnreadNotificationsCount(count);
-        } catch (error) {
-            console.error("Failed to fetch notification count:", error);
-            setUnreadNotificationsCount(0);
-        }
-    } else {
-        setUnreadNotificationsCount(0);
-    }
-  }, [userProfileWithPermissions?.id]);
+  }, []);
 
   useEffect(() => {
     updateCounts();
 
     const handleStorageChange = () => updateCounts();
     window.addEventListener('favorites-updated', handleStorageChange);
-    window.addEventListener('notifications-updated', handleStorageChange); 
     window.addEventListener('storage', (e) => {
         if (e.key === 'bidExpertFavoriteLotIds') {
             updateCounts();
@@ -136,7 +123,6 @@ export default function Header() {
 
     return () => {
         window.removeEventListener('favorites-updated', handleStorageChange);
-        window.removeEventListener('notifications-updated', handleStorageChange);
         window.removeEventListener('storage', handleStorageChange);
     };
   }, [updateCounts]);
@@ -555,7 +541,7 @@ export default function Header() {
                 <Link href="/dashboard/notifications">
                   <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
                   {unreadNotificationsCount > 0 && (
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">
+                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">
                       {unreadNotificationsCount}
                     </Badge>
                   )}
@@ -565,7 +551,7 @@ export default function Header() {
             <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Favoritos">
               <Link href="/dashboard/favorites">
                 <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {favoriteCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-accent-foreground text-accent border-accent">{favoriteCount}</Badge>}
+                {favoriteCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">{favoriteCount}</Badge>}
               </Link>
             </Button>
              <UserNav />
