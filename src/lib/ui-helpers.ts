@@ -126,10 +126,10 @@ export const getAuctionStatusColor = (status: AuctionStatus | undefined): string
 export const getAuctionTypeDisplayData = (type?: AuctionType) => {
     if (!type) return null;
     switch (type) {
-      case 'JUDICIAL': return { label: 'Judicial', iconName: 'Gavel' };
-      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', iconName: 'Gavel' };
-      case 'PARTICULAR': return { label: 'Particular', iconName: 'Gavel' };
-      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', iconName: 'FileText' };
+      case 'JUDICIAL': return { label: 'Judicial', iconName: 'Gavel', icon: Gavel };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', iconName: 'Gavel', icon: Gavel };
+      case 'PARTICULAR': return { label: 'Particular', iconName: 'Gavel', icon: Gavel };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', iconName: 'FileText', icon: TomadaPrecosIcon };
       default: return null;
     }
 };

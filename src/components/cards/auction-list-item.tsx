@@ -56,6 +56,8 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
+  
+  const IconComponent = auctionTypeDisplay?.icon;
 
   return (
     <TooltipProvider>
@@ -129,10 +131,10 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              {auctionTypeDisplay?.iconName && (
+              {IconComponent && (
                 <div className="flex items-center">
-                  {React.createElement(getAuctionTypeDisplayData(auction.auctionType)!.icon, { className: "h-3.5 w-3.5 mr-1.5 text-primary/80" })}
-                  <span>{auctionTypeDisplay.label}</span>
+                  <IconComponent className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                  <span>{auctionTypeDisplay?.label}</span>
                 </div>
               )}
               <div className="flex items-center">

@@ -7,7 +7,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, AuctionStage as AuctionStageType } from '@/types';
+import type { Auction } from '@/types';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -130,18 +130,9 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   };
 
   const statusDisplay = getStatusDisplay();
-
   const getAuctionTypeIcon = (type: string | undefined) => {
-    switch (type) {
-      case 'JUDICIAL':
-      case 'EXTRAJUDICIAL':
-      case 'PARTICULAR':
-        return <AuctionTypeIcon className="h-3 w-3" />;
-      case 'TOMADA_DE_PRECOS':
-        return <TomadaPrecosIcon className="h-3 w-3" />;
-      default:
-        return null;
-    }
+    const IconComponent = getAuctionTypeDisplayData(type)?.icon;
+    return IconComponent ? <IconComponent className="h-3 w-3" /> : null;
   };
 
 
