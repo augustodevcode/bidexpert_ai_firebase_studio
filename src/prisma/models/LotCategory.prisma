@@ -1,26 +1,27 @@
 // prisma/models/LotCategory.prisma
 model LotCategory {
-  id                 String      @id @default(cuid())
-  name               String      @unique
-  slug               String      @unique
-  description        String?     @db.VarChar(500)
-  hasSubcategories   Boolean?
-  logoUrl            String?
-  logoMediaId        String?
-  dataAiHintLogo     String?
-  coverImageUrl      String?
-  coverImageMediaId  String?
-  dataAiHintCover    String?
-  megaMenuImageUrl   String?
-  megaMenuImageMediaId String?
-  dataAiHintMegaMenu String?
+  id               String          @id @default(cuid())
+  name             String          @unique
+  slug             String          @unique
+  description      String?         @db.VarChar(500)
+  hasSubcategories Boolean?
+  logoUrl          String?         @map("logo_url")
+  logoMediaId      String?         @map("logo_media_id")
+  dataAiHintLogo   String?         @map("data_ai_hint_logo") @db.VarChar(100)
+  coverImageUrl    String?         @map("cover_image_url")
+  coverImageMediaId String?        @map("cover_image_media_id")
+  dataAiHintCover  String?         @map("data_ai_hint_cover") @db.VarChar(100)
+  megaMenuImageUrl String?         @map("mega_menu_image_url")
+  megaMenuImageMediaId String?    @map("mega_menu_image_media_id")
+  dataAiHintMegaMenu String?     @map("data_ai_hint_mega_menu") @db.VarChar(100)
+  auctions         Auction[]
+  lots             Lot[]
+  bens             Bem[]
+  subcategories    Subcategory[]
+  directSaleOffers DirectSaleOffer[] // Relação inversa adicionada aqui
 
-  auctions           Auction[]
-  lots               Lot[]
-  bens               Bem[]
-  subcategories      Subcategory[]
-  directSaleOffers   DirectSaleOffer[] // Relação inversa adicionada aqui
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  @@map("lotCategories")
 }
