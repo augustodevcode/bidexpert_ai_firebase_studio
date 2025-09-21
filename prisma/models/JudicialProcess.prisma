@@ -1,4 +1,3 @@
-
 model JudicialProcess {
   id                String  @id @default(cuid())
   publicId          String  @unique
@@ -21,4 +20,6 @@ model JudicialProcess {
   seller            Seller?           @relation(fields: [sellerId], references: [id])
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   parties           JudicialParty[] // Back-relation added here
+
+  @@unique([processNumber, tenantId])
 }

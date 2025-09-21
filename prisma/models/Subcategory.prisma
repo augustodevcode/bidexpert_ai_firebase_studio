@@ -11,4 +11,6 @@ model Subcategory {
   parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
   lots               Lot[]
   bens               Bem[]
+
+  @@unique([name, parentCategoryId])
 }

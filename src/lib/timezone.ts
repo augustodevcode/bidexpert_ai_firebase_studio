@@ -1,6 +1,6 @@
 // src/lib/timezone.ts
 import { format } from 'date-fns';
-import * as dateFnsTz from 'date-fns-tz';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
 
 const SAO_PAULO_TZ = 'America/Sao_Paulo';
@@ -10,7 +10,7 @@ const SAO_PAULO_TZ = 'America/Sao_Paulo';
  * @returns {Date} A Date object representing the current time in São Paulo.
  */
 export function nowInSaoPaulo(): Date {
-  return dateFnsTz.utcToZonedTime(new Date(), SAO_PAULO_TZ);
+  return utcToZonedTime(new Date(), SAO_PAULO_TZ);
 }
 
 /**
@@ -21,7 +21,7 @@ export function nowInSaoPaulo(): Date {
  */
 export function formatInSaoPaulo(date: Date | string, formatStr: string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  const zonedDate = dateFnsTz.utcToZonedTime(dateObj, SAO_PAULO_TZ);
+  const zonedDate = utcToZonedTime(dateObj, SAO_PAULO_TZ);
   return format(zonedDate, formatStr, { timeZone: SAO_PAULO_TZ, locale: ptBR });
 }
 
@@ -33,7 +33,7 @@ export function formatInSaoPaulo(date: Date | string, formatStr: string): string
  */
 export function convertUtcToSaoPaulo(date: Date | string): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateFnsTz.utcToZonedTime(dateObj, SAO_PAULO_TZ);
+  return utcToZonedTime(dateObj, SAO_PAULO_TZ);
 }
 
 /**
@@ -43,7 +43,7 @@ export function convertUtcToSaoPaulo(date: Date | string): Date {
  */
 export function convertSaoPauloToUtc(date: Date | string): Date {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateFnsTz.zonedTimeToUtc(dateObj, SAO_PAULO_TZ);
+  return zonedTimeToUtc(dateObj, SAO_PAULO_TZ);
 }
 
 /**

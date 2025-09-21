@@ -1,4 +1,4 @@
-
+// src/components/sidebar-filters.tsx
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -40,7 +40,7 @@ interface SidebarFiltersProps {
   models?: VehicleModel[];
   modalities?: { value: string, label: string }[];
   statuses?: { value: string, label: string }[];
-  offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string}[]; // For Direct Sales
+  offerTypes?: { value: DirectSaleOfferType | 'ALL', label: string}[];
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;

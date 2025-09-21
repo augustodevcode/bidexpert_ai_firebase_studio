@@ -537,7 +537,6 @@ model JudicialParty {
   @@index([processId])
 }
 
-
 model JudicialProcess {
   id                String  @id @default(cuid())
   publicId          String  @unique
@@ -560,8 +559,9 @@ model JudicialProcess {
   seller            Seller?           @relation(fields: [sellerId], references: [id])
   tenant            Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   parties           JudicialParty[] // Back-relation added here
-}
 
+  @@unique([processNumber, tenantId])
+}
 /// Modelo para Lotes individuais dentro de um leilão.
 model Lot {
   id                      String    @id @default(cuid())
@@ -904,8 +904,9 @@ model Subcategory {
   parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
   lots               Lot[]
   bens               Bem[]
-}
 
+  @@unique([name, parentCategoryId])
+}
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
   id        String   @id @default(uuid())
