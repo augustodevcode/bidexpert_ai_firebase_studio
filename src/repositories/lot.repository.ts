@@ -5,7 +5,7 @@ import type { Prisma } from '@prisma/client';
 
 export class LotRepository {
     
-  async findAll(auctionId?: string, tenantId?: string): Promise<any[]> {
+  async findAll(auctionId?: string, tenantId?: string, limit?: number): Promise<any[]> {
     const where: Prisma.LotWhereInput = {
       ...(auctionId && { auctionId }),
       ...(tenantId && { tenantId }),
@@ -13,6 +13,7 @@ export class LotRepository {
     
     return prisma.lot.findMany({
         where,
+        take: limit,
         include: {
             bens: { include: { bem: true } },
             auction: { select: { title: true } },

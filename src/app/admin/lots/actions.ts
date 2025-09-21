@@ -36,9 +36,9 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
 }
 
 
-export async function getLots(auctionId?: string, isPublicCall: boolean = false): Promise<Lot[]> {
+export async function getLots(auctionId?: string, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
   const tenantId = await getTenantIdFromRequest(isPublicCall);
-  return lotService.getLots(auctionId, tenantId);
+  return lotService.getLots(auctionId, tenantId, limit);
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {

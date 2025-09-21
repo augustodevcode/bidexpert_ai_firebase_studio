@@ -11,6 +11,7 @@ import HomePageClient from './home-page-client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 async function HomePageData() {
+    // Otimização: Buscar apenas um subconjunto de dados para a página inicial
     const [
         settings,
         auctionsData,
@@ -19,8 +20,8 @@ async function HomePageData() {
         sellersData,
     ] = await Promise.all([
         getPlatformSettings(),
-        getAuctions(true),
-        getLots(undefined, true),
+        getAuctions(true, 10), // Limitar para 10 leilões
+        getLots(undefined, true, 12), // Limitar para 12 lotes
         getLotCategories(),
         getSellers(true),
     ]);

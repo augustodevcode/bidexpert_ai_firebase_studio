@@ -33,8 +33,8 @@ export class LotService {
     };
   }
 
-  async getLots(auctionId?: string, tenantId?: string): Promise<Lot[]> {
-    const lots = await this.repository.findAll(auctionId, tenantId);
+  async getLots(auctionId?: string, tenantId?: string, limit?: number): Promise<Lot[]> {
+    const lots = await this.repository.findAll(auctionId, tenantId, limit);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
@@ -391,8 +391,7 @@ export class LotService {
                   lotId: lot.id,
                   userId: winningBid.bidderId,
                   winningBidAmount: winningBid.amount,
-                  winDate: nowInSaoPaulo(),
-                  paymentStatus: 'PENDENTE'
+                  winDate: nowInSaoPaulo()
               }
           });
           // After sale, update the associated 'bem' status to 'VENDIDO'
