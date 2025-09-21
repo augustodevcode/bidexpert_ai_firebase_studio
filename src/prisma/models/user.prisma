@@ -1,68 +1,59 @@
-/// Modelo base para todos os usuários da plataforma.
 model User {
-  id                  String             @id @default(cuid())
-  email               String             @unique
-  password            String?
-  fullName            String?
-  cpf                 String?            @unique
-  rgNumber            String?
-  rgIssuer            String?
-  rgIssueDate         DateTime?
-  rgState             String?
-  dateOfBirth         DateTime?
-  cellPhone           String?
-  homePhone           String?
-  gender              String?
-  profession          String?
-  nationality         String?
-  maritalStatus       String?
-  propertyRegime      String?
-  spouseName          String?
-  spouseCpf           String?
-  optInMarketing      Boolean            @default(false)
-  
-  // Endereço
-  zipCode             String?
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  city                String?
-  state               String?
+  id                      String                @id @default(cuid())
+  email                   String                @unique
+  password                String?               @db.Text
+  fullName                String?               @db.Text
+  habilitationStatus      UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType             AccountType           @default(PHYSICAL)
+  avatarUrl               String?               @db:Text
+  dataAiHint              String?               @db.Text
+  badges                  Json?
+  createdAt               DateTime              @default(now())
+  updatedAt               DateTime              @updatedAt
+  cpf                     String?               @db.Text
+  rgNumber                String?               @db.Text
+  rgIssuer                String?               @db.Text
+  rgIssueDate             DateTime?
+  rgState                 String?               @db.Text
+  dateOfBirth             DateTime?
+  cellPhone               String?               @db.Text
+  homePhone               String?               @db.Text
+  gender                  String?               @db.Text
+  profession              String?               @db.Text
+  nationality             String?               @db.Text
+  maritalStatus           String?               @db.Text
+  propertyRegime          String?               @db.Text
+  spouseName              String?               @db.Text
+  spouseCpf               String?               @db.Text
+  zipCode                 String?               @db.Text
+  street                  String?               @db.Text
+  number                  String?               @db.Text
+  complement              String?               @db.Text
+  neighborhood            String?               @db.Text
+  city                    String?               @db.Text
+  state                   String?               @db.Text
+  optInMarketing          Boolean?              @default(false)
+  razaoSocial             String?               @db.Text
+  cnpj                    String?               @db.Text
+  inscricaoEstadual       String?               @db.Text
+  website                 String?               @db.Text
+  responsibleName         String?               @db.Text
+  responsibleCpf          String?               @db.Text
 
-  // Configurações
-  avatarUrl           String?
-  dataAiHint          String?
-  habilitationStatus  String             @default("PENDING_DOCUMENTS") // PENDING_DOCUMENTS, PENDING_ANALYSIS, HABILITADO, REJECTED, BLOCKED
-  accountType         String             @default("PHYSICAL") // PHYSICAL, LEGAL, DIRECT_SALE_CONSIGNOR
-  badges              String[]           @default([])
-  
-  // PJ Info
-  razaoSocial         String?
-  cnpj                String?            @unique
-  inscricaoEstadual   String?
-  website             String?
-  responsibleName     String?
-  responsibleCpf      String?
-
-  // Relações
-  bids                Bid[]
-  wins                UserWin[]
-  maxBids             UserLotMaxBid[]
-  notifications       Notification[]
-  documents           UserDocument[]
-  uploadedMedia       MediaItem[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  answeredQuestions   LotQuestion[]      @relation("AnsweredBy")
-  
-  roles               UsersOnRoles[]
-  tenants             UsersOnTenants[]
-
-  // Relações diretas (opcional)
-  sellerProfile       Seller?
-  auctioneerProfile   Auctioneer?
-  
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  // Relations
+  notifications           Notification[]
+  mediaItems              MediaItem[]
+  documents               UserDocument[]
+  bids                    Bid[]
+  maxBids                 UserLotMaxBid[]
+  sellerProfile           Seller?               @relation("UserSeller")
+  auctioneerProfile       Auctioneer?           @relation("UserAuctioneer")
+  roles                   UsersOnRoles[]
+  tenants                 UsersOnTenants[]
+  wins                    UserWin[]
+  lotsWon                 Lot[]                 @relation("UserWins")
+  auctionHabilitations    AuctionHabilitation[]
+  lotQuestions            LotQuestion[]
+  reviews                 Review[]
+  passwordResetTokens     PasswordResetToken[]
 }
