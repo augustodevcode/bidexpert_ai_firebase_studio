@@ -1,8 +1,4 @@
-// prisma/models/user.prisma
-/**
-* Modelo para Usuários. Armazena informações de perfil, autenticação e
-* status de habilitação. É um modelo global, não associado a um tenant específico.
-*/
+
 model User {
   id                      String                @id @default(cuid())
   email                   String                @unique
@@ -23,7 +19,7 @@ model User {
   dateOfBirth             DateTime?
   cellPhone               String?               @db.Text
   homePhone               String?               @db.Text
-  gender                  String?               @dbText
+  gender                  String?               @db.Text
   profession              String?               @db.Text
   nationality             String?               @db.Text
   maritalStatus           String?               @db.Text
@@ -56,7 +52,7 @@ model User {
   roles                   UsersOnRoles[]
   tenants                 UsersOnTenants[]
   wins                    UserWin[]
-  lotsWon                 Lot[]                 @relation("UserWins")
+  lotsWon                 Lot[]                 @relation("LotWinner")
   auctionHabilitations    AuctionHabilitation[]
   lotQuestions            LotQuestion[]
   reviews                 Review[]
