@@ -1,5 +1,5 @@
-// Modelo para Usuários. Armazena informações de perfil, autenticação e status de habilitação.
-// É um modelo global, não associado a um tenant específico, e suas relações são gerenciadas sem tenantId.
+// Modelo para Usuários. Armazena informações de perfil, autenticação e
+// status de habilitação. É um modelo global, não associado a um tenant específico.
 model User {
   id                      String                @id @default(cuid())
   email                   String                @unique
@@ -44,7 +44,7 @@ model User {
 
   // Relations
   notifications           Notification[]
-  mediaItems              MediaItem[]
+  mediaItems              MediaItem[]           @relation("MediaItemUploader")
   documents               UserDocument[]
   bids                    Bid[]
   maxBids                 UserLotMaxBid[]
