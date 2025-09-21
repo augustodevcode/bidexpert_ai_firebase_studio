@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction } from '@/app/auth/actions'; // Corrigido para importar de app/auth/actions
+import { logout as logoutAction } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -33,15 +33,19 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(true); // Começa como true por um instante
+  
+  // Otimização: O estado de 'loading' agora depende se os dados iniciais já existem.
+  // Se 'initialUser' é fornecido, não estamos "carregando" nada no cliente.
+  const [loading, setLoading] = useState(!initialUser); 
   const router = useRouter();
   const { toast } = useToast();
   
-  // O useEffect agora serve apenas para remover o estado de 'loading'
-  // já que os dados vêm do servidor.
   useEffect(() => {
-    setLoading(false);
-  }, []);
+    // Se o usuário inicial for fornecido, apenas garantimos que `loading` seja false.
+    if (initialUser) {
+      setLoading(false);
+    }
+  }, [initialUser]);
 
   const refetchUser = useCallback(async () => {
      // Apenas recarregar a página fará o RootLayout buscar os dados mais recentes.
@@ -66,7 +70,7 @@ export function AuthProvider({
     setActiveTenantId(tenantId);
   };
   
-  if (loading) {
+  if (loading && typeof window !== 'undefined') {
      return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
             <Loader2 className="h-10 w-10 animate-spin text-primary"/>
