@@ -1,3 +1,5 @@
+/// Modelo para Usuários. Armazena informações de perfil, autenticação e
+/// status de habilitação. É um modelo global, não associado a um tenant específico.
 model User {
   id                      String                @id @default(cuid())
   email                   String                @unique
@@ -51,7 +53,7 @@ model User {
   roles                   UsersOnRoles[]
   tenants                 UsersOnTenants[]
   wins                    UserWin[]
-  lotsWon                 Lot[]                 @relation("UserWins")
+  lotsWon                 Lot[]                 @relation("LotWinner")
   auctionHabilitations    AuctionHabilitation[]
   lotQuestions            LotQuestion[]
   reviews                 Review[]
