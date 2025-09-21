@@ -1,29 +1,25 @@
+
 // prisma/models/LotCategory.prisma
-/**
- * Modelo para as categorias principais de lotes (ex: Veículos, Imóveis).
- * Este é um modelo global, compartilhado entre todos os tenants.
- */
 model LotCategory {
   id               String        @id @default(cuid())
-  name             String        @db.Text
-  slug             String        @unique @db.Text
+  name             String        @unique
+  slug             String        @unique
   description      String?       @db.Text
-  hasSubcategories Boolean?      @default(false)
+  hasSubcategories Boolean?
   logoUrl          String?       @db.Text
-  logoMediaId      String?       @db.Text
-  dataAiHintLogo   String?       @db.Text
+  logoMediaId      String?
+  dataAiHintLogo   String?
   coverImageUrl    String?       @db.Text
-  coverImageMediaId String?       @db.Text
-  dataAiHintCover  String?       @db.Text
+  coverImageMediaId String?
+  dataAiHintCover  String?
   megaMenuImageUrl String?       @db.Text
-  megaMenuImageMediaId String?     @db.Text
-  dataAiHintMegaMenu String?     @db.Text
+  megaMenuImageMediaId String?
+  dataAiHintMegaMenu String?
   createdAt        DateTime?     @default(now())
   updatedAt        DateTime?     @updatedAt
   auctions         Auction[]
   lots             Lot[]
+  bens             Bem[]
   subcategories    Subcategory[]
-
-  // Garante que o nome da categoria seja único em toda a plataforma.
-  @@unique([name])
+  directSaleOffers DirectSaleOffer[] // Relação inversa adicionada aqui
 }

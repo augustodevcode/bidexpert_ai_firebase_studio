@@ -654,30 +654,32 @@ model LotBens {
   @@index([bemId])
 }
 
+// prisma/models/LotCategory.prisma
 model LotCategory {
-  id                   String            @id @default(cuid())
-  name                 String
-  slug                 String            @unique
-  description          String?
-  hasSubcategories     Boolean
-  logoUrl              String?
-  logoMediaId          String?
-  dataAiHintLogo       String?
-  coverImageUrl        String?
-  coverImageMediaId    String?
-  dataAiHintCover      String?
-  megaMenuImageUrl     String?
-  megaMenuImageMediaId String?
-  dataAiHintMegaMenu   String?
-  createdAt            DateTime          @default(now())
-  updatedAt            DateTime          @updatedAt
-  auctions             Auction[]
-  bens                 Bem[]
-  lots                 Lot[]
-  subcategories        Subcategory[]
-  DirectSaleOffer      DirectSaleOffer[]
+  id              String        @id @default(cuid())
+  name            String
+  slug            String        @unique
+  description     String?       @db.Text
+  hasSubcategories Boolean?      @default(false)
+  logoUrl         String?       @db.Text
+  logoMediaId     String?       @db.Text
+  dataAiHintLogo  String?       @db.Text
+  coverImageUrl   String?       @db.Text
+  coverImageMediaId String?     @db.Text
+  dataAiHintCover String?       @db.Text
+  megaMenuImageUrl String?      @db.Text
+  megaMenuImageMediaId String?  @db.Text
+  dataAiHintMegaMenu String?    @db.Text
+  createdAt       DateTime?     @default(now())
+  updatedAt       DateTime?     @updatedAt
+  
+  // Relations
+  subcategories   Subcategory[]
+  auctions        Auction[]
+  lots            Lot[]
+  bens            Bem[]
 
-  @@unique([name, tenantId])
+  @@unique([name])
 }
 
 
