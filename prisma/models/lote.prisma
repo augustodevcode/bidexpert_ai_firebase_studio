@@ -1,78 +1,87 @@
-
+// prisma/models/lote.prisma
+/**
+* Modelo para Lotes individuais dentro de um leilão.
+*/
 model Lot {
-  id                      String    @id @default(cuid())
-  publicId                String?   @unique
-  auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId               String
-  slug                    String?
-  number                  String?
-  title                   String
-  description             String?   @db.Text
-  price                   Decimal   @db.Decimal(15, 2)
-  initialPrice            Decimal?  @db.Decimal(15, 2)
-  secondInitialPrice      Decimal?  @db.Decimal(15, 2)
-  bidIncrementStep        Decimal?  @db.Decimal(10, 2)
-  status                  String    @default("EM_BREVE")
-  bidsCount               Int?      @default(0)
-  views                   Int?      @default(0)
-  isFeatured              Boolean?  @default(false)
-  isExclusive             Boolean?  @default(false)
-  additionalTriggers      Json?
-  imageUrl                String?
-  imageMediaId            String?
-  galleryImageUrls        Json?
-  mediaItemIds            Json?
-  type                    String
-  category                LotCategory? @relation(fields: [categoryId], references: [id])
-  categoryId              String?
-  subcategory             Subcategory? @relation(fields: [subcategoryId], references: [id])
-  subcategoryId           String?
-  auctionName             String?
-  seller                  Seller?      @relation(fields: [sellerId], references: [id])
-  sellerId                String?
-  sellerName              String?
-  auctioneer              Auctioneer?  @relation(fields: [auctioneerId], references: [id])
-  auctioneerId            String?
-  city                    City?        @relation(fields: [cityId], references: [id])
-  cityId                  String?
-  state                   State?       @relation(fields: [stateId], references: [id])
-  stateId                 String?
-  cityName                String?
-  stateUf                 String?
-  latitude                Decimal?     @db.Decimal(10, 8)
-  longitude               Decimal?     @db.Decimal(11, 8)
-  mapAddress              String?
-  mapEmbedUrl             String?      @db.VarChar(500)
-  mapStaticImageUrl       String?
-  endDate                 DateTime?
-  auctionDate             DateTime?
-  lotSpecificAuctionDate  DateTime?
-  secondAuctionDate       DateTime?
-  condition               String?
-  dataAiHint              String?
-  winner                  User?        @relation("LotWinner", fields: [winnerId], references: [id])
-  winnerId                String?
-  winningBidTermUrl       String?
-  allowInstallmentBids    Boolean?     @default(false)
-  bids                    Bid[]
-  userMaxBids             UserLotMaxBid[]
-  lotBens                 LotBens[]
-  inheritedMediaFromBemId String?
-  isRelisted              Boolean?  @default(false)
-  relistCount             Int?      @default(0)
-  originalLot             Lot?      @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  originalLotId           String?
-  relistedLots            Lot[]     @relation("RelistHistory")
-  reviews                 Review[]
-  questions               LotQuestion[]
-  installments            InstallmentPayment[] @relation("LotInstallments")
-  stageDetails            LotStageDetails[]
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-  tenantId                String
-  tenant                  Tenant    @relation(fields: [tenantId], references: [id])
+  id             String    @id @default(cuid())
+  publicId       String?   @unique @map("public_id")
+  auctionId      String    @map("auction_id")
+  slug           String?
+  number         String?
+  title          String
+  description    String?   @db.Text
+  price          Decimal   @db.Decimal(15, 2)
+  initialPrice   Decimal?  @map("initial_price") @db.Decimal(15, 2)
+  isRelisted     Boolean?  @default(false) @map("is_relisted")
+  relistCount    Int?      @default(0) @map("relist_count")
+  originalLotId  String?   @unique @map("original_lot_id")
+  status         LotStatus @default(EM_BREVE)
+  bidsCount      Int?      @default(0) @map("bids_count")
+  views          Int?      @default(0)
+  isFeatured     Boolean?  @default(false) @map("is_featured")
+  isExclusive    Boolean?  @default(false) @map("is_exclusive")
+  imageUrl       String?   @map("image_url") @db.Text
+  imageMediaId   String?   @map("image_media_id")
+  galleryImageUrls Json?     @map("gallery_image_urls")
+  mediaItemIds   Json?     @map("media_item_ids")
+  type           String
+  categoryId     String?   @map("category_id")
+  subcategoryId  String?   @map("subcategory_id")
+  auctionName    String?   @map("auction_name")
+  sellerName     String?   @map("seller_name")
+  cityName       String?   @map("city_name")
+  stateUf        String?   @map("state_uf")
+  latitude       Decimal?  @db.Decimal(10, 8)
+  longitude      Decimal?  @db.Decimal(11, 8)
+  mapAddress     String?   @map("map_address")
+  endDate        DateTime? @map("end_date")
+  auctionDate    DateTime? @map("auction_date")
+  condition      String?
+  dataAiHint     String?   @map("data_ai_hint")
+  winnerId       String?   @map("winner_id")
+  winningBidTermUrl String? @map("winning_bid_term_url") @db.Text
+  allowInstallmentBids Boolean? @default(false) @map("allow_installment_bids")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  // Relationships
+  auction         Auction          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  category        LotCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  subcategory     Subcategory?     @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
+  city            City?            @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  cityId          String?
+  state           State?           @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  stateId         String?
+  bens            LotBens[]
+  bids            Bid[]
+  winner          User?            @relation("UserWins", fields: [winnerId], references: [id], onDelete: SetNull)
+  originalLot     Lot?             @relation("Relist", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLot     Lot?             @relation("Relist")
+  reviews         Review[]
+  questions       LotQuestion[]
+  maxBids         UserLotMaxBid[]
+  seller          Seller?          @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  sellerId        String?
+  auctioneer      Auctioneer?      @relation(fields: [auctioneerId], references: [id], onDelete: SetNull)
+  auctioneerId    String?
+  stageDetails    LotStageDetails[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId        String
 
   @@index([auctionId])
   @@index([categoryId])
   @@index([sellerId])
+  @@index([winnerId])
+}
+
+model LotStageDetails {
+  id              String  @id @default(cuid())
+  lotId           String
+  stageId         String
+  initialBid      Decimal? @db.Decimal(15, 2)
+  bidIncrement    Decimal? @db.Decimal(15, 2)
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  stage           AuctionStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@unique([lotId, stageId])
 }

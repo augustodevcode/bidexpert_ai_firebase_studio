@@ -1,0 +1,14 @@
+// prisma/models/state.prisma
+model State {
+  id                String             @id @default(cuid())
+  name              String
+  uf                String             @unique
+  slug              String?            @unique
+  cityCount         Int?               @default(0)
+  createdAt         DateTime?          @default(now())
+  updatedAt         DateTime?          @updatedAt
+  cities            City[]
+  judicialDistricts JudicialDistrict[]
+  auctions          Auction[]
+  lots              Lot[]
+}
