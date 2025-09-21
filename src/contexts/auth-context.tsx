@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions'; // Corrigido para importar de app/auth/actions
+import { logout as logoutAction } from '@/app/auth/actions'; // Corrigido para importar de app/auth/actions
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -33,17 +33,18 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true); // Começa como true por um instante
   const router = useRouter();
   const { toast } = useToast();
   
+  // O useEffect agora serve apenas para remover o estado de 'loading'
+  // já que os dados vêm do servidor.
   useEffect(() => {
-    setUserProfileWithPermissions(initialUser);
-    setActiveTenantId(initialTenantId);
     setLoading(false);
-  }, [initialUser, initialTenantId]);
+  }, []);
 
   const refetchUser = useCallback(async () => {
+     // Apenas recarregar a página fará o RootLayout buscar os dados mais recentes.
      router.refresh();
   }, [router]);
 

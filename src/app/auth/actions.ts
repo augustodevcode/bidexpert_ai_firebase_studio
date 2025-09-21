@@ -69,8 +69,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
 
   try {
     console.log(`[Login Action] Tentativa de login para o email: ${email}`);
-    // **CORREÇÃO:** Usa a instância base do Prisma para a busca inicial do usuário.
-    // A validação de e-mail/senha deve ser global, antes do contexto de tenant ser aplicado.
     const user = await basePrisma.user.findUnique({
         where: { email },
         include: {
@@ -84,16 +82,13 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // Se nenhum tenant foi selecionado, mas o usuário pertence a apenas um, seleciona-o automaticamente
     if (!tenantId && user.tenants?.length === 1) {
         tenantId = user.tenants[0].tenantId;
     } else if (!tenantId && user.tenants && user.tenants.length > 1) {
         const userProfile = formatUserWithPermissions(user);
-        // Retorna sucesso, mas com um usuário, para que a UI possa pedir a seleção do tenant
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfile };
     }
     
-    // Valida se o usuário pertence ao tenant que está tentando acessar
     const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
     if (tenantId && !userBelongsToTenant) {
         console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);

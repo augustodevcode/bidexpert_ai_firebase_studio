@@ -12,7 +12,6 @@ if (!secretKey || secretKey.length < 32) {
 }
 
 export async function encrypt(payload: any) {
-    console.log('[Session Encrypt] Payload para ser criptografado:', payload);
     return new SignJWT(payload)
         .setProtectedHeader({ alg: 'HS256' })
         .setIssuedAt()
@@ -21,16 +20,11 @@ export async function encrypt(payload: any) {
 }
 
 export async function decrypt(session: string | undefined = '') {
-    console.log('[Session Decrypt] Tentando decodificar a sessão do cookie.');
-    if (!session) {
-        console.log('[Session Decrypt] Sessão não fornecida.');
-        return null;
-    }
+    if (!session) return null;
     try {
         const { payload } = await jwtVerify(session, encodedKey, {
             algorithms: ['HS256'],
         });
-        console.log('[Session Decrypt] Sessão verificada com sucesso. Payload:', payload);
         return payload;
     } catch (error) {
         console.error('[Session Decrypt] Falha ao verificar a sessão JWT:', error);
@@ -46,6 +40,7 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     console.log(`[Create Session] Criando sessão para usuário ${user.email} no tenant ${tenantId}`);
     
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    // Simplificando o payload para ser mais leve
     const sessionPayload = {
         userId: user.id,
         email: user.email,
@@ -53,7 +48,7 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
         roleNames: user.roleNames,
         permissions: user.permissions,
     };
-    console.log('[Create Session] Criando payload da sessão:', sessionPayload);
+    
     const session = await encrypt(sessionPayload);
     console.log('[Create Session] Token JWT gerado. Definindo cookie.');
 
@@ -67,13 +62,7 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
 }
 
 export async function getSession(): Promise<{ userId: string; tenantId: string; [key: string]: any } | null> {
-    console.log('[Get Session] Tentando obter o cookie de sessão.');
     const cookie = cookies().get('session')?.value;
-    if (!cookie) {
-        console.log('[Get Session] Cookie de sessão não encontrado.');
-        return null;
-    }
-    console.log('[Get Session] Cookie encontrado, prosseguindo para a decodificação.');
     const session = await decrypt(cookie);
     return session as { userId: string; tenantId: string; [key: string]: any } | null;
 }

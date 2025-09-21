@@ -6,7 +6,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 import { headers } from 'next/headers';
 import { AppContentWrapper } from './app-content-wrapper';
-import { getSession } from '@/app/auth/actions';
+import { getSession } from '@/server/lib/session'; // Usando a função direta do servidor
+import { prisma as basePrisma } from '@/lib/prisma';
+import type { UserProfileWithPermissions, Role, Tenant } from '@/types';
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -15,20 +17,42 @@ export const metadata: Metadata = {
   description: 'Seu parceiro especialista em leilões online.',
 };
 
+function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
+    if (!user) return null;
+    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => r.permissions || [])));
+    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
+    return {
+        ...user, id: user.id, uid: user.id, roles, tenants,
+        roleIds: roles.map((r: any) => r.id),
+        roleNames: roles.map((r: any) => r.name),
+        permissions, roleName: roles[0]?.name,
+    };
+}
+
 // Esta função agora é a única fonte da verdade para o contexto da aplicação.
 async function getLayoutData() {
   const session = await getSession();
-  const initialUser = session ? {
-      id: session.userId,
-      uid: session.userId,
-      email: session.email,
-      roleNames: session.roleNames,
-      permissions: session.permissions,
-  } as any : null;
-  // Correção: Garante que sempre haverá um tenantId, usando '1' (Landlord) como padrão.
-  const initialTenantId = session?.tenantId || '1';
+  
+  // Se não há sessão, não há usuário nem tenant específico
+  if (!session?.userId) {
+    return { initialUser: null, initialTenantId: '1' };
+  }
 
-  return { initialUser, initialTenantIdForProvider: initialTenantId };
+  // Se há sessão, buscamos o usuário completo para popular o AuthProvider
+  const user = await basePrisma.user.findUnique({
+      where: { id: session.userId },
+      include: {
+          roles: { include: { role: true } },
+          tenants: { include: { tenant: true } }
+      }
+  });
+
+  const initialUser = formatUserWithPermissions(user);
+  // O tenantId da sessão tem precedência
+  const initialTenantId = session.tenantId || '1';
+
+  return { initialUser, initialTenantId };
 }
 
 export default async function RootLayout({
@@ -37,7 +61,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   
-  const { initialUser, initialTenantIdForProvider } = await getLayoutData();
+  const { initialUser, initialTenantId } = await getLayoutData();
 
   // A verificação do setup agora é feita no AppContentWrapper e no middleware
   const isSetupComplete = process.env.NEXT_PUBLIC_FORCE_SETUP !== 'true';
@@ -50,7 +74,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider initialUser={initialUser} initialTenantId={initialTenantIdForProvider}>
+        <AuthProvider initialUser={initialUser} initialTenantId={initialTenantId}>
           <TooltipProvider delayDuration={0}>
             <AppContentWrapper isSetupComplete={isSetupComplete}>
               {children}
