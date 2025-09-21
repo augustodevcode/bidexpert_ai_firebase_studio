@@ -369,6 +369,8 @@ model City {
   stateId   String
   lots      Lot[]
   auctions  Auction[]
+
+  @@unique([name, stateId])
 }
 
 model ContactMessage {
@@ -674,6 +676,8 @@ model LotCategory {
   lots                 Lot[]
   subcategories        Subcategory[]
   DirectSaleOffer      DirectSaleOffer[]
+
+  @@unique([name, tenantId])
 }
 
 

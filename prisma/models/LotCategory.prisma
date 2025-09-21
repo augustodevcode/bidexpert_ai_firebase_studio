@@ -20,4 +20,6 @@ model LotCategory {
   lots                 Lot[]
   subcategories        Subcategory[]
   DirectSaleOffer      DirectSaleOffer[]
+
+  @@unique([name, tenantId])
 }

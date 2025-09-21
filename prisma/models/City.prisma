@@ -10,4 +10,6 @@ model City {
   stateId   String
   lots      Lot[]
   auctions  Auction[]
+
+  @@unique([name, stateId])
 }
