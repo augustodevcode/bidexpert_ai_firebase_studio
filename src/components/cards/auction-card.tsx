@@ -23,14 +23,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import EntityEditMenu from '../entity-edit-menu';
 import AuctionStagesTimeline from '../auction/auction-stages-timeline'; // Importando o componente de timeline
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
-import * as icons from 'lucide-react';
-
-// Helper to render an icon dynamically by its name
-const IconByName = ({ name, ...props }: { name: string; [key: string]: any }) => {
-    const IconComponent = (icons as any)[name];
-    if (!IconComponent) return null; // Or return a default icon
-    return <IconComponent {...props} />;
-};
 
 
 interface AuctionCardProps {
@@ -138,6 +130,20 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   };
 
   const statusDisplay = getStatusDisplay();
+
+  const getAuctionTypeIcon = (type: string | undefined) => {
+    switch (type) {
+      case 'JUDICIAL':
+      case 'EXTRAJUDICIAL':
+      case 'PARTICULAR':
+        return <AuctionTypeIcon className="h-3 w-3" />;
+      case 'TOMADA_DE_PRECOS':
+        return <TomadaPrecosIcon className="h-3 w-3" />;
+      default:
+        return null;
+    }
+  };
+
 
   return (
     <TooltipProvider>
@@ -254,7 +260,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
               {auctionTypeDisplay?.label && (
                 <div className="flex items-center gap-1" data-ai-id="auction-card-type">
-                    {auctionTypeDisplay.iconName && <IconByName name={auctionTypeDisplay.iconName} className="h-3 w-3"/> }
+                    {getAuctionTypeIcon(auction.auctionType)}
                     <span>{auctionTypeDisplay.label}</span>
                 </div>
                 )}
