@@ -396,7 +396,7 @@ async function createCategoriesAndSubcategories() {
 
 async function createJudicialProcesses(tenantId: string, courts: any[], branches: any[]) {
   const judicialProcesses = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 3; i++) { // Reduced from 10 to 3
     const court = faker.helpers.arrayElement(courts);
     const branch = faker.helpers.arrayElement(branches);
     const judicialProcess = await prisma.judicialProcess.upsert({
@@ -527,7 +527,7 @@ async function simulateBiddingAndPayments(tenantId: string) {
             winner: {
               connect: { id: winner.id },
             },
-            finalPrice: winner.finalPrice,
+            price: winner.finalPrice,
           },
         });
 
@@ -587,13 +587,13 @@ async function seed() {
   const allLotIds: string[] = []; // New: To store all lot IDs for image generation
 
   for (const state of states) {
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 2; i++) { // Reduced from 5 to 2
       lotsToCreate.push({ stateId: state.id, isCapital: false });
     }
   }
 
   for (const capital of capitals) {
-    for (let i = 0; i < 2; i++) {
+    for (let i = 0; i < 1; i++) { // Reduced from 2 to 1
       lotsToCreate.push({ cityId: capital.id, isCapital: true });
     }
   }
