@@ -18,7 +18,7 @@ import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, Shi
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { formatInSaoPaulo } from '@/lib/timezone';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -48,6 +48,21 @@ const badgeMap: Record<string, { icon: React.ElementType, label: string, descrip
 export default function ProfilePage() {
   const { userProfileWithPermissions, loading } = useAuth();
   const router = useRouter();
+  const [formattedDateOfBirth, setFormattedDateOfBirth] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (userProfileWithPermissions?.dateOfBirth) {
+      try {
+        setFormattedDateOfBirth(formatInSaoPaulo(userProfileWithPermissions.dateOfBirth as string, 'dd/MM/yyyy'));
+      } catch (e) {
+        console.error("Failed to format dateOfBirth", e);
+        setFormattedDateOfBirth('Data inválida');
+      }
+    } else {
+        setFormattedDateOfBirth(null);
+    }
+  }, [userProfileWithPermissions?.dateOfBirth]);
+
 
   if (loading) {
     return (
@@ -150,7 +165,7 @@ export default function ProfilePage() {
               ) : (
                 <>
                   <InfoItem icon={FileText} label="CPF" value={cpf} />
-                  <InfoItem icon={Calendar} label="Data de Nascimento" value={dateOfBirth ? formatInSaoPaulo(dateOfBirth as string, 'dd/MM/yyyy') : null} />
+                  <InfoItem icon={Calendar} label="Data de Nascimento" value={formattedDateOfBirth} />
                 </>
               )}
             </div>

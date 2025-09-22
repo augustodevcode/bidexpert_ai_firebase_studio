@@ -1,36 +1,48 @@
 // src/app/sellers/page.tsx
 /**
  * @fileoverview Página de listagem pública de todos os Comitentes (Vendedores).
- * Este componente Server-Side busca os perfis de todos os comitentes ativos
+ * Este componente de cliente busca os perfis de todos os comitentes ativos
  * na plataforma e os exibe em um layout de cards, permitindo que os usuários
  * descubram e naveguem para as páginas de perfil de cada vendedor.
  */
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, ArrowRight, CalendarDays, Star } from 'lucide-react';
+import { Building, ArrowRight, CalendarDays, Star, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { getSellers } from '@/app/admin/sellers/actions';
 import type { SellerProfileInfo } from '@/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { isValidImageUrl } from '@/lib/ui-helpers';
-import { formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { useEffect, useState } from 'react';
 
 const getSellerInitial = (name: string) => {
     return name ? name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'S';
 };
 
-export default async function SellersListPage() {
-  let sellers: SellerProfileInfo[] = [];
-  let error: string | null = null;
+export default function SellersListPage() {
+  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  try {
-    sellers = await getSellers(true); // Public call
-  } catch (e) {
-    console.error("Error fetching sellers:", e);
-    error = "Falha ao buscar comitentes.";
-  }
+  useEffect(() => {
+    async function fetchData() {
+        setIsLoading(true);
+        try {
+            const fetchedSellers = await getSellers(true); // Public call
+            setSellers(fetchedSellers);
+        } catch (e) {
+            console.error("Error fetching sellers:", e);
+            setError("Falha ao buscar comitentes.");
+        } finally {
+            setIsLoading(false);
+        }
+    }
+    fetchData();
+  }, []);
 
   return (
     <div className="max-w-4xl mx-auto space-y-8 py-8">
@@ -42,24 +54,25 @@ export default async function SellersListPage() {
         </p>
       </section>
       
-      {error && (
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : error ? (
         <div className="text-center py-12">
           <h2 className="text-xl font-semibold text-destructive">{error}</h2>
         </div>
-      )}
-
-      {!error && sellers.length === 0 && (
+      ) : sellers.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
             Nenhum comitente cadastrado na plataforma ainda.
           </CardContent>
         </Card>
-      )}
-      
-      {!error && sellers.length > 0 && (
+      ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {sellers.map((seller) => {
             const validLogoUrl = isValidImageUrl(seller.logoUrl) ? seller.logoUrl : `https://placehold.co/100x100.png?text=${getSellerInitial(seller.name)}`;
+            const formattedDate = seller.memberSince ? format(new Date(seller.memberSince), 'MM/yyyy', { locale: ptBR }) : null;
             return (
                 <Card key={seller.id} className="shadow-lg hover:shadow-xl transition-shadow flex flex-col">
                 <CardHeader className="items-center text-center p-4">
@@ -84,9 +97,9 @@ export default async function SellersListPage() {
                     <div className="text-xs">
                     <span className="font-medium text-foreground">{seller.activeLotsCount || 0}</span> lotes ativos
                     </div>
-                    {seller.memberSince && (
+                    {formattedDate && (
                       <div className="text-xs">
-                          Membro desde: {format(new Date(seller.memberSince), 'MM/yyyy', { locale: ptBR })}
+                          Membro desde: {formattedDate}
                       </div>
                     )}
                 </CardContent>
