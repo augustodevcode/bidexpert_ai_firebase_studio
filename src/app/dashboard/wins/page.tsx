@@ -8,8 +8,7 @@
  */
 'use client';
 
-import React from 'react';
-
+import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -20,13 +19,13 @@ import { getPaymentStatusText } from '@/lib/ui-helpers';
 import type { UserWin } from '@/types';
 import { format, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { formatInSaoPaulo, convertUtcToSaoPaulo } from '@/lib/timezone'; // Import timezone functions
 import { useAuth } from '@/contexts/auth-context';
-import { useEffect, useState, useCallback } from 'react';
-import { getWinsForUserAction } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
-import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions'; // Import the action
+import { getWinsForUserAction } from './actions';
+import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
@@ -41,6 +40,123 @@ const getPaymentStatusColor = (status: string) => {
       return 'bg-secondary text-secondary-foreground';
   }
 };
+
+interface WinCardProps {
+    win: UserWin;
+    isGeneratingTerm: string | null;
+    handleGenerateTerm: (lotId: string) => void;
+}
+
+const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerateTerm }) => {
+    const [formattedWinDate, setFormattedWinDate] = useState<string | null>(null);
+    const [formattedDeadline, setFormattedDeadline] = useState<string | null>(null);
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        if (win.winDate) {
+            setFormattedWinDate(format(new Date(win.winDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+        }
+        const deadline = addDays(new Date(win.winDate as string), 5);
+        setFormattedDeadline(format(deadline, "dd/MM/yyyy"));
+    }, [win.winDate]);
+
+    if (!win.lot) {
+        return <Card className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
+    }
+    const commissionRate = 0.05; // Exemplo: 5% de comissão
+    const commissionValue = win.winningBidAmount * commissionRate;
+    const totalDue = win.winningBidAmount + commissionValue;
+
+    return (
+        <Card className="overflow-hidden shadow-md flex flex-col">
+            <div className="relative aspect-[16/9] bg-muted">
+                <Image 
+                    src={win.lot.imageUrl || 'https://placehold.co/600x400.png'} 
+                    alt={win.lot.title} 
+                    fill 
+                    className="object-cover"
+                    data-ai-hint={win.lot.dataAiHint || 'imagem lote arrematado'}
+                />
+            </div>
+            <CardHeader className="pb-2">
+            <CardTitle className="text-lg leading-tight hover:text-primary">
+                <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
+                    {win.lot.title}
+                </Link>
+            </CardTitle>
+            <CardDescription className="text-xs pt-0.5">
+                Leilão: {win.lot.auctionName} (Lote: {win.lot.number || win.lot.id})
+            </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2.5 text-sm flex-grow">
+            <div>
+                <span className="font-medium text-muted-foreground">Valor do Arremate:</span>
+                <span className="text-primary font-bold ml-2 text-lg">
+                R$ {win.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+            </div>
+            <div className="text-xs text-muted-foreground">
+                <p><span className="font-medium text-foreground">Comissão do Leiloeiro (5%):</span> R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p><span className="font-medium text-foreground">Total Devido:</span> R$ {totalDue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            </div>
+            <div className="flex items-center">
+                <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Arrematado em: {isClient ? formattedWinDate : <Skeleton className="h-4 w-24 inline-block" />}</span>
+            </div>
+            <div className="flex items-center">
+                <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Status do Pagamento: </span>
+                <Badge variant="outline" className={`ml-2 ${getPaymentStatusColor(win.paymentStatus)}`}>
+                    {getPaymentStatusText(win.paymentStatus)}
+                </Badge>
+            </div>
+            {win.paymentStatus === 'PENDENTE' && (
+                <div className="flex items-center text-xs text-amber-600">
+                    <CalendarCheck className="h-4 w-4 mr-2" />
+                    <span>Prazo para Pagamento: {isClient ? formattedDeadline : <Skeleton className="h-4 w-16 inline-block" />}</span>
+                </div>
+            )}
+            <div className="flex items-center">
+                <Truck className="h-4 w-4 mr-2 text-muted-foreground" />
+                <span>Status da Retirada: {win.paymentStatus === 'PAGO' ? 'Aguardando Agendamento' : 'Aguardando Pagamento'}</span>
+            </div>
+            </CardContent>
+            <CardFooter className="border-t pt-4 flex flex-col sm:flex-row flex-wrap gap-2">
+                <Button size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
+                    <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
+                        <Eye className="mr-2 h-4 w-4" /> Ver Lote
+                    </Link>
+                </Button>
+                {win.paymentStatus === 'PENDENTE' && (
+                    <Button variant="default" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
+                        <Link href={`/checkout/${win.id}`}>
+                            <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
+                        </Link>
+                    </Button>
+                )}
+                {win.paymentStatus === 'PAGO' && (
+                    <>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            className="flex-1 min-w-[calc(50%-0.25rem)]"
+                            onClick={() => handleGenerateTerm(win.lot.id)}
+                            disabled={isGeneratingTerm === win.lot.id}
+                        >
+                            {isGeneratingTerm === win.lot.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4" />}
+                            Termo Arrem.
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
+                            <Truck className="mr-2 h-4 w-4" /> Agendar Retirada
+                        </Button>
+                    </>
+                )}
+            </CardFooter>
+        </Card>
+    );
+}
+
 
 function WinsPageContent() {
     const { userProfileWithPermissions } = useAuth();
@@ -150,103 +266,14 @@ function WinsPageContent() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {wins.map((win) => {
-                        if (!win.lot) {
-                        return <Card key={win.id} className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
-                        }
-                        const paymentDeadline = addDays(convertUtcToSaoPaulo(win.winDate as string), 5); // Exemplo: 5 dias para pagar, usando data em SP
-                        const commissionRate = 0.05; // Exemplo: 5% de comissão
-                        const commissionValue = win.winningBidAmount * commissionRate;
-                        const totalDue = win.winningBidAmount + commissionValue; // Simplificado, pode haver outras taxas
-
-                        return (
-                        <Card key={win.id} className="overflow-hidden shadow-md flex flex-col">
-                            <div className="relative aspect-[16/9] bg-muted">
-                            <Image 
-                                src={win.lot.imageUrl || 'https://placehold.co/600x400.png'} 
-                                alt={win.lot.title} 
-                                fill 
-                                className="object-cover"
-                                data-ai-hint={win.lot.dataAiHint || 'imagem lote arrematado'}
-                            />
-                            </div>
-                            <CardHeader className="pb-2">
-                            <CardTitle className="text-lg leading-tight hover:text-primary">
-                                <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
-                                    {win.lot.title}
-                                </Link>
-                            </CardTitle>
-                            <CardDescription className="text-xs pt-0.5">
-                                Leilão: {win.lot.auctionName} (Lote: {win.lot.number || win.lot.id})
-                            </CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-2.5 text-sm flex-grow">
-                            <div>
-                                <span className="font-medium text-muted-foreground">Valor do Arremate:</span>
-                                <span className="text-primary font-bold ml-2 text-lg">
-                                R$ {win.winningBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                                <p><span className="font-medium text-foreground">Comissão do Leiloeiro (5%):</span> R$ {commissionValue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (placeholder)</p>
-                                <p><span className="font-medium text-foreground">Total Devido:</span> R$ {totalDue.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (placeholder)</p>
-                            </div>
-                            <div className="flex items-center">
-                                <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <span>Arrematado em: {formatInSaoPaulo(win.winDate as string, "dd/MM/yyyy 'às' HH:mm")}</span>
-                            </div>
-                            <div className="flex items-center">
-                                <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <span>Status do Pagamento: </span>
-                                <Badge variant="outline" className={`ml-2 ${getPaymentStatusColor(win.paymentStatus)}`}>
-                                    {getPaymentStatusText(win.paymentStatus)}
-                                </Badge>
-                            </div>
-                            {win.paymentStatus === 'PENDENTE' && (
-                                <div className="flex items-center text-xs text-amber-600">
-                                    <CalendarCheck className="h-4 w-4 mr-2" />
-                                    <span>Prazo para Pagamento: {formatInSaoPaulo(paymentDeadline, "dd/MM/yyyy")} (placeholder)</span>
-                                </div>
-                            )}
-                            <div className="flex items-center">
-                                <Truck className="h-4 w-4 mr-2 text-muted-foreground" />
-                                <span>Status da Retirada: {win.paymentStatus === 'PAGO' ? 'Aguardando Agendamento' : 'Aguardando Pagamento'} (placeholder)</span>
-                            </div>
-                            </CardContent>
-                            <CardFooter className="border-t pt-4 flex flex-col sm:flex-row flex-wrap gap-2">
-                                <Button size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                                    <Link href={`/auctions/${win.lot.auctionId}/lots/${win.lot.publicId || win.lot.id}`}>
-                                        <Eye className="mr-2 h-4 w-4" /> Ver Lote
-                                    </Link>
-                                </Button>
-                                {win.paymentStatus === 'PENDENTE' && (
-                                    <Button variant="default" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" asChild>
-                                        <Link href={`/checkout/${win.id}`}>
-                                            <CreditCard className="mr-2 h-4 w-4" /> Pagar Agora
-                                        </Link>
-                                    </Button>
-                                )}
-                                {win.paymentStatus === 'PAGO' && (
-                                    <>
-                                        <Button 
-                                            variant="secondary" 
-                                            size="sm" 
-                                            className="flex-1 min-w-[calc(50%-0.25rem)]"
-                                            onClick={() => handleGenerateTerm(win.lot.id)}
-                                            disabled={isGeneratingTerm === win.lot.id}
-                                        >
-                                            {isGeneratingTerm === win.lot.id ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <FileText className="mr-2 h-4 w-4" />}
-                                            Termo Arrem.
-                                        </Button>
-                                        <Button variant="outline" size="sm" className="flex-1 min-w-[calc(50%-0.25rem)]" disabled>
-                                            <Truck className="mr-2 h-4 w-4" /> Agendar Retirada
-                                        </Button>
-                                    </>
-                                )}
-                            </CardFooter>
-                        </Card>
-                        )
-                    })}
+                    {wins.map((win) => (
+                        <WinCard 
+                            key={win.id} 
+                            win={win} 
+                            isGeneratingTerm={isGeneratingTerm} 
+                            handleGenerateTerm={handleGenerateTerm} 
+                        />
+                    ))}
                     </div>
                 )}
                 </CardContent>
