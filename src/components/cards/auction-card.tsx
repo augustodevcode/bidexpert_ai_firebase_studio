@@ -11,7 +11,7 @@ import type { Auction } from '@/types';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import AuctionPreviewModal from '@/components/auction-preview-modal';
+import AuctionPreviewModal from '../auction-preview-modal';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import {
   DropdownMenu,
@@ -31,7 +31,7 @@ interface AuctionCardProps {
 }
 
 export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(auction.isFavorite || false);
+  const [isFavorite, setIsFavorite] = React.useState(false); // Default to false, check in useEffect
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
@@ -72,6 +72,9 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
+      // Check favorite status on client-side
+      // This assumes you have a function to check favorites from localStorage
+      // setIsFavorite(isAuctionFavoriteInStorage(auction.id)); 
     }
   }, [auction.id, auction.publicId]);
 
@@ -80,6 +83,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     e.preventDefault(); 
     e.stopPropagation();
     setIsFavorite(!isFavorite);
+    // Add logic to save to localStorage here
   };
 
   const openPreviewModal = (e: React.MouseEvent) => {
@@ -130,8 +134,8 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   };
 
   const statusDisplay = getStatusDisplay();
-  const getAuctionTypeIcon = (type: string | undefined) => {
-    const IconComponent = getAuctionTypeDisplayData(type)?.icon;
+  const getAuctionTypeIcon = () => {
+    const IconComponent = getAuctionTypeDisplayData(auction.auctionType)?.icon;
     return IconComponent ? <IconComponent className="h-3 w-3" /> : null;
   };
 
@@ -251,7 +255,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
               {auctionTypeDisplay?.label && (
                 <div className="flex items-center gap-1" data-ai-id="auction-card-type">
-                    {getAuctionTypeIcon(auction.auctionType)}
+                    {getAuctionTypeIcon()}
                     <span>{auctionTypeDisplay.label}</span>
                 </div>
                 )}
@@ -279,7 +283,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="space-y-1 mb-3 text-xs" data-ai-id="auction-card-timeline">
-                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
+                    <AuctionStagesTimeline stages={auction.auctionStages} />
                 </div>
             ) : null}
 

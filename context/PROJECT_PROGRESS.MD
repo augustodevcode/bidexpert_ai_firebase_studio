@@ -28,13 +28,14 @@
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
 - **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
 - **Item 24: Unificação dos Componentes de Card (UniversalCard):** Criado o `UniversalCard` e `UniversalListItem` e refatoradas as páginas principais (`HomePage`, `SearchPage`, `CategoryPage`, etc.) para usá-los.
+- **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
+- **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
+- **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
 
 ## DOING
-- **Item 27: Refatorar Testes de Integração e E2E:**
-    - **Objetivo:** Alinhar todos os testes (`*.test.ts`) com a arquitetura de serviços refatorada, garantindo que eles chamem as `Server Actions` em vez dos serviços diretamente, e simulem o contexto de tenant.
-    - **Status Atual:** Refatoração do teste `bidding-e2e.test.ts` concluída. Próximo passo é continuar com os demais arquivos de teste.
+- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
-- **(A definir):** Próximas funcionalidades a serem priorizadas após a conclusão dos testes.
+- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

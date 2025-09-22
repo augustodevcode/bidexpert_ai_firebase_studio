@@ -34,9 +34,9 @@ export class AuctioneerService {
     this.prisma = getPrismaInstance();
   }
 
-  async getAuctioneers(tenantId: string): Promise<AuctioneerProfileInfo[]> {
+  async getAuctioneers(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {
     // @ts-ignore
-    return this.auctioneerRepository.findAll(tenantId);
+    return this.auctioneerRepository.findAll(tenantId, limit);
   }
 
   async getAuctioneerById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {

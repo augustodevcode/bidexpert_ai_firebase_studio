@@ -8,22 +8,22 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { useToast } from '@/hooks/use-toast';
-import { useEffect, useState, useRef, useCallback, forwardRef } from 'react';
+import { useEffect, useState, useRef, useCallback, forwardRef, useMemo } from 'react';
 import { slugify } from '@/lib/ui-helpers';
 import UserNav from './user-nav';
 import MainNav, { type NavItem } from './main-nav';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import Image from 'next/image';
 import { Loader2, Heart, Bell, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import type { RecentlyViewedLotInfo, Lot, LotCategory, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo } from '@/types';
 import { getLotsByIds, getLots } from '@/app/admin/lots/actions';
+import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getFavoriteLotIdsFromStorage } from '@/lib/favorite-store';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
@@ -36,8 +36,6 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import MegaMenuCategories from './mega-menu-categories';
-import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { getSellers } from '@/app/admin/sellers/actions';
 import type { MegaMenuGroup } from './mega-menu-link-list';
 import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import TwoColumnMegaMenu from './two-column-mega-menu';
@@ -71,13 +69,20 @@ export const HistoryListItem = forwardRef<
 });
 HistoryListItem.displayName = "HistoryListItem";
 
-export default function Header() {
+interface HeaderProps {
+    platformSettings: PlatformSettings | null;
+}
+
+export default function Header({ 
+    platformSettings,
+}: HeaderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [recentlyViewedItems, setRecentlyViewedItems] = useState<RecentlyViewedLotInfo[]>([]);
-  const [searchCategories, setSearchCategories] = useState<LotCategory[]>([]);
   const [allLots, setAllLots] = useState<Lot[]>([]); // New state for search
+  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
+  const [categories, setCategories] = useState<LotCategory[]>([]);
+  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
   const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
-  const [consignorMegaMenuGroups, setConsignorMegaMenuGroups] = useState<MegaMenuGroup[]>([]);
   const [favoriteCount, setFavoriteCount] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -89,16 +94,65 @@ export default function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParamsHook = useSearchParams();
-  const { userProfileWithPermissions } = useAuth();
+  const { userProfileWithPermissions, unreadNotificationsCount } = useAuth();
   const currentParamsType = searchParamsHook.get('type');
   const currentCategoryParam = searchParamsHook.get('category');
-
-
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  
   const siteTitle = platformSettings?.siteTitle || 'BidExpert';
   const siteTagline = platformSettings?.siteTagline;
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    async function fetchClientSideData() {
+      setIsLoading(true);
+      try {
+        const [
+            fetchedLots,
+            fetchedAuctions,
+            fetchedCategories,
+            fetchedSellers,
+            fetchedAuctioneers
+        ] = await Promise.all([
+          getLots(undefined, true), 
+          getAuctions(true, 20),
+          getLotCategories(),
+          getSellers(true, 20),
+          getAuctioneers(true, 20)
+        ]);
+
+        setAllLots(fetchedLots);
+        setAllAuctions(fetchedAuctions);
+        setCategories(fetchedCategories);
+        setSellers(fetchedSellers);
+        setAuctioneers(fetchedAuctioneers);
+
+        const viewedIds = getRecentlyViewedIds();
+        if (viewedIds.length > 0) {
+          const itemsData = await getLotsByIds(viewedIds);
+          const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
+              const lot = itemsData.find(l => l.id === id);
+              return lot ? {
+                id: lot.id,
+                title: lot.title,
+                imageUrl: lot.imageUrl,
+                auctionId: lot.auctionId,
+                dataAiHint: lot.dataAiHint,
+                publicId: lot.publicId,
+              } : null;
+          }).filter(item => item !== null) as RecentlyViewedLotInfo[];
+          setRecentlyViewedItems(items);
+        } else {
+          setRecentlyViewedItems([]);
+        }
+      } catch (error) {
+        console.error("Error fetching client-side data for header:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchClientSideData();
+  }, []);
 
   const onLinkClick = useCallback(() => {
     if (isMobileMenuOpen) {
@@ -126,63 +180,22 @@ export default function Header() {
         window.removeEventListener('storage', handleStorageChange);
     };
   }, [updateCounts]);
+  
+   const consignorMegaMenuGroups: MegaMenuGroup[] = useMemo(() => {
+      const consignorItemsForMenu: MegaMenuLinkItem[] = sellers.map(seller => ({
+          href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
+          label: seller.name,
+          description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
+          icon: seller.logoUrl ? <Avatar className="h-5 w-5 border"><AvatarImage src={seller.logoUrl!} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || 'logo comitente'} /><AvatarFallback>{seller.name.charAt(0)}</AvatarFallback></Avatar> : undefined
+      }));
 
-  useEffect(() => {
-    async function fetchInitialData() {
-      setIsLoading(true);
-      try {
-        const [settings, categories, allFetchedLots, fetchedAuctioneers, fetchedSellers] = await Promise.all([
-          getPlatformSettings(),
-          getLotCategories(),
-          getLots(undefined, true), // Public call
-          getAuctioneers(true), // Public call
-          getSellers(true), // Public call
-        ]);
-        setPlatformSettings(settings as PlatformSettings);
-        setSearchCategories(categories);
-        setAllLots(allFetchedLots);
-        setAuctioneers(fetchedAuctioneers);
+      const formattedSellersForMenu: MegaMenuGroup[] = [{
+          title: "Principais Comitentes",
+          items: consignorItemsForMenu,
+      }];
+      return formattedSellersForMenu.filter(group => group.items.length > 0);
+  }, [sellers]);
 
-        const consignorItemsForMenu: MegaMenuLinkItem[] = fetchedSellers.map(seller => ({
-            href: `/sellers/${seller.slug || seller.publicId || seller.id}`,
-            label: seller.name,
-            description: seller.city && seller.state ? `${seller.city} - ${seller.state}` : (seller.description ? seller.description.substring(0,40)+'...' : 'Ver perfil'),
-            icon: seller.logoUrl ? <Avatar className="h-5 w-5 border"><AvatarImage src={seller.logoUrl!} alt={seller.name} data-ai-hint={seller.dataAiHintLogo || 'logo comitente'} /><AvatarFallback>{seller.name.charAt(0)}</AvatarFallback></Avatar> : undefined
-        }));
-
-        const formattedSellersForMenu: MegaMenuGroup[] = [{
-            title: "Principais Comitentes",
-            items: consignorItemsForMenu,
-        }];
-        setConsignorMegaMenuGroups(formattedSellersForMenu.filter(group => group.items.length > 0));
-
-        const viewedIds = getRecentlyViewedIds();
-        if (viewedIds.length > 0) {
-          const itemsData = await getLotsByIds(viewedIds);
-          const items: RecentlyViewedLotInfo[] = viewedIds.map(id => {
-              const lot = itemsData.find(l => l.id === id);
-              return lot ? {
-                id: lot.id,
-                title: lot.title,
-                imageUrl: lot.imageUrl,
-                auctionId: lot.auctionId,
-                dataAiHint: lot.dataAiHint,
-                publicId: lot.publicId,
-              } : null;
-          }).filter(item => item !== null) as RecentlyViewedLotInfo[];
-          setRecentlyViewedItems(items);
-        } else {
-          setRecentlyViewedItems([]);
-        }
-
-      } catch (error) {
-        console.error("Error fetching data for header:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchInitialData();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -322,18 +335,6 @@ export default function Header() {
     { href: '/sell-with-us', label: 'Venda Conosco', icon: Percent },
   ];
 
-  const HeaderSkeleton = () => (
-      <div className="container mx-auto px-4 flex h-12 items-center justify-between animate-pulse">
-        <Skeleton className="h-6 w-32 rounded-md" />
-        <div className="flex-grow flex justify-start pl-4 gap-4">
-            <Skeleton className="h-6 w-24 rounded-md" />
-            <Skeleton className="h-6 w-24 rounded-md" />
-            <Skeleton className="h-6 w-24 rounded-md" />
-        </div>
-      </div>
-  );
-
-
   return (
     <header className="sticky top-0 z-50 w-full shadow-md print:hidden">
       {/* Promotion Bar */}
@@ -353,7 +354,7 @@ export default function Header() {
       <div className="bg-secondary text-secondary-foreground text-xs border-b">
         <div className="container mx-auto px-4 h-10 flex items-center justify-between">
           <div className="hidden sm:block">
-            {isLoading ? <Skeleton className="h-4 w-64" /> : `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.`}
+            {siteTitle ? `Bem-vindo ao ${siteTitle}! Sua plataforma de leilões online.` : <Skeleton className="h-4 w-64" />}
           </div>
           <nav className="flex items-center space-x-3 sm:space-x-4">
             <Link href="/faq" className="hover:text-primary transition-colors flex items-center gap-1">
@@ -397,7 +398,7 @@ export default function Header() {
                             items={allNavItemsForMobile}
                             onLinkClick={onLinkClick}
                             isMobile={true}
-                            searchCategories={searchCategories}
+                            searchCategories={categories}
                             auctioneers={auctioneers}
                             consignorMegaMenuGroups={consignorMegaMenuGroups}
                             recentlyViewedItems={recentlyViewedItems}
@@ -446,8 +447,8 @@ export default function Header() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todas" className="text-sm">Todas</SelectItem>
-                    {searchCategories.length > 0 ? (
-                      searchCategories.map(cat => (
+                    {categories.length > 0 ? (
+                      categories.map(cat => (
                         <SelectItem
                           key={cat.slug}
                           value={cat.slug}
@@ -561,46 +562,44 @@ export default function Header() {
 
       {/* Main Navigation Bar - Desktop */}
       <div className="border-b bg-background text-foreground hidden md:block">
-        {isLoading ? <HeaderSkeleton /> : (
-            <div className="container mx-auto px-4 flex h-12 items-center justify-between">
-                {/* Categorias Megamenu (à esquerda) */}
-                {firstNavItem && firstNavItem.isMegaMenu && (
-                <NavigationMenu className="relative z-10 flex items-center justify-start">
-                    <NavigationMenuList>
-                    <NavigationMenuItem value={firstNavItem.label}>
-                        <NavigationMenuTrigger
-                            className={cn(
-                                navigationMenuTriggerStyle(),
-                                (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam))) && 'bg-accent text-primary font-semibold',
-                                'font-semibold'
-                            )}
-                        >
-                        {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
-                        {firstNavItem.label}
-                    </NavigationMenuTrigger>
-                    <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
-                        {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={searchCategories} onLinkClick={onLinkClick} />}
-                    </NavigationMenuContent>
-                    </NavigationMenuItem>
-                    </NavigationMenuList>
-                </NavigationMenu>
-                )}
+        <div className="container mx-auto px-4 flex h-12 items-center justify-between">
+            {/* Categorias Megamenu (à esquerda) */}
+            {firstNavItem && firstNavItem.isMegaMenu && (
+            <NavigationMenu className="relative z-10 flex items-center justify-start">
+                <NavigationMenuList>
+                <NavigationMenuItem value={firstNavItem.label}>
+                    <NavigationMenuTrigger
+                        className={cn(
+                            navigationMenuTriggerStyle(),
+                            (pathname?.startsWith('/category') || (pathname === '/search' && (currentParamsType === 'lots' || currentCategoryParam))) && 'bg-accent text-primary font-semibold',
+                            'font-semibold'
+                        )}
+                    >
+                    {firstNavItem.icon && <firstNavItem.icon className="mr-1.5 h-4 w-4" /> }
+                    {firstNavItem.label}
+                </NavigationMenuTrigger>
+                <NavigationMenuContent align={firstNavItem.megaMenuAlign || "start"}>
+                    {firstNavItem.contentKey === 'categories' && <MegaMenuCategories categories={categories} onLinkClick={onLinkClick} />}
+                </NavigationMenuContent>
+                </NavigationMenuItem>
+                </NavigationMenuList>
+            </NavigationMenu>
+            )}
 
-                {/* Itens Centrais de Navegação */}
-                <div className="flex-grow flex justify-start pl-4">
-                    <MainNav
-                        items={centralNavItems}
-                        onLinkClick={onLinkClick}
-                        className="hidden md:flex"
-                        searchCategories={searchCategories}
-                        auctioneers={auctioneers}
-                        consignorMegaMenuGroups={consignorMegaMenuGroups}
-                        recentlyViewedItems={recentlyViewedItems}
-                        HistoryListItemComponent={HistoryListItem}
-                    />
-                </div>
+            {/* Itens Centrais de Navegação */}
+            <div className="flex-grow flex justify-start pl-4">
+                <MainNav
+                    items={centralNavItems}
+                    onLinkClick={onLinkClick}
+                    className="hidden md:flex"
+                    searchCategories={categories}
+                    auctioneers={auctioneers}
+                    consignorMegaMenuGroups={consignorMegaMenuGroups}
+                    recentlyViewedItems={recentlyViewedItems}
+                    HistoryListItemComponent={HistoryListItem}
+                />
             </div>
-        )}
+        </div>
       </div>
 
       {/* Breadcrumbs Bar */}

@@ -1,3 +1,4 @@
+
 // src/app/dashboard/overview/page.tsx
 /**
  * @fileoverview Página "Visão Geral" do Painel do Usuário (Arrematante).
@@ -28,7 +29,9 @@ function TimeRemaining({ endDate }: { endDate: Date | string | null | undefined 
 
   useEffect(() => {
     if (!endDate) return;
-    const end = new Date(endDate);
+    
+    // Assegura que a data é um objeto Date válido.
+    const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
     if (!isValid(end)) {
         setRemaining('Data inválida');
         return;
@@ -42,9 +45,10 @@ function TimeRemaining({ endDate }: { endDate: Date | string | null | undefined 
       }
       const hours = differenceInHours(end, now);
       const minutes = differenceInMinutes(end, now) % 60;
+      const days = differenceInDays(end, now);
 
-      if (hours > 24) {
-        setRemaining(`${Math.floor(hours / 24)}d ${hours % 24}h`);
+      if (days > 0) {
+        setRemaining(`${days}d ${hours % 24}h`);
       } else if (hours > 0) {
         setRemaining(`${hours}h ${minutes}m`);
       } else if (minutes > 0) {
@@ -60,6 +64,7 @@ function TimeRemaining({ endDate }: { endDate: Date | string | null | undefined 
 
   return <span className="font-semibold">{remaining}</span>;
 }
+
 
 const initialData: DashboardOverviewData = {
     upcomingLots: [],

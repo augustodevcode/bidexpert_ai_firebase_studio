@@ -1,3 +1,4 @@
+
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
@@ -45,7 +46,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
             </p>
             <p className="text-muted-foreground">{formattedDate} - {formattedTime}</p>
             {stage.initialPrice && (
-                <p className="text-primary font-medium">R$ {stage.initialPrice.toLocaleString('pt-br')}</p>
+                <p className="text-primary font-medium">R$ {Number(stage.initialPrice).toLocaleString('pt-br')}</p>
             )}
         </div>
     </div>
@@ -53,13 +54,29 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
 };
 
 interface AuctionStagesTimelineProps {
+  auctionOverallStartDate?: Date;
   stages: AuctionStage[];
 }
 
 export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineProps) {
-  if (!stages || stages.length === 0) {
-    return null;
-  }
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
+    if (!isClient || !stages || stages.length === 0) {
+        // Render a placeholder or null on the server and initial client render
+        return (
+            <div>
+                <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />ETAPAS DO LEILÃO</h4>
+                <div className="relative flex flex-col space-y-2">
+                    <div className="absolute left-[6px] top-2 bottom-2 w-0.5 bg-border -z-10"></div>
+                    <p className="text-xs text-muted-foreground p-2">Carregando etapas...</p>
+                </div>
+            </div>
+        );
+    }
 
   const processedStages = stages
     .map(stage => ({
@@ -94,10 +111,11 @@ export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineP
                 const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
                 const isActive = index === activeStageIndex;
                 return (
-                    <AuctionStageItem key={stage.name || index} stage={stage} isActive={isActive} isCompleted={isCompleted} />
+                    <AuctionStageItem key={(stage.id as string) || index} stage={stage} isActive={isActive} isCompleted={isCompleted} />
                 )
             })}
         </div>
     </div>
   );
 }
+

@@ -37,9 +37,9 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
 }
 
 
-export async function getAuctioneers(isPublicCall: boolean = false, tenantId?: string): Promise<AuctioneerProfileInfo[]> {
-  const tenantIdToUse = tenantId || await getTenantIdFromRequest(isPublicCall);
-  return auctioneerService.getAuctioneers(tenantIdToUse);
+export async function getAuctioneers(isPublicCall: boolean = false, limit?: number): Promise<AuctioneerProfileInfo[]> {
+  const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
+  return auctioneerService.getAuctioneers(tenantIdToUse, limit);
 }
 
 export async function getAuctioneer(id: string): Promise<AuctioneerProfileInfo | null> {

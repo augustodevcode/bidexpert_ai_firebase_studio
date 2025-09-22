@@ -317,7 +317,10 @@ export default function LotDetailClientContent({
 
 
   useEffect(() => {
-    if (typeof window !== 'undefined') setCurrentUrl(window.location.href);
+    if (typeof window !== 'undefined') {
+        setCurrentUrl(window.location.href);
+        setIsLotFavorite(isLotFavoriteInStorage(lot.id));
+    }
     
     // Format the date here to avoid hydration mismatch
     if (auction.endDate && isValid(new Date(auction.endDate as string))) {
@@ -326,7 +329,6 @@ export default function LotDetailClientContent({
     
     if (lot?.id) {
       addRecentlyViewedId(lot.id);
-      setIsLotFavorite(isLotFavoriteInStorage(lot.id));
       setCurrentImageIndex(0);
 
       const fetchData = async () => {
@@ -359,7 +361,7 @@ export default function LotDetailClientContent({
   const lotTitle = `${lot?.year || ''} ${lot?.make || ''} ${lot?.model || ''} ${lot?.version || ''} ${lot?.title || ''}`.trim();
   const lotLocation = lot?.cityName && lot?.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot?.stateUf || lot?.cityName || 'Não informado';
 
-  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === 'admin@bidexpert.com.br'.toLowerCase();
+  const isEffectivelySuperTestUser = userProfileWithPermissions?.email?.toLowerCase() === SUPER_TEST_USER_EMAIL_FOR_BYPASS;
   const hasAdminRights = userProfileWithPermissions && hasPermission(userProfileWithPermissions, 'manage_all');
   const isDocHabilitado = userProfileWithPermissions?.habilitationStatus === 'HABILITADO';
 

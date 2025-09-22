@@ -38,9 +38,9 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
 }
 
 
-export async function getSellers(isPublicCall: boolean = false): Promise<SellerProfileInfo[]> {
+export async function getSellers(isPublicCall: boolean = false, limit?: number): Promise<SellerProfileInfo[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    return sellerService.getSellers(tenantIdToUse);
+    return sellerService.getSellers(tenantIdToUse, limit);
 }
 
 export async function getSeller(id: string): Promise<SellerProfileInfo | null> {

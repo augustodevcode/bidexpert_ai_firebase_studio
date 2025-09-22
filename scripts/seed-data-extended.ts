@@ -1,5 +1,5 @@
 // scripts/seed-data-extended.ts
-import { PrismaClient, UserHabilitationStatus, Prisma } from '@prisma/client';
+import { PrismaClient, UserHabilitationStatus, Prisma, PaymentStatus } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
@@ -535,8 +535,7 @@ async function simulateBiddingAndPayments(tenantId: string) {
           data: {
             userId: winner.id,
             lotId: lot.id,
-            auctionId: lot.auctionId,
-            finalPrice: winner.finalPrice,
+            winningBidAmount: winner.finalPrice,
             paymentStatus: 'PENDING',
             tenantId: tenantId,
           },
@@ -647,6 +646,36 @@ async function seed() {
         softCloseMinutes: faker.number.int({ min: 1, max: 10 }),
       },
     });
+
+    // Create auction stages
+    const firstStageInitialPrice = faker.number.float({ min: 10000, max: 100000, multipleOf: 0.01 });
+    const secondStageInitialPrice = faker.number.float({ min: firstStageInitialPrice * 0.5, max: firstStageInitialPrice * 0.9, multipleOf: 0.01 });
+
+    const firstStageEndDate = new Date(auctionDate);
+    firstStageEndDate.setHours(firstStageEndDate.getHours() + faker.number.int({ min: 4, max: 8 })); // First stage lasts a few hours
+
+    const secondStageStartDate = new Date(firstStageEndDate);
+    secondStageStartDate.setDate(secondStageStartDate.getDate() + 1); // Second stage starts the next day
+
+    await prisma.auctionStage.createMany({
+      data: [
+        {
+          auctionId: auction.id,
+          name: '1º Leilão',
+          startDate: auctionDate,
+          endDate: firstStageEndDate,
+          initialPrice: new Prisma.Decimal(firstStageInitialPrice),
+        },
+        {
+          auctionId: auction.id,
+          name: '2º Leilão',
+          startDate: secondStageStartDate,
+          endDate: endDate,
+          initialPrice: new Prisma.Decimal(secondStageInitialPrice),
+        },
+      ],
+    });
+    console.log(`  Created 2 stages for auction: ${auction.title}`);
     auctionCounter++;
     console.log(`Created auction ${auctionCounter}: ${auction.title} (Type: ${type}, Method: ${method}, Status: ${status})`);
 

@@ -10,10 +10,11 @@ export class SellerRepository {
     this.prisma = getPrismaInstance();
   }
 
-  async findAll(tenantId: string): Promise<SellerProfileInfo[]> {
+  async findAll(tenantId: string, limit?: number): Promise<SellerProfileInfo[]> {
     return this.prisma.seller.findMany({ 
         where: { tenantId }, 
-        orderBy: { name: 'asc' } 
+        orderBy: { createdAt: 'desc' },
+        take: limit,
     });
   }
 

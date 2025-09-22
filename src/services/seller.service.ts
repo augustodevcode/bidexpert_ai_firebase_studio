@@ -41,8 +41,8 @@ export class SellerService {
     }));
   }
 
-  async getSellers(tenantId: string): Promise<SellerProfileInfo[]> {
-    return this.sellerRepository.findAll(tenantId);
+  async getSellers(tenantId: string, limit?: number): Promise<SellerProfileInfo[]> {
+    return this.sellerRepository.findAll(tenantId, limit);
   }
 
   async getSellerById(tenantId: string, id: string): Promise<SellerProfileInfo | null> {

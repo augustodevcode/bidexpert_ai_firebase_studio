@@ -4,24 +4,36 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
-import { headers } from 'next/headers';
 import { AppContentWrapper } from './app-content-wrapper';
-import { getSession } from '@/server/lib/session'; // Usando a função direta do servidor
-import { prisma as basePrisma } from '@/lib/prisma';
-import type { UserProfileWithPermissions, Role, Tenant } from '@/types';
+import { getSession } from '@/server/lib/session';
+import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
 export const metadata: Metadata = {
   title: 'BidExpert - Leilões Online',
-  description: 'Seu parceiro especialista em leilões online.',
+  description: 'Sua plataforma especialista em leilões online.',
 };
 
 /**
- * Server-side function to get initial authentication data from the session cookie.
- * This function avoids hitting the database for every page load.
- * @returns An object with the initial user profile (from session) and tenant ID.
+ * Fetches only the essential data for the main layout, which is platform settings.
+ * Other data will be fetched on the client side.
  */
+async function getLayoutData() {
+  try {
+    const settings = await getPlatformSettings();
+    return { 
+      platformSettings: settings, 
+    };
+  } catch (error) {
+    console.error("[Layout Data Fetch] Failed to fetch layout data:", error);
+    return {
+      platformSettings: null,
+    };
+  }
+}
+
 async function getInitialAuthData() {
   const session = await getSession();
   
@@ -29,8 +41,7 @@ async function getInitialAuthData() {
     return { initialUser: null, initialTenantId: '1' };
   }
 
-  // The AuthProvider will now be responsible for fetching the full user profile if needed,
-  // but we can pass the session data as the initial state to avoid a loading screen.
+  // Simplified user object from session, no DB call needed here.
   const initialUserFromSession: Partial<UserProfileWithPermissions> = {
       id: session.userId,
       uid: session.userId,
@@ -53,8 +64,9 @@ export default async function RootLayout({
 }>) {
   
   const { initialUser, initialTenantId } = await getInitialAuthData();
+  const { platformSettings } = await getLayoutData();
 
-  // A verificação do setup agora é feita no AppContentWrapper e no middleware
+  // Força o setup se a variável de ambiente estiver definida, senão assume que está completo
   const isSetupComplete = process.env.NEXT_PUBLIC_FORCE_SETUP !== 'true';
 
   return (
@@ -67,7 +79,10 @@ export default async function RootLayout({
       <body>
         <AuthProvider initialUser={initialUser} initialTenantId={initialTenantId}>
           <TooltipProvider delayDuration={0}>
-            <AppContentWrapper isSetupComplete={isSetupComplete}>
+            <AppContentWrapper 
+              isSetupComplete={isSetupComplete}
+              platformSettings={platformSettings}
+            >
               {children}
             </AppContentWrapper>
             <Toaster />

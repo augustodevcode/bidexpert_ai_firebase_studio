@@ -26,11 +26,19 @@ async function HomePageData() {
         getSellers(true),
     ]);
 
+    const serializedLots = lotsData.map(lot => ({
+      ...lot,
+      initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+      secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+      price: lot.price ? Number(lot.price) : null,
+      // Certifique-se de que todos os campos Decimal sejam convertidos
+    }));
+
     return (
         <HomePageClient
             platformSettings={settings}
             allAuctions={auctionsData}
-            allLots={lotsData}
+            allLots={serializedLots}
             categories={categoriesData}
             sellers={sellersData}
         />

@@ -10,10 +10,11 @@ export class AuctioneerRepository {
     this.prisma = getPrismaInstance();
   }
 
-  async findAll(tenantId: string): Promise<AuctioneerProfileInfo[]> {
+  async findAll(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {
     return this.prisma.auctioneer.findMany({ 
         where: { tenantId },
-        orderBy: { name: 'asc' } 
+        orderBy: { createdAt: 'desc' },
+        take: limit,
     });
   }
 
