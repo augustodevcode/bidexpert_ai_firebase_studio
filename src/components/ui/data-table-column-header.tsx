@@ -18,6 +18,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { useState, useEffect } from "react"
+import { format as formatDate } from "date-fns"
+import { ptBR } from "date-fns/locale"
+
 
 interface DataTableColumnHeaderProps<TData, TValue>
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -77,4 +81,23 @@ export function DataTableColumnHeader<TData, TValue>({
       </DropdownMenu>
     </div>
   )
+}
+
+// Client-side date formatter component to prevent hydration errors
+export const ClientOnlyDate = ({ date, format = "dd/MM/yyyy" }: { date: string | Date | null | undefined, format?: string }) => {
+    const [formattedDate, setFormattedDate] = useState('...');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(formatDate(new Date(date as string), format, { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date, format]);
+
+    return <span>{formattedDate}</span>;
 }

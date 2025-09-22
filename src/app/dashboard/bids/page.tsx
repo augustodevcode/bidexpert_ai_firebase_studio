@@ -20,6 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
+import { ClientOnlyDate } from '@/components/ui/data-table-column-header';
 
 const getBidStatusInfo = (bidStatus: UserBid['bidStatus']) => {
     switch(bidStatus) {
@@ -111,6 +112,7 @@ export default function MyBidsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Lote</TableHead>
+                    <TableHead>Data do Lance</TableHead>
                     <TableHead className="text-right">Meu Lance</TableHead>
                     <TableHead className="text-right">Lance Atual</TableHead>
                     <TableHead>Status</TableHead>
@@ -128,6 +130,9 @@ export default function MyBidsPage() {
                             </Link>
                             <p className="text-xs text-muted-foreground">Leilão: {bid.lot.auctionName}</p>
                           </TableCell>
+                           <TableCell className="text-sm">
+                                <ClientOnlyDate date={bid.date} format="dd/MM/yyyy HH:mm"/>
+                           </TableCell>
                           <TableCell className="text-right font-semibold">
                             {bid.userBidAmount.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                           </TableCell>

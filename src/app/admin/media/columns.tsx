@@ -21,29 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { MediaItem } from '@/types';
-import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import React, { useState, useEffect } from 'react';
-
-const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
-    const [formattedDate, setFormattedDate] = useState('');
-
-    useEffect(() => {
-        if (date) {
-            try {
-                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }));
-            } catch {
-                setFormattedDate('Data inválida');
-            }
-        } else {
-            setFormattedDate('N/A');
-        }
-    }, [date]);
-
-    return <span>{formattedDate}</span>;
-}
-
+import { DataTableColumnHeader, ClientOnlyDate } from '@/components/ui/data-table-column-header';
 
 export const createColumns = ({
   handleDelete,
@@ -112,7 +90,7 @@ export const createColumns = ({
   {
     accessorKey: "uploadedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Data de Upload" />,
-    cell: ({ row }) => <ClientOnlyDate date={row.getValue("uploadedAt")} />,
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("uploadedAt")} format="dd/MM/yyyy HH:mm" />,
   },
   {
     accessorKey: "sizeBytes",
