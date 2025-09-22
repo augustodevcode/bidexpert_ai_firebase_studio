@@ -24,6 +24,26 @@ import type { MediaItem } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import React, { useState, useEffect } from 'react';
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
+}
+
 
 export const createColumns = ({
   handleDelete,
@@ -92,14 +112,7 @@ export const createColumns = ({
   {
     accessorKey: "uploadedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Data de Upload" />,
-    cell: ({ row }) => {
-      const date = row.getValue("uploadedAt");
-      try {
-        return date ? format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A';
-      } catch {
-        return 'Data inválida';
-      }
-    },
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("uploadedAt")} />,
   },
   {
     accessorKey: "sizeBytes",

@@ -14,6 +14,26 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
+import React, { useState, useEffect } from 'react';
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
+}
+
 
 export const createFinancialColumns = (): ColumnDef<UserWin>[] => [
   {
@@ -29,7 +49,7 @@ export const createFinancialColumns = (): ColumnDef<UserWin>[] => [
   {
     accessorKey: 'winDate',
     header: ({ column }) => <DataTableColumnHeader column={column} title="Data do Arremate" />,
-    cell: ({ row }) => format(new Date(row.getValue("winDate")), "dd/MM/yyyy", { locale: ptBR }),
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("winDate")} />,
   },
   {
     accessorKey: 'winningBidAmount',

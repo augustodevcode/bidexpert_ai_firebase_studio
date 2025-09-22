@@ -18,7 +18,6 @@ import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, Shi
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { formatInSaoPaulo } from '@/lib/timezone';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -53,7 +52,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (userProfileWithPermissions?.dateOfBirth) {
       try {
-        setFormattedDateOfBirth(formatInSaoPaulo(userProfileWithPermissions.dateOfBirth as string, 'dd/MM/yyyy'));
+        setFormattedDateOfBirth(format(new Date(userProfileWithPermissions.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }));
       } catch (e) {
         console.error("Failed to format dateOfBirth", e);
         setFormattedDateOfBirth('Data inválida');
@@ -79,9 +78,7 @@ export default function ProfilePage() {
         <AlertCircle className="mx-auto h-12 w-12 text-destructive mb-4" />
         <h2 className="text-xl font-semibold text-destructive">Usuário não encontrado</h2>
         <p className="text-muted-foreground">Por favor, faça login para ver seu perfil.</p>
-        <Button asChild className="mt-4">
-          <Link href="/auth/login?redirect=/profile">Ir para Login</Link>
-        </Button>
+        <Button asChild className="mt-4"><Link href="/auth/login?redirect=/profile">Ir para Login</Link></Button>
       </div>
     );
   }

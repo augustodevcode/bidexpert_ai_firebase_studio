@@ -22,6 +22,9 @@ import Link from 'next/link';
 import type { DocumentTemplate } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Badge } from '@/components/ui/badge';
+import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const getTemplateTypeLabel = (type: string | undefined) => {
     if (!type) return 'N/A';
@@ -32,6 +35,25 @@ const getTemplateTypeLabel = (type: string | undefined) => {
         default: return type;
     }
 }
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
+}
+
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<DocumentTemplate>[] => [
   {
@@ -51,7 +73,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
   {
     accessorKey: "updatedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Última Atualização" />,
-    cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleString('pt-BR'),
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("updatedAt")} />,
   },
   {
     id: "actions",

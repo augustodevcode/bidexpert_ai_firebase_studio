@@ -25,6 +25,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import React, { useState, useEffect } from 'react';
 
 const getOfferTypeLabel = (type: string) => {
     switch (type) {
@@ -32,6 +33,24 @@ const getOfferTypeLabel = (type: string) => {
         case 'ACCEPTS_PROPOSALS': return 'Aceita Propostas';
         default: return type;
     }
+}
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
 }
 
 
@@ -102,14 +121,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
   {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Criado em" />,
-    cell: ({ row }) => {
-      const date = row.getValue("createdAt");
-      try {
-        return date ? format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }) : 'N/A';
-      } catch {
-        return 'Data inválida';
-      }
-    }
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("createdAt")} />,
   },
   {
     id: "actions",

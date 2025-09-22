@@ -10,7 +10,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText } from 'lucide-react';
-import { formatInSaoPaulo } from '@/lib/timezone';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 
 export default function TermsPage() {
@@ -18,7 +19,7 @@ export default function TermsPage() {
 
   useEffect(() => {
     // Para evitar hydration mismatch, a data é formatada no lado do cliente
-    setLastUpdated(formatInSaoPaulo(new Date(), 'dd/MM/yyyy'));
+    setLastUpdated(format(new Date(), 'dd/MM/yyyy', { locale: ptBR }));
   }, []);
 
   return (

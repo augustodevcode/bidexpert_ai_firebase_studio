@@ -14,6 +14,28 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy HH:mm", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
+}
+
 
 export const createColumns = (): ColumnDef<UserProfileData>[] => [
   {
@@ -43,7 +65,7 @@ export const createColumns = (): ColumnDef<UserProfileData>[] => [
   {
     accessorKey: "updatedAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Última Atualização" />,
-    cell: ({ row }) => new Date(row.getValue("updatedAt")).toLocaleString('pt-BR'),
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("updatedAt")} />,
   },
   {
     id: "actions",

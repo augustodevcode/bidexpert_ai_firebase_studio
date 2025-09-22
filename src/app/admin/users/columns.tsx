@@ -10,6 +10,29 @@ import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import Link from 'next/link';
 import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+
+
+const ClientOnlyDate = ({ date }: { date: string | Date | null | undefined }) => {
+    const [formattedDate, setFormattedDate] = useState('');
+
+    useEffect(() => {
+        if (date) {
+            try {
+                setFormattedDate(format(new Date(date as string), "dd/MM/yyyy", { locale: ptBR }));
+            } catch {
+                setFormattedDate('Data inválida');
+            }
+        } else {
+            setFormattedDate('N/A');
+        }
+    }, [date]);
+
+    return <span>{formattedDate}</span>;
+}
+
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<UserProfileWithPermissions>[] => [
    {
@@ -83,7 +106,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
   {
     accessorKey: "createdAt",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Criado em" />,
-    cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString('pt-BR'),
+    cell: ({ row }) => <ClientOnlyDate date={row.getValue("createdAt")} />,
   },
   {
     id: "actions",

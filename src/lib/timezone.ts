@@ -21,6 +21,10 @@ export function nowInSaoPaulo(): Date {
  */
 export function formatInSaoPaulo(date: Date | string, formatStr: string): string {
   const dateObj = typeof date === 'string' ? new Date(date) : date;
+  if (isNaN(dateObj.getTime())) {
+    // Handle invalid dates gracefully
+    return 'Data inválida';
+  }
   const zonedDate = utcToZonedTime(dateObj, SAO_PAULO_TZ);
   return format(zonedDate, formatStr, { timeZone: SAO_PAULO_TZ, locale: ptBR });
 }
