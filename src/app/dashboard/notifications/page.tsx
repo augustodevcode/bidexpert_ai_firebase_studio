@@ -117,7 +117,7 @@ export default function NotificationsPage() {
                   <div className="flex-grow space-y-1">
                     <p className="text-sm font-medium">{notification.message}</p>
                     <div className="flex items-center justify-between text-xs text-muted-foreground">
-                       <span>{format(new Date(notification.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+                       <span>{notification.createdAt ? format(new Date(notification.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}</span>
                        {notification.link && (
                           <span className="text-primary font-medium">Ver Detalhes</span>
                        )}

@@ -50,10 +50,8 @@ interface WinCardProps {
 const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerateTerm }) => {
     const [formattedWinDate, setFormattedWinDate] = useState<string | null>(null);
     const [formattedDeadline, setFormattedDeadline] = useState<string | null>(null);
-    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        setIsClient(true);
         if (win.winDate) {
             setFormattedWinDate(format(new Date(win.winDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
         }
@@ -102,7 +100,7 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
             </div>
             <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Arrematado em: {isClient ? formattedWinDate : <Skeleton className="h-4 w-24 inline-block" />}</span>
+                <span>Arrematado em: {formattedWinDate ? formattedWinDate : <Skeleton className="h-4 w-24 inline-block" />}</span>
             </div>
             <div className="flex items-center">
                 <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -114,7 +112,7 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
             {win.paymentStatus === 'PENDENTE' && (
                 <div className="flex items-center text-xs text-amber-600">
                     <CalendarCheck className="h-4 w-4 mr-2" />
-                    <span>Prazo para Pagamento: {isClient ? formattedDeadline : <Skeleton className="h-4 w-16 inline-block" />}</span>
+                    <span>Prazo para Pagamento: {formattedDeadline ? formattedDeadline : <Skeleton className="h-4 w-16 inline-block" />}</span>
                 </div>
             )}
             <div className="flex items-center">
