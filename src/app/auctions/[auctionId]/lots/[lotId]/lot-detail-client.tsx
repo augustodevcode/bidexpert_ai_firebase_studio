@@ -229,6 +229,8 @@ function hasProcessInfo(lot: Lot): boolean {
     );
 }
 
+const SUPER_TEST_USER_EMAIL_FOR_BYPASS = 'admin@bidexpert.com.br'.toLowerCase();
+
 export default function LotDetailClientContent({
   lot: initialLot,
   auction,
