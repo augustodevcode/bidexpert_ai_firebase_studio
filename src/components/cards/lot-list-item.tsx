@@ -61,6 +61,8 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
 
   const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl : `https://placehold.co/600x400.png?text=Lote`;
   const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
+  
+  const IconComponent = auctionTypeDisplay?.icon;
 
   return (
     <TooltipProvider>
@@ -132,10 +134,10 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
-              {auctionTypeDisplay?.iconName && (
+              {IconComponent && (
                 <div className="flex items-center">
-                  <EntityEditMenu entityType='lot' entityId={lot.id} publicId={lot.publicId!} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate} />
-                  <span>{auctionTypeDisplay.label}</span>
+                  <IconComponent className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                  <span>{auctionTypeDisplay?.label}</span>
                 </div>
               )}
               <div className="flex items-center">
@@ -187,4 +189,3 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
     </TooltipProvider>
   );
 }
-

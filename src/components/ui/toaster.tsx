@@ -14,7 +14,7 @@ import {
 import { Button } from "./button"
 import { Copy, Check, BrainCircuit, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { analyzeErrorWithLogsAction } from "@/app/admin/qa/actions"
+import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
 import { Alert, AlertDescription, AlertTitle } from "./alert"
 import { ScrollArea } from "./scroll-area" // Importando a ScrollArea
 
@@ -47,7 +47,7 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
       setIsLoading(true);
       setAnalysisResult(null);
       setHasCopiedForAI(false); // Reset copy status when modal opens
-      analyzeErrorWithLogsAction(errorLog)
+      analyzeErrorLogAction(errorLog)
         .then(result => {
           if (result.success) {
             setAnalysisResult({ analysis: result.analysis, recommendation: result.recommendation });
