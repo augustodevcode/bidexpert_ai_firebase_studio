@@ -19,7 +19,7 @@ export class ContactMessageService {
     return this.repository.findAll();
   }
 
-  async saveMessage(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string; }> {
+  async saveMessage(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead' | 'tenantId'>): Promise<{ success: boolean; message: string; }> {
     try {
       await this.repository.create(data);
       return { success: true, message: 'Mensagem salva com sucesso.' };

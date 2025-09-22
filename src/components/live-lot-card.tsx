@@ -1,4 +1,4 @@
-
+// src/components/live-lot-card.tsx
 'use client';
 
 import type { Lot } from '@/types';
@@ -20,9 +20,15 @@ interface LiveLotCardProps {
 
 function TimeRemaining({ endDate, status }: { endDate: Date | string | null; status: Lot['status'] }) {
   const [remaining, setRemaining] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    if (!endDate) return;
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!endDate || !isClient) return;
+    
     const end = new Date(endDate);
     if (!isValid(end)) {
         setRemaining('Data inválida');
@@ -50,10 +56,15 @@ function TimeRemaining({ endDate, status }: { endDate: Date | string | null; sta
         setRemaining('Encerrando!');
       }
     };
+
     calculate();
     const interval = setInterval(calculate, 60000); // Update every minute
     return () => clearInterval(interval);
-  }, [endDate, status]);
+  }, [endDate, status, isClient]);
+
+  if (!isClient) {
+    return <span className="font-semibold">...</span>;
+  }
 
   return <span className="font-semibold">{remaining}</span>;
 }

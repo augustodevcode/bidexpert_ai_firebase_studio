@@ -8,15 +8,16 @@
  * renderiza o painel de lances (`BiddingPanel`).
  */
 'use client';
+import React from 'react';
 
-import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid } from '@/types';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import LotCard from '@/components/lot-card';
-import LotListItem from '@/components/lot-list-item';
+import LotListItem from '@/components/cards/lot-list-item';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
@@ -28,7 +29,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, isPast, differenceInSeconds, parseISO, isValid } from 'date-fns';
+import { format, isPast, differenceInSeconds, parseISO, isValid, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
@@ -93,10 +94,17 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
 }) => {
   const [timeSegments, setTimeSegments] = useState<{days: string; hours: string; minutes: string; seconds: string} | null>(null);
   const [displayMessage, setDisplayMessage] = useState<string | null>(null);
+  const [isClient, setIsClient] = useState(false);
   const [formattedStartDate, setFormattedStartDate] = useState<string | null>(null);
   const [formattedEndDate, setFormattedEndDate] = useState<string | null>(null);
 
   useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
     if (!effectiveEndDate || !isValid(effectiveEndDate)) {
       setDisplayMessage(getAuctionStatusText(lotStatus));
       setTimeSegments(null);
@@ -139,18 +147,22 @@ export const DetailTimeRemaining: React.FC<DetailTimeRemainingProps> = ({
     calculateTime();
     const interval = setInterval(calculateTime, 1000);
     return () => clearInterval(interval);
-  }, [effectiveEndDate, lotStatus]);
+  }, [effectiveEndDate, lotStatus, isClient]);
 
   // Client-side only date formatting to prevent hydration mismatch
   useEffect(() => {
+    if (!isClient) return;
     if (effectiveStartDate && isValid(effectiveStartDate)) {
       setFormattedStartDate(format(effectiveStartDate, 'dd/MM/yy HH:mm', { locale: ptBR }));
     }
     if (effectiveEndDate && isValid(effectiveEndDate)) {
       setFormattedEndDate(format(effectiveEndDate, 'dd/MM/yy HH:mm', { locale: ptBR }));
     }
-  }, [effectiveStartDate, effectiveEndDate]);
+  }, [effectiveStartDate, effectiveEndDate, isClient]);
 
+  if (!isClient) {
+    return <div className={cn("absolute bottom-0 left-0 right-0 p-2 text-center text-white bg-gradient-to-t from-black/80 to-transparent", className)}><Skeleton className="h-12 w-3/4 mx-auto" /></div>;
+  }
 
   return (
     <div className={cn("absolute bottom-0 left-0 right-0 p-2 text-center text-white bg-gradient-to-t from-black/80 to-transparent", className)}>
@@ -257,6 +269,11 @@ export default function LotDetailClientContent({
   const [isMapModalOpen, setIsMapModalOpen] = useState(false);
   const [formattedAuctionEndDate, setFormattedAuctionEndDate] = useState<string | null>(null);
   const [isHabilitadoForThisAuction, setIsHabilitadoForThisAuction] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const checkHabilitationStatus = useCallback(async () => {
     if (userProfileWithPermissions?.id && auction.id) {
@@ -325,7 +342,7 @@ export default function LotDetailClientContent({
     }
     
     // Format the date here to avoid hydration mismatch
-    if (auction.endDate && isValid(new Date(auction.endDate as string))) {
+    if (isClient && auction.endDate && isValid(new Date(auction.endDate as string))) {
       setFormattedAuctionEndDate(format(new Date(auction.endDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
     }
     
@@ -352,7 +369,7 @@ export default function LotDetailClientContent({
       };
       fetchData();
     }
-  }, [lot?.id, lot.publicId, toast, auction.endDate]);
+  }, [lot?.id, lot.publicId, toast, auction.endDate, isClient]);
 
   const handleBidSuccess = (updatedLotData: Partial<Lot>, newBid?: BidInfo) => {
     setLot(prevLot => ({...prevLot!, ...updatedLotData}));

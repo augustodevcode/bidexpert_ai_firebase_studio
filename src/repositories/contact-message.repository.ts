@@ -8,8 +8,8 @@ export class ContactMessageRepository {
     return prisma.contactMessage.findMany({ orderBy: { createdAt: 'desc' } });
   }
 
-  async create(data: Prisma.ContactMessageCreateInput): Promise<ContactMessage> {
-    return prisma.contactMessage.create({ data });
+  async create(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead' | 'tenantId'>): Promise<ContactMessage> {
+    return prisma.contactMessage.create({ data: data as any });
   }
 
   async update(id: string, data: Prisma.ContactMessageUpdateInput): Promise<ContactMessage> {

@@ -1,4 +1,3 @@
-
 // src/app/dashboard/overview/page.tsx
 /**
  * @fileoverview Página "Visão Geral" do Painel do Usuário (Arrematante).
@@ -17,53 +16,13 @@ import Image from 'next/image';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import type { Lot, UserWin, UserBid, UserHabilitationStatus } from '@/types';
 import { useEffect, useState, useCallback } from 'react';
-import { format, differenceInHours, differenceInMinutes, isPast, isValid } from 'date-fns';
+import { format, differenceInHours, differenceInMinutes, isPast, isValid, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/auth-context';
 import { getDashboardOverviewDataAction, type DashboardOverviewData } from './actions';
 import { useToast } from '@/hooks/use-toast';
-
-function TimeRemaining({ endDate }: { endDate: Date | string | null | undefined }) {
-  const [remaining, setRemaining] = useState('');
-
-  useEffect(() => {
-    if (!endDate) return;
-    
-    // Assegura que a data é um objeto Date válido.
-    const end = typeof endDate === 'string' ? new Date(endDate) : endDate;
-    if (!isValid(end)) {
-        setRemaining('Data inválida');
-        return;
-    }
-
-    const calculate = () => {
-      const now = new Date();
-      if (isPast(end)) {
-        setRemaining('Encerrado');
-        return;
-      }
-      const hours = differenceInHours(end, now);
-      const minutes = differenceInMinutes(end, now) % 60;
-      const days = differenceInDays(end, now);
-
-      if (days > 0) {
-        setRemaining(`${days}d ${hours % 24}h`);
-      } else if (hours > 0) {
-        setRemaining(`${hours}h ${minutes}m`);
-      } else if (minutes > 0) {
-        setRemaining(`${minutes}m`);
-      } else {
-        setRemaining('Encerrando');
-      }
-    };
-    calculate();
-    const interval = setInterval(calculate, 60000);
-    return () => clearInterval(interval);
-  }, [endDate]);
-
-  return <span className="font-semibold">{remaining}</span>;
-}
+import LiveLotCard from '@/components/live-lot-card';
 
 
 const initialData: DashboardOverviewData = {
@@ -163,13 +122,8 @@ export default function DashboardOverviewPage() {
             <CardDescription>Lotes com lances terminando em breve.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {dashboardData.upcomingLots.map(lot => (
-              <Card key={lot.id} className="overflow-hidden">
-                <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`}>
-                  <div className="relative aspect-video bg-muted"><Image src={lot.imageUrl || 'https://placehold.co/600x400.png'} alt={lot.title} fill className="object-cover" data-ai-hint={lot.dataAiHint || "lote proximo encerramento"} /></div>
-                  <div className="p-3"><h4 className="text-sm font-semibold truncate mb-1">{lot.title}</h4><p className="text-xs text-muted-foreground">Leilão: {lot.auctionName}</p><div className="mt-2 flex justify-between items-center"><p className="text-lg font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR')}</p><Badge variant="outline" className="text-xs"><Clock className="h-3 w-3 mr-1" /> <TimeRemaining endDate={lot.endDate} /></Badge></div></div>
-                </Link>
-              </Card>
+             {dashboardData.upcomingLots.map(lot => (
+              <LiveLotCard key={lot.id} lot={lot} />
             ))}
           </CardContent>
         </Card>
