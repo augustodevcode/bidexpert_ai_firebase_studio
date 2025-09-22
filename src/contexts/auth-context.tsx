@@ -8,11 +8,13 @@ import { logout as logoutAction } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions'; // Importar a nova action
 
 interface AuthContextType {
   userProfileWithPermissions: UserProfileWithPermissions | null;
   activeTenantId: string | null;
   loading: boolean;
+  unreadNotificationsCount: number; // Adicionar contagem
   setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>;
   setActiveTenantId: Dispatch<SetStateAction<string | null>>;
   logout: () => void;
@@ -33,30 +35,54 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  
-  // Otimização: O estado de 'loading' agora depende se os dados iniciais já existem.
-  // Se 'initialUser' é fornecido, não estamos "carregando" nada no cliente.
   const [loading, setLoading] = useState(!initialUser); 
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
   
-  useEffect(() => {
-    // Se o usuário inicial for fornecido, apenas garantimos que `loading` seja false.
-    if (initialUser) {
-      setLoading(false);
+  const fetchUnreadCount = useCallback(async (userId: string) => {
+    try {
+        const count = await getUnreadNotificationCountAction(userId);
+        setUnreadNotificationsCount(count);
+    } catch (e) {
+        console.error("Failed to fetch notification count:", e);
+        setUnreadNotificationsCount(0);
     }
-  }, [initialUser]);
+  }, []);
 
   const refetchUser = useCallback(async () => {
-     // Apenas recarregar a página fará o RootLayout buscar os dados mais recentes.
      router.refresh();
-  }, [router]);
+     if (userProfileWithPermissions?.id) {
+       await fetchUnreadCount(userProfileWithPermissions.id);
+     }
+  }, [router, userProfileWithPermissions?.id, fetchUnreadCount]);
+
+  useEffect(() => {
+    if (initialUser) {
+      setLoading(false);
+      fetchUnreadCount(initialUser.id);
+    } else {
+      setLoading(false);
+    }
+    
+    const handleStorageChange = () => {
+      if (userProfileWithPermissions?.id) {
+        fetchUnreadCount(userProfileWithPermissions.id);
+      }
+    };
+    window.addEventListener('notifications-updated', handleStorageChange);
+    return () => {
+      window.removeEventListener('notifications-updated', handleStorageChange);
+    };
+
+  }, [initialUser, fetchUnreadCount, userProfileWithPermissions?.id]);
 
   const logout = async () => {
     try {
         await logoutAction();
         setUserProfileWithPermissions(null);
         setActiveTenantId(null);
+        setUnreadNotificationsCount(0); // Resetar na saída
         toast({ title: "Logout realizado com sucesso." });
         window.location.href = '/auth/login';
     } catch (error) {
@@ -68,6 +94,7 @@ export function AuthProvider({
   const loginUser = (user: UserProfileWithPermissions, tenantId: string) => {
     setUserProfileWithPermissions(user);
     setActiveTenantId(tenantId);
+    fetchUnreadCount(user.id); // Buscar contagem no login
   };
   
   if (loading && typeof window !== 'undefined') {
@@ -84,6 +111,7 @@ export function AuthProvider({
       userProfileWithPermissions,
       activeTenantId,
       loading,
+      unreadNotificationsCount,
       setUserProfileWithPermissions,
       setActiveTenantId,
       logout,

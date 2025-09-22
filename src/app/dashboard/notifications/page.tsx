@@ -21,10 +21,46 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { useRouter } from 'next/navigation';
+import { Skeleton } from '@/components/ui/skeleton';
 
+function NotificationItem({ notification, onNotificationClick }: { notification: Notification, onNotificationClick: (notification: Notification) => void }) {
+    const [formattedDate, setFormattedDate] = useState('...');
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+        if (notification.createdAt) {
+            setFormattedDate(format(new Date(notification.createdAt as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
+        }
+    }, [notification.createdAt]);
+
+    return (
+        <div
+            key={notification.id}
+            onClick={() => onNotificationClick(notification)}
+            className={cn(
+                "relative flex items-start gap-4 p-4 border rounded-lg transition-all cursor-pointer",
+                notification.isRead ? "bg-card text-muted-foreground hover:bg-secondary/50" : "bg-accent/50 text-accent-foreground border-primary/20 hover:bg-accent"
+            )}
+        >
+            {!notification.isRead && (
+                <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" title="Não lida"></div>
+            )}
+            <div className="flex-grow space-y-1">
+                <p className="text-sm font-medium">{notification.message}</p>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{isClient ? formattedDate : <Skeleton className="h-4 w-28" />}</span>
+                    {notification.link && (
+                        <span className="text-primary font-medium">Ver Detalhes</span>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
 
 export default function NotificationsPage() {
-  const { userProfileWithPermissions } = useAuth();
+  const { userProfileWithPermissions, unreadNotificationsCount, refetchUser } = useAuth(); // Usando refetchUser para consistência
   const { toast } = useToast();
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -61,8 +97,7 @@ export default function NotificationsPage() {
       if (result.success) {
         // Optimistically update the UI
         setNotifications(prev => prev.map(n => n.id === notification.id ? { ...n, isRead: true } : n));
-        // Dispatch event to update header count
-        window.dispatchEvent(new CustomEvent('notifications-updated'));
+        refetchUser(); // Atualiza a contagem no header
       }
     }
     if (notification.link) {
@@ -103,27 +138,11 @@ export default function NotificationsPage() {
           ) : (
             <div className="space-y-3" data-ai-id="my-notifications-list">
               {notifications.map(notification => (
-                <div
-                  key={notification.id}
-                  onClick={() => handleNotificationClick(notification)}
-                  className={cn(
-                    "relative flex items-start gap-4 p-4 border rounded-lg transition-all cursor-pointer",
-                    notification.isRead ? "bg-card text-muted-foreground hover:bg-secondary/50" : "bg-accent/50 text-accent-foreground border-primary/20 hover:bg-accent"
-                  )}
-                >
-                  {!notification.isRead && (
-                    <div className="absolute top-2 right-2 h-2 w-2 rounded-full bg-primary" title="Não lida"></div>
-                  )}
-                  <div className="flex-grow space-y-1">
-                    <p className="text-sm font-medium">{notification.message}</p>
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                       <span>{notification.createdAt ? format(new Date(notification.createdAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Data indisponível'}</span>
-                       {notification.link && (
-                          <span className="text-primary font-medium">Ver Detalhes</span>
-                       )}
-                    </div>
-                  </div>
-                </div>
+                <NotificationItem 
+                    key={notification.id}
+                    notification={notification}
+                    onNotificationClick={handleNotificationClick}
+                />
               ))}
             </div>
           )}
