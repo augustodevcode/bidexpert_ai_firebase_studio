@@ -14,8 +14,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { utcToZonedTime } from 'date-fns-tz';
 import { getPrismaInstance } from '@/lib/prisma';
 
-// Status que não devem ser visíveis publicamente
-const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO', 'CANCELADO', 'SUSPENSO'];
+// Status que NUNCA devem ser visíveis publicamente
+const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
 
 export class AuctionService {
   private auctionRepository: AuctionRepository;

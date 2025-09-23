@@ -6,7 +6,7 @@ import HeroCarousel from '@/components/hero-carousel';
 import FilterLinkCard from '@/components/filter-link-card';
 import PromoCard from '@/components/promo-card';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, Loader2 } from 'lucide-react';
+import { ArrowRight, Loader2, List, CalendarX, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
@@ -52,13 +52,25 @@ export default function HomePageClient({
       <HeroCarousel />
       
       <section className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <h2 className="text-3xl font-bold">{lotsTitle}</h2>
-          <Button variant="outline" asChild>
-            <Link href="/search?type=lots">
-              Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/search?type=lots&status=ENCERRADO,VENDIDO,NAO_VENDIDO">
+                    <CalendarX className="mr-2 h-4 w-4" /> Ver Encerrados
+                </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/search?type=lots&status=CANCELADO">
+                    <XCircle className="mr-2 h-4 w-4" /> Ver Cancelados
+                </Link>
+            </Button>
+            <Button variant="default" asChild>
+                <Link href="/search?type=lots">
+                    Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {lotsToDisplay.map((item) => (
@@ -94,13 +106,25 @@ export default function HomePageClient({
       </div>
 
        <section className="space-y-6">
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <h2 className="text-3xl font-bold">{auctionsTitle}</h2>
-          <Button variant="outline" asChild>
-            <Link href="/search?type=auctions">
-              Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/search?type=auctions&status=ENCERRADO,FINALIZADO">
+                    <CalendarX className="mr-2 h-4 w-4" /> Ver Encerrados
+                </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+                <Link href="/search?type=auctions&status=CANCELADO">
+                    <XCircle className="mr-2 h-4 w-4" /> Ver Cancelados
+                </Link>
+            </Button>
+            <Button variant="default" asChild>
+                <Link href="/search?type=auctions">
+                Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+            </Button>
+          </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {auctionsToDisplay.map((item) => (
