@@ -11,7 +11,7 @@ import { getAuctioneersPerformanceAction, analyzeAuctioneerDataAction, type Auct
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
-import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, BrainCircuit } from 'lucide-react';
+import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit } from 'lucide-react';
 import { createAuctioneerAnalysisColumns } from './columns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
