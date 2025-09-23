@@ -1,4 +1,4 @@
-
+// src/components/cards/auction-list-item.tsx
 'use client';
 
 import * as React from 'react';
@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, MapPin, Tag, Users, Clock, Star, ListChecks } from 'lucide-react';
+import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -26,7 +26,9 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
   const sellerName = auction.seller?.name;
 
-  const mentalTriggers = React.useMemo(() => {
+  const [mentalTriggers, setMentalTriggers] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
     const triggers: string[] = [];
     const now = new Date();
 
@@ -51,7 +53,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
         triggers.push(...auction.additionalTriggers);
     }
     
-    return Array.from(new Set(triggers));
+    setMentalTriggers(Array.from(new Set(triggers)));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
