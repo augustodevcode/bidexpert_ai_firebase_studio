@@ -53,8 +53,8 @@ export async function getCourtsPerformanceAction(): Promise<CourtPerformanceData
         totalProcesses: court._count.judicialProcesses,
         totalAuctions: court._count.auctions,
         totalLotsSold,
-        totalRevenue,
-        averageTicket,
+        totalRevenue: Number(totalRevenue),
+        averageTicket: Number(averageTicket),
       };
     }).sort((a, b) => b.totalRevenue - a.totalRevenue);
   } catch (error: any) {

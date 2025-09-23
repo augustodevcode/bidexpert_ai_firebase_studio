@@ -29,17 +29,12 @@
 - **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
+- **Item 29:** **Dashboards de Auditoria e Inconsistência:** Implementado painel para identificar problemas de integridade de dados (leilões sem lotes, lotes sem bens, etc.) em `/admin/reports/audit`.
 
 ## DOING
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 2:** Concluída a criação de dashboards para Cidades, Estados, Comitentes, Leiloeiros, Categorias e Lotes.
     - **Fase 4:** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
-- **Item 29: [NOVO] Dashboards de Auditoria e Inconsistência:** Implementar painéis para identificar problemas de integridade de dados, tais como:
-    - Leilões sem lotes.
-    - Lotes sem bens vinculados.
-    - Leilões sem etapas/praças configuradas.
-    - Leilões encerrados ou cancelados com lotes em aberto.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 
