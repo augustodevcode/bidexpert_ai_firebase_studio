@@ -8,7 +8,7 @@
 
 import { getPrismaInstance } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
-import type { Auction, Lot } from '@/types';
+import type { Auction, Lot, Bem, DirectSaleOffer, UserProfileData } from '@/types';
 
 export interface AuditData {
   auctionsWithoutLots: Partial<Auction>[];
@@ -16,6 +16,14 @@ export interface AuditData {
   auctionsWithoutStages: Partial<Auction>[];
   closedAuctionsWithOpenLots: { auction: Partial<Auction>, lots: Partial<Lot>[] }[];
   canceledAuctionsWithOpenLots: { auction: Partial<Auction>, lots: Partial<Lot>[] }[];
+  auctionsWithoutLocation: Partial<Auction>[];
+  lotsWithoutLocation: Partial<Lot>[];
+  bensWithoutRequiredLinks: Partial<Bem>[];
+  endedLotsWithoutBids: Partial<Lot>[];
+  directSalesWithMissingData: Partial<DirectSaleOffer>[];
+  lotsWithoutQuestions: Partial<Lot>[];
+  lotsWithoutReviews: Partial<Lot>[];
+  habilitatedUsersWithoutDocs: Partial<UserProfileData>[];
 }
 
 /**
@@ -46,13 +54,30 @@ export async function getAuditDataAction(): Promise<AuditData> {
       where: { tenantId },
       include: {
         _count: {
-          select: { bens: true },
+          select: { bens: true, bids: true, questions: true, reviews: true },
         },
       },
     });
+    
+    const allBens = await prisma.bem.findMany({
+        where: { tenantId },
+    });
+
+    const allDirectSales = await prisma.directSaleOffer.findMany({
+        where: { tenantId },
+    });
+
+    const allUsers = await prisma.user.findMany({
+        where: { tenants: { some: { tenantId: tenantId } } },
+        include: {
+            _count: {
+                select: { documents: true }
+            }
+        }
+    });
 
     const auctionsWithoutLots = allAuctions
-      .filter(a => a._count.lots === 0)
+      .filter(a => a._count.lots === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
       .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
     const lotsWithoutBens = allLots
@@ -70,6 +95,38 @@ export async function getAuditDataAction(): Promise<AuditData> {
     const canceledAuctionsWithOpenLots = allAuctions
       .filter(a => a.status === 'CANCELADO' && a.lots.length > 0)
       .map(a => ({ auction: {id: a.id, title: a.title, status: a.status, publicId: a.publicId}, lots: a.lots }));
+      
+    const auctionsWithoutLocation = allAuctions
+      .filter(a => !a.cityId && !a.stateId)
+      .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
+
+    const lotsWithoutLocation = allLots
+      .filter(l => !l.cityId && !l.stateId)
+      .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
+
+    const bensWithoutRequiredLinks = allBens
+      .filter(b => !b.categoryId || !b.sellerId)
+      .map(b => ({ id: b.id, title: b.title, status: b.status, publicId: b.publicId }));
+
+    const endedLotsWithoutBids = allLots
+      .filter(l => l.status === 'ENCERRADO' && l._count.bids === 0)
+      .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
+      
+    const directSalesWithMissingData = allDirectSales
+      .filter(d => (d.offerType === 'BUY_NOW' && !d.price) || !d.sellerId || !d.categoryId)
+      .map(d => ({ id: d.id, title: d.title, status: d.status, publicId: d.publicId }));
+      
+    const lotsWithoutQuestions = allLots
+        .filter(l => l._count.questions === 0 && (l.status === 'ABERTO_PARA_LANCES' || l.status === 'VENDIDO'))
+        .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
+
+    const lotsWithoutReviews = allLots
+        .filter(l => l._count.reviews === 0 && l.status === 'VENDIDO')
+        .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
+    
+    const habilitatedUsersWithoutDocs = allUsers
+        .filter(u => u.habilitationStatus === 'HABILITADO' && u._count.documents === 0)
+        .map(u => ({ id: u.id, fullName: u.fullName, email: u.email }));
 
     return {
       auctionsWithoutLots,
@@ -77,6 +134,14 @@ export async function getAuditDataAction(): Promise<AuditData> {
       auctionsWithoutStages,
       closedAuctionsWithOpenLots,
       canceledAuctionsWithOpenLots,
+      auctionsWithoutLocation,
+      lotsWithoutLocation,
+      bensWithoutRequiredLinks,
+      endedLotsWithoutBids,
+      directSalesWithMissingData,
+      lotsWithoutQuestions,
+      lotsWithoutReviews,
+      habilitatedUsersWithoutDocs,
     };
   } catch (error: any) {
     console.error("[Action - getAuditDataAction] Error fetching audit data:", error);

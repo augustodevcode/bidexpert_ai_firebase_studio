@@ -30,12 +30,11 @@
 - **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
-- **Item 29: Dashboards de Auditoria e Inconsistência:** Implementado painel para identificar problemas de integridade de dados (leilões sem lotes, lotes sem bens, etc.) em `/admin/reports/audit`.
 
 ## DOING
+- **Item 29: Dashboards de Auditoria e Inconsistência:** Implementar um painel para identificar problemas de integridade de dados (leilões sem lotes, lotes sem bens, etc.) em `/admin/reports/audit`.
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
-- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.

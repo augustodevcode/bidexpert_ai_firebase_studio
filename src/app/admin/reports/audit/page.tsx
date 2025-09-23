@@ -1,13 +1,12 @@
 // src/app/admin/reports/audit/page.tsx
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit } from 'lucide-react';
+import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit, MapPin, Search, HelpCircle, FileSignature } from 'lucide-react';
 import { getAuditDataAction, type AuditData } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -33,7 +32,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon }) => (
   </Card>
 );
 
-const InconsistencyAccordion = ({ title, data, entityPath, message }: { title: string, data: { id: string, title: string, publicId?: string | null }[], entityPath: string, message: string }) => {
+const InconsistencyAccordion = ({ title, data, entityPath, message, idField = 'id', publicIdField = 'publicId' }: { title: string, data: any[], entityPath: string, message: string, idField?: string, publicIdField?: string }) => {
     if (data.length === 0) return null;
     return (
         <Card>
@@ -46,12 +45,12 @@ const InconsistencyAccordion = ({ title, data, entityPath, message }: { title: s
             <CardContent>
                 <Accordion type="single" collapsible className="w-full">
                     {data.map(item => (
-                        <AccordionItem value={item.id} key={item.id}>
+                        <AccordionItem value={item[idField]} key={item[idField]}>
                             <AccordionTrigger>
                                 <div className="flex justify-between items-center w-full pr-4">
-                                    <span className="truncate" title={item.title}>{item.title}</span>
+                                    <span className="truncate" title={item.title || item.fullName || item.email}>{item.title || item.fullName || item.email}</span>
                                     <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
-                                        <Link href={`/admin/${entityPath}/${item.publicId || item.id}/edit`}>
+                                        <Link href={`/admin/${entityPath}/${item[publicIdField] || item[idField]}/edit`}>
                                           <Edit className="mr-2 h-3.5 w-3.5"/> Corrigir
                                         </Link>
                                     </Button>
@@ -148,7 +147,15 @@ export default function AuditPage() {
       (auditData?.lotsWithoutBens.length || 0) +
       (auditData?.auctionsWithoutStages.length || 0) +
       (auditData?.closedAuctionsWithOpenLots.length || 0) +
-      (auditData?.canceledAuctionsWithOpenLots.length || 0);
+      (auditData?.canceledAuctionsWithOpenLots.length || 0) +
+      (auditData?.auctionsWithoutLocation.length || 0) +
+      (auditData?.lotsWithoutLocation.length || 0) +
+      (auditData?.bensWithoutRequiredLinks.length || 0) +
+      (auditData?.endedLotsWithoutBids.length || 0) +
+      (auditData?.directSalesWithMissingData.length || 0) +
+      (auditData?.lotsWithoutQuestions.length || 0) +
+      (auditData?.lotsWithoutReviews.length || 0) +
+      (auditData?.habilitatedUsersWithoutDocs.length || 0);
 
   return (
     <div className="space-y-6">
@@ -174,12 +181,15 @@ export default function AuditPage() {
           </AlertDescription>
       </Alert>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard title="Leilões sem Lotes" value={auditData?.auctionsWithoutLots.length || 0} icon={Gavel} />
-        <StatCard title="Lotes sem Bens Vinculados" value={auditData?.lotsWithoutBens.length || 0} icon={Package} />
+        <StatCard title="Lotes sem Bens" value={auditData?.lotsWithoutBens.length || 0} icon={Package} />
         <StatCard title="Leilões sem Etapas" value={auditData?.auctionsWithoutStages.length || 0} icon={ListTodo} />
-        <StatCard title="Leilões Finalizados com Lotes Abertos" value={auditData?.closedAuctionsWithOpenLots.length || 0} icon={Boxes} />
-        <StatCard title="Leilões Cancelados com Lotes Abertos" value={auditData?.canceledAuctionsWithOpenLots.length || 0} icon={Ban} />
+        <StatCard title="Lotes Abertos Incorretamente" value={(auditData?.closedAuctionsWithOpenLots.length || 0) + (auditData?.canceledAuctionsWithOpenLots.length || 0)} icon={Boxes} />
+        <StatCard title="Itens sem Localização" value={(auditData?.auctionsWithoutLocation.length || 0) + (auditData?.lotsWithoutLocation.length || 0)} icon={MapPin} />
+        <StatCard title="Bens com Dados Faltando" value={auditData?.bensWithoutRequiredLinks.length || 0} icon={Search} />
+        <StatCard title="Lotes Encerrados sem Lances" value={auditData?.endedLotsWithoutBids.length || 0} icon={Gavel} />
+        <StatCard title="Usuários Habilitados sem Docs" value={auditData?.habilitatedUsersWithoutDocs.length || 0} icon={FileSignature} />
       </div>
       
       <div className="space-y-4">
@@ -188,8 +198,15 @@ export default function AuditPage() {
         <InconsistencyAccordion title="Leilões Sem Etapas (Praças) Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" message="Este leilão precisa de pelo menos uma etapa (praça) com datas de início e fim."/>
         <InconsistentAuctionAccordion title="Leilões Encerrados/Finalizados com Lotes Abertos" data={auditData?.closedAuctionsWithOpenLots || []} />
         <InconsistentAuctionAccordion title="Leilões Cancelados com Lotes Abertos" data={auditData?.canceledAuctionsWithOpenLots || []} />
+        <InconsistencyAccordion title="Leilões sem Localização" data={auditData?.auctionsWithoutLocation || []} entityPath="auctions" message="Este leilão não possui cidade ou estado definido."/>
+        <InconsistencyAccordion title="Lotes sem Localização" data={auditData?.lotsWithoutLocation || []} entityPath="lots" message="Este lote não possui cidade ou estado definido."/>
+        <InconsistencyAccordion title="Bens sem Categoria ou Vendedor" data={auditData?.bensWithoutRequiredLinks || []} entityPath="bens" message="Este bem não possui uma categoria ou um comitente vinculado, dados essenciais para o seu gerenciamento."/>
+        <InconsistencyAccordion title="Lotes Encerrados sem Lances" data={auditData?.endedLotsWithoutBids || []} entityPath="lots" message="Este lote foi encerrado mas não recebeu nenhum lance. Considere relistá-lo ou analisar sua precificação."/>
+        <InconsistencyAccordion title="Vendas Diretas com Dados Inválidos" data={auditData?.directSalesWithMissingData || []} entityPath="direct-sales" message="Esta oferta de venda direta não possui um preço (para 'Compra Imediata') ou não está vinculada a uma categoria/vendedor."/>
+        <InconsistencyAccordion title="Lotes Ativos/Vendidos sem Perguntas" data={auditData?.lotsWithoutQuestions || []} entityPath="lots" message="Este lote não recebeu nenhuma pergunta, o que pode indicar baixa visibilidade ou descrição muito completa."/>
+        <InconsistencyAccordion title="Lotes Vendidos sem Avaliações" data={auditData?.lotsWithoutReviews || []} entityPath="lots" message="Este lote foi vendido mas ainda não recebeu nenhuma avaliação do arrematante."/>
+        <InconsistencyAccordion title="Usuários Habilitados sem Documentos" data={auditData?.habilitatedUsersWithoutDocs || []} entityPath="users" message="Este usuário possui status de 'Habilitado', mas não tem nenhum documento cadastrado no sistema. Verifique a integridade do processo de habilitação." idField="id" publicIdField="id" />
       </div>
-
     </div>
   );
 }

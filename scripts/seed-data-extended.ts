@@ -18,7 +18,7 @@ async function createTenant() {
   return tenant;
 }
 
-async function createRoles(tenantId: string) {
+async function createRoles() {
   const roles = ['ADMIN', 'USER', 'AUCTIONEER', 'SELLER'];
   const createdRoles = [];
   for (const roleName of roles) {
@@ -49,26 +49,19 @@ async function createUsers(tenantId: string, roles: any[]) {
     create: {
       email: 'admin@example.com',
       fullName: 'Admin User',
-      password: 'password',
-      habilitationStatus: UserHabilitationStatus.APPROVED,
+      password: 'password', // Em um projeto real, use hash
+      habilitationStatus: 'HABILITADO',
     },
   });
   await prisma.usersOnRoles.upsert({
     where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
     update: {},
-    create: {
-      userId: adminUser.id,
-      roleId: adminRole.id,
-      assignedBy: 'seed-script',
-    },
+    create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' },
   });
   await prisma.usersOnTenants.upsert({
     where: { userId_tenantId: { userId: adminUser.id, tenantId: tenantId } },
     update: {},
-    create: {
-      userId: adminUser.id,
-      tenantId: tenantId,
-    },
+    create: { userId: adminUser.id, tenantId: tenantId },
   });
   users.push(adminUser);
   console.log(`Created/found admin user: ${adminUser.email}`);
@@ -81,25 +74,18 @@ async function createUsers(tenantId: string, roles: any[]) {
       email: 'user@example.com',
       fullName: 'Regular User',
       password: 'password',
-      habilitationStatus: UserHabilitationStatus.PENDING_DOCUMENTS,
+      habilitationStatus: 'PENDING_DOCUMENTS',
     },
   });
   await prisma.usersOnRoles.upsert({
     where: { userId_roleId: { userId: regularUser.id, roleId: userRole.id } },
     update: {},
-    create: {
-      userId: regularUser.id,
-      roleId: userRole.id,
-      assignedBy: 'seed-script',
-    },
+    create: { userId: regularUser.id, roleId: userRole.id, assignedBy: 'seed-script' },
   });
   await prisma.usersOnTenants.upsert({
     where: { userId_tenantId: { userId: regularUser.id, tenantId: tenantId } },
     update: {},
-    create: {
-      userId: regularUser.id,
-      tenantId: tenantId,
-    },
+    create: { userId: regularUser.id, tenantId: tenantId },
   });
   users.push(regularUser);
   console.log(`Created/found regular user: ${regularUser.email}`);
@@ -114,25 +100,18 @@ async function createUsers(tenantId: string, roles: any[]) {
         email: bidderEmail,
         fullName: faker.person.fullName(),
         password: 'password',
-        habilitationStatus: UserHabilitationStatus.APPROVED,
+        habilitationStatus: 'HABILITADO',
       },
     });
     await prisma.usersOnRoles.upsert({
-      where: { userId_roleId: { userId: bidder.id, roleId: userRole.id } },
-      update: {},
-      create: {
-        userId: bidder.id,
-        roleId: userRole.id,
-        assignedBy: 'seed-script',
-      },
+        where: { userId_roleId: { userId: bidder.id, roleId: userRole.id } },
+        update: {},
+        create: { userId: bidder.id, roleId: userRole.id, assignedBy: 'seed-script' },
     });
     await prisma.usersOnTenants.upsert({
-      where: { userId_tenantId: { userId: bidder.id, tenantId: tenantId } },
-      update: {},
-      create: {
-        userId: bidder.id,
-        tenantId: tenantId,
-      },
+        where: { userId_tenantId: { userId: bidder.id, tenantId: tenantId } },
+        update: {},
+        create: { userId: bidder.id, tenantId: tenantId },
     });
     users.push(bidder);
     console.log(`Created bidder user: ${bidder.email}`);
@@ -141,7 +120,7 @@ async function createUsers(tenantId: string, roles: any[]) {
   return users;
 }
 
-async function createStatesAndCities(tenantId: string) {
+async function createStatesAndCities() {
   const statesData = [
     { uf: 'AC', name: 'Acre', capital: 'Rio Branco' },
     { uf: 'AL', name: 'Alagoas', capital: 'Maceió' },
@@ -174,54 +153,39 @@ async function createStatesAndCities(tenantId: string) {
 
   const states = [];
   const cities = [];
-  const capitals = [];
 
   for (const stateData of statesData) {
     const state = await prisma.state.upsert({
       where: { uf: stateData.uf },
       update: {},
-      create: { uf: stateData.uf, name: stateData.name },
+      create: { uf: stateData.uf, name: stateData.name, slug: stateData.name.toLowerCase() },
     });
     states.push(state);
 
     const capitalCity = await prisma.city.upsert({
       where: { name_stateId: { name: stateData.capital, stateId: state.id } },
       update: {},
-      create: { name: stateData.capital, stateId: state.id },
+      create: { name: stateData.capital, stateId: state.id, slug: stateData.capital.toLowerCase() },
     });
     cities.push(capitalCity);
-    capitals.push(capitalCity);
-
-    for (let i = 0; i < faker.number.int({ min: 5, max: 10 }); i++) {
-      const cityName = faker.location.city();
-      const otherCity = await prisma.city.upsert({
-        where: { name_stateId: { name: cityName, stateId: state.id } },
-        update: {},
-        create: { name: cityName, stateId: state.id },
-      });
-      cities.push(otherCity);
-    }
   }
 
   console.log('Created/found states and cities.');
-  return { states, cities, capitals };
+  return { states, cities };
 }
 
-async function createAuctioneers(tenantId: string, cities: any[]) {
+async function createAuctioneers(tenantId: string) {
   const auctioneers = [];
-  for (let i = 0; i < 2; i++) {
-    const city = faker.helpers.arrayElement(cities);
-    const auctioneer = await prisma.auctioneer.upsert({
-      where: { publicId: faker.string.uuid() },
-      update: {},
-      create: {
+  for (let i = 0; i < 5; i++) {
+    const name = faker.person.fullName();
+    const auctioneer = await prisma.auctioneer.create({
+      data: {
         publicId: faker.string.uuid(),
-        slug: faker.lorem.slug(),
-        name: faker.person.fullName(),
+        slug: faker.helpers.slugify(name).toLowerCase(),
+        name: name,
         email: faker.internet.email(),
         phone: faker.phone.number(),
         address: faker.location.streetAddress(),
-        city: city.name,
         tenantId: tenantId,
       },
     });
@@ -231,22 +195,18 @@ async function createAuctioneers(tenantId: string, cities: any[]) {
   return auctioneers;
 }
 
-async function createSellers(tenantId: string, cities: any[]) {
+async function createSellers(tenantId: string) {
   const sellers = [];
-  for (let i = 0; i < 20; i++) {
-    const city = faker.helpers.arrayElement(cities);
-    const companyName = faker.company.name();
-    const seller = await prisma.seller.upsert({
-      where: { name: companyName },
-      update: {},
-      create: {
+  for (let i = 0; i < 10; i++) {
+    const name = faker.company.name();
+    const seller = await prisma.seller.create({
+      data: {
         publicId: faker.string.uuid(),
-        slug: faker.lorem.slug(),
-        name: companyName,
+        slug: faker.helpers.slugify(name).toLowerCase(),
+        name: name,
         email: faker.internet.email(),
         phone: faker.phone.number(),
         address: faker.location.streetAddress(),
-        city: city.name,
         tenantId: tenantId,
       },
     });
@@ -256,342 +216,298 @@ async function createSellers(tenantId: string, cities: any[]) {
   return sellers;
 }
 
-async function createCourts(tenantId: string, states: any[]) {
+async function createCourts(states: any[]) {
   const courts = [];
-  for (let i = 0; i < 5; i++) {
-    const state = faker.helpers.arrayElement(states);
+  for (const state of states) {
     const court = await prisma.court.create({
       data: {
-        name: `Vara ${faker.lorem.word()} ${state.uf}`,
-        slug: faker.lorem.slug(),
+        name: `Tribunal de Justiça de ${state.name}`,
+        slug: `tj-${state.uf.toLowerCase()}`,
         stateUf: state.uf,
         website: faker.internet.url(),
       },
     });
     courts.push(court);
-    console.log(`Created court: ${court.name}`);
   }
+  console.log('Created courts.');
   return courts;
 }
 
-async function createJudicialDistricts(courts: any[], states: any[]) {
+async function createJudicialDistricts(courts: any[], cities: any[]) {
     const districts = [];
     for (let i = 0; i < 15; i++) {
-        const state = faker.helpers.arrayElement(states);
-        const court = faker.helpers.arrayElement(courts);
+        const city = faker.helpers.arrayElement(cities);
+        const court = courts.find(c => c.stateUf === city.state.uf);
         const district = await prisma.judicialDistrict.create({
             data: {
-                name: `Comarca de ${faker.location.city()}`,
+                name: `Comarca de ${city.name}`,
                 slug: faker.lorem.slug(),
-                stateId: state.id,
-                courtId: court.id,
+                stateId: city.stateId,
+                courtId: court?.id,
             },
         });
         districts.push(district);
-        console.log(`Created judicial district: ${district.name}`);
     }
+    console.log('Created judicial districts.');
     return districts;
 }
 
 async function createJudicialBranches(districts: any[]) {
     const branches = [];
     for (const district of districts) {
-        for (let i = 0; i < faker.number.int({ min: 1, max: 4 }); i++) {
+        for (let i = 0; i < faker.number.int({ min: 1, max: 3 }); i++) {
             const branch = await prisma.judicialBranch.create({
                 data: {
-                    name: `${i + 1}ª Vara Cível`,
+                    name: `${i + 1}ª Vara Cível de ${district.name}`,
                     slug: faker.lorem.slug(),
                     districtId: district.id,
                 },
             });
             branches.push(branch);
-            console.log(`  Created judicial branch: ${branch.name} for district ${district.name}`);
         }
     }
+    console.log('Created judicial branches.');
     return branches;
 }
 
-async function createJudicialParties(processId: string) {
-  const partyTypes = ['AUTOR', 'REU', 'ADVOGADO_AUTOR', 'ADVOGADO_REU', 'TERCEIRO_INTERESSADO'];
-  const judicialParties = [];
-  for (let i = 0; i < faker.number.int({ min: 2, max: 5 }); i++) {
-    const partyType = faker.helpers.arrayElement(partyTypes);
-    const judicialParty = await prisma.judicialParty.create({
-      data: {
-        processId: processId,
-        name: faker.person.fullName(),
-        documentNumber: faker.string.numeric(11),
-        partyType: partyType as any,
-      },
-    });
-    judicialParties.push(judicialParty);
-    console.log(`  Created judicial party: ${judicialParty.name} (${judicialParty.partyType})`);
-  }
-  return judicialParties;
-}
-
 async function createCategoriesAndSubcategories() {
+  const categoriesData = [
+    { name: 'Imóveis', slug: 'imoveis', sub: ['Apartamentos', 'Casas', 'Terrenos'] },
+    { name: 'Veículos', slug: 'veiculos', sub: ['Carros', 'Motos', 'Caminhões'] },
+    { name: 'Eletrônicos', slug: 'eletronicos', sub: ['Celulares', 'Notebooks', 'TVs'] },
+  ];
   const categories = [];
   const subcategories = [];
 
-  const vehicles = await prisma.lotCategory.upsert({
-    where: { name: 'Veículos' },
-    update: {},
-    create: { 
-      name: 'Veículos',
-      slug: 'veiculos'
-    },
-  });
-  categories.push(vehicles);
-  subcategories.push(await prisma.subcategory.upsert({
-    where: { name_parentCategoryId: { name: 'Carros', parentCategoryId: vehicles.id } },
-    update: {},
-    create: { 
-      name: 'Carros', 
-      slug: 'carros',
-      parentCategoryId: vehicles.id
-    },
-  }));
-  subcategories.push(await prisma.subcategory.upsert({
-    where: { name_parentCategoryId: { name: 'Motos', parentCategoryId: vehicles.id } },
-    update: {},
-    create: { 
-      name: 'Motos', 
-      slug: 'motos',
-      parentCategoryId: vehicles.id
-    },
-  }));
+  for (const catData of categoriesData) {
+    const category = await prisma.lotCategory.upsert({
+      where: { slug: catData.slug },
+      update: {},
+      create: { name: catData.name, slug: catData.slug },
+    });
+    categories.push(category);
 
-  const realEstate = await prisma.lotCategory.upsert({
-    where: { name: 'Imóveis' },
-    update: {},
-    create: { 
-      name: 'Imóveis',
-      slug: 'imoveis'
-     },
-  });
-  categories.push(realEstate);
-  subcategories.push(await prisma.subcategory.upsert({
-    where: { name_parentCategoryId: { name: 'Apartamentos', parentCategoryId: realEstate.id } },
-    update: {},
-    create: { 
-      name: 'Apartamentos', 
-      slug: 'apartamentos',
-      parentCategoryId: realEstate.id
-    },
-  }));
-  subcategories.push(await prisma.subcategory.upsert({
-    where: { name_parentCategoryId: { name: 'Casas', parentCategoryId: realEstate.id } },
-    update: {},
-    create: { 
-      name: 'Casas', 
-      slug: 'casas',
-      parentCategoryId: realEstate.id
-    },
-  }));
-
-  console.log('Created/found categories and subcategories.');
+    for (const subName of catData.sub) {
+      const sub = await prisma.subcategory.upsert({
+        where: { name_parentCategoryId: { name: subName, parentCategoryId: category.id } },
+        update: {},
+        create: { name: subName, slug: subName.toLowerCase(), parentCategoryId: category.id },
+      });
+      subcategories.push(sub);
+    }
+  }
+  console.log('Created categories and subcategories.');
   return { categories, subcategories };
 }
 
-async function createJudicialProcesses(tenantId: string, courts: any[], branches: any[]) {
+async function createJudicialProcesses(tenantId: string, courts: any[], branches: any[], sellers: any[]) {
   const judicialProcesses = [];
-  for (let i = 0; i < 3; i++) { // Reduced from 10 to 3
-    const court = faker.helpers.arrayElement(courts);
+  for (let i = 0; i < 10; i++) {
     const branch = faker.helpers.arrayElement(branches);
-    const judicialProcess = await prisma.judicialProcess.upsert({
-      where: { processNumber_tenantId: { processNumber: faker.string.numeric(7) + '-' + faker.string.numeric(2) + '.' + faker.string.numeric(4) + '.' + faker.string.numeric(1) + '.' + faker.string.numeric(2) + '.' + faker.string.numeric(4), tenantId: tenantId } },
-      update: {},
-      create: {
+    const judicialProcess = await prisma.judicialProcess.create({
+      data: {
         publicId: faker.string.uuid(),
-        processNumber: faker.string.numeric(7) + '-' + faker.string.numeric(2) + '.' + faker.string.numeric(4) + '.' + faker.string.numeric(1) + '.' + faker.string.numeric(2) + '.' + faker.string.numeric(4),
-        courtId: court.id,
+        processNumber: faker.string.numeric(20),
+        tenantId: tenantId,
+        courtId: faker.helpers.arrayElement(courts).id,
         branchId: branch.id,
         districtId: branch.districtId,
-        tenantId: tenantId,
+        sellerId: faker.helpers.arrayElement(sellers).id,
       },
     });
     judicialProcesses.push(judicialProcess);
-    await createJudicialParties(judicialProcess.id);
-    console.log(`Created judicial process: ${judicialProcess.processNumber}`);
   }
+  console.log('Created judicial processes.');
   return judicialProcesses;
 }
 
-async function createBems(tenantId: string, categories: any[]) {
+async function createBems(tenantId: string, categories: any[], judicialProcesses: any[]) {
   const bems = [];
   for (let i = 0; i < 50; i++) {
-    const category = faker.helpers.arrayElement(categories);
     const bem = await prisma.bem.create({
       data: {
         publicId: faker.string.uuid(),
         title: faker.commerce.productName(),
-        description: faker.commerce.productDescription(),
+        description: faker.lorem.paragraph(),
+        evaluationValue: faker.number.float({ min: 100, max: 100000 }),
+        status: 'DISPONIVEL',
         tenantId: tenantId,
-        categoryId: category.id,
+        categoryId: faker.helpers.arrayElement(categories).id,
+        judicialProcessId: faker.helpers.arrayElement(judicialProcesses).id,
       },
     });
     bems.push(bem);
-    console.log(`Created bem: ${bem.title}`);
   }
+  console.log('Created bems.');
   return bems;
 }
 
-async function createMediaItems(lotId: string, isFeatured: boolean = false) {
-  const mediaItems = [];
-  const numImages = isFeatured ? 1 : faker.number.int({ min: 5, max: 8 });
+async function createVehicleData() {
+    const makes = ['Ford', 'Chevrolet', 'Honda', 'Toyota', 'BMW'].map(name => ({ name, slug: name.toLowerCase() }));
+    const vehicleMakes = [];
+    for(const make of makes) {
+        const newMake = await prisma.vehicleMake.create({ data: make });
+        vehicleMakes.push(newMake);
+    }
 
-  for (let i = 0; i < numImages; i++) {
-    const imageUrl = faker.image.url();
-    const mediaItem = await prisma.mediaItem.create({
-      data: {
-        fileName: faker.system.fileName(),
-        storagePath: imageUrl,
-        urlOriginal: imageUrl,
-        mimeType: 'image/jpeg',
-        linkedLotIds: [lotId],
-        title: faker.lorem.sentence(3),
-        altText: faker.lorem.sentence(5),
-        caption: faker.lorem.sentence(7),
-        description: faker.lorem.paragraph(),
-      },
-    });
-    mediaItems.push(mediaItem);
-    console.log(`  Created media item for lot ${lotId}: ${mediaItem.fileName}`);
-  }
-  return mediaItems;
+    const models = {
+        'Ford': ['Fiesta', 'Focus', 'Mustang'],
+        'Chevrolet': ['Onix', 'Cruze', 'S10'],
+        'Honda': ['Civic', 'Fit', 'HR-V'],
+        'Toyota': ['Corolla', 'Hilux', 'Yaris'],
+        'BMW': ['320i', 'X1', 'M3']
+    };
+    const vehicleModels = [];
+    for(const make of vehicleMakes) {
+        for(const modelName of models[make.name]) {
+            const newModel = await prisma.vehicleModel.create({
+                data: {
+                    name: modelName,
+                    slug: modelName.toLowerCase(),
+                    makeId: make.id,
+                }
+            });
+            vehicleModels.push(newModel);
+        }
+    }
+    console.log('Created vehicle makes and models.');
+    return { vehicleMakes, vehicleModels };
 }
 
-async function simulateVisits() {
-  console.log('Simulating visits and updating descriptions for debugging...');
-  const lots = await prisma.lot.findMany({ select: { id: true, description: true } });
-  const auctions = await prisma.auction.findMany({ select: { id: true, description: true } });
-
-  for (const lot of lots) {
-    try {
-      const newDescription = (lot.description || '') + ' -- SEED_VISITED';
-      await prisma.lot.update({
-        where: { id: lot.id },
-        data: { description: newDescription },
-      });
-    } catch (e) {
-      console.error(`Failed to update description for lot ${lot.id}:`, e);
+async function createDocumentData() {
+    const docTypes = [
+        { name: 'RG', description: 'Registro Geral', isRequired: true, appliesTo: 'PHYSICAL' },
+        { name: 'CNH', description: 'Carteira Nacional de Habilitação', isRequired: true, appliesTo: 'PHYSICAL' },
+        { name: 'Contrato Social', description: 'Contrato Social da Empresa', isRequired: true, appliesTo: 'LEGAL' },
+    ];
+    const documentTypes = [];
+    for(const type of docTypes) {
+        const newDocType = await prisma.documentType.create({ data: type });
+        documentTypes.push(newDocType);
     }
-  }
-  console.log(`Attempted to update descriptions for ${lots.length} lots.`);
 
-  for (const auction of auctions) {
-    try {
-        const newDescription = (auction.description || '') + ' -- SEED_VISITED';
-        await prisma.auction.update({
-            where: { id: auction.id },
-            data: { description: newDescription },
-        });
-    } catch (e) {
-      console.error(`Failed to update description for auction ${auction.id}:`, e);
+    const docTemplates = [
+        { name: 'Termo de Arrematação Padrão', type: 'WINNING_BID_TERM', content: '<h1>Termo de Arrematação</h1><p>Conteúdo do termo...</p>' },
+        { name: 'Certificado de Leilão', type: 'AUCTION_CERTIFICATE', content: '<h1>Certificado</h1><p>Conteúdo do certificado...</p>' },
+    ];
+    const documentTemplates = [];
+    for(const template of docTemplates) {
+        const newDocTemplate = await prisma.documentTemplate.create({ data: template });
+        documentTemplates.push(newDocTemplate);
     }
-  }
-  console.log(`Attempted to update descriptions for ${auctions.length} auctions.`);
+    console.log('Created document types and templates.');
+    return { documentTypes, documentTemplates };
 }
 
-async function simulateBiddingAndPayments(tenantId: string) {
-  console.log('Simulating bidding and payments...');
-
-  const approvedBidders = await prisma.user.findMany({
-    where: {
-      habilitationStatus: UserHabilitationStatus.APPROVED,
-      tenants: {
-        some: {
-          tenantId: tenantId,
-        },
-      },
-    },
-  });
-
-  if (approvedBidders.length === 0) {
-    console.log('No approved bidders found. Skipping simulation.');
-    return;
-  }
-
-  const lotsToBidOn = await prisma.lot.findMany({
-    where: {
-      auction: {
-        status: { in: ['ABERTO_PARA_LANCES', 'ENCERRADO'] },
-        tenantId: tenantId,
-      },
-    },
-    include: {
-      auction: true,
-    },
-  });
-
-  for (const lot of lotsToBidOn) {
-    if (Math.random() > 0.3) { // 70% chance of a lot receiving bids
-      const numberOfBids = faker.number.int({ min: 1, max: 15 });
-      let currentBid = new Prisma.Decimal(lot.initialPrice ?? 1000);
-      const bidIncrement = new Prisma.Decimal(lot.bidIncrementStep ?? 100);
-      let winner: any = null;
-
-      for (let i = 0; i < numberOfBids; i++) {
-        const bidder = faker.helpers.arrayElement(approvedBidders);
-        currentBid = currentBid.add(bidIncrement);
-
-        await prisma.bid.create({
-          data: {
-            amount: currentBid,
-            lotId: lot.id,
-            auctionId: lot.auctionId,
-            bidderId: bidder.id,
+async function createPlatformSettings(tenantId: string) {
+    await prisma.platformSettings.create({
+        data: {
             tenantId: tenantId,
-          },
-        });
-        winner = { id: bidder.id, finalPrice: currentBid };
-        console.log(`  Bid placed on lot ${lot.title} by ${bidder.email} for ${currentBid.toFixed(2)}`);
-      }
-
-      if (winner) {
-        const dataToUpdate: Prisma.LotUpdateInput = {
-          price: winner.finalPrice,
-          bidsCount: { increment: numberOfBids },
-        };
-
-        if (lot.auction.status === 'ENCERRADO') {
-          dataToUpdate.status = 'VENDIDO';
-          dataToUpdate.winner = { connect: { id: winner.id } };
+            siteTitle: 'BidExpert Leilões',
+            paymentGatewaySettings: { commissionPercentage: 5 },
         }
+    });
+    console.log('Created platform settings.');
+}
 
-        try {
-          await prisma.lot.update({
-            where: { id: lot.id },
-            data: dataToUpdate,
-          });
-        } catch (e) {
-          console.error(`Failed to update bidsCount/status for lot ${lot.id}:`, e);
-        }
-
-        if (lot.auction.status === 'ENCERRADO') {
-          await prisma.userWin.create({
+async function createDirectSaleOffers(tenantId: string, sellers: any[], categories: any[]) {
+    for (let i = 0; i < 5; i++) {
+        await prisma.directSaleOffer.create({
             data: {
-              userId: winner.id,
-              lotId: lot.id,
-              winningBidAmount: winner.finalPrice,
-              paymentStatus: 'PENDING',
-              tenantId: tenantId,
-            },
-          });
-          console.log(`  Lot ${lot.title} sold to user ${winner.id} for ${winner.finalPrice.toFixed(2)}`);
-        }
-      }
-    } else {
-      if (lot.auction.status === 'ENCERRADO') {
-        await prisma.lot.update({
-          where: { id: lot.id },
-          data: { status: 'NAO_VENDIDO' },
+                publicId: faker.string.uuid(),
+                title: `Venda Direta: ${faker.commerce.productName()}`,
+                price: faker.number.float({ min: 500, max: 5000 }),
+                status: 'ACTIVE',
+                offerType: 'BUY_NOW',
+                tenantId: tenantId,
+                sellerId: faker.helpers.arrayElement(sellers).id,
+                categoryId: faker.helpers.arrayElement(categories).id,
+            }
         });
-        console.log(`  Lot ${lot.title} received no bids and was not sold.`);
-      }
     }
-  }
+    console.log('Created direct sale offers.');
+}
+
+async function createMiscData(users: any[]) {
+    // Contact Messages
+    for (let i = 0; i < 10; i++) {
+        await prisma.contactMessage.create({
+            data: {
+                name: faker.person.fullName(),
+                email: faker.internet.email(),
+                subject: faker.lorem.sentence(),
+                message: faker.lorem.paragraph(),
+            }
+        });
+    }
+    // Password Reset Tokens
+    const user = faker.helpers.arrayElement(users);
+    await prisma.passwordResetToken.create({
+        data: {
+            email: user.email,
+            token: faker.string.uuid(),
+            expires: faker.date.future(),
+        }
+    });
+    console.log('Created misc data (contacts, tokens).');
+}
+
+async function createNotifications(tenantId: string, users: any[]) {
+    for(const user of users) {
+        if(Math.random() > 0.5) { // 50% chance of getting a notification
+            await prisma.notification.create({
+                data: {
+                    message: 'Seu lance foi superado no lote X!',
+                    link: '/dashboard/bids',
+                    userId: user.id,
+                    tenantId: tenantId,
+                }
+            });
+        }
+    }
+    console.log('Created notifications.');
+}
+
+async function simulatePostBidding(tenantId: string) {
+    const wins = await prisma.userWin.findMany({ include: { lot: true } });
+
+    for (const win of wins) {
+        // Create Installment Payments for some wins
+        if (Math.random() > 0.7) {
+            const totalAmount = win.winningBidAmount;
+            const installmentCount = 3;
+            const installmentAmount = new Prisma.Decimal(totalAmount.toNumber() / installmentCount);
+
+            for (let i = 1; i <= installmentCount; i++) {
+                const installment = await prisma.installmentPayment.create({
+                    data: {
+                        userWinId: win.id,
+                        installmentNumber: i,
+                        amount: installmentAmount,
+                        dueDate: faker.date.future({ years: i/12 }),
+                        status: i === 1 ? 'PAGO' : 'PENDENTE',
+                    }
+                });
+                // Create join table entry
+                await prisma.$executeRaw`INSERT INTO _InstallmentPaymentToLot (A, B) VALUES (${installment.id}, ${win.lotId})`;
+            }
+            console.log(`Created ${installmentCount} installments for win ${win.id}`);
+        }
+
+        // Create Reviews for some lots
+        if (Math.random() > 0.5) {
+            await prisma.review.create({
+                data: {
+                    rating: faker.number.int({ min: 4, max: 5 }),
+                    comment: faker.lorem.sentence(),
+                    lotId: win.lotId,
+                    auctionId: win.lot.auctionId,
+                    userId: win.userId,
+                }
+            });
+            console.log(`Created review for lot ${win.lotId}`);
+        }
+    }
 }
 
 
@@ -599,183 +515,142 @@ async function seed() {
   console.log('Starting extended seeding...');
 
   const tenant = await createTenant();
-  const roles = await createRoles(tenant.id);
-  const users = await createUsers(tenant.id, roles);
-  const { states, cities, capitals } = await createStatesAndCities(tenant.id);
-  const auctioneers = await createAuctioneers(tenant.id, cities);
-  const sellers = await createSellers(tenant.id, cities);
-  const courts = await createCourts(tenant.id, states);
-  const districts = await createJudicialDistricts(courts, states);
-  const branches = await createJudicialBranches(districts);
+  
+  // Independent tables
+  const roles = await createRoles();
+  const { states, cities } = await createStatesAndCities();
   const { categories, subcategories } = await createCategoriesAndSubcategories();
-  const judicialProcesses = await createJudicialProcesses(tenant.id, courts, branches);
-  const bems = await createBems(tenant.id, categories);
+  await createVehicleData();
+  const { documentTypes } = await createDocumentData();
+  await createPlatformSettings(tenant.id);
+  await createMiscData([]); // No user dependency for now
 
-  const auctionTypes = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS', 'VENDA_DIRETA'];
-  const auctionMethods = ['STANDARD', 'DUTCH', 'SILENT'];
-  const auctionParticipations = ['ONLINE', 'PRESENCIAL', 'HIBRIDO'];
-  const auctionStatuses = ['RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'];
+  // Dependent tables
+  const users = await createUsers(tenant.id, roles);
+  await createNotifications(tenant.id, users);
+  const auctioneers = await createAuctioneers(tenant.id);
+  const sellers = await createSellers(tenant.id);
+  const courts = await createCourts(states);
+  const districts = await createJudicialDistricts(courts, cities.map(c => ({...c, state: states.find(s => s.id === c.stateId)})));
+  const branches = await createJudicialBranches(districts);
+  const judicialProcesses = await createJudicialProcesses(tenant.id, courts, branches, sellers);
+  const bems = await createBems(tenant.id, categories, judicialProcesses);
+  await createDirectSaleOffers(tenant.id, sellers, categories);
 
-  const stateLotCounts: { [key: string]: number } = {};
-  states.forEach(s => (stateLotCounts[s.id] = 0));
-  const capitalLotCounts: { [key: string]: number } = {};
-  capitals.forEach(c => (capitalLotCounts[c.id] = 0));
+  const allAuctions = [];
+  const allLots = [];
 
-  const lotsToCreate: any[] = [];
-  const allLotIds: string[] = [];
-
-  for (const state of states) {
-    for (let i = 0; i < 2; i++) {
-      lotsToCreate.push({ stateId: state.id, isCapital: false });
-    }
-  }
-
-  for (const capital of capitals) {
-    for (let i = 0; i < 1; i++) {
-      lotsToCreate.push({ cityId: capital.id, isCapital: true });
-    }
-  }
-
-  faker.helpers.shuffle(lotsToCreate);
-
-  let auctionCounter = 0;
-  for (const lotToCreate of lotsToCreate) {
-    const type = faker.helpers.arrayElement(auctionTypes);
-    const method = faker.helpers.arrayElement(auctionMethods);
-    const participation = faker.helpers.arrayElement(auctionParticipations);
-    const status = faker.helpers.arrayElement(auctionStatuses);
-
-    const auctioneer = faker.helpers.arrayElement(auctioneers);
-    const seller = faker.helpers.arrayElement(sellers);
-
-    let city: any;
-    if (lotToCreate.isCapital) {
-      city = cities.find((c: any) => c.id === lotToCreate.cityId);
-    } else {
-      city = faker.helpers.arrayElement(cities.filter((c: any) => c.stateId === lotToCreate.stateId));
-    }
-
-    let auctionDate: Date;
-    let endDate: Date;
-    if (type === 'TOMADA_DE_PRECOS' || type === 'VENDA_DIRETA') {
-      auctionDate = faker.date.future({ years: 0.1 });
-      endDate = faker.date.soon({ days: 7, refDate: auctionDate });
-    } else {
-      auctionDate = faker.date.future({ years: 1 });
-      endDate = faker.date.future({ years: 1.5 });
-    }
-
+  // Create Auctions and Lots
+  for (let i = 0; i < 15; i++) {
     const auction = await prisma.auction.create({
       data: {
-        title: faker.lorem.sentence(5),
+        title: `Leilão ${faker.commerce.department()} ${i + 1}`,
         description: faker.lorem.paragraph(),
-        auctionDate: auctionDate,
-        endDate: endDate,
-        auctioneerId: auctioneer.id,
-        sellerId: seller.id,
-        auctionMethod: method as any,
-        auctionType: type as any,
-        participation: participation as any,
-        status: status as any,
-        cityId: city.id,
+        status: faker.helpers.arrayElement(['ABERTO_PARA_LANCES', 'EM_BREVE', 'ENCERRADO']),
+        auctionDate: faker.date.soon(),
+        endDate: faker.date.future(),
         tenantId: tenant.id,
-        softCloseEnabled: faker.datatype.boolean(),
-        softCloseMinutes: faker.number.int({ min: 1, max: 10 }),
-        latitude: faker.location.latitude({ min: -33.75, max: 5.25 }),
-        longitude: faker.location.longitude({ min: -73.98, max: -34.79 }),
+        auctioneerId: faker.helpers.arrayElement(auctioneers).id,
+        sellerId: faker.helpers.arrayElement(sellers).id,
+        cityId: faker.helpers.arrayElement(cities).id,
       },
     });
+    allAuctions.push(auction);
+    console.log(`Created auction: ${auction.title}`);
 
-    const firstStageInitialPrice = faker.number.float({ min: 10000, max: 100000, multipleOf: 0.01 });
-    const secondStageInitialPrice = faker.number.float({ min: firstStageInitialPrice * 0.5, max: firstStageInitialPrice * 0.9, multipleOf: 0.01 });
+    // Habilitate some users for this auction
+    for(const user of faker.helpers.arrayElements(users, 5)) {
+        await prisma.auctionHabilitation.create({
+            data: { auctionId: auction.id, userId: user.id }
+        });
+    }
 
-    const firstStageEndDate = new Date(auctionDate);
-    firstStageEndDate.setHours(firstStageEndDate.getHours() + faker.number.int({ min: 4, max: 8 }));
-
-    const secondStageStartDate = new Date(firstStageEndDate);
-    secondStageStartDate.setDate(secondStageStartDate.getDate() + 1);
-
-    await prisma.auctionStage.createMany({
-      data: [
-        {
-          auctionId: auction.id,
-          name: '1º Leilão',
-          startDate: auctionDate,
-          endDate: firstStageEndDate,
-          initialPrice: new Prisma.Decimal(firstStageInitialPrice),
-        },
-        {
-          auctionId: auction.id,
-          name: '2º Leilão',
-          startDate: secondStageStartDate,
-          endDate: endDate,
-          initialPrice: new Prisma.Decimal(secondStageInitialPrice),
-        },
-      ],
-    });
-    console.log(`  Created 2 stages for auction: ${auction.title}`);
-    auctionCounter++;
-    console.log(`Created auction ${auctionCounter}: ${auction.title} (Type: ${type}, Method: ${method}, Status: ${status})`);
-
-    for (let j = 0; j < faker.number.int({ min: 1, max: 3 }); j++) {
-      const category = faker.helpers.arrayElement(categories);
-      const relevantSubcategories = subcategories.filter(s => s.parentCategoryId === category.id);
-      const subcategory = relevantSubcategories.length > 0 ? faker.helpers.arrayElement(relevantSubcategories) : null;
-
-      const numBems = faker.datatype.boolean() ? faker.number.int({ min: 2, max: 5 }) : 1;
-      const selectedBems = faker.helpers.arrayElements(bems, numBems);
-
-      let initialPrice: number;
-      let secondInitialPrice: number | null = null;
-      const isTwoPraças = faker.datatype.boolean();
-
-      if (isTwoPraças) {
-        initialPrice = faker.number.float({ min: 10000, max: 100000, multipleOf: 0.01 });
-        secondInitialPrice = faker.number.float({ min: initialPrice * 0.5, max: initialPrice * 0.9, multipleOf: 0.01 });
-      } else {
-        initialPrice = faker.number.float({ min: 1000, max: 50000, multipleOf: 0.01 });
-      }
-
+    for (let j = 0; j < faker.number.int({ min: 2, max: 8 }); j++) {
       const lot = await prisma.lot.create({
         data: {
           auctionId: auction.id,
-          title: faker.lorem.sentence(3),
-          description: faker.lorem.paragraph(),
-          initialPrice: initialPrice,
-          price: initialPrice,
-          secondInitialPrice: secondInitialPrice,
-          bidIncrementStep: faker.number.float({ min: 50, max: 500, multipleOf: 0.01 }),
-          status: faker.helpers.arrayElement(['EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO']),
-          categoryId: category.id,
-          subcategoryId: subcategory?.id,
+          number: `${j + 1}`,
+          title: faker.commerce.productName(),
+          description: faker.commerce.productDescription(),
+          initialPrice: faker.number.float({ min: 100, max: 10000 }),
+          price: 0,
+          status: 'EM_BREVE',
           tenantId: tenant.id,
-          type: type as any,
+          categoryId: faker.helpers.arrayElement(categories).id,
+          type: 'JUDICIAL',
         },
       });
-      console.log(`  Created lot: ${lot.title} for auction ${auction.title}`);
-      allLotIds.push(lot.id);
+      allLots.push(lot);
+      console.log(`  Created lot: ${lot.title}`);
 
-      if (selectedBems.length > 0) {
-        for (const bem of selectedBems) {
-            await prisma.lotBens.create({
-                data: {
-                    lotId: lot.id,
-                    bemId: bem.id,
-                },
-            });
-        }
+      // Create LotBens
+      await prisma.lotBens.create({
+          data: { lotId: lot.id, bemId: faker.helpers.arrayElement(bems).id }
+      });
+
+      // Create LotQuestions
+      if(Math.random() > 0.5) {
+          await prisma.lotQuestion.create({
+              data: {
+                  questionText: 'Qual o estado de conservação?',
+                  answerText: 'Em bom estado, com marcas de uso.',
+                  lotId: lot.id,
+                  auctionId: auction.id,
+                  userId: faker.helpers.arrayElement(users).id,
+              }
+          });
+      }
+      
+      // Create UserLotMaxBid
+      if(Math.random() > 0.5) {
+          await prisma.userLotMaxBid.create({
+              data: {
+                  maxAmount: faker.number.float({ min: 5000, max: 20000 }),
+                  lotId: lot.id,
+                  userId: faker.helpers.arrayElement(users).id,
+              }
+          });
       }
     }
   }
-
-  console.log('Generating media items for all created lots...');
-  for (const lotId of allLotIds) {
-    await createMediaItems(lotId, true);
-    await createMediaItems(lotId, false);
+  
+  // Simulate Bidding
+  const lotsToBidOn = allLots.filter(l => l.status !== 'ENCERRADO');
+  for (const lot of lotsToBidOn) {
+      let currentBid = new Prisma.Decimal(lot.initialPrice ?? 100);
+      for(let i=0; i < faker.number.int({min: 0, max: 15}); i++) {
+          const bidder = faker.helpers.arrayElement(users.filter(u => u.habilitationStatus === 'HABILITADO'));
+          currentBid = currentBid.add(100);
+          await prisma.bid.create({
+              data: {
+                  amount: currentBid,
+                  lotId: lot.id,
+                  auctionId: lot.auctionId,
+                  bidderId: bidder.id,
+                  tenantId: tenant.id,
+              }
+          });
+      }
+      // Assign winner
+      const winningBid = await prisma.bid.findFirst({ where: { lotId: lot.id }, orderBy: { amount: 'desc' }});
+      if (winningBid) {
+          await prisma.lot.update({
+              where: { id: lot.id },
+              data: { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount }
+          });
+          await prisma.userWin.create({
+              data: {
+                  userId: winningBid.bidderId,
+                  lotId: lot.id,
+                  winningBidAmount: winningBid.amount,
+                  paymentStatus: 'PENDENTE',
+              }
+          });
+      }
   }
+  console.log('Simulated bidding and assigned winners.');
 
-  await simulateBiddingAndPayments(tenant.id);
-  await simulateVisits();
+  await simulatePostBidding(tenant.id);
 
   console.log('Extended seeding finished.');
 }
