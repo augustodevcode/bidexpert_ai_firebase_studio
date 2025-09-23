@@ -1,12 +1,12 @@
 // src/app/admin/states/analysis/page.tsx
 /**
  * @fileoverview Página do painel de administração para análise de performance de Estados.
- * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras
- * com o faturamento dos principais estados e uma tabela de dados detalhada.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * o faturamento dos principais estados e uma tabela de dados detalhada.
  */
 'use client';
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } from 'recharts';
 import { getStatesPerformanceAction, type StatePerformanceData } from './actions';
 import { analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
 import { useState, useEffect, useMemo } from 'react';
@@ -116,7 +116,19 @@ export default function StateAnalysisPage() {
   }, [performanceData]);
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise...</div>
+    return (
+        <div className="space-y-6">
+            <Skeleton className="h-24 w-full" />
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <Skeleton className="h-28 w-full" />
+                <Skeleton className="h-28 w-full" />
+                <Skeleton className="h-28 w-full" />
+                <Skeleton className="h-28 w-full" />
+            </div>
+             <Skeleton className="h-96 w-full" />
+             <Skeleton className="h-96 w-full" />
+        </div>
+    );
   }
 
   return (

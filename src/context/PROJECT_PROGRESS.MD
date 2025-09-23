@@ -13,15 +13,9 @@
 - **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
 - **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
-- **Item 14: Dashboards de Análise e KPIs (Estratégico):**
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
     - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
-    - **Fase 2 (Parcial):**
-      - [X] Dashboard de Comitentes (`/admin/sellers/analysis`)
-      - [X] Dashboard de Leiloeiros (`/admin/auctioneers/analysis`)
-      - [X] Dashboard de Leilões (`/admin/auctions/analysis`)
-      - [X] Dashboard de Categorias (`/admin/categories/analysis`)
-      - [X] Dashboard de Lotes (`/admin/lots/analysis`)
-      - [X] Dashboard de Cidades (`/admin/cities/analysis`)
+    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
@@ -38,7 +32,7 @@
 
 ## DOING
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 2:** Criar dashboards de análise de grupo para Estados.
+    - **Fase 2:** Concluída a criação de dashboards para todas as entidades de negócio (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões).
     - **Fase 4:** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
 - **Item 29: [NOVO] Dashboards de Auditoria e Inconsistência:** Implementar painéis para identificar problemas de integridade de dados, tais como:
