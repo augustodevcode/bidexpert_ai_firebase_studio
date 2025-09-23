@@ -24,7 +24,7 @@ export class LotRepository {
         where: finalWhere,
         take: limit,
         include: {
-            bens: { include: { bem: true } },
+            assets: { include: { asset: true } },
             auction: { select: { title: true, status: true } }, // Incluindo status do leilão
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
@@ -44,7 +44,7 @@ export class LotRepository {
     return prisma.lot.findFirst({
       where: whereClause,
       include: {
-        bens: { include: { bem: true } },
+        assets: { include: { asset: true } },
         auction: true,
       },
     });
@@ -58,19 +58,19 @@ export class LotRepository {
     });
   }
 
-  async create(lotData: Prisma.LotCreateInput, bemIds: string[]): Promise<Lot> {
+  async create(lotData: Prisma.LotCreateInput, assetIds: string[]): Promise<Lot> {
     return getPrismaInstance().$transaction(async (tx) => {
       // 1. Create the Lot
       const newLot = await tx.lot.create({
         data: lotData,
       });
 
-      // 2. If there are bemIds, create the entries in the join table
-      if (bemIds && bemIds.length > 0) {
-        await tx.lotBens.createMany({
-          data: bemIds.map(bemId => ({
+      // 2. If there are assetIds, create the entries in the join table
+      if (assetIds && assetIds.length > 0) {
+        await tx.assetsOnLots.createMany({
+          data: assetIds.map(assetId => ({
             lotId: newLot.id,
-            bemId: bemId,
+            assetId: assetId,
           })),
         });
       }
@@ -79,22 +79,22 @@ export class LotRepository {
     });
   }
 
-  async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[]): Promise<Lot> {
+  async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: string[]): Promise<Lot> {
     return getPrismaInstance().$transaction(async (tx) => {
         const updatedLot = await tx.lot.update({
             where: { id },
             data: lotData,
         });
 
-        if (bemIds !== undefined) {
-            await tx.lotBens.deleteMany({
+        if (assetIds !== undefined) {
+            await tx.assetsOnLots.deleteMany({
                 where: { lotId: id },
             });
-            if (bemIds.length > 0) {
-                await tx.lotBens.createMany({
-                    data: bemIds.map(bemId => ({
+            if (assetIds.length > 0) {
+                await tx.assetsOnLots.createMany({
+                    data: assetIds.map(assetId => ({
                         lotId: id,
-                        bemId: bemId,
+                        assetId: assetId,
                     })),
                 });
             }
@@ -105,7 +105,7 @@ export class LotRepository {
 
   async delete(id: string): Promise<void> {
      await getPrismaInstance().$transaction(async (tx) => {
-        await tx.lotBens.deleteMany({
+        await tx.assetsOnLots.deleteMany({
             where: { lotId: id },
         });
         await tx.lot.delete({ where: { id } });

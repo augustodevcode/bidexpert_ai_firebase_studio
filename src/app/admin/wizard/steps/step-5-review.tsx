@@ -118,7 +118,7 @@ export default function Step5Review() {
               <div key={index} className="p-3 border rounded-md">
                 <p className="font-semibold">Lote {lot.number}: {lot.title}</p>
                 <p className="text-xs text-muted-foreground">
-                    {lot.assetIds?.length} bem(ns) | Lance Inicial: R$ {(lot.initialPrice || 0).toLocaleString('pt-br', {minimumFractionDigits: 2})}
+                    {lot.assetIds?.length} ativo(s) | Lance Inicial: R$ {(lot.initialPrice || 0).toLocaleString('pt-br', {minimumFractionDigits: 2})}
                 </p>
               </div>
             ))

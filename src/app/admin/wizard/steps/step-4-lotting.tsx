@@ -114,8 +114,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h3 className="text-lg font-semibold">Loteamento de Bens</h3>
-                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis para criar lotes individuais ou agrupados.</p>
+                <h3 className="text-lg font-semibold">Loteamento de Ativos</h3>
+                <p className="text-sm text-muted-foreground">Selecione os ativos disponíveis para criar lotes individuais ou agrupados.</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto flex-wrap justify-end">
                 <Button onClick={handleCreateIndividualLotsClick} variant="outline" className="flex-1" disabled={selectedAssets.length === 0 || isCreatingIndividualLots}>
@@ -133,7 +133,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
           searchColumnId="title"
-          searchPlaceholder="Buscar por título do bem..."
+          searchPlaceholder="Buscar por título do ativo..."
         />
       </div>
 
@@ -146,7 +146,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
                     <div key={lot.id} className="text-sm p-2 bg-secondary/50 rounded-md">
                         <p className="font-medium">Lote {lot.number}: {lot.title}</p>
                         <p className="text-xs text-muted-foreground">
-                            {lot.assetIds?.length} bem(ns) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
+                            {lot.assetIds?.length} ativo(s) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
                         </p>
                     </div>
                 ))}

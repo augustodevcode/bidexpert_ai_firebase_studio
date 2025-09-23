@@ -2,7 +2,7 @@
 'use client';
 
 import { createContext, useContext, useState, ReactNode } from 'react';
-import type { Auction, Bem, JudicialProcess, Lot } from '@/types';
+import type { Auction, Asset, JudicialProcess, Lot } from '@/types';
 
 type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
 
@@ -10,7 +10,7 @@ export interface WizardData {
   auctionType?: AuctionType;
   judicialProcess?: JudicialProcess;
   auctionDetails?: Partial<Auction>;
-  selectedBens?: Bem[];
+  selectedAssets?: Asset[];
   createdLots?: Lot[];
 }
 

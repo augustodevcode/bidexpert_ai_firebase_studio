@@ -93,14 +93,14 @@ export default function CreateLotFromAssetsModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><PackagePlus /> Criar Novo Lote Agrupado</DialogTitle>
           <DialogDescription>
-            Defina os detalhes para o novo lote que conterá os {selectedAssets.length} bens selecionados.
+            Defina os detalhes para o novo lote que conterá os {selectedAssets.length} ativos selecionados.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="py-4 space-y-4">
               <div className="p-3 bg-secondary/50 rounded-md text-sm">
-                <p><strong>Bens Selecionados:</strong> {selectedAssets.length}</p>
+                <p><strong>Ativos Selecionados:</strong> {selectedAssets.length}</p>
                 <p><strong>Valor de Avaliação Total:</strong> R$ {totalEvaluationValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
               </div>
               <Separator />
