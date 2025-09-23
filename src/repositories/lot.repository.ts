@@ -1,23 +1,31 @@
-
 // src/repositories/lot.repository.ts
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
+const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
+
+
 export class LotRepository {
     
-  async findAll(tenantId: string | undefined, where: Prisma.LotWhereInput = {}, limit?: number): Promise<any[]> {
+  async findAll(tenantId: string | undefined, where: Prisma.LotWhereInput = {}, limit?: number, isPublicCall = false): Promise<any[]> {
     const finalWhere: Prisma.LotWhereInput = {
       ...where,
       ...(tenantId && { tenantId }),
     };
     
-    return prisma.lot.findMany({
+    if (isPublicCall) {
+        finalWhere.auction = {
+            status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
+        }
+    }
+    
+    return getPrismaInstance().lot.findMany({
         where: finalWhere,
         take: limit,
         include: {
             bens: { include: { bem: true } },
-            auction: { select: { title: true } },
+            auction: { select: { title: true, status: true } }, // Incluindo status do leilão
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
         },
@@ -26,10 +34,10 @@ export class LotRepository {
   }
 
   async findById(id: string, tenantId?: string): Promise<any | null> {
+    const prisma = getPrismaInstance();
     const whereClause: Prisma.LotWhereInput = {
         OR: [{ id }, { publicId: id }],
     };
-    // If a tenantId is provided (non-public call), enforce it.
     if (tenantId) {
         whereClause.tenantId = tenantId;
     }
@@ -44,14 +52,14 @@ export class LotRepository {
   
   async findByIds(ids: string[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    return prisma.lot.findMany({
+    return getPrismaInstance().lot.findMany({
         where: { id: { in: ids } },
         include: { auction: true }
     });
   }
 
   async create(lotData: Prisma.LotCreateInput, bemIds: string[]): Promise<Lot> {
-    return prisma.$transaction(async (tx) => {
+    return getPrismaInstance().$transaction(async (tx) => {
       // 1. Create the Lot
       const newLot = await tx.lot.create({
         data: lotData,
@@ -72,7 +80,7 @@ export class LotRepository {
   }
 
   async update(id: string, lotData: Prisma.LotUpdateInput, bemIds?: string[]): Promise<Lot> {
-    return prisma.$transaction(async (tx) => {
+    return getPrismaInstance().$transaction(async (tx) => {
         const updatedLot = await tx.lot.update({
             where: { id },
             data: lotData,
@@ -96,7 +104,7 @@ export class LotRepository {
   }
 
   async delete(id: string): Promise<void> {
-     await prisma.$transaction(async (tx) => {
+     await getPrismaInstance().$transaction(async (tx) => {
         await tx.lotBens.deleteMany({
             where: { lotId: id },
         });

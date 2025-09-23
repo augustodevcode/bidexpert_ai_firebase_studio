@@ -1,4 +1,3 @@
-
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
@@ -43,17 +42,23 @@ export class LotService {
     if (auctionId) {
       where.auctionId = auctionId;
     }
+    // O filtro de status de lote para chamadas públicas agora é feito no repositório,
+    // mas mantemos este para filtros adicionais se necessário.
     if (isPublicCall) {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
-    const lots = await this.repository.findAll(tenantId, where, limit);
+    const lots = await this.repository.findAll(tenantId, where, limit, isPublicCall);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
   async getLotsByIds(ids: string[], isPublicCall = false): Promise<Lot[]> {
     const lots = await this.repository.findByIds(ids);
     if (isPublicCall) {
-      return lots.filter(lot => !NON_PUBLIC_STATUSES.includes(lot.status)).map(lot => this.mapLotWithDetails(lot));
+      // Garante que mesmo buscando por ID, os status não públicos e de leilões não publicados sejam respeitados
+      return lots.filter(lot => 
+        !NON_PUBLIC_STATUSES.includes(lot.status) &&
+        lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status)
+      ).map(lot => this.mapLotWithDetails(lot));
     }
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
@@ -61,7 +66,11 @@ export class LotService {
   async getLotById(id: string, tenantId?: string, isPublicCall = false): Promise<Lot | null> {
     const lot = await this.repository.findById(id, tenantId);
     if (!lot) return null;
-    if (isPublicCall && NON_PUBLIC_STATUSES.includes(lot.status)) {
+    
+    const isLotPublic = !NON_PUBLIC_STATUSES.includes(lot.status);
+    const isAuctionPublic = lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status);
+
+    if (isPublicCall && (!isLotPublic || !isAuctionPublic)) {
         return null;
     }
     return this.mapLotWithDetails(lot);
