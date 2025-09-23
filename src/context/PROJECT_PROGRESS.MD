@@ -20,7 +20,8 @@
       - [X] Dashboard de Leiloeiros (`/admin/auctioneers/analysis`)
       - [X] Dashboard de Leilões (`/admin/auctions/analysis`)
       - [X] Dashboard de Categorias (`/admin/categories/analysis`)
-    - **Fase 3 (Parcial):** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+      - [X] Dashboard de Lotes (`/admin/lots/analysis`)
+    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
@@ -36,17 +37,17 @@
 
 ## DOING
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 2:** Criar dashboards de análise de grupo para Lotes, Cidades e Estados.
+    - **Fase 2:** Criar dashboards de análise de grupo para Cidades e Estados.
     - **Fase 4:** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
-- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
-
-## NEXT
-- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.
 - **Item 29: [NOVO] Dashboards de Auditoria e Inconsistência:** Implementar painéis para identificar problemas de integridade de dados, tais como:
     - Leilões sem lotes.
     - Lotes sem bens vinculados.
     - Leilões sem etapas/praças configuradas.
     - Leilões encerrados/cancelados com lotes ainda em aberto.
+- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
+
+## NEXT
+- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
