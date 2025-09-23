@@ -640,13 +640,15 @@ async function seed() {
 
       // Create LotQuestions
       if(Math.random() > 0.5) {
+          const questionUser = faker.helpers.arrayElement(users);
           await prisma.lotQuestion.create({
               data: {
                   questionText: 'Qual o estado de conservação?',
                   answerText: 'Em bom estado, com marcas de uso.',
                   lotId: lot.id,
                   auctionId: auction.id,
-                  userId: faker.helpers.arrayElement(users).id,
+                  userId: questionUser.id,
+                  userDisplayName: questionUser.fullName,
               }
           });
       }

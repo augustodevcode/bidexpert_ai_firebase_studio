@@ -178,7 +178,7 @@ model Auctioneer {
 model Bem {
   id                        String              @id @default(cuid())
   publicId                  String              @unique
-  title                     String
+  title                     String              @unique
   description               String?             @db.Text
   status                    BemStatus           @default(DISPONIVEL)
   evaluationValue           Decimal?            @db.Decimal(15, 2)
@@ -387,7 +387,7 @@ model ContactMessage {
 model Court {
   id                String              @id @default(cuid())
   name              String
-  slug              String?
+  slug              String?             @unique
   stateUf           String?
   website           String?
   createdAt         DateTime?           @default(now())
@@ -455,7 +455,7 @@ enum DirectSaleOfferType {
 
 model DocumentTemplate {
   id      String   @id @default(cuid())
-  name    String
+  name    String   @unique
   type    DocumentTemplateType
   content String?  @db.Text
   createdAt DateTime @default(now())
@@ -470,7 +470,7 @@ enum DocumentTemplateType {
 
 model DocumentType {
   id              String         @id @default(cuid())
-  name            String
+  name            String   @unique
   description     String?
   isRequired      Boolean        @default(true)
   appliesTo       String // e.g., 'PHYSICAL,LEGAL'
@@ -496,7 +496,7 @@ model InstallmentPayment {
 
 model JudicialBranch {
   id                String              @id @default(cuid())
-  name              String
+  name              String            @unique
   slug              String?             @unique
   districtId        String?
   contactName       String?
@@ -512,7 +512,7 @@ model JudicialBranch {
 
 model JudicialDistrict {
   id                String            @id @default(cuid())
-  name              String
+  name              String            @unique
   slug              String?           @unique
   courtId           String?
   stateId           String?

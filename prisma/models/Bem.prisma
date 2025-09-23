@@ -2,7 +2,7 @@
 model Bem {
   id                        String              @id @default(cuid())
   publicId                  String              @unique
-  title                     String
+  title                     String              @unique
   description               String?             @db.Text
   status                    BemStatus           @default(DISPONIVEL)
   evaluationValue           Decimal?            @db.Decimal(15, 2)

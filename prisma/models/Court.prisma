@@ -1,7 +1,7 @@
 model Court {
   id                String              @id @default(cuid())
   name              String
-  slug              String?
+  slug              String?             @unique
   stateUf           String?
   website           String?
   createdAt         DateTime?           @default(now())

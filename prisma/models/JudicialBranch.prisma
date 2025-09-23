@@ -1,6 +1,6 @@
 model JudicialBranch {
   id                String              @id @default(cuid())
-  name              String
+  name              String            @unique
   slug              String?             @unique
   districtId        String?
   contactName       String?
