@@ -71,11 +71,11 @@ export class AuctionService {
    * @returns {Promise<Auction[]>} Uma lista de leilões.
    */
   async getAuctions(tenantId: string, limit?: number, isPublicCall = false): Promise<Auction[]> {
-    const where: Prisma.AuctionWhereInput = { tenantId };
+    const where: Prisma.AuctionWhereInput = {};
     if (isPublicCall) {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
-    const auctions = await this.auctionRepository.findAll(where, limit);
+    const auctions = await this.auctionRepository.findAll(tenantId, where, limit);
     return this.mapAuctionsWithDetails(auctions);
   }
 

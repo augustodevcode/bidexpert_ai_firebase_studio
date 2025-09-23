@@ -10,9 +10,9 @@ export class AuctionRepository {
     this.prisma = getPrismaInstance();
   }
   
-  async findAll(tenantId: string, limit?: number): Promise<any[]> {
+  async findAll(tenantId: string, where?: Prisma.AuctionWhereInput, limit?: number): Promise<any[]> {
     return this.prisma.auction.findMany({
-      where: { tenantId },
+      where: { ...where, tenantId },
       orderBy: { auctionDate: 'desc' },
       take: limit,
       include: {
