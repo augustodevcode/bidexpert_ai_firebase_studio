@@ -456,10 +456,8 @@ export default function SearchPage() {
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
-    let itemType: 'auction' | 'lot' | 'direct_sale' = 'auction';
-    if(currentSearchType === 'lots') itemType = 'lot';
-    else if(currentSearchType === 'direct_sale') itemType = 'direct_sale';
-
+    let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
+    
     return (
         <UniversalCard
             key={`${itemType}-${item.id}-${index}`}
@@ -473,14 +471,13 @@ export default function SearchPage() {
 
   const renderListItem = (item: any, index: number): React.ReactNode => {
      if (!platformSettings) return null;
-    let itemType: 'auction' | 'lot' | 'direct_sale' = 'auction';
-    if(currentSearchType === 'lots') itemType = 'lot';
-    else if(currentSearchType === 'direct_sale') itemType = 'direct_sale';
+     let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
+
      return (
         <UniversalListItem
             key={`${itemType}-list-${item.id}-${index}`}
             item={item}
-            type={itemType as 'auction' | 'lot'} 
+            type={itemType}
             platformSettings={platformSettings}
             parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
         />
@@ -570,7 +567,7 @@ export default function SearchPage() {
               sortOptions={currentSortOptions}
               initialSortBy={sortBy}
               onSortChange={setSortByState}
-              platformSettings={platformSettings!}
+              platformSettings={platformSettings}
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
               emptyStateMessage="Nenhum item encontrado com os filtros aplicados."

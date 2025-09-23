@@ -462,6 +462,38 @@ async function createMediaItems(lotId: string, isFeatured: boolean = false) {
   return mediaItems;
 }
 
+async function simulateVisits() {
+  console.log('Simulating visits and updating descriptions for debugging...');
+  const lots = await prisma.lot.findMany({ select: { id: true, description: true } });
+  const auctions = await prisma.auction.findMany({ select: { id: true, description: true } });
+
+  for (const lot of lots) {
+    try {
+      const newDescription = (lot.description || '') + ' -- SEED_VISITED';
+      await prisma.lot.update({
+        where: { id: lot.id },
+        data: { description: newDescription },
+      });
+    } catch (e) {
+      console.error(`Failed to update description for lot ${lot.id}:`, e);
+    }
+  }
+  console.log(`Attempted to update descriptions for ${lots.length} lots.`);
+
+  for (const auction of auctions) {
+    try {
+        const newDescription = (auction.description || '') + ' -- SEED_VISITED';
+        await prisma.auction.update({
+            where: { id: auction.id },
+            data: { description: newDescription },
+        });
+    } catch (e) {
+      console.error(`Failed to update description for auction ${auction.id}:`, e);
+    }
+  }
+  console.log(`Attempted to update descriptions for ${auctions.length} auctions.`);
+}
+
 async function simulateBiddingAndPayments(tenantId: string) {
   console.log('Simulating bidding and payments...');
 
@@ -494,21 +526,19 @@ async function simulateBiddingAndPayments(tenantId: string) {
   });
 
   for (const lot of lotsToBidOn) {
-    // 70% chance of a lot receiving bids
-    if (Math.random() > 0.3) {
+    if (Math.random() > 0.3) { // 70% chance of a lot receiving bids
       const numberOfBids = faker.number.int({ min: 1, max: 15 });
-      // Ensure we are working with Decimal objects for precision
       let currentBid = new Prisma.Decimal(lot.initialPrice ?? 1000);
       const bidIncrement = new Prisma.Decimal(lot.bidIncrementStep ?? 100);
       let winner: any = null;
 
       for (let i = 0; i < numberOfBids; i++) {
         const bidder = faker.helpers.arrayElement(approvedBidders);
-        currentBid = currentBid.add(bidIncrement); // Use Decimal's add method
+        currentBid = currentBid.add(bidIncrement);
 
         await prisma.bid.create({
           data: {
-            amount: currentBid, // Pass the Decimal object directly
+            amount: currentBid,
             lotId: lot.id,
             auctionId: lot.auctionId,
             bidderId: bidder.id,
@@ -519,42 +549,51 @@ async function simulateBiddingAndPayments(tenantId: string) {
         console.log(`  Bid placed on lot ${lot.title} by ${bidder.email} for ${currentBid.toFixed(2)}`);
       }
 
-      if (winner && lot.auction.status === 'ENCERRADO') {
-        await prisma.lot.update({
-          where: { id: lot.id },
-          data: {
-            status: 'VENDIDO',
-            winner: {
-              connect: { id: winner.id },
-            },
-            price: winner.finalPrice,
-          },
-        });
+      if (winner) {
+        const dataToUpdate: Prisma.LotUpdateInput = {
+          price: winner.finalPrice,
+          bidsCount: { increment: numberOfBids },
+        };
 
-        await prisma.userWin.create({
-          data: {
-            userId: winner.id,
-            lotId: lot.id,
-            winningBidAmount: winner.finalPrice,
-            paymentStatus: 'PENDING',
-            tenantId: tenantId,
-          },
-        });
-        console.log(`  Lot ${lot.title} sold to user ${winner.id} for ${winner.finalPrice.toFixed(2)}`);
+        if (lot.auction.status === 'ENCERRADO') {
+          dataToUpdate.status = 'VENDIDO';
+          dataToUpdate.winner = { connect: { id: winner.id } };
+        }
+
+        try {
+          await prisma.lot.update({
+            where: { id: lot.id },
+            data: dataToUpdate,
+          });
+        } catch (e) {
+          console.error(`Failed to update bidsCount/status for lot ${lot.id}:`, e);
+        }
+
+        if (lot.auction.status === 'ENCERRADO') {
+          await prisma.userWin.create({
+            data: {
+              userId: winner.id,
+              lotId: lot.id,
+              winningBidAmount: winner.finalPrice,
+              paymentStatus: 'PENDING',
+              tenantId: tenantId,
+            },
+          });
+          console.log(`  Lot ${lot.title} sold to user ${winner.id} for ${winner.finalPrice.toFixed(2)}`);
+        }
       }
     } else {
       if (lot.auction.status === 'ENCERRADO') {
         await prisma.lot.update({
           where: { id: lot.id },
-          data: {
-            status: 'NAO_VENDIDO',
-          },
+          data: { status: 'NAO_VENDIDO' },
         });
         console.log(`  Lot ${lot.title} received no bids and was not sold.`);
       }
     }
   }
 }
+
 
 async function seed() {
   console.log('Starting extended seeding...');
@@ -583,16 +622,16 @@ async function seed() {
   capitals.forEach(c => (capitalLotCounts[c.id] = 0));
 
   const lotsToCreate: any[] = [];
-  const allLotIds: string[] = []; // New: To store all lot IDs for image generation
+  const allLotIds: string[] = [];
 
   for (const state of states) {
-    for (let i = 0; i < 2; i++) { // Reduced from 5 to 2
+    for (let i = 0; i < 2; i++) {
       lotsToCreate.push({ stateId: state.id, isCapital: false });
     }
   }
 
   for (const capital of capitals) {
-    for (let i = 0; i < 1; i++) { // Reduced from 2 to 1
+    for (let i = 0; i < 1; i++) {
       lotsToCreate.push({ cityId: capital.id, isCapital: true });
     }
   }
@@ -616,17 +655,15 @@ async function seed() {
       city = faker.helpers.arrayElement(cities.filter((c: any) => c.stateId === lotToCreate.stateId));
     }
 
-    // Handle auction dates based on type
     let auctionDate: Date;
     let endDate: Date;
     if (type === 'TOMADA_DE_PRECOS' || type === 'VENDA_DIRETA') {
-      auctionDate = faker.date.future({ years: 0.1 }); // Soon
-      endDate = faker.date.soon({ days: 7, refDate: auctionDate }); // A week after auctionDate
+      auctionDate = faker.date.future({ years: 0.1 });
+      endDate = faker.date.soon({ days: 7, refDate: auctionDate });
     } else {
       auctionDate = faker.date.future({ years: 1 });
       endDate = faker.date.future({ years: 1.5 });
     }
-
 
     const auction = await prisma.auction.create({
       data: {
@@ -644,18 +681,19 @@ async function seed() {
         tenantId: tenant.id,
         softCloseEnabled: faker.datatype.boolean(),
         softCloseMinutes: faker.number.int({ min: 1, max: 10 }),
+        latitude: faker.location.latitude({ min: -33.75, max: 5.25 }),
+        longitude: faker.location.longitude({ min: -73.98, max: -34.79 }),
       },
     });
 
-    // Create auction stages
     const firstStageInitialPrice = faker.number.float({ min: 10000, max: 100000, multipleOf: 0.01 });
     const secondStageInitialPrice = faker.number.float({ min: firstStageInitialPrice * 0.5, max: firstStageInitialPrice * 0.9, multipleOf: 0.01 });
 
     const firstStageEndDate = new Date(auctionDate);
-    firstStageEndDate.setHours(firstStageEndDate.getHours() + faker.number.int({ min: 4, max: 8 })); // First stage lasts a few hours
+    firstStageEndDate.setHours(firstStageEndDate.getHours() + faker.number.int({ min: 4, max: 8 }));
 
     const secondStageStartDate = new Date(firstStageEndDate);
-    secondStageStartDate.setDate(secondStageStartDate.getDate() + 1); // Second stage starts the next day
+    secondStageStartDate.setDate(secondStageStartDate.getDate() + 1);
 
     await prisma.auctionStage.createMany({
       data: [
@@ -687,10 +725,9 @@ async function seed() {
       const numBems = faker.datatype.boolean() ? faker.number.int({ min: 2, max: 5 }) : 1;
       const selectedBems = faker.helpers.arrayElements(bems, numBems);
 
-      // Handle 1 praça / 2 praças
       let initialPrice: number;
       let secondInitialPrice: number | null = null;
-      const isTwoPraças = faker.datatype.boolean(); // Randomly decide if it's a 2-praças lot
+      const isTwoPraças = faker.datatype.boolean();
 
       if (isTwoPraças) {
         initialPrice = faker.number.float({ min: 10000, max: 100000, multipleOf: 0.01 });
@@ -705,7 +742,7 @@ async function seed() {
           title: faker.lorem.sentence(3),
           description: faker.lorem.paragraph(),
           initialPrice: initialPrice,
-          price: initialPrice, // Current price starts as initial price
+          price: initialPrice,
           secondInitialPrice: secondInitialPrice,
           bidIncrementStep: faker.number.float({ min: 50, max: 500, multipleOf: 0.01 }),
           status: faker.helpers.arrayElement(['EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO']),
@@ -716,7 +753,7 @@ async function seed() {
         },
       });
       console.log(`  Created lot: ${lot.title} for auction ${auction.title}`);
-      allLotIds.push(lot.id); // Store lot ID for later image generation
+      allLotIds.push(lot.id);
 
       if (selectedBems.length > 0) {
         for (const bem of selectedBems) {
@@ -728,20 +765,17 @@ async function seed() {
             });
         }
       }
-
-      // Removed direct call to createMediaItems here
     }
   }
 
-  // Generate images for all lots at the end
   console.log('Generating media items for all created lots...');
   for (const lotId of allLotIds) {
-    await createMediaItems(lotId, true); // Featured image
-    await createMediaItems(lotId, false); // Additional images
+    await createMediaItems(lotId, true);
+    await createMediaItems(lotId, false);
   }
 
-  // This is the new function call
   await simulateBiddingAndPayments(tenant.id);
+  await simulateVisits();
 
   console.log('Extended seeding finished.');
 }

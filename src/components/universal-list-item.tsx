@@ -5,6 +5,7 @@ import * as React from 'react';
 import type { Auction, Lot, PlatformSettings, DirectSaleOffer } from '@/types';
 import AuctionListItem from '@/components/cards/auction-list-item';
 import LotListItem from '@/components/cards/lot-list-item';
+import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
 
 
 type Item = Partial<Auction & Lot & DirectSaleOffer>;
@@ -24,7 +25,7 @@ export default function UniversalListItem({ item, type, platformSettings, parent
     return <AuctionListItem auction={item as Auction} onUpdate={onUpdate} />;
   }
   
-  if (type === 'lot' || type === 'direct_sale') {
+  if (type === 'lot') {
     return (
       <LotListItem 
         lot={item as Lot} 
@@ -33,6 +34,10 @@ export default function UniversalListItem({ item, type, platformSettings, parent
         onUpdate={onUpdate}
       />
     );
+  }
+  
+  if (type === 'direct_sale') {
+      return <DirectSaleOfferListItem offer={item as DirectSaleOffer} />;
   }
 
   return null;

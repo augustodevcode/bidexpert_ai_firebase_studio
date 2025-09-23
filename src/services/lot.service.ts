@@ -17,6 +17,7 @@ export class LotService {
   }
 
   private mapLotWithDetails(lot: any): Lot {
+    const bens = lot.bens?.map((lb: any) => lb.bem).filter(Boolean) || [];
     return {
       ...lot,
       price: lot.price ? Number(lot.price) : 0,
@@ -26,7 +27,8 @@ export class LotService {
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
       evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-      bens: lot.bens?.map((lb: any) => lb.bem) || [],
+      bens: bens,
+      bemIds: bens.map((b: any) => b.id),
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
