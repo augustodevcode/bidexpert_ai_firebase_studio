@@ -46,7 +46,10 @@ export class AuctionService {
       sellerName: a.seller?.name,
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      auctionStages: a.stages || [],
+      auctionStages: (a.stages || []).map((stage: any) => ({
+        ...stage,
+        initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+      })),
       lots: (a.lots || []).map((lot: any) => ({
         ...lot,
         price: Number(lot.price),
@@ -63,8 +66,8 @@ export class AuctionService {
    * @param {string} tenantId - O ID do tenant.
    * @returns {Promise<Auction[]>} Uma lista de leilões.
    */
-  async getAuctions(tenantId: string): Promise<Auction[]> {
-    const auctions = await this.auctionRepository.findAll(tenantId);
+  async getAuctions(tenantId: string, limit?: number): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findAll(tenantId, limit);
     return this.mapAuctionsWithDetails(auctions);
   }
 

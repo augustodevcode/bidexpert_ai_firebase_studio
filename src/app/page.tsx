@@ -26,18 +26,35 @@ async function HomePageData() {
         getSellers(true),
     ]);
 
+    // ATENÇÃO: Conversão de `Decimal` para `Number`
+    // Os dados que vêm do Prisma (através das server actions) podem conter campos
+    // do tipo `Decimal`. Este tipo não é serializável e não pode ser passado
+    // diretamente de um Server Component para um Client Component.
+    // Portanto, precisamos converter manualmente esses campos para `Number` ou `String`.
+
     const serializedLots = lotsData.map(lot => ({
       ...lot,
       initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
       secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
       price: lot.price ? Number(lot.price) : null,
-      // Certifique-se de que todos os campos Decimal sejam convertidos
+      evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+      bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
     }));
+
+    const serializedAuctions = auctionsData.map(auction => ({
+        ...auction,
+        initialOffer: auction.initialOffer ? Number(auction.initialOffer) : null,
+        estimatedRevenue: auction.estimatedRevenue ? Number(auction.estimatedRevenue) : null,
+        achievedRevenue: auction.achievedRevenue ? Number(auction.achievedRevenue) : null,
+        decrementAmount: auction.decrementAmount ? Number(auction.decrementAmount) : null,
+        floorPrice: auction.floorPrice ? Number(auction.floorPrice) : null,
+    }));
+
 
     return (
         <HomePageClient
             platformSettings={settings}
-            allAuctions={auctionsData}
+            allAuctions={serializedAuctions}
             allLots={serializedLots}
             categories={categoriesData}
             sellers={sellersData}
