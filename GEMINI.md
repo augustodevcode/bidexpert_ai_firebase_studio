@@ -30,7 +30,15 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Esta regra é o pilar da segurança e integridade dos dados da plataforma, garantindo que os dados de cada cliente (leiloeiro) permaneçam completamente isolados.
 
-## 5. Estrutura Modular do Schema Prisma
+## 5. Exibição Pública de Conteúdo
+
+**Regra:** Conteúdo que não está pronto para o público **não deve** ser exibido em páginas públicas.
+-   **Status a serem ocultados:** Leilões e lotes com o status `"RASCUNHO"` ou `"EM_PREPARACAO"` **nunca** devem ser retornados em consultas para páginas de acesso público (home, busca, páginas de categoria, perfis de vendedores, etc.).
+-   **Aplicação:** Esta filtragem deve ser aplicada na camada de serviço (`AuctionService`, `LotService`) sempre que uma chamada de dados for identificada como pública.
+
+**Justificativa:** Garante que os usuários finais vejam apenas conteúdo finalizado e relevante, evitando a exposição de leilões incompletos ou em fase de planejamento, o que melhora a experiência do usuário e a percepção de profissionalismo da plataforma.
+
+## 6. Estrutura Modular do Schema Prisma
 
 **Regra:** Para manter a organização e a legibilidade do modelo de dados, o schema do Prisma é modularizado.
 - **Diretório de Modelos:** Todos os modelos (`model`) e enumerações (`enum`) do Prisma **devem** ser definidos em arquivos `.prisma` individuais dentro do diretório `prisma/models/`. Cada arquivo deve conter apenas um modelo.
@@ -40,7 +48,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos. Qualquer alteração direta no `schema.prisma` será perdida.
 
-## 6. Princípio da Não-Regressão e Autorização Humana
+## 7. Princípio da Não-Regressão e Autorização Humana
 
 **Regra:** Qualquer exclusão de funcionalidade, componente ou alteração significativa no projeto **deve ser explicitamente autorizada por um usuário humano**. Para evitar a remoção acidental de funcionalidades que estão operando corretamente ao implementar correções ou melhorias, a IA deve:
 
@@ -50,7 +58,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Este princípio garante que o processo de desenvolvimento esteja sempre avançando e evita regressões. Ele mantém uma salvaguarda onde o desenvolvedor humano tem a palavra final sobre quaisquer alterações destrutivas ou em larga escala, preservando a estabilidade e a integridade do projeto.
 
-## 7. Gerenciamento de Dependências
+## 8. Gerenciamento de Dependências
 
 **Regra:** Para manter o projeto otimizado e evitar o crescimento excessivo do diretório `node_modules` e dos pacotes de produção, siga estas diretrizes:
 -   **Dependências de Desenvolvimento:** Pacotes usados exclusivamente para desenvolvimento, teste ou processos de build (e.g., `@playwright/test`, `puppeteer` para geração de PDF no servidor) **devem** ser instalados como `devDependencies`. Isso impede que eles sejam incluídos no build de produção.
@@ -59,7 +67,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Um `node_modules` grande e pacotes de produção inchados podem levar a tempos de instalação mais longos, builds mais lentos e custos de hospedagem mais altos. Manter as dependências limpas e otimizadas é crucial para a saúde do projeto.
 
-## 8. Integridade de Links (Next.js)
+## 9. Integridade de Links (Next.js)
 
 **Regra:** Nunca permita que a propriedade `href` de um componente `<Link>` do Next.js seja `undefined`.
 
@@ -71,7 +79,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Um `href` indefinido causa um erro fatal de renderização no Next.js (`Error: Failed prop type`). Garantir a validade do `href` previne crashes e melhora a robustez da aplicação.
 
-## 9. Indicador de Ambiente de Desenvolvimento
+## 10. Indicador de Ambiente de Desenvolvimento
 
 **Regra:** Em ambiente de desenvolvimento (`NODE_ENV === 'development'`), o rodapé **deve** exibir o componente `DevInfoIndicator`, que mostra informações de depuração essenciais.
 -   **Informações a serem exibidas:**
@@ -82,7 +90,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Ter essas informações visíveis a todo momento durante o desenvolvimento é crucial para depurar problemas relacionados à arquitetura multi-tenant, permissões de usuário e configuração do ambiente, acelerando a resolução de bugs.
 
-## 10. Integridade do Arquivo de Ambiente (`.env`)
+## 11. Integridade do Arquivo de Ambiente (`.env`)
 
 **Regra:** O arquivo `.env` é uma "zona de segurança crítica".
 -   **Modificação pela IA é Proibida:** A IA **nunca** deve modificar o arquivo `.env` diretamente.
@@ -95,7 +103,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Estas regras garantem que segredos e configurações críticas do ambiente sejam sempre gerenciados e validados por um humano, prevenindo a exposição acidental de dados sensíveis ou a quebra do ambiente por configurações incorretas ou remoção de variáveis essenciais.
 
-## 11. Comentários de Cabeçalho nos Arquivos (Nova Regra)
+## 12. Comentários de Cabeçalho nos Arquivos (Nova Regra)
 
 **Regra:** Todo arquivo de código-fonte (ex: `.ts`, `.tsx`) **deve** começar com um comentário em bloco (docblock) que explica de forma clara e concisa o propósito do arquivo e suas principais responsabilidades dentro da arquitetura da aplicação.
 
@@ -112,6 +120,6 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Esta prática garante que qualquer desenvolvedor (ou IA) possa entender rapidamente o papel de cada arquivo, reduzindo a ambiguidade e melhorando a manutenibilidade. Além disso, fornece um contexto crucial para o desenvolvimento e análise assistidos por IA.
 
-## 12. Estratégia de Testes para Aplicação de Leilões Full-Stack
+## 13. Estratégia de Testes para Aplicação de Leilões Full-Stack
 
 A estratégia de testes está documentada no arquivo `README.md` e deve ser seguida para garantir a qualidade e estabilidade do código.

@@ -7,6 +7,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { getPrismaInstance } from '@/lib/prisma';
 import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
 
+const NON_PUBLIC_STATUSES: Prisma.LotStatus[] = ['RASCUNHO', 'CANCELADO'];
+
 export class LotService {
   private repository: LotRepository;
   private prisma;
@@ -35,19 +37,32 @@ export class LotService {
     };
   }
 
-  async getLots(auctionId?: string, tenantId?: string, limit?: number): Promise<Lot[]> {
-    const lots = await this.repository.findAll(auctionId, tenantId, limit);
+  async getLots(auctionId?: string, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
+    const where: Prisma.LotWhereInput = {
+      ...(auctionId && { auctionId }),
+      ...(tenantId && { tenantId }),
+    };
+    if (isPublicCall) {
+        where.status = { notIn: NON_PUBLIC_STATUSES };
+    }
+    const lots = await this.repository.findAll(where, limit);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
-  async getLotsByIds(ids: string[]): Promise<Lot[]> {
+  async getLotsByIds(ids: string[], isPublicCall = false): Promise<Lot[]> {
     const lots = await this.repository.findByIds(ids);
+    if (isPublicCall) {
+      return lots.filter(lot => !NON_PUBLIC_STATUSES.includes(lot.status)).map(lot => this.mapLotWithDetails(lot));
+    }
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
-  async getLotById(id: string, tenantId?: string): Promise<Lot | null> {
+  async getLotById(id: string, tenantId?: string, isPublicCall = false): Promise<Lot | null> {
     const lot = await this.repository.findById(id, tenantId);
     if (!lot) return null;
+    if (isPublicCall && NON_PUBLIC_STATUSES.includes(lot.status)) {
+        return null;
+    }
     return this.mapLotWithDetails(lot);
   }
 

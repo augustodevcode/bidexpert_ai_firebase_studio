@@ -14,6 +14,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { utcToZonedTime } from 'date-fns-tz';
 import { getPrismaInstance } from '@/lib/prisma';
 
+// Status que não devem ser visíveis publicamente
+const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO', 'CANCELADO', 'SUSPENSO'];
+
 export class AuctionService {
   private auctionRepository: AuctionRepository;
   private prisma;
@@ -64,22 +67,34 @@ export class AuctionService {
   /**
    * Busca todos os leilões para um determinado tenant.
    * @param {string} tenantId - O ID do tenant.
+   * @param {boolean} isPublicCall - Se a chamada é pública, filtra os status.
    * @returns {Promise<Auction[]>} Uma lista de leilões.
    */
-  async getAuctions(tenantId: string, limit?: number): Promise<Auction[]> {
-    const auctions = await this.auctionRepository.findAll(tenantId, limit);
+  async getAuctions(tenantId: string, limit?: number, isPublicCall = false): Promise<Auction[]> {
+    const where: Prisma.AuctionWhereInput = { tenantId };
+    if (isPublicCall) {
+        where.status = { notIn: NON_PUBLIC_STATUSES };
+    }
+    const auctions = await this.auctionRepository.findAll(where, limit);
     return this.mapAuctionsWithDetails(auctions);
   }
 
   /**
-   * Busca um leilão específico por ID ou publicId, respeitando o tenantId se fornecido.
+   * Busca um leilão específico por ID ou publicId. Para chamadas públicas,
+   * verifica se o status do leilão permite sua visualização.
    * @param {string | undefined} tenantId - O ID do tenant (opcional para chamadas públicas).
    * @param {string} id - O ID ou publicId do leilão.
+   * @param {boolean} isPublicCall - Se a chamada é pública.
    * @returns {Promise<Auction | null>} O leilão encontrado ou null.
    */
-  async getAuctionById(tenantId: string | undefined, id: string): Promise<Auction | null> {
+  async getAuctionById(tenantId: string | undefined, id: string, isPublicCall = false): Promise<Auction | null> {
     const auction = await this.auctionRepository.findById(tenantId, id);
     if (!auction) return null;
+
+    if (isPublicCall && NON_PUBLIC_STATUSES.includes(auction.status)) {
+        return null; // Não retorna leilões em rascunho/preparação em chamadas públicas
+    }
+
     return this.mapAuctionsWithDetails([auction])[0];
   }
 
@@ -95,25 +110,27 @@ export class AuctionService {
   }
 
   /**
-   * Busca leilões por slug ou ID do leiloeiro.
+   * Busca leilões por slug ou ID do leiloeiro, excluindo status não públicos.
    * @param {string} tenantId - O ID do tenant.
    * @param {string} auctioneerSlug - O slug ou ID do leiloeiro.
-   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   * @returns {Promise<Auction[]>} Uma lista de leilões públicos.
    */
   async getAuctionsByAuctioneerSlug(tenantId: string, auctioneerSlug: string): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findByAuctioneerSlug(tenantId, auctioneerSlug);
-    return this.mapAuctionsWithDetails(auctions);
+    const publicAuctions = auctions.filter(a => !NON_PUBLIC_STATUSES.includes(a.status));
+    return this.mapAuctionsWithDetails(publicAuctions);
   }
 
   /**
-   * Busca leilões por slug ou ID do comitente.
+   * Busca leilões por slug ou ID do comitente, excluindo status não públicos.
    * @param {string} tenantId - O ID do tenant.
    * @param {string} sellerSlugOrPublicId - O slug, ID ou publicId do comitente.
-   * @returns {Promise<Auction[]>} Uma lista de leilões.
+   * @returns {Promise<Auction[]>} Uma lista de leilões públicos.
    */
    async getAuctionsBySellerSlug(tenantId: string, sellerSlugOrPublicId: string): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findBySellerSlug(tenantId, sellerSlugOrPublicId);
-    return this.mapAuctionsWithDetails(auctions);
+    const publicAuctions = auctions.filter(a => !NON_PUBLIC_STATUSES.includes(a.status));
+    return this.mapAuctionsWithDetails(publicAuctions);
   }
 
   /**
