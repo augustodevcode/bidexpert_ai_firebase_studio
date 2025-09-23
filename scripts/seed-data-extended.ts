@@ -667,40 +667,47 @@ async function seed() {
   }
   
   // Simulate Bidding
-  const lotsToBidOn = allLots.filter(l => l.status !== 'ENCERRADO');
-  for (const lot of lotsToBidOn) {
-      let currentBid = new Prisma.Decimal(lot.initialPrice ?? 100);
-      for(let i=0; i < faker.number.int({min: 0, max: 15}); i++) {
-          const bidder = faker.helpers.arrayElement(users.filter(u => u.habilitationStatus === 'HABILITADO'));
-          currentBid = currentBid.add(100);
-          await prisma.bid.create({
-              data: {
-                  amount: currentBid,
-                  lotId: lot.id,
-                  auctionId: lot.auctionId,
-                  bidderId: bidder.id,
-                  tenantId: tenant.id,
-              }
-          });
-      }
-      // Assign winner
-      const winningBid = await prisma.bid.findFirst({ where: { lotId: lot.id }, orderBy: { amount: 'desc' }});
-      if (winningBid) {
-          await prisma.lot.update({
-              where: { id: lot.id },
-              data: { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount }
-          });
-          await prisma.userWin.create({
-              data: {
-                  userId: winningBid.bidderId,
-                  lotId: lot.id,
-                  winningBidAmount: winningBid.amount,
-                  paymentStatus: 'PENDENTE',
-              }
-          });
-      }
+  console.log('Simulating Bidding...');
+  const bidders = users.filter(u => u.habilitationStatus === 'HABILITADO');
+
+  if (bidders.length === 0) {
+    console.log('No habilitated bidders found. Skipping bidding simulation.');
+  } else {
+    const lotsToBidOn = allLots.filter(l => l.status !== 'ENCERRADO');
+    for (const lot of lotsToBidOn) {
+        let currentBid = new Prisma.Decimal(lot.initialPrice ?? 100);
+        for(let i=0; i < faker.number.int({min: 0, max: 15}); i++) {
+            const bidder = faker.helpers.arrayElement(bidders);
+            currentBid = currentBid.add(100);
+            await prisma.bid.create({
+                data: {
+                    amount: currentBid,
+                    lotId: lot.id,
+                    auctionId: lot.auctionId,
+                    bidderId: bidder.id,
+                    tenantId: tenant.id,
+                }
+            });
+        }
+        // Assign winner
+        const winningBid = await prisma.bid.findFirst({ where: { lotId: lot.id }, orderBy: { amount: 'desc' }});
+        if (winningBid) {
+            await prisma.lot.update({
+                where: { id: lot.id },
+                data: { status: 'VENDIDO', winnerId: winningBid.bidderId, price: winningBid.amount }
+            });
+            await prisma.userWin.create({
+                data: {
+                    userId: winningBid.bidderId,
+                    lotId: lot.id,
+                    winningBidAmount: winningBid.amount,
+                    paymentStatus: 'PENDENTE',
+                }
+            });
+        }
+    }
+    console.log('Simulated bidding and assigned winners.');
   }
-  console.log('Simulated bidding and assigned winners.');
 
   await simulatePostBidding(tenant.id);
 

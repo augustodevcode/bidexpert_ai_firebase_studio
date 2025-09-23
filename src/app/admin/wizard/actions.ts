@@ -7,7 +7,7 @@ import { getJudicialBranches } from '../judicial-branches/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getAuctioneers } from '../auctioneers/actions';
 import { getSellers } from '../sellers/actions';
-import { getBens } from '../bens/actions';
+import { getAssets } from '../assets/actions';
 import { getLotCategories } from '../categories/actions';
 import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { revalidatePath } from 'next/cache';
@@ -47,16 +47,16 @@ export async function getWizardInitialData() {
       judicialProcesses,
       auctioneers,
       sellers,
-      availableBens,
+      availableAssets,
       categories
     ] = await Promise.all([
       getCourts(),
       getJudicialDistricts(),
       getJudicialBranches(),
       getJudicialProcesses(tenantId),
-      getAuctioneers(false, tenantId),
-      getSellers(false, tenantId),
-      getBens({ tenantId }),
+      getAuctioneers(false),
+      getSellers(false),
+      getAssets({ tenantId }),
       getLotCategories(),
     ]);
 
@@ -69,7 +69,7 @@ export async function getWizardInitialData() {
         judicialProcesses,
         auctioneers,
         sellers,
-        availableBens,
+        availableAssets,
         categories,
       },
     };

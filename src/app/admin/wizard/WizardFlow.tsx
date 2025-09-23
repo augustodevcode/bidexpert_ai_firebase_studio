@@ -175,18 +175,16 @@ export default function WizardFlow() {
   }, [wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.title, wizardData.auctionDetails?.sellerId, wizardData.auctionDetails?.auctioneerId, wizardData.createdLots?.length, currentStep]);
 
   return (
-    <div data-ai-id="wizard-flow-container" className="w-full h-full">
-        <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            fitView
-            proOptions={{ hideAttribution: true }}
-            className="bg-muted/30"
-        >
-            <Background />
-            <Controls showInteractive={false} />
-        </ReactFlow>
-    </div>
+    <ReactFlow
+      nodes={nodes}
+      edges={edges}
+      nodeTypes={nodeTypes}
+      fitView
+      proOptions={{ hideAttribution: true }}
+      className="bg-muted/30"
+    >
+      <Background />
+      <Controls showInteractive={false} />
+    </ReactFlow>
   );
 }

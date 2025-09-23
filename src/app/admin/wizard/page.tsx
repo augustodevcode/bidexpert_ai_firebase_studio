@@ -10,7 +10,7 @@ import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-
 import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
 import Step5Review from '@/components/admin/wizard/steps/step-5-review';
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Bem, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Asset, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
@@ -18,11 +18,11 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import JudicialProcessForm from '@/app/admin/judicial-processes/judicial-process-form';
 import { createJudicialProcessAction } from '@/app/admin/judicial-processes/actions';
-import { createBem as createBemAction } from '@/app/admin/bens/actions';
+import { createAsset as createAssetAction } from '@/app/admin/assets/actions';
 import { Separator } from '@/components/ui/separator';
 import WizardFlow from '@/components/admin/wizard/WizardFlow';
 import WizardFlowModal from '@/components/admin/wizard/WizardFlowModal';
-import BemForm from '@/app/admin/bens/bem-form';
+import AssetForm from '@/app/admin/assets/asset-form';
 
 
 const allSteps = [
@@ -38,7 +38,7 @@ interface WizardDataForFetching {
     categories: LotCategory[];
     auctioneers: AuctioneerProfileInfo[];
     sellers: SellerProfileInfo[];
-    availableBens: Bem[];
+    availableAssets: Asset[];
     courts: Court[];
     districts: JudicialDistrict[];
     branches: JudicialBranch[];
@@ -54,7 +54,7 @@ function WizardContent({
     refetchData: (newProcessIdToSelect?: string) => void;
 }) {
   const { currentStep, wizardData, nextStep, prevStep, goToStep, setWizardData } = useWizard();
-  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process' | 'bem'>('main');
+  const [wizardMode, setWizardMode] = useState<'main' | 'judicial_process' | 'asset'>('main');
   const [isDataRefetching, setIsDataRefetching] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
@@ -70,19 +70,19 @@ function WizardContent({
 
   const currentStepId = stepsToUse[currentStep]?.id;
   
-  const bensForLotting = useMemo(() => {
-    if (!fetchedData?.availableBens) return [];
+  const assetsForLotting = useMemo(() => {
+    if (!fetchedData?.availableAssets) return [];
 
     if (wizardData.auctionType === 'JUDICIAL') {
       return wizardData.judicialProcess
-        ? fetchedData.availableBens.filter(bem => bem.judicialProcessId === wizardData.judicialProcess!.id)
+        ? fetchedData.availableAssets.filter(asset => asset.judicialProcessId === wizardData.judicialProcess!.id)
         : [];
     } else {
       return wizardData.auctionDetails?.sellerId
-        ? fetchedData.availableBens.filter(bem => bem.sellerId === wizardData.auctionDetails!.sellerId)
+        ? fetchedData.availableAssets.filter(asset => asset.sellerId === wizardData.auctionDetails!.sellerId)
         : [];
     }
-  }, [fetchedData?.availableBens, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
+  }, [fetchedData?.availableAssets, wizardData.auctionType, wizardData.judicialProcess, wizardData.auctionDetails?.sellerId]);
 
   const handleNextStep = () => {
     if (currentStepId === 'auction') {
@@ -102,7 +102,7 @@ function WizardContent({
     setIsDataRefetching(false);
   }
   
-  const handleBemCreated = async () => {
+  const handleAssetCreated = async () => {
     toast({ title: "Sucesso!", description: "Bem cadastrado com sucesso." });
     setIsDataRefetching(true);
     await refetchData(wizardData.judicialProcess?.id);
@@ -132,9 +132,9 @@ function WizardContent({
       );
     }
     
-    if (wizardMode === 'bem') {
+    if (wizardMode === 'asset') {
       return (
-        <BemForm
+        <AssetForm
           initialData={{
             judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id : undefined,
             sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId : undefined,
@@ -143,8 +143,8 @@ function WizardContent({
           processes={fetchedData.judicialProcesses}
           categories={fetchedData.categories}
           sellers={fetchedData.sellers}
-          onSubmitAction={createBemAction}
-          onSuccess={handleBemCreated}
+          onSubmitAction={createAssetAction}
+          onSuccess={handleAssetCreated}
           onCancel={() => setWizardMode('main')}
           formTitle="Novo Bem (Wizard)"
           formDescription="Cadastre o bem. Ele ficará disponível para loteamento ao salvar."
@@ -159,7 +159,7 @@ function WizardContent({
       case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
       case 'lotting': {
         return <Step4Lotting 
-                  availableBens={bensForLotting} 
+                  availableAssets={assetsForLotting} 
                   auctionData={wizardData.auctionDetails as Partial<Auction>} 
                />;
       }
@@ -194,7 +194,7 @@ function WizardContent({
 
                 <div className="flex items-center gap-2">
                     {currentStepId === 'lotting' && (
-                        <Button variant="secondary" type="button" onClick={() => setWizardMode('bem')} disabled={isLoading || isDataRefetching}>
+                        <Button variant="secondary" type="button" onClick={() => setWizardMode('asset')} disabled={isLoading || isDataRefetching}>
                             <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
                         </Button>
                     )}

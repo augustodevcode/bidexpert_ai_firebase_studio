@@ -12,7 +12,7 @@ import LotDetailClientContent from './lot-detail-client';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { getAuction, getAuctions } from '@/app/admin/auctions/actions';
-import { getLot, getLots, getBensByIdsAction } from '@/app/admin/lots/actions';
+import { getLot, getLots, getAssetsByIdsAction } from '@/app/admin/lots/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -65,8 +65,8 @@ async function getLotPageData(currentAuctionId: string, currentLotId: string): P
   }
   
   // Enrich lot with its assets
-  if (lotFromDb.bemIds && lotFromDb.bemIds.length > 0) {
-    lotFromDb.bens = await getBensByIdsAction(lotFromDb.bemIds);
+  if (lotFromDb.assetIds && lotFromDb.assetIds.length > 0) {
+    lotFromDb.assets = await getAssetsByIdsAction(lotFromDb.assetIds);
   }
 
   // Ensure the lots array on the auction object is populated.

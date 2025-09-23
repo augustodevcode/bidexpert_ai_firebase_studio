@@ -3,21 +3,21 @@
  * @fileoverview Server Actions para a entidade Lot (Lote).
  * Este arquivo funciona como a camada de Controller para todas as operações
  * de CRUD e outras lógicas de negócio relacionadas a lotes. Ele interage com
- * a LotService e a BemService para manipular dados, garantindo a aplicação
+ * a LotService e a AssetService para manipular dados, garantindo a aplicação
  * do contexto de tenant e a revalidação de cache do Next.js quando necessário.
  */
 'use server';
 
-import type { Lot, Bem, LotFormData } from '@/types';
+import type { Lot, Asset, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
-import { BemService } from '@/services/bem.service'; // Use BemService now
+import { AssetService } from '@/services/asset.service';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/app/auth/actions';
 import { headers } from 'next/headers';
 
 const lotService = new LotService();
-const bemService = new BemService(); // Use BemService
+const assetService = new AssetService();
 
 async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
     const session = await getSession();
@@ -46,7 +46,7 @@ export async function getLot(id: string, isPublicCall: boolean = false): Promise
   return lotService.getLotById(id, tenantId);
 }
 
-export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean, message: string, lotId?: string }> {
+export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string }> {
   const tenantId = await getTenantIdFromRequest();
   const result = await lotService.createLot(data, tenantId);
   if (result.success && process.env.NODE_ENV !== 'test') {
@@ -58,7 +58,7 @@ export async function createLot(data: Partial<LotFormData>): Promise<{ success: 
   return result;
 }
 
-export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean, message: string }> {
+export async function updateLot(id: string, data: Partial<LotFormData>): Promise<{ success: boolean; message: string }> {
   const result = await lotService.updateLot(id, data);
   if (result.success && process.env.NODE_ENV !== 'test') {
       revalidatePath('/admin/lots');
@@ -70,7 +70,7 @@ export async function updateLot(id: string, data: Partial<LotFormData>): Promise
   return result;
 }
 
-export async function deleteLot(id: string, auctionId?: string): Promise<{ success: boolean, message: string }> {
+export async function deleteLot(id: string, auctionId?: string): Promise<{ success: boolean; message: string }> {
   const lotToDelete = await lotService.getLotById(id);
   const finalAuctionId = auctionId || lotToDelete?.auctionId;
 
@@ -85,13 +85,13 @@ export async function deleteLot(id: string, auctionId?: string): Promise<{ succe
   return result;
 }
 
-export async function getBensForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Bem[]> {
+export async function getAssetsForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Asset[]> {
     const tenantId = await getTenantIdFromRequest();
-    return bemService.getBens({ ...filter, tenantId });
+    return assetService.getAssets({ ...filter, tenantId });
 }
 
-export async function getBensByIdsAction(ids: string[]): Promise<Bem[]> {
-  return bemService.getBensByIds(ids);
+export async function getAssetsByIdsAction(ids: string[]): Promise<Asset[]> {
+  return assetService.getAssetsByIds(ids);
 }
 
 export async function getLotsByIds(ids: string[]): Promise<Lot[]> {

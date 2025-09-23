@@ -309,13 +309,13 @@ export default function LotDetailClientContent({
   const gallery = useMemo(() => {
     if (!lot) return [];
     
-    // Check if we should inherit media from a Bem
-    if (lot.inheritedMediaFromBemId && lot.bens && lot.bens.length > 0) {
-        const sourceBem = lot.bens.find(b => b.id === lot.inheritedMediaFromBemId);
-        if (sourceBem) {
-            const bemImages = [sourceBem.imageUrl, ...(sourceBem.galleryImageUrls || [])]
+    // Check if we should inherit media from a Asset
+    if (lot.inheritedMediaFromBemId && lot.assets && lot.assets.length > 0) {
+        const sourceAsset = lot.assets.find(b => b.id === lot.inheritedMediaFromBemId);
+        if (sourceAsset) {
+            const assetImages = [sourceAsset.imageUrl, ...(sourceAsset.galleryImageUrls || [])]
                 .filter(Boolean) as string[];
-            if (bemImages.length > 0) return bemImages;
+            if (assetImages.length > 0) return assetImages;
         }
     }
     

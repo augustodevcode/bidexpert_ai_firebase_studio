@@ -2,15 +2,14 @@
 /**
  * @fileoverview Componente de formulário reutilizável para criar e editar Lotes.
  * Utiliza `react-hook-form` e Zod para gerenciamento de estado e validação.
- * O formulário é altamente dinâmico, permitindo a vinculação de Bens,
- * gerenciamento de mídia, seleção de leilão/categoria, e configuração de
- * preços específicos por etapa do leilão.
+ * É um componente complexo que inclui seletores de entidade, campos dinâmicos
+ * para diferentes métodos de leilão, e gerenciamento de etapas/praças.
  */
 'use client';
 
-import * as React from 'react';
+import React, { useEffect, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useWatch, useFieldArray } from 'react-hook-form';
+import { useForm, Controller, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -27,7 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { lotFormSchema, type LotFormValues } from './lot-form-schema';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo } from '@/types';
+import type { Lot, Auction, Asset, StateInfo, CityInfo, MediaItem, Subcategory, PlatformSettings, LotStatus, LotCategory, SellerProfileInfo } from '@/types';
 import { Loader2, Save, Package, ImagePlus, Trash2, MapPin, FileText, Banknote, Link as LinkIcon, Gavel, Building, Layers, ImageIcon, PackagePlus, Eye, CheckCircle, FileSignature, Sparkles, DollarSign, Percent, Settings as SettingsIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -43,11 +42,11 @@ import { getStates as refetchStates } from '../states/actions';
 import { getCities as refetchCities } from '../cities/actions';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import SearchResultsFrame from '@/components/search-results-frame';
-import { createColumns as createBemColumns } from '@/components/admin/lotting/columns';
+import { createColumns as createAssetColumns } from '@/components/admin/lotting/columns';
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
-import { getBens } from '@/app/admin/bens/actions';
+import { getAssets } from '@/app/admin/assets/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { DataTable } from '@/components/ui/data-table';
 import { Switch } from '@/components/ui/switch';
@@ -61,7 +60,7 @@ interface LotFormProps {
   sellers: SellerProfileInfo[]; 
   states: StateInfo[];
   allCities: CityInfo[];
-  initialAvailableBens: Bem[];
+  initialAvailableAssets: Asset[];
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
@@ -81,7 +80,7 @@ export default function LotForm({
   sellers: initialSellers, 
   states,
   allCities,
-  initialAvailableBens,
+  initialAvailableAssets,
   onSubmitAction,
   formTitle,
   formDescription,
@@ -99,11 +98,11 @@ export default function LotForm({
   
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
-  const [bemRowSelection, setBemRowSelection] = React.useState({});
-  const [currentAvailableBens, setCurrentAvailableBens] = React.useState<Bem[]>(initialAvailableBens);
+  const [assetRowSelection, setAssetRowSelection] = React.useState({});
+  const [currentAvailableAssets, setCurrentAvailableAssets] = React.useState<Asset[]>(initialAvailableAssets);
 
-  const [isBemModalOpen, setIsBemModalOpen] = React.useState(false);
-  const [selectedBemForModal, setSelectedBemForModal] = React.useState<Bem | null>(null);
+  const [isAssetModalOpen, setIsAssetModalOpen] = React.useState(false);
+  const [selectedAssetForModal, setSelectedAssetForModal] = React.useState<Asset | null>(null);
 
   const [auctions, setAuctions] = React.useState(initialAuctions);
   const [categories, setCategories] = React.useState(initialCategories);
@@ -112,7 +111,7 @@ export default function LotForm({
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false); 
 
-  const [linkedBensSortBy, setLinkedBensSortBy] = React.useState('title_asc');
+  const [linkedAssetsSortBy, setLinkedAssetsSortBy] = React.useState('title_asc');
   const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(samplePlatformSettings as PlatformSettings);
 
   const form = useForm<LotFormValues>({
@@ -122,7 +121,7 @@ export default function LotForm({
       auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
       type: initialData?.categoryId || initialData?.type || '',
       price: initialData?.price || 0,
-      bemIds: initialData?.bemIds || [],
+      assetIds: initialData?.assetIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
       status: initialData?.status || 'EM_BREVE',
@@ -135,8 +134,8 @@ export default function LotForm({
   });
   
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
-  const watchedBemIds = useWatch({ control: form.control, name: 'bemIds' });
-  const inheritedMediaFromBemId = useWatch({ control: form.control, name: 'inheritedMediaFromBemId' });
+  const watchedAssetIds = useWatch({ control: form.control, name: 'assetIds' });
+  const inheritedMediaFromAssetId = useWatch({ control: form.control, name: 'inheritedMediaFromBemId' });
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
 
@@ -153,11 +152,11 @@ export default function LotForm({
     updateSellerFromAuction();
   }, [watchedAuctionId, form]);
 
-  const linkedBensDetails = React.useMemo(() => {
-    const allPossibleBens = [...currentAvailableBens, ...(initialData?.bens || [])];
-    const uniqueBens = Array.from(new Map(allPossibleBens.map(item => [item.id, item])).values());
-    return (watchedBemIds || []).map(id => uniqueBens.find(bem => bem.id === id)).filter((b): b is Bem => !!b);
-  }, [watchedBemIds, currentAvailableBens, initialData?.bens]);
+  const linkedAssetsDetails = React.useMemo(() => {
+    const allPossibleAssets = [...currentAvailableAssets, ...(initialData?.assets || [])];
+    const uniqueAssets = Array.from(new Map(allPossibleAssets.map(item => [item.id, item])).values());
+    return (watchedAssetIds || []).map(id => uniqueAssets.find(asset => asset.id === id)).filter((b): b is Asset => !!b);
+  }, [watchedAssetIds, currentAvailableAssets, initialData?.assets]);
 
   // Resto do código...
   const handleRefetchAuctions = React.useCallback(async () => {
@@ -231,56 +230,56 @@ export default function LotForm({
   }
 
   // O resto das funções e hooks permanecem os mesmos...
-   const handleLinkBens = () => {
-    const selectedBemIds = Object.keys(bemRowSelection)
+   const handleLinkAssets = () => {
+    const selectedAssetIds = Object.keys(assetRowSelection)
       .map(Number)
-      .map(index => availableBensForTable[index]?.id)
+      .map(index => availableAssetsForTable[index]?.id)
       .filter(Boolean);
 
-    if (selectedBemIds.length > 0) {
-      const currentBemIds = form.getValues('bemIds') || [];
-      const newBemIds = Array.from(new Set([...currentBemIds, ...selectedBemIds]));
-      form.setValue('bemIds', newBemIds, { shouldDirty: true });
-      setBemRowSelection({}); 
-      toast({ title: `${selectedBemIds.length} bem(ns) vinculado(s).` });
+    if (selectedAssetIds.length > 0) {
+      const currentAssetIds = form.getValues('assetIds') || [];
+      const newAssetIds = Array.from(new Set([...currentAssetIds, ...selectedAssetIds]));
+      form.setValue('assetIds', newAssetIds, { shouldDirty: true });
+      setAssetRowSelection({}); 
+      toast({ title: `${selectedAssetIds.length} bem(ns) vinculado(s).` });
     }
   };
 
-  const handleUnlinkBem = (bemIdToUnlink: string) => {
-      const currentBemIds = form.getValues('bemIds') || [];
-      const newBemIds = currentBemIds.filter(id => id !== bemIdToUnlink);
-      form.setValue('bemIds', newBemIds, { shouldDirty: true });
+  const handleUnlinkAsset = (assetIdToUnlink: string) => {
+      const currentAssetIds = form.getValues('assetIds') || [];
+      const newAssetIds = currentAssetIds.filter(id => id !== assetIdToUnlink);
+      form.setValue('assetIds', newAssetIds, { shouldDirty: true });
       toast({ title: 'Bem desvinculado.' });
   };
     
-  const handleViewBemDetails = (bem: Bem) => {
-    setSelectedBemForModal(bem);
-    setIsBemModalOpen(true);
+  const handleViewAssetDetails = (asset: Asset) => {
+    setSelectedAssetForModal(asset);
+    setIsAssetModalOpen(true);
   };
 
-  const bemColumns = React.useMemo(() => createBemColumns({ onOpenDetails: handleViewBemDetails, handleDelete: () => {} }), [handleViewBemDetails]);
+  const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails, handleDelete: () => {} }), [handleViewAssetDetails]);
 
-  const availableBensForTable = React.useMemo(() => {
-    const linkedBemIds = new Set(watchedBemIds || []);
-    return currentAvailableBens.filter(bem => !linkedBemIds.has(bem.id));
-  }, [currentAvailableBens, watchedBemIds]);
+  const availableAssetsForTable = React.useMemo(() => {
+    const linkedAssetIds = new Set(watchedAssetIds || []);
+    return currentAvailableAssets.filter(asset => !linkedAssetIds.has(asset.id));
+  }, [currentAvailableAssets, watchedAssetIds]);
   
-  const bemSortOptions = [ { value: 'title_asc', label: 'Título A-Z' }, { value: 'title_desc', label: 'Título Z-A' }, { value: 'evaluationValue_asc', label: 'Valor Crescente' }, { value: 'evaluationValue_desc', label: 'Valor Decrescente' }];
-  const renderBemGridItem = (bem: Bem) => (
-    <Card key={bem.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
-        <CardHeader className="p-3"><div className="relative aspect-video bg-muted rounded-md overflow-hidden"><Image src={bem.imageUrl || 'https://placehold.co/400x300.png'} alt={bem.title} fill className="object-cover" data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="text-sm font-semibold line-clamp-2 h-8 mt-2">{bem.title}</CardTitle><CardDescription className="text-xs">ID: {bem.publicId || bem.id}</CardDescription></CardHeader>
-        <CardContent className="p-3 flex-grow space-y-1 text-xs"><p className="font-medium">Avaliação: {bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p></CardContent>
-        <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
+  const assetSortOptions = [ { value: 'title_asc', label: 'Título A-Z' }, { value: 'title_desc', label: 'Título Z-A' }, { value: 'evaluationValue_asc', label: 'Valor Crescente' }, { value: 'evaluationValue_desc', label: 'Valor Decrescente' }];
+  const renderAssetGridItem = (asset: Asset) => (
+    <Card key={asset.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
+        <CardHeader className="p-3"><div className="relative aspect-video bg-muted rounded-md overflow-hidden"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="text-sm font-semibold line-clamp-2 h-8 mt-2">{asset.title}</CardTitle><CardDescription className="text-xs">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
+        <CardContent className="p-3 flex-grow space-y-1 text-xs"><p className="font-medium">Avaliação: {asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p></CardContent>
+        <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
     </Card>
   );
 
-  const renderBemListItem = (bem: Bem) => (
-    <Card key={bem.id} className="shadow-sm hover:shadow-md transition-shadow">
+  const renderAssetListItem = (asset: Asset) => (
+    <Card key={asset.id} className="shadow-sm hover:shadow-md transition-shadow">
       <CardContent className="p-3 flex items-center gap-4">
-        <div className="relative w-24 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0"><Image src={bem.imageUrl || 'https://placehold.co/120x90.png'} alt={bem.title} fill className="object-cover" data-ai-hint={bem.dataAiHint || bem.categoryName?.toLowerCase() || 'bem item'} /></div>
-        <div className="flex-grow"><h4 className="font-semibold text-sm">{bem.title}</h4><p className="text-xs text-muted-foreground">ID: {bem.publicId || bem.id}</p></div>
-        <div className="flex-shrink-0 text-right"><p className="text-sm font-semibold">{bem.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="text-xs text-muted-foreground">Avaliação</p></div>
-         <div className="flex items-center flex-shrink-0 ml-4"><Button variant="ghost" size="icon" onClick={() => handleViewBemDetails(bem)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkBem(bem.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
+        <div className="relative w-24 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
+        <div className="flex-grow"><h4 className="font-semibold text-sm">{asset.title}</h4><p className="text-xs text-muted-foreground">ID: {asset.publicId || asset.id}</p></div>
+        <div className="flex-shrink-0 text-right"><p className="text-sm font-semibold">{asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="text-xs text-muted-foreground">Avaliação</p></div>
+         <div className="flex items-center flex-shrink-0 ml-4"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
       </CardContent>
     </Card>
   );
@@ -320,11 +319,11 @@ export default function LotForm({
                                <p>A configuração de preços agora é feita por etapa do leilão.</p>
                              </TabsContent>
                               <TabsContent value="midia" className="pt-6 space-y-4">
-                                 <FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedBensDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedBensDetails[0]?.id || ''} disabled={linkedBensDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
-                                  {inheritedMediaFromBemId && (<FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedBensDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)}/>)}
-                                  <div className={cn("space-y-4", inheritedMediaFromBemId && "opacity-50 pointer-events-none")}>
-                                      <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={!!inheritedMediaFromBemId}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>
-                                      <FormItem><FormLabel>Galeria de Imagens Adicionais</FormLabel><Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} disabled={!!inheritedMediaFromBemId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{galleryUrls?.map((url, index) => (<div key={url} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover" disabled={!!inheritedMediaFromBemId}><Trash2 className="h-3.5 w-3.5" /></Button></div>))}</div></FormItem>
+                                 <FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedAssetsDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedAssetsDetails[0]?.id || ''} disabled={linkedAssetsDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
+                                  {inheritedMediaFromAssetId && (<FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedAssetsDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)}/>)}
+                                  <div className={cn("space-y-4", inheritedMediaFromAssetId && "opacity-50 pointer-events-none")}>
+                                      <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} disabled={!!inheritedMediaFromAssetId}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>
+                                      <FormItem><FormLabel>Galeria de Imagens Adicionais</FormLabel><Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} disabled={!!inheritedMediaFromAssetId}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{galleryUrls?.map((url, index) => (<div key={url} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover" disabled={!!inheritedMediaFromAssetId}><Trash2 className="h-3.5 w-3.5" /></Button></div>))}</div></FormItem>
                                  </div>
                               </TabsContent>
                               <TabsContent value="avancado" className="pt-6 space-y-4">
@@ -342,11 +341,11 @@ export default function LotForm({
                 <Card className="shadow-lg mt-6">
                     <CardHeader><CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle><CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription></CardHeader>
                     <CardContent className="space-y-4 p-6 bg-secondary/30">
-                        <SearchResultsFrame items={linkedBensDetails} totalItemsCount={linkedBensDetails.length} renderGridItem={renderBemGridItem} renderListItem={renderBemListItem} sortOptions={bemSortOptions} initialSortBy={linkedBensSortBy} onSortChange={setLinkedBensSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                        <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
                         <Separator />
                         <div>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkBens} disabled={Object.keys(bemRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
-                            <DataTable columns={bemColumns} data={availableBensForTable} rowSelection={bemRowSelection} setRowSelection={setBemRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
+                            <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                         </div>
                     </CardContent>
                 </Card>
@@ -358,7 +357,7 @@ export default function LotForm({
       <ChooseMediaDialog isOpen={isMainImageDialogOpen} onOpenChange={setIsMainImageDialogOpen} onMediaSelect={(items) => handleMediaSelect(items, 'main')} allowMultiple={false} />
       <ChooseMediaDialog isOpen={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen} onMediaSelect={(items) => handleMediaSelect(items, 'gallery')} allowMultiple={true} />
       
-      <BemDetailsModal bem={selectedBemForModal} isOpen={isBemModalOpen} onClose={() => setIsBemModalOpen(false)} />
+      <AssetDetailsModal asset={selectedAssetForModal} isOpen={isAssetModalOpen} onClose={() => setIsAssetModalOpen(false)} />
     </>
   );
 }

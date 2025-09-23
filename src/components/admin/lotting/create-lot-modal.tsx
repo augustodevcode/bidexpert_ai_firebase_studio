@@ -12,7 +12,7 @@ import {
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import type { Bem, Lot } from '@/types';
+import type { Asset, Lot } from '@/types';
 import { Loader2, Save, PackagePlus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 
@@ -25,24 +25,24 @@ export const lotModalFormSchema = z.object({
 
 export type LotFromModalValues = z.infer<typeof lotModalFormSchema>;
 
-interface CreateLotFromBensModalProps {
+interface CreateLotFromAssetsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedBens: Bem[];
+  selectedAssets: Asset[];
   onLotCreated: (newLotData: Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt'>) => void;
 }
 
-export default function CreateLotFromBensModal({
-  isOpen, onClose, selectedBens, onLotCreated
-}: CreateLotFromBensModalProps) {
+export default function CreateLotFromAssetsModal({
+  isOpen, onClose, selectedAssets, onLotCreated
+}: CreateLotFromAssetsModalProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const totalEvaluationValue = React.useMemo(() => {
-    return selectedBens.reduce((sum, bem) => sum + (bem.evaluationValue || 0), 0);
-  }, [selectedBens]);
+    return selectedAssets.reduce((sum, asset) => sum + (asset.evaluationValue || 0), 0);
+  }, [selectedAssets]);
   
-  const defaultTitle = selectedBens.length === 1 ? selectedBens[0].title : `Lote Agrupado - ${selectedBens.length} Bens`;
+  const defaultTitle = selectedAssets.length === 1 ? selectedAssets[0].title : `Lote Agrupado - ${selectedAssets.length} Itens`;
 
   const form = useForm<LotFromModalValues>({
     resolver: zodResolver(lotModalFormSchema),
@@ -63,24 +63,23 @@ export default function CreateLotFromBensModal({
         bidIncrementStep: undefined,
         });
     }
-  }, [isOpen, selectedBens, defaultTitle, totalEvaluationValue, form]);
+  }, [isOpen, selectedAssets, defaultTitle, totalEvaluationValue, form]);
 
 
   async function onSubmit(values: LotFromModalValues) {
     setIsSubmitting(true);
-    const firstBem = selectedBens[0];
+    const firstAsset = selectedAssets[0];
     
-    // Passa o objeto de dados de volta para o pai, em vez de chamar a server action aqui.
     onLotCreated({
         ...values,
-        bemIds: selectedBens.map(b => b.id),
+        assetIds: selectedAssets.map(b => b.id),
         status: 'EM_BREVE',
         price: values.initialPrice,
-        categoryId: firstBem?.categoryId,
-        type: firstBem?.categoryId || '', 
-        subcategoryId: firstBem?.subcategoryId,
-        imageUrl: firstBem?.imageUrl,
-        dataAiHint: firstBem?.dataAiHint,
+        categoryId: firstAsset?.categoryId,
+        type: firstAsset?.categoryId || '', 
+        subcategoryId: firstAsset?.subcategoryId,
+        imageUrl: firstAsset?.imageUrl,
+        dataAiHint: firstAsset?.dataAiHint,
     });
 
     toast({ title: 'Sucesso!', description: 'Lote agrupado foi preparado.' });
@@ -94,14 +93,14 @@ export default function CreateLotFromBensModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2"><PackagePlus /> Criar Novo Lote Agrupado</DialogTitle>
           <DialogDescription>
-            Defina os detalhes para o novo lote que conterá os {selectedBens.length} bens selecionados.
+            Defina os detalhes para o novo lote que conterá os {selectedAssets.length} bens selecionados.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <div className="py-4 space-y-4">
               <div className="p-3 bg-secondary/50 rounded-md text-sm">
-                <p><strong>Bens Selecionados:</strong> {selectedBens.length}</p>
+                <p><strong>Bens Selecionados:</strong> {selectedAssets.length}</p>
                 <p><strong>Valor de Avaliação Total:</strong> R$ {totalEvaluationValue.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
               </div>
               <Separator />
