@@ -46,7 +46,7 @@ export class AuctionService {
       sellerName: a.seller?.name,
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      stages: a.stages || [],
+      auctionStages: a.stages || [],
       lots: (a.lots || []).map((lot: any) => ({
         ...lot,
         price: Number(lot.price),
@@ -61,11 +61,10 @@ export class AuctionService {
   /**
    * Busca todos os leilões para um determinado tenant.
    * @param {string} tenantId - O ID do tenant.
-   * @param {number} [limit] - Limite opcional para o número de resultados.
    * @returns {Promise<Auction[]>} Uma lista de leilões.
    */
-  async getAuctions(tenantId: string, limit?: number): Promise<Auction[]> {
-    const auctions = await this.auctionRepository.findAll(tenantId, limit);
+  async getAuctions(tenantId: string): Promise<Auction[]> {
+    const auctions = await this.auctionRepository.findAll(tenantId);
     return this.mapAuctionsWithDetails(auctions);
   }
 
