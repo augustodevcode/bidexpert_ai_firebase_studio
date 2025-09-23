@@ -50,7 +50,7 @@ const InconsistencyTable: React.FC<InconsistencyTableProps> = ({ title, data, en
                                 <TableCell className="font-medium">{item.title}</TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href={`/admin/${entityPath}/${item.publicId || item.id}/edit`} target="_blank">Corrigir</Link>
+                                        <Link href={`/admin/${entityPath}/${item.publicId || item.id}/edit`}>Corrigir</Link>
                                     </Button>
                                 </TableCell>
                             </TableRow>
@@ -79,7 +79,7 @@ const InconsistentAuctionTable: React.FC<InconsistentAuctionTableProps> = ({ tit
                          <div className="flex justify-between items-center">
                             <p className="font-semibold">{auction.title} (Status: {auction.status})</p>
                             <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`} target="_blank">Corrigir Leilão</Link>
+                                <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`}>Corrigir Leilão</Link>
                             </Button>
                          </div>
                          <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 pl-2">
