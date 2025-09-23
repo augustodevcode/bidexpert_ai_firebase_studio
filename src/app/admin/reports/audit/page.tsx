@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes } from 'lucide-react';
+import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit } from 'lucide-react';
 import { getAuditDataAction, type AuditData } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -11,6 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 interface StatCardProps {
   title: string;
@@ -30,67 +33,89 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon }) => (
   </Card>
 );
 
-interface InconsistencyTableProps {
-  title: string;
-  data: { id: string; title: string; publicId?: string | null }[];
-  entityPath: string;
-}
-
-const InconsistencyTable: React.FC<InconsistencyTableProps> = ({ title, data, entityPath }) => {
+const InconsistencyAccordion = ({ title, data, entityPath, message }: { title: string, data: { id: string, title: string, publicId?: string | null }[], entityPath: string, message: string }) => {
     if (data.length === 0) return null;
     return (
         <Card>
-            <CardHeader><CardTitle className="text-base">{title} ({data.length})</CardTitle></CardHeader>
+            <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive"/>
+                    {title} ({data.length})
+                </CardTitle>
+            </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader><TableRow><TableHead>Título</TableHead><TableHead className="text-right">Ação</TableHead></TableRow></TableHeader>
-                    <TableBody>
-                        {data.map(item => (
-                            <TableRow key={item.id}>
-                                <TableCell className="font-medium">{item.title}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button asChild variant="outline" size="sm">
-                                        <Link href={`/admin/${entityPath}/${item.publicId || item.id}/edit`}>Corrigir</Link>
+                <Accordion type="single" collapsible className="w-full">
+                    {data.map(item => (
+                        <AccordionItem value={item.id} key={item.id}>
+                            <AccordionTrigger>
+                                <div className="flex justify-between items-center w-full pr-4">
+                                    <span className="truncate" title={item.title}>{item.title}</span>
+                                    <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
+                                        <Link href={`/admin/${entityPath}/${item.publicId || item.id}/edit`}>
+                                          <Edit className="mr-2 h-3.5 w-3.5"/> Corrigir
+                                        </Link>
                                     </Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <p className="text-sm text-muted-foreground p-2 bg-muted rounded-md">{message}</p>
+                            </AccordionContent>
+                        </AccordionItem>
+                    ))}
+                </Accordion>
             </CardContent>
         </Card>
     )
 }
 
-interface InconsistentAuctionTableProps {
-  title: string;
-  data: { auction: { id: string; title: string; publicId?: string | null; status: string }; lots: { id: string; title: string; status: string }[] }[];
-}
-
-const InconsistentAuctionTable: React.FC<InconsistentAuctionTableProps> = ({ title, data }) => {
+const InconsistentAuctionAccordion = ({ title, data }: { title: string, data: { auction: { id: string; title: string; publicId?: string | null; status: string }; lots: { id: string; title: string; status: string }[] }[] }) => {
     if (data.length === 0) return null;
     return (
         <Card>
-            <CardHeader><CardTitle className="text-base">{title} ({data.length})</CardTitle></CardHeader>
+            <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                     <AlertTriangle className="h-5 w-5 text-destructive"/>
+                    {title} ({data.length})
+                </CardTitle>
+            </CardHeader>
             <CardContent>
-                <div className="space-y-4">
-                 {data.map(({ auction, lots }) => (
-                     <div key={auction.id} className="border p-3 rounded-md">
-                         <div className="flex justify-between items-center">
-                            <p className="font-semibold">{auction.title} (Status: {auction.status})</p>
-                            <Button asChild variant="outline" size="sm">
-                                <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`}>Corrigir Leilão</Link>
-                            </Button>
-                         </div>
-                         <ul className="list-disc list-inside text-sm text-muted-foreground mt-2 pl-2">
-                             {lots.map(lot => <li key={lot.id}>{lot.title} (Status: {lot.status})</li>)}
-                         </ul>
-                     </div>
-                 ))}
-                </div>
+                <Accordion type="single" collapsible className="w-full">
+                    {data.map(({ auction, lots }) => (
+                         <AccordionItem value={auction.id} key={auction.id}>
+                             <AccordionTrigger>
+                                <div className="flex justify-between items-center w-full pr-4">
+                                    <span className="truncate" title={auction.title}>{auction.title}</span>
+                                    <div className="flex items-center gap-2">
+                                        <Badge variant="destructive">{auction.status}</Badge>
+                                         <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
+                                            <Link href={`/admin/auctions/${auction.publicId || auction.id}/edit`}>
+                                                <Edit className="mr-2 h-3.5 w-3.5"/> Corrigir Leilão
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent>
+                                <div className="p-2 bg-muted rounded-md space-y-2">
+                                     <p className="text-sm font-semibold">Lotes com status inconsistente:</p>
+                                     <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+                                        {lots.map(lot => (
+                                            <li key={lot.id}>
+                                                <Link href={`/admin/lots/${lot.id}/edit`} className="hover:underline hover:text-primary">
+                                                    {lot.title}
+                                                </Link>
+                                                <Badge variant="secondary" className="ml-2">{lot.status}</Badge>
+                                            </li>
+                                        ))}
+                                     </ul>
+                                </div>
+                            </AccordionContent>
+                         </AccordionItem>
+                    ))}
+                </Accordion>
             </CardContent>
         </Card>
-    )
+    );
 }
 
 
@@ -158,11 +183,11 @@ export default function AuditPage() {
       </div>
       
       <div className="space-y-4">
-        <InconsistencyTable title="Leilões Sem Lotes" data={auditData?.auctionsWithoutLots || []} entityPath="auctions" />
-        <InconsistencyTable title="Lotes Sem Bens" data={auditData?.lotsWithoutBens || []} entityPath="lots" />
-        <InconsistencyTable title="Leilões Sem Etapas Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" />
-        <InconsistentAuctionTable title="Leilões Encerrados/Finalizados com Lotes Abertos" data={auditData?.closedAuctionsWithOpenLots || []} />
-        <InconsistentAuctionTable title="Leilões Cancelados com Lotes Abertos" data={auditData?.canceledAuctionsWithOpenLots || []} />
+        <InconsistencyAccordion title="Leilões Sem Lotes" data={auditData?.auctionsWithoutLots || []} entityPath="auctions" message="Este leilão não possui nenhum lote cadastrado. Adicione lotes para que ele possa ser publicado."/>
+        <InconsistencyAccordion title="Lotes Sem Bens Vinculados" data={auditData?.lotsWithoutBens || []} entityPath="lots" message="Este lote não tem nenhum bem (ativo) vinculado a ele." />
+        <InconsistencyAccordion title="Leilões Sem Etapas (Praças) Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" message="Este leilão precisa de pelo menos uma etapa (praça) com datas de início e fim."/>
+        <InconsistentAuctionAccordion title="Leilões Encerrados/Finalizados com Lotes Abertos" data={auditData?.closedAuctionsWithOpenLots || []} />
+        <InconsistentAuctionAccordion title="Leilões Cancelados com Lotes Abertos" data={auditData?.canceledAuctionsWithOpenLots || []} />
       </div>
 
     </div>
