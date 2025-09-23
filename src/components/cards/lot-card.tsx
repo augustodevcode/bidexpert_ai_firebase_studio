@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
-import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock } from 'lucide-react';
+import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock, X, Facebook, MessageSquareText, Mail } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
@@ -20,6 +20,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import EntityEditMenu from '../entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Skeleton } from '../ui/skeleton';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+
 
 interface LotCardProps {
   lot: Lot;
@@ -35,6 +37,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   const [isViewed, setIsViewed] = React.useState(false);
   const { toast } = useToast();
   const { userProfileWithPermissions } = useAuth();
+  const [lotFullUrl, setLotFullUrl] = React.useState('');
 
   const hasEditPermission = hasPermission(userProfileWithPermissions, 'manage_all');
 
@@ -57,7 +60,10 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   React.useEffect(() => {
     setIsFavorite(isLotFavoriteInStorage(lot.id));
     setIsViewed(getRecentlyViewedIds().includes(lot.id));
-  }, [lot.id]);
+    if (typeof window !== 'undefined') {
+        setLotFullUrl(`${window.location.origin}/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`);
+    }
+  }, [lot.id, lot.auctionId, lot.publicId]);
   
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -79,6 +85,17 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     e.preventDefault();
     e.stopPropagation();
     setIsPreviewModalOpen(true);
+  };
+  
+  const getSocialLink = (platform: 'x' | 'facebook' | 'whatsapp' | 'email', url: string, title: string) => {
+    const encodedUrl = encodeURIComponent(url);
+    const encodedTitle = encodeURIComponent(title);
+    switch(platform) {
+      case 'x': return `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+      case 'facebook': return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+      case 'whatsapp': return `https://api.whatsapp.com/send?text=${encodedTitle}%20${encodedUrl}`;
+      case 'email': return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
+    }
   };
   
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'Não informado';
@@ -152,34 +169,20 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
             ))}
           </div>
           <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
-              <TooltipProvider>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
-                        <Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
-                    </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
-                </Tooltip>
-                 <Tooltip>
-                    <TooltipTrigger asChild>
-                    <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar">
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                    </Button>
-                    </TooltipTrigger>
-                    <TooltipContent><p>Pré-visualizar</p></TooltipContent>
-                </Tooltip>
-                {hasEditPermission && (
-                    <EntityEditMenu
-                        entityType="lot"
-                        entityId={lot.id}
-                        publicId={lot.publicId!}
-                        currentTitle={lot.title}
-                        isFeatured={lot.isFeatured || false}
-                        onUpdate={onUpdate}
-                    />
-                )}
-              </TooltipProvider>
+            <TooltipProvider>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+                <DropdownMenu>
+                    <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" aria-label="Compartilhar"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
+                    <DropdownMenuContent align="end" className="w-56">
+                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+                {hasEditPermission && (<EntityEditMenu entityType="lot" entityId={lot.id} publicId={lot.publicId!} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate}/>)}
+            </TooltipProvider>
           </div>
         </div>
         <CardContent className="p-3 flex-grow space-y-1.5">
