@@ -11,15 +11,17 @@ import { Checkbox } from '@/components/ui/checkbox';
 import type { LotCategory } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Check, X } from 'lucide-react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 
 export const createColumns = (): ColumnDef<LotCategory>[] => [
   {
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
-      <div className="font-medium">
+      <Link href={`/admin/categories/${row.original.id}/edit`} className="font-medium hover:text-primary">
         {row.getValue("name")}
-      </div>
+      </Link>
     ),
   },
   {

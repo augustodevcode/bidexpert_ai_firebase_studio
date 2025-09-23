@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotCategories } from './actions';
 import type { LotCategory } from '@/types';
-import { ListChecks, PlusCircle } from 'lucide-react';
+import { ListChecks, PlusCircle, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
@@ -69,10 +69,14 @@ export default function AdminCategoriesPage() {
               Categorias de Lotes
             </CardTitle>
             <CardDescription>
-              Visualize as categorias fixas da plataforma. A criação e edição foram desativadas para manter a consistência dos dados.
+              Visualize as categorias da plataforma. Para adicionar ou editar, contate o administrador.
             </CardDescription>
           </div>
-          {/* O botão de criar foi removido para reforçar que o CRUD está desativado nesta tela. */}
+          <Button asChild>
+            <Link href="/admin/categories/analysis">
+              <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
           <DataTable

@@ -45,18 +45,14 @@ const assetManagementItems = [
 
 const categoryManagementItems = [
     { title: 'Listar Categorias', href: '/admin/categories', icon: ListChecks },
-    { title: 'Nova Categoria', href: '/admin/categories/new', icon: PlusCircle },
     { title: 'Análise de Categorias', href: '/admin/categories/analysis', icon: BarChart },
     { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-    { title: 'Nova Subcategoria', href: '/admin/subcategories/new', icon: PlusCircle },
 ];
 
 const locationManagementItems = [
     { title: 'Listar Cidades', href: '/admin/cities', icon: Building2 },
-    { title: 'Nova Cidade', href: '/admin/cities/new', icon: PlusCircle },
     { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart },
     { title: 'Listar Estados', href: '/admin/states', icon: MapPin },
-    { title: 'Novo Estado', href: '/admin/states/new', icon: PlusCircle },
     { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart },
 ];
 
@@ -67,16 +63,12 @@ const contentManagementItems = [
 
 const judicialManagementItems = [
     { title: 'Listar Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Novo Tribunal', href: '/admin/courts/new', icon: PlusCircle },
     { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart },
     { title: 'Listar Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Nova Comarca', href: '/admin/judicial-districts/new', icon: PlusCircle },
     { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart },
     { title: 'Listar Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Nova Vara', href: '/admin/judicial-branches/new', icon: PlusCircle },
     { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart },
     { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
-    { title: 'Novo Processo', href: '/admin/judicial-processes/new', icon: PlusCircle },
 ]
 
 const platformManagementItems = [

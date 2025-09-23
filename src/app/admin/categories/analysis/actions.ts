@@ -33,7 +33,7 @@ export async function getCategoriesPerformanceAction(): Promise<CategoryPerforma
     });
 
     return categories.map(category => {
-      const totalRevenue = category.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalRevenue = category.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLotsSold = category.lots.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 

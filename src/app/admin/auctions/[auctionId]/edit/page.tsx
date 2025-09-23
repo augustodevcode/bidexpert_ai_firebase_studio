@@ -38,7 +38,6 @@ import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
-import SearchResultsFrame from '@/components/search-results-frame';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';

@@ -36,7 +36,7 @@ export async function getAuctionsPerformanceAction(): Promise<AuctionPerformance
     });
 
     return auctions.map(auction => {
-      const totalRevenue = auction.lots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalRevenue = auction.lots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const lotsSoldCount = auction.lots.length;
       const totalLots = auction._count.lots;
       const averageTicket = lotsSoldCount > 0 ? totalRevenue / lotsSoldCount : 0;
@@ -93,7 +93,7 @@ export async function getAuctionDashboardDataAction(auctionId: string): Promise<
         }
 
         const soldLots = auction.lots.filter(lot => lot.status === 'VENDIDO');
-        const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price || 0), 0);
+        const totalRevenue = soldLots.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
         const totalBids = auction.lots.reduce((acc, lot) => acc + lot.bids.length, 0);
         const uniqueBidders = new Set(auction.lots.flatMap(lot => lot.bids.map(bid => bid.bidderId))).size;
         const salesRate = auction.lots.length > 0 ? (soldLots.length / auction.lots.length) * 100 : 0;
