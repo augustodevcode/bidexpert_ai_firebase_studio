@@ -542,7 +542,6 @@ export default function SearchPage() {
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
               emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
-              onItemsPerPageChange={setItemsPerPage}
             />
             </Tabs>
         </main>
