@@ -212,9 +212,14 @@ export default function SearchPage() {
     if (auctionTypeFromQuery && initial.searchType !== 'tomada_de_precos') {
         initial.modality = auctionTypeFromQuery.toUpperCase();
     }
-
-    if (searchParamsHook.get('status')) initial.status = [searchParamsHook.get('status')!.toUpperCase()];
-    else initial.status = (initial.searchType === 'direct_sale' || initial.searchType === 'tomada_de_precos') ? ['ACTIVE'] : [];
+    
+    // CORREÇÃO: Processar múltiplos status da URL
+    const statusParam = searchParamsHook.get('status');
+    if (statusParam) {
+      initial.status = statusParam.split(',').map(s => s.trim().toUpperCase());
+    } else {
+      initial.status = (initial.searchType === 'direct_sale' || initial.searchType === 'tomada_de_precos') ? ['ACTIVE'] : [];
+    }
 
     if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
 
