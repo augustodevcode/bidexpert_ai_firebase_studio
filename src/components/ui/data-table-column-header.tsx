@@ -86,18 +86,23 @@ export function DataTableColumnHeader<TData, TValue>({
 // Client-side date formatter component to prevent hydration errors
 export const ClientOnlyDate = ({ date, format = "dd/MM/yyyy" }: { date: string | Date | null | undefined, format?: string }) => {
     const [formattedDate, setFormattedDate] = useState('...');
+    const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
-        if (date) {
+        setIsClient(true);
+    }, []);
+    
+    useEffect(() => {
+        if (isClient && date) {
             try {
                 setFormattedDate(formatDate(new Date(date as string), format, { locale: ptBR }));
             } catch {
                 setFormattedDate('Data inválida');
             }
-        } else {
+        } else if (isClient) {
             setFormattedDate('N/A');
         }
-    }, [date, format]);
+    }, [date, format, isClient]);
 
     return <span>{formattedDate}</span>;
 }
