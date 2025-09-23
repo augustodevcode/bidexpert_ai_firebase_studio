@@ -32,13 +32,12 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 ## 5. Exibição Pública de Conteúdo (Regra Crítica)
 
-**Regra:** Conteúdo que não está pronto para o público **NUNCA** deve ser exibido em páginas públicas.
+**Regra:** O conteúdo visível publicamente deve ser estritamente controlado para garantir uma experiência de usuário limpa e relevante.
 
--   **Status a serem ocultados:** Leilões e lotes associados a leilões com o status `"RASCUNHO"` ou `"EM_PREPARACAO"` **nunca** devem ser retornados em consultas para páginas de acesso público (home, busca, páginas de categoria, perfis de vendedores, etc.).
--   **Aplicação da Regra:** Esta filtragem **deve ser aplicada na camada de acesso a dados (Repositório)** sempre que uma consulta for identificada como pública (`isPublicCall = true`). Isso garante que, independentemente da lógica de negócio no serviço, os dados brutos retornados do banco de dados já estejam pré-filtrados, prevenindo vazamentos de informação.
--   **Status de Lotes:** Lotes individuais com status "RASCUNHO" ou "CANCELADO" também devem ser omitidos de todas as visualizações públicas.
+-   **Regra 5.1: Status de Preparação:** Leilões e lotes associados a leilões com o status `"RASCUNHO"` ou `"EM_PREPARACAO"` **nunca** devem ser retornados em consultas para páginas de acesso público (home, busca, páginas de categoria, etc.). Esta filtragem deve ser aplicada na camada de acesso a dados (Repositório) para máxima segurança.
+-   **Regra 5.2: Conteúdo da Homepage:** A página inicial **deve exibir apenas** leilões e lotes com status que indicam uma oportunidade ativa ou futura (ex: `"ABERTO_PARA_LANCES"`, `"EM_BREVE"`). Leilões `"ENCERRADO"`, `"FINALIZADO"` ou `"CANCELADO"` **não devem** aparecer na homepage, mas podem ser acessados através da página de busca.
 
-**Justificativa:** Garante que os usuários finais vejam apenas conteúdo finalizado e relevante, evitando a exposição de leilões incompletos ou em fase de planejamento. Aplicar o filtro na camada de repositório cria uma barreira de segurança mais robusta do que depender apenas da camada de serviço.
+**Justificativa:** Garante que os usuários finais vejam apenas conteúdo relevante e finalizado, evitando a exposição de leilões incompletos, cancelados ou já terminados na página principal. Aplicar o filtro de status de preparação na camada de repositório cria uma barreira de segurança mais robusta.
 
 ## 6. Estrutura Modular do Schema Prisma
 

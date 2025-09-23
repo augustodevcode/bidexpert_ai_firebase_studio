@@ -36,12 +36,17 @@ export default function HomePageClient({
     );
   }
 
-  const featuredLots = allLots.filter(l => l.isFeatured).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8);
-  const lotsToDisplay = featuredLots.length > 0 ? featuredLots : allLots.slice(0, 8);
+  const activeLotStatuses = ['ABERTO_PARA_LANCES', 'EM_BREVE'];
+  const activeAuctionStatuses = ['ABERTO_PARA_LANCES', 'EM_BREVE', 'ABERTO'];
+
+  const featuredLots = allLots.filter(l => l.isFeatured && activeLotStatuses.includes(l.status)).sort((a, b) => (b.views || 0) - (a.views || 0)).slice(0, 8);
+  const recentActiveLots = allLots.filter(l => activeLotStatuses.includes(l.status)).slice(0,8);
+  const lotsToDisplay = featuredLots.length > 0 ? featuredLots : recentActiveLots;
   const lotsTitle = featuredLots.length > 0 ? "Lotes em Destaque" : "Lotes Recentes";
 
-  const featuredAuctions = allAuctions.filter(a => a.isFeaturedOnMarketplace).sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime()).slice(0, 4);
-  const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : allAuctions.slice(0, 4);
+  const featuredAuctions = allAuctions.filter(a => a.isFeaturedOnMarketplace && activeAuctionStatuses.includes(a.status as any)).sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime()).slice(0, 4);
+  const recentActiveAuctions = allAuctions.filter(a => activeAuctionStatuses.includes(a.status as any)).slice(0, 4);
+  const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : recentActiveAuctions;
   const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
   
   const featuredCategories = categories.sort((a, b) => (b.itemCount || 0) - (a.itemCount || 0)).slice(0, 3);
