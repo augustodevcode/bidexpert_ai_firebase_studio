@@ -5,7 +5,7 @@ import * as React from 'react';
 import type { Auction, Lot, PlatformSettings, DirectSaleOffer } from '@/types';
 import AuctionListItem from '@/components/cards/auction-list-item';
 import LotListItem from '@/components/cards/lot-list-item';
-import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
+import DirectSaleOfferListItem from '@/components/cards/direct-sale-offer-list-item';
 
 
 type Item = Partial<Auction & Lot & DirectSaleOffer>;
