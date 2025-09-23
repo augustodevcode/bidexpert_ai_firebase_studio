@@ -7,8 +7,11 @@
  */
 'use server';
 
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { Prisma as PrismaTypes } from '@prisma/client';
+import { format, subMonths } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
 
 export interface BranchPerformanceData {
   id: string;
@@ -26,6 +29,7 @@ export interface BranchPerformanceData {
  * Fetches and aggregates performance data for all judicial branches.
  */
 export async function getBranchesPerformanceAction(): Promise<BranchPerformanceData[]> {
+  const prisma = getPrismaInstance();
   try {
     const branches = await prisma.judicialBranch.findMany({
       include: {
