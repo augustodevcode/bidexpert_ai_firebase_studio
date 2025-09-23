@@ -15,7 +15,7 @@
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
 - **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
     - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
-    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias e Lotes.
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
@@ -32,17 +32,16 @@
 
 ## DOING
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 2:** Concluída a criação de dashboards para todas as entidades de negócio (Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes, Leilões).
+    - **Fase 2:** Concluída a criação de dashboards para Cidades, Estados, Comitentes, Leiloeiros, Categorias e Lotes.
     - **Fase 4:** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
 - **Item 29: [NOVO] Dashboards de Auditoria e Inconsistência:** Implementar painéis para identificar problemas de integridade de dados, tais como:
     - Leilões sem lotes.
     - Lotes sem bens vinculados.
     - Leilões sem etapas/praças configuradas.
-    - Lotes com lances vencidos e sem habilitados.
-    - Leilões encerrados com lotes em aberto.
-    - Leilões cancelados com lotes abertos.
+    - Leilões encerrados ou cancelados com lotes em aberto.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
+
 
 ## NEXT
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.

@@ -7,7 +7,7 @@ import {
   ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
   Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
   Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, 
-  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu
+  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -79,6 +79,7 @@ const platformManagementItems = [
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
   { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart },
+  { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
   { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
@@ -222,7 +223,7 @@ export default function AdminSidebar() {
             </Button>
           </SheetTrigger>
           <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
-            <SidebarContent />
+            <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
           </SheetContent>
         </Sheet>
       </div>
