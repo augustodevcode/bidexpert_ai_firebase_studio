@@ -65,16 +65,21 @@ export class AuctionService {
   }
 
   /**
-   * Busca todos os leilões para um determinado tenant.
+   * Busca todos os leilões para um determinado tenant. Por padrão, exclui status não públicos.
    * @param {string} tenantId - O ID do tenant.
-   * @param {boolean} isPublicCall - Se a chamada é pública, filtra os status.
+   * @param {number} [limit] - Limite de resultados.
+   * @param {boolean} [isPublicCall=true] - Define se a chamada é pública (padrão) ou interna (para admin).
    * @returns {Promise<Auction[]>} Uma lista de leilões.
    */
-  async getAuctions(tenantId: string, limit?: number, isPublicCall = false): Promise<Auction[]> {
+  async getAuctions(tenantId: string, limit?: number, isPublicCall = true): Promise<Auction[]> {
     const where: Prisma.AuctionWhereInput = {};
+    
+    // A lógica agora é: SEMPRE filtrar, a menos que a chamada explicitamente não seja pública.
+    // Isso é mais seguro.
     if (isPublicCall) {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
+
     const auctions = await this.auctionRepository.findAll(tenantId, where, limit);
     return this.mapAuctionsWithDetails(auctions);
   }

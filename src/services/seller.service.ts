@@ -20,6 +20,7 @@ export interface SellerDashboardData {
   salesByMonth: { name: string; Faturamento: number }[];
 }
 
+const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
 
 export class SellerService {
   private sellerRepository: SellerRepository;
@@ -65,7 +66,8 @@ export class SellerService {
 
   async getAuctionsBySellerSlug(tenantId: string, sellerSlugOrPublicId: string): Promise<Auction[]> {
     const auctions = await this.auctionRepository.findBySellerSlug(tenantId, sellerSlugOrPublicId);
-    return this.mapAuctionsWithDetails(auctions);
+    const publicAuctions = auctions.filter(a => !NON_PUBLIC_STATUSES.includes(a.status));
+    return this.mapAuctionsWithDetails(publicAuctions);
   }
 
   async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {

@@ -42,11 +42,7 @@ export class LotService {
     if (auctionId) {
       where.auctionId = auctionId;
     }
-    // O filtro de status de lote para chamadas públicas agora é feito no repositório,
-    // mas mantemos este para filtros adicionais se necessário.
-    if (isPublicCall) {
-        where.status = { notIn: NON_PUBLIC_STATUSES };
-    }
+    
     const lots = await this.repository.findAll(tenantId, where, limit, isPublicCall);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }

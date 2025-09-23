@@ -36,16 +36,16 @@ async function HomePageData() {
       ...lot,
       initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
       secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
-      price: lot.price ? Number(lot.price) : null,
+      price: lot.price ? Number(lot.price) : 0,
       evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
       bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
     }));
 
     const serializedAuctions = auctionsData.map(auction => ({
         ...auction,
-        initialOffer: auction.initialOffer ? Number(auction.initialOffer) : null,
-        estimatedRevenue: auction.estimatedRevenue ? Number(auction.estimatedRevenue) : null,
-        achievedRevenue: auction.achievedRevenue ? Number(auction.achievedRevenue) : null,
+        initialOffer: auction.initialOffer ? Number(auction.initialOffer) : undefined,
+        estimatedRevenue: auction.estimatedRevenue ? Number(auction.estimatedRevenue) : undefined,
+        achievedRevenue: auction.achievedRevenue ? Number(auction.achievedRevenue) : undefined,
         decrementAmount: auction.decrementAmount ? Number(auction.decrementAmount) : null,
         floorPrice: auction.floorPrice ? Number(auction.floorPrice) : null,
     }));

@@ -39,12 +39,12 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
-    return auctionService.getAuctions(tenantIdToUse, limit);
+    return auctionService.getAuctions(tenantIdToUse, limit, isPublicCall);
 }
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
     const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
-    return auctionService.getAuctionById(tenantId, id);
+    return auctionService.getAuctionById(tenantId, id, isPublicCall);
 }
 
 export async function createAuction(data: Partial<AuctionFormData>): Promise<{ success: boolean, message: string, auctionId?: string }> {
