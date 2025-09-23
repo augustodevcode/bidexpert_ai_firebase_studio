@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
@@ -38,14 +39,14 @@ export class LotService {
   }
 
   async getLots(auctionId?: string, tenantId?: string, limit?: number, isPublicCall = false): Promise<Lot[]> {
-    const where: Prisma.LotWhereInput = {
-      ...(auctionId && { auctionId }),
-      ...(tenantId && { tenantId }),
-    };
+    const where: Prisma.LotWhereInput = {};
+    if (auctionId) {
+      where.auctionId = auctionId;
+    }
     if (isPublicCall) {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
-    const lots = await this.repository.findAll(where, limit);
+    const lots = await this.repository.findAll(tenantId, where, limit);
     return lots.map(lot => this.mapLotWithDetails(lot));
   }
 
