@@ -3,8 +3,8 @@
 'use client';
 
 import type { AuctionStage } from '@/types';
-import { CalendarDays, DollarSign } from 'lucide-react';
-import { format, isPast } from 'date-fns';
+import { CalendarDays } from 'lucide-react';
+import { format, isPast, isFuture, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
@@ -21,7 +21,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
 
   useEffect(() => {
     if (stage.endDate) {
-      const dateObj = stage.endDate instanceof Date ? stage.endDate : new Date(stage.endDate as string);
+      const dateObj = stage.endDate instanceof Date ? stage.endDate : parseISO(stage.endDate as string);
       if (!isNaN(dateObj.getTime())) {
         setFormattedDate(format(dateObj, "dd/MM", { locale: ptBR }));
         setFormattedTime(format(dateObj, "HH:mm", { locale: ptBR }));
@@ -45,7 +45,7 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
                 {stage.name || `Etapa`}
             </p>
             <p className="text-muted-foreground">{formattedDate} - {formattedTime}</p>
-            {stage.initialPrice && (
+            {stage.initialPrice != null && (
                 <p className="text-primary font-medium">R$ {Number(stage.initialPrice).toLocaleString('pt-br')}</p>
             )}
         </div>
@@ -54,7 +54,6 @@ const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted,
 };
 
 interface AuctionStagesTimelineProps {
-  auctionOverallStartDate?: Date;
   stages: AuctionStage[];
 }
 
@@ -65,8 +64,7 @@ export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineP
         setIsClient(true);
     }, []);
 
-    if (!isClient || !stages || stages.length === 0) {
-        // Render a placeholder or null on the server and initial client render
+    if (!isClient) {
         return (
             <div>
                 <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />ETAPAS DO LEILÃO</h4>
@@ -77,12 +75,21 @@ export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineP
             </div>
         );
     }
+    
+    if (!stages || stages.length === 0) {
+        return (
+             <div>
+                <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />ETAPAS DO LEILÃO</h4>
+                <p className="text-xs text-muted-foreground p-2">Nenhuma etapa definida para este leilão.</p>
+             </div>
+        )
+    }
 
   const processedStages = stages
     .map(stage => ({
       ...stage,
-      startDate: stage.startDate ? new Date(stage.startDate as string) : null,
-      endDate: stage.endDate ? new Date(stage.endDate as string) : null,
+      startDate: stage.startDate ? (stage.startDate instanceof Date ? stage.startDate : parseISO(stage.startDate as string)) : null,
+      endDate: stage.endDate ? (stage.endDate instanceof Date ? stage.endDate : parseISO(stage.endDate as string)) : null,
     }))
     .sort((a, b) => (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0));
 
@@ -92,7 +99,7 @@ export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineP
   );
   
   if (activeStageIndex === -1) {
-    const nextStageIndex = processedStages.findIndex(stage => stage.startDate && now < stage.startDate);
+    const nextStageIndex = processedStages.findIndex(stage => stage.startDate && isFuture(stage.startDate));
     if (nextStageIndex !== -1) {
       activeStageIndex = nextStageIndex;
     } else if (processedStages.every(s => s.endDate && isPast(s.endDate))) {
@@ -118,4 +125,3 @@ export default function AuctionStagesTimeline({ stages }: AuctionStagesTimelineP
     </div>
   );
 }
-

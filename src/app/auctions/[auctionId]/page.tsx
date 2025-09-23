@@ -27,8 +27,8 @@ async function getAuctionPageData(id: string): Promise<{
   allCategories: LotCategory[];
   allSellers: SellerProfileInfo[];
 }> {
-  console.log(`[getAuctionPageData - Adapter Mode] Buscando leilão: ${id}`);
-  
+  console.log(`[getAuctionPageData] Buscando leilão: ${id}`);
+
   const [
       platformSettingsData, 
       auctionFromDb, 
@@ -49,14 +49,9 @@ async function getAuctionPageData(id: string): Promise<{
     return { platformSettings: platformSettingsData, allCategories: allCategoriesData, allSellers: allSellersData };
   }
 
-  // A service getAuction já deve incluir os lotes.
-  // Esta é uma salvaguarda caso a inclusão falhe ou seja removida.
-  const lotsForAuction = auctionFromDb.lots && auctionFromDb.lots.length > 0 
-    ? auctionFromDb.lots 
-    : await getLots(auctionFromDb.id, true); // Public call
-    
-  const auction = { ...auctionFromDb, lots: lotsForAuction, totalLots: lotsForAuction.length };
-
+  // A service getAuction já deve incluir os lotes E os estágios.
+  const auction = { ...auctionFromDb, totalLots: auctionFromDb.lots?.length ?? 0 };
+  
   let auctioneer: AuctioneerProfileInfo | null = null;
   if (auction.auctioneerId) {
       const found = allAuctioneersData.find(a => a.id === auction.auctioneerId);
@@ -67,7 +62,7 @@ async function getAuctionPageData(id: string): Promise<{
       auctioneer = found || null;
   }
 
-  console.log(`[getAuctionPageData - Adapter Mode] Leilão ID ${id} encontrado. Total de lotes: ${lotsForAuction.length}`);
+  console.log(`[getAuctionPageData] Leilão ID ${id} encontrado. Total de lotes: ${auction.totalLots}, Total de estágios: ${auction.auctionStages?.length}`);
   
   return { auction, auctioneer, platformSettings: platformSettingsData!, allCategories: allCategoriesData, allSellers: allSellersData };
 }
