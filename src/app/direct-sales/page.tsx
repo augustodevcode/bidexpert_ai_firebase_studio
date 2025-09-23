@@ -31,7 +31,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 import UniversalCard from '@/components/universal-card';
-import DirectSaleOfferListItem from '@/components/direct-sale-offer-list-item';
+import UniversalListItem from '@/components/universal-list-item';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 
@@ -195,8 +195,8 @@ export default function DirectSalesPage() {
     router.push(`/direct-sales?${currentParams.toString()}`);
   };
 
-  const renderGridItem = (item: DirectSaleOffer) => <UniversalCard item={item} type="lot" platformSettings={platformSettings!} />;
-  const renderListItem = (item: DirectSaleOffer) => <DirectSaleOfferListItem offer={item as DirectSaleOffer} />;
+  const renderGridItem = (item: DirectSaleOffer) => <UniversalCard item={item} type="direct_sale" platformSettings={platformSettings!} />;
+  const renderListItem = (item: DirectSaleOffer) => <UniversalListItem item={item} type="direct_sale" platformSettings={platformSettings!} />;
 
   if (isFilterDataLoading || !platformSettings) {
     return (
