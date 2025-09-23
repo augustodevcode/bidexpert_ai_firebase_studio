@@ -1,4 +1,3 @@
-
 "use client"
 
 import * as React from "react"
@@ -14,7 +13,7 @@ import {
 import { Button } from "./button"
 import { Copy, Check, BrainCircuit, Loader2, AlertCircle, CheckCircle } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
-import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
+// import { analyzeErrorLogAction } from "@/app/admin/qa/actions"
 import { Alert, AlertDescription, AlertTitle } from "./alert"
 import { ScrollArea } from "./scroll-area" // Importando a ScrollArea
 
@@ -35,7 +34,7 @@ const getTextContent = (node: React.ReactNode): string => {
   return '';
 };
 
-
+/*
 function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string; isOpen: boolean; onOpenChange: (open: boolean) => void; }) {
   const [analysisResult, setAnalysisResult] = React.useState<{ analysis: string; recommendation: string } | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -47,15 +46,15 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
       setIsLoading(true);
       setAnalysisResult(null);
       setHasCopiedForAI(false); // Reset copy status when modal opens
-      analyzeErrorLogAction(errorLog)
-        .then(result => {
-          if (result.success) {
-            setAnalysisResult({ analysis: result.analysis, recommendation: result.recommendation });
-          } else {
-            setAnalysisResult({ analysis: 'Falha na Análise', recommendation: 'Não foi possível analisar este erro.' });
-          }
-        })
-        .finally(() => setIsLoading(false));
+      // analyzeErrorLogAction(errorLog)
+      //   .then(result => {
+      //     if (result.success) {
+      //       setAnalysisResult({ analysis: result.analysis, recommendation: result.recommendation });
+      //     } else {
+      //       setAnalysisResult({ analysis: 'Falha na Análise', recommendation: 'Não foi possível analisar este erro.' });
+      //     }
+      //   })
+      //   .finally(() => setIsLoading(false));
     }
   }, [isOpen, errorLog]);
 
@@ -113,7 +112,7 @@ function AIAnalysisModal({ errorLog, isOpen, onOpenChange }: { errorLog: string;
     </Dialog>
   );
 }
-
+*/
 
 // Extracted component to handle its own state, avoiding hook calls in a loop.
 function ToastComponent({ id, title, description, action, variant, ...props }: any) {
@@ -147,7 +146,7 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
               {title && <ToastTitle>{title}</ToastTitle>}
             </div>
             <div className="flex flex-col gap-2 self-start flex-shrink-0">
-              {variant === 'destructive' && (
+              {/* {variant === 'destructive' && (
                  <Button
                     size="icon"
                     variant="ghost"
@@ -157,7 +156,7 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
                   >
                    <BrainCircuit className="h-4 w-4" />
                 </Button>
-              )}
+              )} */}
               <Button
                   size="icon"
                   variant="ghost"
@@ -181,13 +180,13 @@ function ToastComponent({ id, title, description, action, variant, ...props }: a
             </ScrollArea>
         )}
       </Toast>
-      {variant === 'destructive' && (
+      {/* {variant === 'destructive' && (
          <AIAnalysisModal 
             errorLog={fullErrorText}
             isOpen={isAnalysisModalOpen}
             onOpenChange={setIsAnalysisModalOpen}
           />
-      )}
+      )} */}
     </>
   );
 }
