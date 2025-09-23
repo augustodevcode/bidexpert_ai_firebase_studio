@@ -85,7 +85,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
       .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
     const auctionsWithoutStages = allAuctions
-      .filter(a => a._count.stages === 0)
+      .filter(a => a._count.stages === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
       .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
     const closedAuctionsWithOpenLots = allAuctions

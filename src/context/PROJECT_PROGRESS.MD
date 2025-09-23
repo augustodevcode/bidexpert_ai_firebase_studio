@@ -13,11 +13,6 @@
 - **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
 - **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
-    - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias e Lotes.
-    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
-    - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
@@ -30,9 +25,14 @@
 - **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
+    - **Fase 1:** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
+    - **Fase 2:** Criados dashboards de análise de grupo para Comitentes, Leiloeiros, Leilões, Categorias e Lotes.
+    - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+    - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+- **Item 29: Dashboards de Auditoria e Inconsistência:** Implementado um painel para identificar problemas de integridade de dados (leilões sem lotes, lotes sem bens, etc.) em `/admin/reports/audit`.
 
 ## DOING
-- **Item 29: Dashboards de Auditoria e Inconsistência:** Implementar um painel para identificar problemas de integridade de dados (leilões sem lotes, lotes sem bens, etc.) em `/admin/reports/audit`.
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
 
