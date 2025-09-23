@@ -5,7 +5,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight, X } from 'lucide-react';
+import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
 import { DataTableFacetedFilter } from './ui/data-table-faceted-filter';
@@ -19,43 +19,18 @@ import {
   Table
 } from "@tanstack/react-table";
 
-interface SearchResultsFrameProps<TItem> {
-  items: TItem[]; 
-  totalItemsCount: number;
-  renderGridItem: (item: TItem, index: number) => React.ReactNode;
-  renderListItem: (item: TItem, index: number) => React.ReactNode;
-  sortOptions: { value: string; label: string }[];
-  initialSortBy?: string;
-  onSortChange: (sortBy: string) => void;
-  platformSettings: PlatformSettings | null;
-  isLoading?: boolean;
-  emptyStateMessage?: string;
-  searchTypeLabel: string; 
-  facetedFilterColumns?: {
-    id: string;
-    title: string;
-    options: {
-        label: string;
-        value: string;
-        icon?: React.ComponentType<{ className?: string }>;
-    }[];
-  }[];
-  currentPage?: number;
-  itemsPerPage?: number;
-  onPageChange?: (page: number) => void;
-  onItemsPerPageChange?: (size: number) => void;
-}
-
-const PaginationControls = ({
-    currentPage,
-    totalItemsCount,
-    itemsPerPage,
-    onPageChange,
-}: {
+interface PaginationControlsProps {
     currentPage: number;
     totalItemsCount: number;
     itemsPerPage: number;
     onPageChange: (page: number) => void;
+}
+
+const PaginationControls: React.FC<PaginationControlsProps> = ({
+    currentPage,
+    totalItemsCount,
+    itemsPerPage,
+    onPageChange,
 }) => {
 
     const totalPages = itemsPerPage > 0 ? Math.ceil(totalItemsCount / itemsPerPage) : 1;
@@ -100,9 +75,32 @@ const PaginationControls = ({
 };
 
 
+interface SearchResultsFrameProps<TItem> {
+  items: TItem[]; 
+  totalItemsCount?: number; // Agora opcional
+  renderGridItem: (item: TItem, index: number) => React.ReactNode;
+  renderListItem: (item: TItem, index: number) => React.ReactNode;
+  sortOptions: { value: string; label: string }[];
+  initialSortBy?: string;
+  onSortChange: (sortBy: string) => void;
+  platformSettings: PlatformSettings | null;
+  isLoading?: boolean;
+  emptyStateMessage?: string;
+  searchTypeLabel: string; 
+  facetedFilterColumns?: {
+    id: string;
+    title: string;
+    options: {
+        label: string;
+        value: string;
+        icon?: React.ComponentType<{ className?: string }>;
+    }[];
+  }[];
+  onItemsPerPageChange?: (size: number) => void;
+}
+
 export default function SearchResultsFrame<TItem extends { id: string | number; [key: string]: any }>({
   items,
-  totalItemsCount,
   renderGridItem,
   renderListItem,
   sortOptions,
@@ -113,55 +111,44 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   emptyStateMessage = "Nenhum item encontrado com os filtros aplicados.",
   searchTypeLabel,
   facetedFilterColumns = [],
-  currentPage,
-  itemsPerPage,
-  onPageChange,
   onItemsPerPageChange,
 }: SearchResultsFrameProps<TItem>) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
-  const [columnFilters, setColumnFilters] = React.useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(platformSettings?.searchItemsPerPage || 12);
   
-  const table = useReactTable({
-    data: items,
-    columns: [],
-    state: { columnFilters },
-    onColumnFiltersChange: setColumnFilters,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
-  });
-
   const handleSortChangeInternal = (value: string) => {
     setCurrentSortBy(value);
     onSortChange(value);
+    setCurrentPage(1); // Reset page on sort change
   };
   
-  const isFiltered = table.getState().columnFilters.length > 0;
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    window.scrollTo(0, 0);
+  };
   
-  const showPagination = onPageChange && currentPage && itemsPerPage && totalItemsCount > itemsPerPage;
+  const handleItemsPerPageChangeInternal = (size: number) => {
+    setItemsPerPage(size);
+    setCurrentPage(1);
+    if (onItemsPerPageChange) {
+      onItemsPerPageChange(size);
+    }
+  }
+  
+  const paginatedItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return items.slice(startIndex, startIndex + itemsPerPage);
+  }, [items, currentPage, itemsPerPage]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
         <p className="text-sm text-muted-foreground">
-          {totalItemsCount} {searchTypeLabel} encontrado(s)
+          {items.length} {searchTypeLabel} encontrado(s)
         </p>
         <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
-           {facetedFilterColumns.map(col => table.getColumn(col.id) ? (
-            <DataTableFacetedFilter
-                key={col.id}
-                column={table.getColumn(col.id) as Column<TItem, unknown>}
-                title={col.title}
-                options={col.options}
-            />
-          ) : null)}
-          {isFiltered && (
-            <Button variant="ghost" onClick={() => table.resetColumnFilters()} className="h-8 px-2 lg:px-3 text-xs">
-                Limpar <X className="ml-1 h-3 w-3" />
-            </Button>
-          )}
           <Select value={currentSortBy} onValueChange={handleSortChangeInternal}>
             <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
               <SelectValue placeholder="Ordenar por" />
@@ -190,21 +177,19 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
         <div className="flex justify-center items-center py-12">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
         </div>
-      ) : items.length > 0 ? (
+      ) : paginatedItems.length > 0 ? (
         <>
           <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
-            {items.map((item, index) => (
+            {paginatedItems.map((item, index) => (
               viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
             ))}
           </div>
-          {showPagination && (
-            <PaginationControls 
-              currentPage={currentPage}
-              totalItemsCount={totalItemsCount}
-              itemsPerPage={itemsPerPage}
-              onPageChange={onPageChange}
-            />
-          )}
+          <PaginationControls 
+            currentPage={currentPage}
+            totalItemsCount={items.length}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+          />
         </>
       ) : (
         <Card>

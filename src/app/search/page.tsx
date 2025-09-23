@@ -105,8 +105,6 @@ export default function SearchPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
   
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
 
   // Effect to fetch shared data for filters once
   useEffect(() => {
@@ -125,7 +123,6 @@ export default function SearchPage() {
         setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
-        if(settings) setItemsPerPage(settings.searchItemsPerPage || 12);
         setAllMakesForFilter(makes);
         setAllModelsForFilter(models);
 
@@ -240,9 +237,7 @@ export default function SearchPage() {
         newSearchType = 'tomada_de_precos';
     }
     setCurrentSearchType(newSearchType);
-    setCurrentPage(1);
-    if(platformSettings) setItemsPerPage(platformSettings.searchItemsPerPage || 12);
-  }, [searchParamsHook, platformSettings]);
+  }, [searchParamsHook]);
 
 
   const handleSearchTypeChange = (type: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos') => {
@@ -290,7 +285,6 @@ export default function SearchPage() {
         currentParams.delete('status');
     }
     router.push(`/search?${currentParams.toString()}`);
-    setCurrentPage(1); 
   };
 
   const handleFilterReset = () => {
@@ -314,7 +308,6 @@ export default function SearchPage() {
 
     router.push(`/search?${currentParams.toString()}`);
     setIsFilterSheetOpen(false);
-    setCurrentPage(1); 
   };
 
   const filteredAndSortedItems = useMemo(() => {
@@ -412,33 +405,6 @@ export default function SearchPage() {
     return filteredItems;
   }, [searchTerm, activeFilters, sortBy, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
 
-  const paginatedItems = useMemo(() => {
-    if (!platformSettings) return [];
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return filteredAndSortedItems.slice(startIndex, endIndex);
-  }, [filteredAndSortedItems, platformSettings, currentPage, itemsPerPage]);
-
-
-  const handlePageChange = (newPage: number) => {
-    const totalPages = itemsPerPage > 0 ? Math.ceil(filteredAndSortedItems.length / itemsPerPage) : 1;
-    if (newPage >= 1 && newPage <= totalPages) {
-      setCurrentPage(newPage);
-      window.scrollTo(0, 0);
-    }
-  };
-  
-  const handleItemsPerPageChange = (newSize: number) => {
-    setItemsPerPage(newSize);
-    setCurrentPage(1);
-  };
-
-
-  const currentSortOptions =
-    currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? sortOptionsAuctions :
-    currentSearchType === 'lots' ? sortOptionsLots :
-    sortOptionsDirectSales;
-
   const handleSearchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
@@ -451,7 +417,6 @@ export default function SearchPage() {
         currentParams.delete('term');
     }
     router.push(`/search?${currentParams.toString()}`);
-    setCurrentPage(1); 
   };
 
   const renderGridItem = (item: any, index: number): React.ReactNode => {
@@ -493,6 +458,12 @@ export default function SearchPage() {
         default: return 'itens';
     }
   }
+
+  const currentSortOptions =
+    currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? sortOptionsAuctions :
+    currentSearchType === 'lots' ? sortOptionsLots :
+    sortOptionsDirectSales;
+
 
   if (isFilterDataLoading || !platformSettings) {
     return (
@@ -560,7 +531,7 @@ export default function SearchPage() {
             </TabsList>
 
             <SearchResultsFrame
-              items={paginatedItems}
+              items={filteredAndSortedItems}
               totalItemsCount={filteredAndSortedItems.length}
               renderGridItem={renderGridItem}
               renderListItem={renderListItem}
@@ -571,10 +542,7 @@ export default function SearchPage() {
               isLoading={isLoading}
               searchTypeLabel={getSearchTypeLabel()}
               emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
-              currentPage={currentPage}
-              itemsPerPage={itemsPerPage}
-              onPageChange={handlePageChange}
-              onItemsPerPageChange={handleItemsPerPageChange}
+              onItemsPerPageChange={setItemsPerPage}
             />
             </Tabs>
         </main>
