@@ -21,6 +21,7 @@
       - [X] Dashboard de Leilões (`/admin/auctions/analysis`)
       - [X] Dashboard de Categorias (`/admin/categories/analysis`)
       - [X] Dashboard de Lotes (`/admin/lots/analysis`)
+      - [X] Dashboard de Cidades (`/admin/cities/analysis`)
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
@@ -37,14 +38,16 @@
 
 ## DOING
 - **Item 14: Dashboards de Análise e KPIs (Estratégico):**
-    - **Fase 2:** Criar dashboards de análise de grupo para Cidades e Estados.
+    - **Fase 2:** Criar dashboards de análise de grupo para Estados.
     - **Fase 4:** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrar Genkit para fornecer análises e recomendações inteligentes nos dashboards restantes.
 - **Item 29: [NOVO] Dashboards de Auditoria e Inconsistência:** Implementar painéis para identificar problemas de integridade de dados, tais como:
     - Leilões sem lotes.
     - Lotes sem bens vinculados.
     - Leilões sem etapas/praças configuradas.
-    - Leilões encerrados/cancelados com lotes ainda em aberto.
+    - Lotes com lances vencidos e sem habilitados.
+    - Leilões encerrados com lotes em aberto.
+    - Leilões cancelados com lotes abertos.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
