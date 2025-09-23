@@ -121,7 +121,7 @@ const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; titl
   </Button>
 );
 
-function SidebarContent() {
+function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     const pathname = usePathname();
     return (
         <>

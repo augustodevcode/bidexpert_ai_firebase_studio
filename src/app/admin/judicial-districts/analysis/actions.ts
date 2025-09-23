@@ -41,7 +41,7 @@ export async function getDistrictsPerformanceAction(): Promise<DistrictPerforman
 
     return districts.map(district => {
       const allLotsFromAuctions = district.auctions.flatMap(auc => auc.lots);
-      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price || 0), 0);
+      const totalRevenue = allLotsFromAuctions.reduce((acc, lot) => acc + (lot.price ? Number(lot.price) : 0), 0);
       const totalLotsSold = allLotsFromAuctions.length;
       const averageTicket = totalLotsSold > 0 ? totalRevenue / totalLotsSold : 0;
 
