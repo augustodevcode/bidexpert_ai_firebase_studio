@@ -30,13 +30,14 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Esta regra é o pilar da segurança e integridade dos dados da plataforma, garantindo que os dados de cada cliente (leiloeiro) permaneçam completamente isolados.
 
-## 5. Exibição Pública de Conteúdo
+## 5. Exibição Pública de Conteúdo (Regra Crítica)
 
-**Regra:** Conteúdo que não está pronto para o público **não deve** ser exibido em páginas públicas.
--   **Status a serem ocultados:** Leilões e lotes com o status `"RASCUNHO"` ou `"EM_PREPARACAO"` **nunca** devem ser retornados em consultas para páginas de acesso público (home, busca, páginas de categoria, perfis de vendedores, etc.).
--   **Aplicação:** Esta filtragem deve ser aplicada na camada de serviço (`AuctionService`, `LotService`) sempre que uma chamada de dados for identificada como pública.
+**Regra:** O conteúdo visível publicamente deve ser estritamente controlado para garantir uma experiência de usuário limpa e relevante.
 
-**Justificativa:** Garante que os usuários finais vejam apenas conteúdo finalizado e relevante, evitando a exposição de leilões incompletos ou em fase de planejamento, o que melhora a experiência do usuário e a percepção de profissionalismo da plataforma.
+-   **Regra 5.1: Status de Preparação:** Leilões e lotes associados a leilões com o status `"RASCUNHO"` ou `"EM_PREPARACAO"` **nunca** devem ser retornados em consultas para páginas de acesso público (home, busca, páginas de categoria, etc.). Esta filtragem deve ser aplicada na camada de acesso a dados (Repositório) para máxima segurança.
+-   **Regra 5.2: Conteúdo da Homepage:** A página inicial **deve exibir apenas** leilões e lotes com status que indicam uma oportunidade ativa ou futura (ex: `"ABERTO_PARA_LANCES"`, `"EM_BREVE"`). Leilões `"ENCERRADO"`, `"FINALIZADO"` ou `"CANCELADO"` **não devem** aparecer na homepage, mas podem ser acessados através da página de busca.
+
+**Justificativa:** Garante que os usuários finais vejam apenas conteúdo relevante e finalizado, evitando a exposição de leilões incompletos, cancelados ou já terminados na página principal. Aplicar o filtro de status de preparação na camada de repositório cria uma barreira de segurança mais robusta.
 
 ## 6. Estrutura Modular do Schema Prisma
 
@@ -46,7 +47,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 - **Processo de Build:** O script `scripts/build-prisma-schema.ts` é responsável por ler todos os arquivos em `prisma/models/`, concatená-los e gerar o arquivo `prisma/schema.prisma` final.
 - **Execução:** Este script é executado automaticamente pelos comandos `npm run dev`, `npm run build` e `npm run db:push`, garantindo que o Prisma sempre opere com o schema mais recente.
 
-**Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos. Qualquer alteração direta no `schema.prisma` será perdida.
+**Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos.
 
 ## 7. Princípio da Não-Regressão e Autorização Humana
 
@@ -103,7 +104,7 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Estas regras garantem que segredos e configurações críticas do ambiente sejam sempre gerenciados e validados por um humano, prevenindo a exposição acidental de dados sensíveis ou a quebra do ambiente por configurações incorretas ou remoção de variáveis essenciais.
 
-## 12. Comentários de Cabeçalho nos Arquivos (Nova Regra)
+## 12. Comentários de Cabeçalho nos Arquivos
 
 **Regra:** Todo arquivo de código-fonte (ex: `.ts`, `.tsx`) **deve** começar com um comentário em bloco (docblock) que explica de forma clara e concisa o propósito do arquivo e suas principais responsabilidades dentro da arquitetura da aplicação.
 
@@ -123,3 +124,14 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 ## 13. Estratégia de Testes para Aplicação de Leilões Full-Stack
 
 A estratégia de testes está documentada no arquivo `README.md` e deve ser seguida para garantir a qualidade e estabilidade do código.
+
+## 14. Gerenciamento Centralizado de Mídia
+
+**Regra:** Todas as imagens da plataforma (logos, fotos de leilões, fotos de lotes) **devem** ser gerenciadas através do modelo `MediaItem` e da Biblioteca de Mídia (`/admin/media`).
+- **Proibição de URLs Diretas:** Nunca use URLs de imagem fixas ou campos de texto para URLs diretamente nos modelos como `Lot` ou `Auction`. Em vez disso, use um campo de relação (ex: `imageMediaId`) para vincular ao registro `MediaItem` correspondente.
+- **Herança de Imagens (Lotes):** A imagem principal de um `Lot` **deve** ser herdada de um dos seus `Assets` vinculados. O formulário de lote deve permitir ao usuário selecionar de qual `Asset` a galeria de imagens será herdada.
+- **Fonte da Verdade:** A tabela `MediaItem` é a única fonte da verdade para os caminhos e metadados das imagens.
+
+**Justificativa:** Centralizar a mídia garante a consistência, evita links quebrados, facilita a otimização de imagens e permite o reuso de ativos. A herança de imagens de `Asset` para `Lot` simplifica o cadastro e mantém a integridade da relação entre o item físico e sua representação no leilão.
+```
+
