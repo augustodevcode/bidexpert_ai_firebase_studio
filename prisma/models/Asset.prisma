@@ -1,174 +1,144 @@
-/// Representa um ativo individual (um carro, uma casa, um computador) que pode ser leiloado.
-/// Os ativos são agrupados em Lotes para serem vendidos em um Leilão.
+// /prisma/models/Asset.prisma
+
 model Asset {
-  id              String      @id @default(cuid())
-  publicId        String      @unique @default(uuid())
-  title           String
-  description     String?     @db.Text
-  status          AssetStatus @default(DISPONIVEL)
-  evaluationValue Decimal?    @db.Decimal(15, 2)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  tenantId        String
-  tenant          Tenant      @relation(fields: [tenantId], references: [id])
+  id                        String      @id @default(cuid())
+  publicId                  String      @unique @default(cuid())
+  title                     String
+  description               String?     @db.Text
+  status                    AssetStatus @default(DISPONIVEL)
+  categoryId                String?
+  subcategoryId             String?
+  judicialProcessId         String?
+  sellerId                  String?
+  evaluationValue           Decimal?    @db.Decimal(15, 2)
+  imageUrl                  String?
+  imageMediaId              String?
+  galleryImageUrls          Json?
+  mediaItemIds              Json?
+  dataAiHint                String?
+  locationCity              String?
+  locationState             String?
+  address                   String?
+  latitude                  Decimal?    @db.Decimal(10, 8)
+  longitude                 Decimal?    @db.Decimal(11, 8)
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+  tenantId                  String
+  plate                     String?
+  make                      String?
+  model                     String?
+  version                   String?
+  year                      Int?
+  modelYear                 Int?
+  mileage                   Int?
+  color                     String?
+  fuelType                  String?
+  transmissionType          String?
+  bodyType                  String?
+  vin                       String?     @unique
+  renavam                   String?     @unique
+  enginePower               String?
+  numberOfDoors             Int?
+  vehicleOptions            String?
+  detranStatus              String?
+  debts                     String?
+  runningCondition          String?
+  bodyCondition             String?
+  tiresCondition            String?
+  hasKey                    Boolean?
+  propertyRegistrationNumber String?
+  iptuNumber                String?
+  isOccupied                Boolean?
+  totalArea                 Decimal?    @db.Decimal(15, 2)
+  builtArea                 Decimal?    @db.Decimal(15, 2)
+  bedrooms                  Int?
+  suites                    Int?
+  bathrooms                 Int?
+  parkingSpaces             Int?
+  constructionType          String?
+  finishes                  String?
+  infrastructure            String?
+  condoDetails              String?
+  improvements              String?
+  topography                String?
+  liensAndEncumbrances      String?     @db.Text
+  propertyDebts             String?     @db.Text
+  unregisteredRecords       String?     @db.Text
+  hasHabiteSe               Boolean?
+  zoningRestrictions        String?
+  amenities                 Json?
+  brand                     String?
+  serialNumber              String?     @unique
+  itemCondition             String?
+  specifications            String?     @db.Text
+  includedAccessories       String?
+  batteryCondition          String?
+  hasInvoice                Boolean?
+  hasWarranty               Boolean?
+  repairHistory             String?
+  applianceCapacity         String?
+  voltage                   String?
+  applianceType             String?
+  additionalFunctions       String?
+  hoursUsed                 Int?
+  engineType                String?
+  capacityOrPower           String?
+  maintenanceHistory        String?     @db.Text
+  installationLocation      String?
+  compliesWithNR            String?
+  operatingLicenses         String?
+  breed                     String?
+  age                       String?
+  sex                       String?
+  weight                    String?
+  individualId              String?
+  purpose                   String?
+  sanitaryCondition         String?
+  lineage                   String?
+  isPregnant                Boolean?
+  specialSkills             String?
+  gtaDocument               String?
+  breedRegistryDocument     String?
+  furnitureType             String?
+  material                  String?
+  style                     String?
+  dimensions                String?
+  pieceCount                Int?
+  jewelryType               String?
+  metal                     String?
+  gemstones                 String?
+  totalWeight               String?
+  jewelrySize               String?
+  authenticityCertificate   String?
+  workType                  String?
+  artist                    String?
+  period                    String?
+  technique                 String?
+  provenance                String?
+  boatType                  String?
+  boatLength                String?
+  hullMaterial              String?
+  onboardEquipment          String?     @db.Text
+  productName               String?
+  quantity                  String?
+  packagingType             String?
+  expirationDate            DateTime?
+  storageConditions         String?
+  preciousMetalType         String?
+  purity                    String?
+  forestGoodsType           String?
+  volumeOrQuantity          String?
+  species                   String?
+  dofNumber                 String?
 
-  // Relations
-  lots AssetsOnLots[]
+  lots          AssetsOnLots[]
+  category      LotCategory?     @relation(fields: [categoryId], references: [id])
+  subcategory   Subcategory?     @relation(fields: [subcategoryId], references: [id])
+  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  seller        Seller?          @relation(fields: [sellerId], references: [id])
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
 
-  // Imagens
-  imageUrl         String?
-  imageMediaId     String?
-  galleryImageUrls Json?
-  mediaItemIds     Json?
-  dataAiHint       String?
-
-  // Localização
-  locationCity  String?
-  locationState String?
-  address       String?
-  latitude      Decimal?
-  longitude     Decimal?
-
-  // Entidades relacionadas
-  categoryId       String?
-  category         LotCategory? @relation(fields: [categoryId], references: [id])
-  subcategoryId    String?
-  subcategory      Subcategory? @relation(fields: [subcategoryId], references: [id])
-  judicialProcessId String?
-  judicialProcess  JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  sellerId         String?
-  seller           Seller? @relation(fields: [sellerId], references: [id])
-
-  // Campos específicos (Veículo)
-  plate            String? // Placa
-  make             String? // Marca
-  model            String? // Modelo
-  version          String? // Versão
-  year             Int? // Ano de Fabricação
-  modelYear        Int? // Ano do Modelo
-  mileage          Int? // Quilometragem
-  color            String? // Cor
-  fuelType         String? // Tipo de Combustível
-  transmissionType String? // Tipo de Transmissão
-  bodyType         String? // Tipo de Carroceria
-  vin              String? @unique // Número do Chassi
-  renavam          String? @unique // RENAVAM
-  enginePower      String? // Potência do Motor
-  numberOfDoors    Int?
-  vehicleOptions   String? // Opcionais (ex: "Ar condicionado, Direção hidráulica")
-  detranStatus     String? // Pendências no DETRAN
-  debts            String? // Multas, IPVA, etc.
-  runningCondition String? // Estado de funcionamento (Funcionando, Não liga, etc.)
-  bodyCondition    String? // Estado da lataria (Amassados, riscos, etc.)
-  tiresCondition   String? // Estado dos pneus
-  hasKey           Boolean? @default(true)
-
-  // Campos específicos (Imóvel)
-  propertyRegistrationNumber String? // Matrícula do Imóvel
-  iptuNumber                 String? // Inscrição Cadastral / IPTU
-  isOccupied                 Boolean? @default(false) // Ocupado (Sim/Não)
-  totalArea                  Decimal? // Área total (m²)
-  builtArea                  Decimal? // Área construída (m²)
-  bedrooms                   Int?
-  suites                     Int?
-  bathrooms                  Int?
-  parkingSpaces              Int?
-  constructionType           String? // Alvenaria, Madeira, Mista
-  finishes                   String? // Acabamentos (porcelanato, mármore, etc.)
-  infrastructure             String? // Infraestrutura do entorno
-  condoDetails               String? // Detalhes do condomínio (se aplicável)
-  improvements               String? // Benfeitorias
-  topography                 String? // Topografia (para terrenos)
-  liensAndEncumbrances       String? @db.Text // Ônus e gravames
-  propertyDebts              String? // Débitos do imóvel (condomínio, IPTU)
-  unregisteredRecords        String? @db.Text // Averbações não registradas
-  hasHabiteSe                Boolean? // Possui Habite-se?
-  zoningRestrictions         String? // Restrições de zoneamento
-
-  // Campos específicos (Eletrônicos)
-  brand                String?
-  serialNumber         String?
-  itemCondition        String? // Novo, Usado, Com defeito, etc.
-  specifications       String? @db.Text
-  includedAccessories  String?
-  batteryCondition     String? // Condição da bateria
-  hasInvoice           Boolean? // Possui nota fiscal?
-  hasWarranty          Boolean? // Está na garantia?
-  repairHistory        String? @db.Text
-
-  // Campos específicos (Eletrodomésticos)
-  applianceCapacity String? // Capacidade (Litros, KG)
-  voltage           String? // Voltagem (110v, 220v, Bivolt)
-  applianceType     String? // Tipo (Geladeira, Fogão)
-  additionalFunctions String?
-
-  // Campos específicos (Máquinas e Equipamentos)
-  hoursUsed          Int? // Horas de uso
-  engineType         String? // Tipo do motor
-  capacityOrPower    String? // Capacidade ou potência (KVA, Toneladas)
-  maintenanceHistory String? @db.Text
-  installationLocation String? // Local de instalação
-  compliesWithNR     String? // Atende a quais normas regulamentadoras (NRs)
-  operatingLicenses  String? // Licenças de operação
-
-  // Campos específicos (Semoventes - Gado, Cavalos, etc.)
-  breed                  String?   // Raça
-  age                    String?   // Idade (ex: 3 anos e 6 meses)
-  sex                    String?   // Macho / Fêmea
-  weight                 String?   // Peso (ex: 15 arrobas)
-  individualId           String?   // Identificação (Brinco, Marcação)
-  purpose                String?   // Finalidade (Corte, Leiteiro, Reprodução, Passeio)
-  sanitaryCondition      String?   // Vacinação, Exames em dia
-  lineage                String?   // Linhagem / Pedigree
-  isPregnant             Boolean?  // Fêmea está prenha?
-  specialSkills          String?   // Habilidades especiais (para cavalos de competição, por ex.)
-  gtaDocument            String?   // Possui Guia de Trânsito Animal?
-  breedRegistryDocument  String?   // Documento de Registro da Raça
-
-  // Campos específicos (Móveis)
-  furnitureType String? // Tipo (ex: Mesa de Jantar, Sofá 3 lugares)
-  material      String? // Material (ex: Madeira de demolição, Couro)
-  style         String? // Estilo (ex: Clássico, Moderno, Rústico)
-  dimensions    String? // Dimensões (ex: 2.20m x 1.00m x 0.80m)
-  pieceCount    Int?    // Quantidade de peças (para conjuntos)
-
-  // Campos específicos (Joias e Relógios)
-  jewelryType           String? // Tipo (Anel, Colar, Relógio de pulso)
-  metal                 String? // Metal (Ouro 18k, Prata 925)
-  gemstones             String? // Pedras preciosas (Diamantes 1ct, Esmeraldas)
-  totalWeight           String? // Peso total em gramas
-  jewelrySize           String? // Tamanho (Aro do anel, comprimento do colar)
-  authenticityCertificate String? // Certificado de autenticidade (GIA, etc.)
-
-  // Campos específicos (Obras de Arte e Antiguidades)
-  workType   String? // Tipo (Pintura, Escultura, Gravura)
-  artist     String? // Artista
-  period     String? // Período ou Escola (ex: Barroco, Modernista)
-  technique  String? // Técnica (Óleo sobre tela, Aquarela)
-  provenance String? @db.Text // Proveniência / Histórico da obra
-
-  // Campos específicos (Embarcações)
-  boatType        String? // Tipo (Lancha, Veleiro, Jet Ski)
-  boatLength      String? // Comprimento (em pés)
-  hullMaterial    String? // Material do casco (Fibra de vidro, Alumínio)
-  onboardEquipment String? @db.Text // Equipamentos a bordo (GPS, Radar, etc.)
-
-  // Campos específicos (Alimentos e Bebidas - ex: vinhos, grãos)
-  productName       String?
-  quantity          String? // Quantidade (ex: 100 sacas de 60kg, 12 garrafas)
-  packagingType     String? // Tipo de embalagem
-  expirationDate    DateTime?
-  storageConditions String?
-
-  // Campos específicos (Metais e Pedras Preciosas)
-  preciousMetalType String? // Tipo (Ouro, Prata, Platina)
-  purity            String? // Pureza (ex: 24k, .999)
-
-  // Campos específicos (Bens Florestais)
-  forestGoodsType  String? // Tipo (ex: Madeira em tora, Lenha)
-  volumeOrQuantity String? // Volume (m³) ou Quantidade
-  species          String? // Espécie da madeira
-  dofNumber        String? // Número do Documento de Origem Florestal
-
-  @@map("assets")
+  @@index([sellerId])
+  @@index([judicialProcessId])
+  @@index([tenantId])
 }

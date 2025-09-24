@@ -1,4 +1,4 @@
-// /prisma/models/AssetsOnLots.prisma
+// prisma/models/assetsOnLots.prisma
 
 model AssetsOnLots {
   lot      Lot    @relation(fields: [lotId], references: [id])
@@ -6,7 +6,7 @@ model AssetsOnLots {
   asset    Asset  @relation(fields: [assetId], references: [id])
   assetId  String
   assignedAt DateTime @default(now())
-  assignedBy String
+  assignedBy String?
 
   @@id([lotId, assetId])
 }
