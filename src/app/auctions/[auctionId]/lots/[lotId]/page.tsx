@@ -17,6 +17,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getBensByIdsAction } from '@/app/admin/lots/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -152,19 +153,4 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
       />
     </div>
   );
-}
-
-export async function generateStaticParams() {
-  try {
-    const lots = await getLots(undefined, true); // Public call
-    // Limit to a reasonable number for build time
-    const paths = lots.slice(0, 50).map(lot => ({
-        auctionId: lot.auctionId,
-        lotId: lot.publicId || lot.id,
-      }));
-    return paths;
-  } catch (error) {
-    console.error("Error generating static params for lot detail pages:", error);
-    return [];
-  }
 }

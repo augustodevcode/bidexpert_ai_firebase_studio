@@ -32,7 +32,7 @@ export class AuctionRepository {
         ...(tenantId && { tenantId }), // Only apply tenantId if it exists
       },
       include: {
-        lots: { include: { bens: { include: { bem: true } } } },
+        lots: { include: { assets: { include: { asset: true } } } }, // Correção: de bens para assets
         auctioneer: true,
         seller: true,
         category: true,
