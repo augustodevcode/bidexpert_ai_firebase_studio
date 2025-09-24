@@ -35,10 +35,15 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(!initialUser); 
+  const [loading, setLoading] = useState(!initialUser);
+  const [isClient, setIsClient] = useState(false);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   
   const fetchUnreadCount = useCallback(async (userId: string) => {
     try {
@@ -97,7 +102,7 @@ export function AuthProvider({
     fetchUnreadCount(user.id); // Buscar contagem no login
   };
   
-  if (loading && typeof window !== 'undefined') {
+  if (loading && isClient) {
      return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
             <Loader2 className="h-10 w-10 animate-spin text-primary"/>

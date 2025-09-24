@@ -1,144 +1,168 @@
-// /prisma/models/Asset.prisma
-
+/// Representa um ativo individual (um bem) antes de ser agrupado em um lote.
+/// Pode ser um veículo, um imóvel, uma máquina, etc.
 model Asset {
-  id                        String      @id @default(cuid())
-  publicId                  String      @unique @default(cuid())
-  title                     String
-  description               String?     @db.Text
-  status                    AssetStatus @default(DISPONIVEL)
-  categoryId                String?
-  subcategoryId             String?
-  judicialProcessId         String?
-  sellerId                  String?
-  evaluationValue           Decimal?    @db.Decimal(15, 2)
-  imageUrl                  String?
-  imageMediaId              String?
-  galleryImageUrls          Json?
-  mediaItemIds              Json?
-  dataAiHint                String?
-  locationCity              String?
-  locationState             String?
-  address                   String?
-  latitude                  Decimal?    @db.Decimal(10, 8)
-  longitude                 Decimal?    @db.Decimal(11, 8)
-  createdAt                 DateTime    @default(now())
-  updatedAt                 DateTime    @updatedAt
-  tenantId                  String
-  plate                     String?
-  make                      String?
-  model                     String?
-  version                   String?
-  year                      Int?
-  modelYear                 Int?
-  mileage                   Int?
-  color                     String?
-  fuelType                  String?
-  transmissionType          String?
-  bodyType                  String?
-  vin                       String?     @unique
-  renavam                   String?     @unique
-  enginePower               String?
-  numberOfDoors             Int?
-  vehicleOptions            String?
-  detranStatus              String?
-  debts                     String?
-  runningCondition          String?
-  bodyCondition             String?
-  tiresCondition            String?
-  hasKey                    Boolean?
+  id        String   @id @default(cuid())
+  publicId  String   @unique @default(cuid())
+  title     String
+  description           String? @db.Text
+  status                AssetStatus @default(DISPONIVEL)
+  category              LotCategory? @relation(fields: [categoryId], references: [id])
+  categoryId            String?
+  subcategory           Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId         String?
+  judicialProcess       JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId     String?
+  seller                Seller?          @relation(fields: [sellerId], references: [id])
+  sellerId              String?
+  evaluationValue       Decimal?         @db.Decimal(15, 2)
+  imageUrl              String?
+  imageMediaId          String?
+  galleryImageUrls      Json?
+  mediaItemIds          Json?
+  dataAiHint            String?
+  locationCity          String?
+  locationState         String?
+  address               String?
+  latitude              Decimal?
+  longitude             Decimal?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+  
+  lots      AssetsOnLots[]
+  tenant    Tenant         @relation(fields: [tenantId], references: [id])
+  tenantId  String
+
+  // Vehicle Specific Fields
+  plate                    String?
+  make                     String?
+  model                    String?
+  version                  String?
+  year                     Int?
+  modelYear                Int?
+  mileage                  Int?
+  color                    String?
+  fuelType                 String?
+  transmissionType         String?
+  bodyType                 String?
+  vin                      String? @unique
+  renavam                  String? @unique
+  enginePower              String?
+  numberOfDoors            Int?
+  vehicleOptions           String? @db.Text
+  detranStatus             String? @db.Text
+  debts                    String? @db.Text
+  runningCondition         String?
+  bodyCondition            String?
+  tiresCondition           String?
+  hasKey                   Boolean?
+  
+  // Real Estate Specific Fields
   propertyRegistrationNumber String?
-  iptuNumber                String?
-  isOccupied                Boolean?
-  totalArea                 Decimal?    @db.Decimal(15, 2)
-  builtArea                 Decimal?    @db.Decimal(15, 2)
-  bedrooms                  Int?
-  suites                    Int?
-  bathrooms                 Int?
-  parkingSpaces             Int?
-  constructionType          String?
-  finishes                  String?
-  infrastructure            String?
-  condoDetails              String?
-  improvements              String?
-  topography                String?
-  liensAndEncumbrances      String?     @db.Text
-  propertyDebts             String?     @db.Text
-  unregisteredRecords       String?     @db.Text
-  hasHabiteSe               Boolean?
-  zoningRestrictions        String?
-  amenities                 Json?
-  brand                     String?
-  serialNumber              String?     @unique
-  itemCondition             String?
-  specifications            String?     @db.Text
-  includedAccessories       String?
-  batteryCondition          String?
-  hasInvoice                Boolean?
-  hasWarranty               Boolean?
-  repairHistory             String?
-  applianceCapacity         String?
-  voltage                   String?
-  applianceType             String?
-  additionalFunctions       String?
-  hoursUsed                 Int?
-  engineType                String?
-  capacityOrPower           String?
-  maintenanceHistory        String?     @db.Text
-  installationLocation      String?
-  compliesWithNR            String?
-  operatingLicenses         String?
-  breed                     String?
-  age                       String?
-  sex                       String?
-  weight                    String?
-  individualId              String?
-  purpose                   String?
-  sanitaryCondition         String?
-  lineage                   String?
-  isPregnant                Boolean?
-  specialSkills             String?
-  gtaDocument               String?
-  breedRegistryDocument     String?
-  furnitureType             String?
-  material                  String?
-  style                     String?
-  dimensions                String?
-  pieceCount                Int?
-  jewelryType               String?
-  metal                     String?
-  gemstones                 String?
-  totalWeight               String?
-  jewelrySize               String?
-  authenticityCertificate   String?
-  workType                  String?
-  artist                    String?
-  period                    String?
-  technique                 String?
-  provenance                String?
-  boatType                  String?
-  boatLength                String?
-  hullMaterial              String?
-  onboardEquipment          String?     @db.Text
-  productName               String?
-  quantity                  String?
-  packagingType             String?
-  expirationDate            DateTime?
-  storageConditions         String?
-  preciousMetalType         String?
-  purity                    String?
-  forestGoodsType           String?
-  volumeOrQuantity          String?
-  species                   String?
-  dofNumber                 String?
+  iptuNumber                 String?
+  isOccupied                 Boolean?
+  totalArea                  Decimal?
+  builtArea                  Decimal?
+  bedrooms                   Int?
+  suites                     Int?
+  bathrooms                  Int?
+  parkingSpaces              Int?
+  constructionType           String?
+  finishes                   String? @db.Text
+  infrastructure             String? @db.Text
+  condoDetails               String? @db.Text
+  improvements               String? @db.Text
+  topography                 String?
+  liensAndEncumbrances       String? @db.Text
+  propertyDebts              String? @db.Text
+  unregisteredRecords        String? @db.Text
+  hasHabiteSe                Boolean?
+  zoningRestrictions         String?
+  amenities                  Json?
+  
+  // Electronics Specific Fields
+  brand                      String?
+  serialNumber               String?
+  itemCondition              String?
+  specifications             String? @db.Text
+  includedAccessories        String? @db.Text
+  batteryCondition           String?
+  hasInvoice                 Boolean?
+  hasWarranty                Boolean?
+  repairHistory              String? @db.Text
+  
+  // Appliance Specific Fields
+  applianceCapacity          String?
+  voltage                    String?
+  applianceType              String?
+  additionalFunctions        String?
 
-  lots          AssetsOnLots[]
-  category      LotCategory?     @relation(fields: [categoryId], references: [id])
-  subcategory   Subcategory?     @relation(fields: [subcategoryId], references: [id])
-  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  seller        Seller?          @relation(fields: [sellerId], references: [id])
-  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  // Machinery Specific Fields
+  hoursUsed                  Int?
+  engineType                 String?
+  capacityOrPower            String?
+  maintenanceHistory         String? @db.Text
+  installationLocation       String?
+  compliesWithNR             String?
+  operatingLicenses          String?
 
-  @@index([sellerId])
-  @@index([judicialProcessId])
+  // Livestock Specific Fields
+  breed                      String?
+  age                        String?
+  sex                        String?
+  weight                     String?
+  individualId               String?
+  purpose                    String?
+  sanitaryCondition          String? @db.Text
+  lineage                    String?
+  isPregnant                 Boolean?
+  specialSkills              String?
+  gtaDocument                String?
+  breedRegistryDocument      String?
+
+  // Furniture Specific Fields
+  furnitureType              String?
+  material                   String?
+  style                      String?
+  dimensions                 String?
+  pieceCount                 Int?
+
+  // Jewelry Specific Fields
+  jewelryType                String?
+  metal                      String?
+  gemstones                  String?
+  totalWeight                String?
+  jewelrySize                String?
+  authenticityCertificate    String?
+
+  // Artwork & Antiques Specific Fields
+  workType                   String?
+  artist                     String?
+  period                     String?
+  technique                  String?
+  provenance                 String? @db.Text
+
+  // Vessel Specific Fields
+  boatType                   String?
+  boatLength                 String?
+  hullMaterial               String?
+  onboardEquipment           String? @db.Text
+
+  // Foodstuffs Specific Fields
+  productName                String?
+  quantity                   String?
+  packagingType              String?
+  expirationDate             DateTime?
+  storageConditions          String?
+
+  // Precious Metals/Stones Specific Fields
+  preciousMetalType          String?
+  purity                     String?
+
+  // Forestry Goods Specific Fields
+  forestGoodsType            String?
+  volumeOrQuantity           String?
+  species                    String?
+  dofNumber                  String?
+
   @@index([tenantId])
 }
