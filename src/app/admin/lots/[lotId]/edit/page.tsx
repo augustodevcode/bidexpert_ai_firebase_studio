@@ -11,13 +11,13 @@
 import { getLot, updateLot, finalizeLot } from '../../actions';
 import { getAuction } from '@/app/admin/auctions/actions';
 import LotForm, { type LotFormData } from '../../lot-form';
-import { getBensForLotting } from '@/app/admin/bens/actions';
+import { getAssetsForLotting } from '@/app/admin/assets/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctions as getAllAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useParams } from 'next/navigation';
-import type { Lot, Auction, Bem, StateInfo, CityInfo, LotCategory, SellerProfileInfo } from '@/types';
+import type { Lot, Auction, Asset, StateInfo, CityInfo, LotCategory, SellerProfileInfo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader2, Gavel, Repeat } from 'lucide-react';
@@ -49,7 +49,7 @@ export default function EditLotPage() {
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
   const [states, setStates] = useState<StateInfo[]>([]);
   const [allCities, setAllCities] = useState<CityInfo[]>([]);
-  const [availableBens, setAvailableBens] = useState<Bem[]>([]);
+  const [availableBens, setAvailableBens] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isRelistModalOpen, setIsRelistModalOpen] = useState(false);
@@ -74,7 +74,7 @@ export default function EditLotPage() {
         getAllAuctions(),
         getStates(),
         getCities(),
-        getBensForLotting(filterForBens),
+        getAssetsForLotting(filterForBens),
         getSellers(),
       ]);
       
@@ -146,7 +146,7 @@ export default function EditLotPage() {
           sellers={sellers}
           states={states}
           allCities={allCities}
-          initialAvailableBens={availableBens}
+          initialAvailableAssets={availableBens}
           onSubmitAction={handleUpdateLot}
           formTitle="Editar Lote"
           formDescription="Modifique os detalhes do lote existente."

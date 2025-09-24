@@ -293,7 +293,7 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromAssetId = data.inheritedMediaFromBemId;
+        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
@@ -356,7 +356,7 @@ export class LotService {
         dataToUpdate.state = { connect: { id: stateId } };
       }
       if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromBemId;
+        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       // A atualização dos ativos vinculados e a atualização dos detalhes das etapas são agora transacionais

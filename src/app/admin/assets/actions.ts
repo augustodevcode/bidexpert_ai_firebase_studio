@@ -115,5 +115,5 @@ export async function getAssetsByIdsAction(ids: string[]): Promise<Asset[]> {
 
 export async function getAssetsForLotting(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Asset[]> {
     const tenantId = await getTenantIdFromRequest();
-    return assetService.getAssets({ ...filter, tenantId });
+    return assetService.getAssets({ ...filter, tenantId, status: 'DISPONIVEL' });
 }
