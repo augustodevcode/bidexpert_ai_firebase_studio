@@ -1,0 +1,176 @@
+// /prisma/models/Asset.prisma
+model Asset {
+  id                String   @id @default(cuid())
+  publicId          String   @unique @default(uuid())
+  title             String   @db.VarChar(200)
+  description       String?  @db.Text
+  status            AssetStatus @default(CADASTRO)
+  evaluationValue   Decimal? @db.Decimal(15, 2)
+  imageUrl          String?  @db.VarChar(255)
+  imageMediaId      String?  @db.VarChar(100)
+  galleryImageUrls  Json?
+  mediaItemIds      Json?
+  dataAiHint        String?  @db.VarChar(100)
+  locationCity      String?  @db.VarChar(100)
+  locationState     String?  @db.VarChar(100)
+  address           String?  @db.VarChar(255)
+  latitude          Decimal? @db.Decimal(10, 8)
+  longitude         Decimal? @db.Decimal(11, 8)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  lots AssetsOnLots[]
+
+  category   LotCategory? @relation(fields: [categoryId], references: [id])
+  categoryId String?
+  
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId String?
+
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId String?
+
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+  sellerId String?
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId String
+
+  // Vehicle specific
+  plate               String?   @db.VarChar(10)
+  make                String?   @db.VarChar(50)
+  model               String?   @db.VarChar(50)
+  version             String?   @db.VarChar(100)
+  year                Int?
+  modelYear           Int?
+  mileage             Int?
+  color               String?   @db.VarChar(30)
+  fuelType            String?   @db.VarChar(30)
+  transmissionType    String?   @db.VarChar(30)
+  bodyType            String?   @db.VarChar(50)
+  vin                 String?   @db.VarChar(17)
+  renavam             String?   @db.VarChar(11)
+  enginePower         String?   @db.VarChar(50)
+  numberOfDoors       Int?
+  vehicleOptions      String?   @db.VarChar(500)
+  detranStatus        String?   @db.VarChar(100)
+  debts               String?   @db.VarChar(500)
+  runningCondition    String?   @db.VarChar(100)
+  bodyCondition       String?   @db.VarChar(100)
+  tiresCondition      String?   @db.VarChar(100)
+  hasKey              Boolean?
+
+  // Real Estate specific
+  propertyRegistrationNumber String? @db.VarChar(50)
+  iptuNumber                 String? @db.VarChar(50)
+  isOccupied                 Boolean?
+  totalArea                  Decimal? @db.Decimal(12, 2)
+  builtArea                  Decimal? @db.Decimal(12, 2)
+  bedrooms                   Int?
+  suites                     Int?
+  bathrooms                  Int?
+  parkingSpaces              Int?
+  constructionType           String? @db.VarChar(100)
+  finishes                   String? @db.VarChar(500)
+  infrastructure             String? @db.VarChar(500)
+  condoDetails               String? @db.VarChar(500)
+  improvements               String? @db.VarChar(500)
+  topography                 String? @db.VarChar(100)
+  liensAndEncumbrances       String? @db.Text
+  propertyDebts              String? @db.VarChar(500)
+  unregisteredRecords        String? @db.VarChar(500)
+  hasHabiteSe                Boolean?
+  zoningRestrictions         String? @db.VarChar(200)
+  amenities                  Json?
+  
+  // Electronics
+  brand                String?  @db.VarChar(50)
+  serialNumber         String?  @db.VarChar(100)
+  itemCondition        String?  @db.VarChar(100)
+  specifications       String?  @db.Text
+  includedAccessories  String?  @db.VarChar(500)
+  batteryCondition     String?  @db.VarChar(100)
+  hasInvoice           Boolean?
+  hasWarranty          Boolean?
+  repairHistory        String?  @db.VarChar(500)
+
+  // Appliances
+  applianceCapacity   String?  @db.VarChar(50)
+  voltage             String?  @db.VarChar(20)
+  applianceType       String?  @db.VarChar(50)
+  additionalFunctions String?  @db.VarChar(200)
+
+  // Machinery
+  hoursUsed           Int?
+  engineType          String?  @db.VarChar(50)
+  capacityOrPower     String?  @db.VarChar(100)
+  maintenanceHistory  String?  @db.Text
+  installationLocation String?  @db.VarChar(200)
+  compliesWithNR      String?  @db.VarChar(100)
+  operatingLicenses   String?  @db.VarChar(200)
+
+  // Livestock
+  breed                   String?  @db.VarChar(50)
+  age                     String?  @db.VarChar(30)
+  sex                     String?  @db.VarChar(10) // e.g., Macho, Fêmea
+  weight                  String?  @db.VarChar(30)
+  individualId            String?  @db.VarChar(50)
+  purpose                 String?  @db.VarChar(100) // e.g., Corte, Leite, Reprodução
+  sanitaryCondition       String?  @db.VarChar(200)
+  lineage                 String?  @db.VarChar(200)
+  isPregnant              Boolean?
+  specialSkills           String?  @db.VarChar(200)
+  gtaDocument             String?  @db.VarChar(100)
+  breedRegistryDocument   String?  @db.VarChar(100)
+
+  // Furniture
+  furnitureType String? @db.VarChar(100)
+  material      String? @db.VarChar(100)
+  style         String? @db.VarChar(50)
+  dimensions    String? @db.VarChar(100)
+  pieceCount    Int?
+
+  // Jewelry
+  jewelryType           String? @db.VarChar(100)
+  metal                 String? @db.VarChar(100)
+  gemstones             String? @db.VarChar(500)
+  totalWeight           String? @db.VarChar(50)
+  jewelrySize           String? @db.VarChar(50)
+  authenticityCertificate String? @db.VarChar(200)
+
+  // Art & Antiques
+  workType   String? @db.VarChar(100)
+  artist     String? @db.VarChar(100)
+  period     String? @db.VarChar(100)
+  technique  String? @db.VarChar(100)
+  provenance String? @db.VarChar(500)
+
+  // Boats
+  boatType       String? @db.VarChar(100)
+  boatLength     String? @db.VarChar(50)
+  hullMaterial   String? @db.VarChar(50)
+  onboardEquipment String? @db.Text
+
+  // Food
+  productName       String?   @db.VarChar(100)
+  quantity          String?   @db.VarChar(50)
+  packagingType     String?   @db.VarChar(50)
+  expirationDate    DateTime?
+  storageConditions String?   @db.VarChar(200)
+
+  // Precious Metals & Stones
+  preciousMetalType String? @db.VarChar(50)
+  purity            String? @db.VarChar(50)
+
+  // Forest Goods
+  forestGoodsType  String? @db.VarChar(100)
+  volumeOrQuantity String? @db.VarChar(100)
+  species          String? @db.VarChar(100)
+  dofNumber        String? @db.VarChar(100)
+
+
+  @@index([sellerId])
+  @@index([judicialProcessId])
+  @@index([categoryId])
+  @@index([tenantId])
+}
