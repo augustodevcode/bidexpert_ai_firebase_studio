@@ -1,17 +1,26 @@
 
+
 'use client';
 
+import * as React from 'react';
 import type { Lot, Auction, PlatformSettings } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import Image from 'next/image';
-import { Eye, ChevronLeft, ChevronRight, ImageOff, MapPin, Tag, Clock, Users, Gavel, Percent, Zap, TrendingUp, Crown, Building, Car, Truck, Info, Leaf, CalendarDays } from 'lucide-react';
+import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from './ui/separator';
+import LotStagesTimeline from './auction/lot-stages-timeline';
+import { useMemo, useState } from 'react';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { isValidImageUrl } from '@/lib/ui-helpers';
+import { Clock, Percent, Zap, TrendingUp, Crown, Building, Car, Truck, Leaf, Gavel, Users } from 'lucide-react';
 import { isPast, differenceInSeconds, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Separator } from './ui/separator';
+import { Badge } from '@/components/ui/badge';
+import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
+
 
 interface LotPreviewModalProps {
   lot: Lot | null;
@@ -20,6 +29,7 @@ interface LotPreviewModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
 
 const InfoItem = ({ icon: Icon, value, label }: { icon: React.ElementType, value?: string | number | null, label: string }) => {
     if (!value && value !== 0) return null;
@@ -117,7 +127,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[850px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-4 sm:p-6 pb-0 flex-shrink-0">
-          <DialogTitle className="text-xl sm:text-2xl font-bold font-headline line-clamp-2">{lot.title}</DialogTitle>
+          <DialogTitle className="text-xl sm:text-2xl font-bold font-headline">{lot.title}</DialogTitle>
           <DialogDescription>Lote Nº: {lot.number || lot.id.replace('LOTE', '')}</DialogDescription>
         </DialogHeader>
         
@@ -125,7 +135,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
             {/* Image Gallery */}
             <div className="space-y-2">
                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
-                    <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || 'marina home'} priority />
+                    <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint="imagem principal lote" priority />
                     {gallery.length > 1 && (
                         <>
                             <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronLeft className="h-5 w-5" /></Button>
@@ -204,3 +214,5 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
     </Dialog>
   );
 }
+
+    
