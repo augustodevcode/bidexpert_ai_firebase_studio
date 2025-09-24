@@ -17,6 +17,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
+  getExpandedRowModel, // Importar o modelo de expansão
+  ExpandedState, // Importar o tipo de estado de expansão
 } from "@tanstack/react-table";
 
 import {
@@ -76,6 +78,7 @@ export function DataTable<TData, TValue>({
     React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
+  const [expanded, setExpanded] = React.useState<ExpandedState>({}); // Estado para controlar a expansão
 
   const isControlled = controlledRowSelection !== undefined && setControlledRowSelection !== undefined;
   const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
@@ -91,17 +94,20 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnFilters,
       grouping,
+      expanded, // Passar o estado de expansão para a tabela
     },
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGroupingChange: setGrouping,
+    onExpandedChange: setExpanded, // Handler para atualizar o estado de expansão
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(), // Habilitar o modelo de expansão
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     enableRowSelection: true,
@@ -165,7 +171,7 @@ export function DataTable<TData, TValue>({
                            <div className="flex items-center gap-2">
                             <Button
                                 variant="ghost" size="icon" className="h-6 w-6"
-                                onClick={row.getToggleExpandedHandler()}
+                                onClick={row.getToggleExpandedHandler()} // Handler correto no botão
                             >
                                 {row.getIsExpanded() ? (
                                     <ChevronDown className="h-4 w-4" />
