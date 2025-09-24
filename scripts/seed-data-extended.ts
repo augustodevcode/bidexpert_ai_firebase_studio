@@ -1,6 +1,7 @@
 // scripts/seed-data-extended.ts
 import { PrismaClient, Prisma, AuctionType, AssetStatus, LotStatus, AuctionStatus, AuctionMethod, Participation } from '@prisma/client';
 import { faker } from '@faker-js/faker';
+import { seedGeminiExtended } from './seed-data-extended-gemini';
 
 const prisma = new PrismaClient();
 
@@ -175,9 +176,8 @@ Creating user wins and installment payments...');
   const userWins = await createUserWins(bidders, allCreatedAuctions);
   await createInstallmentPayments(userWins, seedConfig.installmentPayments.perUserWin);
 
-  console.log('
-Seeding finished successfully!');
-  await createUseCasesDocumentation(); // Generate documentation
+  console.log('\nSeeding finished successfully!');
+  await seedGeminiExtended();
 }
 
 // =================================================================

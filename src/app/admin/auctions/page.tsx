@@ -1,30 +1,39 @@
 // src/app/admin/auctions/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Leilões.
- * Utiliza o componente DataTable para exibir os dados de forma interativa,
- * permitindo busca, ordenação, filtros por status e agrupamentos.
+ * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros por status e visualização em grade ou lista.
  */
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctions, deleteAuction } from './actions';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
-import { PlusCircle, Gavel } from 'lucide-react';
+import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { getAuctions as getAuctionsAction, deleteAuction } from './actions';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, PlatformSettings } from '@/types';
+import { PlusCircle, Gavel, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
 import { getAuctioneers } from '../auctioneers/actions';
+import SearchResultsFrame from '@/components/search-results-frame';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
+const sortOptions = [
+  { value: 'auctionDate_desc', label: 'Data: Mais Recentes' },
+  { value: 'auctionDate_asc', label: 'Data: Mais Antigos' },
+  { value: 'title_asc', label: 'Título A-Z' },
+  { value: 'title_desc', label: 'Título Z-A' },
+  { value: 'visits_desc', label: 'Mais Visitados' },
+];
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
-  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
-  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -34,14 +43,12 @@ export default function AdminAuctionsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedAuctions, fetchedSellers, fetchedAuctioneers] = await Promise.all([
-        getAuctions(),
-        getSellers(),
-        getAuctioneers(),
+      const [fetchedAuctions, settings] = await Promise.all([
+        getAuctionsAction(false), // Fetch all for admin
+        getPlatformSettings(),
       ]);
       setAuctions(fetchedAuctions);
-      setSellers(fetchedSellers);
-      setAuctioneers(fetchedAuctioneers);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
@@ -55,59 +62,34 @@ export default function AdminAuctionsPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
-  
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteAuction(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      setRefetchTrigger(c => c + 1); // Trigger refetch
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteAuction(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
 
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} leilão(ões) excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
+  const onUpdate = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+  }, []);
 
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const renderGridItem = (item: Auction) => <UniversalCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: Auction) => <UniversalListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 
-  const statusOptions = useMemo(() => 
-    [...new Set(auctions.map(a => a.status))]
-      .map(status => ({ value: status!, label: getAuctionStatusText(status) })),
-  [auctions]);
-
-  const sellerOptions = useMemo(() =>
-    sellers.map(s => ({ value: s.name, label: s.name })),
-  [sellers]);
-  
-  const auctioneerOptions = useMemo(() =>
-    auctioneers.map(a => ({ value: a.name, label: a.name })),
-  [auctioneers]);
-
-  const facetedFilterColumns = useMemo(() => [
-    { id: 'status', title: 'Status', options: statusOptions },
-    { id: 'sellerName', title: 'Comitente', options: sellerOptions },
-    { id: 'auctioneerName', title: 'Leiloeiro', options: auctioneerOptions },
-  ], [statusOptions, sellerOptions, auctioneerOptions]);
+  if (isLoading || !platformSettings) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <Skeleton className="h-8 w-64 mb-2"/>
+                        <Skeleton className="h-4 w-80"/>
+                    </div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="admin-auctions-page-container">
@@ -128,19 +110,22 @@ export default function AdminAuctionsPage() {
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
-           <DataTable
-            columns={columns}
-            data={auctions}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="title"
-            searchPlaceholder="Buscar por título ou ID..."
-            facetedFilterColumns={facetedFilterColumns}
-            onDeleteSelected={handleDeleteSelected}
-          />
-        </CardContent>
       </Card>
+
+      <SearchResultsFrame
+        items={auctions}
+        totalItemsCount={auctions.length}
+        renderGridItem={renderGridItem}
+        renderListItem={renderListItem}
+        sortOptions={sortOptions}
+        initialSortBy="auctionDate_desc"
+        onSortChange={() => {}} // Sorting logic is now internal to SearchResultsFrame or could be passed
+        platformSettings={platformSettings}
+        isLoading={isLoading}
+        searchTypeLabel="leilões"
+        emptyStateMessage="Nenhum leilão encontrado."
+        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+      />
     </div>
   );
 }

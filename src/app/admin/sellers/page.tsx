@@ -1,35 +1,49 @@
 // src/app/admin/sellers/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Comitentes (Vendedores).
- * Utiliza o componente DataTable para exibir os dados de forma interativa,
- * permitindo busca, ordenação e ações como edição e exclusão.
+ * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * permitindo busca, ordenação e visualização em grade ou lista.
  */
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSellers, deleteSeller } from './actions';
-import type { SellerProfileInfo } from '@/types';
+import { getSellers as getSellersAction } from './actions';
+import type { SellerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import SearchResultsFrame from '@/components/search-results-frame';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const sortOptions = [
+  { value: 'name_asc', label: 'Nome A-Z' },
+  { value: 'name_desc', label: 'Nome Z-A' },
+  { value: 'createdAt_desc', label: 'Mais Recentes' },
+];
 
 export default function AdminSellersPage() {
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedSellers = await getSellers();
+      const [fetchedSellers, settings] = await Promise.all([
+        getSellersAction(),
+        getPlatformSettings(),
+      ]);
       setSellers(fetchedSellers);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
       console.error("Error fetching sellers:", e);
@@ -42,41 +56,28 @@ export default function AdminSellersPage() {
 
   useEffect(() => {
     fetchPageData();
-  }, [fetchPageData]);
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteSeller(id);
-    if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
-      fetchPageData();
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast, fetchPageData]);
-
-  const handleDeleteSelected = useCallback(async (selectedItems: SellerProfileInfo[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteSeller(item.id);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.name}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} comitente(s) excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
+  }, [fetchPageData, refetchTrigger]);
   
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const onUpdate = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+  }, []);
+
+  const renderGridItem = (item: SellerProfileInfo) => <UniversalCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: SellerProfileInfo) => <UniversalListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  
+   if (isLoading || !platformSettings) {
+    return (
+      <div className="space-y-6">
+        <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                <Skeleton className="h-10 w-36"/>
+            </CardHeader>
+            <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="admin-sellers-page-container">
@@ -97,18 +98,22 @@ export default function AdminSellersPage() {
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
-           <DataTable
-            columns={columns}
-            data={sellers}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome..."
-            onDeleteSelected={handleDeleteSelected}
-          />
-        </CardContent>
       </Card>
+      
+      <SearchResultsFrame
+        items={sellers}
+        totalItemsCount={sellers.length}
+        renderGridItem={renderGridItem}
+        renderListItem={renderListItem}
+        sortOptions={sortOptions}
+        initialSortBy="name_asc"
+        onSortChange={() => {}}
+        platformSettings={platformSettings}
+        isLoading={isLoading}
+        searchTypeLabel="comitentes"
+        emptyStateMessage="Nenhum comitente encontrado."
+        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+      />
     </div>
   );
 }

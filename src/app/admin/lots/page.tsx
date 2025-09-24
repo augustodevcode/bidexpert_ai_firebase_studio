@@ -1,8 +1,8 @@
 // src/app/admin/lots/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Lotes.
- * Utiliza o componente DataTable para exibir os dados de forma interativa,
- * permitindo busca, ordenação, filtros facetados e ações como exclusão.
+ * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * permitindo busca, ordenação e visualização em grade ou lista.
  */
 'use client';
 
@@ -10,18 +10,29 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLots, deleteLot } from './actions';
+import { getLots as getLotsAction } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import type { Auction, Lot } from '@/types';
+import type { Auction, Lot, PlatformSettings } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
-import { createColumns } from './columns';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import SearchResultsFrame from '@/components/search-results-frame';
+import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/universal-list-item';
+import { Skeleton } from '@/components/ui/skeleton';
+
+const sortOptions = [
+  { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
+  { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'price_asc', label: 'Preço: Menor para Maior' },
+  { value: 'title_asc', label: 'Título A-Z' },
+];
 
 export default function AdminLotsPage() {
   const [lots, setLots] = useState<Lot[]>([]);
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
@@ -31,12 +42,14 @@ export default function AdminLotsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedLots, fetchedAuctions] = await Promise.all([
-        getLots(),
+      const [fetchedLots, fetchedAuctions, settings] = await Promise.all([
+        getLotsAction(),
         getAuctions(),
+        getPlatformSettings(),
       ]);
       setLots(fetchedLots);
       setAuctions(fetchedAuctions);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
       console.error("Error fetching lots:", e);
@@ -50,57 +63,37 @@ export default function AdminLotsPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
+
+  const onUpdate = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+  }, []);
+
+  const renderGridItem = (item: Lot) => <UniversalCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: Lot) => <UniversalListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
   
-  const handleDelete = useCallback(async (id: string, auctionId?: string) => {
-    const result = await deleteLot(id, auctionId);
-    if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
-      setRefetchTrigger(c => c + 1);
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast]);
-  
-  const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
-    if (selectedItems.length === 0) return;
-    
-    let successCount = 0;
-    let errorCount = 0;
-    
-    for (const item of selectedItems) {
-      const result = await deleteLot(item.id, item.auctionId);
-      if (result.success) {
-        successCount++;
-      } else {
-        errorCount++;
-        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
-      }
-    }
-
-    if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} lote(s) excluído(s) com sucesso.` });
-    }
-    fetchPageData();
-  }, [toast, fetchPageData]);
-
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-
-  const statusOptions = useMemo(() => 
-    [...new Set(lots.map(l => l.status))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
-  [lots]);
-  
-  const auctionOptions = useMemo(() =>
-    auctions.map(auc => ({ value: auc.title, label: `${auc.title} (ID: ...${auc.id.slice(-6)})` })),
-  [auctions]);
-
-  const facetedFilterColumns = useMemo(() => [
-    { id: 'status', title: 'Status', options: statusOptions },
-    { id: 'auctionName', title: 'Leilão', options: auctionOptions },
-  ], [statusOptions, auctionOptions]);
+  if (isLoading || !platformSettings) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <Skeleton className="h-8 w-64 mb-2"/>
+                        <Skeleton className="h-4 w-80"/>
+                    </div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="admin-lots-page-container">
       <Card className="shadow-lg">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
@@ -118,19 +111,22 @@ export default function AdminLotsPage() {
             </Link>
           </Button>
         </CardHeader>
-        <CardContent>
-           <DataTable
-              columns={columns}
-              data={lots}
-              isLoading={isLoading}
-              error={error}
-              searchColumnId="title"
-              searchPlaceholder="Buscar por título ou ID..."
-              facetedFilterColumns={facetedFilterColumns}
-              onDeleteSelected={handleDeleteSelected}
-            />
-        </CardContent>
       </Card>
+      
+       <SearchResultsFrame
+        items={lots}
+        totalItemsCount={lots.length}
+        renderGridItem={renderGridItem}
+        renderListItem={renderListItem}
+        sortOptions={sortOptions}
+        initialSortBy="endDate_asc"
+        onSortChange={() => {}}
+        platformSettings={platformSettings}
+        isLoading={isLoading}
+        searchTypeLabel="lotes"
+        emptyStateMessage="Nenhum lote encontrado."
+        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+      />
     </div>
   );
 }
