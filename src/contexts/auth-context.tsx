@@ -4,17 +4,17 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction } from '@/app/auth/actions';
+import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions'; // Importar a nova action
+import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
 
 interface AuthContextType {
   userProfileWithPermissions: UserProfileWithPermissions | null;
   activeTenantId: string | null;
   loading: boolean;
-  unreadNotificationsCount: number; // Adicionar contagem
+  unreadNotificationsCount: number;
   setUserProfileWithPermissions: Dispatch<SetStateAction<UserProfileWithPermissions | null>>;
   setActiveTenantId: Dispatch<SetStateAction<string | null>>;
   logout: () => void;
@@ -35,16 +35,11 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(!initialUser);
-  const [isClient, setIsClient] = useState(false);
+  const [loading, setLoading] = useState(true); // Start as true
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-  
   const fetchUnreadCount = useCallback(async (userId: string) => {
     try {
         const count = await getUnreadNotificationCountAction(userId);
@@ -61,14 +56,35 @@ export function AuthProvider({
        await fetchUnreadCount(userProfileWithPermissions.id);
      }
   }, [router, userProfileWithPermissions?.id, fetchUnreadCount]);
-
+  
   useEffect(() => {
-    if (initialUser) {
-      setLoading(false);
-      fetchUnreadCount(initialUser.id);
-    } else {
-      setLoading(false);
+    async function checkUserSession() {
+      if (userProfileWithPermissions) {
+          setLoading(false);
+          return;
+      }
+
+      console.log("[AuthContext] No initial user. Checking session on client...");
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          console.log("[AuthContext] User found in session. Setting context.");
+          // @ts-ignore - a sessão do getCurrentUser não tem o tenantId, mas o login sim.
+          const tenantId = user.tenants?.[0]?.id || '1';
+          setUserProfileWithPermissions(user);
+          setActiveTenantId(tenantId);
+          fetchUnreadCount(user.id);
+        } else {
+            console.log("[AuthContext] No user found in session.");
+        }
+      } catch (error) {
+        console.error('[AuthContext] Error checking user session:', error);
+      } finally {
+        setLoading(false);
+      }
     }
+
+    checkUserSession();
     
     const handleStorageChange = () => {
       if (userProfileWithPermissions?.id) {
@@ -80,14 +96,15 @@ export function AuthProvider({
       window.removeEventListener('notifications-updated', handleStorageChange);
     };
 
-  }, [initialUser, fetchUnreadCount, userProfileWithPermissions?.id]);
+  }, [fetchUnreadCount, userProfileWithPermissions]);
+
 
   const logout = async () => {
     try {
         await logoutAction();
         setUserProfileWithPermissions(null);
         setActiveTenantId(null);
-        setUnreadNotificationsCount(0); // Resetar na saída
+        setUnreadNotificationsCount(0);
         toast({ title: "Logout realizado com sucesso." });
         window.location.href = '/auth/login';
     } catch (error) {
@@ -99,10 +116,10 @@ export function AuthProvider({
   const loginUser = (user: UserProfileWithPermissions, tenantId: string) => {
     setUserProfileWithPermissions(user);
     setActiveTenantId(tenantId);
-    fetchUnreadCount(user.id); // Buscar contagem no login
+    fetchUnreadCount(user.id);
   };
   
-  if (loading && isClient) {
+  if (loading) {
      return (
         <div className="flex h-screen w-screen items-center justify-center bg-background">
             <Loader2 className="h-10 w-10 animate-spin text-primary"/>

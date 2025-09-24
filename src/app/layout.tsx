@@ -8,6 +8,8 @@ import { AppContentWrapper } from './app-content-wrapper';
 import { getSession } from '@/server/lib/session';
 import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { UserService } from '@/services/user.service'; // Importar UserService
+
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -41,17 +43,12 @@ async function getInitialAuthData() {
     return { initialUser: null, initialTenantId: '1' };
   }
 
-  // Simplified user object from session, no DB call needed here.
-  const initialUserFromSession: Partial<UserProfileWithPermissions> = {
-      id: session.userId,
-      uid: session.userId,
-      email: session.email,
-      roleNames: session.roleNames,
-      permissions: session.permissions,
-  };
+  // No server, vamos buscar o usuário completo para ter todos os dados na primeira carga
+  const userService = new UserService();
+  const fullUser = await userService.getUserById(session.userId);
 
   return { 
-    initialUser: initialUserFromSession as UserProfileWithPermissions, 
+    initialUser: fullUser, 
     initialTenantId: session.tenantId || '1' 
   };
 }
