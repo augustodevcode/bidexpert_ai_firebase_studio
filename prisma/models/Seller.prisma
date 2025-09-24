@@ -26,7 +26,7 @@ model Seller {
   // Relacionamentos
   auctions             Auction[]
   lots                 Lot[]
-  bens                 Bem[]
+  assets               Asset[]
   directSaleOffers     DirectSaleOffer[]
   judicialProcesses    JudicialProcess[]
   // Multi-Tenant

@@ -102,8 +102,14 @@ export default function Header({
   const siteTagline = platformSettings?.siteTagline;
   const siteLogoUrl = platformSettings?.logoUrl;
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   useEffect(() => {
+    if (!isClient) return;
     async function fetchClientSideData() {
       setIsLoading(true);
       try {
@@ -152,7 +158,7 @@ export default function Header({
       }
     }
     fetchClientSideData();
-  }, []);
+  }, [isClient]);
 
   const onLinkClick = useCallback(() => {
     if (isMobileMenuOpen) {
@@ -165,6 +171,7 @@ export default function Header({
   }, []);
 
   useEffect(() => {
+    if (!isClient) return;
     updateCounts();
 
     const handleStorageChange = () => updateCounts();
@@ -179,7 +186,7 @@ export default function Header({
         window.removeEventListener('favorites-updated', handleStorageChange);
         window.removeEventListener('storage', handleStorageChange);
     };
-  }, [updateCounts]);
+  }, [isClient, updateCounts]);
   
    const consignorMegaMenuGroups: MegaMenuGroup[] = useMemo(() => {
       const consignorItemsForMenu: MegaMenuLinkItem[] = sellers.map(seller => ({

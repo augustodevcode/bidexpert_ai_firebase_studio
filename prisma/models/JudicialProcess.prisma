@@ -10,7 +10,7 @@ model JudicialProcess {
   createdAt         DateTime? @default(now())
   updatedAt         DateTime? @updatedAt
   tenantId          String
-  bens              Bem[]
+  assets            Asset[]
   auctions          Auction[] @relation(map: "AuctionToJudicialProcess")
 
   // Relations

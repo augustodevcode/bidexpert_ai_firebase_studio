@@ -62,7 +62,7 @@ model Lot {
   city            City?               @relation(fields: [cityId], references: [id])
   state           State?              @relation(fields: [stateId], references: [id])
   winner          User?               @relation("LotWinner", fields: [winnerId], references: [id], onDelete: SetNull)
-  bens            LotBens[]
+  assets          AssetsOnLots[]
   bids            Bid[]
   reviews         Review[]
   questions       LotQuestion[]

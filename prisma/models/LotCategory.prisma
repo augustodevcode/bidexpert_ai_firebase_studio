@@ -21,7 +21,7 @@ model LotCategory {
   subcategories   Subcategory[]
   auctions        Auction[]
   lots            Lot[]
-  bens            Bem[]
+  assets          Asset[]
 
   @@unique([name])
   DirectSaleOffer DirectSaleOffer[]

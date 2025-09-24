@@ -10,7 +10,7 @@ model Subcategory {
   dataAiHintIcon     String?
   parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
   lots               Lot[]
-  bens               Bem[]
+  assets             Asset[]
 
   @@unique([name, parentCategoryId])
 }

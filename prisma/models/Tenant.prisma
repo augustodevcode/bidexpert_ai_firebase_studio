@@ -11,7 +11,7 @@ model Tenant {
   users             UsersOnTenants[]
   auctions          Auction[]
   lots              Lot[]
-  bens              Bem[]
+  assets            Asset[]
   sellers           Seller[]
   auctioneers       Auctioneer[]
   judicialProcesses JudicialProcess[]
