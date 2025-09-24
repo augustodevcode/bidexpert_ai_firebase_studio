@@ -58,21 +58,32 @@ export default function LoginPage() {
             // Caso de múltiplos tenants: exibir o seletor
             toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
             setUserWithMultipleTenants(result.user);
+            setIsLoading(false);
         } else if (result.success && result.user) {
             // Login bem-sucedido e tenant definido: redirecionar
             const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
             loginUser(result.user, selectedTenantId || result.user.tenants[0].id);
-            router.push(redirectUrl);
+
+            // Adiciona o toast e um pequeno delay antes de redirecionar
+            toast({
+                title: "Login bem-sucedido!",
+                description: "Redirecionando para o seu painel...",
+            });
+
+            setTimeout(() => {
+                router.push(redirectUrl);
+            }, 300); // 300ms de delay
+            
         } else {
             // Falha no login
             setError(result.message);
             toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
+            setIsLoading(false);
         }
     } catch (e: any) {
         const errorMessage = e.message || 'Ocorreu um erro inesperado.';
         setError(errorMessage);
         toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
-    } finally {
         setIsLoading(false);
     }
   };

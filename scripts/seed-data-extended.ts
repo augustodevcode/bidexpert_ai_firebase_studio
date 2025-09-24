@@ -122,6 +122,7 @@ async function main() {
     }
 
     const auction = await createAuction(tenant.id, auctioneers, sellers, cities, type, `Leilão ${type} de Teste`);
+    allCreatedAuctions.push(auction); // Collect auction
     const lots = await createLotsForAuction(auction, suitableAssets, seedConfig.auctions.lotsPerAuction);
     
     // Refresh available assets pool
@@ -134,6 +135,7 @@ async function main() {
   // Create auctions for all statuses
   console.log('Creating auctions for all statuses...');
   const auctionsForAllStatuses = await createAuctionsForAllStatuses(tenant.id, auctioneers, sellers, cities);
+  allCreatedAuctions.push(...auctionsForAllStatuses); // Collect auctions
   
   // For each status auction, create one lot for each status
   for (const auction of auctionsForAllStatuses) {
@@ -152,9 +154,14 @@ async function main() {
   // Create auctions and lots for capital cities
   console.log('Creating auctions and lots for capital cities...');
   const { createdAuctions: capitalAuctions, createdLots: capitalLots } = await createCapitalCityAuctionsAndLots(tenant.id, auctioneers, sellers, cities, capitalCities, availableAssets);
+  allCreatedAuctions.push(...capitalAuctions); // Collect auctions
   // Update available assets after creating capital city auctions and lots
   const lottedAssetIdsCapital = capitalLots.flatMap(l => l.assets.map(a => a.assetId));
   availableAssets = availableAssets.filter(a => !lottedAssetIdsCapital.includes(a.id));
+
+  // Create auction stages for all created auctions
+  console.log('Creating auction stages for all auctions...');
+  await createAuctionStages(allCreatedAuctions);
 
   console.log('Seeding finished successfully!');
 }
@@ -633,6 +640,37 @@ async function createCapitalCityAuctionsAndLots(tenantId: string, auctioneers: a
     }
   }
   return { createdAuctions, createdLots };
+}
+
+async function createAuctionStages(auctions: any[]) {
+  // Check if AuctionStage table is empty
+  const existingStages = await prisma.auctionStage.findMany({ take: 1 });
+  if (existingStages.length > 0) {
+    console.log('AuctionStage table already has data. Skipping creation.');
+    return []; // Return empty array if data exists
+  }
+
+  console.log('Creating auction stages...');
+  const createdStages = [];
+  for (const auction of auctions) {
+    // Create 2 stages for each auction
+    for (let i = 0; i < 2; i++) {
+      const startDate = faker.date.soon();
+      const endDate = faker.date.future({ refDate: startDate });
+      const stage = await prisma.auctionStage.create({
+        data: {
+          name: `Stage ${i + 1} for ${auction.title}`,
+          startDate: startDate,
+          endDate: endDate,
+          auctionId: auction.id,
+          initialPrice: faker.number.float({ min: 100, max: 10000 }),
+        },
+      });
+      createdStages.push(stage);
+    }
+  }
+  console.log(`Created ${createdStages.length} auction stages.`);
+  return createdStages;
 }
 
 
