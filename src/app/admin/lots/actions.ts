@@ -38,12 +38,12 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
 
 export async function getLots(auctionId?: string, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
   const tenantId = await getTenantIdFromRequest(isPublicCall);
-  return lotService.getLots(auctionId, tenantId, limit);
+  return lotService.getLots(auctionId, tenantId, limit, isPublicCall);
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
   const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : undefined;
-  return lotService.getLotById(id, tenantId);
+  return lotService.getLotById(id, tenantId, isPublicCall);
 }
 
 export async function createLot(data: Partial<LotFormData>): Promise<{ success: boolean; message: string; lotId?: string }> {
