@@ -22,6 +22,7 @@ import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createColumns } from './columns';
 
 const sortOptions = [
   { value: 'auctionDate_desc', label: 'Data: Mais Recentes' },
@@ -33,6 +34,8 @@ const sortOptions = [
 
 export default function AdminAuctionsPage() {
   const [auctions, setAuctions] = useState<Auction[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
+  const [allAuctioneers, setAllAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,12 +46,16 @@ export default function AdminAuctionsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedAuctions, settings] = await Promise.all([
+      const [fetchedAuctions, settings, sellers, auctioneers] = await Promise.all([
         getAuctionsAction(false), // Fetch all for admin
         getPlatformSettings(),
+        getSellers(),
+        getAuctioneers(),
       ]);
       setAuctions(fetchedAuctions);
       setPlatformSettings(settings as PlatformSettings);
+      setAllSellers(sellers);
+      setAllAuctioneers(auctioneers);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
@@ -62,6 +69,23 @@ export default function AdminAuctionsPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
+  
+  const handleDelete = useCallback(
+    async (id: string) => {
+      const result = await deleteAuction(id);
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        setRefetchTrigger((c) => c + 1);
+      } else {
+        toast({
+          title: "Erro ao Excluir",
+          description: result.message,
+          variant: "destructive",
+        });
+      }
+    },
+    [toast]
+  );
 
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
@@ -69,23 +93,28 @@ export default function AdminAuctionsPage() {
 
   const renderGridItem = (item: Auction) => <UniversalCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Auction) => <UniversalListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
+  const facetedFilterOptions = useMemo(() => {
+      const statusOptions = [...new Set(auctions.map(a => a.status))].map(status => ({ value: status!, label: getAuctionStatusText(status) }));
+      const sellerOptions = allSellers.map(s => ({ value: s.name, label: s.name }));
+      const auctioneerOptions = allAuctioneers.map(a => ({ value: a.name, label: a.name }));
+      return [
+          { id: 'status', title: 'Status', options: statusOptions },
+          { id: 'sellerName', title: 'Comitente', options: sellerOptions },
+          { id: 'auctioneerName', title: 'Leiloeiro', options: auctioneerOptions },
+      ];
+  }, [auctions, allSellers, allAuctioneers]);
+  
   if (isLoading || !platformSettings) {
     return (
         <div className="space-y-6">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <Skeleton className="h-8 w-64 mb-2"/>
-                        <Skeleton className="h-4 w-80"/>
-                    </div>
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
                     <Skeleton className="h-10 w-36"/>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full" />)}
-                    </div>
-                </CardContent>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
             </Card>
         </div>
     );
@@ -117,14 +146,15 @@ export default function AdminAuctionsPage() {
         totalItemsCount={auctions.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
+        dataTableColumns={columns}
         sortOptions={sortOptions}
         initialSortBy="auctionDate_desc"
-        onSortChange={() => {}} // Sorting logic is now internal to SearchResultsFrame or could be passed
+        onSortChange={() => {}}
         platformSettings={platformSettings}
         isLoading={isLoading}
         searchTypeLabel="leilões"
         emptyStateMessage="Nenhum leilão encontrado."
-        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+        facetedFilterColumns={facetedFilterOptions}
       />
     </div>
   );

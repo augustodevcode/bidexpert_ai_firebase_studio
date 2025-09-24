@@ -10,16 +10,19 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getLots as getLotsAction } from './actions';
+import { getLots as getLotsAction, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import type { Auction, Lot, PlatformSettings } from '@/types';
-import { PlusCircle, Package } from 'lucide-react';
+import { PlusCircle, Package, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { createColumns } from './columns';
+
 
 const sortOptions = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
@@ -63,6 +66,23 @@ export default function AdminLotsPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
+  
+  const handleDelete = useCallback(
+    async (lotId: string, auctionId?: string) => {
+      const result = await deleteLot(lotId, auctionId);
+      if (result.success) {
+        toast({ title: 'Sucesso', description: result.message });
+        setRefetchTrigger((c) => c + 1);
+      } else {
+        toast({
+          title: 'Erro ao Excluir',
+          description: result.message,
+          variant: 'destructive',
+        });
+      }
+    },
+    [toast]
+  );
 
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
@@ -70,23 +90,26 @@ export default function AdminLotsPage() {
 
   const renderGridItem = (item: Lot) => <UniversalCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Lot) => <UniversalListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  
+  const facetedFilterOptions = useMemo(() => {
+      const statusOptions = [...new Set(lots.map(l => l.status))].map(status => ({ value: status, label: getAuctionStatusText(status) }));
+      const auctionOptions = auctions.map(a => ({ value: a.title, label: a.title }));
+      return [
+          { id: 'status', title: 'Status', options: statusOptions },
+          { id: 'auctionName', title: 'Leilão', options: auctionOptions }
+      ];
+  }, [lots, auctions]);
   
   if (isLoading || !platformSettings) {
     return (
         <div className="space-y-6">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <div>
-                        <Skeleton className="h-8 w-64 mb-2"/>
-                        <Skeleton className="h-4 w-80"/>
-                    </div>
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
                     <Skeleton className="h-10 w-36"/>
                 </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-80 w-full" />)}
-                    </div>
-                </CardContent>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
             </Card>
         </div>
     );
@@ -118,6 +141,7 @@ export default function AdminLotsPage() {
         totalItemsCount={lots.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
+        dataTableColumns={columns}
         sortOptions={sortOptions}
         initialSortBy="endDate_asc"
         onSortChange={() => {}}
@@ -125,7 +149,7 @@ export default function AdminLotsPage() {
         isLoading={isLoading}
         searchTypeLabel="lotes"
         emptyStateMessage="Nenhum lote encontrado."
-        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+        facetedFilterColumns={facetedFilterOptions}
       />
     </div>
   );
