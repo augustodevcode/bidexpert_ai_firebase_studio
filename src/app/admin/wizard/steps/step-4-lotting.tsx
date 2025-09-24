@@ -50,8 +50,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
   const handleCreateGroupedLotClick = () => {
     if (selectedAssets.length === 0) {
       toast({
-        title: "Nenhum bem selecionado",
-        description: "Por favor, selecione um ou mais bens da lista para criar um lote.",
+        title: "Nenhum ativo selecionado",
+        description: "Por favor, selecione um ou mais ativos da lista para criar um lote.",
         variant: "destructive",
       });
       return;
@@ -61,7 +61,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
 
   const handleCreateIndividualLotsClick = () => {
     if (selectedAssets.length === 0) {
-      toast({ title: "Nenhum bem selecionado", variant: "destructive" });
+      toast({ title: "Nenhum ativo selecionado", variant: "destructive" });
       return;
     }
     setIsCreatingIndividualLots(true);

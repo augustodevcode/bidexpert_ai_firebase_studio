@@ -32,7 +32,7 @@ async function getTenantIdFromSession(): Promise<string> {
 
 /**
  * Busca todos os dados iniciais necessários para popular os seletores e opções do wizard.
- * Isso inclui dados sobre entidades judiciais, leiloeiros, comitentes, bens e categorias,
+ * Isso inclui dados sobre entidades judiciais, leiloeiros, comitentes, ativos e categorias,
  * TODOS FILTRADOS PELO TENANT_ID DO USUÁRIO LOGADO.
  * @returns {Promise<{success: boolean, data?: object, message?: string}>} Um objeto com os dados ou uma mensagem de erro.
  */

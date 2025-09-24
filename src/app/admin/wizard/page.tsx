@@ -29,7 +29,7 @@ const allSteps = [
   { id: 'type', title: 'Tipo de Leilão', description: 'Selecione a modalidade.' },
   { id: 'judicial', title: 'Dados Judiciais', description: 'Informações do processo.' },
   { id: 'auction', title: 'Dados do Leilão', description: 'Detalhes e datas.' },
-  { id: 'lotting', title: 'Loteamento', description: 'Agrupe bens em lotes.' },
+  { id: 'lotting', title: 'Loteamento', description: 'Agrupe ativos em lotes.' },
   { id: 'review', title: 'Revisão e Publicação', description: 'Revise e publique.' },
 ];
 
@@ -103,7 +103,7 @@ function WizardContent({
   }
   
   const handleAssetCreated = async () => {
-    toast({ title: "Sucesso!", description: "Bem cadastrado com sucesso." });
+    toast({ title: "Sucesso!", description: "Ativo cadastrado com sucesso." });
     setIsDataRefetching(true);
     await refetchData(wizardData.judicialProcess?.id);
     setWizardMode('main');
@@ -146,8 +146,8 @@ function WizardContent({
           onSubmitAction={createAssetAction}
           onSuccess={handleAssetCreated}
           onCancel={() => setWizardMode('main')}
-          formTitle="Novo Bem (Wizard)"
-          formDescription="Cadastre o bem. Ele ficará disponível para loteamento ao salvar."
+          formTitle="Novo Ativo (Wizard)"
+          formDescription="Cadastre o ativo. Ele ficará disponível para loteamento ao salvar."
           submitButtonText="Criar e Voltar ao Loteamento"
         />
       );
@@ -195,7 +195,7 @@ function WizardContent({
                 <div className="flex items-center gap-2">
                     {currentStepId === 'lotting' && (
                         <Button variant="secondary" type="button" onClick={() => setWizardMode('asset')} disabled={isLoading || isDataRefetching}>
-                            <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Bem
+                            <PackagePlus className="mr-2 h-4 w-4" /> Cadastrar Novo Ativo
                         </Button>
                     )}
                     {currentStep < stepsToUse.length - 1 && (
