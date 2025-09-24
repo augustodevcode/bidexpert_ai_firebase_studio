@@ -71,7 +71,6 @@ export class LotRepository {
           data: assetIds.map(assetId => ({
             lotId: newLot.id,
             assetId: assetId,
-            assignedBy: 'system' // or a user ID
           })),
         });
       }
@@ -96,7 +95,6 @@ export class LotRepository {
                     data: assetIds.map(assetId => ({
                         lotId: id,
                         assetId: assetId,
-                        assignedBy: 'system-update' // or a user ID
                     })),
                 });
             }

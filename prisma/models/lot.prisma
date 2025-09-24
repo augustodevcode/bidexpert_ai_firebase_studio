@@ -1,0 +1,88 @@
+// /prisma/models/lot.prisma
+model Lot {
+  id                      String   @id @default(cuid())
+  publicId                String   @unique @default(uuid())
+  number                  String?
+  title                   String
+  slug                    String   @unique
+  description             String?  @db.Text
+  price                   Decimal  @default(0)
+  initialPrice            Decimal?
+  secondInitialPrice      Decimal?
+  evaluationValue         Decimal?
+  bidIncrementStep        Decimal?
+  status                  LotStatus @default(EM_BREVE)
+  condition               String?
+  views                   Int      @default(0)
+  bidsCount               Int      @default(0)
+  imageUrl                String?  @db.Text
+  imageMediaId            String?
+  galleryImageUrls        Json?
+  mediaItemIds            Json?
+  type                    String?
+  mapAddress              String?
+  latitude                Decimal?
+  longitude               Decimal?
+  isFeatured              Boolean  @default(false)
+  isExclusive             Boolean  @default(false)
+  additionalTriggers      Json?
+  dataAiHint              String?
+  discountPercentage      Int?
+  inheritedMediaFromAssetId String? @map("inherited_media_from_asset_id")
+
+
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  auctionDate    DateTime?
+  endDate        DateTime?
+  secondAuctionDate DateTime?
+
+  // Relations
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+
+  auctionId String
+  auction   Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+
+  categoryId String?
+  category   LotCategory? @relation(fields: [categoryId], references: [id])
+
+  subcategoryId String?
+  subcategory   Subcategory? @relation(fields: [subcategoryId], references: [id])
+
+  sellerId String?
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+
+  auctioneerId String?
+  auctioneer   Auctioneer? @relation(fields: [auctioneerId], references: [id])
+
+  cityId  String?
+  city    City?    @relation(fields: [cityId], references: [id])
+  stateId String?
+  state   State?   @relation(fields: [stateId], references: [id])
+
+  winnerId          String?
+  winner            User?         @relation("WinnerOfLots", fields: [winnerId], references: [id])
+  winningBidTermUrl String?
+
+  assets         AssetsOnLots[]
+  bids              Bid[]
+  reviews           Review[]
+  questions         LotQuestion[]
+  maxBids           UserLotMaxBid[]
+  userWins          UserWin[]
+  
+  isRelisted    Boolean  @default(false)
+  relistCount   Int      @default(0)
+  originalLotId String?  @unique
+  originalLot   Lot?     @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLot   Lot?     @relation("RelistedLot")
+  
+  installments InstallmentPayment[]
+
+  @@index([auctionId])
+  @@index([sellerId])
+  @@index([categoryId])
+  @@index([status])
+}
