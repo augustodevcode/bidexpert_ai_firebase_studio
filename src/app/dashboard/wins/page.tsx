@@ -17,15 +17,13 @@ import { Badge } from '@/components/ui/badge';
 import { ShoppingBag, FileText, CreditCard, CalendarDays, Eye, AlertCircle, Truck, CalendarCheck, Loader2 } from 'lucide-react';
 import { getPaymentStatusText } from '@/lib/ui-helpers';
 import type { UserWin } from '@/types';
-import { format, addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/auth-context';
 import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 import { getWinsForUserAction } from './actions';
 import { generateWinningBidTermAction } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { ClientOnlyDate } from '@/components/ui/data-table-column-header';
 
 const getPaymentStatusColor = (status: string) => {
   switch (status) {
@@ -48,16 +46,6 @@ interface WinCardProps {
 }
 
 const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerateTerm }) => {
-    const [formattedWinDate, setFormattedWinDate] = useState<string | null>(null);
-    const [formattedDeadline, setFormattedDeadline] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (win.winDate) {
-            setFormattedWinDate(format(new Date(win.winDate as string), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }));
-        }
-        const deadline = addDays(new Date(win.winDate as string), 5);
-        setFormattedDeadline(format(deadline, "dd/MM/yyyy"));
-    }, [win.winDate]);
 
     if (!win.lot) {
         return <Card className="p-4 text-destructive">Lote com ID {win.lotId} não encontrado.</Card>;
@@ -100,7 +88,7 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
             </div>
             <div className="flex items-center">
                 <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground" />
-                <span>Arrematado em: {formattedWinDate ? formattedWinDate : <Skeleton className="h-4 w-24 inline-block" />}</span>
+                <span>Arrematado em: <ClientOnlyDate date={win.winDate} format="dd/MM/yyyy HH:mm"/></span>
             </div>
             <div className="flex items-center">
                 <CreditCard className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -112,7 +100,7 @@ const WinCard: React.FC<WinCardProps> = ({ win, isGeneratingTerm, handleGenerate
             {win.paymentStatus === 'PENDENTE' && (
                 <div className="flex items-center text-xs text-amber-600">
                     <CalendarCheck className="h-4 w-4 mr-2" />
-                    <span>Prazo para Pagamento: {formattedDeadline ? formattedDeadline : <Skeleton className="h-4 w-16 inline-block" />}</span>
+                    <span>Prazo para Pagamento: <ClientOnlyDate date={addDays(new Date(win.winDate as string), 5)} format="dd/MM/yyyy"/></span>
                 </div>
             )}
             <div className="flex items-center">
