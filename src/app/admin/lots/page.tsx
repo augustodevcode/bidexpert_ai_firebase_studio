@@ -1,10 +1,8 @@
 // src/app/admin/lots/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Lotes.
- * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
- * permitindo busca, ordenação e alternância entre visualização em grade e lista.
- * É responsável por buscar os dados iniciais de todos os lotes, leilões e
- * configurações da plataforma para renderização no lado do cliente.
+ * Utiliza o componente DataTable para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros facetados e ações como exclusão.
  */
 'use client';
 
@@ -14,44 +12,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLots, deleteLot } from './actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
-import { getPlatformSettings } from '../settings/actions';
-import type { Auction, Lot, PlatformSettings } from '@/types';
+import type { Auction, Lot } from '@/types';
 import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SearchResultsFrame from '@/components/search-results-frame';
+import { DataTable } from '@/components/ui/data-table';
+import { createColumns } from './columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
-import { useAuth } from '@/contexts/auth-context'; // Import useAuth
-import { hasPermission } from '@/lib/permissions';
 
 export default function AdminLotsPage() {
-  const [allLots, setAllLots] = useState<Lot[]>([]);
-  const [allAuctions, setAllAuctions] = useState<Auction[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [lots, setLots] = useState<Lot[]>([]);
+  const [auctions, setAuctions] = useState<Auction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  const [sortBy, setSortBy] = useState('endDate_asc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(12);
-
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedLots, fetchedAuctions, fetchedSettings] = await Promise.all([
+      const [fetchedLots, fetchedAuctions] = await Promise.all([
         getLots(),
         getAuctions(),
-        getPlatformSettings(),
       ]);
-      setAllLots(fetchedLots);
-      setAllAuctions(fetchedAuctions);
-      setPlatformSettings(fetchedSettings as PlatformSettings);
-       if(fetchedSettings) setItemsPerPage(fetchedSettings.defaultListItemsPerPage || 12);
+      setLots(fetchedLots);
+      setAuctions(fetchedAuctions);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar lotes.";
       console.error("Error fetching lots:", e);
@@ -66,15 +51,53 @@ export default function AdminLotsPage() {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
   
-  const renderGridItem = (lot: Lot) => <UniversalCard item={lot} type="lot" auction={allAuctions.find(a => a.id === lot.auctionId)} platformSettings={platformSettings!} onUpdate={() => setRefetchTrigger(p => p+1)} />;
-  const renderListItem = (lot: Lot) => <UniversalListItem item={lot} type="lot" auction={allAuctions.find(a => a.id === lot.auctionId)} platformSettings={platformSettings!} onUpdate={() => setRefetchTrigger(p => p+1)} />;
+  const handleDelete = useCallback(async (id: string, auctionId?: string) => {
+    const result = await deleteLot(id, auctionId);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
   
-  const sortOptions = [
-    { value: 'endDate_asc', label: 'Encerramento Próximo' },
-    { value: 'price_desc', label: 'Maior Preço' },
-    { value: 'price_asc', label: 'Menor Preço' },
-    { value: 'views_desc', label: 'Mais Visitados' },
-  ];
+  const handleDeleteSelected = useCallback(async (selectedItems: Lot[]) => {
+    if (selectedItems.length === 0) return;
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const item of selectedItems) {
+      const result = await deleteLot(item.id, item.auctionId);
+      if (result.success) {
+        successCount++;
+      } else {
+        errorCount++;
+        toast({ title: `Erro ao excluir ${item.title}`, description: result.message, variant: "destructive", duration: 5000 });
+      }
+    }
+
+    if (successCount > 0) {
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} lote(s) excluído(s) com sucesso.` });
+    }
+    fetchPageData();
+  }, [toast, fetchPageData]);
+
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const statusOptions = useMemo(() => 
+    [...new Set(lots.map(l => l.status))]
+      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+  [lots]);
+  
+  const auctionOptions = useMemo(() =>
+    auctions.map(auc => ({ value: auc.title, label: `${auc.title} (ID: ...${auc.id.slice(-6)})` })),
+  [auctions]);
+
+  const facetedFilterColumns = useMemo(() => [
+    { id: 'status', title: 'Status', options: statusOptions },
+    { id: 'auctionName', title: 'Leilão', options: auctionOptions },
+  ], [statusOptions, auctionOptions]);
 
   return (
     <div className="space-y-6">
@@ -96,24 +119,16 @@ export default function AdminLotsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           {platformSettings && (
-                 <SearchResultsFrame
-                    items={allLots}
-                    totalItemsCount={allLots.length}
-                    renderGridItem={renderGridItem}
-                    renderListItem={renderListItem}
-                    sortOptions={sortOptions}
-                    initialSortBy={sortBy}
-                    onSortChange={setSortBy}
-                    platformSettings={platformSettings}
-                    isLoading={isLoading}
-                    searchTypeLabel="lotes"
-                    currentPage={currentPage}
-                    itemsPerPage={itemsPerPage}
-                    onPageChange={setCurrentPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                  />
-              )}
+           <DataTable
+              columns={columns}
+              data={lots}
+              isLoading={isLoading}
+              error={error}
+              searchColumnId="title"
+              searchPlaceholder="Buscar por título ou ID..."
+              facetedFilterColumns={facetedFilterColumns}
+              onDeleteSelected={handleDeleteSelected}
+            />
         </CardContent>
       </Card>
     </div>

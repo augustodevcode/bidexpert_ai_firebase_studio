@@ -173,6 +173,11 @@ export function DataTable<TData, TValue>({
                                     <ChevronRight className="h-4 w-4" />
                                 )}
                             </Button>
+                            {flexRender(
+                                row.getGroupingValue(row.groupingColumnId!),
+                                { cell: { getValue: row.getGroupingValue } }
+                            )}
+                            <span className="text-xs text-muted-foreground ml-1">({row.subRows.length})</span>
                            </div>
                         </TableCell>
                     </TableRow>
