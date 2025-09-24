@@ -36,6 +36,8 @@
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
-- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades. Isso aumentará a manutenibilidade e fornecerá contexto para o desenvolvimento futuro assistido por IA.
+- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionar um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
+- **Item 30: Implementar Herança de Mídia:** Implementar a lógica de herança e substituição de imagens para Lotes e Leilões, conforme definido nas regras de negócio. Isso inclui atualizar os formulários para permitir que o usuário escolha entre herdar a galeria de um bem vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
+```

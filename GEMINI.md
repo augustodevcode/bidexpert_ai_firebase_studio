@@ -125,13 +125,19 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 A estratégia de testes está documentada no arquivo `README.md` e deve ser seguida para garantir a qualidade e estabilidade do código.
 
-## 14. Gerenciamento Centralizado de Mídia
+## 14. Gerenciamento Centralizado de Mídia (Regra de Herança e Substituição)
 
-**Regra:** Todas as imagens da plataforma (logos, fotos de leilões, fotos de lotes) **devem** ser gerenciadas através do modelo `MediaItem` e da Biblioteca de Mídia (`/admin/media`).
-- **Proibição de URLs Diretas:** Nunca use URLs de imagem fixas ou campos de texto para URLs diretamente nos modelos como `Lot` ou `Auction`. Em vez disso, use um campo de relação (ex: `imageMediaId`) para vincular ao registro `MediaItem` correspondente.
-- **Herança de Imagens (Lotes):** A imagem principal de um `Lot` **deve** ser herdada de um dos seus `Assets` vinculados. O formulário de lote deve permitir ao usuário selecionar de qual `Asset` a galeria de imagens será herdada.
-- **Fonte da Verdade:** A tabela `MediaItem` é a única fonte da verdade para os caminhos e metadados das imagens.
+**Regra:** Toda a mídia visual da plataforma (imagens de lotes, leilões, logos) **deve** ser gerenciada através da tabela `MediaItem`. O uso de URLs de imagem estáticas diretamente nos modelos é proibido.
 
-**Justificativa:** Centralizar a mídia garante a consistência, evita links quebrados, facilita a otimização de imagens e permite o reuso de ativos. A herança de imagens de `Asset` para `Lot` simplifica o cadastro e mantém a integridade da relação entre o item físico e sua representação no leilão.
-```
+-   **Fonte da Verdade:** A tabela `MediaItem` é a única fonte da verdade para os caminhos e metadados das imagens.
+-   **Relação `Asset` -> `MediaItem`:** Imagens são primeiramente vinculadas a um `Asset` (Bem) através da Biblioteca de Mídia. Um `Asset` pode ter uma imagem principal e uma galeria.
+-   **Relação `Lot` -> `Asset` (Herança vs. Substituição):**
+    -   Ao criar ou editar um `Lot` a partir de um ou mais `Asset`(s), o usuário **deve** ter a opção de:
+        1.  **Herdar Galeria:** Selecionar um dos `Asset`(s) vinculados como a fonte principal da mídia. O `Lot` então exibirá a imagem principal e a galeria deste `Asset` escolhido.
+        2.  **Galeria Customizada:** Ignorar as imagens dos `Asset`(s) e selecionar uma nova imagem principal e/ou galeria diretamente da `MediaLibrary` (`MediaItem`) para este `Lot` específico.
+-   **Relação `Auction` -> `Lot` (Herança vs. Substituição):**
+    -   Ao criar ou editar um `Auction`, a imagem principal do leilão pode ser definida por:
+        1.  **Herdar de um Lote:** Selecionar um dos `Lot`(s) já vinculados ao leilão. A imagem principal deste `Lot` será usada como a imagem principal do `Auction`.
+        2.  **Imagem Customizada:** Ignorar as imagens dos lotes e selecionar uma nova imagem principal diretamente da `MediaLibrary` (`MediaItem`).
 
+**Justificativa:** Este sistema de herança com opção de substituição oferece máxima flexibilidade e consistência. Ele permite o reaproveitamento rápido de mídias (um `Asset` pode ser loteado várias vezes, sempre usando suas imagens padrão), ao mesmo tempo que dá ao usuário o controle para customizar a apresentação de lotes e leilões específicos quando necessário, sem duplicar arquivos e mantendo `MediaItem` como a fonte única da verdade.
