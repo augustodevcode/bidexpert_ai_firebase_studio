@@ -1,4 +1,3 @@
-
 // src/components/cards/auction-list-item.tsx
 'use client';
 
@@ -73,7 +72,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
                 alt={auction.title}
                 fill
                 className="object-cover"
-                data-ai-hint={auction.dataAiHint || 'imagem leilao lista'}
+                data-ai-hint="marina home"
               />
             </Link>
              {sellerLogoUrl && (

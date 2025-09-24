@@ -1,4 +1,4 @@
-
+// src/components/cards/lot-card.tsx
 'use client';
 
 import * as React from 'react';
@@ -139,6 +139,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
+                data-ai-hint="luxury home"
                 data-ai-id="lot-card-main-image"
               />
             </div>

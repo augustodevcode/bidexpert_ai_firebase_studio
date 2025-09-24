@@ -154,7 +154,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="object-cover"
-                  data-ai-hint={mainImageDataAiHint}
+                  data-ai-hint="marina home"
                   data-ai-id="auction-card-main-image"
                 />
                  {sellerLogoUrl && (

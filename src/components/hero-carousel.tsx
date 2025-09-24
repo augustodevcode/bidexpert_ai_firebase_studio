@@ -1,4 +1,4 @@
-
+// src/components/hero-carousel.tsx
 'use client';
 
 import Image from 'next/image';
@@ -23,7 +23,7 @@ const slides = [
     title: 'Oportunidades Únicas em Leilão',
     subtitle: 'De Imóveis a Itens Raros',
     description: 'Explore uma vasta gama de produtos em nossos leilões diários. Grandes achados esperam por você.',
-    imageUrl: 'https://placehold.co/1200x500.png?text=Leilao+Diversos',
+    imageUrl: 'https://picsum.photos/seed/hero2/1200/500',
     imageAlt: 'Itens Diversos de Leilão',
     dataAiHint: 'leilao itens diversos',
     buttonText: 'Explorar Leilões',
@@ -124,4 +124,3 @@ export default function HeroCarousel() {
     </section>
   );
 }
-
