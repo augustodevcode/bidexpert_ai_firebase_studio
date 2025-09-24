@@ -143,6 +143,8 @@ export default function AdminSellersPage() {
         searchTypeLabel="comitentes"
         emptyStateMessage="Nenhum comitente encontrado."
         facetedFilterColumns={facetedFilterOptions}
+        searchColumnId='name'
+        searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected}
       />
     </div>

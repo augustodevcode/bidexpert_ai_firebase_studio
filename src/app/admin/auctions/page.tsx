@@ -155,6 +155,8 @@ export default function AdminAuctionsPage() {
         searchTypeLabel="leilões"
         emptyStateMessage="Nenhum leilão encontrado."
         facetedFilterColumns={facetedFilterOptions}
+        searchColumnId='title'
+        searchPlaceholder='Buscar por título...'
       />
     </div>
   );

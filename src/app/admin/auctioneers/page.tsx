@@ -141,6 +141,8 @@ export default function AdminAuctioneersPage() {
         searchTypeLabel="leiloeiros"
         emptyStateMessage="Nenhum leiloeiro encontrado."
         facetedFilterColumns={facetedFilterOptions}
+        searchColumnId='name'
+        searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected}
       />
     </div>

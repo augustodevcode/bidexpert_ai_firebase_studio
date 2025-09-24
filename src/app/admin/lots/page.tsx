@@ -150,6 +150,8 @@ export default function AdminLotsPage() {
         searchTypeLabel="lotes"
         emptyStateMessage="Nenhum lote encontrado."
         facetedFilterColumns={facetedFilterOptions}
+        searchColumnId='title'
+        searchPlaceholder='Buscar por título...'
       />
     </div>
   );
