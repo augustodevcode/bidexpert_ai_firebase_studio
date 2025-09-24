@@ -1,5 +1,5 @@
 // scripts/seed-data-extended.ts
-import { PrismaClient, Prisma, AuctionType, AssetStatus } from '@prisma/client';
+import { PrismaClient, Prisma, AuctionType, AssetStatus, LotStatus, AuctionStatus } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 
 const prisma = new PrismaClient();
@@ -9,26 +9,25 @@ const prisma = new PrismaClient();
 // =================================================================
 const seedConfig = {
   users: {
-    bidders: 5,
+    bidders: 3,
   },
-  sellers: 5,
-  auctioneers: 3,
+  sellers: 3,
+  auctioneers: 2,
   judicial: {
-    courts: 3,
-    districts: 5,
-    branches: 5,
-    processes: 4,
+    courts: 2,
+    districts: 3,
+    branches: 3,
+    processes: 2,
   },
   assets: {
-    // Total assets to create for EACH main category (Imóveis, Veículos, Eletrônicos)
-    totalPerCategory: 5, 
-    judicialRatio: 0.4, // 40% of assets will be linked to a judicial process
+    totalPerCategory: 3,
+    judicialRatio: 0.4,
   },
   auctions: {
-    judicial: 2,
-    extrajudicial: 2,
+    judicial: 1,
+    extrajudicial: 1,
     particular: 1,
-    lotsPerAuction: 3,
+    lotsPerAuction: 2,
   },
 };
 
@@ -49,6 +48,19 @@ async function main() {
   }
   console.log(`Using tenant: ${tenant.name}`);
 
+  // Ensure roles are created/found first
+  const createdRoles = await createRoles(); // Call createRoles here
+  const adminRole = createdRoles.find(r => r.nameNormalized === 'ADMIN'); // Find from createdRoles
+  if (!adminRole) {
+      console.error('ADMIN role not found after creation. This should not happen.');
+      return;
+  }
+  const userRole = createdRoles.find(r => r.nameNormalized === 'USER');
+  if (!userRole) {
+      console.error('USER role not found after creation. This should not happen.');
+      return;
+  }
+
   const adminUser = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' } });
   if (!adminUser) {
     console.error('Admin user admin@bidexpert.com.br not found. Please ensure it exists.');
@@ -56,23 +68,20 @@ async function main() {
   }
   console.log(`Using admin user: ${adminUser.email}`);
 
-  const roles = await prisma.role.findMany();
-  if (roles.length === 0) {
-    console.error('Roles not found. Please ensure they exist.');
-    return;
-  }
-  console.log(`Found ${roles.length} roles.`);
-  const userRole = roles.find(r => r.nameNormalized === 'USER');
-  if (!userRole) {
-      console.error('USER role not found.');
-      return;
-  }
+  // Ensure admin user has ADMIN role
+  await prisma.usersOnRoles.upsert({
+    where: { userId_roleId: { userId: adminUser.id, roleId: adminRole.id } },
+    update: {},
+    create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' },
+  });
+  console.log(`Ensured admin user ${adminUser.email} has ADMIN role.`);
 
   // --- 2. CREATE NEW DATA ---
   console.log('Creating new data based on configuration...');
 
   const bidders = await createBidders(tenant.id, userRole.id, seedConfig.users.bidders);
   const { states, cities } = await createStatesAndCities();
+  const capitalCities = cities.filter(city => states.some(state => state.capital === city.name)); // Extract capital cities
   const { categories, subcategories } = await createCategoriesAndSubcategories();
   const sellers = await createSellers(tenant.id, seedConfig.sellers);
   const auctioneers = await createAuctioneers(tenant.id, seedConfig.auctioneers);
@@ -88,7 +97,11 @@ async function main() {
   const createdAssets = await createAssets(tenant.id, categories, subcategories, judicialProcesses, sellers);
   console.log(`Created ${createdAssets.length} assets.`);
 
-  let availableAssets = [...createdAssets];
+  console.log('Creating assets for all statuses...');
+  const assetsForAllStatuses = await createAssetsForAllStatuses(tenant.id, categories, subcategories, judicialProcesses, sellers);
+  console.log(`Created ${assetsForAllStatuses.length} assets for all statuses.`);
+
+  let availableAssets = [...createdAssets, ...assetsForAllStatuses];
 
   // --- 4. CREATE AUCTIONS AND LOTS (NEW LOGIC) ---
   console.log('Creating auctions and lots...');
@@ -118,12 +131,64 @@ async function main() {
     console.log(`Created ${type} auction "${auction.title}" with ${lots.length} lots.`);
   }
 
+  // Create auctions for all statuses
+  console.log('Creating auctions for all statuses...');
+  const auctionsForAllStatuses = await createAuctionsForAllStatuses(tenant.id, auctioneers, sellers, cities);
+  
+  // For each status auction, create one lot for each status
+  for (const auction of auctionsForAllStatuses) {
+      console.log(`Creating lots for auction with status ${auction.status}...`);
+      // Create a fresh pool of assets for each call to createLotsForAllStatuses
+      const freshStatusAssets = await createAssets(tenant.id, categories, subcategories, judicialProcesses, sellers);
+      let freshAvailableStatusAssets = [...freshStatusAssets];
+
+      // Pass the fresh pool of assets
+      const lotsForStatusAuction = await createLotsForAllStatuses(auction, freshAvailableStatusAssets);
+      // Update fresh available assets after creating lots for status auctions
+      const lottedAssetIds = lotsForStatusAuction.flatMap(l => l.assets.map(a => a.assetId));
+      freshAvailableStatusAssets = freshAvailableStatusAssets.filter(a => !lottedAssetIds.includes(a.id));
+  }
+
+  // Create auctions and lots for capital cities
+  console.log('Creating auctions and lots for capital cities...');
+  const { createdAuctions: capitalAuctions, createdLots: capitalLots } = await createCapitalCityAuctionsAndLots(tenant.id, auctioneers, sellers, cities, capitalCities, availableAssets);
+  // Update available assets after creating capital city auctions and lots
+  const lottedAssetIdsCapital = capitalLots.flatMap(l => l.assets.map(a => a.assetId));
+  availableAssets = availableAssets.filter(a => !lottedAssetIdsCapital.includes(a.id));
+
   console.log('Seeding finished successfully!');
 }
 
 // =================================================================
 // DATA CREATION FUNCTIONS
 // =================================================================
+
+async function createRoles() {
+  const roles = ['ADMIN', 'USER', 'AUCTIONEER', 'SELLER'];
+  const createdRoles = [];
+  for (const roleName of roles) {
+    const role = await prisma.role.upsert({
+      where: { name: roleName },
+      update: {},
+      create: {
+        name: roleName,
+        nameNormalized: roleName.toUpperCase(),
+        description: `Role for ${roleName}`,
+      },
+    });
+    createdRoles.push(role);
+    console.log(`Created/found role: ${role.name}`);
+  }
+  return createdRoles;
+}
+
+function generateImageUrls(count: number = 3) {
+  const imageUrl = faker.image.urlLoremFlickr({ category: 'nature', width: 640, height: 480 });
+  const imageMediaId = faker.string.uuid();
+  const galleryImageUrls = Array.from({ length: count }, () => faker.image.urlLoremFlickr({ category: 'nature', width: 640, height: 480 }));
+  const mediaItemIds = Array.from({ length: count }, () => faker.string.uuid());
+  return { imageUrl, imageMediaId, galleryImageUrls, mediaItemIds };
+}
 
 async function createBidders(tenantId: string, userRoleId: string, count: number) {
     const bidders = [];
@@ -252,6 +317,7 @@ async function createAssets(tenantId: string, categories: any[], subcategories: 
     const isJudicial = assets.filter(a => a.judicialProcessId).length < numJudicial;
 
     const { categoryId, subcategoryId, ...restAssetData } = assetData;
+    const imageInfo = generateImageUrls(); // Generate image data
 
     const finalAssetData: Prisma.AssetCreateInput = {
         ...restAssetData, // Spread the rest of the assetData
@@ -263,12 +329,97 @@ async function createAssets(tenantId: string, categories: any[], subcategories: 
         subcategory: subcategoryId ? { connect: { id: subcategoryId } } : undefined,
         judicialProcess: isJudicial && judicialProcesses.length > 0 ? { connect: { id: faker.helpers.arrayElement(judicialProcesses).id } } : undefined,
         seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
+        // Add image data
+        imageUrl: imageInfo.imageUrl,
+        imageMediaId: imageInfo.imageMediaId,
+        galleryImageUrls: imageInfo.galleryImageUrls,
+        mediaItemIds: imageInfo.mediaItemIds,
     };
 
     const asset = await prisma.asset.create({ data: finalAssetData });
     assets.push(asset);
   }
 
+  return assets;
+}
+
+async function createAssetsForAllStatuses(tenantId: string, categories: any[], subcategories: any[], judicialProcesses: any[], sellers: any[]) {
+  const assets = [];
+  const assetStatuses = Object.values(AssetStatus);
+  const vehicleCategory = categories.find(c => c.slug === 'veiculos');
+  const propertyCategory = categories.find(c => c.slug === 'imoveis');
+  const electronicsCategory = categories.find(c => c.slug === 'eletronicos');
+
+  const assetCreators = {
+    VEICULO: () => {
+      const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === vehicleCategory.id));
+      return {
+        title: `Veículo ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
+        description: faker.vehicle.vin(),
+        categoryId: vehicleCategory.id,
+        subcategoryId: subcategory.id,
+        plate: faker.vehicle.vrm(),
+        make: faker.vehicle.manufacturer(),
+        model: faker.vehicle.model(),
+        year: faker.number.int({ min: 2010, max: 2023 }),
+        color: faker.vehicle.color(),
+      };
+    },
+    IMOVEL: () => {
+        const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === propertyCategory.id));
+        return {
+            title: `Imóvel em ${faker.location.city()}`,
+            description: faker.location.streetAddress(true),
+            categoryId: propertyCategory.id,
+            subcategoryId: subcategory.id,
+            isOccupied: faker.datatype.boolean(),
+            bedrooms: faker.number.int({ min: 1, max: 5 }),
+            suites: faker.number.int({ min: 0, max: 3 }),
+            parkingSpaces: faker.number.int({ min: 1, max: 4 }),
+        };
+    },
+    ELETRONICO: () => {
+        const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === electronicsCategory.id));
+        return {
+            title: `Eletrônico ${faker.commerce.productName()}`,
+            description: faker.commerce.productDescription(),
+            categoryId: electronicsCategory.id,
+            subcategoryId: subcategory.id,
+            brand: faker.company.name(),
+            itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
+        };
+    }
+  };
+
+  for (const status of assetStatuses) {
+    const assetType = faker.helpers.arrayElement(Object.keys(assetCreators));
+    const assetData = assetCreators[assetType]();
+    const imageInfo = generateImageUrls();
+
+    const isJudicial = faker.datatype.boolean(); // Randomly assign judicial or extrajudicial for status assets
+
+    const { categoryId, subcategoryId, ...restAssetData } = assetData;
+
+    const finalAssetData: Prisma.AssetCreateInput = {
+        ...restAssetData,
+        publicId: faker.string.uuid(),
+        evaluationValue: faker.number.float({ min: 1000, max: 150000 }),
+        status: status, // Set the specific status
+        tenant: { connect: { id: tenantId } },
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        subcategory: subcategoryId ? { connect: { id: subcategoryId } } : undefined,
+        judicialProcess: isJudicial && judicialProcesses.length > 0 ? { connect: { id: faker.helpers.arrayElement(judicialProcesses).id } } : undefined,
+        seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
+        imageUrl: imageInfo.imageUrl,
+        imageMediaId: imageInfo.imageMediaId,
+        galleryImageUrls: imageInfo.galleryImageUrls,
+        mediaItemIds: imageInfo.mediaItemIds,
+    };
+
+    const asset = await prisma.asset.create({ data: finalAssetData });
+    assets.push(asset);
+    console.log(`Created asset with status: ${status}`);
+  }
   return assets;
 }
 
@@ -295,6 +446,8 @@ async function createLotsForAuction(auction: any, availableAssets: any[], number
     const assetsForAuction = faker.helpers.arrayElements(availableAssets, numberOfLots);
 
     for (const asset of assetsForAuction) {
+        const imageInfo = generateImageUrls(); // Generate image data for the lot
+
         const lot = await prisma.lot.create({
             data: {
                 auctionId: auction.id,
@@ -308,6 +461,11 @@ async function createLotsForAuction(auction: any, availableAssets: any[], number
                 categoryId: asset.categoryId,
                 subcategoryId: asset.subcategoryId,
                 type: auction.auctionType,
+                // Add image data
+                imageUrl: imageInfo.imageUrl,
+                imageMediaId: imageInfo.imageMediaId,
+                galleryImageUrls: imageInfo.galleryImageUrls,
+                mediaItemIds: imageInfo.mediaItemIds,
             },
         });
 
@@ -330,6 +488,153 @@ async function createLotsForAuction(auction: any, availableAssets: any[], number
     return createdLots;
 }
 
+async function createLotsForAllStatuses(auction: any, availableAssets: any[]) {
+  const lots = [];
+  const lotStatuses = Object.values(LotStatus);
+
+  for (const status of lotStatuses) {
+    const asset = faker.helpers.arrayElement(availableAssets.filter(a => a.status === AssetStatus.DISPONIVEL));
+    if (!asset) {
+        console.warn(`No available assets to create lot with status: ${status}. Skipping.`);
+        continue;
+    }
+    const imageInfo = generateImageUrls();
+
+    const lot = await prisma.lot.create({
+        data: {
+            auctionId: auction.id,
+            number: `${lots.length + 1}-STATUS`,
+            title: `Lot with status ${status} - ${asset.title}`,
+            description: asset.description,
+            initialPrice: asset.evaluationValue,
+            price: 0,
+            status: status, // Set the specific status
+            tenantId: auction.tenantId,
+            categoryId: asset.categoryId,
+            subcategoryId: asset.subcategoryId,
+            type: auction.auctionType,
+            imageUrl: imageInfo.imageUrl,
+            imageMediaId: imageInfo.imageMediaId,
+            galleryImageUrls: imageInfo.galleryImageUrls,
+            mediaItemIds: imageInfo.mediaItemIds,
+        },
+    });
+
+    await prisma.assetsOnLots.create({
+        data: {
+            lotId: lot.id,
+            assetId: asset.id,
+            assignedBy: 'seed-script',
+        }
+    });
+
+    await prisma.asset.update({
+        where: { id: asset.id },
+        data: { status: AssetStatus.LOTEADO },
+    });
+
+    const lotWithAsset = await prisma.lot.findUnique({ where: { id: lot.id }, include: { assets: true } });
+    lots.push(lotWithAsset);
+    console.log(`Created lot with status: ${status}`);
+  }
+  return lots;
+}
+
+async function createAuctionsForAllStatuses(tenantId: string, auctioneers: any[], sellers: any[], cities: any[]) {
+  const auctions = [];
+  const auctionStatuses = Object.values(AuctionStatus);
+
+  for (const status of auctionStatuses) {
+    const type = faker.helpers.arrayElement([AuctionType.JUDICIAL, AuctionType.EXTRAJUDICIAL, AuctionType.PARTICULAR]);
+    const auction = await prisma.auction.create({
+      data: {
+        title: `Auction with status ${status} #${faker.string.uuid().substring(0, 4)}`,
+        description: faker.lorem.paragraph(),
+        status: status, // Set the specific status
+        auctionDate: faker.date.soon(),
+        endDate: faker.date.future(),
+        auctionType: type,
+        tenant: { connect: { id: tenantId } },
+        auctioneer: { connect: { id: faker.helpers.arrayElement(auctioneers).id } },
+        seller: type !== 'JUDICIAL' ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
+        city: { connect: { id: faker.helpers.arrayElement(cities).id } },
+      },
+    });
+    auctions.push(auction);
+    console.log(`Created auction with status: ${status}`);
+  }
+  return auctions;
+}
+
+async function createCapitalCityAuctionsAndLots(tenantId: string, auctioneers: any[], sellers: any[], cities: any[], capitalCities: any[], availableAssets: any[]) {
+  const createdAuctions = [];
+  const createdLots = [];
+
+  for (const capitalCity of capitalCities) {
+    const type = faker.helpers.arrayElement([AuctionType.JUDICIAL, AuctionType.EXTRAJUDICIAL, AuctionType.PARTICULAR]);
+    const auction = await prisma.auction.create({
+      data: {
+        title: `Leilão na Capital ${capitalCity.name} #${faker.string.uuid().substring(0, 4)}`,
+        description: faker.lorem.paragraph(),
+        status: faker.helpers.arrayElement([AuctionStatus.ABERTO_PARA_LANCES, AuctionStatus.EM_BREVE]),
+        auctionDate: faker.date.soon(),
+        endDate: faker.date.future(),
+        auctionType: type,
+        tenant: { connect: { id: tenantId } },
+        auctioneer: { connect: { id: faker.helpers.arrayElement(auctioneers).id } },
+        seller: type !== 'JUDICIAL' ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
+        city: { connect: { id: capitalCity.id } }, // Link to capital city
+      },
+    });
+    createdAuctions.push(auction);
+    console.log(`Created auction in capital: ${capitalCity.name}`);
+
+    const suitableAssets = availableAssets.filter(a => (type === AuctionType.JUDICIAL ? !!a.judicialProcessId : !a.judicialProcessId) && a.status === AssetStatus.DISPONIVEL);
+    if (suitableAssets.length > 0) {
+        const asset = faker.helpers.arrayElement(suitableAssets);
+        const imageInfo = generateImageUrls();
+
+        const lot = await prisma.lot.create({
+            data: {
+                auctionId: auction.id,
+                number: `1-CAPITAL`,
+                title: `Lot na Capital ${capitalCity.name} - ${asset.title}`,
+                description: asset.description,
+                initialPrice: asset.evaluationValue,
+                price: 0,
+                status: LotStatus.EM_BREVE,
+                tenantId: auction.tenantId,
+                categoryId: asset.categoryId,
+                subcategoryId: asset.subcategoryId,
+                type: auction.auctionType,
+                imageUrl: imageInfo.imageUrl,
+                imageMediaId: imageInfo.imageMediaId,
+                galleryImageUrls: imageInfo.galleryImageUrls,
+                mediaItemIds: imageInfo.mediaItemIds,
+            },
+        });
+
+        await prisma.assetsOnLots.create({
+            data: {
+                lotId: lot.id,
+                assetId: asset.id,
+                assignedBy: 'seed-script',
+            }
+        });
+
+        await prisma.asset.update({
+            where: { id: asset.id },
+            data: { status: AssetStatus.LOTEADO },
+        });
+        createdLots.push(lot);
+        console.log(`Created lot in capital: ${capitalCity.name}`);
+    } else {
+        console.warn(`No suitable assets for lot in capital: ${capitalCity.name}. Skipping lot creation.`);
+    }
+  }
+  return { createdAuctions, createdLots };
+}
+
 
 // =================================================================
 // BOILERPLATE DATA FUNCTIONS (can be customized if needed)
@@ -337,9 +642,33 @@ async function createLotsForAuction(auction: any, availableAssets: any[], number
 
 async function createStatesAndCities() {
   const statesData = [
-    { uf: 'SP', name: 'São Paulo', capital: 'São Paulo' },
-    { uf: 'RJ', name: 'Rio de Janeiro', capital: 'Rio de Janeiro' },
+    { uf: 'AC', name: 'Acre', capital: 'Rio Branco' },
+    { uf: 'AL', name: 'Alagoas', capital: 'Maceió' },
+    { uf: 'AP', name: 'Amapá', capital: 'Macapá' },
+    { uf: 'AM', name: 'Amazonas', capital: 'Manaus' },
+    { uf: 'BA', name: 'Bahia', capital: 'Salvador' },
+    { uf: 'CE', name: 'Ceará', capital: 'Fortaleza' },
+    { uf: 'DF', name: 'Distrito Federal', capital: 'Brasília' },
+    { uf: 'ES', name: 'Espírito Santo', capital: 'Vitória' },
+    { uf: 'GO', name: 'Goiás', capital: 'Goiânia' },
+    { uf: 'MA', name: 'Maranhão', capital: 'São Luís' },
+    { uf: 'MT', name: 'Mato Grosso', capital: 'Cuiabá' },
+    { uf: 'MS', name: 'Mato Grosso do Sul', capital: 'Campo Grande' },
     { uf: 'MG', name: 'Minas Gerais', capital: 'Belo Horizonte' },
+    { uf: 'PA', name: 'Pará', capital: 'Belém' },
+    { uf: 'PB', name: 'Paraíba', capital: 'João Pessoa' },
+    { uf: 'PR', name: 'Paraná', capital: 'Curitiba' },
+    { uf: 'PE', name: 'Pernambuco', capital: 'Recife' },
+    { uf: 'PI', name: 'Piauí', capital: 'Teresina' },
+    { uf: 'RJ', name: 'Rio de Janeiro', capital: 'Rio de Janeiro' },
+    { uf: 'RN', name: 'Rio Grande do Norte', capital: 'Natal' },
+    { uf: 'RS', name: 'Rio Grande do Sul', capital: 'Porto Alegre' },
+    { uf: 'RO', name: 'Rondônia', capital: 'Porto Velho' },
+    { uf: 'RR', name: 'Roraima', capital: 'Boa Vista' },
+    { uf: 'SC', name: 'Santa Catarina', capital: 'Florianópolis' },
+    { uf: 'SP', name: 'São Paulo', capital: 'São Paulo' },
+    { uf: 'SE', name: 'Sergipe', capital: 'Aracaju' },
+    { uf: 'TO', name: 'Tocantins', capital: 'Palmas' },
   ];
 
   const states = [];
@@ -420,10 +749,10 @@ async function createJudicialDistricts(courts: any[], cities: any[], count: numb
     for (let i = 0; i < count; i++) {
         const city = faker.helpers.arrayElement(cities);
         const court = faker.helpers.arrayElement(courts);
-        const name = `Comarca de ${city.name} #${i+1}`;
-        const slug = faker.helpers.slugify(name).toLowerCase() + `-${faker.string.uuid().substring(0, 4)}`; // Added UUID part for uniqueness
+        const name = `Comarca de ${city.name} #${i+1}-${faker.string.uuid().substring(0, 4)}`; // Added UUID part for uniqueness
+        const slug = faker.helpers.slugify(name).toLowerCase(); // Slugify the unique name
         const district = await prisma.judicialDistrict.upsert({
-            where: { slug: slug }, // Use slug for upsert where clause
+            where: { name: name }, // Use name for upsert where clause
             update: {},
             create: {
                 name: name,
