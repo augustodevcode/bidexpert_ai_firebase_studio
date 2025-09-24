@@ -37,6 +37,7 @@ export class LotService {
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
+      sellerName: lot.seller?.name,
     };
   }
 
