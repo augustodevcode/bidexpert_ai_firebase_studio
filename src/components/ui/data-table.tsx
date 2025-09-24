@@ -161,11 +161,14 @@ export function DataTable<TData, TValue>({
                 if (row.getIsGrouped()) {
                   return (
                      <TableRow key={row.id} className="bg-muted/50 hover:bg-muted/60 font-medium">
-                        <TableCell colSpan={columns.length}>
+                        <TableCell 
+                          colSpan={columns.length}
+                          className="cursor-pointer"
+                          onClick={row.getToggleExpandedHandler()}
+                        >
                            <div className="flex items-center gap-2">
                             <Button
                                 variant="ghost" size="icon" className="h-6 w-6"
-                                onClick={row.getToggleExpandedHandler()}
                             >
                                 {row.getIsExpanded() ? (
                                     <ChevronDown className="h-4 w-4" />
