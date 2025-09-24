@@ -7,12 +7,14 @@
 'use client';
 
 import type { ColumnDef } from '@tanstack/react-table';
-import { Eye, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { Eye, MoreHorizontal, Pencil, Trash2, Scale } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Checkbox } from '@/components/ui/checkbox';
 import type { SellerProfileInfo } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
+import { Badge } from '@/components/ui/badge';
+
 
 export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<SellerProfileInfo>[] => [
   {
@@ -47,12 +49,22 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     ),
   },
   {
-    accessorKey: "email",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
+    accessorKey: "isJudicial",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Tipo" />,
+    cell: ({ row }) => {
+      const isJudicial = row.getValue("isJudicial");
+      return (
+        <Badge variant={isJudicial ? "outline" : "secondary"} className={isJudicial ? "border-blue-500/60" : ""}>
+            {isJudicial && <Scale className="mr-1.5 h-3.5 w-3.5 text-blue-600"/>}
+            {isJudicial ? "Judicial" : "Outros"}
+        </Badge>
+      );
+    },
+    filterFn: (row, id, value) => value.includes(String(row.getValue(id))),
   },
   {
-    accessorKey: "phone",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Telefone" />,
+    accessorKey: "email",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Email" />,
   },
   {
     accessorKey: "city",

@@ -2,7 +2,7 @@
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Leiloeiros.
  * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
- * permitindo busca, ordenação e visualização em grade ou lista.
+ * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
  */
 'use client';
 
@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctioneers as getAuctioneersAction } from './actions';
+import { getAuctioneers as getAuctioneersAction, deleteAuctioneer } from './actions';
 import type { AuctioneerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,7 +19,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
-
+import { createColumns } from './columns';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
@@ -63,8 +63,34 @@ export default function AdminAuctioneersPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteAuctioneer(id);
+    if(result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      onUpdate();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, onUpdate]);
+
+  const handleDeleteSelected = useCallback(async (selectedItems: AuctioneerProfileInfo[]) => {
+      for (const item of selectedItems) {
+        await deleteAuctioneer(item.id);
+      }
+      toast({ title: "Sucesso!", description: `${selectedItems.length} leiloeiro(s) excluído(s).` });
+      onUpdate();
+  }, [onUpdate, toast]);
+
   const renderGridItem = (item: AuctioneerProfileInfo) => <UniversalCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: AuctioneerProfileInfo) => <UniversalListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  
+  const facetedFilterOptions = useMemo(() => {
+      const stateOptions = [...new Set(auctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+      return [
+          { id: 'state', title: 'Estado', options: stateOptions },
+      ];
+  }, [auctioneers]);
   
   if (isLoading || !platformSettings) {
     return (
@@ -106,6 +132,7 @@ export default function AdminAuctioneersPage() {
         totalItemsCount={auctioneers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
+        dataTableColumns={columns}
         sortOptions={sortOptions}
         initialSortBy="name_asc"
         onSortChange={() => {}}
@@ -113,7 +140,8 @@ export default function AdminAuctioneersPage() {
         isLoading={isLoading}
         searchTypeLabel="leiloeiros"
         emptyStateMessage="Nenhum leiloeiro encontrado."
-        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+        facetedFilterColumns={facetedFilterOptions}
+        onDeleteSelected={handleDeleteSelected}
       />
     </div>
   );

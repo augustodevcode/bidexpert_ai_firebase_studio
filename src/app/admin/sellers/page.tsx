@@ -2,15 +2,15 @@
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Comitentes (Vendedores).
  * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
- * permitindo busca, ordenação e visualização em grade ou lista.
+ * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
  */
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSellers as getSellersAction } from './actions';
+import { getSellers as getSellersAction, deleteSeller } from './actions';
 import type { SellerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +19,7 @@ import SearchResultsFrame from '@/components/search-results-frame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
+import { createColumns } from './columns';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
@@ -61,21 +62,49 @@ export default function AdminSellersPage() {
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
+  
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteSeller(id);
+    if(result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      onUpdate();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, onUpdate]);
+  
+  const handleDeleteSelected = useCallback(async (selectedItems: SellerProfileInfo[]) => {
+      // Logic for batch deletion
+      for (const item of selectedItems) {
+        await deleteSeller(item.id);
+      }
+      toast({ title: "Sucesso!", description: `${selectedItems.length} comitente(s) excluído(s).` });
+      onUpdate();
+  }, [onUpdate, toast]);
 
   const renderGridItem = (item: SellerProfileInfo) => <UniversalCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: SellerProfileInfo) => <UniversalListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  
-   if (isLoading || !platformSettings) {
+  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  const facetedFilterOptions = useMemo(() => {
+      const stateOptions = [...new Set(sellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+      return [
+          { id: 'state', title: 'Estado', options: stateOptions },
+          { id: 'isJudicial', title: 'Tipo', options: [{value: 'true', label: 'Judicial'}, {value: 'false', label: 'Não Judicial'}]}
+      ];
+  }, [sellers]);
+
+  if (isLoading || !platformSettings) {
     return (
-      <div className="space-y-6">
-        <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                <Skeleton className="h-10 w-36"/>
-            </CardHeader>
-            <CardContent><Skeleton className="h-96 w-full" /></CardContent>
-        </Card>
-      </div>
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
     );
   }
 
@@ -105,6 +134,7 @@ export default function AdminSellersPage() {
         totalItemsCount={sellers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
+        dataTableColumns={columns}
         sortOptions={sortOptions}
         initialSortBy="name_asc"
         onSortChange={() => {}}
@@ -112,7 +142,8 @@ export default function AdminSellersPage() {
         isLoading={isLoading}
         searchTypeLabel="comitentes"
         emptyStateMessage="Nenhum comitente encontrado."
-        itemsPerPage={platformSettings.defaultListItemsPerPage || 10}
+        facetedFilterColumns={facetedFilterOptions}
+        onDeleteSelected={handleDeleteSelected}
       />
     </div>
   );
