@@ -3,7 +3,7 @@
  * @fileoverview Este script popula o banco de dados com um conjunto completo
  * de dados de amostra para demonstração e desenvolvimento. Ele cria entidades
  * como categorias, comitentes, leiloeiros, leilões (de diferentes tipos),
- * bens e lotes, todos vinculados ao tenant "Landlord" (ID '1').
+ * ativos e lotes, todos vinculados ao tenant "Landlord" (ID '1').
  * ATENÇÃO: Este script deve ser executado APÓS o seed essencial (`npm run db:seed`).
  */
 import { PrismaClient } from '@prisma/client';
@@ -51,20 +51,17 @@ async function seedSampleData() {
 
   try {
     // 1. Buscar Dados Essenciais
-    console.log('[DB SEED SAMPLES] Buscando dados de base (usuário admin, tenant)...
-');
+    console.log('[DB SEED SAMPLES] Buscando dados de base (usuário admin, tenant)...');
     const adminUser = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' } });
     const tenant = await prisma.tenant.findUnique({ where: { id: TENANT_ID } });
 
     if (!adminUser || !tenant) {
       throw new Error('Usuário administrador ou Tenant Landlord não encontrado. Execute `npm run db:seed` primeiro.');
     }
-    console.log('[DB SEED SAMPLES] ✅ Dados de base encontrados.
-');
+    console.log('[DB SEED SAMPLES] ✅ Dados de base encontrados.');
 
     // 2. Criar Entidades Principais
-    console.log('[DB SEED SAMPLES] Criando entidades de amostra (Categorias, Comitentes, Leiloeiro, Judicial, Localidades)...
-');
+    console.log('[DB SEED SAMPLES] Criando entidades de amostra (Categorias, Comitentes, Leiloeiro, Judicial, Localidades)...');
 
     // States and Cities
     const createdStates: Record<string, any> = {};
@@ -139,13 +136,13 @@ async function seedSampleData() {
     const subcategories: Record<string, any> = {};
     for (const subcat of subcategoriesData) {
       const parentCategory = categories[subcat.parentSlug.replace(/-/g, '')];
-      subcategories[subcat.slug.replace(/-/g, '')] = await prisma.lotSubCategory.upsert({
+      subcategories[subcat.slug.replace(/-/g, '')] = await prisma.subcategory.upsert({
         where: { slug: subcat.slug },
         update: {},
         create: {
           name: subcat.name,
           slug: subcat.slug,
-          categoryId: parentCategory.id,
+          parentCategoryId: parentCategory.id,
         },
       });
     }
@@ -223,27 +220,17 @@ async function seedSampleData() {
         },
       });
     }
-    console.log('[DB SEED SAMPLES] ✅ Entidades de amostra criadas/verificadas.
-');
+    console.log('[DB SEED SAMPLES] ✅ Entidades de amostra criadas/verificadas.');
 
     // 3. Criar Leilões e Itens
-    console.log('[DB SEED SAMPLES] Criando Leilões, Bens e Lotes de amostra...
-');
+    console.log('[DB SEED SAMPLES] Criando Leilões, Ativos e Lotes de amostra...');
     const createdAuctions: string[] = [];
 
     const auctionTypes = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
     const auctionMethods = ['STANDARD', 'DUTCH', 'SILENT'];
     const participationTypes = ['ONLINE', 'PRESENCIAL', 'HIBRIDO'];
     const auctionStatuses = [
-      'RASCUNHO',
-      'EM_PREPARACAO',
-      'EM_BREVE',
-      'ABERTO',
-      'ABERTO_PARA_LANCES',
-      'ENCERRADO',
-      'FINALIZADO',
-      'CANCELADO',
-      'SUSPENSO',
+      'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO',
     ];
 
     let auctionCounter = 0;
@@ -320,7 +307,6 @@ async function seedSampleData() {
                     branch: { connect: { id: judicialBranch.id } },
                     seller: { connect: { id: randomSeller.id } },
                     tenant: { connect: { id: TENANT_ID } },
-                    // Add partes (parties)
                     parties: {
                       create: [
                         { name: faker.person.fullName(), type: 'AUTOR', tenant: { connect: { id: TENANT_ID } } },
@@ -351,41 +337,41 @@ async function seedSampleData() {
               });
               createdAuctions.push(auction.title);
 
-              // Create 2-5 lots for each auction, mixing 1:1 and 1:N bens
+              // Create 2-5 lots for each auction, mixing 1:1 and 1:N assets
               const numberOfLots = faker.number.int({ min: 2, max: 5 });
               for (let j = 0; j < numberOfLots; j++) {
                 const isGroupedLot = faker.datatype.boolean(); // Randomly decide if it's a grouped lot
-                const bensToCreate = isGroupedLot ? faker.number.int({ min: 2, max: 4 }) : 1; // 1 for 1:1, 2-4 for grouped
+                const assetsToCreate = isGroupedLot ? faker.number.int({ min: 2, max: 4 }) : 1; // 1 for 1:1, 2-4 for grouped
 
                 const lotTitle = isGroupedLot ? `Lote Agrupado de ${faker.commerce.productAdjective()} ${faker.commerce.productMaterial()} (${j + 1})` : faker.commerce.productName();
                 const lotEvaluationValue = faker.number.int({ min: 10000, max: 1000000 });
                 const lotFeaturedImage = getRandomImageUrl(`lot-${auction.id}-${j}`);
 
-                const createdBens = [];
-                for (let k = 0; k < bensToCreate; k++) {
-                  const bemTitle = faker.commerce.productName();
-                  const bemEvaluationValue = faker.number.int({ min: 5000, max: 500000 });
-                  const bemImageUrl = getRandomImageUrl(`bem-${auction.id}-${j}-${k}`);
-                  const bemGalleryImages = getRandomGalleryImages(`bem-gallery-${auction.id}-${j}-${k}`, faker.number.int({ min: 2, max: 5 }));
+                const createdAssets = [];
+                for (let k = 0; k < assetsToCreate; k++) {
+                  const assetTitle = faker.commerce.productName();
+                  const assetEvaluationValue = faker.number.int({ min: 5000, max: 500000 });
+                  const assetImageUrl = getRandomImageUrl(`asset-${auction.id}-${j}-${k}`);
+                  const assetGalleryImages = getRandomGalleryImages(`asset-gallery-${auction.id}-${j}-${k}`, faker.number.int({ min: 2, max: 5 }));
 
-                  const bem = await prisma.bem.create({
+                  const asset = await prisma.asset.create({
                     data: {
-                      title: bemTitle,
+                      title: assetTitle,
                       description: faker.commerce.productDescription(),
-                      evaluationValue: bemEvaluationValue,
+                      evaluationValue: assetEvaluationValue,
                       tenant: { connect: { id: TENANT_ID } },
                       seller: { connect: { id: randomSeller.id } },
                       category: { connect: { id: faker.helpers.arrayElement(Object.values(categories)).id } },
-                      subCategory: faker.helpers.arrayElement(Object.values(subcategories)) ? { connect: { id: faker.helpers.arrayElement(Object.values(subcategories)).id } } : undefined,
-                      imageUrl: bemImageUrl,
-                      galleryImages: bemGalleryImages,
+                      subcategory: faker.helpers.arrayElement(Object.values(subcategories)) ? { connect: { id: faker.helpers.arrayElement(Object.values(subcategories)).id } } : undefined,
+                      imageUrl: assetImageUrl,
+                      galleryImageUrls: assetGalleryImages,
                       dataAiHint: faker.lorem.word(),
                       judicialProcess: judicialProcess ? { connect: { id: judicialProcess.id } } : undefined,
                       state: { connect: { id: createdStates[targetState.uf].id } },
                       city: { connect: { id: targetCity.id } },
                     },
                   });
-                  createdBens.push(bem);
+                  createdAssets.push(asset);
                 }
 
                 await prisma.lot.create({
@@ -396,11 +382,11 @@ async function seedSampleData() {
                     auction: { connect: { id: auction.id } },
                     price: lotEvaluationValue,
                     initialPrice: lotEvaluationValue,
-                    bens: { create: createdBens.map(b => ({ bemId: b.id })) },
+                    assets: { create: createdAssets.map(b => ({ assetId: b.id })) },
                     tenant: { connect: { id: TENANT_ID } },
                     bidIncrementStep: faker.number.int({ min: 50, max: 500 }),
-                    featuredImageUrl: lotFeaturedImage,
-                    galleryImages: getRandomGalleryImages(`lot-gallery-${auction.id}-${j}`, faker.number.int({ min: 2, max: 5 })),
+                    imageUrl: lotFeaturedImage,
+                    galleryImageUrls: getRandomGalleryImages(`lot-gallery-${auction.id}-${j}`, faker.number.int({ min: 2, max: 5 })),
                     state: { connect: { id: createdStates[targetState.uf].id } },
                     city: { connect: { id: targetCity.id } },
                   },
