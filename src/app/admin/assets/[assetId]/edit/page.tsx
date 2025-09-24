@@ -1,7 +1,7 @@
 // src/app/admin/assets/[assetId]/edit/page.tsx
 /**
- * @fileoverview Página para edição de um Asset (ativo) específico.
- * Busca os dados iniciais do bem e as entidades relacionadas (processos,
+ * @fileoverview Página para edição de um Ativo específico.
+ * Busca os dados iniciais do ativo e as entidades relacionadas (processos,
  * categorias, comitentes) necessárias para popular os seletores do formulário.
  * Passa a ação de atualização para o componente `AssetForm`.
  */
@@ -38,8 +38,8 @@ export default async function EditAssetPage({ params }: { params: { assetId: str
       categories={categories}
       sellers={sellers}
       onSubmitAction={handleUpdateAsset}
-      formTitle="Editar Bem"
-      formDescription="Modifique os detalhes do bem existente."
+      formTitle="Editar Ativo"
+      formDescription="Modifique os detalhes do ativo existente."
       submitButtonText="Salvar Alterações"
     />
   );

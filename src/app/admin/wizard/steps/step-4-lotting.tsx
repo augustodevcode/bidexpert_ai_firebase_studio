@@ -7,7 +7,7 @@ import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
-import { Boxes, Box, Eye } from 'lucide-react';
+import { Boxes, Box, Eye, PackagePlus } from 'lucide-react';
 import CreateLotFromAssetsModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
@@ -44,7 +44,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     setIsAssetModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), []);
 
   
   const handleCreateGroupedLotClick = () => {
@@ -158,6 +158,8 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedAssets={selectedAssets}
+        auctionId={auctionData.id || ''}
+        sellerId={auctionData.sellerId}
         onLotCreated={handleLotCreatedInModal}
       />}
        <AssetDetailsModal 

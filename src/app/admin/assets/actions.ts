@@ -48,7 +48,7 @@ async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<st
  * @param {object} filter - Objeto com filtros como `judicialProcessId` ou `sellerId`.
  * @returns {Promise<Asset[]>} Uma lista de ativos.
  */
-export async function getAssets(filter?: { judicialProcessId?: string, sellerId?: string }): Promise<Asset[]> {
+export async function getAssets(filter?: { judicialProcessId?: string, sellerId?: string, status?: string }): Promise<Asset[]> {
     const tenantId = await getTenantIdFromRequest();
     return assetService.getAssets({ ...filter, tenantId });
 }
@@ -59,7 +59,8 @@ export async function getAssets(filter?: { judicialProcessId?: string, sellerId?
  * @returns {Promise<Asset | null>} O ativo encontrado ou null.
  */
 export async function getAsset(id: string): Promise<Asset | null> {
-    return assetService.getAssetById(id);
+    const tenantId = await getTenantIdFromRequest();
+    return assetService.getAssetById(tenantId, id);
 }
 
 /**

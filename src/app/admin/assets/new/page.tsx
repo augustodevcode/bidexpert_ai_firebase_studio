@@ -1,6 +1,6 @@
 // src/app/admin/assets/new/page.tsx
 /**
- * @fileoverview Página para criação de um novo Asset (ativo).
+ * @fileoverview Página para criação de um novo Ativo.
  * Este componente busca os dados necessários para os seletores do formulário
  * (processos, categorias, comitentes) e renderiza o `AssetForm` para a
  * entrada de dados, passando a server action `createAsset` para persistir o novo registro.
@@ -30,9 +30,9 @@ export default async function NewAssetPage() {
       categories={categories}
       sellers={sellers}
       onSubmitAction={handleCreateAsset}
-      formTitle="Novo Bem"
-      formDescription="Cadastre um novo bem para que possa ser posteriormente loteado em um leilão."
-      submitButtonText="Criar Bem"
+      formTitle="Novo Ativo"
+      formDescription="Cadastre um novo ativo para que possa ser posteriormente loteado em um leilão."
+      submitButtonText="Criar Ativo"
     />
   );
 }

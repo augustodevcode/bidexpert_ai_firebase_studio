@@ -38,9 +38,9 @@ const lotManagementItems = [
 
 
 const assetManagementItems = [
-    { title: 'Listar Bens', href: '/admin/bens', icon: Package },
-    { title: 'Novo Bem', href: '/admin/bens/new', icon: PlusCircle },
-    { title: 'Análise de Bens', href: '/admin/bens/analysis', icon: BarChart },
+    { title: 'Listar Ativos', href: '/admin/assets', icon: Package },
+    { title: 'Novo Ativo', href: '/admin/assets/new', icon: PlusCircle },
+    { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart },
 ];
 
 const categoryManagementItems = [

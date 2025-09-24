@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getAssets } from '../assets/actions';
@@ -65,8 +65,8 @@ export default function LoteamentoPage() {
     setIsLoadingAssets(true);
     setRowSelection({});
     try {
-      const fetchedAssets = await getAssets({ judicialProcessId: selectedProcessId });
-      setAssets(fetchedAssets.filter(b => b.status === 'DISPONIVEL'));
+      const fetchedAssets = await getAssets({ judicialProcessId: selectedProcessId, status: 'DISPONIVEL' });
+      setAssets(fetchedAssets);
     } catch (e) {
       setError('Falha ao buscar os ativos do processo selecionado.');
       setAssets([]);
@@ -147,7 +147,7 @@ export default function LoteamentoPage() {
     setIsAssetModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), []);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
   const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
 
   return (

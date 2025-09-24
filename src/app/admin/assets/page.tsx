@@ -1,7 +1,7 @@
 // src/app/admin/assets/page.tsx
 /**
- * @fileoverview Página principal para listagem e gerenciamento de Assets (ativos).
- * Utiliza o componente DataTable para exibir os bens de forma interativa,
+ * @fileoverview Página principal para listagem e gerenciamento de Ativos.
+ * Utiliza o componente DataTable para exibir os ativos de forma interativa,
  * permitindo busca, ordenação, exclusão em massa e visualização de detalhes
  * em um modal.
  */
@@ -35,7 +35,7 @@ export default function AdminAssetsPage() {
       const fetchedAssets = await getAssets();
       setAssets(fetchedAssets);
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar bens.";
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar ativos.";
       console.error("Error fetching assets:", e);
       setError(errorMessage);
       toast({ title: "Erro", description: errorMessage, variant: "destructive" });
@@ -75,7 +75,7 @@ export default function AdminAssetsPage() {
     }
 
     if (successCount > 0) {
-      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} bem(ns) excluído(s) com sucesso.` });
+      toast({ title: "Exclusão em Massa Concluída", description: `${successCount} ativo(s) excluído(s) com sucesso.` });
     }
     fetchPageData();
   }, [toast, fetchPageData]);
@@ -95,15 +95,15 @@ export default function AdminAssetsPage() {
             <div>
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Package className="h-6 w-6 mr-2 text-primary" />
-                Gerenciar Bens
+                Gerenciar Ativos
               </CardTitle>
               <CardDescription>
-                Cadastre e gerencie os bens individuais que poderão ser loteados.
+                Cadastre e gerencie os ativos individuais que poderão ser posteriormente loteados.
               </CardDescription>
             </div>
             <Button asChild>
               <Link href="/admin/assets/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Novo Bem
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Ativo
               </Link>
             </Button>
           </CardHeader>
