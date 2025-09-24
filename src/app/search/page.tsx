@@ -23,8 +23,8 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
 import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
-import UniversalListItem from '@/components/universal-list-item';
-import UniversalCard from '@/components/universal-card';
+import UniversalListItem from '@/components/cards/lot-list-item';
+import UniversalCard from '@/components/cards/lot-card';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 
@@ -409,21 +409,7 @@ export default function SearchPage() {
     }
     return filteredItems;
   }, [searchTerm, activeFilters, sortBy, currentSearchType, allAuctions, allLots, allDirectSales, allCategoriesForFilter]);
-
-  const handleSearchFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
-    currentParams.set('type', currentSearchType === 'tomada_de_precos' ? 'auctions' : currentSearchType);
-    if (currentSearchType === 'tomada_de_precos') currentParams.set('auctionType', 'TOMADA_DE_PRECOS');
-
-    if (searchTerm.trim()) {
-        currentParams.set('term', searchTerm.trim());
-    } else {
-        currentParams.delete('term');
-    }
-    router.push(`/search?${currentParams.toString()}`);
-  };
-
+  
   const renderGridItem = (item: any, index: number): React.ReactNode => {
     if (!platformSettings) return null;
     let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
@@ -432,7 +418,7 @@ export default function SearchPage() {
         <UniversalCard
             key={`${itemType}-${item.id}-${index}`}
             item={item}
-            type={itemType as 'auction' | 'lot'}
+            type={itemType}
             platformSettings={platformSettings}
             parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
         />
@@ -447,7 +433,7 @@ export default function SearchPage() {
         <UniversalListItem
             key={`${itemType}-list-${item.id}-${index}`}
             item={item}
-            type={itemType}
+            type={itemType as 'auction' | 'lot' | 'direct_sale'}
             platformSettings={platformSettings}
             parentAuction={itemType === 'lot' ? allAuctions.find(a => a.id === item.auctionId) : undefined}
         />
@@ -485,56 +471,53 @@ export default function SearchPage() {
         <ChevronRight className="h-4 w-4 mx-1" />
         <span className="text-foreground font-medium">Busca</span>
       </div>
-
+      
       <Card className="shadow-lg p-6 bg-secondary/30">
-        <div className="text-center mb-6">
-          <ShoppingCart className="h-12 w-12 mx-auto text-primary mb-3" />
-          <h1 className="text-3xl font-bold font-headline">Explore & Encontre</h1>
-          <p className="text-muted-foreground mt-2">
-            Use nossa busca avançada para encontrar leilões, lotes e ofertas de venda direta.
-          </p>
-        </div>
-        <form onSubmit={handleSearchFormSubmit} className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
-            <div className="relative flex-grow w-full">
+        <div className="flex flex-col md:flex-row items-center gap-4 w-full max-w-2xl mx-auto">
+            <Sheet open={isFilterSheetOpen} onOpenChange={setIsFilterSheetOpen}>
+                <SheetTrigger asChild>
+                    <Button variant="outline" className="w-full md:w-auto">
+                        <SlidersHorizontal className="mr-2 h-4 w-4" /> Filtros
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[340px] sm:w-[400px]">
+                    <SidebarFilters
+                        categories={allCategoriesForFilter}
+                        locations={uniqueLocationsForFilter}
+                        sellers={uniqueSellersForFilter}
+                        onFilterSubmit={handleFilterSubmit as any}
+                        onFilterReset={handleFilterReset}
+                        initialFilters={activeFilters as ActiveFilters}
+                        filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales' | 'lots')}
+                        makes={allMakesForFilter}
+                        models={allModelsForFilter}
+                    />
+                </SheetContent>
+            </Sheet>
+            <form onSubmit={handleSearchFormSubmit} className="relative flex-grow w-full">
                 <SearchIcon className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                type="search"
-                placeholder="Buscar por palavra-chave..."
-                className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                    type="search"
+                    placeholder="O que você está procurando?"
+                    className="h-12 pl-12 text-md rounded-lg shadow-sm w-full"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
                 />
-            </div>
-            <Button type="submit" className="h-12 w-full md:w-auto">
-              <SearchIcon className="mr-2 h-4 w-4 md:hidden" /> Buscar
-            </Button>
-        </form>
+            </form>
+        </div>
       </Card>
       
-      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
-        <aside className="hidden md:block sticky top-24 h-fit">
-             <SidebarFilters
-                categories={allCategoriesForFilter}
-                locations={uniqueLocationsForFilter}
-                sellers={uniqueSellersForFilter}
-                onFilterSubmit={handleFilterSubmit as any}
-                onFilterReset={handleFilterReset}
-                initialFilters={activeFilters as ActiveFilters}
-                filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales')}
-                makes={allMakesForFilter}
-                models={allModelsForFilter}
-            />
-        </aside>
-        
-        <main className="min-w-0 space-y-6 md:ml-4">
-            <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
-            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
-                <TabsTrigger value="auctions">Leilões ({currentSearchType === 'auctions' ? filteredAndSortedItems.length : allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
-                <TabsTrigger value="lots">Lotes ({currentSearchType === 'lots' ? filteredAndSortedItems.length : allLots.length})</TabsTrigger>
-                <TabsTrigger value="direct_sale">Venda Direta ({currentSearchType === 'direct_sale' ? filteredAndSortedItems.length : allDirectSales.length})</TabsTrigger>
-                <TabsTrigger value="tomada_de_precos">Tomada de Preços ({currentSearchType === 'tomada_de_precos' ? filteredAndSortedItems.length : allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
-            </TabsList>
-
+      <Tabs value={currentSearchType} onValueChange={(value) => handleSearchTypeChange(value as any)} className="w-full">
+        <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 mb-6 gap-1 sm:gap-2">
+            <TabsTrigger value="auctions">Leilões ({currentSearchType === 'auctions' ? filteredAndSortedItems.length : allAuctions.filter(a=> a.auctionType !== 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+            <TabsTrigger value="lots">Lotes ({currentSearchType === 'lots' ? filteredAndSortedItems.length : allLots.length})</TabsTrigger>
+            <TabsTrigger value="direct_sale">Venda Direta ({currentSearchType === 'direct_sale' ? filteredAndSortedItems.length : allDirectSales.length})</TabsTrigger>
+            <TabsTrigger value="tomada_de_precos">Tomada de Preços ({currentSearchType === 'tomada_de_precos' ? filteredAndSortedItems.length : allAuctions.filter(a => a.auctionType === 'TOMADA_DE_PRECOS').length})</TabsTrigger>
+        </TabsList>
+      </Tabs>
+      
+      <div className="grid md:grid-cols-1 gap-8">
+        <main className="min-w-0 space-y-6">
             <SearchResultsFrame
               items={filteredAndSortedItems}
               totalItemsCount={filteredAndSortedItems.length}
@@ -548,7 +531,6 @@ export default function SearchPage() {
               searchTypeLabel={getSearchTypeLabel()}
               emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
             />
-            </Tabs>
         </main>
       </div>
     </div>
