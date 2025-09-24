@@ -134,7 +134,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
               <Image
-                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : 'https://placehold.co/600x400.png'}
+                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : `https://picsum.photos/seed/${lot.id}/600/400`}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"

@@ -1,3 +1,4 @@
+
 // src/components/cards/auction-list-item.tsx
 'use client';
 
@@ -56,7 +57,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     setMentalTriggers(Array.from(new Set(triggers)));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://picsum.photos/seed/${auction.id}/600/400`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
   
   const IconComponent = auctionTypeDisplay?.icon;
@@ -65,7 +66,6 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     <TooltipProvider>
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
         <div className="flex flex-col md:flex-row">
-          {/* Image Column */}
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block h-full w-full">
               <Image
@@ -93,7 +93,6 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             )}
           </div>
 
-          {/* Content Column */}
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">

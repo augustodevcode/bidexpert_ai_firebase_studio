@@ -1,3 +1,4 @@
+
 // src/components/cards/auction-card.tsx
 'use client';
 
@@ -107,7 +108,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://picsum.photos/seed/${auction.id}/600/400`;
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;

@@ -1,3 +1,4 @@
+
 // src/app/category/[categorySlug]/category-display.tsx
 /**
  * @fileoverview Componente de cliente que renderiza o conteúdo de uma página de categoria.
@@ -276,7 +277,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
             sellers={uniqueSellersForFilter}
-            onFilterSubmit={handleFilterSubmit as any}
+            onFilterSubmit={handleFilterSubmit}
             onFilterReset={handleFilterReset}
             initialFilters={activeFilters}
             filterContext="lots"
