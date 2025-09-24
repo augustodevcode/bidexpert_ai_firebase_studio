@@ -7,17 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { getJudicialProcesses } from '../judicial-processes/actions';
-import { getBens } from '../bens/actions';
+import { getAssets } from '../assets/actions';
 import { getAuctions } from '../auctions/actions';
-import type { JudicialProcess, Bem, Auction, Lot } from '@/types';
+import type { JudicialProcess, Asset, Auction, Lot } from '@/types';
 import { Boxes, Box, Eye, FileText, Loader2, AlertCircle, Package } from 'lucide-react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { useToast } from '@/hooks/use-toast';
-import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
+import CreateLotFromAssetsModal from '@/components/admin/lotting/create-lot-modal';
 import { Label } from '@/components/ui/label';
 import { v4 as uuidv4 } from 'uuid';
-import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import { createLot } from '../lots/actions'; // Import the createLot server action
 
 export default function LoteamentoPage() {
@@ -26,15 +26,15 @@ export default function LoteamentoPage() {
   const [selectedProcessId, setSelectedProcessId] = useState<string>('');
   const [selectedAuctionId, setSelectedAuctionId] = useState<string>('');
   
-  const [bens, setBens] = useState<Bem[]>([]);
+  const [assets, setAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingBens, setIsLoadingBens] = useState(false);
+  const [isLoadingAssets, setIsLoadingAssets] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rowSelection, setRowSelection] = useState({});
   const [isLotModalOpen, setIsLotModalOpen] = useState(false);
-  const [isBemModalOpen, setIsBemModalOpen] = useState(false);
-  const [selectedBemForModal, setSelectedBemForModal] = useState<Bem | null>(null);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [selectedAssetForModal, setSelectedAssetForModal] = useState<Asset | null>(null);
   const { toast } = useToast();
 
   const fetchInitialData = useCallback(async () => {
@@ -57,38 +57,38 @@ export default function LoteamentoPage() {
     fetchInitialData();
   }, [fetchInitialData]);
 
-  const fetchBensForProcess = useCallback(async () => {
+  const fetchAssetsForProcess = useCallback(async () => {
     if (!selectedProcessId) {
-      setBens([]);
+      setAssets([]);
       return;
     }
-    setIsLoadingBens(true);
+    setIsLoadingAssets(true);
     setRowSelection({});
     try {
-      const fetchedBens = await getBens({ judicialProcessId: selectedProcessId });
-      setBens(fetchedBens.filter(b => b.status === 'DISPONIVEL'));
+      const fetchedAssets = await getAssets({ judicialProcessId: selectedProcessId });
+      setAssets(fetchedAssets.filter(b => b.status === 'DISPONIVEL'));
     } catch (e) {
-      setError('Falha ao buscar os bens do processo selecionado.');
-      setBens([]);
+      setError('Falha ao buscar os ativos do processo selecionado.');
+      setAssets([]);
     } finally {
-      setIsLoadingBens(false);
+      setIsLoadingAssets(false);
     }
   }, [selectedProcessId]);
 
   useEffect(() => {
-    fetchBensForProcess();
-  }, [fetchBensForProcess]);
+    fetchAssetsForProcess();
+  }, [fetchAssetsForProcess]);
   
-  const selectedBens = useMemo(() => {
+  const selectedAssets = useMemo(() => {
     const selectedIndices = Object.keys(rowSelection).map(Number);
-    return selectedIndices.map(index => bens[index]).filter(Boolean) as Bem[];
-  }, [rowSelection, bens]);
+    return selectedIndices.map(index => assets[index]).filter(Boolean) as Asset[];
+  }, [rowSelection, assets]);
 
   const handleCreateGroupedLotClick = () => {
-    if (selectedBens.length === 0 || !selectedAuctionId) {
+    if (selectedAssets.length === 0 || !selectedAuctionId) {
       toast({
         title: "Seleção Incompleta",
-        description: "Por favor, selecione um leilão e pelo menos um bem para criar o lote.",
+        description: "Por favor, selecione um leilão e pelo menos um ativo para criar o lote.",
         variant: "destructive"
       });
       return;
@@ -97,8 +97,8 @@ export default function LoteamentoPage() {
   };
   
   const handleCreateIndividualLotsClick = async () => {
-    if (selectedBens.length === 0 || !selectedAuctionId) {
-        toast({ title: "Seleção Incompleta", description: "Por favor, selecione um leilão de destino e pelo menos um bem.", variant: "destructive" });
+    if (selectedAssets.length === 0 || !selectedAuctionId) {
+        toast({ title: "Seleção Incompleta", description: "Por favor, selecione um leilão de destino e pelo menos um ativo.", variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
@@ -107,28 +107,28 @@ export default function LoteamentoPage() {
 
     const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
 
-    for (const bem of selectedBens) {
+    for (const asset of selectedAssets) {
         const lotNumber = String(Math.floor(Math.random() * 900) + 100); // Placeholder for a better numbering system
         const newLotData: Partial<Lot> = {
-            title: bem.title,
+            title: asset.title,
             number: lotNumber,
-            price: bem.evaluationValue || 0,
-            initialPrice: bem.evaluationValue || 0,
+            price: asset.evaluationValue || 0,
+            initialPrice: asset.evaluationValue || 0,
             status: 'EM_BREVE',
             auctionId: selectedAuctionId,
             sellerId: selectedAuction?.sellerId,
-            categoryId: bem.categoryId,
-            type: bem.categoryId,
-            bemIds: [bem.id],
-            imageUrl: bem.imageUrl,
-            dataAiHint: bem.dataAiHint,
+            categoryId: asset.categoryId,
+            type: asset.categoryId,
+            assetIds: [asset.id],
+            imageUrl: asset.imageUrl,
+            dataAiHint: asset.dataAiHint,
         };
         const result = await createLot(newLotData);
         if (result.success) {
             successCount++;
         } else {
             errorCount++;
-            toast({ title: `Erro ao criar lote para "${bem.title}"`, description: result.message, variant: "destructive"});
+            toast({ title: `Erro ao criar lote para "${asset.title}"`, description: result.message, variant: "destructive"});
         }
     }
 
@@ -138,16 +138,16 @@ export default function LoteamentoPage() {
     });
 
     setRowSelection({});
-    await fetchBensForProcess(); // Refresh the list of available bens
+    await fetchAssetsForProcess(); // Refresh the list of available assets
     setIsSubmitting(false);
   };
 
-  const handleViewBemDetails = (bem: Bem) => {
-    setSelectedBemForModal(bem);
-    setIsBemModalOpen(true);
+  const handleViewAssetDetails = (asset: Asset) => {
+    setSelectedAssetForModal(asset);
+    setIsAssetModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), [handleViewBemDetails]);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), []);
   const selectedAuction = auctions.find(a => a.id === selectedAuctionId);
 
   return (
@@ -157,10 +157,10 @@ export default function LoteamentoPage() {
           <CardHeader>
             <CardTitle className="text-2xl font-bold font-headline flex items-center">
               <Boxes className="h-6 w-6 mr-2 text-primary" />
-              Loteamento de Bens
+              Loteamento de Ativos
             </CardTitle>
             <CardDescription>
-              Agrupe bens de um processo judicial em lotes para serem leiloados.
+              Agrupe ativos de um processo judicial em lotes para serem leiloados.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -184,35 +184,35 @@ export default function LoteamentoPage() {
               <Card>
                   <CardHeader className="flex flex-row justify-between items-center">
                       <div>
-                          <CardTitle className="text-lg flex items-center gap-2"><Package/> 3. Selecione os Bens Disponíveis</CardTitle>
-                          <CardDescription>Selecione os bens que farão parte do novo lote.</CardDescription>
+                          <CardTitle className="text-lg flex items-center gap-2"><Package/> 3. Selecione os Ativos Disponíveis</CardTitle>
+                          <CardDescription>Selecione os ativos que farão parte do novo lote.</CardDescription>
                       </div>
                       <div className="flex gap-2 flex-wrap">
-                        <Button onClick={handleCreateIndividualLotsClick} variant="outline" disabled={selectedBens.length === 0 || isSubmitting}>
+                        <Button onClick={handleCreateIndividualLotsClick} variant="outline" disabled={selectedAssets.length === 0 || isSubmitting}>
                             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Box className="mr-2 h-4 w-4" />}
                             Lotear Individualmente
                         </Button>
-                        <Button onClick={handleCreateGroupedLotClick} disabled={selectedBens.length === 0 || isSubmitting}>
+                        <Button onClick={handleCreateGroupedLotClick} disabled={selectedAssets.length === 0 || isSubmitting}>
                             <Boxes className="mr-2 h-4 w-4" />
                             Agrupar em Lote Único
                         </Button>
                       </div>
                   </CardHeader>
                   <CardContent>
-                      {isLoadingBens ? (
-                           <div className="flex items-center justify-center h-48"><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Carregando bens...</div>
-                      ) : selectedProcessId && bens.length === 0 ? (
-                          <div className="text-center py-10"><AlertCircle className="mx-auto h-10 w-10 text-muted-foreground mb-2"/><p>Nenhum bem disponível encontrado para este processo.</p></div>
+                      {isLoadingAssets ? (
+                           <div className="flex items-center justify-center h-48"><Loader2 className="mr-2 h-6 w-6 animate-spin" /> Carregando ativos...</div>
+                      ) : selectedProcessId && assets.length === 0 ? (
+                          <div className="text-center py-10"><AlertCircle className="mx-auto h-10 w-10 text-muted-foreground mb-2"/><p>Nenhum ativo disponível encontrado para este processo.</p></div>
                       ) : !selectedProcessId ? (
-                          <div className="text-center py-10"><FileText className="mx-auto h-10 w-10 text-muted-foreground mb-2"/><p>Selecione um processo para visualizar os bens associados.</p></div>
+                          <div className="text-center py-10"><FileText className="mx-auto h-10 w-10 text-muted-foreground mb-2"/><p>Selecione um processo para visualizar os ativos associados.</p></div>
                       ) : (
                           <DataTable
                               columns={columns}
-                              data={bens}
+                              data={assets}
                               rowSelection={rowSelection}
                               setRowSelection={setRowSelection}
                               searchColumnId="title"
-                              searchPlaceholder="Buscar por título do bem..."
+                              searchPlaceholder="Buscar por título do ativo..."
                           />
                       )}
                   </CardContent>
@@ -221,19 +221,19 @@ export default function LoteamentoPage() {
         </Card>
       </div>
       {isLotModalOpen && (
-        <CreateLotFromBensModal
+        <CreateLotFromAssetsModal
           isOpen={isLotModalOpen}
           onClose={() => setIsLotModalOpen(false)}
-          selectedBens={selectedBens}
+          selectedAssets={selectedAssets}
           auctionId={selectedAuctionId}
           sellerId={selectedAuction?.sellerId}
-          onLotCreated={fetchBensForProcess}
+          onLotCreated={() => {}}
         />
       )}
-       <BemDetailsModal 
-        bem={selectedBemForModal} 
-        isOpen={isBemModalOpen} 
-        onClose={() => setIsBemModalOpen(false)} 
+       <AssetDetailsModal 
+        asset={selectedAssetForModal} 
+        isOpen={isAssetModalOpen} 
+        onClose={() => setIsAssetModalOpen(false)} 
       />
     </>
   );
