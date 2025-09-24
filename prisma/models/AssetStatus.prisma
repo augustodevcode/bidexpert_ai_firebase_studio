@@ -1,0 +1,15 @@
+/// Status de um bem individual.
+enum AssetStatus {
+  /// O bem está sendo cadastrado e não está pronto para ser usado.
+  CADASTRO
+  /// O bem está disponível no inventário para ser adicionado a um lote.
+  DISPONIVEL
+  /// O bem já faz parte de um lote.
+  LOTEADO
+  /// O bem foi vendido (como parte de um lote).
+  VENDIDO
+  /// O bem foi removido do inventário (ex: devolvido ao comitente).
+  REMOVIDO
+  /// O bem não está mais ativo, mas o registro é mantido.
+  INATIVADO
+}

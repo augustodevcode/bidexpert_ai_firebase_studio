@@ -1,9 +1,1 @@
-/// Status de um bem individual.
-enum BemStatus {
-  CADASTRO
-  DISPONIVEL
-  LOTEADO
-  VENDIDO
-  REMOVIDO
-  INATIVADO
-}
+// This file is obsolete. The enum has been renamed to AssetStatus and moved to AssetStatus.prisma.
