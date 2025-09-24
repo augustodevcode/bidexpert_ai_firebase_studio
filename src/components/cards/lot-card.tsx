@@ -124,8 +124,8 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
-  const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
-  const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
+  const inheritedAsset = (lot.inheritedMediaFromAssetId && lot.assets) ? lot.assets.find(b => b.id === lot.inheritedMediaFromAssetId) : null;
+  const imageUrlToDisplay = inheritedAsset ? inheritedAsset.imageUrl : lot.imageUrl;
 
   return (
     <>
@@ -139,7 +139,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="object-cover"
-                data-ai-hint="luxury home"
+                data-ai-hint="marina home"
                 data-ai-id="lot-card-main-image"
               />
             </div>

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { Eye, ChevronLeft, ChevronRight, ImageOff, MapPin, Tag, Clock, Users, Gavel, Percent, Zap, TrendingUp, Crown, Building, Car, Truck, Info, Leaf, CalendarDays } from 'lucide-react';
 import Link from 'next/link';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from './ui/separator';
 import { isPast, differenceInSeconds, format } from 'date-fns';
@@ -35,7 +35,7 @@ const InfoItem = ({ icon: Icon, value, label }: { icon: React.ElementType, value
 const TimeRemaining: React.FC<{endDate: Date | string | null}> = ({ endDate }) => {
     const [remaining, setRemaining] = useState('');
 
-    useEffect(() => {
+    React.useEffect(() => {
         if (!endDate) return;
 
         const interval = setInterval(() => {
@@ -125,7 +125,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
             {/* Image Gallery */}
             <div className="space-y-2">
                 <div className="relative aspect-video w-full bg-muted rounded-md overflow-hidden">
-                    <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || 'imagem lote preview'} priority />
+                    <Image src={gallery[currentImageIndex]} alt={`Imagem ${currentImageIndex + 1} de ${lot.title}`} fill className="object-contain" data-ai-hint={lot.dataAiHint || 'marina home'} priority />
                     {gallery.length > 1 && (
                         <>
                             <Button variant="outline" size="icon" onClick={prevImage} className="absolute left-2 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-8 w-8 rounded-full shadow-md"><ChevronLeft className="h-5 w-5" /></Button>
