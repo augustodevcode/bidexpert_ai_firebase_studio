@@ -698,3 +698,15 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** os 3 usuários selecionados devem ser excluídos.
 - **E** a tabela deve ser atualizada para refletir a exclusão.
 - **Critério de Aceite**: A exclusão em lote deve funcionar em todas as páginas de listagem que a suportam.
+
+---
+
+## Módulo 25: Painel de Análise (Vara Judicial)
+
+**Cenário 25.1.1: Visualização dos KPIs de Varas Judiciais**
+- **Dado** que existem processos judiciais e leilões vinculados a diferentes varas.
+- **Quando** um admin acessa a página `/admin/judicial-branches/analysis`.
+- **Então** os cards de estatísticas devem exibir corretamente o "Faturamento Total", "Total de Processos", "Total de Leilões" e "Total de Lotes Vendidos" agregados para todas as varas.
+- **E** a tabela de "Dados Detalhados por Vara" deve listar todas as varas com atividade, com os cálculos de performance corretos para cada uma.
+- **E** o gráfico de "Top 10 Varas por Faturamento" deve exibir os dados corretos e ordenados.
+- **E** a seção de Análise da IA deve conter um texto com insights sobre o desempenho das varas judiciais.
