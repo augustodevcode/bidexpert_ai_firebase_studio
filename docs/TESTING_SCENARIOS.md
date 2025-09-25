@@ -287,7 +287,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 **Cenário 9.1.2: Meus Lances - Status do Lance**
 - **Dado** que o Usuário A deu o lance mais alto em um lote.
 - **Quando** ele acessa a página `/dashboard/bids`.
-- **Então** o status do lance para aquele lote deve ser "Ganhando", com destaque visual verde.
+- **Então** o status do seu lance para aquele lote deve ser "Ganhando", com destaque visual verde.
 - **Dado** que o Usuário B dá um lance maior no mesmo lote.
 - **Quando** o Usuário A recarrega a página `/dashboard/bids`.
 - **Então** o status do seu lance para aquele lote deve mudar para "Superado", com destaque visual amarelo/laranja.
@@ -753,7 +753,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 
 **Cenário 27.1.2: Tentativa de Editar Entidade de Outro Tenant**
 - **Dado** que o "Admin A" do "Tenant A" está logado.
-- **E** existe um leilão do "Tenant B".
+- **E** existe um leilão com ID "leilao-123" que pertence ao "Tenant B".
 - **Quando** o "Admin A" tenta chamar a server action `updateAuction` passando o ID do leilão do "Tenant B".
 - **Então** a ação deve falhar e retornar um resultado `{ success: false, message: 'Leilão não encontrado...' }`.
 - **E** os dados do leilão no "Tenant B" devem permanecer inalterados.
@@ -880,5 +880,3 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** a imagem principal na página do "Leilão X" deve ser a mesma imagem principal do "Lote 101".
 - **Quando** o usuário edita novamente o leilão e seleciona "Imagem Customizada", escolhendo uma nova imagem da biblioteca.
 - **Então** a imagem principal do leilão deve ser atualizada para a nova imagem, ignorando a imagem do lote.
-
----
