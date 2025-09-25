@@ -597,3 +597,44 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Quando** ele clica no botão "Atualizar" (ícone `RefreshCw`).
 - **Então** a lista de opções deve ser recarregada do servidor.
 - **Critério de Aceite**: O componente `EntitySelector` deve ser robusto e todas as suas funcionalidades devem operar corretamente.
+
+---
+
+## Módulo 22: Fluxo de Configuração Inicial (Setup)
+
+**Cenário 22.1.1: Acesso Inicial e Boas-vindas**
+- **Dado** que é a primeira vez que a aplicação é executada (sem cookie `bidexpert_setup_complete`).
+- **Quando** o usuário acessa qualquer página (ex: `/`).
+- **Então** ele deve ser automaticamente redirecionado para `/setup`.
+- **E** a primeira etapa ("Boas-Vindas") deve ser exibida.
+- **E** a verificação do banco de dados deve indicar o sistema ativo (ex: `MYSQL`).
+- **E** o botão "Avançar" deve estar habilitado se o banco for persistente.
+
+**Cenário 22.1.2: Execução do Seed de Dados**
+- **Dado** que o usuário está na etapa "Dados Iniciais".
+- **Quando** ele clica no botão "Popular com Dados de Demonstração".
+- **Então** uma animação de carregamento deve ser exibida no botão.
+- **E** a ação de `seed` deve ser executada no servidor.
+- **E** ao final, uma notificação de sucesso ou erro deve ser exibida.
+
+**Cenário 22.1.3: Avançar após o Seed**
+- **Dado** que o usuário está na etapa "Dados Iniciais".
+- **Quando** ele clica em "Verificar e Avançar".
+- **Então** o sistema deve verificar se os dados essenciais (ex: roles) existem no banco.
+- **E se** a verificação for bem-sucedida, ele deve avançar para a etapa "Administrador".
+- **E se** a verificação falhar, uma notificação de erro deve ser exibida, e ele deve permanecer na etapa atual.
+
+**Cenário 22.1.4: Criação do Usuário Administrador**
+- **Dado** que o usuário está na etapa "Administrador".
+- **Quando** ele preenche os dados do administrador (nome, email, senha) e clica em "Salvar e Avançar".
+- **Então** a ação de criação de usuário deve ser chamada.
+- **E** uma conta de administrador deve ser criada no banco de dados.
+- **E** o usuário deve ser logado automaticamente (uma sessão deve ser criada).
+- **E** ele deve avançar para a etapa "Finalização".
+
+**Cenário 22.1.5: Finalização do Setup**
+- **Dado** que o usuário está na etapa "Finalização".
+- **Quando** ele clica no botão "Ir para o Painel de Administração".
+- **Então** um cookie `bidexpert_setup_complete` deve ser definido no navegador.
+- **E** ele deve ser redirecionado para `/admin/dashboard`.
+- **E** em futuras visitas, ele não deve mais ser redirecionado para `/setup`.
