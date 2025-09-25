@@ -141,7 +141,7 @@ export async function seedGeminiExtended() {
       {
         name: 'Termo de Arrematação Padrão (Estendido)',
         type: DocumentTemplateType.WINNING_BID_TERM,
-        content: '<h1>Termo Estendido</h1><p>Lote: {{lot.title}}</p>',
+        content: '<h1>Termo Estendido</h1><p>Lote: {{{lot.title}}}</p>',
       },
     ],
     skipDuplicates: true,
@@ -292,7 +292,7 @@ export async function seedGeminiExtended() {
   if(seller) {
     await prisma.asset.create({
         data: {
-            tenantId: tenantId,
+            tenantId: tenant1.id,
             publicId: faker.string.uuid(),
             title: 'Ativo Loteado (Estendido)',
             status: AssetStatus.LOTEADO,

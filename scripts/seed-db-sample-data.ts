@@ -309,8 +309,8 @@ async function seedSampleData() {
                     tenant: { connect: { id: TENANT_ID } },
                     parties: {
                       create: [
-                        { name: faker.person.fullName(), type: 'AUTOR', tenant: { connect: { id: TENANT_ID } } },
-                        { name: faker.person.fullName(), type: 'REU', tenant: { connect: { id: TENANT_ID } } },
+                        { name: faker.person.fullName(), partyType: 'AUTOR' },
+                        { name: faker.person.fullName(), partyType: 'REU' },
                       ],
                     },
                   },
