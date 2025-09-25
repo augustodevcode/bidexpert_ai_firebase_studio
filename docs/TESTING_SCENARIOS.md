@@ -427,13 +427,36 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 
 ## Módulo 15: Painel de Análise de Usuários
 
-**Cenário 15.1.1: Visualização dos KPIs de Usuários**
-- **Dado** que existem usuários com diferentes níveis de atividade na plataforma.
-- **Quando** um admin acessa a página `/admin/users/analysis`.
-- **Então** os cards de estatísticas devem exibir corretamente o número total de usuários, o faturamento total, o número de lotes arrematados e o total de lances.
-- **E** a tabela de "Dados Detalhados por Usuário" deve listar todos os usuários, ordenados pelo valor total gasto (maior para o menor).
-- **E** o gráfico de pizza deve mostrar a distribuição correta de status de habilitação (ex: 70% Habilitado, 20% Pendente, 10% Rejeitado).
-- **E** a seção de Análise da IA deve conter um texto com insights sobre o comportamento dos usuários.
+**Cenário 15.1.1: Visualização dos KPIs Gerais de Usuários**
+- **Dado** que existem usuários com diferentes níveis de atividade.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** o card "Usuários Totais" deve exibir a contagem correta de todas as contas na plataforma.
+- **E** o card "Valor Total Gasto" deve exibir a soma de todos os lotes arrematados por todos os usuários.
+- **E** o card "Lotes Arrematados" deve exibir a contagem total de lotes com status 'VENDIDO'.
+- **E** o card "Total de Lances" deve exibir a contagem total de lances feitos na plataforma.
+- **Critério de Aceite**: Os KPIs devem refletir os dados agregados corretos de todo o banco de dados.
+
+**Cenário 15.1.2: Validação da Tabela de Performance de Usuários**
+- **Dado** que existem usuários com diferentes históricos de arremates e lances.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** a tabela "Dados Detalhados por Usuário" deve ser renderizada.
+- **E** por padrão, a tabela deve estar ordenada pela coluna "Valor Total Gasto" em ordem decrescente.
+- **E** cada linha deve exibir corretamente o nome, email, status de habilitação, total de lances, lotes arrematados e o valor total gasto para cada usuário.
+- **E** ao clicar no cabeçalho de uma coluna (ex: "Total de Lances"), a tabela deve reordenar os dados corretamente.
+- **E** o filtro por "Status Habilitação" deve funcionar, exibindo apenas os usuários com o status selecionado.
+
+**Cenário 15.1.3: Validação do Gráfico de Status de Habilitação**
+- **Dado** que existem usuários com status 'HABILITADO', 'PENDENTE_ANALYSIS' e 'REJECTED_DOCUMENTS'.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** o gráfico de pizza "Distribuição de Status de Habilitação" deve ser exibido.
+- **E** cada fatia do gráfico deve corresponder à proporção correta de usuários em cada status.
+- **E** a legenda do gráfico deve exibir os nomes dos status corretamente.
+
+**Cenário 15.1.4: Validação da Análise por IA**
+- **Dado** que há dados de performance de usuários carregados.
+- **Quando** o administrador visualiza a seção "Análise de Comportamento (IA)".
+- **Então** um texto analítico deve ser exibido, oferecendo insights sobre os dados (ex: "Nota-se que um pequeno grupo de usuários é responsável pela maior parte do faturamento..." ou "A maioria dos usuários tem poucos lances, sugerindo uma oportunidade para aumentar o engajamento...").
+- **Critério de Aceite**: A análise gerada deve ser coerente com os dados exibidos nos KPIs e na tabela.
 
 ---
 
@@ -634,14 +657,20 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 
 ---
 
-## Módulo 23: Lógica de Precificação por Etapa (Revisão)
+## Módulo 23: Lógica de Precificação por Etapa
 
-**Cenário 23.1.1: Visualização de Preços por Etapa no Formulário**
+**Cenário 23.1.1: Definir preços diferentes por praça**
+- **Dado** que um leilão tem duas praças (1ª e 2ª).
+- **Quando** o admin, no formulário de edição de um lote, define "Lance Inicial 1ª Praça" como R$ 10.000 e "Lance Inicial 2ª Praça" como R$ 5.000.
+- **Então** o lance inicial exibido publicamente deve ser R$ 10.000 enquanto a 1ª praça estiver ativa.
+- **E** após o término da 1ª praça e início da 2ª, o lance inicial na página do lote deve ser automaticamente atualizado para R$ 5.000.
+
+**Cenário 23.1.2: Visualização de Preços por Etapa no Formulário**
 - **Dado** que um leilão possui 2 etapas ("1ª Praça", "2ª Praça").
 - **Quando** um admin edita um lote vinculado a este leilão.
 - **Então** a seção "Financeiro" do formulário do lote deve exibir campos para "Lance Inicial" e "Incremento" para cada uma das etapas ("1ª Praça" e "2ª Praça").
 
-**Cenário 23.1.2: Lógica de Preço na Página do Lote**
+**Cenário 23.1.3: Lógica de Preço na Página do Lote**
 - **Dado** que um lote tem preço de R$ 10.000 para a 1ª Praça (ativa) e R$ 5.000 para a 2ª Praça (futura).
 - **Quando** um usuário visualiza a página do lote durante a 1ª Praça.
 - **Então** o lance inicial exibido deve ser "R$ 10.000,00".
