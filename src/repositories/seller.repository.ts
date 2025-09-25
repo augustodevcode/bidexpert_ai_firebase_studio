@@ -43,8 +43,22 @@ export class SellerRepository {
       });
   }
 
-  async create(data: Prisma.SellerCreateInput): Promise<SellerProfileInfo> {
-    return this.prisma.seller.create({ data });
+  async create(data: Prisma.SellerCreateInput & { judicialBranchId?: string }): Promise<SellerProfileInfo> {
+    const { judicialBranchId, ...restData } = data;
+
+    const createData: Prisma.SellerCreateInput = {
+      ...restData,
+    };
+
+    if (judicialBranchId) {
+      createData.judicialBranch = {
+        connect: {
+          id: judicialBranchId,
+        },
+      };
+    }
+
+    return this.prisma.seller.create({ data: createData });
   }
 
   async update(tenantId: string, id: string, data: Partial<SellerFormData>): Promise<SellerProfileInfo> {

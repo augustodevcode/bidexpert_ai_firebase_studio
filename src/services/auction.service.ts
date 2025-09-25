@@ -151,44 +151,39 @@ export class AuctionService {
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
 
-      const derivedAuctionDate = (data.auctionStages && data.auctionStages.length > 0 && data.auctionStages[0].startDate)
-        ? new Date(data.auctionStages[0].startDate as Date)
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, tenantId: tenantIdFromData, ...restOfData } = data;
+
+      // Defensively delete tenantId from restOfData to avoid Prisma error
+      delete (restOfData as any).tenantId;
+
+      const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate)
+        ? new Date(auctionStages[0].startDate as Date)
         : utcToZonedTime(new Date(), 'America/Sao_Paulo');
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, ...restOfData } = data;
-
-      const newAuction = await this.prisma.$transaction(async (tx: any) => {
-        const createdAuction = await tx.auction.create({
-          data: {
-            ...(restOfData as any),
-            publicId: `AUC-${uuidv4()}`,
-            slug: slugify(data.title!),
-            auctionDate: derivedAuctionDate,
-            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            auctioneer: { connect: { id: auctioneerId } },
-            seller: { connect: { id: sellerId } },
-            category: categoryId ? { connect: { id: categoryId } } : undefined,
-            tenant: { connect: { id: tenantId } },
-            city: cityId ? { connect: { id: cityId } } : undefined,
-            state: stateId ? { connect: { id: stateId } } : undefined,
-            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
-          }
-        });
-
-        if (data.auctionStages && data.auctionStages.length > 0) {
-          await tx.auctionStage.createMany({
-            data: data.auctionStages.map((stage: any) => ({
-              name: stage.name,
-              startDate: new Date(stage.startDate as Date),
-              endDate: new Date(stage.endDate as Date),
-              initialPrice: stage.initialPrice,
-              auctionId: createdAuction.id,
-            })),
-          });
+      const createPayload: Prisma.AuctionCreateInput = {
+        ...(restOfData as any),
+        publicId: `AUC-${uuidv4()}`,
+        slug: slugify(data.title!),
+        auctionDate: derivedAuctionDate,
+        softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+        auctioneer: { connect: { id: auctioneerId } },
+        seller: { connect: { id: sellerId } },
+        category: categoryId ? { connect: { id: categoryId } } : undefined,
+        tenant: { connect: { id: tenantId } },
+        city: cityId ? { connect: { id: cityId } } : undefined,
+        state: stateId ? { connect: { id: stateId } } : undefined,
+        judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
+        stages: {
+          create: auctionStages?.map((stage: any) => ({
+            name: stage.name,
+            startDate: new Date(stage.startDate as Date),
+            endDate: new Date(stage.endDate as Date),
+            initialPrice: stage.initialPrice,
+          }))
         }
+      };
 
-        return createdAuction;
-      });
+      const newAuction = await this.prisma.auction.create({ data: createPayload });
 
       return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
 

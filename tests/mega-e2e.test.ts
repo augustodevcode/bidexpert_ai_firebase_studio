@@ -75,15 +75,18 @@ const prisma = new PrismaClient();
 // --- Test Utility Functions (from test-utils.ts and other files) ---
 
 async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
-    const originalGetSession = authActions.getSession;
     const tenantId = user?.tenants?.[0]?.id || '1'; // Default to landlord if user has no specific tenant
-    
-    (authActions as any).getSession = async () => user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions } : null;
+
+    // Use vi.spyOn to mock the implementation of getSession for the duration of this call
+    const getSessionSpy = vi.spyOn(authActions, 'getSession').mockResolvedValue(
+        user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions, user: {} as any } : null
+    );
 
     try {
         return await tenantContext.run({ tenantId }, () => action(...args));
     } finally {
-        (authActions as any).getSession = originalGetSession;
+        // Restore the original implementation after the action has been called
+        getSessionSpy.mockRestore();
     }
 }
 
@@ -300,9 +303,9 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions)`, () => {
                   await prisma.usersOnRoles.deleteMany({where: {userId: {in: userIds}}});
                   await prisma.user.deleteMany({ where: { id: { in: userIds } } });
                 }
-                if (extrajudicialLot) await deleteLot(extrajudicialLot.id);
-                if (extrajudicialAuction) await deleteAuction(extrajudicialAuction.id);
-                if (testSeller) await deleteSeller(testSeller.id);
+                if (extrajudicialLot) await callActionAsUser(deleteLot, adminUser, extrajudicialLot.id);
+                if (extrajudicialAuction) await callActionAsUser(deleteAuction, adminUser, extrajudicialAuction.id);
+                if (testSeller) await callActionAsUser(deleteSeller, adminUser, testSeller.id);
                 if (testAuctioneer) await prisma.auctioneer.delete({ where: { id: testAuctioneer.id } });
                 if (testCategory) await prisma.lotCategory.delete({ where: { id: testCategory.id } });
                 if (testTenant) await prisma.tenant.delete({ where: { id: testTenant.id } });
@@ -331,17 +334,19 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions)`, () => {
         
         testCategory = await prisma.lotCategory.create({ data: { name: `Cat Bidding ${testRunId}`, slug: `cat-bidding-${testRunId}`, hasSubcategories: false } });
         
-        await tenantContext.run({ tenantId: testTenant.id }, async () => {
-            const auctioneerRes = await createAuctioneer({ name: `Auctioneer Bidding ${testRunId}` } as any);
-            const sellerRes = await createSeller({ name: `Seller Bidding ${testRunId}`, isJudicial: false } as any);
-            testAuctioneer = (await prisma.auctioneer.findUnique({ where: { id: auctioneerRes.auctioneerId } }))!;
-            testSeller = (await prisma.seller.findUnique({ where: { id: sellerRes.sellerId } }))!;
-        });
+        const auctioneerRes = await callActionAsUser(createAuctioneer, adminUser, { name: `Auctioneer Bidding ${testRunId}` });
+        const sellerRes = await callActionAsUser(createSeller, adminUser, { name: `Seller Bidding ${testRunId}`, isJudicial: false });
 
-        const aucRes = await tenantContext.run({ tenantId: testTenant.id }, () => createAuction({ title: `Extrajudicial Auction ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctionStages: [{name: 'Praça Única', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000)}] } as any));
+        assert.ok(auctioneerRes.success && auctioneerRes.auctioneerId, `Auctioneer creation failed: ${auctioneerRes.message}`);
+        assert.ok(sellerRes.success && sellerRes.sellerId, `Seller creation failed: ${sellerRes.message}`);
+
+        testAuctioneer = (await prisma.auctioneer.findUnique({ where: { id: auctioneerRes.auctioneerId! } }))!;
+        testSeller = (await prisma.seller.findUnique({ where: { id: sellerRes.sellerId! } }))!;
+
+        const aucRes = await callActionAsUser(createAuction, adminUser, { title: `Extrajudicial Auction ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctionStages: [{name: 'Praça Única', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000)}] } as any);
         extrajudicialAuction = (await callActionAsUser(getAuction, adminUser, aucRes.auctionId!))!;
 
-        const lotRes = await tenantContext.run({ tenantId: testTenant.id }, () => createLot({ title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, categoryId: testCategory.id, status: 'ABERTO_PARA_LANCES' } as Partial<LotFormData>));
+        const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, categoryId: testCategory.id, type: testCategory.name, status: 'ABERTO_PARA_LANCES' } as Partial<LotFormData>);
         extrajudicialLot = (await callActionAsUser(getLot, adminUser, lotRes.lotId!))!;
     }, 60000);
 
