@@ -28,12 +28,13 @@ const sortOptions = [
 ];
 
 export default function AdminSellersPage() {
-  const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
+  const [allSellers, setAllSellers] = useState<SellerProfileInfo[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -43,7 +44,7 @@ export default function AdminSellersPage() {
         getSellersAction(),
         getPlatformSettings(),
       ]);
-      setSellers(fetchedSellers);
+      setAllSellers(fetchedSellers);
       setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
@@ -59,6 +60,14 @@ export default function AdminSellersPage() {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
   
+  const filteredSellers = useMemo(() => {
+    if (!searchTerm) return allSellers;
+    return allSellers.filter(seller => 
+      seller.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      seller.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allSellers, searchTerm]);
+
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
@@ -87,13 +96,13 @@ export default function AdminSellersPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
-      const stateOptions = [...new Set(sellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+      const stateOptions = [...new Set(allSellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
       return [
           { id: 'state', title: 'Estado', options: stateOptions },
           { id: 'isJudicial', title: 'Tipo', options: [{value: 'true', label: 'Judicial'}, {value: 'false', label: 'Não Judicial'}]}
       ];
-  }, [sellers]);
-
+  }, [allSellers]);
+  
   if (isLoading || !platformSettings) {
     return (
         <div className="space-y-6">
@@ -128,10 +137,10 @@ export default function AdminSellersPage() {
           </Button>
         </CardHeader>
       </Card>
-      
+
       <SearchResultsFrame
-        items={sellers}
-        totalItemsCount={sellers.length}
+        items={filteredSellers}
+        totalItemsCount={filteredSellers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
         dataTableColumns={columns}
@@ -144,7 +153,9 @@ export default function AdminSellersPage() {
         emptyStateMessage="Nenhum comitente encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
-        searchPlaceholder='Buscar por nome...'
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
+        searchPlaceholder='Buscar por nome ou email...'
         onDeleteSelected={handleDeleteSelected}
       />
     </div>

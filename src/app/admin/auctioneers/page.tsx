@@ -28,12 +28,13 @@ const sortOptions = [
 ];
 
 export default function AdminAuctioneersPage() {
-  const [auctioneers, setAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
+  const [allAuctioneers, setAllAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -43,7 +44,7 @@ export default function AdminAuctioneersPage() {
         getAuctioneersAction(),
         getPlatformSettings(),
       ]);
-      setAuctioneers(fetchedAuctioneers);
+      setAllAuctioneers(fetchedAuctioneers);
       setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
@@ -58,6 +59,15 @@ export default function AdminAuctioneersPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
+  
+  const filteredAuctioneers = useMemo(() => {
+    if (!searchTerm) return allAuctioneers;
+    return allAuctioneers.filter(auct => 
+      auct.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      auct.email?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [allAuctioneers, searchTerm]);
+
 
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
@@ -86,11 +96,11 @@ export default function AdminAuctioneersPage() {
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
   
   const facetedFilterOptions = useMemo(() => {
-      const stateOptions = [...new Set(auctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+      const stateOptions = [...new Set(allAuctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
       return [
           { id: 'state', title: 'Estado', options: stateOptions },
       ];
-  }, [auctioneers]);
+  }, [allAuctioneers]);
   
   if (isLoading || !platformSettings) {
     return (
@@ -128,8 +138,8 @@ export default function AdminAuctioneersPage() {
       </Card>
 
       <SearchResultsFrame
-        items={auctioneers}
-        totalItemsCount={auctioneers.length}
+        items={filteredAuctioneers}
+        totalItemsCount={filteredAuctioneers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
         dataTableColumns={columns}
@@ -142,6 +152,8 @@ export default function AdminAuctioneersPage() {
         emptyStateMessage="Nenhum leiloeiro encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
+        searchTerm={searchTerm}
+        onSearchTermChange={setSearchTerm}
         searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected}
       />
