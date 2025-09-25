@@ -849,3 +849,36 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Quando** ele clica em "Publicar Leilão".
 - **Então** o sistema deve criar o registro do leilão e todos os lotes vinculados no banco de dados em uma única transação.
 - **E** o usuário deve ser redirecionado para a página de edição do leilão recém-criado.
+
+---
+
+## Módulo 30: Gerenciamento de Mídia e Herança
+
+**Cenário 30.1.1: Upload e Seleção de Mídia**
+- **Dado** que o usuário está em um formulário (ex: edição de Lote) e clica em "Escolher da Biblioteca".
+- **Quando** ele navega para a aba "Enviar arquivos" e faz o upload de uma nova imagem.
+- **Então** a imagem deve ser enviada com sucesso e aparecer na aba "Biblioteca de mídia".
+- **Quando** ele seleciona a imagem recém-enviada na biblioteca.
+- **Então** a URL da imagem deve preencher o campo de "Imagem Principal" no formulário principal.
+
+**Cenário 30.1.2: Herança de Mídia (Bem -> Lote)**
+- **Dado** que o "Bem A" (um carro) tem uma galeria de 5 imagens.
+- **Quando** o usuário está editando o "Lote 101" (que contém o "Bem A").
+- **E** na seção de Mídia, ele seleciona a opção "Herdar de um Bem Vinculado" e escolhe o "Bem A".
+- **Então** a imagem principal e a galeria de imagens do "Lote 101" na página pública devem ser exatamente as mesmas do "Bem A".
+
+**Cenário 30.1.3: Substituição de Mídia (Lote)**
+- **Dado** que o "Lote 101" está configurado para herdar a mídia do "Bem A".
+- **Quando** o usuário, no formulário de edição do lote, muda a opção para "Usar Galeria Customizada".
+- **E** ele seleciona uma nova imagem principal e remove 2 imagens da galeria.
+- **Então** a página pública do "Lote 101" deve exibir a nova imagem principal e a galeria reduzida, ignorando as imagens do "Bem A".
+- **E** as imagens do "Bem A" devem permanecer inalteradas.
+
+**Cenário 30.1.4: Herança e Substituição (Lote -> Leilão)**
+- **Dado** que o "Lote 101" tem uma imagem principal customizada (diferente do bem).
+- **Quando** o usuário está editando o "Leilão X" e, na seção de Imagem Principal, escolhe a opção "Herdar de um Lote" e seleciona o "Lote 101".
+- **Então** a imagem principal na página do "Leilão X" deve ser a mesma imagem principal do "Lote 101".
+- **Quando** o usuário edita novamente o leilão e seleciona "Imagem Customizada", escolhendo uma nova imagem da biblioteca.
+- **Então** a imagem principal do leilão deve ser atualizada para a nova imagem, ignorando a imagem do lote.
+
+---
