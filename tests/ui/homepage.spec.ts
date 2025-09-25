@@ -1,5 +1,6 @@
 // tests/ui/homepage.spec.ts
 import { test, expect } from '@playwright/test';
+import { prisma } from '../../lib/prisma';
 
 test.describe('Homepage Smoke Test', () => {
     

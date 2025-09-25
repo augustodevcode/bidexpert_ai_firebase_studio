@@ -1,9 +1,9 @@
 // tests/bidding-e2e.test.ts
 import { describe, test, beforeAll, afterAll, expect, it, vi } from 'vitest';
 import assert from 'node:assert';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../src/lib/prisma';
 import { tenantContext } from '@/lib/prisma';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, AuctionFormData, LotFormData, BemFormData, JudicialProcessFormData } from '@/types';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Bem, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, AuctionFormData, LotFormData, BemFormData, JudicialProcessFormData } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Mock server-only to allow testing server actions
@@ -139,7 +139,7 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions) (ID: ${testRunId}
         assert.ok(aucRes.success && aucRes.auctionId, "Auction creation failed.");
         extrajudicialAuction = (await callActionAsUser(getAuction, null, aucRes.auctionId))!;
 
-        const lotRes = await tenantContext.run({ tenantId: testTenant.id }, () => createLot({ title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: new Date(Date.now() + 5 * 60 * 1000) } as any));
+        const lotRes = await tenantContext.run({ tenantId: testTenant.id }, () => createLot({ title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: new Date(Date.now() + 5 * 60 * 1000) } as Partial<LotFormData>));
         assert.ok(lotRes.success && lotRes.lotId);
         extrajudicialLot = (await callActionAsUser(getLot, null, lotRes.lotId))!;
 
