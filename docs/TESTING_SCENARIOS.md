@@ -484,3 +484,56 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** o sistema deve gerar um documento PDF em uma nova aba ou iniciar o download.
 - **E** o PDF deve conter os dados corretos do lote, do leilão e do arrematante, preenchidos dinamicamente no template.
 
+---
+
+## Módulo 19: Vendas Diretas
+
+**Cenário 19.1.1: Criar uma oferta de "Compra Imediata"**
+- **Dado** que um admin/comitente está na página "Nova Oferta de Venda Direta".
+- **Quando** ele seleciona o tipo "Compra Imediata", preenche título, descrição, categoria, vendedor e define um preço fixo.
+- **E** salva a oferta.
+- **Então** a nova oferta deve ser criada com status "Ativa".
+- **E** na página pública, o botão "Comprar Agora" deve estar visível.
+
+**Cenário 19.1.2: Criar uma oferta de "Aceita Propostas"**
+- **Dado** que um admin/comitente está na página "Nova Oferta de Venda Direta".
+- **Quando** ele seleciona o tipo "Aceita Propostas", preenche os detalhes e opcionalmente define um preço mínimo.
+- **E** salva a oferta.
+- **Então** a nova oferta deve ser criada.
+- **E** na página pública, um campo para inserção de proposta deve estar visível em vez do botão de compra.
+
+**Cenário 19.1.3: Interagir com uma oferta**
+- **Dado** que um usuário habilitado está vendo uma oferta de "Compra Imediata".
+- **Quando** ele clica em "Comprar Agora".
+- **Então** ele deve ser (simuladamente) redirecionado para um fluxo de checkout.
+- **Dado** que um usuário habilitado está vendo uma oferta que "Aceita Propostas".
+- **Quando** ele insere um valor no campo de proposta e clica em "Enviar Proposta".
+- **Então** sua proposta deve ser registrada e uma notificação enviada ao vendedor.
+
+---
+
+## Módulo 20: Testes de Regressão e Validação Visual
+
+**Cenário 20.1.1: Consistência do `UniversalCard`**
+- **Dado** que existem um leilão e um lote com dados completos (título, preço, imagem, status).
+- **Quando** o componente `UniversalCard` é renderizado para o leilão.
+- **Então** ele deve exibir corretamente o `AuctionCard` com todos os seus elementos (timeline, contadores, logo do comitente, etc.).
+- **Quando** o mesmo componente `UniversalCard` é renderizado para o lote.
+- **Então** ele deve exibir corretamente o `LotCard` com seus elementos específicos (contagem de lances, localização, etc.).
+- **Critério de Aceite**: O componente `UniversalCard` deve renderizar a visualização correta e completa para cada tipo de entidade sem erros visuais ou de console.
+
+**Cenário 20.1.2: Consistência do `UniversalListItem`**
+- **Dado** que existem um leilão e um lote.
+- **Quando** o `UniversalListItem` é usado para renderizar o leilão em uma lista.
+- **Então** o `AuctionListItem` deve ser exibido com seu layout de linha, mostrando estatísticas e o valor inicial.
+- **Quando** o `UniversalListItem` é usado para renderizar o lote.
+- **Então** o `LotListItem` deve ser exibido, mostrando o valor atual, o nome do leilão e os detalhes do lote.
+- **Critério de Aceite**: O layout de lista deve ser consistente e funcional para ambas as entidades através do componente unificado.
+
+**Cenário 20.1.3: Responsividade do `SearchResultsFrame`**
+- **Dado** que o usuário está na página de busca com resultados.
+- **Quando** a largura da tela é reduzida para um tamanho de dispositivo móvel.
+- **Então** a visualização em grade deve se ajustar para 1 ou 2 colunas.
+- **E** a visualização em lista deve manter a legibilidade.
+- **E** a visualização em tabela (no admin) deve se transformar em um layout de cards empilhados.
+- **Critério de Aceite**: Todas as visualizações dentro do `SearchResultsFrame` devem ser perfeitamente utilizáveis em desktops, tablets e celulares.
