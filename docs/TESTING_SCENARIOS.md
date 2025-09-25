@@ -61,11 +61,11 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 **Cenário 1: Criação de um Ativo (Bem)**
 - **Dado** que o Administrador está na página "Gerenciar Ativos".
 - **Quando** ele cria um novo ativo do tipo "Veículo", preenchendo título, categoria, comitente, valor de avaliação e campos específicos (placa, marca, modelo).
-- **Então** o ativo deve ser criado com status "DISPONÍVEL".
+- **Então** o ativo deve ser criado com status "DISPONIVEL".
 - **E** deve aparecer na lista de ativos disponíveis para loteamento.
 
 **Cenário 2: Criação de um Lote vinculando um Ativo**
-- **Dado** que existe um leilão criado e um ativo com status "DISPONÍVEL".
+- **Dado** que existe um leilão criado e um ativo com status "DISPONIVEL".
 - **Quando** o Administrador cria um novo lote, o associa ao leilão e seleciona o ativo existente para compô-lo.
 - **Então** o lote é criado com sucesso.
 - **E** o status do ativo vinculado deve mudar para "LOTEADO".
@@ -74,7 +74,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Dado** que um lote existe e está vinculado a um ativo.
 - **Quando** o Administrador exclui este lote.
 - **Então** o lote é removido do banco de dados.
-- **E** o status do ativo anteriormente vinculado deve voltar para "DISPONÍVEL".
+- **E** o status do ativo anteriormente vinculado deve voltar para "DISPONIVEL".
 
 ---
 

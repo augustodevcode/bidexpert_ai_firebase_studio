@@ -1,4 +1,3 @@
-
 // tests/mega-e2e.test.ts
 /**
  * @fileoverview Mega Test Suite for E2E validation.
@@ -17,6 +16,24 @@ import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { slugify } from '@/lib/ui-helpers';
 import { tenantContext } from '@/lib/prisma';
+
+// Import Services
+import { LotService } from '@/services/lot.service';
+import { AuctionService } from '@/services/auction.service';
+
+// Import Server Actions
+import * as authActions from '@/app/auth/actions';
+import { createAuction, getAuction, deleteAuction } from '@/app/admin/auctions/actions';
+import { createLot, getLot, deleteLot, finalizeLot } from '@/app/admin/lots/actions';
+import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
+import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
+import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
+import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
+import { createRole, getRoles } from '@/app/admin/roles/actions';
+import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
+import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
+import { createAuctioneer } from '@/app/admin/auctioneers/actions';
+import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
 
 // Import types used across tests
 import type { 
@@ -58,26 +75,19 @@ const prisma = new PrismaClient();
 // --- Test Utility Functions (from test-utils.ts and other files) ---
 
 async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
-    const originalGetSession = require('@/app/auth/actions').getSession;
+    const originalGetSession = authActions.getSession;
     const tenantId = user?.tenants?.[0]?.id || '1'; // Default to landlord if user has no specific tenant
     
-    require('@/app/auth/actions').getSession = async () => user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions } : null;
+    (authActions as any).getSession = async () => user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions } : null;
 
     try {
         return await tenantContext.run({ tenantId }, () => action(...args));
     } finally {
-        require('@/app/auth/actions').getSession = originalGetSession;
+        (authActions as any).getSession = originalGetSession;
     }
 }
 
 async function createTestPrerequisites(testRunId: string, prefix: string) {
-    // Import inside function to avoid circular dependencies if any
-    const { createAuctioneer } = await import('@/app/admin/auctioneers/actions');
-    const { createSeller, getSeller } = await import('@/app/admin/sellers/actions');
-    const { createUser, getUserProfileData } = await import('@/app/admin/users/actions');
-    const { createJudicialProcessAction } = await import('@/app/admin/judicial-processes/actions');
-    const { createAsset } = await import('@/app/admin/assets/actions');
-
     const tenant = await prisma.tenant.create({ data: { name: `${prefix} Tenant ${testRunId}`, subdomain: `${prefix}-${testRunId}` } });
 
     const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { id: `role-admin-${prefix}-${testRunId}`, name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
@@ -166,8 +176,6 @@ async function sleep(ms: number) {
 // --- Suite 1: Search and Filter Service Logic ---
 describe('Search and Filter Service Logic Test (Tenant-Aware)', () => {
     const testRunId = `search-service-${uuidv4().substring(0, 8)}`;
-    const { LotService } = require('@/services/lot.service');
-    const { AuctionService } = require('@/services/auction.service');
     const lotService = new LotService();
     const auctionService = new AuctionService();
 
@@ -182,10 +190,12 @@ describe('Search and Filter Service Logic Test (Tenant-Aware)', () => {
         console.log(`[Search Service Test] Creating test data for run: ${testRunId}`);
         
         testTenant = await prisma.tenant.create({ data: { name: `Search Test Tenant ${testRunId}`, subdomain: `search-${testRunId}` }});
+        const ufSP = `S${testRunId.slice(0,2)}`
+        const ufRJ = `R${testRunId.slice(0,2)}`
 
         const [stateSP, stateRJ] = await prisma.$transaction([
-            prisma.state.create({ data: { name: 'São Paulo', uf: `S${testRunId.slice(0,1)}`, slug: `sp-${testRunId}` } }),
-            prisma.state.create({ data: { name: 'Rio de Janeiro', uf: `R${testRunId.slice(0,1)}`, slug: `rj-${testRunId}` } })
+            prisma.state.upsert({ where: { uf: ufSP }, update: {}, create: { name: 'São Paulo', uf: ufSP, slug: `sp-${testRunId}` } }),
+            prisma.state.upsert({ where: { uf: ufRJ }, update: {}, create: { name: 'Rio de Janeiro', uf: ufRJ, slug: `rj-${testRunId}` } })
         ]);
 
         const [citySP, cityRJ] = await prisma.$transaction([
@@ -238,8 +248,8 @@ describe('Search and Filter Service Logic Test (Tenant-Aware)', () => {
         await prisma.seller.deleteMany({ where: { tenantId: testTenant.id, name: { contains: testRunId } } });
         await prisma.auctioneer.deleteMany({ where: { tenantId: testTenant.id, name: { contains: testRunId } } });
         await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
-        await prisma.city.deleteMany({ where: { name: { contains: 'São Paulo' } } });
-        await prisma.state.deleteMany({ where: { name: { contains: 'São Paulo' } } });
+        await prisma.city.deleteMany({ where: { slug: { contains: testRunId } } });
+        await prisma.state.deleteMany({ where: { slug: { contains: testRunId } } });
         await prisma.tenant.deleteMany({ where: { name: { contains: testRunId } } });
       } catch (e) { console.error("Error cleaning up search test data", e); }
     }
@@ -282,9 +292,6 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions)`, () => {
 
     async function cleanupBiddingData() {
         if (!testTenant) return;
-        const { deleteLot } = require('@/app/admin/lots/actions');
-        const { deleteAuction } = require('@/app/admin/auctions/actions');
-        const { deleteSeller } = require('@/app/admin/sellers/actions');
         await tenantContext.run({ tenantId: testTenant.id }, async () => {
             try {
                 const userIds = [adminUser?.id, ...biddingUsers.map(u => u.id)].filter(Boolean) as string[];
@@ -305,11 +312,6 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions)`, () => {
 
     beforeAll(async () => {
         await cleanupBiddingData();
-        const { createAuction, getAuction } = require('@/app/admin/auctions/actions');
-        const { createLot, getLot } = require('@/app/admin/lots/actions');
-        const { createUser, getUserProfileData } = require('@/app/admin/users/actions');
-        const { createSeller } = require('@/app/admin/sellers/actions');
-        const { createAuctioneer } = require('@/app/admin/auctioneers/actions');
 
         testTenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `bidding-${testRunId}` } });
 
@@ -346,10 +348,6 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions)`, () => {
     afterAll(async () => { await cleanupBiddingData(); });
 
     it('Standard Bidding: should allow habilitated users to bid and determine a winner', async () => {
-        const { habilitateForAuctionAction } = require('@/app/admin/habilitations/actions');
-        const { placeBidOnLot } = require('@/app/auctions/[auctionId]/lots/[lotId]/actions');
-        const { finalizeLot, getLot } = require('@/app/admin/lots/actions');
-
         await callActionAsUser(habilitateForAuctionAction, adminUser, biddingUsers[0].id, extrajudicialAuction.id);
         await callActionAsUser(habilitateForAuctionAction, adminUser, biddingUsers[1].id, extrajudicialAuction.id);
         
@@ -402,7 +400,6 @@ describe(`[E2E] Auction Creation Wizard Lifecycle`, () => {
     });
 
     it('should simulate the entire wizard flow and create a complete auction', async () => {
-        const { createAuctionFromWizard } = require('@/app/admin/wizard/actions');
         let wizardData: WizardData = { createdLots: [] };
         
         wizardData.auctionType = 'JUDICIAL';
@@ -436,7 +433,6 @@ describe(`[E2E] Auction Creation Wizard Lifecycle`, () => {
     });
 
     it('should NOT allow a user without permission to create an auction', async () => {
-        const { createAuctionFromWizard } = require('@/app/admin/wizard/actions');
         const wizardData: WizardData = { createdLots: [], auctionType: 'JUDICIAL', judicialProcess: testJudicialProcess as JudicialProcess, auctionDetails: { title: `Leilão Não Autorizado ${testRunId}` } };
         
         const result = await callActionAsUser(createAuctionFromWizard, unauthorizedUser, wizardData);
