@@ -1,10 +1,32 @@
+// prisma/models/Role.prisma
 model Role {
-  id            String         @id @default(cuid())
-  name          String         @unique
-  nameNormalized String        @unique
-  description   String?
-  permissions   Json?
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  users         UsersOnRoles[]
+  id              String         @id @default(cuid())
+  name            String
+  nameNormalized  String         @unique
+  description     String?
+  permissions     String[]
+  users           UsersOnRoles[]
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model UsersOnRoles {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([userId, roleId])
+}
+
+enum RoleName {
+  ADMINISTRATOR
+  TENANT_ADMIN
+  AUCTION_ANALYST
+  CONSIGNOR
+  BIDDER
+  USER
+  FINANCIAL // Adicionado novo perfil
 }
