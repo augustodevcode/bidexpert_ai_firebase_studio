@@ -235,3 +235,77 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Quando** ele clica em "Limpar Filtros".
 - **Então** todos os filtros devem ser desmarcados e a lista deve voltar ao seu estado original.
 - **Critério de Aceite**: Os filtros devem atualizar a lista de resultados de forma precisa e podem ser resetados.
+
+---
+
+## Módulo 8: Assistente de Criação de Leilões (Wizard)
+
+**Cenário 8.1.1: Início e Seleção de Modalidade**
+- **Dado** que um admin está na página `/admin/wizard`.
+- **Quando** ele seleciona a modalidade "Judicial".
+- **Então** a visualização do fluxo deve destacar o caminho "JUDICIAL".
+- **E** o botão "Próximo" deve levá-lo para a etapa "Dados Judiciais".
+- **Quando** ele seleciona a modalidade "Extrajudicial".
+- **Então** a visualização do fluxo deve destacar o caminho "EXTRAJUDICIAL".
+- **E** o botão "Próximo" deve levá-lo para a etapa "Dados do Leilão" (pulando a etapa judicial).
+
+**Cenário 8.1.2: Etapa Judicial - Vinculação de Processo e Criação de Comitente**
+- **Dado** que o admin está na etapa "Dados Judiciais".
+- **Quando** ele seleciona um processo judicial da lista.
+- **Então** os detalhes do processo (nº, vara, comarca) devem ser exibidos na tela.
+- **E** o comitente vinculado à vara daquele processo deve ser automaticamente selecionado no formulário da próxima etapa.
+- **Quando** ele clica em "Criar Novo Processo".
+- **Então** ele deve ser levado ao formulário completo de criação de processo.
+- **E** após salvar, ele deve retornar ao wizard com o novo processo selecionado.
+
+**Cenário 8.1.3: Etapa de Loteamento - Agrupar e Individualizar**
+- **Dado** que o admin está na etapa "Loteamento" e há bens disponíveis para o processo/comitente selecionado.
+- **Quando** ele seleciona 3 bens e clica em "Agrupar em Lote Único".
+- **Então** um modal deve aparecer para definir os detalhes do novo lote (título, número, lance inicial).
+- **E** após salvar o modal, um novo lote agrupado deve aparecer na lista de "Lotes Preparados".
+- **E** os 3 bens devem desaparecer da lista de "Bens Disponíveis".
+- **Quando** ele seleciona 2 outros bens e clica em "Lotear Individualmente".
+- **Então** 2 novos lotes devem ser adicionados automaticamente à lista de "Lotes Preparados", cada um com os dados de seu bem correspondente.
+
+**Cenário 8.1.4: Revisão e Publicação Final**
+- **Dado** que o admin está na etapa "Revisão e Publicação".
+- **Então** ele deve ver um resumo completo de todos os dados inseridos: detalhes do leilão, dados do processo (se aplicável) e a lista de lotes criados.
+- **Quando** ele clica em "Publicar Leilão".
+- **Então** o sistema deve criar o registro do leilão e todos os lotes vinculados no banco de dados em uma única transação.
+- **E** o usuário deve ser redirecionado para a página de edição do leilão recém-criado.
+
+---
+
+## Módulo 9: Painel do Usuário (Arrematante)
+
+**Cenário 9.1.1: Visão Geral (Overview)**
+- **Dado** que um usuário logado tem 2 lances ativos e 1 arremate pendente de pagamento.
+- **Quando** ele acessa `/dashboard/overview`.
+- **Então** os cards de estatísticas devem exibir "Meus Lances Ativos: 2" e "Arremates Pendentes: 1".
+- **E** a seção "Próximos Encerramentos" deve exibir os lotes corretos, ordenados pelo tempo restante.
+
+**Cenário 9.1.2: Meus Lances - Status do Lance**
+- **Dado** que o Usuário A deu o lance mais alto em um lote.
+- **Quando** ele acessa a página `/dashboard/bids`.
+- **Então** o status do lance para aquele lote deve ser "Ganhando", com destaque visual verde.
+- **Dado** que o Usuário B dá um lance maior no mesmo lote.
+- **Quando** o Usuário A recarrega a página `/dashboard/bids`.
+- **Então** o status do seu lance para aquele lote deve mudar para "Superado", com destaque visual amarelo/laranja.
+
+**Cenário 9.1.3: Meus Arremates - Ações Contextuais**
+- **Dado** que um usuário tem um lote arrematado com status de pagamento "PENDENTE".
+- **Quando** ele acessa a página `/dashboard/wins`.
+- **Então** o card do lote deve exibir um botão "Pagar Agora".
+- **Dado** que um usuário tem um lote arrematado com status de pagamento "PAGO".
+- **Quando** ele acessa a página `/dashboard/wins`.
+- **Então** o card do lote deve exibir os botões "Gerar Termo de Arrematação" e "Agendar Retirada".
+
+**Cenário 9.1.4: Meus Documentos - Envio e Status**
+- **Dado** que um usuário precisa enviar seu "Comprovante de Endereço".
+- **Quando** ele acessa `/dashboard/documents`, seleciona um arquivo e faz o upload.
+- **Então** o status daquele documento deve mudar para "Em Análise".
+- **E** o status geral de habilitação deve ser atualizado para refletir o novo estado (se aplicável).
+- **Dado** que um documento foi "Rejeitado" por um admin.
+- **Quando** o usuário acessa a página.
+- **Então** ele deve ver o status "Rejeitado" e o motivo da rejeição claramente exibido no card do documento.
+```
