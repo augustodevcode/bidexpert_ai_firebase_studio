@@ -20,7 +20,8 @@ import {
     Loader2,
     TrendingUp,
     CircleDollarSign,
-    Package
+    Package,
+    ServerCrash,
 } from 'lucide-react';
 import { 
     LineChart, 
@@ -40,6 +41,7 @@ import { useState, useEffect } from 'react';
 import { getAdminReportDataAction } from './actions';
 import type { AdminReportData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import Link from 'next/link';
 
 const initialStats: AdminReportData = {
   users: 0,
@@ -59,23 +61,25 @@ const initialStats: AdminReportData = {
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
 
-function StatCard({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) {
-    return (
-        <Card data-ai-id={`stat-card-${title.toLowerCase().replace(/\s/g, '-')}`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-                <Icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                {isLoading ? (
-                    <Skeleton className="h-8 w-1/2 mb-2" />
-                ) : (
-                    <div className="text-2xl font-bold">{value}</div>
-                )}
-                <p className="text-xs text-muted-foreground">{description}</p>
-            </CardContent>
-        </Card>
+function StatCard({ title, value, icon: Icon, description, isLoading, link }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean, link?: string }) {
+    const cardContent = (
+      <Card className="hover:shadow-md transition-shadow h-full">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            {isLoading ? (
+                <Skeleton className="h-8 w-1/2 mb-2" />
+            ) : (
+                <div className="text-2xl font-bold">{value}</div>
+            )}
+            <p className="text-xs text-muted-foreground">{description}</p>
+        </CardContent>
+      </Card>
     );
+
+    return link ? <Link href={link} className="block hover:no-underline">{cardContent}</Link> : cardContent;
 }
 
 export default function AdminReportsPage() {
@@ -116,7 +120,7 @@ export default function AdminReportsPage() {
             title="Faturamento Bruto Total"
             value={stats.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             icon={DollarSign}
-            description="Total de lotes vendidos"
+            description="Soma de todos os lotes vendidos"
             isLoading={isLoading}
         />
         <StatCard 
@@ -124,49 +128,24 @@ export default function AdminReportsPage() {
             value={`+${stats.newUsersLast30Days}`}
             icon={Users}
             description="Novos cadastros no último mês"
-            isLoading={isLoading}
+            link="/admin/users/analysis"
+            isLoading={isLoading} 
         />
          <StatCard 
             title="Leilões Ativos"
             value={stats.activeAuctions}
             icon={Gavel}
             description="Leilões abertos para lances"
-            isLoading={isLoading}
+            link="/admin/auctions"
+            isLoading={isLoading} 
         />
          <StatCard 
-            title="Total de Lotes Vendidos"
-            value={stats.lotsSoldCount}
-            icon={LotsIcon}
-            description="Desde o início da plataforma"
-            isLoading={isLoading}
-        />
-        <StatCard 
-            title="Taxa de Sucesso (Leilões)"
-            value={`${stats.auctionSuccessRate?.toFixed(1) || 0}%`}
-            icon={TrendingUp}
-            description="Leilões com pelo menos um lote vendido."
-            isLoading={isLoading}
-        />
-         <StatCard 
-            title="Valor Médio do Lance"
-            value={(stats.averageBidValue || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            icon={CircleDollarSign}
-            description="Valor médio de todos os lances feitos."
-            isLoading={isLoading}
-        />
-        <StatCard 
-            title="Média de Lotes por Leilão"
-            value={`${stats.averageLotsPerAuction?.toFixed(1) || 0}`}
-            icon={Package}
-            description="Média de lotes em cada leilão."
-            isLoading={isLoading}
-        />
-        <StatCard 
-            title="Usuários Totais"
-            value={`${stats.users || 0}`}
-            icon={Users}
-            description="Total de usuários cadastrados."
-            isLoading={isLoading}
+            title="Integridade dos Dados"
+            value="Auditoria"
+            icon={ServerCrash}
+            description="Verificar inconsistências"
+            link="/admin/reports/audit"
+            isLoading={isLoading} 
         />
       </div>
 

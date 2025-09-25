@@ -537,3 +537,63 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **E** a visualização em lista deve manter a legibilidade.
 - **E** a visualização em tabela (no admin) deve se transformar em um layout de cards empilhados.
 - **Critério de Aceite**: Todas as visualizações dentro do `SearchResultsFrame` devem ser perfeitamente utilizáveis em desktops, tablets e celulares.
+
+---
+
+## Módulo 21: Testes de Validação e Casos de Borda
+
+### 21.1. Validação de Formulários
+
+**Cenário 21.1.1: Tentar criar uma entidade com campos obrigatórios em branco**
+- **Dado** que um admin está no formulário de "Novo Leilão".
+- **Quando** ele tenta salvar o formulário sem preencher o "Título", "Comitente" ou "Leiloeiro".
+- **Então** o formulário não deve ser enviado.
+- **E** uma mensagem de erro de validação deve aparecer abaixo de cada campo obrigatório não preenchido.
+- **Critério de Aceite**: Repetir este teste para todos os formulários CRUD (Lotes, Usuários, Comitentes, etc.).
+
+**Cenário 21.1.2: Tentar inserir dados em formato inválido**
+- **Dado** que um usuário está no formulário de "Editar Perfil".
+- **Quando** ele insere "email-invalido" no campo de e-mail.
+- **E** tenta salvar.
+- **Então** o formulário deve exibir uma mensagem de erro indicando "Formato de email inválido".
+- **Critério de Aceite**: Repetir para outros campos com formatos específicos (URL, CEP, data, número de telefone).
+
+**Cenário 21.1.3: Tentar criar uma entidade com nome/email que já existe**
+- **Dado** que já existe um comitente chamado "Empresa ABC".
+- **Quando** um admin tenta criar um novo comitente com o nome "Empresa ABC".
+- **Então** a ação do servidor deve retornar um erro.
+- **E** o formulário deve exibir uma mensagem de erro como "Já existe um comitente com este nome.".
+- **Critério de Aceite**: A validação de unicidade deve funcionar em todos os campos relevantes (`email` de usuário, `nome` de comitente, etc.).
+
+### 21.2. Segurança e Acesso Direto
+
+**Cenário 21.2.1: Tentar acessar uma URL de edição de outro tenant**
+- **Dado** que o "Admin A" pertence ao "Tenant A".
+- **E** existe um leilão com ID "leilao-123" que pertence ao "Tenant B".
+- **Quando** o "Admin A" tenta acessar a URL `/admin/auctions/leilao-123/edit` diretamente no navegador.
+- **Então** ele deve ser redirecionado ou ver uma página de "Não Encontrado" (ou "Acesso Negado").
+- **E** nenhum dado do "Leilão 123" deve ser carregado.
+- **Critério de Aceite**: O middleware Prisma deve impedir o acesso a dados de outros tenants em qualquer circunstância.
+
+**Cenário 21.2.2: Verificar o tratamento de IDs públicos vs. internos**
+- **Dado** que um lote tem `id="123"` e `publicId="LOTE-ABC"`.
+- **Quando** um usuário público acessa `/auctions/.../lots/123`.
+- **Então** ele deve ver uma página de "Não Encontrado" ou ser redirecionado para a URL com o `publicId`.
+- **Quando** ele acessa `/auctions/.../lots/LOTE-ABC`.
+- **Então** a página do lote deve ser carregada corretamente.
+- **Critério de Aceite**: Apenas `publicId` (ou `slug`) deve ser usado em URLs públicas.
+
+### 21.3. Integridade dos Componentes de UI
+
+**Cenário 21.3.1: Comportamento do EntitySelector**
+- **Dado** que um admin está em um formulário com um `EntitySelector` (ex: selecionar comitente para um leilão).
+- **Quando** ele abre o seletor e digita no campo de busca.
+- **Então** a lista de opções deve ser filtrada em tempo real.
+- **Quando** ele clica no botão "Criar Novo".
+- **Então** o modal de criação correspondente deve abrir sobre o modal atual.
+- **E** após salvar o novo registro, o modal de criação deve fechar e o `EntitySelector` deve ter o novo item selecionado.
+- **Quando** ele seleciona um item e depois clica no botão "Limpar" (ícone 'X').
+- **Então** a seleção deve ser removida e o placeholder deve reaparecer.
+- **Quando** ele clica no botão "Atualizar" (ícone `RefreshCw`).
+- **Então** a lista de opções deve ser recarregada do servidor.
+- **Critério de Aceite**: O componente `EntitySelector` deve ser robusto e todas as suas funcionalidades devem operar corretamente.
