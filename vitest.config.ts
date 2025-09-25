@@ -16,9 +16,8 @@ export default defineConfig({
       '**/cypress/**',
       '**/.{idea,git,cache,output,temp}/**',
       '**/{karma,rollup,webpack,vite,vitest,jest,ava,babel,nyc,cypress,tsup,build}.config.*',
-      '**/tests/bidding-e2e.test.ts',
-      '**/tests/wizard-e2e.test.ts',
-      '**/tests/search.spec.ts',
+      // Excluir os testes de UI do Playwright da execução do Vitest
+      '**/tests/ui/**', 
     ],
   },
 })

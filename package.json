@@ -15,6 +15,7 @@
         "prisma:build": "tsx scripts/build-prisma-schema.ts",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",
+        "test:ui": "playwright test",
         "postinstall": ""
     },
     "dependencies": {
@@ -88,6 +89,7 @@
         "@faker-js/faker": "^8.4.1",
         "@opentelemetry/exporter-jaeger": "^2.1.0",
         "@opentelemetry/winston-transport": "^0.16.0",
+        "@playwright/test": "^1.45.3",
         "@types/bcryptjs": "^2.4.6",
         "@types/leaflet": "^1.9.12",
         "@types/node": "^20.14.12",

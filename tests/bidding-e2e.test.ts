@@ -24,7 +24,7 @@ import { createLot, getLot, deleteLot, finalizeLot } from '@/app/admin/lots/acti
 import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
 import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
-import { createBem, deleteBem } from '@/app/admin/bens/actions';
+import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
 import { createRole, getRoles } from '@/app/admin/roles/actions';
 import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
 import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
@@ -40,7 +40,7 @@ let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
 let testState: StateInfo;
 let testCourt: Court, testDistrict: JudicialDistrict, testBranch: JudicialBranch, testJudicialProcess: JudicialProcess;
-let testBemJudicial: Bem, testBemExtrajudicial: Bem;
+let testAssetJudicial: Asset, testAssetExtrajudicial: Asset;
 let judicialAuction: Auction, extrajudicialAuction: Auction;
 let judicialLot: Lot, extrajudicialLot: Lot;
 let testTenant: any;
@@ -79,8 +79,8 @@ async function cleanup() {
             const auctionIds = [judicialAuction?.id, extrajudicialAuction?.id].filter(Boolean) as string[];
             for (const auctionId of auctionIds) { await deleteAuction(auctionId); }
     
-            const bemIds = [testBemJudicial?.id, testBemExtrajudicial?.id].filter(Boolean) as string[];
-            for (const bemId of bemIds) { await deleteBem(bemId); }
+            const assetIds = [testAssetJudicial?.id, testAssetExtrajudicial?.id].filter(Boolean) as string[];
+            for (const assetId of assetIds) { await deleteAsset(assetId); }
             
             if (testJudicialProcess) await deleteJudicialProcess(testJudicialProcess.id);
             if (testSeller) await deleteSeller(testSeller.id);
@@ -127,7 +127,7 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions) (ID: ${testRunId}
         
         testCategory = await prisma.lotCategory.create({ data: { name: `Cat Bidding ${testRunId}`, slug: `cat-bidding-${testRunId}`, hasSubcategories: false } });
         
-        await runInTenant(testTenant.id, async () => {
+        await tenantContext.run({ tenantId: testTenant.id }, async () => {
             const auctioneerRes = await createAuctioneer({ name: `Auctioneer Bidding ${testRunId}` } as any);
             const sellerRes = await createSeller({ name: `Seller Bidding ${testRunId}`, isJudicial: false } as any);
             assert.ok(auctioneerRes.success && auctioneerRes.auctioneerId && sellerRes.success && sellerRes.sellerId, "Auctioneer/Seller setup failed.");
@@ -135,11 +135,11 @@ describe(`[E2E] Full Auction & Bidding Lifecycle (via Actions) (ID: ${testRunId}
             testSeller = (await prisma.seller.findUnique({ where: { id: sellerRes.sellerId } }))!;
         });
 
-        const aucRes = await runInTenant(testTenant.id, () => createAuction({ title: `Extrajudicial Auction ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctionStages: [{name: 'Praça Única', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000)}] } as any));
+        const aucRes = await tenantContext.run({ tenantId: testTenant.id }, () => createAuction({ title: `Extrajudicial Auction ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES', auctionDate: new Date(), auctionStages: [{name: 'Praça Única', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000)}] } as any));
         assert.ok(aucRes.success && aucRes.auctionId, "Auction creation failed.");
         extrajudicialAuction = (await callActionAsUser(getAuction, null, aucRes.auctionId))!;
 
-        const lotRes = await runInTenant(testTenant.id, () => createLot({ title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: new Date(Date.now() + 5 * 60 * 1000) } as any));
+        const lotRes = await tenantContext.run({ tenantId: testTenant.id }, () => createLot({ title: `Lot Bidding ${testRunId}`, auctionId: extrajudicialAuction.id, price: 25000, type: testCategory.id, status: 'ABERTO_PARA_LANCES', endDate: new Date(Date.now() + 5 * 60 * 1000) } as any));
         assert.ok(lotRes.success && lotRes.lotId);
         extrajudicialLot = (await callActionAsUser(getLot, null, lotRes.lotId))!;
 
