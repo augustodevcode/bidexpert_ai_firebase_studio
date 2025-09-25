@@ -334,7 +334,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 **Cenário 10.1.3: Salvar e Carregar um Relatório**
 - **Dado** que um usuário criou um layout com pelo menos 2 elementos.
 - **Quando** ele clica em "Salvar", preenche o nome "Relatório de Vendas Mensal" e salva.
-- **Então** uma notificação de sucesso deve aparecer.
+- **Então** uma notificação de sucesso deve aparecer e o relatório deve ser salvo no banco de dados.
 - **Quando** ele recarrega a página (limpando o estado atual) e clica em "Carregar".
 - **E** seleciona "Relatório de Vendas Mensal" da lista de relatórios salvos.
 - **Então** a área de design deve ser populada exatamente com os 2 elementos e suas posições salvas anteriormente.
@@ -440,11 +440,12 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 ## Módulo 16: Fluxos Multi-Tenant
 
 **Cenário 16.1.1: Isolamento de Dados entre Tenants**
-- **Dado** que o "Leiloeiro A" cria o "Leilão X" em seu subdomínio (`leiloeiro-a.bidexpert.com`).
-- **E** o "Leiloeiro B" cria o "Leilão Y" em seu subdomínio (`leiloeiro-b.bidexpert.com`).
-- **Quando** o admin do "Leiloeiro A" acessa a lista de leilões em seu painel.
-- **Então** ele deve ver apenas o "Leilão X".
-- **E** o "Leilão Y" **não** deve ser visível.
+- **Dado** que o "Admin A" pertence ao "Tenant A".
+- **E** o "Admin B" pertence ao "Tenant B".
+- **Quando** o "Admin A" cria o "Leilão X" em seu painel.
+- **Então** o "Leilão X" deve ter o `tenantId` do "Tenant A".
+- **E** o "Admin A" deve conseguir ver o "Leilão X" na sua lista de leilões.
+- **E** o "Admin B" **não** deve conseguir ver o "Leilão X" na sua lista de leilões.
 - **Critério de Aceite**: A camada de repositório deve filtrar todas as consultas automaticamente pelo `tenantId` do contexto da requisição.
 
 **Cenário 16.1.2: Login Multi-Tenant com Seleção de Workspace**
@@ -713,7 +714,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 
 ---
 
-## Módulo 26: Painel de Análise de Usuários (Revisado)
+## Módulo 26: Painel de Análise de Usuários
 
 **Cenário 26.1.1: Visualização dos KPIs Gerais de Usuários**
 - **Dado** que existem usuários com diferentes níveis de atividade.
@@ -745,3 +746,32 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Quando** o administrador visualiza a seção "Análise de Comportamento (IA)".
 - **Então** um texto analítico deve ser exibido, oferecendo insights sobre os dados (ex: "Nota-se que um pequeno grupo de usuários é responsável pela maior parte do faturamento..." ou "A maioria dos usuários tem poucos lances, sugerindo uma oportunidade para aumentar o engajamento...").
 - **Critério de Aceite**: A análise gerada deve ser coerente com os dados exibidos nos KPIs e na tabela.
+
+---
+
+## Módulo 27: Testes de Segurança da Camada de Ações (Server Actions)
+
+### 27.1. Validação de Permissões
+
+**Cenário 27.1.1: Tentativa de Ação de Admin por Usuário Comum**
+- **Dado** que um usuário com perfil "Arrematante" está logado.
+- **Quando** ele tenta chamar diretamente (via teste de integração) a server action `deleteAuction` com um ID de leilão válido.
+- **Então** a ação deve falhar e retornar um resultado `{ success: false, message: 'Acesso negado...' }`.
+- **E** o leilão **não** deve ser excluído do banco de dados.
+
+**Cenário 27.1.2: Tentativa de Editar Entidade de Outro Tenant**
+- **Dado** que o "Admin A" do "Tenant A" está logado.
+- **E** existe um leilão do "Tenant B".
+- **Quando** o "Admin A" tenta chamar a server action `updateAuction` passando o ID do leilão do "Tenant B".
+- **Então** a ação deve falhar e retornar um resultado `{ success: false, message: 'Leilão não encontrado...' }`.
+- **E** os dados do leilão no "Tenant B" devem permanecer inalterados.
+- **Critério de Aceite**: A camada de serviço/repositório deve impedir a operação devido ao filtro automático de `tenantId`.
+
+### 27.2. Validação de Lógica de Negócio na Ação
+
+**Cenário 27.2.1: Tentativa de Excluir Leilão com Lotes via Ação**
+- **Dado** que um admin está logado e existe um leilão com lotes vinculados.
+- **Quando** ele chama a server action `deleteAuction` para este leilão.
+- **Então** a ação deve falhar e retornar `{ success: false, message: 'Não é possível excluir. O leilão possui X lote(s) associado(s).' }`.
+- **E** o leilão e seus lotes devem permanecer no banco de dados.
+- **Critério de Aceite**: Garante que a lógica de negócio na camada de serviço é corretamente invocada pela server action.
