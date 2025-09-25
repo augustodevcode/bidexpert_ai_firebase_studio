@@ -811,3 +811,41 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** a barra de filtros lateral (`SidebarFilters`) deve desaparecer.
 - **E** um botão "Filtros" deve aparecer, que ao ser clicado abre os filtros em um modal ou `Sheet` sobre a tela.
 - **E** a grade de resultados deve se ajustar para uma ou duas colunas.
+
+---
+
+## Módulo 29: Assistente de Criação de Leilões (Wizard)
+
+**Cenário 29.1.1: Início e Seleção de Modalidade**
+- **Dado** que um admin está na página `/admin/wizard`.
+- **Quando** ele seleciona a modalidade "Judicial".
+- **Então** a visualização do fluxo deve destacar o caminho "JUDICIAL".
+- **E** o botão "Próximo" deve levá-lo para a etapa "Dados Judiciais".
+- **Quando** ele seleciona a modalidade "Extrajudicial".
+- **Então** a visualização do fluxo deve destacar o caminho "EXTRAJUDICIAL".
+- **E** o botão "Próximo" deve levá-lo para a etapa "Dados do Leilão" (pulando a etapa judicial).
+
+**Cenário 29.1.2: Etapa Judicial - Vinculação de Processo e Criação de Comitente**
+- **Dado** que o admin está na etapa "Dados Judiciais".
+- **Quando** ele seleciona um processo judicial da lista.
+- **Então** os detalhes do processo (nº, vara, comarca) devem ser exibidos na tela.
+- **E** o comitente vinculado à vara daquele processo deve ser automaticamente selecionado no formulário da próxima etapa.
+- **Quando** ele clica em "Criar Novo Processo".
+- **Então** ele deve ser levado ao formulário completo de criação de processo.
+- **E** após salvar, ele deve retornar ao wizard com o novo processo selecionado.
+
+**Cenário 29.1.3: Etapa de Loteamento - Agrupar e Individualizar**
+- **Dado** que o admin está na etapa "Loteamento" e há bens disponíveis para o processo/comitente selecionado.
+- **Quando** ele seleciona 3 bens e clica em "Agrupar em Lote Único".
+- **Então** um modal deve aparecer para definir os detalhes do novo lote (título, número, lance inicial).
+- **E** após salvar o modal, um novo lote agrupado deve aparecer na lista de "Lotes Preparados".
+- **E** os 3 bens devem desaparecer da lista de "Bens Disponíveis".
+- **Quando** ele seleciona 2 outros bens e clica em "Lotear Individualmente".
+- **Então** 2 novos lotes devem ser adicionados automaticamente à lista de "Lotes Preparados", cada um com os dados de seu bem correspondente.
+
+**Cenário 29.1.4: Revisão e Publicação Final**
+- **Dado** que o admin está na etapa "Revisão e Publicação".
+- **Então** ele deve ver um resumo completo de todos os dados inseridos: detalhes do leilão, dados do processo (se aplicável) e a lista de lotes criados.
+- **Quando** ele clica em "Publicar Leilão".
+- **Então** o sistema deve criar o registro do leilão e todos os lotes vinculados no banco de dados em uma única transação.
+- **E** o usuário deve ser redirecionado para a página de edição do leilão recém-criado.
