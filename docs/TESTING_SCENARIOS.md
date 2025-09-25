@@ -310,6 +310,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** ele deve ver o status "Rejeitado" e o motivo da rejeição claramente exibido no card do documento.
 
 ---
+
 ## Módulo 10: Construtor de Relatórios (Self-Service)
 
 **Cenário 10.1.1: Adicionar e Manipular Elementos**
@@ -368,3 +369,68 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** a imagem principal na página do "Leilão X" deve ser a mesma imagem principal do "Lote 101".
 - **Quando** o usuário edita novamente o leilão e seleciona "Imagem Customizada", escolhendo uma nova imagem da biblioteca.
 - **Então** a imagem principal do leilão deve ser atualizada para a nova imagem, ignorando a imagem do lote.
+
+---
+
+## Módulo 12: Relistagem e Reloteamento
+
+**Cenário 12.1.1: Relistar um lote não vendido com desconto**
+- **Dado** que um lote está com status "NAO_VENDIDO".
+- **E** o admin está na página de edição deste lote.
+- **Quando** ele clica em "Relistar este Lote", seleciona um novo leilão, insere um desconto de "20%" e confirma.
+- **Então** um novo lote deve ser criado, vinculado ao novo leilão.
+- **E** o preço inicial do novo lote deve ser 20% menor que o valor de avaliação do lote original.
+- **E** o status do lote original deve ser alterado para "RELISTADO".
+- **E** o novo lote deve ter seu campo `originalLotId` apontando para o lote original.
+
+**Cenário 12.2.1: Desvincular bens de um lote não vendido (Reloteamento)**
+- **Dado** que o "Lote 102", contendo os bens "Bem X" e "Bem Y", terminou "NAO_VENDIDO".
+- **E** o status dos bens "Bem X" e "Bem Y" é "LOTEADO".
+- **Quando** o admin acessa a página de edição do "Lote 102", seleciona o "Bem Y" e clica em "Desvincular e Relotear Bem".
+- **Então** a relação entre "Lote 102" e "Bem Y" deve ser removida.
+- **E** o status do "Bem Y" deve ser atualizado para "DISPONIVEL".
+- **E** o "Bem Y" deve voltar a aparecer na lista de bens disponíveis para loteamento no wizard.
+- **E** o "Bem X" deve permanecer vinculado ao "Lote 102" com status "LOTEADO".
+
+---
+
+## Módulo 13: Lógica de Precificação por Etapa
+
+**Cenário 13.1.1: Definir preços diferentes por praça**
+- **Dado** que um leilão tem duas praças (1ª e 2ª).
+- **Quando** o admin, no formulário de edição de um lote, define "Lance Inicial 1ª Praça" como R$ 10.000 e "Lance Inicial 2ª Praça" como R$ 5.000.
+- **Então** o lance inicial exibido publicamente deve ser R$ 10.000 enquanto a 1ª praça estiver ativa.
+- **E** após o término da 1ª praça e início da 2ª, o lance inicial na página do lote deve ser automaticamente atualizado para R$ 5.000.
+
+---
+
+## Módulo 14: Pagamento Parcelado
+
+**Cenário 14.1.1: Checkout com opção de parcelamento**
+- **Dado** que um usuário arrematou um lote e o leilão permite parcelamento.
+- **Quando** o usuário acessa a página de checkout.
+- **Então** ele deve ver, além do pagamento à vista, a opção "Boleto Parcelado".
+- **Quando** ele seleciona "Boleto Parcelado" e escolhe "10" parcelas.
+- **E** confirma a operação.
+- **Então** 10 registros de `InstallmentPayment` devem ser criados no banco de dados.
+- **E** o status do `UserWin` deve mudar para "PROCESSANDO".
+
+**Cenário 14.2.1: Painel Financeiro do Administrador**
+- **Dado** que existem parcelas geradas no sistema.
+- **Quando** um usuário com perfil "Financeiro" ou "Admin" acessa o painel de gerenciamento financeiro.
+- **Então** ele deve ver uma lista de todas as parcelas pendentes e pagas.
+- **Quando** ele marca uma parcela como "PAGO".
+- **Então** o status daquela parcela específica deve ser atualizado.
+- **E** o sistema deve verificar se todas as parcelas de um `UserWin` foram pagas para, então, atualizar o status do `UserWin` para "PAGO".
+
+---
+
+## Módulo 15: Painel de Análise de Usuários
+
+**Cenário 15.1.1: Visualização dos KPIs de Usuários**
+- **Dado** que existem usuários com diferentes níveis de atividade na plataforma.
+- **Quando** um admin acessa a página `/admin/users/analysis`.
+- **Então** os cards de estatísticas devem exibir corretamente o número total de usuários, o faturamento total, o número de lotes arrematados e o total de lances.
+- **E** a tabela de "Dados Detalhados por Usuário" deve listar todos os usuários, ordenados pelo valor total gasto (maior para o menor).
+- **E** o gráfico de pizza deve mostrar a distribuição correta de status de habilitação (ex: 70% Habilitado, 20% Pendente, 10% Rejeitado).
+- **E** a seção de Análise da IA deve conter um texto com insights sobre o comportamento dos usuários.

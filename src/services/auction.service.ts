@@ -151,20 +151,15 @@ export class AuctionService {
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, tenantId: tenantIdFromData, ...restOfData } = data;
-
-      // Defensively delete tenantId from restOfData to avoid Prisma error
-      delete (restOfData as any).tenantId;
-
-      // Defensively delete tenantId from restOfData to avoid Prisma error
-      delete (restOfData as any).tenantId;
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, ...restOfData } = data;
 
       const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate)
         ? new Date(auctionStages[0].startDate as Date)
         : utcToZonedTime(new Date(), 'America/Sao_Paulo');
 
+      // Explicitly build the payload, excluding tenantId from restOfData.
       const createPayload: Prisma.AuctionCreateInput = {
-        ...(restOfData as any),
+        ...restOfData,
         publicId: `AUC-${uuidv4()}`,
         slug: slugify(data.title!),
         auctionDate: derivedAuctionDate,
@@ -172,7 +167,7 @@ export class AuctionService {
         auctioneer: { connect: { id: auctioneerId } },
         seller: { connect: { id: sellerId } },
         category: categoryId ? { connect: { id: categoryId } } : undefined,
-        tenant: { connect: { id: tenantId } },
+        tenant: { connect: { id: tenantId } }, // Use the tenantId parameter, not from data
         city: cityId ? { connect: { id: cityId } } : undefined,
         state: stateId ? { connect: { id: stateId } } : undefined,
         judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
@@ -185,6 +180,9 @@ export class AuctionService {
           }))
         }
       };
+      
+      // Final check to remove tenantId if it slipped through restOfData
+      delete (createPayload as any).tenantId;
 
       const newAuction = await this.prisma.auction.create({ data: createPayload });
 
