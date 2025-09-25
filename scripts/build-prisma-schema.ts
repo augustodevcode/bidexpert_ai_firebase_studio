@@ -7,6 +7,11 @@ const schemaPath = path.join(process.cwd(), "prisma", "schema.prisma");
 const headerPath = path.join(process.cwd(), "prisma", "header.prisma");
 
 try {
+  // Delete the existing schema.prisma file if it exists
+  if (fs.existsSync(schemaPath)) {
+    fs.unlinkSync(schemaPath);
+  }
+
   // Ler o cabeçalho
   let schema = fs.readFileSync(headerPath, "utf-8");
   

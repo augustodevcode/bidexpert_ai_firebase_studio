@@ -2,6 +2,9 @@
 import { PrismaClient, Prisma, AuctionType, AssetStatus, LotStatus, AuctionStatus, AuctionMethod, Participation } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { seedGeminiExtended } from './seed-data-extended-gemini';
+import fs from 'fs';
+import https from 'https';
+import path from 'path';
 
 const prisma = new PrismaClient();
 
@@ -10,33 +13,36 @@ const prisma = new PrismaClient();
 // =================================================================
 const seedConfig = {
   users: {
-    bidders: 5, // Aumentado para mais licitantes
+    bidders: 15,
   },
-  sellers: 5, // Aumentado para mais vendedores
-  auctioneers: 3, // Aumentado para mais leiloeiros
+  sellers: 10,
+  auctioneers: 5,
   judicial: {
-    courts: 3,
-    districts: 5,
-    branches: 5,
-    processes: 5,
+    courts: 5,
+    districts: 10,
+    branches: 10,
+    processes: 20,
   },
   assets: {
-    totalPerCategory: 5, // Aumentado para mais ativos por categoria
+    totalPerCategory: 10,
     judicialRatio: 0.4,
   },
   auctions: {
-    judicial: 2, // Aumentado para mais leilões judiciais
-    extrajudicial: 2, // Aumentado para mais leilões extrajudiciais
-    particular: 2, // Aumentado para mais leilões particulares
-    tomadaDePrecos: 1, // Nova categoria de leilão
-    vendaDireta: 1, // Nova categoria de leilão
-    lotsPerAuction: 3, // Aumentado para mais lotes por leilão
+    total: 20,
+    lotsPerAuction: 5,
+  },
+  bids: {
+    perLot: 15,
+  },
+  media: {
+    imagesToDownload: 50,
   },
   installmentPayments: {
-    perUserWin: 2, // Número de parcelas por arremate
+    perUserWin: 3,
   }
 };
 
+const UPLOADS_DIR = path.join(process.cwd(), 'public', 'uploads');
 
 // =================================================================
 // SEEDING SCRIPT
@@ -45,9 +51,13 @@ const seedConfig = {
 async function main() {
   console.log('Starting extended seeding with controlled scenarios...');
 
+  // --- 0. SETUP ---
+  if (!fs.existsSync(UPLOADS_DIR)) {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  }
+
   // --- 1. FETCH PRESERVED DATA ---
-  console.log('Fetching preserved data (Tenant, Admin User, Roles)...
-');
+  console.log('Fetching preserved data (Tenant, Admin User, Roles)...');
   const tenant = await prisma.tenant.findUnique({ where: { id: '1' } });
   if (!tenant) {
     console.error('Tenant with ID 1 not found. Please ensure it exists.');
@@ -57,19 +67,16 @@ async function main() {
 
   const createdRoles = await createRoles();
   const adminRole = createdRoles.find(r => r.nameNormalized === 'ADMIN');
-  if (!adminRole) {
-      console.error('ADMIN role not found after creation. This should not happen.');
-      return;
-  }
   const userRole = createdRoles.find(r => r.nameNormalized === 'USER');
-  if (!userRole) {
-      console.error('USER role not found after creation. This should not happen.');
-      return;
+
+  if (!adminRole || !userRole) {
+    console.error('Core roles (ADMIN, USER) not found after creation.');
+    return;
   }
 
   const adminUser = await prisma.user.findUnique({ where: { email: 'admin@bidexpert.com.br' } });
   if (!adminUser) {
-    console.error('Admin user admin@bidexpert.com.br not found. Please ensure it exists.');
+    console.error('Admin user admin@bidexpert.com.br not found.');
     return;
   }
   console.log(`Using admin user: ${adminUser.email}`);
@@ -79,101 +86,85 @@ async function main() {
     update: {},
     create: { userId: adminUser.id, roleId: adminRole.id, assignedBy: 'seed-script' },
   });
-  console.log(`Ensured admin user ${adminUser.email} has ADMIN role.
-`);
+  console.log('Ensured admin user has ADMIN role.');
 
   // --- 2. CREATE NEW DATA ---
-  console.log('Creating new data based on configuration...
-');
+  console.log('Creating new data based on configuration...');
 
-  const bidders = await createBidders(tenant.id, userRole.id, seedConfig.users.bidders);
   const { states, cities } = await createStatesAndCities();
-  const capitalCities = cities.filter(city => states.some(state => state.capital === city.name));
+  const capitalCities = cities.filter(c => states.some(s => s.capital === c.name));
+
+  const mediaItems = await createMediaItems(seedConfig.media.imagesToDownload, tenant.id);
+  if (mediaItems.length === 0) {
+    console.error("No media items were created. Aborting seed.");
+    return;
+  }
+
+  const bidders = await createBidders(tenant.id, userRole.id, seedConfig.users.bidders, cities);
   const { categories, subcategories } = await createCategoriesAndSubcategories();
-  const sellers = await createSellers(tenant.id, seedConfig.sellers);
-  const auctioneers = await createAuctioneers(tenant.id, seedConfig.auctioneers);
-  
+  const sellers = await createSellers(tenant.id, seedConfig.sellers, cities);
+  const auctioneers = await createAuctioneers(tenant.id, seedConfig.auctioneers, cities);
+
   // Judicial Entities
   const courts = await createCourts(states, seedConfig.judicial.courts);
   const districts = await createJudicialDistricts(courts, cities, seedConfig.judicial.districts);
   const branches = await createJudicialBranches(districts, seedConfig.judicial.branches);
   const judicialProcesses = await createJudicialProcesses(tenant.id, courts, branches, sellers, seedConfig.judicial.processes);
 
-  // --- 3. CREATE ASSETS (NEW LOGIC) ---
-  console.log('
-Creating assets with varied scenarios...');
-  const createdAssets = await createAssets(tenant.id, categories, subcategories, judicialProcesses, sellers, cities);
+  // --- 3. CREATE ASSETS ---
+  console.log('Creating assets...');
+  const createdAssets = await createAssets(tenant.id, categories, subcategories, judicialProcesses, sellers, cities, mediaItems);
   console.log(`Created ${createdAssets.length} assets.`);
 
-  console.log('
-Creating assets for all statuses...');
-  const assetsForAllStatuses = await createAssetsForAllStatuses(tenant.id, categories, subcategories, judicialProcesses, sellers, cities);
-  console.log(`Created ${assetsForAllStatuses.length} assets for all statuses.`);
+  let availableAssets = [...createdAssets];
 
-  let availableAssets = [...createdAssets, ...assetsForAllStatuses];
+  // --- 4. CREATE AUCTIONS, LOTS, STAGES, AND BIDS ---
+  console.log('Creating auctions, lots, stages, and bids...');
+  let allCreatedAuctions = [];
+  let allCreatedLots = [];
 
-  // --- 4. CREATE AUCTIONS AND LOTS (NEW LOGIC) ---
-  console.log('
-Creating auctions and lots...');
-
-  const auctionTypesToCreate = [
-      ...Array(seedConfig.auctions.judicial).fill(AuctionType.JUDICIAL),
-      ...Array(seedConfig.auctions.extrajudicial).fill(AuctionType.EXTRAJUDICIAL),
-      ...Array(seedConfig.auctions.particular).fill(AuctionType.PARTICULAR),
-      ...Array(seedConfig.auctions.tomadaDePrecos).fill(AuctionType.TOMADA_DE_PRECOS),
-      ...Array(seedConfig.auctions.vendaDireta).fill(AuctionType.VENDA_DIRETA),
-  ];
-
-  let allCreatedAuctions: any[] = [];
-
-  for (const type of auctionTypesToCreate) {
+  for (let i = 0; i < seedConfig.auctions.total; i++) {
+    const type = faker.helpers.arrayElement(Object.values(AuctionType));
     const isJudicial = type === AuctionType.JUDICIAL;
+
     const suitableAssets = availableAssets.filter(a => (isJudicial ? !!a.judicialProcessId : !a.judicialProcessId) && a.status === AssetStatus.DISPONIVEL);
 
     if (suitableAssets.length < seedConfig.auctions.lotsPerAuction) {
-        console.warn(`Not enough available ${type} assets to create a full auction. Skipping.`);
-        continue;
+      console.warn(`Not enough available ${type} assets to create a full auction. Skipping.`);
+      continue;
     }
 
-    const auction = await createAuction(tenant.id, auctioneers, sellers, cities, type, `Leilão ${type} de Teste`, courts, districts, branches);
+    const auction = await createAuction(tenant.id, auctioneers, sellers, cities, type, `Leilão ${type} de Teste ${i + 1}`, courts, districts, branches);
     allCreatedAuctions.push(auction);
-    const lots = await createLotsForAuction(auction, suitableAssets, seedConfig.auctions.lotsPerAuction, cities);
-    
+
+    const lots = await createLotsForAuction(auction, suitableAssets.slice(0, seedConfig.auctions.lotsPerAuction), cities, mediaItems);
+    allCreatedLots.push(...lots);
+
     const lottedAssetIds = lots.flatMap(l => l.assets.map(a => a.assetId));
     availableAssets = availableAssets.filter(a => !lottedAssetIds.includes(a.id));
 
-    console.log(`Created ${type} auction "${auction.title}" with ${lots.length} lots.`);
-  }
+    await createAuctionStages([auction]);
+    await createBidsForLots(lots, bidders, seedConfig.bids.perLot);
 
-  console.log('
-Creating auctions for all statuses...');
-  const auctionsForAllStatuses = await createAuctionsForAllStatuses(tenant.id, auctioneers, sellers, cities, courts, districts, branches);
-  allCreatedAuctions.push(...auctionsForAllStatuses);
+    console.log(`Created ${type} auction "${auction.title}" with ${lots.length} lots, stages, and bids.`);
+  }
   
-  for (const auction of auctionsForAllStatuses) {
-      console.log(`Creating lots for auction with status ${auction.status}...`);
-      const freshStatusAssets = await createAssets(tenant.id, categories, subcategories, judicialProcesses, sellers, cities);
-      let freshAvailableStatusAssets = [...freshStatusAssets];
-
-      const lotsForStatusAuction = await createLotsForAllStatuses(auction, freshAvailableStatusAssets, cities);
-      const lottedAssetIds = lotsForStatusAuction.flatMap(l => l.assets.map(a => a.assetId));
-      freshAvailableStatusAssets = freshAvailableStatusAssets.filter(a => !lottedAssetIds.includes(a.id));
+  // Ensure some auctions cover all statuses
+  const allStatuses = Object.values(AuctionStatus);
+  for(const status of allStatuses) {
+      const auction = allCreatedAuctions.find(a => a.status === status);
+      if (!auction) {
+          const newAuction = await createAuction(tenant.id, auctioneers, sellers, cities, AuctionType.EXTRAJUDICIAL, `Leilão Status ${status}`, courts, districts, branches, status);
+          allCreatedAuctions.push(newAuction);
+          console.log(`Created auction with specific status: ${status}`);
+      }
   }
 
-  console.log('
-Creating auctions and lots for capital cities...');
-  const { createdAuctions: capitalAuctions, createdLots: capitalLots } = await createCapitalCityAuctionsAndLots(tenant.id, auctioneers, sellers, cities, capitalCities, availableAssets, courts, districts, branches);
-  allCreatedAuctions.push(...capitalAuctions);
-  const lottedAssetIdsCapital = capitalLots.flatMap(l => l.assets.map(a => a.assetId));
-  availableAssets = availableAssets.filter(a => !lottedAssetIdsCapital.includes(a.id));
 
-  console.log('
-Creating auction stages for all auctions...');
-  await createAuctionStages(allCreatedAuctions);
-
-  console.log('
-Creating user wins and installment payments...');
-  const userWins = await createUserWins(bidders, allCreatedAuctions);
+  // --- 5. CREATE USER WINS AND PAYMENTS ---
+  console.log('Creating user wins and installment payments...');
+  const closedLots = allCreatedLots.filter(l => l.status === LotStatus.ENCERRADO || l.status === LotStatus.VENDIDO);
+  const userWins = await createUserWins(bidders, closedLots);
   await createInstallmentPayments(userWins, seedConfig.installmentPayments.perUserWin);
 
   console.log('\nSeeding finished successfully!');
@@ -198,22 +189,15 @@ async function createRoles() {
       },
     });
     createdRoles.push(role);
-    console.log(`Created/found role: ${role.name}`);
   }
+  console.log(`Created/found ${createdRoles.length} roles.`);
   return createdRoles;
 }
 
-function generateImageUrls(count: number = 3) {
-  const imageUrl = faker.image.urlLoremFlickr({ category: 'nature', width: 640, height: 480 });
-  const imageMediaId = faker.string.uuid();
-  const galleryImageUrls = Array.from({ length: count }, () => faker.image.urlLoremFlickr({ category: 'nature', width: 640, height: 480 }));
-  const mediaItemIds = Array.from({ length: count }, () => faker.string.uuid());
-  return { imageUrl, imageMediaId, galleryImageUrls, mediaItemIds };
-}
-
-async function createBidders(tenantId: string, userRoleId: string, count: number) {
+async function createBidders(tenantId: string, userRoleId: string, count: number, cities: any[]) {
     const bidders = [];
     for (let i = 0; i < count; i++) {
+        const city = faker.helpers.arrayElement(cities);
         const bidderEmail = `bidder${i}@example.com`;
         const bidder = await prisma.user.upsert({
             where: { email: bidderEmail },
@@ -221,17 +205,17 @@ async function createBidders(tenantId: string, userRoleId: string, count: number
             create: {
                 email: bidderEmail,
                 fullName: faker.person.fullName(),
-                password: 'password',
+                password: 'password', // In a real app, this should be hashed
                 habilitationStatus: 'HABILITADO',
                 cpf: faker.string.numeric(11),
                 cellPhone: faker.phone.number('## #####-####'),
-                zipCode: faker.location.zipCode(),
+                zipCode: city.zipCode,
                 street: faker.location.street(),
                 number: faker.location.buildingNumber(),
                 complement: faker.location.secondaryAddress(),
                 neighborhood: faker.location.county(),
-                city: faker.location.city(),
-                state: faker.location.stateAbbr(),
+                city: city.name,
+                state: city.stateId,
             },
         });
         await prisma.usersOnRoles.upsert({
@@ -250,12 +234,12 @@ async function createBidders(tenantId: string, userRoleId: string, count: number
     return bidders;
 }
 
-async function createSellers(tenantId: string, count: number) {
+async function createSellers(tenantId: string, count: number, cities: any[]) {
   const sellers = [];
   for (let i = 0; i < count; i++) {
     const name = faker.company.name();
     const slug = faker.helpers.slugify(name).toLowerCase();
-    const isJudicial = faker.datatype.boolean(); // Randomly assign judicial status
+    const city = faker.helpers.arrayElement(cities);
     const seller = await prisma.seller.create({
       data: {
         publicId: faker.string.uuid(),
@@ -263,13 +247,12 @@ async function createSellers(tenantId: string, count: number) {
         name: name,
         email: faker.internet.email(),
         tenantId: tenantId,
-        isJudicial: isJudicial,
-        // judicialBranchId will be linked later if isJudicial is true
+        isJudicial: faker.datatype.boolean(),
         phone: faker.phone.number('## #####-####'),
-        address: faker.location.streetAddress(true),
-        city: faker.location.city(),
-        state: faker.location.stateAbbr(),
-        zipCode: faker.location.zipCode(),
+        address: faker.location.streetAddress(),
+        city: city.name,
+        state: city.stateId,
+        zipCode: city.zipCode,
       },
     });
     sellers.push(seller);
@@ -278,11 +261,12 @@ async function createSellers(tenantId: string, count: number) {
   return sellers;
 }
 
-async function createAuctioneers(tenantId: string, count: number) {
+async function createAuctioneers(tenantId: string, count: number, cities: any[]) {
   const auctioneers = [];
   for (let i = 0; i < count; i++) {
     const name = faker.person.fullName();
     const slug = faker.helpers.slugify(name).toLowerCase();
+    const city = faker.helpers.arrayElement(cities);
     const auctioneer = await prisma.auctioneer.create({
       data: {
         publicId: faker.string.uuid(),
@@ -291,10 +275,10 @@ async function createAuctioneers(tenantId: string, count: number) {
         email: faker.internet.email(),
         tenantId: tenantId,
         phone: faker.phone.number('## #####-####'),
-        address: faker.location.streetAddress(true),
-        city: faker.location.city(),
-        state: faker.location.stateAbbr(),
-        zipCode: faker.location.zipCode(),
+        address: faker.location.streetAddress(),
+        city: city.name,
+        state: city.stateId,
+        zipCode: city.zipCode,
       },
     });
     auctioneers.push(auctioneer);
@@ -303,14 +287,14 @@ async function createAuctioneers(tenantId: string, count: number) {
   return auctioneers;
 }
 
-async function createAssets(tenantId: string, categories: any[], subcategories: any[], judicialProcesses: any[], sellers: any[], cities: any[]) {
+async function createAssets(tenantId: string, categories: any[], subcategories: any[], judicialProcesses: any[], sellers: any[], cities: any[], mediaItems: any[]) {
   const assets = [];
   const categoryMap = new Map(categories.map(c => [c.slug, c]));
 
   const assetCreators = {
     VEICULO: (category, subcategory) => ({
       title: `Veículo ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
-      description: faker.vehicle.type(),
+      description: faker.lorem.paragraph(),
       categoryId: category.id,
       subcategoryId: subcategory.id,
       plate: faker.vehicle.vrm(),
@@ -325,178 +309,42 @@ async function createAssets(tenantId: string, categories: any[], subcategories: 
       renavam: faker.string.numeric(11),
       enginePower: `${faker.number.int({ min: 100, max: 300 })} HP`,
       numberOfDoors: faker.helpers.arrayElement([2, 4]),
-      runningCondition: faker.helpers.arrayElement(['Ótimo', 'Bom', 'Regular', 'Ruim']),
-      bodyCondition: faker.helpers.arrayElement(['Perfeita', 'Pequenos Amassados', 'Amassado', 'Danificado']),
-      tiresCondition: faker.helpers.arrayElement(['Novos', 'Bons', 'Meia Vida', 'Gastos']),
-      hasKey: faker.datatype.boolean(),
+      runningCondition: 'Bom',
+      bodyCondition: 'Bom',
+      tiresCondition: 'Bom',
+      hasKey: true,
     }),
     IMOVEL: (category, subcategory) => ({
       title: `Imóvel em ${faker.location.city()}`,
-      description: faker.lorem.sentence(),
+      description: faker.lorem.paragraph(),
       categoryId: category.id,
       subcategoryId: subcategory.id,
       propertyRegistrationNumber: faker.string.numeric(10),
       iptuNumber: faker.string.numeric(10),
       isOccupied: faker.datatype.boolean(),
-      totalArea: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-      builtArea: faker.number.float({ min: 30, max: 300, precision: 0.01 }),
+      totalArea: faker.number.float({ min: 50, max: 500, precision: 2 }),
+      builtArea: faker.number.float({ min: 30, max: 300, precision: 2 }),
       bedrooms: faker.number.int({ min: 1, max: 5 }),
       suites: faker.number.int({ min: 0, max: 3 }),
       bathrooms: faker.number.int({ min: 1, max: 4 }),
       parkingSpaces: faker.number.int({ min: 0, max: 4 }),
-      constructionType: faker.helpers.arrayElement(['Alvenaria', 'Madeira', 'Mista']),
-      hasHabiteSe: faker.datatype.boolean(),
-      zoningRestrictions: faker.helpers.arrayElement(['Residencial', 'Comercial', 'Mista']),
-      amenities: JSON.stringify(faker.helpers.arrayElements(['Piscina', 'Churrasqueira', 'Academia', 'Salão de Festas'], faker.number.int({ min: 0, max: 4 }))),
-    }),
-    ELETRONICO: (category, subcategory) => ({
-      title: `Eletrônico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    ELETRODOMESTICO: (category, subcategory) => ({
-      title: `Eletrodoméstico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      applianceCapacity: `${faker.number.int({ min: 100, max: 500 })}L`,
-      voltage: faker.helpers.arrayElement(['110V', '220V', 'Bivolt']),
-      applianceType: faker.helpers.arrayElement(['Geladeira', 'Fogão', 'Máquina de Lavar', 'Microondas']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
+      constructionType: 'Alvenaria',
+      hasHabiteSe: true,
+      zoningRestrictions: 'Residencial',
+      amenities: '[]',
     }),
     SEMOVENTE: (category, subcategory) => ({
-      title: `Semovente ${faker.animal.type()} ${faker.person.firstName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      breed: faker.animal.breed(),
-      age: `${faker.number.int({ min: 1, max: 10 })} anos`,
-      sex: faker.helpers.arrayElement(['Macho', 'Fêmea']),
-      weight: `${faker.number.int({ min: 50, max: 1000 })} kg`,
-      individualId: faker.string.numeric(10),
-      purpose: faker.helpers.arrayElement(['Corte', 'Leite', 'Reprodução', 'Trabalho']),
-      isPregnant: faker.datatype.boolean(),
-    }),
-    IMPLEMENTO: (category, subcategory) => ({
-      title: `Implemento Agrícola ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 100, max: 5000 }),
-      engineType: faker.helpers.arrayElement(['Diesel', 'Gasolina']),
-      capacityOrPower: `${faker.number.int({ min: 50, max: 300 })} HP`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-    }),
-    EQUIPAMENTO_INDUSTRIAL: (category, subcategory) => ({
-      title: `Equipamento Industrial ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 1000, max: 10000 }),
-      engineType: faker.helpers.arrayElement(['Elétrico', 'Hidráulico', 'Pneumático']),
-      capacityOrPower: `${faker.number.int({ min: 10, max: 500 })} kW`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-      installationLocation: faker.helpers.arrayElement(['Fábrica', 'Armazém', 'Canteiro de Obras']),
-    }),
-    TECNOLOGIA: (category, subcategory) => ({
-      title: `Tecnologia ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      specifications: faker.lorem.sentence(),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    MOVEIS: (category, subcategory) => ({
-      title: `Móvel ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      furnitureType: faker.helpers.arrayElement(['Cadeira', 'Mesa', 'Sofá', 'Armário']),
-      material: faker.helpers.arrayElement(['Madeira', 'Metal', 'Plástico', 'Tecido']),
-      style: faker.helpers.arrayElement(['Moderno', 'Clássico', 'Rústico']),
-      dimensions: `${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}cm`,
-      pieceCount: faker.number.int({ min: 1, max: 5 }),
-    }),
-    JOIAS: (category, subcategory) => ({
-      title: `Joia ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      jewelryType: faker.helpers.arrayElement(['Anel', 'Colar', 'Brinco', 'Pulseira']),
-      metal: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina']),
-      gemstones: faker.helpers.arrayElement(['Diamante', 'Esmeralda', 'Rubi', 'Safira', 'Nenhuma']),
-      totalWeight: `${faker.number.float({ min: 1, max: 50, precision: 0.1 })}g`,
-      jewelrySize: faker.helpers.arrayElement(['Pequeno', 'Médio', 'Grande']),
-      authenticityCertificate: faker.datatype.boolean() ? faker.string.uuid() : undefined,
-    }),
-    ARTE: (category, subcategory) => ({
-      title: `Obra de Arte ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      workType: faker.helpers.arrayElement(['Pintura', 'Escultura', 'Gravura', 'Fotografia']),
-      artist: faker.person.fullName(),
-      period: faker.helpers.arrayElement(['Contemporânea', 'Moderna', 'Clássica']),
-      technique: faker.helpers.arrayElement(['Óleo sobre tela', 'Acrílica', 'Bronze', 'Mármore']),
-      provenance: faker.lorem.sentence(),
-    }),
-    NAUTICA: (category, subcategory) => ({
-      title: `Embarcação ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      boatType: faker.helpers.arrayElement(['Lancha', 'Veleiro', 'Jet Ski', 'Caiaque']),
-      boatLength: `${faker.number.float({ min: 2, max: 20, precision: 0.1 })}m`,
-      hullMaterial: faker.helpers.arrayElement(['Fibra de Vidro', 'Alumínio', 'Madeira']),
-      onboardEquipment: faker.lorem.sentence(),
-    }),
-    ALIMENTOS: (category, subcategory) => ({
-      title: `Alimento ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      productName: faker.commerce.productName(),
-      quantity: `${faker.number.int({ min: 1, max: 100 })}kg`,
-      packagingType: faker.helpers.arrayElement(['Saco', 'Caixa', 'Granel']),
-      expirationDate: faker.date.future(),
-      storageConditions: faker.helpers.arrayElement(['Ambiente', 'Refrigerado', 'Congelado']),
-    }),
-    METAIS_PRECIOSOS: (category, subcategory) => ({
-      title: `Metal Precioso ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      preciousMetalType: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina', 'Paládio']),
-      purity: faker.helpers.arrayElement(['24K', '18K', '925', '950']),
-      totalWeight: `${faker.number.float({ min: 1, max: 1000, precision: 0.1 })}g`,
-    }),
-    PRODUTOS_FLORESTAIS: (category, subcategory) => ({
-      title: `Produto Florestal ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      forestGoodsType: faker.helpers.arrayElement(['Madeira em Tora', 'Celulose', 'Carvão', 'Resina']),
-      volumeOrQuantity: `${faker.number.int({ min: 1, max: 500 })}m³`,
-      species: faker.animal.type(),
-      dofNumber: faker.string.numeric(10),
+        title: `Lote de Gado Nelore`,
+        description: faker.lorem.paragraph(),
+        categoryId: category.id,
+        subcategoryId: subcategory.id,
+        breed: 'Nelore',
+        age: '24 meses',
+        sex: 'Macho',
+        weight: '500 kg',
+        individualId: faker.string.numeric(10),
+        purpose: 'Corte',
+        isPregnant: false,
     }),
   };
 
@@ -507,550 +355,64 @@ async function createAssets(tenantId: string, categories: any[], subcategories: 
   for (let i = 0; i < totalAssetsToCreate; i++) {
     const assetTypeSlug = faker.helpers.arrayElement(assetTypes);
     const category = categoryMap.get(assetTypeSlug.toLowerCase());
+    if (!category) continue;
     const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === category.id));
+    if (!subcategory) continue;
 
     const assetData = assetCreators[assetTypeSlug](category, subcategory);
-
     const isJudicial = assets.filter(a => a.judicialProcessId).length < numJudicial;
-
-    const { categoryId, subcategoryId, ...restAssetData } = assetData;
-    const imageInfo = generateImageUrls(3); // Always generate 3 gallery images
     const randomCity = faker.helpers.arrayElement(cities);
+    const assetMedia = faker.helpers.arrayElement(mediaItems);
 
     const finalAssetData: Prisma.AssetCreateInput = {
-        ...restAssetData,
+        ...assetData,
         publicId: faker.string.uuid(),
-        evaluationValue: faker.number.float({ min: 1000, max: 150000, precision: 0.01 }),
+        evaluationValue: faker.number.float({ min: 1000, max: 150000, precision: 2 }),
         status: AssetStatus.DISPONIVEL,
         tenant: { connect: { id: tenantId } },
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        subcategory: subcategoryId ? { connect: { id: subcategoryId } } : undefined,
         judicialProcess: isJudicial && judicialProcesses.length > 0 ? { connect: { id: faker.helpers.arrayElement(judicialProcesses).id } } : undefined,
         seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
-        imageUrl: imageInfo.imageUrl,
-        imageMediaId: imageInfo.imageMediaId,
-        galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-        mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
-        locationCity: randomCity.name,
-        locationState: randomCity.stateId, // Assuming stateId is UF
-        address: faker.location.streetAddress(true),
-        latitude: faker.location.latitude(),
-        longitude: faker.location.longitude(),
-    };
-
-    const asset = await prisma.asset.create({ data: finalAssetData });
-    assets.push(asset);
-  }
-
-  return assets;
-}
-
-async function createAssetsForAllStatuses(tenantId: string, categories: any[], subcategories: any[], judicialProcesses: any[], sellers: any[], cities: any[]) {
-  const assets = [];
-  const assetStatuses = Object.values(AssetStatus);
-  const categoryMap = new Map(categories.map(c => [c.slug, c]));
-
-  const assetCreators = {
-    VEICULO: (category, subcategory) => ({
-      title: `Veículo ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
-      description: faker.vehicle.type(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      plate: faker.vehicle.vrm(),
-      make: faker.vehicle.manufacturer(),
-      model: faker.vehicle.model(),
-      year: faker.number.int({ min: 2010, max: 2023 }),
-      color: faker.vehicle.color(),
-      fuelType: faker.helpers.arrayElement(['Gasolina', 'Etanol', 'Flex', 'Diesel', 'Elétrico']),
-      transmissionType: faker.helpers.arrayElement(['Manual', 'Automático']),
-      bodyType: faker.helpers.arrayElement(['Sedan', 'Hatch', 'SUV', 'Picape']),
-      vin: faker.vehicle.vin(),
-      renavam: faker.string.numeric(11),
-      enginePower: `${faker.number.int({ min: 100, max: 300 })} HP`,
-      numberOfDoors: faker.helpers.arrayElement([2, 4]),
-      runningCondition: faker.helpers.arrayElement(['Ótimo', 'Bom', 'Regular', 'Ruim']),
-      bodyCondition: faker.helpers.arrayElement(['Perfeita', 'Pequenos Amassados', 'Amassado', 'Danificado']),
-      tiresCondition: faker.helpers.arrayElement(['Novos', 'Bons', 'Meia Vida', 'Gastos']),
-      hasKey: faker.datatype.boolean(),
-    }),
-    IMOVEL: (category, subcategory) => ({
-      title: `Imóvel em ${faker.location.city()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      propertyRegistrationNumber: faker.string.numeric(10),
-      iptuNumber: faker.string.numeric(10),
-      isOccupied: faker.datatype.boolean(),
-      totalArea: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-      builtArea: faker.number.float({ min: 30, max: 300, precision: 0.01 }),
-      bedrooms: faker.number.int({ min: 1, max: 5 }),
-      suites: faker.number.int({ min: 0, max: 3 }),
-      bathrooms: faker.number.int({ min: 1, max: 4 }),
-      parkingSpaces: faker.number.int({ min: 0, max: 4 }),
-      constructionType: faker.helpers.arrayElement(['Alvenaria', 'Madeira', 'Mista']),
-      hasHabiteSe: faker.datatype.boolean(),
-      zoningRestrictions: faker.helpers.arrayElement(['Residencial', 'Comercial', 'Mista']),
-      amenities: JSON.stringify(faker.helpers.arrayElements(['Piscina', 'Churrasqueira', 'Academia', 'Salão de Festas'], faker.number.int({ min: 0, max: 4 }))),
-    }),
-    ELETRONICO: (category, subcategory) => ({
-      title: `Eletrônico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    ELETRODOMESTICO: (category, subcategory) => ({
-      title: `Eletrodoméstico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      applianceCapacity: `${faker.number.int({ min: 100, max: 500 })}L`,
-      voltage: faker.helpers.arrayElement(['110V', '220V', 'Bivolt']),
-      applianceType: faker.helpers.arrayElement(['Geladeira', 'Fogão', 'Máquina de Lavar', 'Microondas']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    SEMOVENTE: (category, subcategory) => ({
-      title: `Semovente ${faker.animal.type()} ${faker.person.firstName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      breed: faker.animal.breed(),
-      age: `${faker.number.int({ min: 1, max: 10 })} anos`,
-      sex: faker.helpers.arrayElement(['Macho', 'Fêmea']),
-      weight: `${faker.number.int({ min: 50, max: 1000 })} kg`,
-      individualId: faker.string.numeric(10),
-      purpose: faker.helpers.arrayElement(['Corte', 'Leite', 'Reprodução', 'Trabalho']),
-      isPregnant: faker.datatype.boolean(),
-    }),
-    IMPLEMENTO: (category, subcategory) => ({
-      title: `Implemento Agrícola ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 100, max: 5000 }),
-      engineType: faker.helpers.arrayElement(['Diesel', 'Gasolina']),
-      capacityOrPower: `${faker.number.int({ min: 50, max: 300 })} HP`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-    }),
-    EQUIPAMENTO_INDUSTRIAL: (category, subcategory) => ({
-      title: `Equipamento Industrial ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 1000, max: 10000 }),
-      engineType: faker.helpers.arrayElement(['Elétrico', 'Hidráulico', 'Pneumático']),
-      capacityOrPower: `${faker.number.int({ min: 10, max: 500 })} kW`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-      installationLocation: faker.helpers.arrayElement(['Fábrica', 'Armazém', 'Canteiro de Obras']),
-    }),
-    TECNOLOGIA: (category, subcategory) => ({
-      title: `Tecnologia ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      specifications: faker.lorem.sentence(),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    MOVEIS: (category, subcategory) => ({
-      title: `Móvel ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      furnitureType: faker.helpers.arrayElement(['Cadeira', 'Mesa', 'Sofá', 'Armário']),
-      material: faker.helpers.arrayElement(['Madeira', 'Metal', 'Plástico', 'Tecido']),
-      style: faker.helpers.arrayElement(['Moderno', 'Clássico', 'Rústico']),
-      dimensions: `${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}cm`,
-      pieceCount: faker.number.int({ min: 1, max: 5 }),
-    }),
-    JOIAS: (category, subcategory) => ({
-      title: `Joia ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      jewelryType: faker.helpers.arrayElement(['Anel', 'Colar', 'Brinco', 'Pulseira']),
-      metal: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina']),
-      gemstones: faker.helpers.arrayElement(['Diamante', 'Esmeralda', 'Rubi', 'Safira', 'Nenhuma']),
-      totalWeight: `${faker.number.float({ min: 1, max: 50, precision: 0.1 })}g`,
-      jewelrySize: faker.helpers.arrayElement(['Pequeno', 'Médio', 'Grande']),
-      authenticityCertificate: faker.datatype.boolean() ? faker.string.uuid() : undefined,
-    }),
-    ARTE: (category, subcategory) => ({
-      title: `Obra de Arte ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      workType: faker.helpers.arrayElement(['Pintura', 'Escultura', 'Gravura', 'Fotografia']),
-      artist: faker.person.fullName(),
-      period: faker.helpers.arrayElement(['Contemporânea', 'Moderna', 'Clássica']),
-      technique: faker.helpers.arrayElement(['Óleo sobre tela', 'Acrílica', 'Bronze', 'Mármore']),
-      provenance: faker.lorem.sentence(),
-    }),
-    NAUTICA: (category, subcategory) => ({
-      title: `Embarcação ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      boatType: faker.helpers.arrayElement(['Lancha', 'Veleiro', 'Jet Ski', 'Caiaque']),
-      boatLength: `${faker.number.float({ min: 2, max: 20, precision: 0.1 })}m`,
-      hullMaterial: faker.helpers.arrayElement(['Fibra de Vidro', 'Alumínio', 'Madeira']),
-      onboardEquipment: faker.lorem.sentence(),
-    }),
-    ALIMENTOS: (category, subcategory) => ({
-      title: `Alimento ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      productName: faker.commerce.productName(),
-      quantity: `${faker.number.int({ min: 1, max: 100 })}kg`,
-      packagingType: faker.helpers.arrayElement(['Saco', 'Caixa', 'Granel']),
-      expirationDate: faker.date.future(),
-      storageConditions: faker.helpers.arrayElement(['Ambiente', 'Refrigerado', 'Congelado']),
-    }),
-    METAIS_PRECIOSOS: (category, subcategory) => ({
-      title: `Metal Precioso ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      preciousMetalType: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina', 'Paládio']),
-      purity: faker.helpers.arrayElement(['24K', '18K', '925', '950']),
-      totalWeight: `${faker.number.float({ min: 1, max: 1000, precision: 0.1 })}g`,
-    }),
-    PRODUTOS_FLORESTAIS: (category, subcategory) => ({
-      title: `Produto Florestal ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      forestGoodsType: faker.helpers.arrayElement(['Madeira em Tora', 'Celulose', 'Carvão', 'Resina']),
-      volumeOrQuantity: `${faker.number.int({ min: 1, max: 500 })}m³`,
-      species: faker.animal.type(),
-      dofNumber: faker.string.numeric(10),
-    }),
-  };
-
-  const assetTypes = Object.keys(assetCreators);
-  const totalAssetsToCreate = seedConfig.assets.totalPerCategory * assetTypes.length;
-  const numJudicial = Math.floor(totalAssetsToCreate * seedConfig.assets.judicialRatio);
-
-  for (let i = 0; i < totalAssetsToCreate; i++) {
-    const assetTypeSlug = faker.helpers.arrayElement(assetTypes);
-    const category = categoryMap.get(assetTypeSlug.toLowerCase());
-    const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === category.id));
-
-    const assetData = assetCreators[assetTypeSlug](category, subcategory);
-
-    const isJudicial = assets.filter(a => a.judicialProcessId).length < numJudicial;
-
-    const { categoryId, subcategoryId, ...restAssetData } = assetData;
-    const imageInfo = generateImageUrls(3); // Always generate 3 gallery images
-    const randomCity = faker.helpers.arrayElement(cities);
-
-    const finalAssetData: Prisma.AssetCreateInput = {
-        ...restAssetData,
-        publicId: faker.string.uuid(),
-        evaluationValue: faker.number.float({ min: 1000, max: 150000, precision: 0.01 }),
-        status: AssetStatus.DISPONIVEL,
-        tenant: { connect: { id: tenantId } },
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        subcategory: subcategoryId ? { connect: { id: subcategoryId } } : undefined,
-        judicialProcess: isJudicial && judicialProcesses.length > 0 ? { connect: { id: faker.helpers.arrayElement(judicialProcesses).id } } : undefined,
-        seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
-        imageUrl: imageInfo.imageUrl,
-        imageMediaId: imageInfo.imageMediaId,
-        galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-        mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
-        locationCity: randomCity.name,
-        locationState: randomCity.stateId, // Assuming stateId is UF
-        address: faker.location.streetAddress(true),
-        latitude: faker.location.latitude(),
-        longitude: faker.location.longitude(),
-    };
-
-    const asset = await prisma.asset.create({ data: finalAssetData });
-    assets.push(asset);
-  }
-
-  return assets;
-}
-
-async function createAssetsForAllStatuses(tenantId: string, categories: any[], subcategories: any[], judicialProcesses: any[], sellers: any[], cities: any[]) {
-  const assets = [];
-  const assetStatuses = Object.values(AssetStatus);
-  const categoryMap = new Map(categories.map(c => [c.slug, c]));
-
-  const assetCreators = {
-    VEICULO: (category, subcategory) => ({
-      title: `Veículo ${faker.vehicle.manufacturer()} ${faker.vehicle.model()}`,
-      description: faker.vehicle.type(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      plate: faker.vehicle.vrm(),
-      make: faker.vehicle.manufacturer(),
-      model: faker.vehicle.model(),
-      year: faker.number.int({ min: 2010, max: 2023 }),
-      color: faker.vehicle.color(),
-      fuelType: faker.helpers.arrayElement(['Gasolina', 'Etanol', 'Flex', 'Diesel', 'Elétrico']),
-      transmissionType: faker.helpers.arrayElement(['Manual', 'Automático']),
-      bodyType: faker.helpers.arrayElement(['Sedan', 'Hatch', 'SUV', 'Picape']),
-      vin: faker.vehicle.vin(),
-      renavam: faker.string.numeric(11),
-      enginePower: `${faker.number.int({ min: 100, max: 300 })} HP`,
-      numberOfDoors: faker.helpers.arrayElement([2, 4]),
-      runningCondition: faker.helpers.arrayElement(['Ótimo', 'Bom', 'Regular', 'Ruim']),
-      bodyCondition: faker.helpers.arrayElement(['Perfeita', 'Pequenos Amassados', 'Amassado', 'Danificado']),
-      tiresCondition: faker.helpers.arrayElement(['Novos', 'Bons', 'Meia Vida', 'Gastos']),
-      hasKey: faker.datatype.boolean(),
-    }),
-    IMOVEL: (category, subcategory) => ({
-      title: `Imóvel em ${faker.location.city()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      propertyRegistrationNumber: faker.string.numeric(10),
-      iptuNumber: faker.string.numeric(10),
-      isOccupied: faker.datatype.boolean(),
-      totalArea: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-      builtArea: faker.number.float({ min: 30, max: 300, precision: 0.01 }),
-      bedrooms: faker.number.int({ min: 1, max: 5 }),
-      suites: faker.number.int({ min: 0, max: 3 }),
-      bathrooms: faker.number.int({ min: 1, max: 4 }),
-      parkingSpaces: faker.number.int({ min: 0, max: 4 }),
-      constructionType: faker.helpers.arrayElement(['Alvenaria', 'Madeira', 'Mista']),
-      hasHabiteSe: faker.datatype.boolean(),
-      zoningRestrictions: faker.helpers.arrayElement(['Residencial', 'Comercial', 'Mista']),
-      amenities: JSON.stringify(faker.helpers.arrayElements(['Piscina', 'Churrasqueira', 'Academia', 'Salão de Festas'], faker.number.int({ min: 0, max: 4 }))),
-    }),
-    ELETRONICO: (category, subcategory) => ({
-      title: `Eletrônico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    ELETRODOMESTICO: (category, subcategory) => ({
-      title: `Eletrodoméstico ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      applianceCapacity: `${faker.number.int({ min: 100, max: 500 })}L`,
-      voltage: faker.helpers.arrayElement(['110V', '220V', 'Bivolt']),
-      applianceType: faker.helpers.arrayElement(['Geladeira', 'Fogão', 'Máquina de Lavar', 'Microondas']),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    SEMOVENTE: (category, subcategory) => ({
-      title: `Semovente ${faker.animal.type()} ${faker.person.firstName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      breed: faker.animal.breed(),
-      age: `${faker.number.int({ min: 1, max: 10 })} anos`,
-      sex: faker.helpers.arrayElement(['Macho', 'Fêmea']),
-      weight: `${faker.number.int({ min: 50, max: 1000 })} kg`,
-      individualId: faker.string.numeric(10),
-      purpose: faker.helpers.arrayElement(['Corte', 'Leite', 'Reprodução', 'Trabalho']),
-      isPregnant: faker.datatype.boolean(),
-    }),
-    IMPLEMENTO: (category, subcategory) => ({
-      title: `Implemento Agrícola ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 100, max: 5000 }),
-      engineType: faker.helpers.arrayElement(['Diesel', 'Gasolina']),
-      capacityOrPower: `${faker.number.int({ min: 50, max: 300 })} HP`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-    }),
-    EQUIPAMENTO_INDUSTRIAL: (category, subcategory) => ({
-      title: `Equipamento Industrial ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      hoursUsed: faker.number.int({ min: 1000, max: 10000 }),
-      engineType: faker.helpers.arrayElement(['Elétrico', 'Hidráulico', 'Pneumático']),
-      capacityOrPower: `${faker.number.int({ min: 10, max: 500 })} kW`,
-      compliesWithNR: faker.datatype.boolean() ? 'Sim' : 'Não',
-      installationLocation: faker.helpers.arrayElement(['Fábrica', 'Armazém', 'Canteiro de Obras']),
-    }),
-    TECNOLOGIA: (category, subcategory) => ({
-      title: `Tecnologia ${faker.commerce.productName()}`,
-      description: faker.commerce.productDescription(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      brand: faker.company.name(),
-      serialNumber: faker.string.uuid(),
-      itemCondition: faker.helpers.arrayElement(['Novo', 'Usado', 'Recondicionado']),
-      specifications: faker.lorem.sentence(),
-      hasInvoice: faker.datatype.boolean(),
-      hasWarranty: faker.datatype.boolean(),
-    }),
-    MOVEIS: (category, subcategory) => ({
-      title: `Móvel ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      furnitureType: faker.helpers.arrayElement(['Cadeira', 'Mesa', 'Sofá', 'Armário']),
-      material: faker.helpers.arrayElement(['Madeira', 'Metal', 'Plástico', 'Tecido']),
-      style: faker.helpers.arrayElement(['Moderno', 'Clássico', 'Rústico']),
-      dimensions: `${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}x${faker.number.int({ min: 50, max: 200 })}cm`,
-      pieceCount: faker.number.int({ min: 1, max: 5 }),
-    }),
-    JOIAS: (category, subcategory) => ({
-      title: `Joia ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      jewelryType: faker.helpers.arrayElement(['Anel', 'Colar', 'Brinco', 'Pulseira']),
-      metal: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina']),
-      gemstones: faker.helpers.arrayElement(['Diamante', 'Esmeralda', 'Rubi', 'Safira', 'Nenhuma']),
-      totalWeight: `${faker.number.float({ min: 1, max: 50, precision: 0.1 })}g`,
-      jewelrySize: faker.helpers.arrayElement(['Pequeno', 'Médio', 'Grande']),
-      authenticityCertificate: faker.datatype.boolean() ? faker.string.uuid() : undefined,
-    }),
-    ARTE: (category, subcategory) => ({
-      title: `Obra de Arte ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      workType: faker.helpers.arrayElement(['Pintura', 'Escultura', 'Gravura', 'Fotografia']),
-      artist: faker.person.fullName(),
-      period: faker.helpers.arrayElement(['Contemporânea', 'Moderna', 'Clássica']),
-      technique: faker.helpers.arrayElement(['Óleo sobre tela', 'Acrílica', 'Bronze', 'Mármore']),
-      provenance: faker.lorem.sentence(),
-    }),
-    NAUTICA: (category, subcategory) => ({
-      title: `Embarcação ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      boatType: faker.helpers.arrayElement(['Lancha', 'Veleiro', 'Jet Ski', 'Caiaque']),
-      boatLength: `${faker.number.float({ min: 2, max: 20, precision: 0.1 })}m`,
-      hullMaterial: faker.helpers.arrayElement(['Fibra de Vidro', 'Alumínio', 'Madeira']),
-      onboardEquipment: faker.lorem.sentence(),
-    }),
-    ALIMENTOS: (category, subcategory) => ({
-      title: `Alimento ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      productName: faker.commerce.productName(),
-      quantity: `${faker.number.int({ min: 1, max: 100 })}kg`,
-      packagingType: faker.helpers.arrayElement(['Saco', 'Caixa', 'Granel']),
-      expirationDate: faker.date.future(),
-      storageConditions: faker.helpers.arrayElement(['Ambiente', 'Refrigerado', 'Congelado']),
-    }),
-    METAIS_PRECIOSOS: (category, subcategory) => ({
-      title: `Metal Precioso ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      preciousMetalType: faker.helpers.arrayElement(['Ouro', 'Prata', 'Platina', 'Paládio']),
-      purity: faker.helpers.arrayElement(['24K', '18K', '925', '950']),
-      totalWeight: `${faker.number.float({ min: 1, max: 1000, precision: 0.1 })}g`,
-    }),
-    PRODUTOS_FLORESTAIS: (category, subcategory) => ({
-      title: `Produto Florestal ${faker.commerce.productName()}`,
-      description: faker.lorem.sentence(),
-      categoryId: category.id,
-      subcategoryId: subcategory.id,
-      forestGoodsType: faker.helpers.arrayElement(['Madeira em Tora', 'Celulose', 'Carvão', 'Resina']),
-      volumeOrQuantity: `${faker.number.int({ min: 1, max: 500 })}m³`,
-      species: faker.animal.type(),
-      dofNumber: faker.string.numeric(10),
-    }),
-  };
-
-  for (const status of assetStatuses) {
-    const assetTypeSlug = faker.helpers.arrayElement(Object.keys(assetCreators));
-    const category = categoryMap.get(assetTypeSlug.toLowerCase());
-    const subcategory = faker.helpers.arrayElement(subcategories.filter(s => s.parentCategoryId === category.id));
-
-    const assetData = assetCreators[assetTypeSlug](category, subcategory);
-    const imageInfo = generateImageUrls(3);
-    const randomCity = faker.helpers.arrayElement(cities);
-
-    const isJudicial = faker.datatype.boolean();
-
-    const { categoryId, subcategoryId, ...restAssetData } = assetData;
-
-    const finalAssetData: Prisma.AssetCreateInput = {
-        ...restAssetData,
-        publicId: faker.string.uuid(),
-        evaluationValue: faker.number.float({ min: 1000, max: 150000, precision: 0.01 }),
-        status: status,
-        tenant: { connect: { id: tenantId } },
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        subcategory: subcategoryId ? { connect: { id: subcategoryId } } : undefined,
-        judicialProcess: isJudicial && judicialProcesses.length > 0 ? { connect: { id: faker.helpers.arrayElement(judicialProcesses).id } } : undefined,
-        seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
-        imageUrl: imageInfo.imageUrl,
-        imageMediaId: imageInfo.imageMediaId,
-        galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-        mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
+        imageUrl: assetMedia.url,
+        imageMediaId: assetMedia.id,
+        galleryImageUrls: [assetMedia.url],
+        mediaItemIds: [assetMedia.id],
         locationCity: randomCity.name,
         locationState: randomCity.stateId,
-        address: faker.location.streetAddress(true),
-        latitude: faker.location.latitude(),
-        longitude: faker.location.longitude(),
+        address: faker.location.streetAddress(),
+        zipCode: randomCity.zipCode,
+        latitude: parseFloat(faker.location.latitude()),
+        longitude: parseFloat(faker.location.longitude()),
     };
 
     const asset = await prisma.asset.create({ data: finalAssetData });
     assets.push(asset);
-    console.log(`Created asset with status: ${status}`);
   }
+
   return assets;
 }
 
-async function createAuction(tenantId: string, auctioneers: any[], sellers: any[], cities: any[], type: AuctionType, title: string, courts: any[], districts: any[], branches: any[]) {
+async function createAuction(tenantId: string, auctioneers: any[], sellers: any[], cities: any[], type: AuctionType, title: string, courts: any[], districts: any[], branches: any[], status?: AuctionStatus) {
     const randomCity = faker.helpers.arrayElement(cities);
     const isJudicial = type === AuctionType.JUDICIAL;
+    const auctionStatus = status || faker.helpers.arrayElement(Object.values(AuctionStatus).filter(s => s !== 'RASCUNHO'));
+
     const auction = await prisma.auction.create({
       data: {
         title: `${title} #${faker.string.uuid().substring(0, 4)}`,
         description: faker.lorem.paragraph(),
-        status: faker.helpers.arrayElement(Object.values(AuctionStatus).filter(s => s !== 'RASCUNHO' && s !== 'EM_PREPARACAO')), // Exclude RASCUNHO and EM_PREPARACAO for active auctions
+        status: auctionStatus,
         auctionDate: faker.date.soon(),
         endDate: faker.date.future(),
         auctionType: type,
         auctionMethod: faker.helpers.arrayElement(Object.values(AuctionMethod)),
         participation: faker.helpers.arrayElement(Object.values(Participation)),
         onlineUrl: faker.internet.url(),
-        address: faker.location.streetAddress(true),
-        zipCode: faker.location.zipCode(),
-        latitude: faker.location.latitude(),
-        longitude: faker.location.longitude(),
-        softCloseEnabled: faker.datatype.boolean(),
-        softCloseMinutes: faker.number.int({ min: 1, max: 5 }),
-        allowInstallmentBids: faker.datatype.boolean(),
-        automaticBiddingEnabled: faker.datatype.boolean(),
-        silentBiddingEnabled: faker.datatype.boolean(),
-        floorPrice: faker.number.float({ min: 1000, max: 10000, precision: 0.01 }),
+        address: faker.location.streetAddress(),
+        zipCode: randomCity.zipCode,
+        latitude: parseFloat(faker.location.latitude()),
+        longitude: parseFloat(faker.location.longitude()),
+        softCloseEnabled: true,
+        softCloseMinutes: 2,
         tenant: { connect: { id: tenantId } },
         auctioneer: { connect: { id: faker.helpers.arrayElement(auctioneers).id } },
         seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
@@ -1059,61 +421,56 @@ async function createAuction(tenantId: string, auctioneers: any[], sellers: any[
         court: isJudicial && courts.length > 0 ? { connect: { id: faker.helpers.arrayElement(courts).id } } : undefined,
         district: isJudicial && districts.length > 0 ? { connect: { id: faker.helpers.arrayElement(districts).id } } : undefined,
         branch: isJudicial && branches.length > 0 ? { connect: { id: faker.helpers.arrayElement(branches).id } } : undefined,
-        auctionCertificateUrl: faker.internet.url(),
-        evaluationReportUrl: faker.internet.url(),
-        sellingBranch: faker.lorem.words(3),
       },
     });
     return auction;
 }
 
-async function createLotsForAuction(auction: any, availableAssets: any[], numberOfLots: number, cities: any[]) {
+async function createLotsForAuction(auction: any, assetsForAuction: any[], cities: any[], mediaItems: any[]) {
     const createdLots = [];
-    const assetsForAuction = faker.helpers.arrayElements(availableAssets, numberOfLots);
 
-    for (const asset of assetsForAuction) {
-        const imageInfo = generateImageUrls(3);
+    for (let i = 0; i < assetsForAuction.length; i++) {
+        const asset = assetsForAuction[i];
         const randomCity = faker.helpers.arrayElement(cities);
+        const assetMedia = faker.helpers.arrayElement(mediaItems);
+
+        let lotStatus: LotStatus;
+        switch (auction.status) {
+            case AuctionStatus.ABERTO_PARA_LANCES:
+                lotStatus = LotStatus.ABERTO;
+                break;
+            case AuctionStatus.ENCERRADO:
+            case AuctionStatus.FINALIZADO:
+                lotStatus = LotStatus.VENDIDO;
+                break;
+            case AuctionStatus.CANCELADO:
+                lotStatus = LotStatus.CANCELADO;
+                break;
+            default:
+                lotStatus = LotStatus.EM_BREVE;
+        }
 
         const lot = await prisma.lot.create({
             data: {
                 auctionId: auction.id,
-                number: `${createdLots.length + 1}`,
+                number: `${i + 1}`,
                 title: asset.title,
                 description: asset.description,
                 initialPrice: asset.evaluationValue,
-                price: asset.evaluationValue * 1.1, // Simulate a slightly higher current price
-                secondInitialPrice: asset.evaluationValue * 0.9,
-                bidIncrementStep: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-                status: faker.helpers.arrayElement(Object.values(LotStatus).filter(s => s !== 'RASCUNHO')),
-                isFeatured: faker.datatype.boolean(),
-                isExclusive: faker.datatype.boolean(),
-                discountPercentage: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 20 }) : null,
-                imageUrl: imageInfo.imageUrl,
-                imageMediaId: imageInfo.imageMediaId,
-                galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-                mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
-                type: auction.auctionType, // Use auction type for lot type
-                condition: faker.helpers.arrayElement(['Novo', 'Usado - Bom', 'Usado - Regular', 'Danificado']),
-                winningBidTermUrl: faker.internet.url(),
-                allowInstallmentBids: faker.datatype.boolean(),
-                isRelisted: faker.datatype.boolean(),
-                relistCount: faker.number.int({ min: 0, max: 3 }),
-                endDate: faker.date.future(),
-                lotSpecificAuctionDate: faker.date.soon(),
-                secondAuctionDate: faker.date.future(),
+                status: lotStatus,
+                imageUrl: assetMedia.url,
+                imageMediaId: assetMedia.id,
+                galleryImageUrls: [assetMedia.url],
+                mediaItemIds: [assetMedia.id],
                 tenantId: auction.tenantId,
                 categoryId: asset.categoryId,
                 subcategoryId: asset.subcategoryId,
-                sellerId: asset.sellerId || auction.sellerId, // Use asset seller or auction seller
+                sellerId: asset.sellerId || auction.sellerId,
                 auctioneerId: auction.auctioneerId,
                 cityId: randomCity.id,
                 stateId: randomCity.stateId,
                 cityName: randomCity.name,
                 stateUf: randomCity.stateId,
-                latitude: faker.location.latitude(),
-                longitude: faker.location.longitude(),
-                mapAddress: faker.location.streetAddress(true),
                 evaluationValue: asset.evaluationValue,
                 auctionName: auction.title,
             },
@@ -1138,254 +495,7 @@ async function createLotsForAuction(auction: any, availableAssets: any[], number
     return createdLots;
 }
 
-async function createLotsForAllStatuses(auction: any, availableAssets: any[], cities: any[]) {
-  const lots = [];
-  const lotStatuses = Object.values(LotStatus);
-
-  for (const status of lotStatuses) {
-    const asset = faker.helpers.arrayElement(availableAssets.filter(a => a.status === AssetStatus.DISPONIVEL));
-    if (!asset) {
-        console.warn(`No available assets to create lot with status: ${status}. Skipping.`);
-        continue;
-    }
-    const imageInfo = generateImageUrls(3);
-    const randomCity = faker.helpers.arrayElement(cities);
-
-    const lot = await prisma.lot.create({
-        data: {
-            auctionId: auction.id,
-            number: `${lots.length + 1}-STATUS`,
-            title: `Lot with status ${status} - ${asset.title}`,
-            description: asset.description,
-            initialPrice: asset.evaluationValue,
-            price: asset.evaluationValue * 1.1,
-            secondInitialPrice: asset.evaluationValue * 0.9,
-            bidIncrementStep: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-            status: status,
-            isFeatured: faker.datatype.boolean(),
-            isExclusive: faker.datatype.boolean(),
-            discountPercentage: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 20 }) : null,
-            imageUrl: imageInfo.imageUrl,
-            imageMediaId: imageInfo.imageMediaId,
-            galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-            mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
-            type: auction.auctionType,
-            condition: faker.helpers.arrayElement(['Novo', 'Usado - Bom', 'Usado - Regular', 'Danificado']),
-            winningBidTermUrl: faker.internet.url(),
-            allowInstallmentBids: faker.datatype.boolean(),
-            isRelisted: faker.datatype.boolean(),
-            relistCount: faker.number.int({ min: 0, max: 3 }),
-            endDate: faker.date.future(),
-            lotSpecificAuctionDate: faker.date.soon(),
-            secondAuctionDate: faker.date.future(),
-            tenantId: auction.tenantId,
-            categoryId: asset.categoryId,
-            subcategoryId: asset.subcategoryId,
-            sellerId: asset.sellerId || auction.sellerId,
-            auctioneerId: auction.auctioneerId,
-            cityId: randomCity.id,
-            stateId: randomCity.stateId,
-            cityName: randomCity.name,
-            stateUf: randomCity.stateId,
-            latitude: faker.location.latitude(),
-            longitude: faker.location.longitude(),
-            mapAddress: faker.location.streetAddress(true),
-            evaluationValue: asset.evaluationValue,
-            auctionName: auction.title,
-        },
-    });
-
-    await prisma.assetsOnLots.create({
-        data: {
-            lotId: lot.id,
-            assetId: asset.id,
-            assignedBy: 'seed-script',
-        }
-    });
-
-    await prisma.asset.update({
-        where: { id: asset.id },
-        data: { status: AssetStatus.LOTEADO },
-    });
-
-    const lotWithAsset = await prisma.lot.findUnique({ where: { id: lot.id }, include: { assets: true } });
-    lots.push(lotWithAsset);
-    console.log(`Created lot with status: ${status}`);
-  }
-  return lots;
-}
-
-async function createAuctionsForAllStatuses(tenantId: string, auctioneers: any[], sellers: any[], cities: any[], courts: any[], districts: any[], branches: any[]) {
-  const auctions = [];
-  const auctionStatuses = Object.values(AuctionStatus);
-
-  for (const status of auctionStatuses) {
-    const type = faker.helpers.arrayElement(Object.values(AuctionType));
-    const isJudicial = type === AuctionType.JUDICIAL;
-    const randomCity = faker.helpers.arrayElement(cities);
-
-    const auction = await prisma.auction.create({
-      data: {
-        title: `Auction with status ${status} #${faker.string.uuid().substring(0, 4)}`,
-        description: faker.lorem.paragraph(),
-        status: status,
-        auctionDate: faker.date.soon(),
-        endDate: faker.date.future(),
-        auctionType: type,
-        auctionMethod: faker.helpers.arrayElement(Object.values(AuctionMethod)),
-        participation: faker.helpers.arrayElement(Object.values(Participation)),
-        onlineUrl: faker.internet.url(),
-        address: faker.location.streetAddress(true),
-        zipCode: faker.location.zipCode(),
-        latitude: faker.location.latitude(),
-        longitude: faker.location.longitude(),
-        softCloseEnabled: faker.datatype.boolean(),
-        softCloseMinutes: faker.number.int({ min: 1, max: 5 }),
-        allowInstallmentBids: faker.datatype.boolean(),
-        automaticBiddingEnabled: faker.datatype.boolean(),
-        silentBiddingEnabled: faker.datatype.boolean(),
-        floorPrice: faker.number.float({ min: 1000, max: 10000, precision: 0.01 }),
-        tenant: { connect: { id: tenantId } },
-        auctioneer: { connect: { id: faker.helpers.arrayElement(auctioneers).id } },
-        seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
-        city: { connect: { id: randomCity.id } },
-        state: { connect: { id: randomCity.stateId } },
-        court: isJudicial && courts.length > 0 ? { connect: { id: faker.helpers.arrayElement(courts).id } } : undefined,
-        district: isJudicial && districts.length > 0 ? { connect: { id: faker.helpers.arrayElement(districts).id } } : undefined,
-        branch: isJudicial && branches.length > 0 ? { connect: { id: faker.helpers.arrayElement(branches).id } } : undefined,
-        auctionCertificateUrl: faker.internet.url(),
-        evaluationReportUrl: faker.internet.url(),
-        sellingBranch: faker.lorem.words(3),
-      },
-    });
-    auctions.push(auction);
-    console.log(`Created auction with status: ${status}`);
-  }
-  return auctions;
-}
-
-async function createCapitalCityAuctionsAndLots(tenantId: string, auctioneers: any[], sellers: any[], cities: any[], capitalCities: any[], availableAssets: any[], courts: any[], districts: any[], branches: any[]) {
-  const createdAuctions = [];
-  const createdLots = [];
-
-  for (const capitalCity of capitalCities) {
-    const type = faker.helpers.arrayElement(Object.values(AuctionType));
-    const isJudicial = type === AuctionType.JUDICIAL;
-    const auction = await prisma.auction.create({
-      data: {
-        title: `Leilão na Capital ${capitalCity.name} #${faker.string.uuid().substring(0, 4)}`,
-        description: faker.lorem.paragraph(),
-        status: faker.helpers.arrayElement(Object.values(AuctionStatus).filter(s => s !== 'RASCUNHO' && s !== 'EM_PREPARACAO')),
-        auctionDate: faker.date.soon(),
-        endDate: faker.date.future(),
-        auctionType: type,
-        auctionMethod: faker.helpers.arrayElement(Object.values(AuctionMethod)),
-        participation: faker.helpers.arrayElement(Object.values(Participation)),
-        onlineUrl: faker.internet.url(),
-        address: `${faker.location.streetAddress()}, ${capitalCity.name} - ${capitalCity.stateId}`, // Address for capital city
-        zipCode: faker.location.zipCode(),
-        latitude: faker.location.latitude(), // Placeholder, ideally center of capital
-        longitude: faker.location.longitude(), // Placeholder, ideally center of capital
-        softCloseEnabled: faker.datatype.boolean(),
-        softCloseMinutes: faker.number.int({ min: 1, max: 5 }),
-        allowInstallmentBids: faker.datatype.boolean(),
-        automaticBiddingEnabled: faker.datatype.boolean(),
-        silentBiddingEnabled: faker.datatype.boolean(),
-        floorPrice: faker.number.float({ min: 1000, max: 10000, precision: 0.01 }),
-        tenant: { connect: { id: tenantId } },
-        auctioneer: { connect: { id: faker.helpers.arrayElement(auctioneers).id } },
-        seller: !isJudicial && sellers.length > 0 ? { connect: { id: faker.helpers.arrayElement(sellers).id } } : undefined,
-        city: { connect: { id: capitalCity.id } },
-        state: { connect: { id: capitalCity.stateId } },
-        court: isJudicial && courts.length > 0 ? { connect: { id: faker.helpers.arrayElement(courts).id } } : undefined,
-        district: isJudicial && districts.length > 0 ? { connect: { id: faker.helpers.arrayElement(districts).id } } : undefined,
-        branch: isJudicial && branches.length > 0 ? { connect: { id: faker.helpers.arrayElement(branches).id } } : undefined,
-        auctionCertificateUrl: faker.internet.url(),
-        evaluationReportUrl: faker.internet.url(),
-        sellingBranch: faker.lorem.words(3),
-      },
-    });
-    createdAuctions.push(auction);
-    console.log(`Created auction in capital: ${capitalCity.name}`);
-
-    const suitableAssets = availableAssets.filter(a => (type === AuctionType.JUDICIAL ? !!a.judicialProcessId : !a.judicialProcessId) && a.status === AssetStatus.DISPONIVEL);
-    if (suitableAssets.length > 0) {
-        const asset = faker.helpers.arrayElement(suitableAssets);
-        const imageInfo = generateImageUrls(3);
-
-        const lot = await prisma.lot.create({
-            data: {
-                auctionId: auction.id,
-                number: `1-CAPITAL`,
-                title: `Lot na Capital ${capitalCity.name} - ${asset.title}`,
-                description: asset.description,
-                initialPrice: asset.evaluationValue,
-                price: asset.evaluationValue * 1.1,
-                secondInitialPrice: asset.evaluationValue * 0.9,
-                bidIncrementStep: faker.number.float({ min: 50, max: 500, precision: 0.01 }),
-                status: faker.helpers.arrayElement(Object.values(LotStatus).filter(s => s !== 'RASCUNHO')),
-                isFeatured: faker.datatype.boolean(),
-                isExclusive: faker.datatype.boolean(),
-                discountPercentage: faker.datatype.boolean() ? faker.number.int({ min: 5, max: 20 }) : null,
-                imageUrl: imageInfo.imageUrl,
-                imageMediaId: imageInfo.imageMediaId,
-                galleryImageUrls: imageInfo.galleryImageUrls as Prisma.JsonArray,
-                mediaItemIds: imageInfo.mediaItemIds as Prisma.JsonArray,
-                type: auction.auctionType,
-                condition: faker.helpers.arrayElement(['Novo', 'Usado - Bom', 'Usado - Regular', 'Danificado']),
-                winningBidTermUrl: faker.internet.url(),
-                allowInstallmentBids: faker.datatype.boolean(),
-                isRelisted: faker.datatype.boolean(),
-                relistCount: faker.number.int({ min: 0, max: 3 }),
-                endDate: faker.date.future(),
-                lotSpecificAuctionDate: faker.date.soon(),
-                secondAuctionDate: faker.date.future(),
-                tenantId: auction.tenantId,
-                categoryId: asset.categoryId,
-                subcategoryId: asset.subcategoryId,
-                sellerId: asset.sellerId || auction.sellerId,
-                auctioneerId: auction.auctioneerId,
-                cityId: capitalCity.id,
-                stateId: capitalCity.stateId,
-                cityName: capitalCity.name,
-                stateUf: capitalCity.stateId,
-                latitude: faker.location.latitude(),
-                longitude: faker.location.longitude(),
-                mapAddress: faker.location.streetAddress(true),
-                evaluationValue: asset.evaluationValue,
-                auctionName: auction.title,
-            },
-        });
-
-        await prisma.assetsOnLots.create({
-            data: {
-                lotId: lot.id,
-                assetId: asset.id,
-                assignedBy: 'seed-script',
-            }
-        });
-
-        await prisma.asset.update({
-            where: { id: asset.id },
-            data: { status: AssetStatus.LOTEADO },
-        });
-        createdLots.push(lot);
-        console.log(`Created lot in capital: ${capitalCity.name}`);
-    } else {
-        console.warn(`No suitable assets for lot in capital: ${capitalCity.name}. Skipping lot creation.`);
-    }
-  }
-  return { createdAuctions, createdLots };
-}
-
 async function createAuctionStages(auctions: any[]) {
-  const existingStages = await prisma.auctionStage.findMany({ take: 1 });
-  if (existingStages.length > 0) {
-    console.log('AuctionStage table already has data. Skipping creation.');
-    return [];
-  }
-
-  console.log('Creating auction stages...');
   const createdStages = [];
   for (const auction of auctions) {
     for (let i = 0; i < 2; i++) {
@@ -1393,11 +503,11 @@ async function createAuctionStages(auctions: any[]) {
       const endDate = faker.date.future({ refDate: startDate });
       const stage = await prisma.auctionStage.create({
         data: {
-          name: `Stage ${i + 1} for ${auction.title}`,
+          name: `Etapa ${i + 1}`,
           startDate: startDate,
           endDate: endDate,
           auctionId: auction.id,
-          initialPrice: faker.number.float({ min: 100, max: 10000, precision: 0.01 }),
+          initialPrice: faker.number.float({ min: 100, max: 10000, precision: 2 }),
         },
       });
       createdStages.push(stage);
@@ -1407,33 +517,56 @@ async function createAuctionStages(auctions: any[]) {
   return createdStages;
 }
 
-async function createUserWins(bidders: any[], auctions: any[]) {
+async function createBidsForLots(lots: any[], bidders: any[], bidCount: number) {
+    for (const lot of lots) {
+        if (lot.status === LotStatus.ABERTO || lot.status === LotStatus.VENDIDO) {
+            let lastBidAmount = lot.initialPrice;
+            for (let i = 0; i < bidCount; i++) {
+                const bidder = faker.helpers.arrayElement(bidders);
+                lastBidAmount += faker.number.int({ min: 100, max: 1000 });
+                await prisma.bid.create({
+                    data: {
+                        lotId: lot.id,
+                        auctionId: lot.auctionId,
+                        bidderId: bidder.id,
+                        amount: lastBidAmount,
+                        tenantId: lot.tenantId,
+                    }
+                });
+            }
+        }
+    }
+    console.log(`Created bids for ${lots.length} lots.`);
+}
+
+async function createUserWins(bidders: any[], lots: any[]) {
   const userWins = [];
   console.log('Creating user wins...');
-  for (const bidder of bidders) {
-    const randomAuction = faker.helpers.arrayElement(auctions.filter(a => a.status === AuctionStatus.ENCERRADO || a.status === AuctionStatus.FINALIZADO));
-    if (!randomAuction) continue;
+  const lotsToWin = lots.filter(l => l.status === LotStatus.VENDIDO);
 
-    const lotsInAuction = await prisma.lot.findMany({ where: { auctionId: randomAuction.id } });
-    if (lotsInAuction.length === 0) continue;
-
-    const randomLot = faker.helpers.arrayElement(lotsInAuction);
-
-    const userWin = await prisma.userWin.upsert({
-      where: { lotId: randomLot.id },
-      update: {},
-      create: {
-        userId: bidder.id,
-        lotId: randomLot.id,
-        winningBidAmount: faker.number.float({ min: randomLot.initialPrice || 1000, max: (randomLot.initialPrice || 1000) * 2, precision: 0.01 }),
-        winDate: faker.date.recent(),
-        paymentStatus: faker.helpers.arrayElement(['PENDENTE', 'PAGO']),
-        invoiceUrl: faker.internet.url(),
-      },
+  for (const lot of lotsToWin) {
+    const bidder = faker.helpers.arrayElement(bidders);
+    const highestBid = await prisma.bid.findFirst({
+        where: { lotId: lot.id },
+        orderBy: { amount: 'desc' }
     });
-    userWins.push(userWin);
-    console.log(`Created win for user ${bidder.email} on lot ${randomLot.title}`);
+
+    if (highestBid) {
+        const userWin = await prisma.userWin.upsert({
+          where: { lotId: lot.id },
+          update: { userId: highestBid.bidderId, winningBidAmount: highestBid.amount },
+          create: {
+            userId: highestBid.bidderId,
+            lotId: lot.id,
+            winningBidAmount: highestBid.amount,
+            winDate: new Date(),
+            paymentStatus: 'PENDENTE',
+          },
+        });
+        userWins.push(userWin);
+    }
   }
+  console.log(`Created ${userWins.length} user wins.`);
   return userWins;
 }
 
@@ -1441,64 +574,53 @@ async function createInstallmentPayments(userWins: any[], installmentsPerWin: nu
   console.log('Creating installment payments...');
   const createdInstallments = [];
   for (const userWin of userWins) {
+    const amount = userWin.winningBidAmount / installmentsPerWin;
     for (let i = 0; i < installmentsPerWin; i++) {
-      const amount = userWin.winningBidAmount / installmentsPerWin;
-      const dueDate = faker.date.future({ refDate: userWin.winDate, years: 1 });
-      const status = i === 0 ? 'PAGO' : faker.helpers.arrayElement(['PENDENTE', 'ATRASADO']);
-
       const installment = await prisma.installmentPayment.create({
         data: {
           amount: amount,
-          dueDate: dueDate,
-          status: status,
+          dueDate: faker.date.future({ years: 1 }),
+          status: 'PENDENTE',
           userWinId: userWin.id,
           installmentNumber: i + 1,
-          paymentDate: status === 'PAGO' ? faker.date.recent({ refDate: dueDate }) : undefined,
-          paymentMethod: status === 'PAGO' ? faker.helpers.arrayElement(['Cartão de Crédito', 'Boleto', 'Pix']) : undefined,
-          transactionId: status === 'PAGO' ? faker.string.uuid() : undefined,
-          lots: { connect: { id: userWin.lotId } }, // Connect to the lot via the many-to-many relation
         },
       });
       createdInstallments.push(installment);
-      console.log(`Created installment ${i + 1} for win ${userWin.id}`);
     }
   }
+  console.log(`Created ${createdInstallments.length} installment payments.`);
   return createdInstallments;
 }
 
-// =================================================================
-// BOILERPLATE DATA FUNCTIONS (can be customized if needed)
-// =================================================================
-
 async function createStatesAndCities() {
   const statesData = [
-    { uf: 'AC', name: 'Acre', capital: 'Rio Branco' },
-    { uf: 'AL', name: 'Alagoas', capital: 'Maceió' },
-    { uf: 'AP', name: 'Amapá', capital: 'Macapá' },
-    { uf: 'AM', name: 'Amazonas', capital: 'Manaus' },
-    { uf: 'BA', name: 'Bahia', capital: 'Salvador' },
-    { uf: 'CE', name: 'Ceará', capital: 'Fortaleza' },
-    { uf: 'DF', name: 'Distrito Federal', capital: 'Brasília' },
-    { uf: 'ES', name: 'Espírito Santo', capital: 'Vitória' },
-    { uf: 'GO', name: 'Goiás', capital: 'Goiânia' },
-    { uf: 'MA', name: 'Maranhão', capital: 'São Luís' },
-    { uf: 'MT', name: 'Mato Grosso', capital: 'Cuiabá' },
-    { uf: 'MS', name: 'Mato Grosso do Sul', capital: 'Campo Grande' },
-    { uf: 'MG', name: 'Minas Gerais', capital: 'Belo Horizonte' },
-    { uf: 'PA', name: 'Pará', capital: 'Belém' },
-    { uf: 'PB', name: 'Paraíba', capital: 'João Pessoa' },
-    { uf: 'PR', name: 'Paraná', capital: 'Curitiba' },
-    { uf: 'PE', name: 'Pernambuco', capital: 'Recife' },
-    { uf: 'PI', name: 'Piauí', capital: 'Teresina' },
-    { uf: 'RJ', name: 'Rio de Janeiro', capital: 'Rio de Janeiro' },
-    { uf: 'RN', name: 'Rio Grande do Norte', capital: 'Natal' },
-    { uf: 'RS', name: 'Rio Grande do Sul', capital: 'Porto Alegre' },
-    { uf: 'RO', name: 'Rondônia', capital: 'Porto Velho' },
-    { uf: 'RR', name: 'Roraima', capital: 'Boa Vista' },
-    { uf: 'SC', name: 'Santa Catarina', capital: 'Florianópolis' },
-    { uf: 'SP', name: 'São Paulo', capital: 'São Paulo' },
-    { uf: 'SE', name: 'Sergipe', capital: 'Aracaju' },
-    { uf: 'TO', name: 'Tocantins', capital: 'Palmas' },
+    { uf: 'AC', name: 'Acre', capital: 'Rio Branco', zip: '69900-000' },
+    { uf: 'AL', name: 'Alagoas', capital: 'Maceió', zip: '57000-000' },
+    { uf: 'AP', name: 'Amapá', capital: 'Macapá', zip: '68900-000' },
+    { uf: 'AM', name: 'Amazonas', capital: 'Manaus', zip: '69000-000' },
+    { uf: 'BA', name: 'Bahia', capital: 'Salvador', zip: '40000-000' },
+    { uf: 'CE', name: 'Ceará', capital: 'Fortaleza', zip: '60000-000' },
+    { uf: 'DF', name: 'Distrito Federal', capital: 'Brasília', zip: '70000-000' },
+    { uf: 'ES', name: 'Espírito Santo', capital: 'Vitória', zip: '29000-000' },
+    { uf: 'GO', name: 'Goiás', capital: 'Goiânia', zip: '74000-000' },
+    { uf: 'MA', name: 'Maranhão', capital: 'São Luís', zip: '65000-000' },
+    { uf: 'MT', name: 'Mato Grosso', capital: 'Cuiabá', zip: '78000-000' },
+    { uf: 'MS', name: 'Mato Grosso do Sul', capital: 'Campo Grande', zip: '79000-000' },
+    { uf: 'MG', name: 'Minas Gerais', capital: 'Belo Horizonte', zip: '30000-000' },
+    { uf: 'PA', name: 'Pará', capital: 'Belém', zip: '66000-000' },
+    { uf: 'PB', name: 'Paraíba', capital: 'João Pessoa', zip: '58000-000' },
+    { uf: 'PR', name: 'Paraná', capital: 'Curitiba', zip: '80000-000' },
+    { uf: 'PE', name: 'Pernambuco', capital: 'Recife', zip: '50000-000' },
+    { uf: 'PI', name: 'Piauí', capital: 'Teresina', zip: '64000-000' },
+    { uf: 'RJ', name: 'Rio de Janeiro', capital: 'Rio de Janeiro', zip: '20000-000' },
+    { uf: 'RN', name: 'Rio Grande do Norte', capital: 'Natal', zip: '59000-000' },
+    { uf: 'RS', name: 'Rio Grande do Sul', capital: 'Porto Alegre', zip: '90000-000' },
+    { uf: 'RO', name: 'Rondônia', capital: 'Porto Velho', zip: '76800-000' },
+    { uf: 'RR', name: 'Roraima', capital: 'Boa Vista', zip: '69300-000' },
+    { uf: 'SC', name: 'Santa Catarina', capital: 'Florianópolis', zip: '88000-000' },
+    { uf: 'SP', name: 'São Paulo', capital: 'São Paulo', zip: '01000-000' },
+    { uf: 'SE', name: 'Sergipe', capital: 'Aracaju', zip: '49000-000' },
+    { uf: 'TO', name: 'Tocantins', capital: 'Palmas', zip: '77000-000' },
   ];
 
   const states = [];
@@ -1507,20 +629,20 @@ async function createStatesAndCities() {
   for (const stateData of statesData) {
     const state = await prisma.state.upsert({
       where: { uf: stateData.uf },
-      update: {},
+      update: {}, 
       create: { uf: stateData.uf, name: stateData.name, slug: stateData.name.toLowerCase() },
     });
     states.push(state);
 
     const capitalCity = await prisma.city.upsert({
       where: { name_stateId: { name: stateData.capital, stateId: state.id } },
-      update: {},
-      create: { name: stateData.capital, stateId: state.id, slug: stateData.capital.toLowerCase() },
+      update: { zipCode: stateData.zip },
+      create: { name: stateData.capital, stateId: state.id, slug: stateData.capital.toLowerCase(), zipCode: stateData.zip },
     });
     cities.push(capitalCity);
   }
 
-  console.log('Created/found states and cities.');
+  console.log('Created/found states and capital cities.');
   return { states, cities };
 }
 
@@ -1528,7 +650,7 @@ async function createCategoriesAndSubcategories() {
   const categoriesData = [
     { name: 'Imóveis', slug: 'imoveis', sub: ['Apartamentos', 'Casas', 'Terrenos'] },
     { name: 'Veículos', slug: 'veiculos', sub: ['Carros', 'Motos', 'Caminhões'] },
-    { name: 'Eletrônicos', slug: 'eletronicos', sub: ['Celulares', 'Notebooks', 'TVs'] },
+    { name: 'Semoventes', slug: 'semoventes', sub: ['Bovinos', 'Equinos'] },
   ];
   const categories = [];
   const subcategories = [];
@@ -1536,7 +658,7 @@ async function createCategoriesAndSubcategories() {
   for (const catData of categoriesData) {
     const category = await prisma.lotCategory.upsert({
       where: { slug: catData.slug },
-      update: {},
+      update: {}, 
       create: { name: catData.name, slug: catData.slug, hasSubcategories: true },
     });
     categories.push(category);
@@ -1544,7 +666,7 @@ async function createCategoriesAndSubcategories() {
     for (const subName of catData.sub) {
       const sub = await prisma.subcategory.upsert({
         where: { name_parentCategoryId: { name: subName, parentCategoryId: category.id } },
-        update: {},
+        update: {}, 
         create: { name: subName, slug: subName.toLowerCase(), parentCategoryId: category.id },
       });
       subcategories.push(sub);
@@ -1558,10 +680,10 @@ async function createCourts(states: any[], count: number) {
   const courts = [];
   for (let i = 0; i < count; i++) {
     const state = faker.helpers.arrayElement(states);
-    const slug = `tj-${state.uf.toLowerCase()}-${i}-${faker.string.uuid().substring(0, 4)}`; // Added UUID part for uniqueness
+    const slug = `tj-${state.uf.toLowerCase()}-${i}`;
     const court = await prisma.court.upsert({
-      where: { slug: slug }, // Use slug for upsert where clause
-      update: {},
+      where: { slug },
+      update: {}, 
       create: {
         name: `Tribunal de Justiça de ${state.name} #${i+1}`,
         slug: slug,
@@ -1579,14 +701,13 @@ async function createJudicialDistricts(courts: any[], cities: any[], count: numb
     for (let i = 0; i < count; i++) {
         const city = faker.helpers.arrayElement(cities);
         const court = faker.helpers.arrayElement(courts);
-        const name = `Comarca de ${city.name} #${i+1}-${faker.string.uuid().substring(0, 4)}`; // Added UUID part for uniqueness
-        const slug = faker.helpers.slugify(name).toLowerCase(); // Slugify the unique name
+        const name = `Comarca de ${city.name} #${i+1}`;
         const district = await prisma.judicialDistrict.upsert({
-            where: { name: name }, // Use name for upsert where clause
-            update: {},
+            where: { name },
+            update: {}, 
             create: {
                 name: name,
-                slug: slug,
+                slug: faker.helpers.slugify(name).toLowerCase(),
                 stateId: city.stateId,
                 courtId: court?.id,
             },
@@ -1619,16 +740,15 @@ async function createJudicialProcesses(tenantId: string, courts: any[], branches
   const judicialProcesses = [];
   for (let i = 0; i < count; i++) {
     const branch = faker.helpers.arrayElement(branches);
-    const processNumber = faker.string.numeric(20);
     const judicialProcess = await prisma.judicialProcess.create({
       data: {
         publicId: faker.string.uuid(),
-        processNumber: processNumber,
+        processNumber: faker.string.numeric(20),
         tenantId: tenantId,
         courtId: faker.helpers.arrayElement(courts).id,
         branchId: branch.id,
         districtId: branch.districtId,
-        sellerId: faker.helpers.arrayElement(sellers).id, // A judicial process can have a seller
+        sellerId: faker.helpers.arrayElement(sellers).id,
       },
     });
     judicialProcesses.push(judicialProcess);
@@ -1636,6 +756,56 @@ async function createJudicialProcesses(tenantId: string, courts: any[], branches
   console.log(`Created ${judicialProcesses.length} judicial processes.`);
   return judicialProcesses;
 }
+
+async function downloadImage(url: string, filepath: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    https.get(url, (res) => {
+      if (res.statusCode === 302 || res.statusCode === 301) {
+        // Handle redirect
+        https.get(res.headers.location!, (res) => {
+          const writeStream = fs.createWriteStream(filepath);
+          res.pipe(writeStream);
+          writeStream.on('finish', resolve);
+          writeStream.on('error', reject);
+        }).on('error', reject);
+      } else {
+        const writeStream = fs.createWriteStream(filepath);
+        res.pipe(writeStream);
+        writeStream.on('finish', resolve);
+        writeStream.on('error', reject);
+      }
+    }).on('error', reject);
+  });
+}
+
+async function createMediaItems(count: number, tenantId: string) {
+    console.log(`Downloading ${count} images from Unsplash...`);
+    const mediaItems = [];
+    for (let i = 0; i < count; i++) {
+        const imageName = `image_${Date.now()}.jpg`;
+        const imagePath = path.join(UPLOADS_DIR, imageName);
+        const imageUrl = 'https://source.unsplash.com/random/800x600';
+
+        try {
+            await downloadImage(imageUrl, imagePath);
+            const mediaItem = await prisma.mediaItem.create({
+                data: {
+                    fileName: imageName,
+                    fileType: 'image/jpeg',
+                    size: fs.statSync(imagePath).size,
+                    url: `/uploads/${imageName}`,
+                    tenantId: tenantId,
+                }
+            });
+            mediaItems.push(mediaItem);
+            console.log(`Downloaded and created media item ${i + 1}/${count}`);
+        } catch (error) {
+            console.error(`Failed to download or create media item:`, error);
+        }
+    }
+    return mediaItems;
+}
+
 
 // =================================================================
 // EXECUTION

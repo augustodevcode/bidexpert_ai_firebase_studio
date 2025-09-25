@@ -26,7 +26,7 @@ import {
 
 const prisma = new PrismaClient();
 
-async function seedGeminiExtended() {
+export async function seedGeminiExtended() {
   console.log('Starting Gemini extended seeding...');
 
   // Fetch existing data to link new data
@@ -52,36 +52,40 @@ async function seedGeminiExtended() {
 
   // 1. Seed AuctionHabilitation
   console.log('Seeding AuctionHabilitation...');
-  await prisma.auctionHabilitation.createMany({
-    data: [
-      { userId: user1.id, auctionId: auction1.id },
-      { userId: user2.id, auctionId: auction1.id },
-    ],
-    skipDuplicates: true,
-  });
+  if(user1 && auction1) {
+    await prisma.auctionHabilitation.createMany({
+        data: [
+        { userId: user1.id, auctionId: auction1.id },
+        { userId: user2.id, auctionId: auction1.id },
+        ],
+        skipDuplicates: true,
+    });
+  }
   console.log('AuctionHabilitation seeded.');
 
   // 2. Seed AuctionStage
   console.log('Seeding AuctionStage...');
-  await prisma.auctionStage.createMany({
-    data: [
-      {
-        name: 'Primeiro Leilão',
-        startDate: faker.date.past(),
-        endDate: faker.date.future(),
-        auctionId: auction1.id,
-        initialPrice: faker.number.float({ min: 1000, max: 5000, precision: 0.01 }),
-      },
-      {
-        name: 'Segundo Leilão',
-        startDate: faker.date.future(),
-        endDate: faker.date.future(),
-        auctionId: auction1.id,
-        initialPrice: faker.number.float({ min: 500, max: 2500, precision: 0.01 }),
-      },
-    ],
-    skipDuplicates: true,
-  });
+  if(auction1) {
+    await prisma.auctionStage.createMany({
+        data: [
+        {
+            name: 'Primeiro Leilão',
+            startDate: faker.date.past(),
+            endDate: faker.date.future(),
+            auctionId: auction1.id,
+            initialPrice: faker.number.float({ min: 1000, max: 5000, multipleOf: 0.01 }),
+        },
+        {
+            name: 'Segundo Leilão',
+            startDate: faker.date.future(),
+            endDate: faker.date.future(),
+            auctionId: auction1.id,
+            initialPrice: faker.number.float({ min: 500, max: 2500, multipleOf: 0.01 }),
+        },
+        ],
+        skipDuplicates: true,
+    });
+  }
   console.log('AuctionStage seeded.');
 
   // 3. Seed ContactMessage
@@ -94,6 +98,7 @@ async function seedGeminiExtended() {
         subject: 'Dúvida sobre Leilão',
         message: faker.lorem.paragraph(),
         isRead: false,
+        tenantId: tenant1.id,
       },
       {
         name: faker.person.fullName(),
@@ -101,50 +106,29 @@ async function seedGeminiExtended() {
         subject: 'Feedback da Plataforma',
         message: faker.lorem.paragraph(),
         isRead: true,
+        tenantId: tenant1.id,
       },
     ],
     skipDuplicates: true,
   });
   console.log('ContactMessage seeded.');
 
-  // 4. Seed data_sources
-  console.log('Seeding data_sources...');
-  await prisma.data_sources.createMany({
+  // 4. Seed dataSource
+  console.log('Seeding dataSource...');
+  await prisma.dataSource.createMany({
     data: [
       {
         name: 'Leilões Ativos',
-        modelName: 'Auction',
-        fields: {
-          select: {
-            id: true,
-            title: true,
-            status: true,
-            auctionDate: true,
-          },
-          where: {
-            status: 'ABERTO_PARA_LANCES',
-          },
-        },
+        description: 'Fonte de dados para leilões abertos para lances',
       },
       {
         name: 'Usuários Habilitados',
-        modelName: 'User',
-        fields: {
-          select: {
-            id: true,
-            email: true,
-            fullName: true,
-            habilitationStatus: true,
-          },
-          where: {
-            habilitationStatus: 'HABILITADO',
-          },
-        },
+        description: 'Fonte de dados para usuários com habilitação aprovada',
       },
     ],
     skipDuplicates: true,
   });
-  console.log('data_sources seeded.');
+  console.log('dataSource seeded.');
 
   // 5. Seed DocumentTemplate
   console.log('Seeding DocumentTemplate...');
@@ -154,16 +138,19 @@ async function seedGeminiExtended() {
         name: 'Termo de Arrematação Padrão',
         type: DocumentTemplateType.WINNING_BID_TERM,
         content: '<h1>Termo de Arrematação</h1><p>Este documento certifica a arrematação do lote {{lot.title}} por {{user.fullName}}.</p>',
+        tenantId: tenant1.id,
       },
       {
         name: 'Relatório de Avaliação de Ativo',
         type: DocumentTemplateType.EVALUATION_REPORT,
         content: '<h1>Relatório de Avaliação</h1><p>Avaliação do ativo {{asset.title}}.</p>',
+        tenantId: tenant1.id,
       },
       {
         name: 'Certificado de Leilão',
         type: DocumentTemplateType.AUCTION_CERTIFICATE,
         content: '<h1>Certificado de Leilão</h1><p>Certificamos a realização do leilão {{auction.title}}.</p>',
+        tenantId: tenant1.id,
       },
     ],
     skipDuplicates: true,
@@ -172,174 +159,162 @@ async function seedGeminiExtended() {
 
   // 6. Seed MediaItem (standalone examples)
   console.log('Seeding MediaItem...');
-  await prisma.mediaItem.createMany({
-    data: [
-      {
-        fileName: 'image1.jpg',
-        mimeType: 'image/jpeg',
-        storagePath: 'uploads/image1.jpg',
-        urlOriginal: 'https://example.com/uploads/image1.jpg',
-        title: 'Imagem de Exemplo 1',
-        description: 'Descrição da imagem de exemplo 1',
-        uploadedByUserId: user1.id,
-      },
-      {
-        fileName: 'document1.pdf',
-        mimeType: 'application/pdf',
-        storagePath: 'uploads/document1.pdf',
-        urlOriginal: 'https://example.com/uploads/document1.pdf',
-        title: 'Documento de Exemplo 1',
-        description: 'Descrição do documento de exemplo 1',
-        uploadedByUserId: user2.id,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  if(user1 && user2) {
+    await prisma.mediaItem.createMany({
+        data: [
+        {
+            fileName: 'image1.jpg',
+            fileType: 'image/jpeg',
+            size: 12345,
+            url: 'uploads/image1.jpg',
+            tenantId: tenant1.id,
+        },
+        {
+            fileName: 'document1.pdf',
+            fileType: 'application/pdf',
+            size: 54321,
+            url: 'uploads/document1.pdf',
+            tenantId: tenant1.id,
+        },
+        ],
+        skipDuplicates: true,
+    });
+  }
   console.log('MediaItem seeded.');
 
   // 7. Seed Notification
   console.log('Seeding Notification...');
-  await prisma.notification.createMany({
-    data: [
-      {
-        userId: user1.id,
-        tenantId: tenant1.id,
-        message: 'Seu lance no lote X foi superado.',
-        link: `/dashboard/bids/${lot1.id}`,
-        isRead: false,
-      },
-      {
-        userId: user2.id,
-        tenantId: tenant1.id,
-        message: 'Você arrematou o lote Y!',
-        link: `/checkout/${lot1.id}`,
-        isRead: true,
-      },
-    ],
-    skipDuplicates: true,
-  });
+  if(user1 && user2 && lot1) {
+    await prisma.notification.createMany({
+        data: [
+        {
+            userId: user1.id,
+            tenantId: tenant1.id,
+            message: 'Seu lance no lote X foi superado.',
+            link: `/dashboard/bids/${lot1.id}`,
+            isRead: false,
+        },
+        {
+            userId: user2.id,
+            tenantId: tenant1.id,
+            message: 'Você arrematou o lote Y!',
+            link: `/checkout/${lot1.id}`,
+            isRead: true,
+        },
+        ],
+        skipDuplicates: true,
+    });
+  }
   console.log('Notification seeded.');
 
-  // 8. Ensure ENUM coverage for existing tables (examples)
-  // This part would typically involve updating the existing seed functions
-  // or adding specific create calls to cover all enum values.
-  // For this exercise, I'll demonstrate by adding a few specific cases.
+  // 8. Ensure ENUM coverage for existing tables
+  const auctioneer = await prisma.auctioneer.findFirst();
+  const seller = await prisma.seller.findFirst();
 
-  // Auction Statuses
-  await prisma.auction.create({
-    data: {
-      tenantId: tenant1.id,
-      title: 'Leilão de Rascunho',
-      description: 'Este leilão está em rascunho.',
-      status: AuctionStatus.RASCUNHO,
-      auctionDate: faker.date.future(),
-      auctioneer: { connect: { id: (await prisma.auctioneer.findFirst())?.id } },
-      seller: { connect: { id: (await prisma.seller.findFirst())?.id } },
-      publicId: faker.string.uuid(),
-      slug: faker.lorem.slug(),
-    },
-    skipDuplicates: true,
-  });
+  if(auctioneer && seller) {
+    await prisma.auction.create({
+        data: {
+        tenantId: tenant1.id,
+        title: 'Leilão de Rascunho',
+        description: 'Este leilão está em rascunho.',
+        status: AuctionStatus.RASCUNHO,
+        auctionDate: faker.date.future(),
+        auctioneerId: auctioneer.id,
+        sellerId: seller.id,
+        },
+    });
 
-  await prisma.auction.create({
-    data: {
-      tenantId: tenant1.id,
-      title: 'Leilão Cancelado',
-      description: 'Este leilão foi cancelado.',
-      status: AuctionStatus.CANCELADO,
-      auctionDate: faker.date.past(),
-      auctioneer: { connect: { id: (await prisma.auctioneer.findFirst())?.id } },
-      seller: { connect: { id: (await prisma.seller.findFirst())?.id } },
-      publicId: faker.string.uuid(),
-      slug: faker.lorem.slug(),
-    },
-    skipDuplicates: true,
-  });
+    await prisma.auction.create({
+        data: {
+        tenantId: tenant1.id,
+        title: 'Leilão Cancelado',
+        description: 'Este leilão foi cancelado.',
+        status: AuctionStatus.CANCELADO,
+        auctionDate: faker.date.past(),
+        auctioneerId: auctioneer.id,
+        sellerId: seller.id,
+        },
+    });
+  }
 
-  // Lot Statuses
-  await prisma.lot.create({
-    data: {
-      auctionId: auction1.id,
-      tenantId: tenant1.id,
-      title: 'Lote Não Vendido',
-      description: 'Este lote não foi vendido.',
-      price: faker.number.float({ min: 100, max: 1000, precision: 0.01 }),
-      status: LotStatus.NAO_VENDIDO,
-      type: AssetType.VEHICLE, // Example type
-      publicId: faker.string.uuid(),
-      slug: faker.lorem.slug(),
-    },
-    skipDuplicates: true,
-  });
+  if(auction1) {
+    await prisma.lot.create({
+        data: {
+        auctionId: auction1.id,
+        tenantId: tenant1.id,
+        title: 'Lote Não Vendido',
+        description: 'Este lote não foi vendido.',
+        initialPrice: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
+        status: LotStatus.NAO_VENDIDO,
+        categoryId: category1.id,
+        },
+    });
 
-  await prisma.lot.create({
-    data: {
-      auctionId: auction1.id,
-      tenantId: tenant1.id,
-      title: 'Lote Retirado',
-      description: 'Este lote foi retirado do leilão.',
-      price: faker.number.float({ min: 100, max: 1000, precision: 0.01 }),
-      status: LotStatus.RETIRADO,
-      type: AssetType.REAL_ESTATE, // Example type
-      publicId: faker.string.uuid(),
-      slug: faker.lorem.slug(),
-    },
-    skipDuplicates: true,
-  });
+    await prisma.lot.create({
+        data: {
+        auctionId: auction1.id,
+        tenantId: tenant1.id,
+        title: 'Lote Retirado',
+        description: 'Este lote foi retirado do leilão.',
+        initialPrice: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
+        status: LotStatus.RETIRADO,
+        categoryId: category1.id,
+        },
+    });
+  }
 
-  // User Habilitation Statuses
-  await prisma.user.update({
-    where: { id: user1.id },
-    data: { habilitationStatus: UserHabilitationStatus.HABILITADO },
-  });
-  await prisma.user.update({
-    where: { id: user2.id },
-    data: { habilitationStatus: UserHabilitationStatus.REJECTED_DOCUMENTS },
-  });
+  if(user1 && user2) {
+    await prisma.user.update({
+        where: { id: user1.id },
+        data: { habilitationStatus: UserHabilitationStatus.HABILITADO },
+    });
+    await prisma.user.update({
+        where: { id: user2.id },
+        data: { habilitationStatus: UserHabilitationStatus.REJECTED_DOCUMENTS },
+    });
+  }
 
-  // DirectSaleOffer Statuses
-  await prisma.directSaleOffer.create({
-    data: {
-      tenantId: tenant1.id,
-      sellerId: (await prisma.seller.findFirst())?.id || '',
-      categoryId: category1.id,
-      publicId: faker.string.uuid(),
-      title: 'Oferta de Venda Direta Expirada',
-      description: 'Esta oferta expirou.',
-      offerType: DirectSaleOfferType.BUY_NOW,
-      price: faker.number.float({ min: 1000, max: 5000, precision: 0.01 }),
-      status: DirectSaleOfferStatus.EXPIRED,
-      expiresAt: faker.date.past(),
-    },
-    skipDuplicates: true,
-  });
+  if(seller && category1) {
+    await prisma.directSaleOffer.create({
+        data: {
+        tenantId: tenant1.id,
+        sellerId: seller.id,
+        categoryId: category1.id,
+        publicId: faker.string.uuid(),
+        title: 'Oferta de Venda Direta Expirada',
+        description: 'Esta oferta expirou.',
+        offerType: DirectSaleOfferType.BUY_NOW,
+        price: faker.number.float({ min: 1000, max: 5000, multipleOf: 0.01 }),
+        status: DirectSaleOfferStatus.EXPIRED,
+        expiresAt: faker.date.past(),
+        },
+    });
 
-  await prisma.directSaleOffer.create({
-    data: {
-      tenantId: tenant1.id,
-      sellerId: (await prisma.seller.findFirst())?.id || '',
-      categoryId: category1.id,
-      publicId: faker.string.uuid(),
-      title: 'Oferta de Venda Direta em Rascunho',
-      description: 'Esta oferta está em rascunho.',
-      offerType: DirectSaleOfferType.ACCEPTS_PROPOSALS,
-      minimumOfferPrice: faker.number.float({ min: 500, max: 2000, precision: 0.01 }),
-      status: DirectSaleOfferStatus.RASCUNHO,
-    },
-    skipDuplicates: true,
-  });
+    await prisma.directSaleOffer.create({
+        data: {
+        tenantId: tenant1.id,
+        sellerId: seller.id,
+        categoryId: category1.id,
+        publicId: faker.string.uuid(),
+        title: 'Oferta de Venda Direta em Rascunho',
+        description: 'Esta oferta está em rascunho.',
+        offerType: DirectSaleOfferType.ACCEPTS_PROPOSALS,
+        minimumOfferPrice: faker.number.float({ min: 500, max: 2000, multipleOf: 0.01 }),
+        status: DirectSaleOfferStatus.RASCUNHO,
+        },
+    });
+  }
 
-  // UserDocument Statuses
   const documentType1 = await prisma.documentType.findFirst();
-  if (documentType1) {
+  if (documentType1 && user1 && user2) {
     await prisma.userDocument.create({
       data: {
         userId: user1.id,
         documentTypeId: documentType1.id,
         fileUrl: faker.internet.url(),
         status: UserDocumentStatus.APPROVED,
+        tenantId: tenant1.id,
       },
-      skipDuplicates: true,
     });
     await prisma.userDocument.create({
       data: {
@@ -348,12 +323,11 @@ async function seedGeminiExtended() {
         fileUrl: faker.internet.url(),
         status: UserDocumentStatus.REJECTED,
         rejectionReason: 'Documento ilegível.',
+        tenantId: tenant1.id,
       },
-      skipDuplicates: true,
     });
   }
 
-  // JudicialParty Types
   if (judicialProcess1) {
     await prisma.judicialParty.createMany({
       data: [
@@ -380,42 +354,32 @@ async function seedGeminiExtended() {
     });
   }
 
-  // Asset Statuses
-  await prisma.asset.create({
-    data: {
-      tenantId: tenant1.id,
-      publicId: faker.string.uuid(),
-      title: 'Ativo Loteado',
-      status: AssetStatus.LOTEADO,
-      categoryId: category1.id,
-      sellerId: (await prisma.seller.findFirst())?.id,
-      type: AssetType.VEHICLE,
-    },
-    skipDuplicates: true,
-  });
+  if(seller && category1) {
+    await prisma.asset.create({
+        data: {
+        tenantId: tenant1.id,
+        publicId: faker.string.uuid(),
+        title: 'Ativo Loteado',
+        status: AssetStatus.LOTEADO,
+        categoryId: category1.id,
+        sellerId: seller.id,
+        evaluationValue: 1000,
+        }, 
+    });
 
-  await prisma.asset.create({
-    data: {
-      tenantId: tenant1.id,
-      publicId: faker.string.uuid(),
-      title: 'Ativo Removido',
-      status: AssetStatus.REMOVIDO,
-      categoryId: category1.id,
-      sellerId: (await prisma.seller.findFirst())?.id,
-      type: AssetType.REAL_ESTATE,
-    },
-    skipDuplicates: true,
-  });
+    await prisma.asset.create({
+        data: {
+        tenantId: tenant1.id,
+        publicId: faker.string.uuid(),
+        title: 'Ativo Removido',
+        status: AssetStatus.REMOVIDO,
+        categoryId: category1.id,
+        sellerId: seller.id,
+        evaluationValue: 2000,
+        },
+    });
+  }
 
 
   console.log('Gemini extended seeding finished.');
 }
-
-seedGeminiExtended()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });

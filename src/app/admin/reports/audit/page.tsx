@@ -1,9 +1,9 @@
 // src/app/admin/reports/audit/page.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit, MapPin, Search, HelpCircle, FileSignature } from 'lucide-react';
+import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit, MapPin, Search, HelpCircle, FileSignature, RefreshCw } from 'lucide-react';
 import { getAuditDataAction, type AuditData } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -123,22 +123,23 @@ export default function AuditPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
-      try {
-        const data = await getAuditDataAction();
-        setAuditData(data);
-      } catch (e: any) {
-        toast({ title: 'Erro ao buscar dados de auditoria', description: e.message, variant: 'destructive' });
-      } finally {
-        setIsLoading(false);
-      }
+  const fetchData = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await getAuditDataAction();
+      setAuditData(data);
+    } catch (e: any) {
+      toast({ title: 'Erro ao buscar dados de auditoria', description: e.message, variant: 'destructive' });
+    } finally {
+      setIsLoading(false);
     }
-    fetchData();
   }, [toast]);
 
-  if (isLoading) {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (isLoading && !auditData) {
     return <div className="flex items-center justify-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando auditoria...</div>;
   }
   
@@ -161,14 +162,20 @@ export default function AuditPage() {
   return (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold font-headline flex items-center">
-            <ServerCrash className="h-6 w-6 mr-2 text-primary" />
-            Painel de Auditoria de Dados
-          </CardTitle>
-          <CardDescription>
-            Monitore a integridade e identifique inconsistências nos cadastros da plataforma.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle className="text-2xl font-bold font-headline flex items-center">
+                <ServerCrash className="h-6 w-6 mr-2 text-primary" />
+                Painel de Auditoria de Dados
+              </CardTitle>
+              <CardDescription>
+                Monitore a integridade e identifique inconsistências nos cadastros da plataforma.
+              </CardDescription>
+            </div>
+            <Button variant="outline" onClick={fetchData} disabled={isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                {isLoading ? 'Atualizando...' : 'Atualizar Dados'}
+            </Button>
         </CardHeader>
       </Card>
       
