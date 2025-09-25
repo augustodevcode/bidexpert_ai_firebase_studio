@@ -61,8 +61,9 @@ export class LotRepository {
   async create(lotData: Prisma.LotCreateInput, assetIds: string[]): Promise<Lot> {
     return getPrismaInstance().$transaction(async (tx) => {
       // 1. Create the Lot
+      const { tenantId, ...restOfLotData } = lotData as any;
       const newLot = await tx.lot.create({
-        data: lotData,
+        data: restOfLotData,
       });
 
       // 2. If there are assetIds, create the entries in the join table

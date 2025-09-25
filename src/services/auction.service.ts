@@ -156,6 +156,9 @@ export class AuctionService {
       // Defensively delete tenantId from restOfData to avoid Prisma error
       delete (restOfData as any).tenantId;
 
+      // Defensively delete tenantId from restOfData to avoid Prisma error
+      delete (restOfData as any).tenantId;
+
       const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate)
         ? new Date(auctionStages[0].startDate as Date)
         : utcToZonedTime(new Date(), 'America/Sao_Paulo');

@@ -249,6 +249,7 @@ export class LotService {
         stageDetails, // Captura os detalhes das etapas
         ...lotData 
       } = data;
+      delete (lotData as any).tenantId; // Remove tenantId to avoid conflict
       const finalCategoryId = categoryId || type;
 
       if (!auctionId) {

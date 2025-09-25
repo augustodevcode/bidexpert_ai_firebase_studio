@@ -308,4 +308,63 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Dado** que um documento foi "Rejeitado" por um admin.
 - **Quando** o usuário acessa a página.
 - **Então** ele deve ver o status "Rejeitado" e o motivo da rejeição claramente exibido no card do documento.
-```
+
+---
+## Módulo 10: Construtor de Relatórios (Self-Service)
+
+**Cenário 10.1.1: Adicionar e Manipular Elementos**
+- **Dado** que o usuário está na página `/admin/report-builder`.
+- **Quando** ele clica no botão "Texto" na barra de ferramentas.
+- **Então** um novo elemento de texto deve aparecer na área de design.
+- **Quando** ele seleciona o novo elemento de texto.
+- **Então** o painel de "Propriedades" deve exibir as opções para aquele elemento (conteúdo, posição, etc.).
+- **Quando** ele altera o conteúdo do texto no painel de propriedades.
+- **Então** o texto na área de design deve ser atualizado em tempo real.
+- **Quando** ele arrasta e solta o elemento para uma nova posição.
+- **Então** a posição do elemento deve ser atualizada.
+
+**Cenário 10.1.2: Uso de Variáveis de Fonte de Dados**
+- **Dado** que o usuário está no construtor de relatórios e navega para a aba "Dados".
+- **Quando** ele expande a fonte de dados "Leilões".
+- **E** arrasta a variável `{{Auction.title}}` para a área de design.
+- **Então** um novo elemento de texto deve ser criado com o conteúdo `{{Auction.title}}`.
+- **E** na pré-visualização, este campo deve ser renderizado com um título de leilão real (ex: "Leilão de Veículos Usados").
+
+**Cenário 10.1.3: Salvar e Carregar um Relatório**
+- **Dado** que um usuário criou um layout com pelo menos 2 elementos.
+- **Quando** ele clica em "Salvar", preenche o nome "Relatório de Vendas Mensal" e salva.
+- **Então** uma notificação de sucesso deve aparecer.
+- **Quando** ele recarrega a página (limpando o estado atual) e clica em "Carregar".
+- **E** seleciona "Relatório de Vendas Mensal" da lista de relatórios salvos.
+- **Então** a área de design deve ser populada exatamente com os 2 elementos e suas posições salvas anteriormente.
+
+---
+
+## Módulo 11: Gerenciamento de Mídia e Herança
+
+**Cenário 11.1.1: Upload e Seleção de Mídia**
+- **Dado** que o usuário está em um formulário (ex: edição de Lote) e clica em "Escolher da Biblioteca".
+- **Quando** ele navega para a aba "Enviar arquivos" e faz o upload de uma nova imagem.
+- **Então** a imagem deve ser enviada com sucesso e aparecer na aba "Biblioteca de mídia".
+- **Quando** ele seleciona a imagem recém-enviada na biblioteca.
+- **Então** a URL da imagem deve preencher o campo de "Imagem Principal" no formulário principal.
+
+**Cenário 11.1.2: Herança de Mídia (Bem -> Lote)**
+- **Dado** que o "Bem A" (um carro) tem uma galeria de 5 imagens.
+- **Quando** o usuário está editando o "Lote 101" (que contém o "Bem A").
+- **E** na seção de Mídia, ele seleciona a opção "Herdar de um Bem Vinculado" e escolhe o "Bem A".
+- **Então** a imagem principal e a galeria de imagens do "Lote 101" na página pública devem ser exatamente as mesmas do "Bem A".
+
+**Cenário 11.1.3: Substituição de Mídia (Lote)**
+- **Dado** que o "Lote 101" está configurado para herdar a mídia do "Bem A".
+- **Quando** o usuário, no formulário de edição do lote, muda a opção para "Usar Galeria Customizada".
+- **E** ele seleciona uma nova imagem principal e remove 2 imagens da galeria.
+- **Então** a página pública do "Lote 101" deve exibir a nova imagem principal e a galeria reduzida, ignorando as imagens do "Bem A".
+- **E** as imagens do "Bem A" devem permanecer inalteradas.
+
+**Cenário 11.1.4: Herança e Substituição (Lote -> Leilão)**
+- **Dado** que o "Lote 101" tem uma imagem principal customizada (diferente do bem).
+- **Quando** o usuário está editando o "Leilão X" e, na seção de Imagem Principal, escolhe a opção "Herdar de um Lote" e seleciona o "Lote 101".
+- **Então** a imagem principal na página do "Leilão X" deve ser a mesma imagem principal do "Lote 101".
+- **Quando** o usuário edita novamente o leilão e seleciona "Imagem Customizada", escolhendo uma nova imagem da biblioteca.
+- **Então** a imagem principal do leilão deve ser atualizada para a nova imagem, ignorando a imagem do lote.
