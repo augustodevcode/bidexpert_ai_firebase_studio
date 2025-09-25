@@ -710,3 +710,38 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **E** a tabela de "Dados Detalhados por Vara" deve listar todas as varas com atividade, com os cálculos de performance corretos para cada uma.
 - **E** o gráfico de "Top 10 Varas por Faturamento" deve exibir os dados corretos e ordenados.
 - **E** a seção de Análise da IA deve conter um texto com insights sobre o desempenho das varas judiciais.
+
+---
+
+## Módulo 26: Painel de Análise de Usuários (Revisado)
+
+**Cenário 26.1.1: Visualização dos KPIs Gerais de Usuários**
+- **Dado** que existem usuários com diferentes níveis de atividade.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** o card "Usuários Totais" deve exibir a contagem correta de todas as contas na plataforma.
+- **E** o card "Valor Total Gasto" deve exibir a soma de todos os lotes arrematados por todos os usuários.
+- **E** o card "Lotes Arrematados" deve exibir a contagem total de lotes com status 'VENDIDO'.
+- **E** o card "Total de Lances" deve exibir a contagem total de lances feitos na plataforma.
+- **Critério de Aceite**: Os KPIs devem refletir os dados agregados corretos de todo o banco de dados.
+
+**Cenário 26.1.2: Validação da Tabela de Performance de Usuários**
+- **Dado** que existem usuários com diferentes históricos de arremates e lances.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** a tabela "Dados Detalhados por Usuário" deve ser renderizada.
+- **E** por padrão, a tabela deve estar ordenada pela coluna "Valor Total Gasto" em ordem decrescente.
+- **E** cada linha deve exibir corretamente o nome, email, status de habilitação, total de lances, lotes arrematados e o valor total gasto para cada usuário.
+- **E** ao clicar no cabeçalho de uma coluna (ex: "Total de Lances"), a tabela deve reordenar os dados corretamente.
+- **E** o filtro por "Status Habilitação" deve funcionar, exibindo apenas os usuários com o status selecionado.
+
+**Cenário 26.1.3: Validação do Gráfico de Status de Habilitação**
+- **Dado** que existem usuários com status 'HABILITADO', 'PENDENTE_ANALYSIS' e 'REJECTED_DOCUMENTS'.
+- **Quando** um administrador acessa a página `/admin/users/analysis`.
+- **Então** o gráfico de pizza "Distribuição de Status de Habilitação" deve ser exibido.
+- **E** cada fatia do gráfico deve corresponder à proporção correta de usuários em cada status.
+- **E** a legenda do gráfico deve exibir os nomes dos status corretamente.
+
+**Cenário 26.1.4: Validação da Análise por IA**
+- **Dado** que há dados de performance de usuários carregados.
+- **Quando** o administrador visualiza a seção "Análise de Comportamento (IA)".
+- **Então** um texto analítico deve ser exibido, oferecendo insights sobre os dados (ex: "Nota-se que um pequeno grupo de usuários é responsável pela maior parte do faturamento..." ou "A maioria dos usuários tem poucos lances, sugerindo uma oportunidade para aumentar o engajamento...").
+- **Critério de Aceite**: A análise gerada deve ser coerente com os dados exibidos nos KPIs e na tabela.
