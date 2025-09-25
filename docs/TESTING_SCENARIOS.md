@@ -638,3 +638,63 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** um cookie `bidexpert_setup_complete` deve ser definido no navegador.
 - **E** ele deve ser redirecionado para `/admin/dashboard`.
 - **E** em futuras visitas, ele não deve mais ser redirecionado para `/setup`.
+
+---
+
+## Módulo 23: Lógica de Precificação por Etapa (Revisão)
+
+**Cenário 23.1.1: Visualização de Preços por Etapa no Formulário**
+- **Dado** que um leilão possui 2 etapas ("1ª Praça", "2ª Praça").
+- **Quando** um admin edita um lote vinculado a este leilão.
+- **Então** a seção "Financeiro" do formulário do lote deve exibir campos para "Lance Inicial" e "Incremento" para cada uma das etapas ("1ª Praça" e "2ª Praça").
+
+**Cenário 23.1.2: Lógica de Preço na Página do Lote**
+- **Dado** que um lote tem preço de R$ 10.000 para a 1ª Praça (ativa) e R$ 5.000 para a 2ª Praça (futura).
+- **Quando** um usuário visualiza a página do lote durante a 1ª Praça.
+- **Então** o lance inicial exibido deve ser "R$ 10.000,00".
+- **Quando** a 1ª Praça termina e a 2ª Praça começa.
+- **E** o usuário recarrega a página do lote.
+- **Então** o lance inicial exibido deve ser atualizado para "R$ 5.000,00".
+
+---
+
+## Módulo 24: Padronização da Interface do Admin (SearchResultsFrame)
+
+**Cenário 24.1.1: Funcionalidade de Busca Unificada**
+- **Dado** que o admin está em uma página de listagem que usa `SearchResultsFrame` (ex: `/admin/auctions`).
+- **Quando** ele digita um termo no campo de busca "Buscar por...".
+- **Então** a lista de itens deve ser filtrada em tempo real para exibir apenas os registros que correspondem ao termo.
+- **Critério de Aceite**: A busca deve funcionar de forma idêntica nas páginas de Leilões, Lotes, Comitentes e Leiloeiros.
+
+**Cenário 24.1.2: Funcionalidade de Filtro por Faceta Unificada**
+- **Dado** que o admin está na página de listagem de Leilões.
+- **Quando** ele clica no botão de filtro "Status" e seleciona "Em Breve".
+- **Então** a tabela deve exibir apenas os leilões com o status "EM_BREVE".
+- **Quando** ele navega para a página de listagem de Comitentes.
+- **E** clica no filtro "Tipo" e seleciona "Judicial".
+- **Então** a tabela deve exibir apenas os comitentes que são judiciais.
+- **Critério de Aceite**: A funcionalidade de filtro por facetas deve estar disponível e operacional em todas as listagens relevantes.
+
+**Cenário 24.1.3: Funcionalidade de Ordenação Unificada**
+- **Dado** que o admin está na página de listagem de Lotes.
+- **Quando** ele clica no cabeçalho da coluna "Preço".
+- **Então** a lista de lotes deve ser ordenada pelo preço em ordem crescente.
+- **Quando** ele clica no mesmo cabeçalho novamente.
+- **Então** a lista de lotes deve ser ordenada pelo preço em ordem decrescente.
+- **Critério de Aceite**: A ordenação por clique no cabeçalho da coluna deve funcionar em todas as colunas ordenáveis de todas as tabelas.
+
+**Cenário 24.1.4: Alternância de Visualização (Tabela/Grade)**
+- **Dado** que o admin está na página de listagem de Comitentes.
+- **Quando** ele clica no ícone de "Grade" na barra de ferramentas.
+- **Então** a `DataTable` deve ser substituída por uma grade de `UniversalCard`.
+- **Quando** ele clica no ícone de "Tabela".
+- **Então** a visualização deve retornar para a `DataTable`.
+- **Critério de Aceite**: A alternância de visualização deve preservar os filtros e a busca aplicados.
+
+**Cenário 24.1.5: Ações em Lote (Exclusão)**
+- **Dado** que o admin está na página de listagem de Usuários e seleciona 3 usuários na tabela.
+- **Então** o botão "Excluir (3)" deve aparecer na barra de ferramentas.
+- **Quando** ele clica no botão e confirma a ação.
+- **Então** os 3 usuários selecionados devem ser excluídos.
+- **E** a tabela deve ser atualizada para refletir a exclusão.
+- **Critério de Aceite**: A exclusão em lote deve funcionar em todas as páginas de listagem que a suportam.
