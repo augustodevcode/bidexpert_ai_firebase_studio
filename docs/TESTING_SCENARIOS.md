@@ -531,14 +531,6 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** o `LotListItem` deve ser exibido, mostrando o valor atual, o nome do leilão e os detalhes do lote.
 - **Critério de Aceite**: O layout de lista deve ser consistente e funcional para ambas as entidades através do componente unificado.
 
-**Cenário 20.1.3: Responsividade do `SearchResultsFrame`**
-- **Dado** que o usuário está na página de busca com resultados.
-- **Quando** a largura da tela é reduzida para um tamanho de dispositivo móvel.
-- **Então** a visualização em grade deve se ajustar para 1 ou 2 colunas.
-- **E** a visualização em lista deve manter a legibilidade.
-- **E** a visualização em tabela (no admin) deve se transformar em um layout de cards empilhados.
-- **Critério de Aceite**: Todas as visualizações dentro do `SearchResultsFrame` devem ser perfeitamente utilizáveis em desktops, tablets e celulares.
-
 ---
 
 ## Módulo 21: Testes de Validação e Casos de Borda
@@ -775,3 +767,47 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** a ação deve falhar e retornar `{ success: false, message: 'Não é possível excluir. O leilão possui X lote(s) associado(s).' }`.
 - **E** o leilão e seus lotes devem permanecer no banco de dados.
 - **Critério de Aceite**: Garante que a lógica de negócio na camada de serviço é corretamente invocada pela server action.
+
+---
+
+## Módulo 28: Testes de Responsividade e UI em Diferentes Dispositivos
+
+### 28.1. Painel de Administração
+
+**Cenário 28.1.1: Responsividade da DataTable (`SearchResultsFrame`)**
+- **Dado** que o admin está em uma página de listagem (ex: `/admin/auctions`).
+- **Quando** a largura da tela é reduzida para um tamanho de dispositivo móvel (ex: 375px).
+- **Então** a tabela deve se transformar em um layout de cards empilhados.
+- **E** cada card deve exibir as informações da linha original de forma legível.
+- **E** o menu de ações "..." deve estar funcional em cada card.
+- **E** a barra de ferramentas (`DataTableToolbar`) deve se ajustar, movendo os filtros para baixo da busca ou para um menu "gaveta".
+
+**Cenário 28.1.2: Responsividade dos Formulários**
+- **Dado** que o admin está em uma página de edição complexa (ex: `/admin/auctions/[id]/edit`).
+- **Quando** a largura da tela é reduzida para um tamanho de dispositivo móvel.
+- **Então** os campos do formulário dispostos em grid devem se empilhar verticalmente.
+- **E** o componente `EntitySelector` deve permanecer funcional, e o modal que ele abre deve ocupar a tela inteira.
+- **E** os botões de ação ("Salvar", "Cancelar") devem estar sempre visíveis ou em uma barra fixa no rodapé da tela.
+
+### 28.2. Páginas Públicas
+
+**Cenário 28.2.1: Responsividade da Homepage**
+- **Dado** que um visitante está na página inicial.
+- **Quando** a tela é redimensionada para tablet e depois para celular.
+- **Então** o carrossel principal (`HeroCarousel`) deve ajustar sua imagem e texto.
+- **E** as grades de `AuctionCard` e `LotCard` devem reduzir o número de colunas (ex: 4 -> 2 -> 1).
+- **E** os menus de navegação no cabeçalho devem ser substituídos por um menu "hambúrguer".
+
+**Cenário 28.2.2: Responsividade da Página de Detalhes do Lote**
+- **Dado** que um usuário está em `/auctions/.../lots/[lotId]`.
+- **Quando** a tela é redimensionada para um dispositivo móvel.
+- **Então** o layout de duas colunas (galeria de imagem + painel de lances) deve se tornar um layout de coluna única empilhado.
+- **E** a galeria de imagens e o painel de lances devem ocupar a largura total da tela.
+- **E** as abas de "Descrição", "Especificações" devem permanecer navegáveis e seu conteúdo legível.
+
+**Cenário 28.2.3: Responsividade da Busca e Filtros**
+- **Dado** que um usuário está na página de busca (`/search`).
+- **Quando** a tela é redimensionada para um dispositivo móvel.
+- **Então** a barra de filtros lateral (`SidebarFilters`) deve desaparecer.
+- **E** um botão "Filtros" deve aparecer, que ao ser clicado abre os filtros em um modal ou `Sheet` sobre a tela.
+- **E** a grade de resultados deve se ajustar para uma ou duas colunas.
