@@ -4,6 +4,7 @@ import type {
     User as PmUser, 
     Role as PmRole, 
     UsersOnRoles,
+    UsersOnTenants, // Adicionado para multi-tenancy
     Tenant as PmTenant,
     Auction as PmAuction, 
     AuctionStage as PmAuctionStage,
@@ -56,7 +57,16 @@ export type LotCategory = PmLotCategory & { itemCount?: number };
 export type Subcategory = PmSubcategory & { parentCategoryName?: string, itemCount?: number };
 export type AuctioneerProfileInfo = PmAuctioneer & { auctionsConductedCount?: number, memberSince?: Date, rating?: number };
 export type SellerProfileInfo = PmSeller & { activeLotsCount?: number, memberSince?: Date, auctionsFacilitatedCount?: number, rating?: number };
-export type Asset = PmAsset & { categoryName?: string, subcategoryName?: string, judicialProcessNumber?: string, sellerName?: string };
+export type Asset = Omit<PmAsset, 'evaluationValue' | 'latitude' | 'longitude'> & { 
+  categoryName?: string;
+  subcategoryName?: string;
+  judicialProcessNumber?: string;
+  sellerName?: string;
+  lots?: { lot: Lot }[];
+  evaluationValue?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' | 'estimatedRevenue' | 'achievedRevenue' | 'decrementAmount' | 'floorPrice'> & {
   lots?: Lot[];
   totalLots?: number;
@@ -94,6 +104,7 @@ export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 
   latitude?: number | null;
   longitude?: number | null;
   stageDetails?: LotStageDetails[];
+  inheritedMediaFromBemId?: string | null;
 };
 export type BidInfo = PmBid;
 export type UserWin = PmUserWin & { lot: Lot };
@@ -129,7 +140,8 @@ export type AccountType = 'PHYSICAL' | 'LEGAL' | 'DIRECT_SALE_CONSIGNOR';
 export type UserDocumentStatus = 'NOT_SENT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED' | 'PENDING_ANALYSIS';
 export type AuctionStatus = 'RASCUNHO' | 'EM_PREPARACAO' | 'EM_BREVE' | 'ABERTO' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'FINALIZADO' | 'CANCELADO' | 'SUSPENSO';
 export type LotStatus = 'RASCUNHO' | 'EM_BREVE' | 'ABERTO_PARA_LANCES' | 'ENCERRADO' | 'VENDIDO' | 'NAO_VENDIDO' | 'RELISTADO' | 'CANCELADO';
-export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED';
+export type AssetStatus = 'CADASTRO' | 'DISPONIVEL' | 'LOTEADO' | 'VENDIDO' | 'REMOVIDO' | 'INATIVADO';
+export type DirectSaleOfferStatus = 'ACTIVE' | 'PENDING_APPROVAL' | 'SOLD' | 'EXPIRED' | 'RASCUNHO';
 export type DirectSaleOfferType = 'BUY_NOW' | 'ACCEPTS_PROPOSALS';
 export type AuctionType = 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
 export type AuctionMethod = 'STANDARD' | 'DUTCH' | 'SILENT';
@@ -278,7 +290,7 @@ export interface ConsignorDashboardStats {
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: string | null };
 export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string };
-export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number };
+export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
