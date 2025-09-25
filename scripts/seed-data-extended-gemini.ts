@@ -11,7 +11,6 @@ import {
   AuctionMethod,
   AuctionStatus,
   AuctionType,
-  HabilitationStatus,
   LotStatus,
   UserHabilitationStatus,
   PaymentStatus,
@@ -21,7 +20,6 @@ import {
   UserDocumentStatus,
   JudicialPartyType,
   AssetStatus,
-  AssetType,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -48,7 +46,7 @@ export async function seedGeminiExtended() {
   const auction1 = auctions[0];
   const lot1 = lots[0];
   const category1 = categories[0];
-  const judicialProcess1 = judicialProcesses[0];
+  const judicialProcess1 = judicialProcesses.length > 0 ? judicialProcesses[0] : null;
 
   // 1. Seed AuctionHabilitation
   console.log('Seeding AuctionHabilitation...');
@@ -69,14 +67,14 @@ export async function seedGeminiExtended() {
     await prisma.auctionStage.createMany({
         data: [
         {
-            name: 'Primeiro Leilão',
+            name: 'Primeiro Leilão (Estendido)',
             startDate: faker.date.past(),
             endDate: faker.date.future(),
             auctionId: auction1.id,
             initialPrice: faker.number.float({ min: 1000, max: 5000, multipleOf: 0.01 }),
         },
         {
-            name: 'Segundo Leilão',
+            name: 'Segundo Leilão (Estendido)',
             startDate: faker.date.future(),
             endDate: faker.date.future(),
             auctionId: auction1.id,
@@ -95,18 +93,16 @@ export async function seedGeminiExtended() {
       {
         name: faker.person.fullName(),
         email: faker.internet.email(),
-        subject: 'Dúvida sobre Leilão',
+        subject: 'Dúvida sobre Leilão (Estendido)',
         message: faker.lorem.paragraph(),
         isRead: false,
-        tenantId: tenant1.id,
       },
       {
         name: faker.person.fullName(),
         email: faker.internet.email(),
-        subject: 'Feedback da Plataforma',
+        subject: 'Feedback da Plataforma (Estendido)',
         message: faker.lorem.paragraph(),
         isRead: true,
-        tenantId: tenant1.id,
       },
     ],
     skipDuplicates: true,
@@ -118,12 +114,20 @@ export async function seedGeminiExtended() {
   await prisma.dataSource.createMany({
     data: [
       {
-        name: 'Leilões Ativos',
-        description: 'Fonte de dados para leilões abertos para lances',
+        name: 'Leilões Ativos (Estendido)',
+        modelName: 'Auction',
+        description: 'Leilões com status ABERTO_PARA_LANCES.',
+        fields: {
+          select: { id: true, title: true, status: true }
+        },
       },
       {
-        name: 'Usuários Habilitados',
-        description: 'Fonte de dados para usuários com habilitação aprovada',
+        name: 'Usuários Habilitados (Estendido)',
+        modelName: 'User',
+        description: 'Usuários com habilitação aprovada.',
+        fields: {
+          select: { id: true, email: true, fullName: true, habilitationStatus: true }
+        },
       },
     ],
     skipDuplicates: true,
@@ -135,22 +139,9 @@ export async function seedGeminiExtended() {
   await prisma.documentTemplate.createMany({
     data: [
       {
-        name: 'Termo de Arrematação Padrão',
+        name: 'Termo de Arrematação Padrão (Estendido)',
         type: DocumentTemplateType.WINNING_BID_TERM,
-        content: '<h1>Termo de Arrematação</h1><p>Este documento certifica a arrematação do lote {{lot.title}} por {{user.fullName}}.</p>',
-        tenantId: tenant1.id,
-      },
-      {
-        name: 'Relatório de Avaliação de Ativo',
-        type: DocumentTemplateType.EVALUATION_REPORT,
-        content: '<h1>Relatório de Avaliação</h1><p>Avaliação do ativo {{asset.title}}.</p>',
-        tenantId: tenant1.id,
-      },
-      {
-        name: 'Certificado de Leilão',
-        type: DocumentTemplateType.AUCTION_CERTIFICATE,
-        content: '<h1>Certificado de Leilão</h1><p>Certificamos a realização do leilão {{auction.title}}.</p>',
-        tenantId: tenant1.id,
+        content: '<h1>Termo Estendido</h1><p>Lote: {{lot.title}}</p>',
       },
     ],
     skipDuplicates: true,
@@ -163,18 +154,13 @@ export async function seedGeminiExtended() {
     await prisma.mediaItem.createMany({
         data: [
         {
-            fileName: 'image1.jpg',
-            fileType: 'image/jpeg',
-            size: 12345,
-            url: 'uploads/image1.jpg',
-            tenantId: tenant1.id,
-        },
-        {
-            fileName: 'document1.pdf',
-            fileType: 'application/pdf',
-            size: 54321,
-            url: 'uploads/document1.pdf',
-            tenantId: tenant1.id,
+            fileName: 'image1_extended.jpg',
+            mimeType: 'image/jpeg',
+            storagePath: 'uploads/image1_extended.jpg',
+            urlOriginal: 'https://example.com/uploads/image1_extended.jpg',
+            title: 'Imagem Estendida 1',
+            uploadedByUserId: user1.id,
+            tenantId: tenant1.id
         },
         ],
         skipDuplicates: true,
@@ -190,16 +176,9 @@ export async function seedGeminiExtended() {
         {
             userId: user1.id,
             tenantId: tenant1.id,
-            message: 'Seu lance no lote X foi superado.',
+            message: 'Seu lance foi superado (Estendido).',
             link: `/dashboard/bids/${lot1.id}`,
             isRead: false,
-        },
-        {
-            userId: user2.id,
-            tenantId: tenant1.id,
-            message: 'Você arrematou o lote Y!',
-            link: `/checkout/${lot1.id}`,
-            isRead: true,
         },
         ],
         skipDuplicates: true,
@@ -207,175 +186,118 @@ export async function seedGeminiExtended() {
   }
   console.log('Notification seeded.');
 
-  // 8. Ensure ENUM coverage for existing tables
-  const auctioneer = await prisma.auctioneer.findFirst();
-  const seller = await prisma.seller.findFirst();
+  // 8. Ensure ENUM coverage
+  const auctioneer = await prisma.auctioneer.findFirst({ where: { tenantId: tenant1.id } });
+  const seller = await prisma.seller.findFirst({ where: { tenantId: tenant1.id } });
 
   if(auctioneer && seller) {
-    await prisma.auction.create({
-        data: {
-        tenantId: tenant1.id,
-        title: 'Leilão de Rascunho',
-        description: 'Este leilão está em rascunho.',
-        status: AuctionStatus.RASCUNHO,
-        auctionDate: faker.date.future(),
-        auctioneerId: auctioneer.id,
-        sellerId: seller.id,
-        },
-    });
+    const existingDraft = await prisma.auction.findFirst({ where: { status: AuctionStatus.RASCUNHO, tenantId: tenant1.id } });
+    if (!existingDraft) {
+      await prisma.auction.create({
+          data: {
+          tenantId: tenant1.id,
+          title: 'Leilão de Rascunho (Estendido)',
+          description: 'Este leilão está em rascunho.',
+          status: AuctionStatus.RASCUNHO,
+          auctioneerId: auctioneer.id,
+          sellerId: seller.id,
+          },
+      });
+    }
 
-    await prisma.auction.create({
-        data: {
-        tenantId: tenant1.id,
-        title: 'Leilão Cancelado',
-        description: 'Este leilão foi cancelado.',
-        status: AuctionStatus.CANCELADO,
-        auctionDate: faker.date.past(),
-        auctioneerId: auctioneer.id,
-        sellerId: seller.id,
-        },
-    });
+     const existingCancelled = await prisma.auction.findFirst({ where: { status: AuctionStatus.CANCELADO, tenantId: tenant1.id } });
+    if (!existingCancelled) {
+      await prisma.auction.create({
+          data: {
+          tenantId: tenant1.id,
+          title: 'Leilão Cancelado (Estendido)',
+          description: 'Este leilão foi cancelado.',
+          status: AuctionStatus.CANCELADO,
+          auctioneerId: auctioneer.id,
+          sellerId: seller.id,
+          },
+      });
+    }
   }
 
   if(auction1) {
-    await prisma.lot.create({
-        data: {
-        auctionId: auction1.id,
-        tenantId: tenant1.id,
-        title: 'Lote Não Vendido',
-        description: 'Este lote não foi vendido.',
-        initialPrice: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
-        status: LotStatus.NAO_VENDIDO,
-        categoryId: category1.id,
-        },
-    });
-
-    await prisma.lot.create({
-        data: {
-        auctionId: auction1.id,
-        tenantId: tenant1.id,
-        title: 'Lote Retirado',
-        description: 'Este lote foi retirado do leilão.',
-        initialPrice: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
-        status: LotStatus.RETIRADO,
-        categoryId: category1.id,
-        },
-    });
+    const existingUnsold = await prisma.lot.findFirst({ where: { status: LotStatus.NAO_VENDIDO, tenantId: tenant1.id } });
+    if (!existingUnsold) {
+      await prisma.lot.create({
+          data: {
+          auctionId: auction1.id,
+          tenantId: tenant1.id,
+          title: 'Lote Não Vendido (Estendido)',
+          description: 'Este lote não foi vendido.',
+          price: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
+          status: LotStatus.NAO_VENDIDO,
+          type: 'GERAL',
+          categoryId: category1.id,
+          },
+      });
+    }
   }
 
-  if(user1 && user2) {
-    await prisma.user.update({
-        where: { id: user1.id },
-        data: { habilitationStatus: UserHabilitationStatus.HABILITADO },
-    });
-    await prisma.user.update({
-        where: { id: user2.id },
-        data: { habilitationStatus: UserHabilitationStatus.REJECTED_DOCUMENTS },
-    });
+  // User Habilitation Statuses
+  await prisma.user.update({ where: { id: user1.id }, data: { habilitationStatus: UserHabilitationStatus.HABILITADO } });
+  await prisma.user.update({ where: { id: user2.id }, data: { habilitationStatus: UserHabilitationStatus.REJECTED_DOCUMENTS } });
+  
+  // DirectSaleOffer Statuses
+  if (seller) {
+    const existingExpired = await prisma.directSaleOffer.findFirst({ where: { status: DirectSaleOfferStatus.EXPIRED, tenantId: tenant1.id } });
+    if (!existingExpired) {
+        await prisma.directSaleOffer.create({
+            data: {
+                tenantId: tenant1.id,
+                sellerId: seller.id,
+                categoryId: category1.id,
+                publicId: faker.string.uuid(),
+                title: 'Oferta Expirada (Estendida)',
+                offerType: DirectSaleOfferType.BUY_NOW,
+                price: 100,
+                status: DirectSaleOfferStatus.EXPIRED,
+                expiresAt: faker.date.past(),
+            }
+        });
+    }
   }
-
-  if(seller && category1) {
-    await prisma.directSaleOffer.create({
-        data: {
-        tenantId: tenant1.id,
-        sellerId: seller.id,
-        categoryId: category1.id,
-        publicId: faker.string.uuid(),
-        title: 'Oferta de Venda Direta Expirada',
-        description: 'Esta oferta expirou.',
-        offerType: DirectSaleOfferType.BUY_NOW,
-        price: faker.number.float({ min: 1000, max: 5000, multipleOf: 0.01 }),
-        status: DirectSaleOfferStatus.EXPIRED,
-        expiresAt: faker.date.past(),
-        },
-    });
-
-    await prisma.directSaleOffer.create({
-        data: {
-        tenantId: tenant1.id,
-        sellerId: seller.id,
-        categoryId: category1.id,
-        publicId: faker.string.uuid(),
-        title: 'Oferta de Venda Direta em Rascunho',
-        description: 'Esta oferta está em rascunho.',
-        offerType: DirectSaleOfferType.ACCEPTS_PROPOSALS,
-        minimumOfferPrice: faker.number.float({ min: 500, max: 2000, multipleOf: 0.01 }),
-        status: DirectSaleOfferStatus.RASCUNHO,
-        },
-    });
-  }
-
+  
+  // UserDocument Statuses
   const documentType1 = await prisma.documentType.findFirst();
-  if (documentType1 && user1 && user2) {
-    await prisma.userDocument.create({
-      data: {
-        userId: user1.id,
-        documentTypeId: documentType1.id,
-        fileUrl: faker.internet.url(),
-        status: UserDocumentStatus.APPROVED,
-        tenantId: tenant1.id,
-      },
-    });
-    await prisma.userDocument.create({
-      data: {
-        userId: user2.id,
-        documentTypeId: documentType1.id,
-        fileUrl: faker.internet.url(),
-        status: UserDocumentStatus.REJECTED,
-        rejectionReason: 'Documento ilegível.',
-        tenantId: tenant1.id,
-      },
-    });
+  if (documentType1 && user1) {
+      await prisma.userDocument.upsert({
+          where: { userId_documentTypeId: { userId: user1.id, documentTypeId: documentType1.id } },
+          update: { status: UserDocumentStatus.APPROVED },
+          create: {
+            userId: user1.id,
+            documentTypeId: documentType1.id,
+            fileUrl: faker.internet.url(),
+            status: UserDocumentStatus.APPROVED,
+          },
+      });
   }
 
+  // JudicialParty Types
   if (judicialProcess1) {
     await prisma.judicialParty.createMany({
       data: [
-        {
-          name: faker.person.fullName(),
-          documentNumber: faker.string.numeric(11),
-          partyType: JudicialPartyType.AUTOR,
-          processId: judicialProcess1.id,
-        },
-        {
-          name: faker.person.fullName(),
-          documentNumber: faker.string.numeric(11),
-          partyType: JudicialPartyType.REU,
-          processId: judicialProcess1.id,
-        },
-        {
-          name: faker.person.fullName(),
-          documentNumber: faker.string.numeric(11),
-          partyType: JudicialPartyType.ADVOGADO_AUTOR,
-          processId: judicialProcess1.id,
-        },
+        { name: faker.person.fullName(), partyType: JudicialPartyType.ADVOGADO_AUTOR, processId: judicialProcess1.id, },
+        { name: faker.person.fullName(), partyType: JudicialPartyType.ADVOGADO_REU, processId: judicialProcess1.id, },
       ],
       skipDuplicates: true,
     });
   }
-
-  if(seller && category1) {
+  
+  // Asset Statuses
+  if(seller) {
     await prisma.asset.create({
         data: {
-        tenantId: tenant1.id,
-        publicId: faker.string.uuid(),
-        title: 'Ativo Loteado',
-        status: AssetStatus.LOTEADO,
-        categoryId: category1.id,
-        sellerId: seller.id,
-        evaluationValue: 1000,
-        }, 
-    });
-
-    await prisma.asset.create({
-        data: {
-        tenantId: tenant1.id,
-        publicId: faker.string.uuid(),
-        title: 'Ativo Removido',
-        status: AssetStatus.REMOVIDO,
-        categoryId: category1.id,
-        sellerId: seller.id,
-        evaluationValue: 2000,
+            tenantId: tenantId,
+            publicId: faker.string.uuid(),
+            title: 'Ativo Loteado (Estendido)',
+            status: AssetStatus.LOTEADO,
+            categoryId: category1.id,
+            sellerId: seller.id,
         },
     });
   }
