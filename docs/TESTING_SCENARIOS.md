@@ -192,7 +192,7 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 
 ## Módulo 7: Interações de Interface do Usuário (UI/UX)
 
-**Cenário 7.1.1: Alternância de Visualização (Grid/Lista/Tabela)**
+**Cenário 7.1.1: Alternância de Visualização (Grade/Lista/Tabela)**
 - **Dado** que o usuário está na página de busca (`/search`) com resultados visíveis.
 - **Quando** ele clica no ícone "Lista".
 - **Então** os resultados devem ser exibidos como uma lista de itens.
@@ -434,3 +434,53 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **E** a tabela de "Dados Detalhados por Usuário" deve listar todos os usuários, ordenados pelo valor total gasto (maior para o menor).
 - **E** o gráfico de pizza deve mostrar a distribuição correta de status de habilitação (ex: 70% Habilitado, 20% Pendente, 10% Rejeitado).
 - **E** a seção de Análise da IA deve conter um texto com insights sobre o comportamento dos usuários.
+
+---
+
+## Módulo 16: Fluxos Multi-Tenant
+
+**Cenário 16.1.1: Isolamento de Dados entre Tenants**
+- **Dado** que o "Leiloeiro A" cria o "Leilão X" em seu subdomínio (`leiloeiro-a.bidexpert.com`).
+- **E** o "Leiloeiro B" cria o "Leilão Y" em seu subdomínio (`leiloeiro-b.bidexpert.com`).
+- **Quando** o admin do "Leiloeiro A" acessa a lista de leilões em seu painel.
+- **Então** ele deve ver apenas o "Leilão X".
+- **E** o "Leilão Y" **não** deve ser visível.
+- **Critério de Aceite**: A camada de repositório deve filtrar todas as consultas automaticamente pelo `tenantId` do contexto da requisição.
+
+**Cenário 16.1.2: Login Multi-Tenant com Seleção de Workspace**
+- **Dado** que o "Usuário Z" pertence tanto ao tenant do "Leiloeiro A" quanto ao do "Leiloeiro B".
+- **Quando** o "Usuário Z" faz login na página principal (`bidexpert.com/auth/login`).
+- **Então** o sistema deve apresentar uma tela de seleção de "espaço de trabalho", listando "Leiloeiro A" e "Leiloeiro B".
+- **Quando** ele seleciona "Leiloeiro A".
+- **Então** ele deve ser logado e redirecionado para o ambiente do "Leiloeiro A".
+- **E** a sessão deve conter o `tenantId` do "Leiloeiro A".
+
+---
+
+## Módulo 17: Interações com Inteligência Artificial
+
+**Cenário 17.1.1: Extração de Dados de Documento Judicial**
+- **Dado** que um admin está na página de edição de um Processo Judicial.
+- **Quando** ele faz o upload de uma imagem de um documento (ex: a capa do processo).
+- **E** clica no botão "Extrair Dados com IA".
+- **Então** um modal de validação deve abrir, pré-preenchido com os dados que a IA conseguiu extrair (Nº do Processo, Vara, Comarca, Partes, etc.).
+- **Quando** o admin corrige um campo (se necessário) e clica em "Aplicar Dados".
+- **Então** os campos do formulário principal do Processo Judicial devem ser atualizados com os dados validados.
+
+**Cenário 17.1.2: Análise de Performance com IA**
+- **Dado** que um admin está em um dashboard de análise (ex: `/admin/reports`, `/admin/sellers/analysis`).
+- **Quando** a página carrega.
+- **Então** a seção "Análise e Recomendações da IA" deve exibir um texto gerado pela IA, contendo insights sobre os dados apresentados nos gráficos e tabelas.
+- **Critério de Aceite**: A análise deve ser contextual e relevante para os dados exibidos na página.
+
+---
+
+## Módulo 18: Geração de Documentos
+
+**Cenário 18.1.1: Geração do Termo de Arrematação**
+- **Dado** que um lote foi arrematado e o usuário está na página "Meus Arremates".
+- **E** o pagamento para este lote foi confirmado ("PAGO").
+- **Quando** o usuário clica no botão "Gerar Termo de Arrematação".
+- **Então** o sistema deve gerar um documento PDF em uma nova aba ou iniciar o download.
+- **E** o PDF deve conter os dados corretos do lote, do leilão e do arrematante, preenchidos dinamicamente no template.
+
