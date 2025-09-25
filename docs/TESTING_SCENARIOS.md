@@ -402,6 +402,19 @@ Este documento descreve os cenários de teste para garantir a qualidade, integri
 - **Então** o lance inicial exibido publicamente deve ser R$ 10.000 enquanto a 1ª praça estiver ativa.
 - **E** após o término da 1ª praça e início da 2ª, o lance inicial na página do lote deve ser automaticamente atualizado para R$ 5.000.
 
+**Cenário 13.1.2: Visualização de Preços por Etapa no Formulário**
+- **Dado** que um leilão possui 2 etapas ("1ª Praça", "2ª Praça").
+- **Quando** um admin edita um lote vinculado a este leilão.
+- **Então** a seção "Financeiro" do formulário do lote deve exibir campos para "Lance Inicial" e "Incremento" para cada uma das etapas ("1ª Praça" e "2ª Praça").
+
+**Cenário 13.1.3: Lógica de Preço na Página do Lote**
+- **Dado** que um lote tem preço de R$ 10.000 para a 1ª Praça (ativa) e R$ 5.000 para a 2ª Praça (futura).
+- **Quando** um usuário visualiza a página do lote durante a 1ª Praça.
+- **Então** o lance inicial exibido deve ser "R$ 10.000,00".
+- **Quando** a 1ª Praça termina e a 2ª Praça começa.
+- **E** o usuário recarrega a página do lote.
+- **Então** o lance inicial exibido deve ser atualizado para "R$ 5.000,00".
+
 ---
 
 ## Módulo 14: Pagamento Parcelado
