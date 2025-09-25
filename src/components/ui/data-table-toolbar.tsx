@@ -51,7 +51,7 @@ export function DataTableToolbar<TData>({
   facetedFilterColumns = [],
   onDeleteSelected,
 }: DataTableToolbarProps<TData>) {
-  const isFiltered = table.getState().columnFilters.length > 0
+  const isFiltered = table.getState().columnFilters.length > 0 || !!table.getState().globalFilter;
   const groupableColumns = table.getAllColumns().filter(c => c.getCanGroup());
   const groupingState = table.getState().grouping;
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length;
@@ -74,6 +74,11 @@ export function DataTableToolbar<TData>({
     }
     return typeof column.columnDef.header === 'string' ? column.columnDef.header : column.id;
   };
+  
+  const handleResetFilters = () => {
+    table.resetColumnFilters();
+    table.setGlobalFilter('');
+  }
 
   return (
     <div className="flex flex-col sm:flex-row items-center justify-between gap-2" data-ai-id="data-table-toolbar">
@@ -81,9 +86,9 @@ export function DataTableToolbar<TData>({
         {searchColumnId && (
             <Input
             placeholder={searchPlaceholder}
-            value={(table.getColumn(searchColumnId)?.getFilterValue() as string) ?? ""}
+            value={(table.getState().globalFilter as string) ?? ""}
             onChange={(event) =>
-                table.getColumn(searchColumnId)?.setFilterValue(event.target.value)
+                table.setGlobalFilter(event.target.value)
             }
             className="h-8 w-full sm:w-[150px] lg:w-[250px]"
             data-ai-id="data-table-search-input"
@@ -124,7 +129,7 @@ export function DataTableToolbar<TData>({
         {isFiltered && (
           <Button
             variant="ghost"
-            onClick={() => table.resetColumnFilters()}
+            onClick={handleResetFilters}
             className="h-8 px-2 lg:px-3"
           >
             Limpar

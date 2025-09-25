@@ -17,8 +17,9 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  getExpandedRowModel, // Importar o modelo de expansão
-  ExpandedState, // Importar o tipo de estado de expansão
+  getExpandedRowModel,
+  ExpandedState,
+  FilterFn,
 } from "@tanstack/react-table";
 
 import {
@@ -34,12 +35,34 @@ import { DataTableToolbar } from "./data-table-toolbar";
 import { DataTablePagination } from "./data-table-pagination";
 import { Button } from "./button";
 
+const globalFilterFn: FilterFn<any> = (row, columnId, value, addMeta) => {
+    const item = row.original;
+    const searchTerm = value.toLowerCase();
+
+    // Check title (or name, which is more generic)
+    if (item.title?.toLowerCase().includes(searchTerm)) return true;
+    if (item.name?.toLowerCase().includes(searchTerm)) return true;
+
+    // Specific check for judicialProcessNumber in assets
+    if (item.judicialProcessNumber?.toLowerCase().includes(searchTerm)) return true;
+    
+    // Specific check for processNumber in judicial processes
+    if (item.processNumber?.toLowerCase().includes(searchTerm)) return true;
+    
+    // Add more fields to search globally as needed
+    if (item.email?.toLowerCase().includes(searchTerm)) return true;
+
+
+    return false;
+};
+
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   isLoading?: boolean;
   error?: string | null;
-  searchColumnId?: string;
+  searchColumnId?: string; // Kept for indicating search is enabled, now used for global search
   searchPlaceholder?: string;
   facetedFilterColumns?: {
     id: string;
@@ -78,7 +101,8 @@ export function DataTable<TData, TValue>({
     React.useState<ColumnFiltersState>([]);
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [grouping, setGrouping] = React.useState<GroupingState>([]);
-  const [expanded, setExpanded] = React.useState<ExpandedState>({}); // Estado para controlar a expansão
+  const [expanded, setExpanded] = React.useState<ExpandedState>({});
+  const [globalFilter, setGlobalFilter] = React.useState(''); // State for global filter
 
   const isControlled = controlledRowSelection !== undefined && setControlledRowSelection !== undefined;
   const rowSelection = isControlled ? controlledRowSelection : uncontrolledRowSelection;
@@ -94,20 +118,23 @@ export function DataTable<TData, TValue>({
       rowSelection,
       columnFilters,
       grouping,
-      expanded, // Passar o estado de expansão para a tabela
+      expanded,
+      globalFilter, // Pass global filter state
     },
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter, // Handle global filter changes
+    globalFilterFn: globalFilterFn, // Use the custom global filter function
     onColumnVisibilityChange: setColumnVisibility,
     onGroupingChange: setGrouping,
-    onExpandedChange: setExpanded, // Handler para atualizar o estado de expansão
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getGroupedRowModel: getGroupedRowModel(),
-    getExpandedRowModel: getExpandedRowModel(), // Habilitar o modelo de expansão
+    getExpandedRowModel: getExpandedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
     enableRowSelection: true,
