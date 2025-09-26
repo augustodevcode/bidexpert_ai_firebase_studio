@@ -1,4 +1,10 @@
 // src/services/user.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe UserService, que encapsula a
+ * lógica de negócio para o gerenciamento de Usuários. É uma das classes mais
+ * críticas, lidando com criação de contas, validação de e-mails, atualização
+ * de perfis e perfis, e o processo de habilitação de usuários para dar lances.
+ */
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';
 import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileData, Tenant, Role } from '@/types';

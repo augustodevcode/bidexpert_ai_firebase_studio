@@ -1,4 +1,10 @@
 // src/services/judicial-branch.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe JudicialBranchService, que encapsula
+ * a lógica de negócio para o gerenciamento de Varas Judiciais. Ele interage com o
+ * repositório para realizar operações de CRUD e garante que os dados, como
+ * a associação com uma comarca, sejam tratados de forma consistente.
+ */
 import { JudicialBranchRepository } from '@/repositories/judicial-branch.repository';
 import type { JudicialBranch, JudicialBranchFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

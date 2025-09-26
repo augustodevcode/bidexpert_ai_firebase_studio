@@ -848,28 +848,13 @@ model Review {
   @@index([lotId])
 }
 
-// prisma/models/Role.prisma
 model Role {
   id              String         @id @default(cuid())
-  name            String
+  name            String         @unique
   nameNormalized  String         @unique
   description     String?
-  permissions     String[]
+  permissions     Json?
   users           UsersOnRoles[]
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-}
-
-
-
-enum RoleName {
-  ADMINISTRATOR
-  TENANT_ADMIN
-  AUCTION_ANALYST
-  CONSIGNOR
-  BIDDER
-  USER
-  FINANCIAL // Adicionado novo perfil
 }
 
 enum SearchPaginationType {

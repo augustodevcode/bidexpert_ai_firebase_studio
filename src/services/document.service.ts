@@ -1,4 +1,10 @@
 // src/services/document.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe DocumentService, responsável
+ * pela lógica de negócio relacionada aos documentos dos usuários. Ele gerencia
+ * o processo de habilitação, verificando se um usuário enviou todos os
+ * documentos necessários e atualizando seu status de habilitação na plataforma.
+ */
 import { DocumentRepository } from '@/repositories/document.repository';
 import { UserService } from './user.service';
 import type { DocumentType, UserDocument } from '@/types';

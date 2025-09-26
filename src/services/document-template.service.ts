@@ -1,4 +1,10 @@
 // src/services/document-template.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe DocumentTemplateService, responsável
+ * por gerenciar os templates de documentos (ex: Termo de Arrematação). Ele
+ * encapsula a lógica de negócio para operações de CRUD nos templates, que
+ * são usados pelo `generate-document-flow` para criar PDFs dinamicamente.
+ */
 import { DocumentTemplateRepository } from '@/repositories/document-template.repository';
 import type { DocumentTemplate, DocumentTemplateFormData } from '@/types';
 import type { Prisma } from '@prisma/client';

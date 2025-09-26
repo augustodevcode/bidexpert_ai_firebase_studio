@@ -1,5 +1,10 @@
-
 // src/services/relist.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe RelistService, responsável pela
+ * lógica de negócio de "relistar" um lote. Isso envolve criar uma nova cópia
+ * de um lote que não foi vendido (ou encerrado sem lances) e associá-lo a um
+ * novo leilão, opcionalmente com um desconto, mantendo um vínculo com o lote original.
+ */
 import { prisma } from '@/lib/prisma';
 import { LotService } from './lot.service';
 import type { Lot } from '@/types';

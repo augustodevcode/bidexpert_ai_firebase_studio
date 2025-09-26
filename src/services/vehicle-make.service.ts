@@ -1,4 +1,10 @@
 // src/services/vehicle-make.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe VehicleMakeService, que gerencia a
+ * lógica de negócio para as Marcas de Veículos. Ele interage com o repositório
+ * para realizar operações de CRUD e garante a aplicação de regras de negócio,
+ * como impedir a exclusão de uma marca que ainda possui modelos vinculados.
+ */
 import { VehicleMakeRepository } from '@/repositories/vehicle-make.repository';
 import type { VehicleMake, VehicleMakeFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

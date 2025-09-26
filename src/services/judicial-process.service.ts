@@ -1,4 +1,11 @@
 // src/services/judicial-process.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe JudicialProcessService, que
+ * encapsula a lógica de negócio para o gerenciamento de Processos Judiciais.
+ * O serviço lida com a criação e atualização de processos, incluindo a
+ * gestão de suas partes (autores, réus, etc.) e a vinculação automática
+ * de comitentes judiciais.
+ */
 import { JudicialProcessRepository } from '@/repositories/judicial-process.repository';
 import { SellerService } from './seller.service';
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';

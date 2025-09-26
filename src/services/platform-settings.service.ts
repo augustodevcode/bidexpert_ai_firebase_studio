@@ -1,6 +1,13 @@
 // src/services/platform-settings.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe PlatformSettingsService, que gerencia
+ * as configurações globais da plataforma. Ele é responsável por buscar as
+ * configurações do banco de dados ou criar um conjunto padrão caso não existam,
+ * além de permitir a sua atualização.
+ */
 import { PlatformSettingsRepository } from '@/repositories/platform-settings.repository';
 import type { PlatformSettings } from '@/types';
+import type { Prisma } from '@prisma/client';
 
 export class PlatformSettingsService {
   private repository: PlatformSettingsRepository;

@@ -1,4 +1,11 @@
 // src/services/data-source.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe DataSourceService, responsável
+ * por gerenciar as Fontes de Dados disponíveis para o Construtor de Relatórios.
+ * Ele serve como uma camada de abstração sobre o repositório, permitindo
+ * buscar e manipular as definições de quais modelos e campos da aplicação
+ * podem ser utilizados nos relatórios.
+ */
 import { DataSourceRepository } from '@/repositories/data-source.repository';
 import type { DataSource, Prisma as PrismaTypes } from '@prisma/client';
 

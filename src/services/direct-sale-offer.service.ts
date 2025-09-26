@@ -1,4 +1,10 @@
 // src/services/direct-sale-offer.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe DirectSaleOfferService, que encapsula
+ * a lógica de negócio para o gerenciamento de Ofertas de Venda Direta. Diferente
+ * de leilões, estas são ofertas com preço fixo ou que aceitam propostas, atuando
+ * como um classificado. O serviço gerencia o CRUD dessas ofertas.
+ */
 import { DirectSaleOfferRepository } from '@/repositories/direct-sale-offer.repository';
 import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

@@ -4,9 +4,12 @@
  * @fileoverview Script abrangente para popular o banco de dados simulando
  * cenários de usuário realistas, utilizando os serviços da aplicação para
  * garantir a integridade e a aplicação das regras de negócio.
+ *
+ * Este script é projetado para ser resumível. Ele salva seu progresso em
+ * `scripts/seed-progress.json` e o utiliza para pular etapas já concluídas.
  */
 
-import { PrismaClient, AssetStatus, AuctionStatus, AuctionType, AuctionMethod } from '@prisma/client';
+import { PrismaClient, AssetStatus, AuctionStatus, AuctionType, AuctionMethod, AuctionParticipation } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { UserService } from '../src/services/user.service';
 import { AuctionService } from '../src/services/auction.service';
@@ -16,6 +19,8 @@ import { CategoryService } from '../src/services/category.service';
 import { AssetService } from '../src/services/asset.service';
 import { LotService } from '../src/services/lot.service';
 import { AssetFormData } from '@/types';
+import fs from 'fs';
+import path from 'path';
 
 const prisma = new PrismaClient();
 const userService = new UserService();
@@ -25,6 +30,61 @@ const auctioneerService = new AuctioneerService();
 const categoryService = new CategoryService();
 const assetService = new AssetService();
 const lotService = new LotService();
+
+// --- Gerenciamento de Progresso ---
+const progressFilePath = path.join(__dirname, 'seed-progress.json');
+
+type Progress = {
+  completedSteps: string[];
+  generatedIds: {
+    tenantId?: string;
+    userIds: string[];
+    sellerIds: string[];
+    auctioneerIds: string[];
+    categoryIds: { id: string; name: string }[];
+    assetIds: string[];
+    auctionIds: string[];
+  }
+};
+
+function readProgress(): Progress {
+  if (fs.existsSync(progressFilePath)) {
+    const data = fs.readFileSync(progressFilePath, 'utf-8');
+    return JSON.parse(data) as Progress;
+  }
+  return {
+    completedSteps: [],
+    generatedIds: {
+      userIds: [],
+      sellerIds: [],
+      auctioneerIds: [],
+      categoryIds: [],
+      assetIds: [],
+      auctionIds: [],
+    },
+  };
+}
+
+function writeProgress(progress: Progress) {
+  fs.writeFileSync(progressFilePath, JSON.stringify(progress, null, 2));
+}
+
+async function runStep<T>(stepName: string, fn: () => Promise<T>): Promise<T | void> {
+    const progress = readProgress();
+    if (progress.completedSteps.includes(stepName)) {
+        console.log(`⏭️  Pulando etapa já concluída: ${stepName}`);
+        return;
+    }
+
+    console.log(`🚀 Iniciando etapa: ${stepName}...`);
+    const result = await fn();
+    
+    progress.completedSteps.push(stepName);
+    writeProgress(progress);
+    
+    console.log(`✅ Etapa concluída: ${stepName}`);
+    return result;
+}
 
 // --- Armazenamento de IDs Gerados ---
 let tenantId: string;
@@ -314,20 +374,58 @@ async function runDataVerification() {
 async function main() {
   console.log('🚀 Iniciando processo de seed completo...');
   
-  const defaultTenant = await prisma.tenant.findFirst();
-  if (!defaultTenant) {
-    throw new Error('Nenhum tenant encontrado. Execute o seed básico primeiro ou crie um tenant manualmente.');
+  const progress = readProgress();
+
+  if (progress.generatedIds.tenantId) {
+    tenantId = progress.generatedIds.tenantId;
+  } else {
+    const defaultTenant = await prisma.tenant.findFirst();
+    if (!defaultTenant) {
+      throw new Error('Nenhum tenant encontrado. Execute o seed básico primeiro ou crie um tenant manualmente.');
+    }
+    tenantId = defaultTenant.id;
+    progress.generatedIds.tenantId = tenantId;
   }
-  tenantId = defaultTenant.id;
-  console.log(`Tenant padrão selecionado: ${defaultTenant.name} (ID: ${tenantId})`);
+  console.log(`Tenant padrão selecionado: ${tenantId}`);
+
+  // Carregar IDs do progresso para continuar de onde parou
+  userIds.push(...progress.generatedIds.userIds);
+  sellerIds.push(...progress.generatedIds.sellerIds);
+  auctioneerIds.push(...progress.generatedIds.auctioneerIds);
+  categoryIds.push(...progress.generatedIds.categoryIds);
+  assetIds.push(...progress.generatedIds.assetIds);
+  auctionIds.push(...progress.generatedIds.auctionIds);
+
 
   // A ordem de execução é crucial para manter a integridade relacional.
-  await seedCoreEntities();
-  await seedUsers();
-  await seedAssets();
-  await seedAuctionsAndLots();
-  await simulateBiddingAndWins();
-  await runDataVerification();
+  await runStep('seedCoreEntities', async () => {
+    await seedCoreEntities();
+    progress.generatedIds.sellerIds = [...sellerIds];
+    progress.generatedIds.auctioneerIds = [...auctioneerIds];
+    progress.generatedIds.categoryIds = [...categoryIds];
+    writeProgress(progress);
+  });
+
+  await runStep('seedUsers', async () => {
+    await seedUsers();
+    progress.generatedIds.userIds = [...userIds];
+    writeProgress(progress);
+  });
+
+  await runStep('seedAssets', async () => {
+    await seedAssets();
+    progress.generatedIds.assetIds = [...assetIds];
+    writeProgress(progress);
+  });
+
+  await runStep('seedAuctionsAndLots', async () => {
+    await seedAuctionsAndLots();
+    progress.generatedIds.auctionIds = [...auctionIds];
+    writeProgress(progress);
+  });
+
+  await runStep('simulateBiddingAndWins', simulateBiddingAndWins);
+  await runStep('runDataVerification', runDataVerification);
 
   console.log('✅ Processo de seed finalizado com sucesso!');
 }

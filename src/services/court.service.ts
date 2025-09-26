@@ -1,4 +1,10 @@
 // src/services/court.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe CourtService, que encapsula a
+ * lógica de negócio para o gerenciamento de Tribunais. Ele interage com o
+ * repositório para realizar operações de CRUD, garantindo a consistência
+ * dos dados, como a geração automática de `slug`.
+ */
 import { CourtRepository } from '@/repositories/court.repository';
 import type { Court, CourtFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

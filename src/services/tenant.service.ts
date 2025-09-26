@@ -1,4 +1,11 @@
 // src/services/tenant.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe TenantService, que encapsula a
+ * lógica de negócio para o gerenciamento de Tenants (inquilinos/leiloeiros).
+ * Sua principal responsabilidade é orquestrar a criação de um novo tenant, o que
+ * inclui criar o registro do tenant e o seu usuário administrador associado,
+ * tudo dentro de uma única transação para garantir a consistência dos dados.
+ */
 import { TenantRepository } from '@/repositories/tenant.repository';
 import { UserRepository } from '@/repositories/user.repository';
 import { RoleRepository } from '@/repositories/role.repository';

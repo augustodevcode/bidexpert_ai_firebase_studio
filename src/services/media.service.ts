@@ -1,4 +1,11 @@
 // src/services/media.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe MediaService, que encapsula a
+ * lógica de negócio para o gerenciamento de todos os itens de mídia da plataforma.
+ * Atua como intermediário entre as actions (ex: upload de arquivos) e o
+ * repositório, garantindo a correta criação e atualização dos metadados
+ * de mídia no banco de dados.
+ */
 import { MediaRepository } from '@/repositories/media.repository';
 import type { MediaItem } from '@/types';
 import type { Prisma } from '@prisma/client';

@@ -1,4 +1,10 @@
 // src/services/report.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe ReportService, que encapsula a
+ * lógica de negócio para o gerenciamento de relatórios customizados criados
+ * pelos usuários no Construtor de Relatórios. Ele interage com o repositório
+ * para realizar operações de CRUD nas definições de relatórios.
+ */
 import { ReportRepository } from '@/repositories/report.repository';
 import type { Report } from '@/types';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';

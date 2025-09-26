@@ -1,7 +1,6 @@
 // src/lib/timezone.ts
 import { format } from 'date-fns';
-// Using require to avoid potential ESM/CJS module resolution issues during build
-const { utcToZonedTime, zonedTimeToUtc } = require('date-fns-tz');
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { ptBR } from 'date-fns/locale';
 
 const SAO_PAULO_TZ = 'America/Sao_Paulo';

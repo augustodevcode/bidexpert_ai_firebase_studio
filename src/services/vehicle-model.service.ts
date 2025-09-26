@@ -1,4 +1,10 @@
 // src/services/vehicle-model.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe VehicleModelService, que gerencia a
+ * lógica de negócio para os Modelos de Veículos. Ele interage com o repositório
+ * para realizar operações de CRUD, garantindo que cada modelo seja corretamente
+ * associado a uma marca e validando dados antes da persistência.
+ */
 import { VehicleModelRepository } from '@/repositories/vehicle-model.repository';
 import type { VehicleModel, VehicleModelFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

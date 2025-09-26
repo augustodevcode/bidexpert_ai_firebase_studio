@@ -1,4 +1,10 @@
 // src/services/judicial-district.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe JudicialDistrictService, que
+ * encapsula a lógica de negócio para o gerenciamento de Comarcas Judiciais.
+ * Ele serve como intermediário entre as actions e o repositório, garantindo
+ * que os dados sejam validados e formatados corretamente antes da persistência.
+ */
 import { JudicialDistrictRepository } from '@/repositories/judicial-district.repository';
 import type { JudicialDistrict, JudicialDistrictFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
@@ -48,7 +54,7 @@ export class JudicialDistrictService {
     }
   }
 
-  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string }> {
+  async updateJudicialDistrict(id: string, data: Partial<JudicialDistrictFormData>): Promise<{ success: boolean; message: string; }> {
     try {
       const dataToUpdate: Prisma.JudicialDistrictUpdateInput = { ...data };
       if (data.name) {

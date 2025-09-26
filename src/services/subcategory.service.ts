@@ -1,4 +1,11 @@
 // src/services/subcategory.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe SubcategoryService, responsável por
+ * gerenciar a lógica de negócio das Subcategorias de Lotes. Ele interage com o
+ * repositório para criar, buscar e atualizar subcategorias, e garante que uma
+ * categoria principal seja marcada como `hasSubcategories` quando a primeira
+ * subcategoria é adicionada a ela.
+ */
 import { SubcategoryRepository } from '@/repositories/subcategory.repository';
 import type { Subcategory, SubcategoryFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

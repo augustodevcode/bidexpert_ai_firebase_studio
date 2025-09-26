@@ -8,11 +8,14 @@
  * 1. Search and Filter Service Logic Test
  * 2. Full Auction & Bidding Lifecycle Test
  * 3. Auction Creation Wizard Lifecycle Test
+ * 4. Administration CRUD Scenarios (from TESTING_SCENARIOS.md)
+ * 5. User Habilitation Flow (from TESTING_SCENARIOS.md)
+ * 6. Bidding and Checkout Flow (from TESTING_SCENARIOS.md)
  */
 
 import { describe, test, beforeAll, afterAll, expect, it, vi } from 'vitest';
 import assert from 'node:assert';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, LotStatus, UserHabilitationStatus } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { slugify } from '@/lib/ui-helpers';
 import { tenantContext } from '@/lib/prisma';
@@ -23,17 +26,19 @@ import { AuctionService } from '@/services/auction.service';
 
 // Import Server Actions
 import * as authActions from '@/app/auth/actions';
-import { createAuction, getAuction, deleteAuction } from '@/app/admin/auctions/actions';
+import { createAuction, getAuction, deleteAuction, updateAuction } from '@/app/admin/auctions/actions';
 import { createLot, getLot, deleteLot, finalizeLot } from '@/app/admin/lots/actions';
-import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
+import { createUser, getUserProfileData, deleteUser, updateUser } from '@/app/admin/users/actions';
 import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
-import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
-import { createRole, getRoles } from '@/app/admin/roles/actions';
-import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
+import { createAsset, deleteAsset, updateAsset } from '@/app/admin/assets/actions';
+import { createRole, getRoles, assignRolesToUser } from '@/app/admin/roles/actions';
+import { habilitateForAuctionAction, reviewUserDocuments } from '@/app/admin/habilitations/actions';
 import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
-import { createAuctioneer } from '@/app/admin/auctioneers/actions';
+import { createAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
 import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
+import { processCheckout } from '@/app/checkout/[winId]/actions';
+
 
 // Import types used across tests
 import type { 
@@ -55,7 +60,8 @@ import type {
     AssetFormData, 
     JudicialProcessFormData,
     WizardData,
-    Tenant
+    Tenant,
+    UserWin
 } from '@/types';
 
 // Mock server-only and next/headers for server action testing
@@ -446,6 +452,263 @@ describe(`[E2E] Auction Creation Wizard Lifecycle`, () => {
         assert.match(result.message, /permissão/i, 'Error message should indicate a permission issue.');
     });
 });
+
+// --- Suite 4: [From Scenarios] Administration - Entity Management (CRUD) ---
+describe('[E2E] Módulo 1: Administração - Gerenciamento de Entidades (CRUD)', () => {
+    const testRunId = `crud-e2e-${uuidv4().substring(0, 8)}`;
+    let adminUser: UserProfileWithPermissions;
+    let unauthorizedUser: UserProfileWithPermissions;
+    let testTenant: Tenant;
+    let testCategory: LotCategory;
+    let testSeller: SellerProfileInfo;
+    let testAuctioneer: AuctioneerProfileInfo;
+
+    beforeAll(async () => {
+        const prereqs = await createTestPrerequisites(testRunId, 'crud');
+        testTenant = prereqs.tenant;
+        adminUser = prereqs.adminUser;
+        unauthorizedUser = prereqs.unauthorizedUser;
+        testCategory = prereqs.category;
+        testSeller = prereqs.judicialSeller;
+        testAuctioneer = prereqs.auctioneer;
+    }, 80000);
+
+    afterAll(async () => {
+        await cleanup(testRunId, 'crud');
+    });
+
+    // 1.1. Gerenciamento de Usuários
+    describe('1.1. Gerenciamento de Usuários', () => {
+        let newUserId: string;
+        const newUserEmail = `testuser-crud-${testRunId}@test.com`;
+
+        it('Cenário 1.1.1 & 1.1.2: Criação e Edição de um novo usuário', async () => {
+            const userRole = await prisma.role.findFirst({ where: { nameNormalized: 'USER' } });
+            const result = await callActionAsUser(createUser, adminUser, {
+                fullName: `Test User ${testRunId}`,
+                email: newUserEmail,
+                password: 'password123',
+                roleIds: [userRole!.id],
+                tenantId: testTenant.id,
+            });
+            expect(result.success).toBe(true);
+            newUserId = result.userId!;
+            
+            const updatedResult = await callActionAsUser(updateUser, adminUser, newUserId, { fullName: `Updated User Name ${testRunId}` });
+            expect(updatedResult.success).toBe(true);
+
+            const updatedUser = await callActionAsUser(getUserProfileData, adminUser, newUserId);
+            expect(updatedUser?.fullName).toBe(`Updated User Name ${testRunId}`);
+        });
+
+        it('Cenário 1.1.3: Atribuição de múltiplos perfis (Roles)', async () => {
+            const sellerRole = await prisma.role.upsert({ where: { nameNormalized: 'SELLER' }, update: {}, create: { name: 'Seller', nameNormalized: 'SELLER', permissions: [] } });
+            const bidderRole = await prisma.role.upsert({ where: { nameNormalized: 'BIDDER' }, update: {}, create: { name: 'Bidder', nameNormalized: 'BIDDER', permissions: ['place_bids'] } });
+            
+            const assignResult = await callActionAsUser(assignRolesToUser, adminUser, newUserId, [sellerRole.id, bidderRole.id]);
+            expect(assignResult.success).toBe(true);
+
+            const userWithRoles = await callActionAsUser(getUserProfileData, adminUser, newUserId);
+            expect(userWithRoles?.roles.some(r => r.name === 'Seller')).toBe(true);
+            expect(userWithRoles?.roles.some(r => r.name === 'Bidder')).toBe(true);
+        });
+
+        it('Cenário 1.1.4: Exclusão de usuário', async () => {
+            const deleteResult = await callActionAsUser(deleteUser, adminUser, newUserId);
+            expect(deleteResult.success).toBe(true);
+
+            const deletedUser = await prisma.user.findUnique({ where: { id: newUserId } });
+            expect(deletedUser).toBeNull();
+        });
+    });
+
+    // 1.2. Gerenciamento de Leilões
+    describe('1.2. Gerenciamento de Leilões', () => {
+        let auctionId: string;
+
+        it('Cenário 1.2.1 & 1.2.2: Criação e Edição de um leilão', async () => {
+            const result = await callActionAsUser(createAuction, adminUser, {
+                title: `Leilão CRUD ${testRunId}`, auctionType: 'EXTRAJUDICIAL', sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'RASCUNHO', auctionDate: new Date(),
+                auctionStages: [{ name: 'Praça Única', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000) }]
+            } as any);
+            expect(result.success).toBe(true);
+            auctionId = result.auctionId!;
+
+            const updateResult = await callActionAsUser(updateAuction, adminUser, auctionId, { status: 'EM_BREVE' });
+            expect(updateResult.success).toBe(true);
+
+            const updatedAuction = await callActionAsUser(getAuction, adminUser, auctionId);
+            expect(updatedAuction?.status).toBe('EM_BREVE');
+        });
+
+        it('Cenário 1.2.4: Tentativa de exclusão de um leilão com lotes', async () => {
+            const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot for Deletion Test ${testRunId}`, auctionId: auctionId, price: 100 } as any);
+            expect(lotRes.success).toBe(true);
+
+            const deleteResult = await callActionAsUser(deleteAuction, adminUser, auctionId);
+            expect(deleteResult.success).toBe(false);
+            expect(deleteResult.message).toContain('possui lote(s) associado(s)');
+
+            // Cleanup lot and then auction
+            await callActionAsUser(deleteLot, adminUser, lotRes.lotId!);
+            await callActionAsUser(deleteAuction, adminUser, auctionId);
+        });
+    });
+
+    // 1.3. Gerenciamento de Ativos e Lotes
+    describe('1.3. Gerenciamento de Ativos e Lotes', () => {
+        let assetId: string;
+        let lotId: string;
+        let auctionId: string;
+
+        it('Cenário 1.3.1 & 1.3.2: Criação de Ativo e Lote vinculado', async () => {
+            const assetRes = await callActionAsUser(createAsset, adminUser, { title: `Asset-Lot Test ${testRunId}`, categoryId: testCategory.id, status: 'DISPONIVEL' } as any);
+            expect(assetRes.success).toBe(true);
+            assetId = assetRes.assetId!;
+
+            const auctionRes = await callActionAsUser(createAuction, adminUser, { title: `Auction for Asset-Lot Test ${testRunId}`, status: 'RASCUNHO', auctionDate: new Date() } as any);
+            expect(auctionRes.success).toBe(true);
+            auctionId = auctionRes.auctionId!;
+
+            const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot with Asset ${testRunId}`, auctionId: auctionId, assetIds: [assetId] } as any);
+            expect(lotRes.success).toBe(true);
+            lotId = lotRes.lotId!;
+
+            const updatedAsset = await prisma.asset.findUnique({ where: { id: assetId } });
+            expect(updatedAsset?.status).toBe('LOTEADO');
+        });
+
+        it('Cenário 1.3.3: Exclusão de Lote desvincula Ativo', async () => {
+            const deleteResult = await callActionAsUser(deleteLot, adminUser, lotId);
+            expect(deleteResult.success).toBe(true);
+
+            const assetAfterDelete = await prisma.asset.findUnique({ where: { id: assetId } });
+            expect(assetAfterDelete?.status).toBe('DISPONIVEL');
+
+            // Cleanup
+            await callActionAsUser(deleteAsset, adminUser, assetId);
+            await callActionAsUser(deleteAuction, adminUser, auctionId);
+        });
+    });
+});
+
+// --- Suite 5: [From Scenarios] User Habilitation Flow ---
+describe('[E2E] Módulo 2: Fluxo de Habilitação de Usuário', () => {
+    const testRunId = `habil-e2e-${uuidv4().substring(0, 8)}`;
+    let adminUser: UserProfileWithPermissions;
+    let userToHabilitate: UserProfileWithPermissions;
+    let testTenant: Tenant;
+
+    beforeAll(async () => {
+        const prereqs = await createTestPrerequisites(testRunId, 'habil');
+        adminUser = prereqs.adminUser;
+        testTenant = prereqs.tenant;
+
+        const userRole = await prisma.role.findFirst({ where: { nameNormalized: 'USER' } });
+        const userRes = await callActionAsUser(createUser, adminUser, {
+            fullName: `João Habilitação ${testRunId}`,
+            email: `joao-habil-${testRunId}@test.com`,
+            password: 'password123',
+            roleIds: [userRole!.id],
+            tenantId: testTenant.id,
+            habilitationStatus: 'PENDING_DOCUMENTS'
+        });
+        userToHabilitate = (await callActionAsUser(getUserProfileData, adminUser, userRes.userId!))!;
+    }, 80000);
+
+    afterAll(async () => {
+        await cleanup(testRunId, 'habil');
+    });
+
+    it('Cenário 2.1.2: Analista aprova os documentos e habilita o usuário', async () => {
+        // Simulate document submission by setting status to 'EM_ANALISE'
+        await prisma.user.update({ where: { id: userToHabilitate.id }, data: { habilitationStatus: 'EM_ANALISE' } });
+
+        const approvalResult = await callActionAsUser(reviewUserDocuments, adminUser, userToHabilitate.id, true, "Documentos OK");
+        expect(approvalResult.success).toBe(true);
+
+        const updatedUser = await callActionAsUser(getUserProfileData, adminUser, userToHabilitate.id);
+        expect(updatedUser?.habilitationStatus).toBe(UserHabilitationStatus.HABILITADO);
+        expect(updatedUser?.roles.some(r => r.nameNormalized === 'BIDDER')).toBe(true);
+    });
+
+    it('Cenário 2.1.3: Analista rejeita um documento', async () => {
+        // Reset status for rejection test
+        await prisma.user.update({ where: { id: userToHabilitate.id }, data: { habilitationStatus: 'EM_ANALISE' } });
+
+        const rejectionResult = await callActionAsUser(reviewUserDocuments, adminUser, userToHabilitate.id, false, "Documento ilegível");
+        expect(rejectionResult.success).toBe(true);
+
+        const updatedUser = await callActionAsUser(getUserProfileData, adminUser, userToHabilitate.id);
+        expect(updatedUser?.habilitationStatus).toBe(UserHabilitationStatus.REJECTED_DOCUMENTS);
+    });
+});
+
+// --- Suite 6: [From Scenarios] Bidding and Checkout Flow ---
+describe('[E2E] Módulo 3: Jornada do Arrematante (Lances e Compras)', () => {
+    const testRunId = `checkout-e2e-${uuidv4().substring(0, 8)}`;
+    let adminUser: UserProfileWithPermissions;
+    let bidderUser: UserProfileWithPermissions;
+    let testTenant: Tenant;
+    let testAuction: Auction;
+    let testLot: Lot;
+    let userWin: UserWin;
+
+    beforeAll(async () => {
+        const prereqs = await createTestPrerequisites(testRunId, 'checkout');
+        adminUser = prereqs.adminUser;
+        testTenant = prereqs.tenant;
+
+        const bidderRole = await prisma.role.upsert({ where: { nameNormalized: 'BIDDER' }, update: {}, create: { name: 'Bidder', nameNormalized: 'BIDDER', permissions: ['place_bids'] } });
+        const userRes = await callActionAsUser(createUser, adminUser, {
+            fullName: `Arrematante Checkout ${testRunId}`, email: `arrematante-checkout-${testRunId}@test.com`, password: 'password123',
+            roleIds: [bidderRole.id], tenantId: testTenant.id, habilitationStatus: 'HABILITADO'
+        });
+        bidderUser = (await callActionAsUser(getUserProfileData, adminUser, userRes.userId!))!;
+
+        const auctionRes = await callActionAsUser(createAuction, adminUser, { title: `Auction Checkout ${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: new Date() } as any);
+        testAuction = (await callActionAsUser(getAuction, adminUser, auctionRes.auctionId!))!;
+
+        const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot Checkout ${testRunId}`, auctionId: testAuction.id, price: 1000, bidIncrement: 100, status: 'ABERTO_PARA_LANCES' } as any);
+        testLot = (await callActionAsUser(getLot, adminUser, lotRes.lotId!))!;
+    }, 80000);
+
+    afterAll(async () => {
+        await cleanup(testRunId, 'checkout');
+    });
+
+    it('Cenário 3.1.1 & 3.1.2: Dar um lance válido e tentar um inválido', async () => {
+        const invalidBid = await callActionAsUser(placeBidOnLot, bidderUser, testLot.id, testAuction.id, bidderUser.id, bidderUser.fullName!, 1050);
+        expect(invalidBid.success).toBe(false);
+        expect(invalidBid.message).toContain('mínimo é de R$ 1100');
+
+        const validBid = await callActionAsUser(placeBidOnLot, bidderUser, testLot.id, testAuction.id, bidderUser.id, bidderUser.fullName!, 1100);
+        expect(validBid.success).toBe(true);
+
+        const updatedLot = await callActionAsUser(getLot, adminUser, testLot.id);
+        expect(updatedLot?.price).toBe(1100);
+    });
+
+    it('Cenário 3.1.3 & 3.1.4: Arrematar um lote e fazer o checkout', async () => {
+        const finalizationResult = await callActionAsUser(finalizeLot, adminUser, testLot.id);
+        expect(finalizationResult.success).toBe(true);
+        
+        const finalLot = await callActionAsUser(getLot, adminUser, testLot.id);
+        expect(finalLot?.status).toBe(LotStatus.VENDIDO);
+        expect(finalLot?.winnerId).toBe(bidderUser.id);
+
+        const winRecord = await prisma.userWin.findFirst({ where: { lotId: testLot.id, userId: bidderUser.id } });
+        expect(winRecord).toBeDefined();
+        userWin = winRecord!;
+
+        const checkoutResult = await callActionAsUser(processCheckout, bidderUser, userWin.id, 'pix', 1155); // Assuming 5% commission
+        expect(checkoutResult.success).toBe(true);
+
+        const updatedWin = await prisma.userWin.findUnique({ where: { id: userWin.id } });
+        expect(updatedWin?.paymentStatus).toBe('PAGO');
+    });
+});
+
 
 afterAll(async () => {
     await prisma.$disconnect();

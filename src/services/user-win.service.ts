@@ -1,4 +1,11 @@
 // src/services/user-win.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe UserWinService, que encapsula
+ * a lógica de negócio para o gerenciamento de arremates de usuários.
+ * O serviço interage com o repositório para buscar informações detalhadas
+ * sobre os lotes que um usuário arrematou, formatando os dados para exibição
+ * no painel do usuário.
+ */
 import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { UserWin } from '@/types';
 

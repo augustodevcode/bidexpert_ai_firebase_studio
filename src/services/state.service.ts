@@ -1,4 +1,10 @@
 // src/services/state.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe StateService, responsável por
+ * gerenciar a lógica de negócio dos Estados (UFs). Ele interage com o repositório
+ * para realizar operações de CRUD, incluindo validações como a checagem de
+ * UFs duplicadas antes de criar ou atualizar um registro.
+ */
 import { StateRepository } from '@/repositories/state.repository';
 import type { StateInfo, StateFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';

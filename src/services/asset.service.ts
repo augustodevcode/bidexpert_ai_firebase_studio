@@ -49,19 +49,20 @@ export class AssetService {
    * @param {object} filter - Filtros a serem aplicados na busca.
    * @returns {Promise<Asset[]>} Uma lista de ativos.
    */
-  async getAssets(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string }): Promise<Asset[]> {
+  async getAssets(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string; status?: string }): Promise<Asset[]> {
     const assets = await this.repository.findAll(filter);
     return this.mapAssetsWithDetails(assets);
   }
 
   /**
    * Busca um ativo específico pelo seu ID.
+   * @param {string} tenantId - O ID do tenant.
    * @param {string} id - O ID do ativo.
    * @returns {Promise<Asset | null>} O ativo encontrado ou null.
    */
-  async getAssetById(id: string): Promise<Asset | null> {
+  async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
     const asset = await this.repository.findById(id);
-    if (!asset) return null;
+    if (!asset || asset.tenantId !== tenantId) return null;
     return this.mapAssetsWithDetails([asset])[0];
   }
 

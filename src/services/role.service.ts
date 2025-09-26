@@ -1,4 +1,11 @@
 // src/services/role.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe RoleService, responsável por
+ * gerenciar a lógica de negócio dos Perfis de Usuário (Roles). Ele interage
+ * com o repositório para criar, ler, atualizar e excluir perfis, garantindo
+ * a validação de nomes duplicados e a correta formatação dos dados antes da
+ * persistência.
+ */
 import { RoleRepository } from '@/repositories/role.repository';
 import type { Role, RoleFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
