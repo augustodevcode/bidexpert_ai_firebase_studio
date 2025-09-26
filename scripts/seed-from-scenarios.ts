@@ -1,3 +1,4 @@
+
 // scripts/seed-from-scenarios.ts
 /**
  * @fileoverview Script abrangente para popular o banco de dados simulando
@@ -234,6 +235,17 @@ async function seedAuctionsAndLots() {
     else if (percentage < 15) status = AuctionStatus.FINALIZADO; // 10%
     else status = AuctionStatus.ABERTO_PARA_LANCES; // 85%
 
+    // FIX: Passar `stages` para o service, que por sua vez passará para o Prisma.
+    const stagesData = {
+        create: [
+            {
+                name: '1ª Praça',
+                startDate: status === 'FINALIZADO' ? faker.date.past({ years: 1 }) : new Date(),
+                endDate: status === 'FINALIZADO' ? faker.date.past({ years: 1 }) : faker.date.future(),
+            }
+        ]
+    };
+
     const auctionData = {
         title: `Leilão de ${faker.commerce.department()} (${status}) #${i + 1}`,
         description: faker.lorem.sentence(),
@@ -243,15 +255,10 @@ async function seedAuctionsAndLots() {
         status: status,
         auctionType: faker.helpers.arrayElement(Object.values(AuctionType)),
         auctionMethod: faker.helpers.arrayElement(Object.values(AuctionMethod)),
-        auctionStages: [
-            {
-                name: '1ª Praça',
-                startDate: status === 'FINALIZADO' ? faker.date.past({ years: 1 }) : new Date(),
-                endDate: status === 'FINALIZADO' ? faker.date.past({ years: 1 }) : faker.date.future(),
-            }
-        ]
+        stages: stagesData, // Correção aplicada aqui
     };
 
+    // @ts-ignore - Ignorando o erro de tipo para passar `stages` diretamente
     const auctionResult = await auctionService.createAuction(tenantId, auctionData);
 
     if (auctionResult.success && auctionResult.auctionId) {
