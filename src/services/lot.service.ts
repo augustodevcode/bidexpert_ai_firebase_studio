@@ -227,7 +227,7 @@ export class LotService {
         // @ts-ignore
         await this.prisma.lotQuestion.update({
             where: { id: questionId },
-            data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: convertSaoPauloToUtc(nowInSaoPaulo()) }
+            data: { answerText, answeredByUserId, answeredByUserDisplayName, answeredAt: nowInSaoPaulo() }
         });
         return { success: true, message: "Resposta enviada com sucesso." };
       } catch (error) {

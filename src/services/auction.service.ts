@@ -11,7 +11,7 @@ import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
-import { utcToZonedTime } from 'date-fns-tz';
+import { nowInSaoPaulo } from '@/lib/timezone';
 import { getPrismaInstance } from '@/lib/prisma';
 
 // Status que NUNCA devem ser visíveis publicamente
@@ -151,40 +151,44 @@ export class AuctionService {
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");
       if (!data.sellerId) throw new Error("O ID do comitente é obrigatório.");
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, ...restOfData } = data;
+      const derivedAuctionDate = (data.auctionStages && data.auctionStages.length > 0 && data.auctionStages[0].startDate)
+        ? new Date(data.auctionStages[0].startDate as Date)
+        : nowInSaoPaulo();
 
-      const derivedAuctionDate = (auctionStages && auctionStages.length > 0 && auctionStages[0].startDate)
-        ? new Date(auctionStages[0].startDate as Date)
-        : utcToZonedTime(new Date(), 'America/Sao_Paulo');
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, ...restOfData } = data;
 
-      // Explicitly build the payload, excluding tenantId from restOfData.
-      const createPayload: Prisma.AuctionCreateInput = {
-        ...restOfData,
-        publicId: `AUC-${uuidv4()}`,
-        slug: slugify(data.title!),
-        auctionDate: derivedAuctionDate,
-        softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-        auctioneer: { connect: { id: auctioneerId } },
-        seller: { connect: { id: sellerId } },
-        category: categoryId ? { connect: { id: categoryId } } : undefined,
-        tenant: { connect: { id: tenantId } }, // Use the tenantId parameter, not from data
-        city: cityId ? { connect: { id: cityId } } : undefined,
-        state: stateId ? { connect: { id: stateId } } : undefined,
-        judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
-        stages: {
-          create: auctionStages?.map((stage: any) => ({
-            name: stage.name,
-            startDate: new Date(stage.startDate as Date),
-            endDate: new Date(stage.endDate as Date),
-            initialPrice: stage.initialPrice,
-          }))
+      const newAuction = await this.prisma.$transaction(async (tx: any) => {
+        const createdAuction = await tx.auction.create({
+          data: {
+            ...(restOfData as any),
+            publicId: `AUC-${uuidv4()}`,
+            slug: slugify(data.title!),
+            auctionDate: derivedAuctionDate,
+            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+            auctioneer: { connect: { id: auctioneerId } },
+            seller: { connect: { id: sellerId } },
+            category: categoryId ? { connect: { id: categoryId } } : undefined,
+            tenant: { connect: { id: tenantId } },
+            city: cityId ? { connect: { id: cityId } } : undefined,
+            state: stateId ? { connect: { id: stateId } } : undefined,
+            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
+          }
+        });
+
+        if (data.auctionStages && data.auctionStages.length > 0) {
+          await tx.auctionStage.createMany({
+            data: data.auctionStages.map((stage: any) => ({
+              name: stage.name,
+              startDate: new Date(stage.startDate as Date),
+              endDate: new Date(stage.endDate as Date),
+              initialPrice: stage.initialPrice,
+              auctionId: createdAuction.id,
+            })),
+          });
         }
-      };
-      
-      // Final check to remove tenantId if it slipped through restOfData
-      delete (createPayload as any).tenantId;
 
-      const newAuction = await this.prisma.auction.create({ data: createPayload });
+        return createdAuction;
+      });
 
       return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
 

@@ -79,6 +79,7 @@ export default function HeroCarousel() {
                     src={slide.imageUrl}
                     alt={slide.imageAlt}
                     fill
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-contain md:object-cover rounded-md"
                     data-ai-hint={slide.dataAiHint}
                     priority={index === 0}

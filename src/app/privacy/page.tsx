@@ -9,7 +9,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShieldCheck } from 'lucide-react';
-import { formatInSaoPaulo } from '@/lib/timezone';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { useState, useEffect } from 'react';
 
 export default function PrivacyPage() {
@@ -17,7 +18,7 @@ export default function PrivacyPage() {
 
   useEffect(() => {
     // Para evitar hydration mismatch, a data é formatada no lado do cliente
-    setLastUpdated(formatInSaoPaulo(new Date(), 'dd/MM/yyyy'));
+    setLastUpdated(format(new Date(), 'dd/MM/yyyy', { locale: ptBR }));
   }, []);
 
   return (
@@ -101,7 +102,7 @@ export default function PrivacyPage() {
           <CardTitle className="text-xl font-semibold">7. Contato</CardTitle>
         </CardHeader>
         <CardContent className="text-muted-foreground space-y-2 text-sm">
-          <p>Se você tiver alguma dúvida sobre esta Política de Privacidade, entre em contato conosco em privacy@bidexpert.com.</p>
+          <p>Se você tiver alguma dúvida sobre estes Termos, entre em contato conosco em privacy@bidexpert.com.</p>
         </CardContent>
       </Card>
     </div>

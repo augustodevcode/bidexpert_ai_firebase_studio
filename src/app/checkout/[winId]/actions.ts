@@ -74,7 +74,7 @@ export async function processPaymentAction(winId: string, paymentData: CheckoutF
                 userWinId: winId,
                 installmentNumber: i + 1,
                 amount: installmentAmount,
-                dueDate: add(convertSaoPauloToUtc(nowInSaoPaulo()), { months: i + 1 }),
+                dueDate: convertSaoPauloToUtc(add(nowInSaoPaulo(), { months: i + 1 })),
                 status: 'PENDENTE' as const
             }));
             

@@ -151,7 +151,7 @@ export async function generateWinningBidTermAction(lotId: string): Promise<{ suc
             winner: winner,
             auctioneer: auctioneer,
             seller: seller,
-            currentDate: formatInSaoPaulo(nowInSaoPaulo(), 'dd/MM/yyyy'),
+            currentDate: formatInSaoPaulo(new Date(), 'dd/MM/yyyy'),
         },
         });
 
