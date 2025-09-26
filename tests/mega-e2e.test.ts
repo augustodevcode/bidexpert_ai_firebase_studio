@@ -3,19 +3,6 @@
  * @fileoverview Mega Test Suite for E2E validation.
  * This file combines multiple E2E test suites into a single file for comprehensive validation of key user flows.
  * Each suite is encapsulated in its own 'describe' block with its own setup and teardown to ensure data isolation.
- *
- * It includes:
- * 1. Search and Filter Service Logic Test
- * 2. Full Auction & Bidding Lifecycle Test
- * 3. Auction Creation Wizard Lifecycle Test
- * 4. Administration CRUD Scenarios (from TESTING_SCENARIOS.md)
- * 5. User Habilitation Flow (from TESTING_SCENARIOS.md)
- * 6. Bidding and Checkout Flow (from TESTING_SCENARIOS.md)
- * 7. Security and Permissions on Server Actions
- * 8. Media Inheritance Logic
- * 9. Lot Lifecycle (Relisting)
- * 10. Installment Payments
- * 11. Staged Pricing Logic
  */
 
 import { describe, test, beforeAll, afterAll, expect, it, vi } from 'vitest';
@@ -45,7 +32,8 @@ import { createAuctionFromWizard } from '@/app/admin/wizard/actions';
 import { processPaymentAction } from '@/app/checkout/[winId]/actions';
 import { createMediaItem } from '@/app/admin/media/actions';
 import { relistLotAction } from '@/app/admin/lots/relist-lot-action';
-
+import { getLots } from '@/app/admin/lots/actions';
+import { getAuctions } from '@/app/admin/auctions/actions';
 
 // Import types used across tests
 import type { 
@@ -68,7 +56,8 @@ import type {
     JudicialProcessFormData,
     WizardData,
     Tenant,
-    UserWin
+    UserWin,
+    CheckoutFormValues
 } from '@/types';
 
 // Mock server-only and next/headers for server action testing
@@ -256,7 +245,7 @@ describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle`, () => {
         const auctionRes = await callActionAsUser(createAuction, adminUser, { title: `Auction Bidding ${testRunId}`, sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES' } as any);
         testAuction = (await callActionAsUser(getAuction, adminUser, auctionRes.auctionId!))!;
 
-        const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot Bidding ${testRunId}`, auctionId: testAuction.id, price: 1000, bidIncrementStep: 100, status: 'ABERTO_PARA_LANCES', type: testCategory.id } as any);
+        const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot Bidding ${testRunId}`, auctionId: testAuction.id, price: 25000, bidIncrementStep: 100, status: 'ABERTO_PARA_LANCES', type: testCategory.id, endDate: new Date(Date.now() + 5 * 60 * 1000) } as Partial<LotFormData>);
         testLot = (await callActionAsUser(getLot, adminUser, lotRes.lotId!))!;
     }, 80000);
 
@@ -266,14 +255,14 @@ describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle`, () => {
         await callActionAsUser(habilitateForAuctionAction, adminUser, bidder1.id, testAuction.id);
         await callActionAsUser(habilitateForAuctionAction, adminUser, bidder2.id, testAuction.id);
 
-        const invalidBid = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 1050);
+        const invalidBid = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 25050);
         expect(invalidBid.success).toBe(false);
-        expect(invalidBid.message).toContain('mínimo é de R$ 1.100');
+        expect(invalidBid.message).toContain('mínimo é de R$ 25.100');
 
-        const validBid1 = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 1100);
+        const validBid1 = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 25100);
         expect(validBid1.success).toBe(true);
 
-        const validBid2 = await callActionAsUser(placeBidOnLot, bidder2, testLot.id, testAuction.id, bidder2.id, bidder2.fullName!, 1200);
+        const validBid2 = await callActionAsUser(placeBidOnLot, bidder2, testLot.id, testAuction.id, bidder2.id, bidder2.fullName!, 25200);
         expect(validBid2.success).toBe(true);
         
         const finalizationResult = await callActionAsUser(finalizeLot, adminUser, testLot.id);
@@ -408,7 +397,6 @@ describe('[E2E] Módulo 2: Fluxo de Habilitação de Usuário', () => {
         await prisma.documentType.deleteMany({ where: { id: docType.id } });
     });
 });
-
 
 // --- Suite 6: Security and Permissions ---
 describe('[E2E] Módulo 27: Testes de Segurança da Camada de Ações', () => {
