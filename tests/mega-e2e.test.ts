@@ -39,6 +39,7 @@ import { createCourt } from '@/app/admin/courts/actions';
 import { createJudicialDistrict } from '@/app/admin/judicial-districts/actions';
 import { createJudicialBranch } from '@/app/admin/judicial-branches/actions';
 import { createDirectSaleOffer, deleteDirectSaleOffer } from '@/app/admin/direct-sales/actions';
+import { getAdminReportDataAction } from '@/app/admin/reports/actions';
 
 // Import types used across tests
 import type { 
@@ -65,7 +66,7 @@ import type {
     CheckoutFormValues,
     SellerFormData,
     AuctioneerFormData,
-    CategoryFormValues,
+    LotCategory as CategoryFormValues,
     CourtFormData,
     JudicialDistrictFormData,
     JudicialBranchFormData,
@@ -91,7 +92,6 @@ const prisma = new PrismaClient();
 async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
     const tenantId = user?.tenants?.[0]?.id || '1'; // Default to landlord if user has no specific tenant
 
-    // Use vi.spyOn to mock the implementation of getSession for the duration of this call
     const getSessionSpy = vi.spyOn(authActions, 'getSession').mockResolvedValue(
         user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions, user: {} as any } : null
     );
@@ -99,7 +99,6 @@ async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user:
     try {
         return await tenantContext.run({ tenantId }, () => action(...args));
     } finally {
-        // Restore the original implementation after the action has been called
         getSessionSpy.mockRestore();
     }
 }
@@ -107,9 +106,10 @@ async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user:
 async function createTestPrerequisites(testRunId: string, prefix: string) {
     const tenant = await prisma.tenant.create({ data: { name: `${prefix} Tenant ${testRunId}`, subdomain: `${prefix}-${testRunId}` } });
 
-    const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { id: `role-admin-${prefix}-${testRunId}`, name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
-    const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { id: `role-user-${prefix}-${testRunId}`, name: 'User', nameNormalized: 'USER', permissions: ['view_auctions'] } });
+    const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
+    const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'User', nameNormalized: 'USER', permissions: ['view_auctions'] } });
     
+    // Admin user must be created in the context of the new tenant
     const adminRes = await callActionAsUser(createUser, null, {
         fullName: `Admin ${prefix} ${testRunId}`,
         email: `admin-${prefix}-${testRunId}@test.com`,
@@ -510,6 +510,7 @@ describe('[E2E] Módulo 23: Lógica de Precificação por Etapa', () => {
   beforeAll(async () => {
     prereqs = await createTestPrerequisites(testRunId, 'stagedprice');
     const { adminUser, judicialSeller, auctioneer, category } = prereqs;
+    const lotService = new LotService();
 
     const auctionRes = await callActionAsUser(createAuction, adminUser, { 
       title: `Staged Auction ${testRunId}`, 
@@ -639,6 +640,46 @@ describe('[E2E] Módulo 19: Vendas Diretas', () => {
 
         const offer = await prisma.directSaleOffer.findUnique({ where: { id: result.offerId } });
         expect(offer?.price).toBe(500);
+    });
+});
+
+
+// --- Suite 12: Dashboard & Reports Data Aggregation ---
+describe('[E2E] Módulo 4 & 9: Dashboards e Agregação de Dados', () => {
+    const testRunId = `reports-e2e-${uuidv4().substring(0, 8)}`;
+    let prereqs: any;
+
+    beforeAll(async () => {
+        prereqs = await createTestPrerequisites(testRunId, 'reports');
+        
+        const auctionRes = await callActionAsUser(createAuction, prereqs.adminUser, { 
+            title: `Report Test Auction ${testRunId}`,
+            sellerId: prereqs.judicialSeller.id, 
+            auctioneerId: prereqs.auctioneer.id,
+            status: 'ABERTO_PARA_LANCES'
+        } as any);
+
+        await callActionAsUser(createLot, prereqs.adminUser, {
+            title: `Report Test Lot ${testRunId}`,
+            auctionId: auctionRes.auctionId,
+            price: 1500,
+            type: prereqs.category.id,
+            status: 'VENDIDO',
+            winnerId: prereqs.adminUser.id
+        } as any);
+    }, 80000);
+
+    afterAll(async () => { await cleanup(testRunId, 'reports'); });
+
+    it('Cenário 4.1.1: Deve buscar dados agregados para o dashboard de admin', async () => {
+        const adminReportData = await callActionAsUser(getAdminReportDataAction, prereqs.adminUser);
+
+        expect(adminReportData).toBeDefined();
+        expect(adminReportData.totalRevenue).toBeGreaterThanOrEqual(1500);
+        expect(adminReportData.auctions).toBeGreaterThan(0);
+        expect(adminReportData.lots).toBeGreaterThan(0);
+        expect(adminReportData.users).toBeGreaterThan(0);
+        expect(adminReportData.sellers).toBeGreaterThan(0);
     });
 });
 
