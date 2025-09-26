@@ -1,4 +1,4 @@
-
+// src/app/hero-carousel.tsx
 'use client';
 
 import Image from 'next/image';
