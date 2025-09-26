@@ -24,7 +24,7 @@ import { createUser, getUserProfileData, deleteUser, updateUserProfile, updateUs
 import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
 import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
-import { createRole } from '@/app/admin/roles/actions';
+import { createRole, getRoles } from '@/app/admin/roles/actions';
 import { habilitateForAuctionAction, approveDocument, rejectDocument } from '@/app/admin/habilitations/actions';
 import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import { createAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
@@ -38,6 +38,7 @@ import { createLotCategory } from '@/app/admin/categories/actions';
 import { createCourt } from '@/app/admin/courts/actions';
 import { createJudicialDistrict } from '@/app/admin/judicial-districts/actions';
 import { createJudicialBranch } from '@/app/admin/judicial-branches/actions';
+import { createDirectSaleOffer, deleteDirectSaleOffer } from '@/app/admin/direct-sales/actions';
 
 // Import types used across tests
 import type { 
@@ -67,7 +68,8 @@ import type {
     CategoryFormValues,
     CourtFormData,
     JudicialDistrictFormData,
-    JudicialBranchFormData
+    JudicialBranchFormData,
+    DirectSaleOfferFormData
 } from '@/types';
 
 // Mock server-only and next/headers for server action testing
@@ -361,7 +363,6 @@ describe('[E2E] Módulo 1: Gerenciamento de Entidades (CRUD)', () => {
     });
 });
 
-
 // --- Suite 5: User Habilitation Flow ---
 describe('[E2E] Módulo 2: Fluxo de Habilitação de Usuário', () => {
     const testRunId = `habil-e2e-${uuidv4().substring(0, 8)}`;
@@ -423,6 +424,13 @@ describe('[E2E] Módulo 27: Testes de Segurança da Camada de Ações', () => {
         const result = await callActionAsUser(updateAuction, otherTenantPrereqs.adminUser, testAuction.id, { title: "Tentativa de Invasão" });
         expect(result.success).toBe(false);
         expect(result.message).toContain('Leilão não encontrado');
+    });
+    
+    it('Cenário 27.2.1: Deve falhar ao tentar excluir um leilão com lotes vinculados', async () => {
+        const lotRes = await callActionAsUser(createLot, prereqs.adminUser, { title: `Lot for Delete Test ${testRunId}`, auctionId: testAuction.id, price: 100, type: prereqs.category.id } as any);
+        const result = await callActionAsUser(deleteAuction, prereqs.adminUser, testAuction.id);
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('possui 1 lote(s) associado(s)');
     });
 });
 
@@ -596,6 +604,41 @@ describe('[E2E] Módulo 14: Pagamento Parcelado', () => {
         
         const updatedWin = await prisma.userWin.findUnique({ where: { id: testWin.id } });
         expect(updatedWin?.paymentStatus).toBe('PROCESSANDO');
+    });
+});
+
+// --- Suite 11: Direct Sale Offers ---
+describe('[E2E] Módulo 19: Vendas Diretas', () => {
+    const testRunId = `dso-e2e-${uuidv4().substring(0, 8)}`;
+    let prereqs: any;
+    let createdOfferId: string | undefined;
+
+    beforeAll(async () => { prereqs = await createTestPrerequisites(testRunId, 'dso'); }, 80000);
+    afterAll(async () => { 
+        if (createdOfferId) {
+            await callActionAsUser(deleteDirectSaleOffer, prereqs.adminUser, createdOfferId);
+        }
+        await cleanup(testRunId, 'dso'); 
+    });
+
+    it('Cenário 19.1.1: Deve criar uma oferta de "Compra Imediata"', async () => {
+        const newOfferData: DirectSaleOfferFormData = {
+            title: `Item Compra Imediata ${testRunId}`,
+            offerType: 'BUY_NOW',
+            status: 'ACTIVE',
+            price: 500,
+            categoryId: prereqs.category.id,
+            sellerId: prereqs.judicialSeller.id,
+        };
+        
+        const result = await callActionAsUser(createDirectSaleOffer, prereqs.adminUser, newOfferData);
+        createdOfferId = result.offerId;
+
+        expect(result.success).toBe(true);
+        expect(result.offerId).toBeDefined();
+
+        const offer = await prisma.directSaleOffer.findUnique({ where: { id: result.offerId } });
+        expect(offer?.price).toBe(500);
     });
 });
 
