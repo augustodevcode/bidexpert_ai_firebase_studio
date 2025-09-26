@@ -43,9 +43,13 @@ export class RoleService {
 
   async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      const dataToUpdate: Prisma.RoleUpdateInput = { ...data };
+      const dataToUpdate: Partial<Prisma.RoleUpdateInput> = { ...data };
       if (data.name) {
         dataToUpdate.nameNormalized = data.name.toUpperCase().replace(/\s/g, '_');
+      }
+      // Garante que a permissão seja um objeto JSON válido ou nulo.
+      if (data.permissions) {
+        dataToUpdate.permissions = data.permissions;
       }
       
       await this.repository.update(id, dataToUpdate);
@@ -56,7 +60,7 @@ export class RoleService {
     }
   }
 
-  async deleteRole(id: string): Promise<{ success: boolean; message: string }> {
+  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Add check for users with this role
       const usersWithRole = await prisma.usersOnRoles.count({ where: { roleId: id } });

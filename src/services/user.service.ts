@@ -24,10 +24,8 @@ export class UserService {
     if (!user) return null;
 
     const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
-        const permissions = Array.from(new Set(roles.flatMap((r: any) => {
-        if (typeof r.permissions === 'string') {
-            return r.permissions.split(',');
-        }
+    const permissions = Array.from(new Set(roles.flatMap((r: any) => {
+        // Corrigido para lidar com o tipo Json
         if (Array.isArray(r.permissions)) {
             return r.permissions;
         }
