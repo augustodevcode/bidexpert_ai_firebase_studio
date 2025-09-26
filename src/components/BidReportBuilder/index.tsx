@@ -133,13 +133,13 @@ const BidReportBuilder = () => {
         <>
             <DndProvider backend={HTML5Backend}>
                 <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
-                    <Toolbar onAddElement={handleAddElement} onSave={() => setIsSaveModalOpen(true)} onLoad={() => setIsLoadModalOpen(true)} onExport={handleExportReport} />
+                    <Toolbar onAddElement={handleAddElement as any} onSave={() => setIsSaveModalOpen(true)} onLoad={() => setIsLoadModalOpen(true)} onExport={handleExportReport} />
                     <div className="flex flex-grow overflow-hidden">
                         <main className="flex-grow flex flex-col border-r" data-ai-id="report-builder-main-panel">
                             <div className="flex-grow relative">
                                 <DesignSurface 
                                     elements={reportDefinition.elements} 
-                                    onAddElement={handleAddElement}
+                                    onAddElement={handleAddElement as any}
                                     onSelectElement={setSelectedElement}
                                     selectedElementId={selectedElement?.id || null}
                                     onElementChange={handleElementChange}
@@ -160,7 +160,7 @@ const BidReportBuilder = () => {
                                     />
                                 </TabsContent>
                                 <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
-                                    <DataSourceManager onAddElement={handleAddElement} />
+                                    <DataSourceManager onAddElement={handleAddElement as any} />
                                 </TabsContent>
                                 <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
                                     <MediaLibrary onSelectImage={handleSelectImage} />
@@ -176,7 +176,7 @@ const BidReportBuilder = () => {
                 onClose={() => setIsSaveModalOpen(false)}
                 onSave={handleSaveReport}
                 initialName={currentReport?.name}
-                initialDescription={currentReport?.description}
+                initialDescription={currentReport?.description || ''}
             />
 
             <ReportLoadDialog
