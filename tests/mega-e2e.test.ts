@@ -203,7 +203,7 @@ describe('Módulo 5: Search and Filter Logic Test (Tenant-Aware)', () => {
         const prereqs = await createTestPrerequisites(testRunId, 'search');
         testTenant = prereqs.tenant;
         adminUser = prereqs.adminUser;
-        category1 = prereqs.category; // Re-using for simplicity
+        category1 = prereqs.category;
         auctioneer1 = prereqs.auctioneer;
         seller1 = prereqs.judicialSeller;
         
@@ -232,9 +232,8 @@ describe('Módulo 5: Search and Filter Logic Test (Tenant-Aware)', () => {
     });
 });
 
-
 // --- Suite 2: Full Auction & Bidding Lifecycle ---
-describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle (via Actions)`, () => {
+describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle`, () => {
     const testRunId = `bidding-e2e-${uuidv4().substring(0, 8)}`;
     let adminUser: UserProfileWithPermissions, bidder1: UserProfileWithPermissions, bidder2: UserProfileWithPermissions;
     let testSeller: SellerProfileInfo, testAuctioneer: AuctioneerProfileInfo, testCategory: LotCategory;
@@ -250,9 +249,9 @@ describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle (via Actions)`, () =
         testCategory = prereqs.category;
 
         [bidder1, bidder2] = await Promise.all([
-            callActionAsUser(createUser, adminUser, { fullName: `Bidder 1 ${testRunId}`, email: `bidder1-${testRunId}@test.com`, password: 'p', tenantId: testTenant.id, habilitationStatus: 'HABILITADO' }).then(res => getUserProfileData(res.userId!)),
-            callActionAsUser(createUser, adminUser, { fullName: `Bidder 2 ${testRunId}`, email: `bidder2-${testRunId}@test.com`, password: 'p', tenantId: testTenant.id, habilitationStatus: 'HABILITADO' }).then(res => getUserProfileData(res.userId!)),
-        ]);
+            callActionAsUser(createUser, adminUser, { fullName: `Bidder 1 ${testRunId}`, email: `bidder1-${testRunId}@test.com`, password: 'p', tenantId: testTenant.id, habilitationStatus: 'HABILITADO' }),
+            callActionAsUser(createUser, adminUser, { fullName: `Bidder 2 ${testRunId}`, email: `bidder2-${testRunId}@test.com`, password: 'p', tenantId: testTenant.id, habilitationStatus: 'HABILITADO' }),
+        ]).then(async (results) => await Promise.all(results.map(res => getUserProfileData(res.userId!))));
         
         const auctionRes = await callActionAsUser(createAuction, adminUser, { title: `Auction Bidding ${testRunId}`, sellerId: testSeller.id, auctioneerId: testAuctioneer.id, status: 'ABERTO_PARA_LANCES' } as any);
         testAuction = (await callActionAsUser(getAuction, adminUser, auctionRes.auctionId!))!;
@@ -296,14 +295,14 @@ describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle (via Actions)`, () =
 });
 
 // --- Suite 3: Auction Creation Wizard Lifecycle ---
-describe(`[E2E] Módulo 8: Auction Creation Wizard Lifecycle`, () => {
+describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle`, () => {
     const testRunId = `wizard-e2e-${uuidv4().substring(0, 8)}`;
     let prereqs: any;
 
     beforeAll(async () => { prereqs = await createTestPrerequisites(testRunId, 'wizard'); }, 80000);
     afterAll(async () => { await cleanup(testRunId, 'wizard'); });
 
-    it('Cenário 8.1: should simulate the entire wizard flow and create a complete auction', async () => {
+    it('Cenário 8.1 & 29.1: should simulate the entire wizard flow and create a complete auction', async () => {
         const wizardData: WizardData = { 
             auctionType: 'JUDICIAL',
             judicialProcess: prereqs.judicialProcess as JudicialProcess,
@@ -311,7 +310,7 @@ describe(`[E2E] Módulo 8: Auction Creation Wizard Lifecycle`, () => {
                 title: `Leilão do Wizard ${testRunId}`, auctionType: 'JUDICIAL',
                 auctioneerId: prereqs.auctioneer.id, sellerId: prereqs.judicialSeller.id,
                 categoryId: prereqs.category.id, judicialProcessId: prereqs.judicialProcess.id,
-                auctionStages: [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 10 * 86400000) } as any]
+                auctionStages: [{ name: '1ª Praça', startDate: new Date(Date.now() + 86400000), endDate: new Date(Date.now() + 10 * 86400000) } as any]
             },
             createdLots: [{ id: `temp-lot-${uuidv4()}`, number: '101-WIZ', title: `Lote do Asset ${testRunId}`, type: 'ASSET_TEST', price: 50000, initialPrice: 50000, status: 'EM_BREVE', assetIds: [prereqs.asset.id], categoryId: prereqs.category.id, auctionId: '' } as any]
         };
@@ -326,7 +325,7 @@ describe(`[E2E] Módulo 8: Auction Creation Wizard Lifecycle`, () => {
         expect(createdAuction?.lots[0].assets[0].assetId).toBe(prereqs.asset.id);
     });
 
-    it('should NOT allow a user without permission to create an auction', async () => {
+    it('should NOT allow a user without permission to create an auction via wizard', async () => {
         const wizardData: WizardData = { auctionDetails: { title: `Leilão Não Autorizado ${testRunId}` } };
         const result = await callActionAsUser(createAuctionFromWizard, prereqs.unauthorizedUser, wizardData);
         expect(result.success).toBe(false);
@@ -409,6 +408,7 @@ describe('[E2E] Módulo 2: Fluxo de Habilitação de Usuário', () => {
         await prisma.documentType.deleteMany({ where: { id: docType.id } });
     });
 });
+
 
 // --- Suite 6: Security and Permissions ---
 describe('[E2E] Módulo 27: Testes de Segurança da Camada de Ações', () => {
@@ -513,6 +513,7 @@ describe('[E2E] Módulo 12: Relistagem e Reloteamento', () => {
     expect(newLot).toBeDefined();
     expect(newLot?.isRelisted).toBe(true);
     expect(newLot?.originalLotId).toBe(originalLot.id);
+    expect(newLot?.auctionId).toBe(newAuction.id);
     expect(newLot?.price).toBe(500); // 50% de 1000
   });
 
@@ -567,100 +568,72 @@ describe('[E2E] Módulo 23: Lógica de Precificação por Etapa', () => {
     const lotService = new LotService();
     const fetchedLot = await tenantContext.run({ tenantId: prereqs.tenant.id }, () => lotService.getLotById(testLot.id));
     const activeStage = testAuction.auctionStages![0];
-    const lotPrices = lotService['getLotPriceForStage'](fetchedLot!, activeStage.id); // Acesso privado para teste
+    const lotPrices = (lotService as any).getLotPriceForStage(fetchedLot!, activeStage.id);
     
     expect(lotPrices?.initialBid).toBe(10000);
   });
 });
 
+// --- Suite 10: Installment Payments ---
+describe('[E2E] Módulo 14: Pagamento Parcelado', () => {
+    const testRunId = `payment-e2e-action-${uuidv4().substring(0, 8)}`;
+    let testUser: UserProfileWithPermissions;
+    let testWin: UserWin;
+    let testLot: Lot;
+    let testTenant: Tenant;
+
+    beforeAll(async () => {
+        testTenant = await prisma.tenant.create({ data: { name: `Payment Test Tenant ${testRunId}`, subdomain: `payment-${testRunId}` } });
+        const userRole = await prisma.role.findFirst({ where: { name: 'USER' } });
+        assert.ok(userRole, "USER role must exist");
+
+        const userRes = await callActionAsUser(createUser, null, {
+            fullName: `Pagador ${testRunId}`, email: `pagador-${testRunId}@test.com`, password: 'password123',
+            roleIds: [userRole.id], habilitationStatus: 'HABILITADO', tenantId: testTenant.id,
+        });
+        assert.ok(userRes.success && userRes.userId);
+        testUser = (await callActionAsUser(getUserProfileData, null, userRes.userId))!;
+        
+        await tenantContext.run({ tenantId: testTenant.id }, async () => {
+            const seller = await prisma.seller.create({ data: { name: `Seller Pay ${testRunId}`, publicId: `pub-seller-pay-${testRunId}`, slug: `seller-pay-${testRunId}`, isJudicial: false, tenantId: testTenant.id } });
+            const auctioneer = await prisma.auctioneer.create({ data: { name: `Auct Pay ${testRunId}`, publicId: `pub-auct-pay-${testRunId}`, slug: `auct-pay-${testRunId}`, tenantId: testTenant.id } });
+            const auction = await prisma.auction.create({ data: { title: `Auction Pay ${testRunId}`, publicId: `pub-auc-pay-${testRunId}`, slug: `auc-pay-${testRunId}`, auctioneerId: auctioneer.id, sellerId: seller.id, status: 'FINALIZADO', auctionDate: new Date(), tenantId: testTenant.id } as any });
+            testLot = (await prisma.lot.create({ data: { title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id, tenantId: testTenant.id } as any })) as Lot;
+        });
+
+        testWin = (await prisma.userWin.create({ data: { userId: testUser.id, lotId: testLot.id, winningBidAmount: 1200.00, paymentStatus: 'PENDENTE' } })) as UserWin;
+    }, 80000);
+    
+    afterAll(async () => {
+        try {
+            await prisma.installmentPayment.deleteMany({ where: { userWinId: testWin.id } });
+            await prisma.userWin.deleteMany({ where: { id: testWin.id } });
+            await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+            await deleteUser(testUser.id);
+            await prisma.tenant.delete({ where: { id: testTenant.id }});
+        } catch (e) {
+             console.error(`[PAYMENT TEST CLEANUP] Error during cleanup for run ${testRunId}:`, e);
+        }
+    });
+
+    it('Cenário 14.1.1: Deve criar registros de parcelamento via ação de checkout', async () => {
+        const paymentData: CheckoutFormValues = { paymentMethod: 'installments', installments: 12 };
+        const result = await callActionAsUser(processPaymentAction, testUser, testWin.id, paymentData);
+        expect(result.success).toBe(true);
+
+        const installments = await prisma.installmentPayment.findMany({ where: { userWinId: testWin.id } });
+        expect(installments.length).toBe(12);
+        
+        const updatedWin = await prisma.userWin.findUnique({ where: { id: testWin.id } });
+        expect(updatedWin?.paymentStatus).toBe('PROCESSANDO');
+    });
+});
+
+
 // Final Teardown
 afterAll(async () => {
     await prisma.$disconnect();
 });
-```
-- src/tests/user.test.ts:
-```ts
-// tests/user.test.ts
-import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
-import assert from 'node:assert';
-import { prisma } from '../src/lib/prisma';
-import type { UserCreationData, Tenant, Role } from '../src/types';
-import { v4 as uuidv4 } from 'uuid';
-import { callActionAsUser } from './test-utils';
-
-// Mock server-only to allow testing server actions
-vi.mock('server-only', () => ({}));
-vi.mock('next/headers', () => ({
-  cookies: () => ({ set: vi.fn(), get: vi.fn(), delete: vi.fn() }),
-  headers: () => new Headers(),
-}));
-import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
-
-
-const testRunId = `user-e2e-${uuidv4().substring(0, 8)}`;
-const testUserEmail = `teste.usuario.${testRunId}@example.com`;
-let testTenant: Tenant;
-let userRole: Role;
-let adminUser: any; // O usuário que executa a ação
-
-describe('User Actions E2E Tests', () => {
-
-    beforeAll(async () => {
-        testTenant = await prisma.tenant.create({ data: { name: `User Test Tenant ${testRunId}`, subdomain: `user-test-${testRunId}` } });
-        userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'User', nameNormalized: 'USER', permissions: ['view_auctions'] } });
-        const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { id: 'role-admin', name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
-        
-        const adminRes = await createUser({
-            fullName: `Admin For User Test ${testRunId}`,
-            email: `admin-for-user-${testRunId}@test.com`,
-            password: 'password123',
-            roleIds: [adminRole!.id],
-            tenantId: testTenant.id,
-        });
-        assert.ok(adminRes.success && adminRes.userId, "Failed to create admin user for test setup");
-        adminUser = await getUserProfileData(adminRes.userId);
-    });
-
-    afterAll(async () => {
-        try {
-            await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
-            await prisma.tenant.delete({ where: { id: testTenant.id } });
-        } catch (error) {
-            console.error(`[USER TEST CLEANUP] - Failed to delete records:`, error);
-        }
-        await prisma.$disconnect();
-    });
-
-    it('should create a new user with default role via server action', async () => {
-        // Arrange
-        const newUser: UserCreationData = {
-            fullName: `Usuário de Teste ${testRunId}`,
-            email: testUserEmail,
-            password: 'aSecurePassword123',
-            roleIds: [userRole.id],
-            tenantId: testTenant.id,
-        };
-
-        // Act
-        const result = await callActionAsUser(createUser, adminUser, newUser);
-
-        // Assert
-        assert.strictEqual(result.success, true, 'createUser action should return success: true');
-        assert.ok(result.userId, 'createUser action should return a userId');
-
-        const createdUserFromDb = await prisma.user.findUnique({
-            where: { id: result.userId },
-            include: { roles: { include: { role: true } }, tenants: true },
-        });
-
-        assert.ok(createdUserFromDb, 'User should be found in the database');
-        assert.strictEqual(createdUserFromDb.email, testUserEmail, 'User email should match');
-        assert.ok(createdUserFromDb.password, 'User password should be set (hashed)');
-        assert.notStrictEqual(createdUserFromDb.password, newUser.password, 'User password should be hashed, not plaintext');
-        assert.strictEqual(createdUserFromDb.roles.length, 1, 'User should have exactly one role');
-        assert.strictEqual(createdUserFromDb.roles[0].role.name, 'User', 'The assigned role should be USER');
-        assert.strictEqual(createdUserFromDb.tenants.length, 1, 'User should be assigned to one tenant');
-        assert.strictEqual(createdUserFromDb.tenants[0].tenantId, testTenant.id, 'User should be assigned to the correct tenant');
-    });
-});
-```
