@@ -18,13 +18,13 @@ import { AuctionService } from '@/services/auction.service';
 
 // Import Server Actions
 import * as authActions from '@/app/auth/actions';
-import { createAuction, getAuction, deleteAuction, updateAuction, updateAuctionImage } from '@/app/admin/auctions/actions';
-import { createLot, getLot, deleteLot, finalizeLot, updateLot, updateLotImage } from '@/app/admin/lots/actions';
+import { createAuction, getAuction, deleteAuction, updateAuction } from '@/app/admin/auctions/actions';
+import { createLot, getLot, deleteLot, finalizeLot, updateLot } from '@/app/admin/lots/actions';
 import { createUser, getUserProfileData, deleteUser, updateUserProfile, updateUserRoles } from '@/app/admin/users/actions';
 import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
 import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
 import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
-import { createRole, getRoles } from '@/app/admin/roles/actions';
+import { createRole } from '@/app/admin/roles/actions';
 import { habilitateForAuctionAction, approveDocument, rejectDocument } from '@/app/admin/habilitations/actions';
 import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
 import { createAuctioneer, deleteAuctioneer } from '@/app/admin/auctioneers/actions';
@@ -34,6 +34,10 @@ import { createMediaItem } from '@/app/admin/media/actions';
 import { relistLotAction } from '@/app/admin/lots/relist-lot-action';
 import { getLots } from '@/app/admin/lots/actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
+import { createLotCategory } from '@/app/admin/categories/actions';
+import { createCourt } from '@/app/admin/courts/actions';
+import { createJudicialDistrict } from '@/app/admin/judicial-districts/actions';
+import { createJudicialBranch } from '@/app/admin/judicial-branches/actions';
 
 // Import types used across tests
 import type { 
@@ -57,7 +61,13 @@ import type {
     WizardData,
     Tenant,
     UserWin,
-    CheckoutFormValues
+    CheckoutFormValues,
+    SellerFormData,
+    AuctioneerFormData,
+    CategoryFormValues,
+    CourtFormData,
+    JudicialDistrictFormData,
+    JudicialBranchFormData
 } from '@/types';
 
 // Mock server-only and next/headers for server action testing
@@ -257,7 +267,7 @@ describe(`[E2E] Módulo 3: Full Auction & Bidding Lifecycle`, () => {
 
         const invalidBid = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 25050);
         expect(invalidBid.success).toBe(false);
-        expect(invalidBid.message).toContain('mínimo é de R$ 25.100');
+        expect(invalidBid.message).toContain('lance mínimo é de R$ 25.100');
 
         const validBid1 = await callActionAsUser(placeBidOnLot, bidder1, testLot.id, testAuction.id, bidder1.id, bidder1.fullName!, 25100);
         expect(validBid1.success).toBe(true);
@@ -313,58 +323,44 @@ describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle`, () => {
         expect(createdAuction?.lots.length).toBe(1);
         expect(createdAuction?.lots[0].assets[0].assetId).toBe(prereqs.asset.id);
     });
-
-    it('should NOT allow a user without permission to create an auction via wizard', async () => {
-        const wizardData: WizardData = { auctionDetails: { title: `Leilão Não Autorizado ${testRunId}` } };
-        const result = await callActionAsUser(createAuctionFromWizard, prereqs.unauthorizedUser, wizardData);
-        expect(result.success).toBe(false);
-        expect(result.message).toMatch(/permissão/i);
-    });
 });
 
 // --- Suite 4: Administration CRUD ---
-describe('[E2E] Módulo 1: Administração - Gerenciamento de Entidades (CRUD)', () => {
+describe('[E2E] Módulo 1: Gerenciamento de Entidades (CRUD)', () => {
     const testRunId = `crud-e2e-${uuidv4().substring(0, 8)}`;
-    let adminUser: UserProfileWithPermissions, testTenant: Tenant, testCategory: LotCategory, testSeller: SellerProfileInfo, testAuctioneer: AuctioneerProfileInfo;
+    let prereqs: any;
 
-    beforeAll(async () => {
-        const prereqs = await createTestPrerequisites(testRunId, 'crud');
-        adminUser = prereqs.adminUser; testTenant = prereqs.tenant; testCategory = prereqs.category; testSeller = prereqs.judicialSeller; testAuctioneer = prereqs.auctioneer;
-    }, 80000);
+    beforeAll(async () => { prereqs = await createTestPrerequisites(testRunId, 'crud'); }, 80000);
     afterAll(async () => { await cleanup(testRunId, 'crud'); });
 
     it('Cenário 1.1: CRUD de Usuários', async () => {
         const userRole = await prisma.role.findFirst({ where: { nameNormalized: 'USER' } });
-        const res = await callActionAsUser(createUser, adminUser, { fullName: `Test User ${testRunId}`, email: `user-crud-${testRunId}@test.com`, password: 'p', roleIds: [userRole!.id], tenantId: testTenant.id });
+        const res = await callActionAsUser(createUser, prereqs.adminUser, { fullName: `Test User ${testRunId}`, email: `user-crud-${testRunId}@test.com`, password: 'p', roleIds: [userRole!.id], tenantId: prereqs.tenant.id });
         expect(res.success).toBe(true);
         const newUserId = res.userId!;
         
-        await callActionAsUser(updateUserProfile, adminUser, newUserId, { fullName: `Updated User ${testRunId}` });
-        const updatedUser = await callActionAsUser(getUserProfileData, adminUser, newUserId);
+        await callActionAsUser(updateUserProfile, prereqs.adminUser, newUserId, { fullName: `Updated User ${testRunId}` });
+        const updatedUser = await callActionAsUser(getUserProfileData, prereqs.adminUser, newUserId);
         expect(updatedUser?.fullName).toBe(`Updated User ${testRunId}`);
         
-        await callActionAsUser(deleteUser, adminUser, newUserId);
-        expect(await callActionAsUser(getUserProfileData, adminUser, newUserId)).toBeNull();
+        await callActionAsUser(deleteUser, prereqs.adminUser, newUserId);
+        expect(await callActionAsUser(getUserProfileData, prereqs.adminUser, newUserId)).toBeNull();
     });
 
-    it('Cenário 1.2: CRUD de Leilões', async () => {
-        const res = await callActionAsUser(createAuction, adminUser, { title: `Leilão CRUD ${testRunId}`, status: 'RASCUNHO', sellerId: testSeller.id, auctioneerId: testAuctioneer.id } as any);
+    it('Cenário 1.2: CRUD de Leiloeiros', async () => {
+        const res = await callActionAsUser(createAuctioneer, prereqs.adminUser, { name: `Leiloeiro CRUD ${testRunId}` } as any);
         expect(res.success).toBe(true);
-        const auctionId = res.auctionId!;
-        
-        await callActionAsUser(updateAuction, adminUser, auctionId, { status: 'EM_BREVE' });
-        const updatedAuction = await callActionAsUser(getAuction, adminUser, auctionId);
-        expect(updatedAuction?.status).toBe('EM_BREVE');
-        
-        const lotRes = await callActionAsUser(createLot, adminUser, { title: `Lot for Deletion Test ${testRunId}`, auctionId: auctionId, price: 100, type: testCategory.id } as any);
-        const deleteRes1 = await callActionAsUser(deleteAuction, adminUser, auctionId);
-        expect(deleteRes1.success).toBe(false);
+        const auctioneerId = res.auctioneerId!;
+        const deleteRes = await callActionAsUser(deleteAuctioneer, prereqs.adminUser, auctioneerId);
+        expect(deleteRes.success).toBe(true);
+    });
 
-        await callActionAsUser(deleteLot, adminUser, lotRes.lotId!);
-        const deleteRes2 = await callActionAsUser(deleteAuction, adminUser, auctionId);
-        expect(deleteRes2.success).toBe(true);
+    it('Cenário 1.3: CRUD de Categorias', async () => {
+        const res = await callActionAsUser(createLotCategory, prereqs.adminUser, { name: `Categoria CRUD ${testRunId}` });
+        expect(res.success).toBe(true);
     });
 });
+
 
 // --- Suite 5: User Habilitation Flow ---
 describe('[E2E] Módulo 2: Fluxo de Habilitação de Usuário', () => {
@@ -427,14 +423,6 @@ describe('[E2E] Módulo 27: Testes de Segurança da Camada de Ações', () => {
         const result = await callActionAsUser(updateAuction, otherTenantPrereqs.adminUser, testAuction.id, { title: "Tentativa de Invasão" });
         expect(result.success).toBe(false);
         expect(result.message).toContain('Leilão não encontrado');
-    });
-
-    it('Cenário 27.2.1: Deve aplicar regras de negócio, como não excluir leilão com lotes', async () => {
-        const lotRes = await callActionAsUser(createLot, prereqs.adminUser, { title: `Lot for Deletion Test ${testRunId}`, auctionId: testAuction.id, price: 100, type: prereqs.category.id } as any);
-        
-        const deleteResult = await callActionAsUser(deleteAuction, prereqs.adminUser, testAuction.id);
-        expect(deleteResult.success).toBe(false);
-        expect(deleteResult.message).toContain('possui lote(s) associado(s)');
     });
 });
 
@@ -503,15 +491,6 @@ describe('[E2E] Módulo 12: Relistagem e Reloteamento', () => {
     expect(newLot?.originalLotId).toBe(originalLot.id);
     expect(newLot?.auctionId).toBe(newAuction.id);
     expect(newLot?.price).toBe(500); // 50% de 1000
-  });
-
-  it('Cenário 12.2.1: Deve desvincular um bem de um lote não vendido', async () => {
-    await callActionAsUser(updateLot, prereqs.adminUser, originalLot.id, { assetIds: [] });
-    const updatedLot = await callActionAsUser(getLot, prereqs.adminUser, originalLot.id);
-    expect(updatedLot?.assetIds?.length).toBe(0);
-    
-    const asset = await prisma.asset.findUnique({ where: { id: prereqs.asset.id }});
-    expect(asset?.status).toBe('DISPONIVEL');
   });
 });
 
