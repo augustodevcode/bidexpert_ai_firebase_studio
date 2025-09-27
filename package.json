@@ -3,6 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
+        "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
         "dev": "npm run prisma:build && npx prisma db push --accept-data-loss && npx prisma generate && npm run db:seed && next dev --port 9003 --hostname 0.0.0.0",
         "start": "next start --port 9002 --hostname 0.0.0.0",
         "build": "npm run prisma:build && npx prisma generate && next build",
@@ -100,6 +101,7 @@
         "@types/uuid": "^9.0.8",
         "@vitejs/plugin-react": "^4.3.1",
         "@vitest/coverage-v8": "^3.2.4",
+        "dotenv": "^17.2.2",
         "eslint": "^8",
         "eslint-config-next": "14.2.3",
         "jsdom": "^24.1.1",
