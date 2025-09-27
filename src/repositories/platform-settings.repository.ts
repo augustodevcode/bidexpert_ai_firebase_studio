@@ -1,6 +1,5 @@
-
 // src/repositories/platform-settings.repository.ts
-import { prisma, getPrismaInstance } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import type { PlatformSettings } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -8,8 +7,8 @@ export class PlatformSettingsRepository {
   private prisma;
 
   constructor() {
-    // Usamos o prisma base, pois as configurações são globais e não por tenant.
-    this.prisma = prisma;
+    // Usa a instância com contexto para permitir operações no tenant correto.
+    this.prisma = getPrismaInstance();
   }
   
   async findFirst(): Promise<PlatformSettings | null> {

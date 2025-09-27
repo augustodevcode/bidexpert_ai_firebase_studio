@@ -8,6 +8,7 @@ import { cookies } from 'next/headers';
 import { createSession } from '@/server/lib/session';
 import { updatePlatformSettings } from '@/app/admin/settings/actions';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { tenantContext } from '@/lib/prisma';
 
 /**
  * Verifica se os dados essenciais (ex: roles e settings) existem no banco de dados.
@@ -95,16 +96,8 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
         const userWithRelations = await prisma.user.findUnique({
             where: { id: userToLogin.id },
             include: {
-                roles: {
-                    include: {
-                        role: true
-                    }
-                },
-                tenants: {
-                    include: {
-                        tenant: true
-                    }
-                }
+                roles: { include: { role: true } },
+                tenants: { include: { tenant: true } }
             }
         });
         
@@ -132,14 +125,26 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
 
 /**
  * Sets a cookie to mark the setup process as complete.
+ * This function now runs within the context of the Landlord Tenant ('1').
  * @returns {Promise<{success: boolean}>}
  */
-export async function markSetupAsComplete(): Promise<{ success: boolean }> {
+export async function markSetupAsComplete(): Promise<{ success: boolean; message: string }> {
   try {
-      await updatePlatformSettings({ isSetupComplete: true });
-      return { success: true };
-  } catch (error) {
-      console.error('[markSetupAsComplete] Error updating settings:', error);
-      return { success: false };
+    // The setup completion flag is a global setting tied to the Landlord tenant.
+    // We must run the update within that tenant's context.
+    const result = await tenantContext.run({ tenantId: '1' }, () => 
+      updatePlatformSettings({ isSetupComplete: true })
+    );
+
+    if (result.success) {
+      console.log('[Setup Action] Platform setup marked as complete in the database.');
+    } else {
+      console.error('[Setup Action] Failed to mark setup as complete in DB:', result.message);
+    }
+    return result;
+
+  } catch (error: any) {
+      console.error('[markSetupAsComplete] Critical error updating settings:', error);
+      return { success: false, message: `Erro crítico: ${error.message}` };
   }
 }

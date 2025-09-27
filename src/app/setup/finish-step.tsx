@@ -7,7 +7,7 @@ import { CheckCircle, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { updatePlatformSettings } from '@/app/admin/settings/actions';
+import { markSetupAsComplete } from '@/app/setup/actions';
 
 export default function FinishStep() {
   const { toast } = useToast();
@@ -18,8 +18,8 @@ export default function FinishStep() {
     setIsFinishing(true);
     console.log("[FinishStep] Finalizando o setup e marcando como completo no DB...");
     
-    // Atualiza a flag no banco de dados
-    const result = await updatePlatformSettings({ isSetupComplete: true });
+    // Atualiza a flag no banco de dados.
+    const result = await markSetupAsComplete();
 
     if (result.success) {
       toast({
@@ -27,13 +27,13 @@ export default function FinishStep() {
         description: "Você será redirecionado para o painel de administração.",
       });
       // A sessão do admin já foi criada no passo anterior.
-      // Apenas redirecionamos APÓS a confirmação do update.
+      // Apenas redirecionamos APÓS a confirmação do update no DB.
       router.push('/admin/dashboard');
-      router.refresh(); // Força a revalidação do layout raiz.
+      router.refresh(); // Força a revalidação do layout raiz para ler o novo estado de `isSetupComplete`.
     } else {
        toast({
         title: "Erro ao Finalizar",
-        description: "Não foi possível salvar o estado da configuração no banco de dados. Tente novamente.",
+        description: `Não foi possível salvar o estado da configuração: ${result.message}`,
         variant: "destructive"
       });
        setIsFinishing(false);
