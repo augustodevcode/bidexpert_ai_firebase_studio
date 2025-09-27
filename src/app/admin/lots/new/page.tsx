@@ -11,10 +11,10 @@ import { createLot, type LotFormData } from '../actions';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
-import { getBens } from '@/app/admin/bens/actions';
+import { getAssets } from '@/app/admin/assets/actions'; // CORRIGIDO
 import { Suspense } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { LotCategory, Auction, StateInfo, CityInfo, Bem, SellerProfileInfo } from '@/types';
+import type { LotCategory, Auction, StateInfo, CityInfo, Asset, SellerProfileInfo } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 
@@ -24,11 +24,11 @@ interface NewLotPageContentProps {
   sellers: SellerProfileInfo[];
   states: StateInfo[];
   allCities: CityInfo[];
-  availableBens: Bem[];
+  availableAssets: Asset[];
   auctionIdFromQuery?: string;
 }
 
-function NewLotPageContent({ categories, auctions, sellers, states, allCities, availableBens, auctionIdFromQuery }: NewLotPageContentProps) {
+function NewLotPageContent({ categories, auctions, sellers, states, allCities, availableAssets, auctionIdFromQuery }: NewLotPageContentProps) {
   async function handleCreateLot(data: Partial<LotFormData>) {
     'use server';
     return createLot(data);
@@ -41,7 +41,7 @@ function NewLotPageContent({ categories, auctions, sellers, states, allCities, a
       sellers={sellers}
       states={states}
       allCities={allCities}
-      initialAvailableBens={availableBens}
+      initialAvailableAssets={availableAssets}
       onSubmitAction={handleCreateLot}
       formTitle="Novo Lote"
       formDescription="Preencha os detalhes para criar um novo lote."
@@ -59,7 +59,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
     getAuctions(),
     getStates(),
     getCities(),
-    getBens(), // Fetch all available bens initially
+    getAssets(), // CORRIGIDO - Fetch all available assets initially
     getSellers(),
   ]);
 
@@ -71,7 +71,7 @@ export default async function NewLotPage({ searchParams }: { searchParams?: { [k
         sellers={sellers}
         states={states}
         allCities={allCities}
-        availableBens={bens}
+        availableAssets={bens}
         auctionIdFromQuery={auctionIdFromQuery} 
       />
     </Suspense>
