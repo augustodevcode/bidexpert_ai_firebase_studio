@@ -1,4 +1,4 @@
-// @fileoverview Este é o cabeçalho do schema do Prisma.
+// Este é o cabeçalho do schema do Prisma.
 // Ele contém as configurações do gerador e da fonte de dados.
 // NÃO adicione modelos de dados aqui. Os modelos devem ser definidos
 // em arquivos individuais no diretório `prisma/models`.
@@ -8,6 +8,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider     = "mysql"
+  url          = env("DATABASE_URL")
+  relationMode = "prisma"
 }
