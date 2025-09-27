@@ -5,6 +5,7 @@
     "scripts": {
         "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
         "dev": "npm run prisma:build && npx prisma db push --accept-data-loss && npx prisma generate && npm run db:seed && next dev --port 9003 --hostname 0.0.0.0",
+        "dev:alt": "npm run prisma:build && npx prisma db push --accept-data-loss && npx prisma generate && npm run db:seed && next dev --port 9004 --hostname 0.0.0.0",
         "start": "next start --port 9002 --hostname 0.0.0.0",
         "build": "npm run prisma:build && npx prisma generate && next build",
         "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
@@ -17,6 +18,10 @@
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",
         "test:ui": "playwright test",
+        "test:ui:headed": "playwright test --headed",
+        "test:ui:debug": "playwright test --debug",
+        "test:ui:report": "playwright show-report",
+        "test:ui:clean": "rm -rf test-results playwright-report",
         "postinstall": ""
     },
     "dependencies": {

@@ -14,17 +14,24 @@ require('dotenv').config();
 
 export default defineConfig({
   testDir: './tests/ui', // Set test directory to ui
-  timeout: 180000, // 3 minutes for global test timeout
+  outputDir: 'test-results/', // Directory for test artifacts
+  timeout: 300000, // 5 minutes for global test timeout (app takes 2 minutes to load)
   /* Run tests in files in the order of their definition */
-  fullyParallel: true,
+  fullyParallel: false, // Disabled due to slow app loading times
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0, // Reduced retries due to slow loading
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1, // Single worker due to slow app performance
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: [
+    ['html'], // HTML report (default location: playwright-report/)
+    ['./playwright-custom-reporter.js', { outputFile: 'test-results/plaintext-report.txt' }], // Custom plaintext report
+    ['junit', { outputFile: 'test-results/junit-report.xml' }], // JUnit XML for CI/CD
+    ['json', { outputFile: 'test-results/test-results.json' }], // JSON report
+    ['line'] // Simple one-line per test output in console
+  ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -32,7 +39,8 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on', // Capture trace for all tests
-    navigationTimeout: 180000, // 3 minutes for page navigation timeout
+    navigationTimeout: 240000, // 4 minutes for page navigation timeout (app takes 2 minutes to load)
+    actionTimeout: 60000, // 1 minute for individual actions
     // Custom option for Playwright to launch the dev server
     // launchOptions: {
     //   args: [`--port=${PORT}`],
@@ -82,6 +90,6 @@ export default defineConfig({
     command: 'npm run dev:playwright',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
-    timeout: 300 * 1000, // Increased timeout for server startup to 5 minutes
+    timeout: 600 * 1000, // Increased timeout for server startup to 10 minutes (app is slow)
   },
 });
