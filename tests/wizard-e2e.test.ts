@@ -30,8 +30,8 @@ describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle (ID: ${testRun
     beforeAll(async () => {
         const prereqs = await createTestPrerequisites(testRunId, 'wizard');
         testTenant = prereqs.tenant;
-        adminUser = prereqs.adminUser;
-        unauthorizedUser = prereqs.unauthorizedUser;
+        adminUser = prereqs.adminUser!;
+        unauthorizedUser = prereqs.unauthorizedUser!;
         testCategory = prereqs.category;
         testAuctioneer = prereqs.auctioneer;
         testJudicialSeller = prereqs.judicialSeller;
@@ -45,7 +45,7 @@ describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle (ID: ${testRun
 
     it('Cenário 8.1 & 29.1: should simulate the entire wizard flow and create a complete auction', async () => {
         console.log('\n--- Test: Full Wizard Flow Simulation ---');
-        let wizardData: WizardData = { 
+        const wizardData: WizardData = { 
             createdLots: [],
             auctionType: 'JUDICIAL',
             judicialProcess: testJudicialProcess,

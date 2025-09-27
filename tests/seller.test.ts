@@ -66,7 +66,6 @@ describe('Seller Actions E2E Tests', () => {
             zipCode: '54321',
             website: 'https://testserviceseller.example.com',
             isJudicial: false,
-            tenantId: testTenant.id, // Explicitly pass tenantId
         };
 
         // Act: Run the action as the admin user

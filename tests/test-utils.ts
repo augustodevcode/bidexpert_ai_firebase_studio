@@ -19,7 +19,7 @@ import { createAuctioneer } from '@/app/admin/auctioneers/actions';
 
 export async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
     const originalGetSession = require('@/app/auth/actions').getSession;
-    const tenantId = user?.tenants?.[0]?.id || '1'; // Default to landlord if user has no specific tenant
+    const tenantId = user?.tenants?.[0]?.tenant.id || '1'; // Default to landlord if user has no specific tenant
     
     require('@/app/auth/actions').getSession = async () => user ? { userId: user.id, tenantId: tenantId, permissions: user.permissions } : null;
 
@@ -47,7 +47,7 @@ export async function createTestPrerequisites(testRunId: string, prefix: string)
     });
     const adminUser = await callActionAsUser(getUserProfileData, null, adminRes.userId!);
 
-    const unauthorizedUser = await callActionAsUser(createUser, null, {
+    const unauthorizedUserRes = await callActionAsUser(createUser, null, {
         fullName: `Unauthorized ${prefix} ${testRunId}`,
         email: `unauthorized-${prefix}-${testRunId}@test.com`,
         password: 'password123',
@@ -55,7 +55,7 @@ export async function createTestPrerequisites(testRunId: string, prefix: string)
         tenantId: tenant.id,
         habilitationStatus: 'PENDING_DOCUMENTS'
     });
-    const unauthorizedUserProfile = await callActionAsUser(getUserProfileData, null, unauthorizedUser.userId!);
+    const unauthorizedUser = await callActionAsUser(getUserProfileData, null, unauthorizedUserRes.userId!);
     
     const category = await prisma.lotCategory.create({ data: { name: `Cat ${prefix} ${testRunId}`, slug: `cat-${prefix}-${testRunId}`, hasSubcategories: false } });
     const auctioneerRes = await callActionAsUser(createAuctioneer, adminUser, { name: `Auctioneer ${prefix} ${testRunId}` } as any);
@@ -71,12 +71,12 @@ export async function createTestPrerequisites(testRunId: string, prefix: string)
     const judicialSeller = (await callActionAsUser(getSeller, adminUser, judicialSellerRes.sellerId!))!;
 
     const procRes = await callActionAsUser(createJudicialProcessAction, adminUser, { processNumber: `500-${prefix}-${testRunId}`, isElectronic: true, courtId: court.id, districtId: district.id, branchId: branch.id, sellerId: judicialSeller.id, parties: [{ name: `Autor ${testRunId}`, partyType: 'AUTOR' }] } as any);
-    const judicialProcess = (await prisma.judicialProcess.findUnique({where: {id: procRes.processId}}))!;
+    const judicialProcess = (await prisma.judicialProcess.findUnique({where: {id: procRes.processId}, include: { parties: true }}))!;
 
     const assetRes = await callActionAsUser(createAsset, adminUser, { title: `Asset para ${prefix} ${testRunId}`, judicialProcessId: judicialProcess.id, categoryId: category.id, status: 'DISPONIVEL', evaluationValue: 50000.00 } as any);
     const asset = (await prisma.asset.findUnique({where: {id: assetRes.assetId}}))!;
 
-    return { tenant, adminUser, unauthorizedUser: unauthorizedUserProfile, category, auctioneer, judicialSeller, state, court, district, branch, judicialProcess, asset };
+    return { tenant, adminUser, unauthorizedUser, category, auctioneer, judicialSeller, state, court, district, branch, judicialProcess, asset };
 }
 
 export async function cleanup(testRunId: string, prefix: string) {

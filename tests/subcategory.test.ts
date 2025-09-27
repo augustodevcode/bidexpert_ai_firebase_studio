@@ -68,9 +68,6 @@ describe('Subcategory Actions E2E Tests', () => {
             parentCategoryId: testParentCategory.id,
             description: 'Subcategoria para teste E2E via action.',
             displayOrder: 1,
-            iconUrl: null,
-            iconMediaId: null,
-            dataAiHintIcon: null
         };
 
         // Act

@@ -45,7 +45,11 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
       isJudicial: false,
       userId: userRes.userId,
       tenantId: testTenant.id,
-    } as any);
+      // Add other required fields for SellerFormData
+      contactName: `Contact ${testRunId}`,
+      email: `contact-${testRunId}@seller.com`,
+      description: 'Test seller',
+    });
     expect(sellerRes.success).toBe(true);
 
     // Buscar os perfis completos para usar no teste

@@ -1,6 +1,6 @@
 // tests/ui/universal-card-content.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { prisma } from '../../src/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { slugify } from '../../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -21,10 +21,10 @@ const testData = {
     status: 'ABERTO_PARA_LANCES' as const,
     visits: 250,
     totalHabilitatedUsers: 35,
+    auctionType: 'EXTRAJUDICIAL' as const,
     isFeaturedOnMarketplace: true,
     totalLots: 5,
     initialOffer: 1500,
-    auctionType: 'EXTRAJUDICIAL' as const,
     imageUrl: 'https://placehold.co/600x400/9b59b6/ffffff.png?text=LeilaoNotebooks',
     dataAiHint: 'leilao card test'
   },
@@ -167,7 +167,7 @@ test.describe('Universal Card UI Validation', () => {
         const sellerLogo = cardLocator.locator(`[data-ai-id="auction-card-seller-logo"] img`);
         await expect(sellerLogo).toHaveAttribute('src', testData.seller.logoUrl);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
-        await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId!);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);
