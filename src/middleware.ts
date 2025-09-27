@@ -1,6 +1,6 @@
 // src/middleware.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { tenantContext } from '@/lib/prisma';
+import { tenantContext } from '@/lib/tenant-context';
 import { getSession } from '@/server/lib/session';
 
 // Adicione aqui os caminhos que devem ser ignorados pelo middleware

@@ -1,7 +1,7 @@
 // src/lib/prisma.ts
-import { AsyncLocalStorage } from 'async_hooks';
 import { PrismaClient } from '@prisma/client';
 import type { Prisma } from '@prisma/client';
+import { tenantContext } from './tenant-context';
 
 // Prisma Client Singleton
 const prismaClientSingleton = () => {
@@ -19,7 +19,6 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Multi-Tenancy Logic
-export const tenantContext = new AsyncLocalStorage<{ tenantId: string | null }>();
 
 const tenantAgnosticModels: Set<string> = new Set([
   'User', 'Tenant', 'Role', 'UsersOnTenants', 'UsersOnRoles',

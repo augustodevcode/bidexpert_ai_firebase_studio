@@ -1,10 +1,8 @@
 // prisma/header.prisma
-/**
- * Este é o cabeçalho do schema do Prisma.
- * Ele contém as configurações do gerador e da fonte de dados.
- * NÃO adicione modelos de dados aqui. Os modelos devem ser definidos
- * em arquivos individuais no diretório `prisma/models`.
- */
+// Este é o cabeçalho do schema do Prisma.
+// Ele contém as configurações do gerador e da fonte de dados.
+// NÃO adicione modelos de dados aqui. Os modelos devem ser definidos
+// em arquivos individuais no diretório `prisma/models`.
 
 generator client {
   provider        = "prisma-client-js"
@@ -15,7 +13,6 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
-
 enum AccountType {
   PHYSICAL
   LEGAL
@@ -824,6 +821,7 @@ model PlatformSettings {
   updatedAt                    DateTime?            @updatedAt
   tenantId                     String               @unique
   tenant                       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isSetupComplete                   Boolean                     @default(false)
 }
 
 enum ProcessPartyType {
@@ -1139,41 +1137,6 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@unique([email, token])
-}
-
-// prisma/models/platformSettings.prisma
-model PlatformSettings {
-  id                                String                      @id @default(cuid())
-  tenant                            Tenant                      @relation(fields: [tenantId], references: [id])
-  tenantId                          String                      @unique
-  siteTitle                         String?
-  siteTagline                       String?
-  logoUrl                           String?
-  isSetupComplete                   Boolean                     @default(false)
-  galleryImageBasePath              String?
-  storageProvider                   String?
-  firebaseStorageBucket             String?
-  activeThemeName                   String?
-  themes                            Json?
-  platformPublicIdMasks             Json?
-  homepageSections                  Json?
-  mentalTriggerSettings             Json?
-  sectionBadgeVisibility            Json?
-  mapSettings                       Json?
-  searchPaginationType              String?
-  searchItemsPerPage                Int?
-  searchLoadMoreCount               Int?
-  showCountdownOnLotDetail          Boolean?
-  showCountdownOnCards              Boolean?
-  showRelatedLotsOnLotDetail        Boolean?
-  relatedLotsCount                  Int?
-  defaultUrgencyTimerHours          Int?
-  variableIncrementTable            Json?
-  biddingSettings                   Json?
-  paymentGatewaySettings            Json?
-  defaultListItemsPerPage           Int?
-  createdAt                         DateTime                    @default(now())
-  updatedAt                         DateTime                    @updatedAt
 }
 
 

@@ -29,4 +29,5 @@ model PlatformSettings {
   updatedAt                    DateTime?            @updatedAt
   tenantId                     String               @unique
   tenant                       Tenant               @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isSetupComplete                   Boolean                     @default(false)
 }
