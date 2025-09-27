@@ -260,7 +260,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                     <FormItem>
                       <FormLabel>Cidade (Opcional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="São Paulo" {...field} value={field.value ?? ""} />
+                        <Input placeholder="São Paulo" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -273,7 +273,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                     <FormItem>
                       <FormLabel>Estado/UF (Opcional)</FormLabel>
                       <FormControl>
-                        <Input placeholder="SP" {...field} value={field.value ?? ""} />
+                        <Input placeholder="SP" {...field} value={field.value ?? ''} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -294,7 +294,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                       )}
                     </div>
                     <div className="flex-grow space-y-2">
-                      <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>
+                      <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)} data-ai-id="btn-choose-logo">
                         {validLogoUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}
                       </Button>
                       <FormField

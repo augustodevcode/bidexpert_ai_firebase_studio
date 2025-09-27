@@ -180,7 +180,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                   {validLogoPreviewUrl ? ( <Image src={validLogoPreviewUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
                 </div>
                 <div className="flex-grow space-y-2">
-                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{validLogoPreviewUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                  <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)} data-ai-id="btn-choose-logo">{validLogoPreviewUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
                   <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                   <FormMessage />
                 </div>

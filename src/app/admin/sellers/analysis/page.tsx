@@ -15,6 +15,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, Gavel, Loader2, Package, Users, TrendingUp, BarChart3, BrainCircuit } from 'lucide-react';
 import { createColumns } from './columns';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>
@@ -23,7 +24,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+             {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{value}</div>}
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
@@ -48,7 +49,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Se
     }, [performanceData, isLoading]);
 
     return (
-        <Card>
+        <Card data-ai-id="ai-analysis-section">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center">
                     <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise e Recomendações da IA
@@ -106,13 +107,9 @@ export default function SellerAnalysisPage() {
     }, { totalRevenue: 0, totalAuctions: 0, totalLots: 0 });
   }, [performanceData]);
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise...</div>
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6" data-ai-id="seller-analysis-page">
+      <Card data-ai-id="seller-analysis-header">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <BarChart3 className="h-6 w-6 mr-2 text-primary" />
@@ -124,7 +121,7 @@ export default function SellerAnalysisPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-ai-id="seller-analysis-kpi-cards">
         <StatCard title="Faturamento Total (Vendido)" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma de todos os lotes vendidos" isLoading={isLoading} />
         <StatCard title="Total de Leilões" value={totalAuctions} icon={Gavel} description="Leilões criados por todos os comitentes" isLoading={isLoading} />
         <StatCard title="Total de Lotes" value={totalLots} icon={Package} description="Lotes cadastrados por todos os comitentes" isLoading={isLoading} />
@@ -133,11 +130,12 @@ export default function SellerAnalysisPage() {
       
       <AIAnalysisSection performanceData={performanceData} isLoading={isLoading} />
 
-       <Card>
+       <Card data-ai-id="top-sellers-chart-card">
         <CardHeader>
             <CardTitle>Top 10 Comitentes por Faturamento</CardTitle>
         </CardHeader>
         <CardContent className="h-96">
+            {isLoading ? <Skeleton className="h-full w-full" /> : 
             <ResponsiveContainer width="100%" height="100%">
             <BarChart data={topSellersByRevenue} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -148,10 +146,11 @@ export default function SellerAnalysisPage() {
                 <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
             </BarChart>
             </ResponsiveContainer>
+            }
         </CardContent>
        </Card>
 
-       <Card>
+       <Card data-ai-id="sellers-data-table-card">
          <CardHeader>
             <CardTitle>Dados Detalhados por Comitente</CardTitle>
          </CardHeader>
@@ -159,6 +158,7 @@ export default function SellerAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="name"
                 searchPlaceholder="Buscar comitente..."
             />

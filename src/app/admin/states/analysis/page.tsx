@@ -16,17 +16,19 @@ import { DollarSign, MapPin, Loader2, Package, TrendingUp, Tag, Building2 as Cit
 import { createColumns } from './columns';
 import { Skeleton } from '@/components/ui/skeleton';
 
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+const StatCard = ({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) => (
     <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{value}</div>}
         </CardContent>
     </Card>
 );
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF', '#FF6666'];
 
 function AIAnalysisSection({ performanceData, isLoading }: { performanceData: StatePerformanceData[], isLoading: boolean }) {
     const [analysis, setAnalysis] = useState<string | null>(null);
@@ -47,7 +49,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: St
     }, [performanceData, isLoading]);
 
     return (
-        <Card>
+        <Card data-ai-id="ai-analysis-section">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center">
                     <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise por Estado (IA)
@@ -115,25 +117,9 @@ export default function StateAnalysisPage() {
     return { totalRevenue, totalLotsSoldCount, topCategory, topCity };
   }, [performanceData]);
 
-  if (isLoading) {
-    return (
-        <div className="space-y-6">
-            <Skeleton className="h-24 w-full" />
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-                <Skeleton className="h-28 w-full" />
-            </div>
-             <Skeleton className="h-96 w-full" />
-             <Skeleton className="h-96 w-full" />
-        </div>
-    );
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6" data-ai-id="state-analysis-page">
+      <Card data-ai-id="state-analysis-header">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <MapPin className="h-6 w-6 mr-2 text-primary" />
@@ -145,20 +131,21 @@ export default function StateAnalysisPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} />
-        <StatCard title="Lotes Vendidos" value={totalLotsSoldCount.toLocaleString('pt-BR')} icon={Package} />
-        <StatCard title="Principal Categoria" value={topCategory} icon={Tag} />
-        <StatCard title="Principal Cidade" value={topCity} icon={City} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-ai-id="state-analysis-kpi-cards">
+        <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} isLoading={isLoading} />
+        <StatCard title="Lotes Vendidos" value={totalLotsSoldCount.toLocaleString('pt-BR')} icon={Package} isLoading={isLoading} />
+        <StatCard title="Principal Categoria" value={topCategory} icon={Tag} isLoading={isLoading} />
+        <StatCard title="Principal Cidade" value={topCity} icon={City} isLoading={isLoading} />
       </div>
       
        <AIAnalysisSection performanceData={performanceData} isLoading={isLoading}/>
 
-       <Card>
+       <Card data-ai-id="top-states-chart-card">
         <CardHeader>
             <CardTitle>Top 10 Estados por Faturamento</CardTitle>
         </CardHeader>
         <CardContent className="h-96">
+            {isLoading ? <Skeleton className="w-full h-full" /> :
             <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -169,10 +156,11 @@ export default function StateAnalysisPage() {
                 <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
             </BarChart>
             </ResponsiveContainer>
+            }
         </CardContent>
        </Card>
 
-       <Card>
+       <Card data-ai-id="states-data-table-card">
          <CardHeader>
             <CardTitle>Dados Detalhados por Estado</CardTitle>
          </CardHeader>
@@ -180,6 +168,7 @@ export default function StateAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="name"
                 searchPlaceholder="Buscar estado..."
             />

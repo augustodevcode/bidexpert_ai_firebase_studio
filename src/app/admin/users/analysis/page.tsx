@@ -19,7 +19,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{isLoading ? <Skeleton className="h-8 w-1/2" /> : value}</div>
+            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{value}</div>}
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
@@ -53,7 +53,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Us
     }, [performanceData, isLoading]);
 
     return (
-        <Card>
+        <Card data-ai-id="ai-analysis-section">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center">
                     <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise de Comportamento (IA)
@@ -118,13 +118,9 @@ export default function UserAnalysisPage() {
     }, { totalUsers: performanceData.length, totalSpent: 0, totalBids: 0, totalWins: 0 });
   }, [performanceData]);
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise de usuários...</div>
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6" data-ai-id="user-analysis-page">
+      <Card data-ai-id="user-analysis-header">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <Users className="h-6 w-6 mr-2 text-primary" />
@@ -136,7 +132,7 @@ export default function UserAnalysisPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-ai-id="user-analysis-kpi-cards">
         <StatCard title="Usuários Totais" value={totalUsers} icon={Users} description="Total de contas cadastradas" isLoading={isLoading} />
         <StatCard title="Valor Total Gasto" value={totalSpent.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma de todos os lotes arrematados" isLoading={isLoading} />
         <StatCard title="Lotes Arrematados" value={totalWins} icon={ShoppingBag} description="Total de lotes vencidos por usuários" isLoading={isLoading} />
@@ -146,11 +142,12 @@ export default function UserAnalysisPage() {
        <AIAnalysisSection performanceData={performanceData} isLoading={isLoading} />
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
+          <Card data-ai-id="top-users-chart-card">
             <CardHeader>
                 <CardTitle>Top 10 Usuários por Valor Gasto</CardTitle>
             </CardHeader>
             <CardContent className="h-96">
+                {isLoading ? <Skeleton className="w-full h-full" /> :
                 <ResponsiveContainer width="100%" height="100%">
                 <ReBarChart data={topUsersBySpending} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" />
@@ -161,13 +158,15 @@ export default function UserAnalysisPage() {
                     <Bar dataKey="Gasto" fill="hsl(var(--primary))" />
                 </ReBarChart>
                 </ResponsiveContainer>
+                }
             </CardContent>
           </Card>
-          <Card>
+          <Card data-ai-id="habilitation-status-chart-card">
             <CardHeader>
                 <CardTitle>Distribuição de Status de Habilitação</CardTitle>
             </CardHeader>
             <CardContent className="h-96">
+                 {isLoading ? <Skeleton className="w-full h-full" /> :
                  <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                         <Pie data={habilitationStatusData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
@@ -179,11 +178,12 @@ export default function UserAnalysisPage() {
                         <Legend />
                     </PieChart>
                 </ResponsiveContainer>
+                }
             </CardContent>
           </Card>
        </div>
 
-       <Card>
+       <Card data-ai-id="users-data-table-card">
          <CardHeader>
             <CardTitle>Dados Detalhados por Usuário</CardTitle>
          </CardHeader>
@@ -191,6 +191,7 @@ export default function UserAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="fullName"
                 searchPlaceholder="Buscar por nome ou email..."
                 facetedFilterColumns={[{ id: 'habilitationStatus', title: 'Status', options: habilitationStatusData.map(d => ({label: d.name, value: d.name})) }]}

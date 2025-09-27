@@ -54,10 +54,10 @@ function FormToolbar({
     return (
         <div className="flex justify-between items-center w-full" data-ai-id="form-page-toolbar-view-mode">
              <div className="flex items-center gap-1">
-                <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev}><ChevronLeft className="h-4 w-4" /></Button>
-                <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext}><ChevronRight className="h-4 w-4" /></Button>
+                <Button size="icon" variant="outline" onClick={onNavigatePrev} disabled={!hasPrev} data-ai-id="form-page-btn-prev"><ChevronLeft className="h-4 w-4" /></Button>
+                <Button size="icon" variant="outline" onClick={onNavigateNext} disabled={!hasNext} data-ai-id="form-page-btn-next"><ChevronRight className="h-4 w-4" /></Button>
              </div>
-             <Button onClick={onEnterEditMode}>
+             <Button onClick={onEnterEditMode} data-ai-id="form-page-btn-edit-mode">
                 <Edit className="mr-2 h-4 w-4" /> Entrar em Modo de Edição
              </Button>
         </div>
@@ -70,7 +70,7 @@ function FormToolbar({
         {onDelete && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isSubmitting}><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>
+                <Button variant="destructive" size="sm" disabled={isSubmitting} data-ai-id="form-page-btn-delete-trigger"><Trash2 className="mr-2 h-4 w-4" /> Excluir</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -81,7 +81,7 @@ function FormToolbar({
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Confirmar Exclusão</AlertDialogAction>
+                  <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90" data-ai-id="form-page-btn-delete-confirm">Confirmar Exclusão</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -90,13 +90,13 @@ function FormToolbar({
       </div>
       <div className="flex items-center gap-2">
         {onSaveAndNew && (
-            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting}>
+            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting} data-ai-id="form-page-btn-save-new">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
                 Salvar e Novo
             </Button>
         )}
         {onSave && (
-            <Button onClick={onSave} disabled={isSubmitting}>
+            <Button onClick={onSave} disabled={isSubmitting} data-ai-id="form-page-btn-save">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
                 Salvar
             </Button>
@@ -184,7 +184,7 @@ export default function FormPageLayout({
             </div>
             {!isViewMode && (
                 <div className="w-full flex justify-end">
-                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>
+                    <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting} data-ai-id="form-page-btn-cancel">
                         <XCircle className="mr-2 h-4 w-4"/> Cancelar
                     </Button>
                 </div>

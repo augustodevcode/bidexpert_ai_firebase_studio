@@ -14,15 +14,16 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, FileText, Loader2, Gavel, TrendingUp, BarChart3, Building2, ListChecks, BrainCircuit } from 'lucide-react';
 import { createBranchAnalysisColumns } from './columns';
+import { Skeleton } from '@/components/ui/skeleton';
 
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+const StatCard = ({ title, value, icon: Icon, isLoading }: { title: string, value: string | number, icon: React.ElementType, isLoading: boolean }) => (
     <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{value}</div>}
         </CardContent>
     </Card>
 );
@@ -46,7 +47,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Br
     }, [performanceData, isLoading]);
 
     return (
-        <Card>
+        <Card data-ai-id="ai-analysis-section">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center">
                     <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise por Vara (IA)
@@ -104,13 +105,9 @@ export default function BranchAnalysisPage() {
     }, { totalRevenue: 0, totalProcesses: 0, totalAuctions: 0, totalLotsSold: 0 });
   }, [performanceData]);
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise...</div>
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6" data-ai-id="branch-analysis-page">
+      <Card data-ai-id="branch-analysis-header">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <BarChart3 className="h-6 w-6 mr-2 text-primary" />
@@ -122,20 +119,21 @@ export default function BranchAnalysisPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} />
-        <StatCard title="Total de Processos" value={totalProcesses.toLocaleString('pt-BR')} icon={FileText} />
-        <StatCard title="Total de Leilões" value={totalAuctions.toLocaleString('pt-BR')} icon={Gavel} />
-        <StatCard title="Total de Lotes Vendidos" value={totalLotsSold.toLocaleString('pt-BR')} icon={ListChecks} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-ai-id="branch-analysis-kpi-cards">
+        <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} isLoading={isLoading} />
+        <StatCard title="Total de Processos" value={totalProcesses.toLocaleString('pt-BR')} icon={FileText} isLoading={isLoading}/>
+        <StatCard title="Total de Leilões" value={totalAuctions.toLocaleString('pt-BR')} icon={Gavel} isLoading={isLoading}/>
+        <StatCard title="Total de Lotes Vendidos" value={totalLotsSold.toLocaleString('pt-BR')} icon={ListChecks} isLoading={isLoading}/>
       </div>
       
       <AIAnalysisSection performanceData={performanceData} isLoading={isLoading}/>
 
-       <Card>
+       <Card data-ai-id="top-branches-chart-card">
         <CardHeader>
             <CardTitle>Top 10 Varas por Faturamento</CardTitle>
         </CardHeader>
         <CardContent className="h-96">
+            {isLoading ? <Skeleton className="w-full h-full" /> :
             <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -146,10 +144,11 @@ export default function BranchAnalysisPage() {
                 <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
             </BarChart>
             </ResponsiveContainer>
+            }
         </CardContent>
        </Card>
 
-       <Card>
+       <Card data-ai-id="branches-data-table-card">
          <CardHeader>
             <CardTitle>Dados Detalhados por Vara</CardTitle>
          </CardHeader>
@@ -157,6 +156,7 @@ export default function BranchAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="name"
                 searchPlaceholder="Buscar vara..."
             />

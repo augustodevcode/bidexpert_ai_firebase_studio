@@ -155,6 +155,7 @@ export default function AdminReportsPage() {
             <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
+            {isLoading ? <Skeleton className="w-full h-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={stats.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
@@ -165,6 +166,7 @@ export default function AdminReportsPage() {
                 <Line type="monotone" dataKey="Sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
               </LineChart>
             </ResponsiveContainer>
+            )}
           </CardContent>
         </Card>
         <Card className="shadow-md" data-ai-id="admin-reports-category-sales-card">
@@ -172,6 +174,7 @@ export default function AdminReportsPage() {
             <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Lotes Vendidos por Categoria</CardTitle>
           </CardHeader>
           <CardContent className="h-80">
+             {isLoading ? <Skeleton className="w-full h-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                     <Pie data={stats.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
@@ -183,6 +186,7 @@ export default function AdminReportsPage() {
                     <Legend />
                 </PieChart>
             </ResponsiveContainer>
+             )}
           </CardContent>
         </Card>
       </div>

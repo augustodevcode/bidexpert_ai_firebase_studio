@@ -1,8 +1,9 @@
 // src/app/admin/auctioneers/analysis/page.tsx
 /**
  * @fileoverview Página do painel de administração para análise de performance de Leiloeiros.
- * Exibe um dashboard com cartões de estatísticas (KPIs), gráficos de desempenho e
- * uma tabela detalhada com os dados de todos os leiloeiros, além de uma análise gerada por IA.
+ * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
+ * o faturamento dos principais leiloeiros, uma tabela detalhada com os dados de
+ * todos os leiloeiros, e uma análise textual gerada por IA.
  */
 'use client';
 
@@ -13,7 +14,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit } from 'lucide-react';
 import { createAuctioneerAnalysisColumns } from './columns';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) => (
     <Card>
@@ -22,7 +23,7 @@ const StatCard = ({ title, value, icon: Icon, description, isLoading }: { title:
             <Icon className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
+            {isLoading ? <Skeleton className="h-8 w-1/2" /> : <div className="text-2xl font-bold">{value}</div>}
             <p className="text-xs text-muted-foreground">{description}</p>
         </CardContent>
     </Card>
@@ -47,7 +48,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Au
     }, [performanceData, isLoading]);
 
     return (
-        <Card>
+        <Card data-ai-id="ai-analysis-section">
             <CardHeader>
                 <CardTitle className="text-xl font-semibold flex items-center">
                     <BrainCircuit className="mr-2 h-5 w-5 text-primary"/> Análise e Recomendações da IA
@@ -104,13 +105,9 @@ export default function AuctioneerAnalysisPage() {
     }, { totalRevenue: 0, totalAuctions: 0, totalLots: 0 });
   }, [performanceData]);
 
-  if (isLoading) {
-    return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin" /> Carregando análise...</div>
-  }
-
   return (
-    <div className="space-y-6">
-      <Card>
+    <div className="space-y-6" data-ai-id="auctioneer-analysis-page">
+      <Card data-ai-id="auctioneer-analysis-header">
         <CardHeader>
           <CardTitle className="text-2xl font-bold font-headline flex items-center">
             <BarChart3 className="h-6 w-6 mr-2 text-primary" />
@@ -122,7 +119,7 @@ export default function AuctioneerAnalysisPage() {
         </CardHeader>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-ai-id="auctioneer-analysis-kpi-cards">
         <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma de todos os lotes vendidos" isLoading={isLoading} />
         <StatCard title="Total de Leilões" value={totalAuctions} icon={Gavel} description="Leilões conduzidos por todos" isLoading={isLoading} />
         <StatCard title="Total de Lotes" value={totalLots} icon={Package} description="Lotes em todos os leilões" isLoading={isLoading} />
@@ -131,25 +128,27 @@ export default function AuctioneerAnalysisPage() {
 
       <AIAnalysisSection performanceData={performanceData} isLoading={isLoading} />
 
-       <Card>
+       <Card data-ai-id="top-auctioneers-chart-card">
         <CardHeader>
             <CardTitle>Top 10 Leiloeiros por Faturamento</CardTitle>
         </CardHeader>
         <CardContent className="h-96">
-            <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topAuctioneersByRevenue} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" tickFormatter={(value) => `R$${Number(value)/1000}k`} />
-                <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
-                <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                <Legend />
-                <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
-            </BarChart>
-            </ResponsiveContainer>
+             {isLoading ? <Skeleton className="h-full w-full" /> : 
+                <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={topAuctioneersByRevenue} layout="vertical" margin={{ top: 5, right: 30, left: 100, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis type="number" tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                    <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 12 }} />
+                    <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
+                    <Legend />
+                    <Bar dataKey="Faturamento" fill="hsl(var(--primary))" />
+                </BarChart>
+                </ResponsiveContainer>
+            }
         </CardContent>
        </Card>
 
-       <Card>
+       <Card data-ai-id="auctioneers-data-table-card">
          <CardHeader>
             <CardTitle>Dados Detalhados por Leiloeiro</CardTitle>
          </CardHeader>
@@ -157,6 +156,7 @@ export default function AuctioneerAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="name"
                 searchPlaceholder="Buscar leiloeiro..."
             />
