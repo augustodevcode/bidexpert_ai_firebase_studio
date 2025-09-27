@@ -1,58 +1,85 @@
 // tests/auction.test.ts
-import { describe, it, beforeAll, afterAll } from 'vitest';
+import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 import assert from 'node:assert';
-import { AuctionService } from '../src/services/auction.service';
 import { prisma } from '../src/lib/prisma';
-import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction } from '../src/types';
+import type { AuctionFormData, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Tenant } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
+import { callActionAsUser } from './test-utils';
 
-const auctionService = new AuctionService();
-const testRunId = `auction-e2e-${uuidv4().substring(0, 8)}`;
+// Mock server-only para permitir testes de server actions
+vi.mock('server-only', () => ({}));
+vi.mock('next/headers', () => ({
+  cookies: () => ({ set: vi.fn(), get: vi.fn(), delete: vi.fn() }),
+  headers: () => new Headers(),
+}));
+import { createAuction } from '@/app/admin/auctions/actions';
+import { createSeller } from '@/app/admin/sellers/actions';
+import { createAuctioneer } from '@/app/admin/auctioneers/actions';
+import { createUser, getUserProfileData } from '@/app/admin/users/actions';
+
+const testRunId = `auction-e2e-action-${uuidv4().substring(0, 8)}`;
 const testAuctionTitle = `Super Leilão Completo de Teste ${testRunId}`;
 
 let testSeller: SellerProfileInfo;
 let testAuctioneer: AuctioneerProfileInfo;
 let testCategory: LotCategory;
 let createdAuctionId: string | undefined;
-let tenant: any;
+let testTenant: Tenant;
+let adminUser: any;
 
-describe('Auction Service E2E Tests (Full)', () => {
+describe('Auction Actions E2E Tests (Full)', () => {
 
     beforeAll(async () => {
         console.log(`[E2E Setup - auction.test.ts - ${testRunId}] Starting...`);
-        // Create tenant
-        tenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `test-tenant-${testRunId}` } });
+        // Criar um tenant dedicado para este teste
+        testTenant = await prisma.tenant.create({ data: { name: `Test Tenant ${testRunId}`, subdomain: `test-tenant-${testRunId}` } });
+        
+        // Criar usuário admin para o tenant
+        const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { id: 'role-admin', name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
+        const adminRes = await createUser({
+            fullName: `Admin For Auction Test ${testRunId}`,
+            email: `admin-for-auction-${testRunId}@test.com`,
+            password: 'password123',
+            roleIds: [adminRole.id],
+            tenantId: testTenant.id,
+        });
+        assert.ok(adminRes.success && adminRes.userId, "Failed to create admin user for test setup");
+        adminUser = await getUserProfileData(adminRes.userId);
+        assert.ok(adminUser, "Could not retrieve admin user profile");
 
-        // Clean up previous test runs to ensure a clean slate
+
+        // Limpar dados de execuções anteriores para garantir um estado limpo
         await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
         await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
         await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
         await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
 
-        // Create dependency records
+        // Criar registros de dependência DENTRO do contexto do tenant
         testCategory = await prisma.lotCategory.create({
             data: { name: `Cat. Leilões ${testRunId}`, slug: `cat-leiloes-${testRunId}`, hasSubcategories: false }
         });
-        testAuctioneer = await prisma.auctioneer.create({
-            data: { name: `Leiloeiro Leilões ${testRunId}`, publicId: `leiloeiro-pub-${testRunId}`, slug: `leiloeiro-leiloes-${testRunId}`, tenantId: tenant.id }
-        });
-        testSeller = await prisma.seller.create({
-            data: { name: `Comitente Leilões ${testRunId}`, publicId: `seller-pub-${testRunId}`, slug: `comitente-leiloes-${testRunId}`, isJudicial: false, tenantId: tenant.id }
-        });
+        
+        const auctioneerRes = await callActionAsUser(createAuctioneer, adminUser, { name: `Leiloeiro Leilões ${testRunId}` } as any);
+        const sellerRes = await callActionAsUser(createSeller, adminUser, { name: `Comitente Leilões ${testRunId}`, isJudicial: false } as any);
+
+        assert.ok(auctioneerRes.success && auctioneerRes.auctioneerId, "Failed to create test auctioneer");
+        assert.ok(sellerRes.success && sellerRes.sellerId, "Failed to create test seller");
+        
+        testAuctioneer = (await prisma.auctioneer.findUnique({ where: { id: auctioneerRes.auctioneerId } }))!;
+        testSeller = (await prisma.seller.findUnique({ where: { id: sellerRes.sellerId } }))!;
+
         console.log(`[E2E Setup - auction.test.ts - ${testRunId}] Complete.`);
     });
 
     afterAll(async () => {
         console.log(`[E2E Teardown - auction.test.ts - ${testRunId}] Cleaning up...`);
         try {
-            if (createdAuctionId) {
-                // Cascading delete should handle stages, so we just delete the auction.
-                await prisma.auction.deleteMany({ where: { id: createdAuctionId }});
-            }
+            if (createdAuctionId) await prisma.auction.deleteMany({ where: { id: createdAuctionId } });
             if (testSeller) await prisma.seller.deleteMany({ where: { id: testSeller.id } });
             if (testAuctioneer) await prisma.auctioneer.deleteMany({ where: { id: testAuctioneer.id } });
             if (testCategory) await prisma.lotCategory.deleteMany({ where: { id: testCategory.id } });
-            if (tenant) await prisma.tenant.deleteMany({ where: { id: tenant.id } });
+            if (adminUser) await prisma.user.deleteMany({ where: { id: adminUser.id } });
+            if (testTenant) await prisma.tenant.deleteMany({ where: { id: testTenant.id } });
         } catch (error) {
             console.error(`[AUCTION TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
@@ -60,11 +87,11 @@ describe('Auction Service E2E Tests (Full)', () => {
         console.log(`[E2E Teardown - auction.test.ts - ${testRunId}] Complete.`);
     });
 
-    it('should create a new auction with all fields and verify it in the database', async () => {
+    it('should create a new auction with all fields via server action and verify it in the database', async () => {
         // Arrange
         const startDate = new Date();
-        const endDateStage1 = new Date(startDate.getTime() + 5 * 24 * 60 * 60 * 1000); // 5 days later
-        const endDateStage2 = new Date(endDateStage1.getTime() + 5 * 24 * 60 * 60 * 1000); // 10 days later
+        const endDateStage1 = new Date(startDate.getTime() + 5 * 24 * 60 * 60 * 1000);
+        const endDateStage2 = new Date(endDateStage1.getTime() + 5 * 24 * 60 * 60 * 1000);
 
         const newAuctionData: Partial<AuctionFormData> = {
             title: testAuctionTitle,
@@ -76,16 +103,6 @@ describe('Auction Service E2E Tests (Full)', () => {
             auctionType: 'EXTRAJUDICIAL',
             participation: 'HIBRIDO',
             auctionMethod: 'STANDARD',
-            onlineUrl: 'https://meet.google.com/xyz-abc-def',
-            address: 'Rua do Leilão, 123',
-            zipCode: '12345-000',
-            imageUrl: 'https://placehold.co/800x600.png',
-            documentsUrl: 'https://placehold.co/docs/edital.pdf',
-            isFeaturedOnMarketplace: true,
-            marketplaceAnnouncementTitle: `OPORTUNIDADE ÚNICA: ${testAuctionTitle}`,
-            softCloseEnabled: true,
-            softCloseMinutes: 3,
-            allowInstallmentBids: true,
             auctionStages: [
                 { name: '1ª Praça', startDate: startDate, endDate: endDateStage1, initialPrice: 10000 },
                 { name: '2ª Praça', startDate: endDateStage1, endDate: endDateStage2, initialPrice: 5000 },
@@ -93,8 +110,24 @@ describe('Auction Service E2E Tests (Full)', () => {
         };
 
         // Act
-        const result = await auctionService.createAuction(tenant.id, newAuctionData);
-        createdAuctionId = result.auctionId; // Store for cleanup
+        const result = await callActionAsUser(createAuction, adminUser, newAuctionData);
+        createdAuctionId = result.auctionId;
 
-        // Assert: Check the service method result
-        assert.strictEqual(result.success, true, 'AuctionService.createAuction should return success: true');
+        // Assert: Check the action result
+        assert.strictEqual(result.success, true, 'createAuction action should return success: true');
+        assert.ok(result.auctionId, 'createAuction action should return an auctionId');
+
+        // Assert: Verify directly in the database
+        const createdAuctionFromDb = await prisma.auction.findUnique({
+            where: { id: result.auctionId },
+            include: { stages: true }
+        });
+
+        assert.ok(createdAuctionFromDb, 'Auction should be found in the database');
+        assert.strictEqual(createdAuctionFromDb.title, testAuctionTitle, 'Title should match');
+        assert.strictEqual(createdAuctionFromDb.auctioneerId, testAuctioneer.id, 'Auctioneer ID should match');
+        assert.strictEqual(createdAuctionFromDb.sellerId, testSeller.id, 'Seller ID should match');
+        assert.strictEqual(createdAuctionFromDb.stages.length, 2, 'Should have 2 stages');
+        assert.strictEqual(createdAuctionFromDb.tenantId, testTenant.id, 'Auction should belong to the correct tenant');
+    });
+});
