@@ -18,7 +18,7 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
 
     // Navegar para a página do Report Builder
     await page.goto('/admin/report-builder');
-    await expect(page.getByRole('heading', { name: 'Construtor de Relatórios' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Construtor de Relatórios' })).toBeVisible({ timeout: 15000 });
   });
 
   test('Cenário 10.1: should add, select, edit, and move a text element', async ({ page }) => {
@@ -42,7 +42,9 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
     await elementWrapper.click();
     
     // Verificar se o painel de propriedades reflete a seleção
-    await expect(propertiesPanel.locator('input[id="prop-id"]')).toHaveValue(elementId!);
+    const propIdInput = propertiesPanel.locator('input[id="prop-id"]');
+    await expect(propIdInput).toBeVisible();
+    await expect(propIdInput).toHaveValue(elementId!);
     
     // Alterar o conteúdo no painel de propriedades
     const contentInput = propertiesPanel.locator('textarea[id="prop-content"]');

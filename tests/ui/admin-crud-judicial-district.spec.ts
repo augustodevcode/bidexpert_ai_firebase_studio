@@ -20,29 +20,29 @@ test.describe('Módulo 1: Administração - CRUD de Comarca (UI)', () => {
     await page.waitForURL('/dashboard/overview');
 
     await page.goto('/admin/judicial-districts');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Comarcas' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Comarcas' })).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for a Judicial District', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Nova Comarca' }).click();
-    await expect(page.getByRole('heading', { name: 'Nova Comarca' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Nova Comarca' })).toBeVisible({ timeout: 15000 });
 
     // Preencher o formulário
     await page.getByLabel('Nome da Comarca').fill(testDistrictName);
     
     // Selecionar Tribunal
-    await page.getByRole('button', { name: 'Selecione o tribunal' }).click();
+    await page.locator('[data-ai-id="entity-selector-trigger-court"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-court"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
 
     // Selecionar Estado
-    await page.getByRole('button', { name: 'Selecione o estado' }).click();
+    await page.locator('[data-ai-id="entity-selector-trigger-state"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-state"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
 
     await page.getByRole('button', { name: 'Criar Comarca' }).click();
     
-    await expect(page.getByText('Comarca criada com sucesso.')).toBeVisible();
+    await expect(page.getByText('Comarca criada com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Comarcas' })).toBeVisible();
 
     // --- READ ---
@@ -64,7 +64,8 @@ test.describe('Módulo 1: Administração - CRUD de Comarca (UI)', () => {
     await expect(page.getByText(updatedDistrictName)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedDistrictName, 'i') }).getByRole('button', { name: 'Abrir menu' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedDistrictName, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();

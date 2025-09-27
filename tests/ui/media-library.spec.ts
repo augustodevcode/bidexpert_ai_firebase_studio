@@ -9,7 +9,7 @@ const testFilePath = path.join(__dirname, '..', 'fixtures', 'test-image.png'); /
 test.describe('Módulo 11: Media Library UI Flow', () => {
 
   test.beforeEach(async ({ page }) => {
-    // Garantir que o setup foi concluído
+    // Garante que o setup foi concluído
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
@@ -63,11 +63,14 @@ test.describe('Módulo 11: Media Library UI Flow', () => {
 
     // 7. Excluir o item de mídia para limpar o ambiente
     await newMediaRow.getByRole('button', { name: 'Abrir menu' }).click();
-    await page.getByRole('menuitem', { name: 'Excluir' }).click();
     
-    // Playwright irá interagir com o alert `confirm` nativo
-    page.on('dialog', dialog => dialog.accept());
-    await page.getByRole('button', { name: 'Excluir' }).click();
+    // Usar page.on para lidar com o diálogo de confirmação nativo
+    page.once('dialog', async dialog => {
+        console.log(`[Media Test] Dialog message: ${dialog.message()}`);
+        await dialog.accept();
+    });
+    
+    await page.getByRole('menuitem', { name: 'Excluir' }).click();
 
     // 8. Verificar a notificação de sucesso da exclusão e a remoção da tabela
     await expect(page.getByText('Item de mídia excluído com sucesso.')).toBeVisible();

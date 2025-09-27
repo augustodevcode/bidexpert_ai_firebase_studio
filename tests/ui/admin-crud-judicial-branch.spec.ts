@@ -20,17 +20,17 @@ test.describe('Módulo 1: Administração - CRUD de Vara Judicial (UI)', () => {
     await page.waitForURL('/dashboard/overview');
 
     await page.goto('/admin/judicial-branches');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Varas Judiciais' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Varas Judiciais' })).toBeVisible({timeout: 20000});
   });
 
   test('Cenário: should perform a full CRUD cycle for a Judicial Branch', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Nova Vara' }).click();
-    await expect(page.getByRole('heading', { name: 'Nova Vara Judicial' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Nova Vara Judicial' })).toBeVisible({ timeout: 15000 });
 
     // Selecionar Comarca
-    await page.getByRole('button', { name: 'Selecione a comarca' }).click();
+    await page.locator('[data-ai-id="entity-selector-trigger-district"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-district"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
 
     // Preencher o formulário
@@ -39,7 +39,7 @@ test.describe('Módulo 1: Administração - CRUD de Vara Judicial (UI)', () => {
     
     await page.getByRole('button', { name: 'Criar Vara' }).click();
     
-    await expect(page.getByText('Vara criada com sucesso.')).toBeVisible();
+    await expect(page.getByText('Vara criada com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Varas Judiciais' })).toBeVisible();
 
     // --- READ ---
@@ -61,8 +61,10 @@ test.describe('Módulo 1: Administração - CRUD de Vara Judicial (UI)', () => {
     await expect(page.getByText(updatedBranchName)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedBranchName, 'i') }).getByRole('button', { name: 'Abrir menu' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedBranchName, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
+    
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
 

@@ -31,6 +31,8 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
 
     // Preencher o formulário
     await page.getByLabel('Título/Nome do Bem').fill(testAssetName);
+    
+    // Selecionar Categoria
     await page.locator('[data-ai-id="entity-selector-trigger-category"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-category"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
     
@@ -60,9 +62,15 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
     const rowToDelete = page.getByRole('row', { name: new RegExp(updatedAssetName, 'i') });
     await rowToDelete.getByRole('button', { name: 'Excluir' }).click();
     
-    await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
-
+    // Playwright irá interagir com o alert `confirm` nativo
+    page.once('dialog', async dialog => {
+        expect(dialog.message()).toContain('Você tem certeza que deseja excluir este item?');
+        await dialog.accept();
+    });
+    
+    // Acionar a exclusão que abre o confirm
+    await rowToDelete.getByRole('button', { name: 'Excluir' }).click();
+    
     await expect(page.getByText('Ativo excluído com sucesso.')).toBeVisible();
     await expect(page.getByText(updatedAssetName)).not.toBeVisible();
   });

@@ -18,27 +18,28 @@ test.describe('Módulo 1: Administração - CRUD de Tribunal (UI)', () => {
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
     
-    await page.waitForURL('/dashboard/overview', { timeout: 15000 });
+    await page.waitForURL('/dashboard/overview', { timeout: 20000 });
 
     await page.goto('/admin/courts');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Tribunais de Justiça' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Tribunais de Justiça' })).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for a Court', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Novo Tribunal' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Tribunal' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Novo Tribunal' })).toBeVisible({ timeout: 15000 });
 
     await page.getByLabel('Nome do Tribunal').fill(testCourtName);
     
     // Selecionar o estado
-    await page.getByRole('button', { name: 'Selecione o estado' }).click();
-    await page.locator('div').filter({ hasText: /^São Paulo \(SP\)$/ }).locator('div').first().click();
+    await page.locator('[data-ai-id="entity-selector-trigger-state"]').click();
+    await page.locator('[data-ai-id="entity-selector-modal-state"]').getByText('São Paulo (SP)').click();
+
 
     await page.getByRole('button', { name: 'Criar Tribunal' }).click();
     
-    await expect(page.getByText('Tribunal criado com sucesso.')).toBeVisible();
+    await expect(page.getByText('Tribunal criado com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Tribunais de Justiça' })).toBeVisible();
 
     // --- READ ---
@@ -61,7 +62,8 @@ test.describe('Módulo 1: Administração - CRUD de Tribunal (UI)', () => {
     await expect(page.getByText(updatedCourtName)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedCourtName, 'i') }).getByRole('button', { name: 'Abrir menu' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedCourtName, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();

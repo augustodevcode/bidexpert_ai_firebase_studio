@@ -10,10 +10,12 @@ test.describe('Homepage Smoke Test', () => {
     });
     // Navega para a página inicial
     await page.goto('/');
+    // Aguarda até que a rede esteja ociosa, indicando que o carregamento principal terminou
     await page.waitForLoadState('networkidle');
   });
 
   test('Cenário Smoke: should load the homepage and display the main title', async ({ page }) => {
+    // Aumentar o timeout para este expect específico para dar tempo para a renderização inicial
     await expect(page.locator('header').getByRole('link', { name: /BidExpert/i }).first()).toBeVisible({ timeout: 20000 });
     console.log('- Verified: Homepage main title is visible.');
   });
