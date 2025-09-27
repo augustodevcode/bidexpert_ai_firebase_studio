@@ -4,11 +4,10 @@
 import { CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { CheckCircle, Loader2 } from 'lucide-react';
-import Link from 'next/link';
 import { useState } from 'react';
-import { markSetupAsComplete } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
+import { updatePlatformSettings } from '@/app/admin/settings/actions';
 
 export default function FinishStep() {
   const { toast } = useToast();
@@ -17,9 +16,10 @@ export default function FinishStep() {
 
   const handleFinish = async () => {
     setIsFinishing(true);
-    console.log("[FinishStep] Finalizando o setup e marcando como completo...");
+    console.log("[FinishStep] Finalizando o setup e marcando como completo no DB...");
     
-    const result = await markSetupAsComplete();
+    // Atualiza a flag no banco de dados
+    const result = await updatePlatformSettings({ isSetupComplete: true });
 
     if (result.success) {
       toast({
@@ -31,7 +31,7 @@ export default function FinishStep() {
     } else {
        toast({
         title: "Erro ao Finalizar",
-        description: "Não foi possível salvar o estado da configuração. Tente novamente.",
+        description: "Não foi possível salvar o estado da configuração no banco de dados. Tente novamente.",
         variant: "destructive"
       });
        setIsFinishing(false);
@@ -59,4 +59,3 @@ export default function FinishStep() {
     </>
   );
 }
-```

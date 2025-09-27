@@ -104,7 +104,10 @@ export class UserService {
             password: hashedPassword,
         };
         
-        const newUser = await this.userRepository.create(dataToCreate, finalRoleIds, tenantId || '1');
+        // Garante que a criação sempre acontece no tenant '1' (Landlord) se não for especificado
+        const finalTenantId = tenantId || '1';
+        
+        const newUser = await this.userRepository.create(dataToCreate, finalRoleIds, finalTenantId);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);

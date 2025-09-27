@@ -1,4 +1,3 @@
-
 // src/app/setup/actions.ts
 'use server';
 
@@ -7,6 +6,8 @@ import bcrypt from 'bcryptjs';
 import type { Role, UserProfileWithPermissions, Tenant } from '@/types';
 import { cookies } from 'next/headers';
 import { createSession } from '@/server/lib/session';
+import { updatePlatformSettings } from '@/app/admin/settings/actions';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 /**
  * Verifica se os dados essenciais (ex: roles e settings) existem no banco de dados.
@@ -59,9 +60,9 @@ function formatUserForSession(user: any): UserProfileWithPermissions | null {
 /**
  * Cria ou confirma o usuário administrador inicial da plataforma e loga-o.
  * @param {FormData} formData - Os dados do formulário de criação do admin.
- * @returns {Promise<{success: boolean; message: string}>}
+ * @returns {Promise<{success: boolean; message: string; user?: UserProfileWithPermissions}>}
  */
-export async function createAdminUser(formData: FormData): Promise<{ success: boolean; message: string }> {
+export async function createAdminUser(formData: FormData): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const fullName = formData.get('fullName') as string;
@@ -73,19 +74,21 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
     console.log('[Setup Action] Criando ou confirmando usuário administrador...');
     
     try {
-        const adminRole = await prisma.role.findFirst({ where: { name: 'ADMINISTRATOR' }});
+        const adminRole = await prisma.role.findFirst({ where: { name: 'Administrator' }});
         if (!adminRole) {
-            throw new Error("O perfil 'ADMINISTRATOR' não foi encontrado. Execute o passo anterior (seed) primeiro.");
+            throw new Error("O perfil 'Administrator' não foi encontrado. Execute o passo anterior (seed) primeiro.");
         }
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
+        const landlordTenantId = '1';
         let userToLogin;
+
+        const existingUser = await prisma.user.findUnique({ where: { email } });
 
         if (existingUser) {
             console.log(`[Setup Action] Usuário admin ${email} já existe. Confirmando e prosseguindo.`);
             userToLogin = existingUser;
         } else {
-             throw new Error("Usuário administrador não encontrado. Por favor, rode o `db:init` primeiro.");
+             throw new Error("Usuário administrador não encontrado. Por favor, rode o `db:init` ou `db:seed` primeiro.");
         }
 
         // Logar o usuário recém-criado/confirmado
@@ -115,11 +118,10 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
             throw new Error('Falha ao formatar o perfil do usuário para a sessão.');
         }
         
-        const landlordTenantId = '1';
         await createSession(userProfile, landlordTenantId);
         console.log(`[Setup Action] Sessão criada para o usuário admin no tenant ${landlordTenantId}.`);
 
-        return { success: true, message: 'Usuário administrador configurado e logado com sucesso!' };
+        return { success: true, message: 'Usuário administrador configurado e logado com sucesso!', user: userProfile };
 
     } catch (error: any) {
         console.error('[Setup Action] Erro ao criar usuário admin:', error);
@@ -130,17 +132,14 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
 
 /**
  * Sets a cookie to mark the setup process as complete.
- * This should be the single source of truth for the SetupRedirect component.
  * @returns {Promise<{success: boolean}>}
  */
 export async function markSetupAsComplete(): Promise<{ success: boolean }> {
-  console.log('[Setup Action] Definindo o cookie de conclusão do setup.');
-  cookies().set('bidexpert_setup_complete', 'true', {
-    path: '/',
-    httpOnly: true,
-    maxAge: 60 * 60 * 24 * 365, // 1 year
-    sameSite: 'lax',
-    secure: process.env.NODE_ENV === 'production',
-  });
-  return { success: true };
+  try {
+      await updatePlatformSettings({ isSetupComplete: true });
+      return { success: true };
+  } catch (error) {
+      console.error('[markSetupAsComplete] Error updating settings:', error);
+      return { success: false };
+  }
 }

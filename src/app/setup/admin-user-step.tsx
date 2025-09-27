@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { Loader2, UserCog, Eye, EyeOff } from 'lucide-react';
 import { createAdminUser } from '@/app/setup/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/auth-context';
+import type { UserProfileWithPermissions } from '@/types';
 
 interface AdminUserStepProps {
   onNext: () => void;
@@ -19,6 +21,7 @@ export default function AdminUserStep({ onNext, onPrev }: AdminUserStepProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [passwordVisible, setPasswordVisible] = useState(false);
     const { toast } = useToast();
+    const { loginUser } = useAuth(); // Usar o contexto para atualizar o estado de login
 
     const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -27,11 +30,13 @@ export default function AdminUserStep({ onNext, onPrev }: AdminUserStepProps) {
         const formData = new FormData(event.currentTarget);
         const result = await createAdminUser(formData);
 
-        if (result.success) {
+        if (result.success && result.user) {
             toast({
                 title: "Administrador Criado!",
-                description: "O usuário principal da plataforma foi configurado.",
+                description: "O usuário principal da plataforma foi configurado e a sessão iniciada.",
             });
+            // Atualiza o contexto de autenticação com o novo usuário
+            loginUser(result.user, result.user.tenants?.[0]?.id || '1');
             onNext();
         } else {
             toast({
