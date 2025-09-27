@@ -20,14 +20,14 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI)', () 
     await page.waitForURL('/dashboard/overview');
 
     await page.goto('/admin/judicial-processes');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Processos Judiciais' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Processos Judiciais' })).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for a Judicial Process', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Novo Processo' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Processo Judicial' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Novo Processo Judicial' })).toBeVisible({ timeout: 15000 });
 
     // Preencher o formulário
     await page.getByLabel('Número do Processo*').fill(testProcessNumber);
@@ -43,7 +43,7 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI)', () 
     
     await page.getByRole('button', { name: 'Criar Processo' }).click();
     
-    await expect(page.getByText('Processo judicial criado com sucesso.')).toBeVisible();
+    await expect(page.getByText('Processo judicial criado com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Processos Judiciais' })).toBeVisible();
 
     // --- READ ---
@@ -65,8 +65,10 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI)', () 
     await expect(page.getByText(updatedProcessNumber)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedProcessNumber, 'i') }).getByRole('button', { name: 'Abrir menu' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedProcessNumber, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
+    
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
 

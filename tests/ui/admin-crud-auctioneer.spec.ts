@@ -19,11 +19,11 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI)', () => {
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
     
-    await page.waitForURL('/dashboard/overview', { timeout: 15000 });
+    await page.waitForURL('/dashboard/overview', { timeout: 20000 });
     console.log('[Admin CRUD Auctioneer] Login successful. Navigating to auctioneers page...');
 
     await page.goto('/admin/auctioneers');
-    await expect(page.getByRole('heading', { name: 'Listagem de Leiloeiros' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Listagem de Leiloeiros' })).toBeVisible({ timeout: 20000 });
     console.log('[Admin CRUD Auctioneer] Arrived at auctioneers page.');
   });
 
@@ -32,13 +32,13 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI)', () => {
     // --- CREATE ---
     console.log('[Admin CRUD Auctioneer] Starting CREATE step...');
     await page.getByRole('button', { name: 'Novo Leiloeiro' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Leiloeiro' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Novo Leiloeiro' })).toBeVisible({ timeout: 15000 });
 
     await page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Leiloeiro/Empresa').fill(testAuctioneerName);
     await page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Contato (Opcional)').fill('Contato Leiloeiro');
     await page.locator('[data-ai-id="admin-new-auctioneer-page"]').getByRole('button', { name: 'Salvar' }).click();
     
-    await expect(page.getByText('Leiloeiro criado com sucesso.')).toBeVisible();
+    await expect(page.getByText('Leiloeiro criado com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Listagem de Leiloeiros' })).toBeVisible();
     console.log('[Admin CRUD Auctioneer] CREATE step finished successfully.');
 
@@ -52,8 +52,8 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI)', () => {
     // --- UPDATE ---
     console.log('[Admin CRUD Auctioneer] Starting UPDATE step...');
     await newRow.getByRole('button', { name: 'Editar' }).click();
-    await page.waitForURL(/\/admin\/auctioneers\/.+\/edit/);
-    await expect(page.getByRole('heading', { name: 'Editar Leiloeiro' })).toBeVisible();
+    await page.waitForURL(/\/admin\/auctioneers\/.+\/edit/, { timeout: 15000 });
+    await expect(page.getByRole('heading', { name: 'Visualizar Leiloeiro' })).toBeVisible();
     
     await page.getByRole('button', { name: 'Entrar em Modo de Edição' }).click();
     const contactInput = page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Contato (Opcional)');

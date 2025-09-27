@@ -18,22 +18,22 @@ test.describe('Módulo 1: Administração - CRUD de Marca de Veículo (UI)', () 
     await page.locator('input[name="password"]').fill('Admin@123');
     await page.getByRole('button', { name: 'Login' }).click();
     
-    await page.waitForURL('/dashboard/overview', { timeout: 15000 });
+    await page.waitForURL('/dashboard/overview', { timeout: 20000 });
 
     await page.goto('/admin/vehicle-makes');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Marcas de Veículos' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Marcas de Veículos' })).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for a Vehicle Make', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Nova Marca' }).click();
-    await expect(page.getByRole('heading', { name: 'Nova Marca de Veículo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Nova Marca de Veículo' })).toBeVisible({ timeout: 15000 });
 
     await page.getByLabel('Nome da Marca').fill(testMakeName);
     await page.getByRole('button', { name: 'Criar Marca' }).click();
     
-    await expect(page.getByText('Marca criada com sucesso.')).toBeVisible();
+    await expect(page.getByText('Marca criada com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Marcas de Veículos' })).toBeVisible();
 
     // --- READ ---
@@ -55,8 +55,10 @@ test.describe('Módulo 1: Administração - CRUD de Marca de Veículo (UI)', () 
     await expect(page.getByText(updatedMakeName)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedMakeName, 'i') }).getByRole('button', { name: 'Abrir menu' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedMakeName, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
+    
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
 

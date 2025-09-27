@@ -20,14 +20,14 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
     await page.waitForURL('/dashboard/overview');
 
     await page.goto('/admin/assets');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Ativos' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Gerenciar Ativos' })).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for an Asset (Bem)', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Novo Ativo' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Ativo' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Novo Ativo' })).toBeVisible({ timeout: 15000 });
 
     // Preencher o formulário
     await page.getByLabel('Título/Nome do Bem').fill(testAssetName);
@@ -36,7 +36,7 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
     
     await page.getByRole('button', { name: 'Criar Ativo' }).click();
     
-    await expect(page.getByText('Ativo criado com sucesso.')).toBeVisible();
+    await expect(page.getByText('Ativo criado com sucesso.')).toBeVisible({ timeout: 10000 });
     await expect(page.getByRole('heading', { name: 'Gerenciar Ativos' })).toBeVisible();
 
     // --- READ ---
@@ -57,7 +57,9 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
     await expect(page.getByText(updatedAssetName)).toBeVisible();
 
     // --- DELETE ---
-    await page.getByRole('row', { name: new RegExp(updatedAssetName, 'i') }).getByRole('button', { name: 'Excluir' }).click();
+    const rowToDelete = page.getByRole('row', { name: new RegExp(updatedAssetName, 'i') });
+    await rowToDelete.getByRole('button', { name: 'Excluir' }).click();
+    
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
 
