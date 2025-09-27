@@ -42,7 +42,7 @@ test.describe('Módulo 1: Administração - CRUD de Comitente (UI)', () => {
     await page.locator('[data-ai-id="seller-form"]').getByLabel('Nome do Comitente/Empresa').fill(testSellerName);
     await page.locator('[data-ai-id="seller-form"]').getByLabel('Nome do Contato (Opcional)').fill('Contato Inicial');
     await page.locator('[data-ai-id="seller-form"]').getByLabel('Email (Opcional)').fill(`comitente-${testRunId}@teste.com`);
-    await page.locator('[data-ai-id="form-page-layout-card"]').getByRole('button', { name: 'Salvar' }).click();
+    await page.locator('[data-ai-id="admin-new-seller-page"]').getByRole('button', { name: 'Salvar' }).click();
     
     // Esperar pelo redirecionamento e toast de sucesso
     await expect(page.getByText('Comitente criado com sucesso.')).toBeVisible();
