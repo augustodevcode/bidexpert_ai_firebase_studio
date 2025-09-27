@@ -1,3 +1,4 @@
+
 // src/types/index.ts
 
 import type { 
@@ -59,9 +60,9 @@ export type AuctioneerProfileInfo = PmAuctioneer & { auctionsConductedCount?: nu
 export type SellerProfileInfo = PmSeller & { activeLotsCount?: number, memberSince?: Date, auctionsFacilitatedCount?: number, rating?: number };
 export type Asset = Omit<PmAsset, 'evaluationValue' | 'latitude' | 'longitude'> & { 
   categoryName?: string;
-  subcategoryName?: string;
-  judicialProcessNumber?: string;
-  sellerName?: string;
+  subcategoryName?: string | null;
+  judicialProcessNumber?: string | null;
+  sellerName?: string | null;
   lots?: { lot: Lot }[];
   evaluationValue?: number | null;
   latitude?: number | null;
@@ -292,7 +293,7 @@ export interface ConsignorDashboardStats {
 }
 
 // Para usar em formulários onde não temos o ID completo ainda
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'>;
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { tenantId?: string };
 export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'category' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null };

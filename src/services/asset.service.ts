@@ -1,3 +1,4 @@
+
 // src/services/asset.service.ts
 /**
  * @fileoverview Este arquivo contém a classe AssetService, que encapsula

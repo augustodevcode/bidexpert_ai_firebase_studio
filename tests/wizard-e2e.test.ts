@@ -1,3 +1,4 @@
+
 // tests/wizard-e2e.test.ts
 import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
@@ -46,7 +47,6 @@ describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle (ID: ${testRun
     it('Cenário 8.1 & 29.1: should simulate the entire wizard flow and create a complete auction', async () => {
         console.log('\n--- Test: Full Wizard Flow Simulation ---');
         const wizardData: WizardData = { 
-            createdLots: [],
             auctionType: 'JUDICIAL',
             judicialProcess: testJudicialProcess,
             auctionDetails: {

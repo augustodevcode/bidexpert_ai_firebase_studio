@@ -1,3 +1,4 @@
+
 // src/services/lot.service.ts
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';

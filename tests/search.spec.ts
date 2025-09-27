@@ -1,6 +1,7 @@
+
 // tests/ui/search-and-filter.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { slugify } from '../../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -36,17 +37,24 @@ async function createSearchTestData() {
     const now = new Date();
     const endDate = new Date(now.getTime() + 10 * 24 * 60 * 60 * 1000);
 
-    [auction1, auction2, auction3] = await prismaClient.$transaction([
+    const [auc1, auc2, auc3] = await prismaClient.$transaction([
         prismaClient.auction.create({ data: { title: `Leilão de Carros SP ${testRunId}`, slug: `leilao-carros-sp-${testRunId}`, publicId: `pub-auc-1-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: now, auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.550520, longitude: -46.633308, tenantId: testTenant.id } as any }),
         prismaClient.auction.create({ data: { title: `Leilão de Apartamentos RJ ${testRunId}`, slug: `leilao-apartamentos-rj-${testRunId}`, publicId: `pub-auc-2-${testRunId}`, status: 'EM_BREVE', auctionDate: new Date(Date.now() + 86400000), auctioneerId: auctioneer1.id, sellerId: seller2.id, categoryId: category2.id, city: 'Rio de Janeiro', state: 'RJ', latitude: -22.906847, longitude: -43.172896, tenantId: testTenant.id } as any }),
         prismaClient.auction.create({ data: { title: `Leilão Misto SP ${testRunId}`, slug: `leilao-misto-sp-${testRunId}`, publicId: `pub-auc-3-${testRunId}`, status: 'ABERTO_PARA_LANCES', auctionDate: now, auctioneerId: auctioneer1.id, sellerId: seller1.id, categoryId: category1.id, city: 'São Paulo', state: 'SP', latitude: -23.5613, longitude: -46.6800, tenantId: testTenant.id } as any })
     ]);
+    auction1 = auc1 as any;
+    auction2 = auc2 as any;
+    auction3 = auc3 as any;
 
-    [lot1, lot2, lot3] = await prismaClient.$transaction([
+
+    const [l1, l2, l3] = await prismaClient.$transaction([
         prismaClient.lot.create({ data: { title: `Ford Ka 2019 ${testRunId}`, publicId: `pub-lot-1-${testRunId}`, auctionId: auction1.id, price: 35000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.550520, longitude: -46.633308, tenantId: testTenant.id } as any }),
         prismaClient.lot.create({ data: { title: `Apartamento 2 Quartos ${testRunId}`, publicId: `pub-lot-2-${testRunId}`, auctionId: auction2.id, price: 250000, type: category2.name, categoryId: category2.id, status: 'EM_BREVE', cityName: 'Rio de Janeiro', stateUf: 'RJ', latitude: -22.906847, longitude: -43.172896, tenantId: testTenant.id } as any }),
         prismaClient.lot.create({ data: { title: `Ford Maverick Antigo ${testRunId}`, publicId: `pub-lot-3-${testRunId}`, auctionId: auction3.id, price: 95000, type: category1.name, categoryId: category1.id, status: 'ABERTO_PARA_LANCES', cityName: 'São Paulo', stateUf: 'SP', latitude: -23.5613, longitude: -46.6800, tenantId: testTenant.id } as any })
     ]);
+    lot1 = l1 as any;
+    lot2 = l2 as any;
+    lot3 = l3 as any;
     console.log(`[Search E2E] Test data created.`);
 }
 
