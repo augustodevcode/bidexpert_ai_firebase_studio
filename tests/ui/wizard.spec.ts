@@ -9,7 +9,7 @@ const testLotTitle = `Lote do Wizard Playwright ${testRunId}`;
 test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
 
   test.beforeEach(async ({ page }) => {
-    // Garantir que o setup foi concluído
+    // Garante que o setup foi concluído
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
@@ -35,12 +35,14 @@ test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
     console.log('[Wizard Test] Step 1: Selecting auction type...');
     await page.getByLabel('Leilão Extrajudicial').click();
     await page.getByRole('button', { name: 'Próximo' }).click();
-    await expect(page.locator('[data-ai-id="admin-wizard-step-content"]')).toContainText('Detalhes do Leilão', { timeout: 10000 });
+    
+    const auctionDetailsSection = page.locator('[data-ai-id="admin-auction-form-card"]');
+    await expect(auctionDetailsSection).toBeVisible();
+    await expect(auctionDetailsSection.getByRole('heading', { name: 'Detalhes do Leilão' })).toBeVisible();
     console.log('[Wizard Test] Step 1 complete.');
 
     // --- STEP 2: Auction Details ---
     console.log('[Wizard Test] Step 2: Filling auction details...');
-    const auctionDetailsSection = page.locator('[data-ai-id="wizard-step3-auction-details"]');
     
     // Preencher título
     await auctionDetailsSection.getByLabel('Título do Leilão').fill(testAuctionTitle);
@@ -55,6 +57,11 @@ test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
     await page.locator('[data-ai-id="entity-selector-modal-seller"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
     await expect(auctionDetailsSection.locator('[data-ai-id="entity-selector-trigger-seller"]')).not.toContainText('Selecione o comitente');
 
+    // Selecionar Categoria
+    await auctionDetailsSection.locator('[data-ai-id="entity-selector-trigger-category"]').click();
+    await page.locator('[data-ai-id="entity-selector-modal-category"]').getByRole('row').first().getByRole('button', { name: 'Selecionar' }).click();
+    await expect(auctionDetailsSection.locator('[data-ai-id="entity-selector-trigger-category"]')).not.toContainText('Selecione a categoria');
+    
     // Avançar
     await page.getByRole('button', { name: 'Próximo' }).click();
     await expect(page.locator('[data-ai-id="wizard-step4-lotting"]')).toContainText('Loteamento de Ativos', { timeout: 10000 });
@@ -80,7 +87,7 @@ test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
     await lotModal.getByRole('button', { name: 'Salvar Lote' }).click();
     
     // Verificar se o lote aparece na lista de "Lotes Preparados"
-    await expect(page.getByText(`Lote 101-WIZ: ${testLotTitle}`)).toBeVisible();
+    await expect(page.getByText(`Lote WIZ-01: ${testLotTitle}`)).toBeVisible();
     console.log('[Wizard Test] Step 3 complete.');
 
     // Avançar
@@ -92,7 +99,7 @@ test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
     console.log('[Wizard Test] Step 4: Reviewing and publishing...');
     const reviewSection = page.locator('[data-ai-id="wizard-step5-review-card"]');
     await expect(reviewSection).toContainText(testAuctionTitle);
-    await expect(reviewSection).toContainText(`Lote 101-WIZ: ${testLotTitle}`);
+    await expect(reviewSection).toContainText(`Lote WIZ-01: ${testLotTitle}`);
 
     // Publicar
     await page.getByRole('button', { name: 'Publicar Leilão' }).click();
@@ -106,5 +113,4 @@ test.describe('Módulo 29: Auction Creation Wizard UI Flow', () => {
     await expect(page.getByLabel('Título do Leilão')).toHaveValue(testAuctionTitle);
     console.log('[Wizard Test] Step 4 complete. Auction created and verified.');
   });
-
 });
