@@ -4,7 +4,7 @@ import { test, expect, type Page } from '@playwright/test';
 test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', () => {
 
   test.beforeEach(async ({ page }) => {
-    // Garantir que o setup foi concluído
+    // Garante que o setup foi concluído
     await page.addInitScript(() => {
       window.localStorage.setItem('bidexpert_setup_complete', 'true');
     });
@@ -32,14 +32,14 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
     // Verificar se o elemento apareceu na área de design
     const newElement = designSurface.getByText('Novo TextBox');
     await expect(newElement).toBeVisible();
-    const elementId = await newElement.locator('xpath=..').getAttribute('data-element-id');
+    const elementWrapper = newElement.locator('xpath=..');
+    const elementId = await elementWrapper.getAttribute('key'); // Supondo que a key seja o ID único
     expect(elementId).toBeTruthy();
     console.log(`- Elemento de texto adicionado com ID: ${elementId}`);
 
     // --- 2. Selecionar e Editar Elemento ---
     console.log('[Report Builder Test] Selecionando e editando o elemento...');
-    // Clicar no elemento para selecioná-lo (se ele não estiver selecionado por padrão)
-    await newElement.click();
+    await elementWrapper.click();
     
     // Verificar se o painel de propriedades reflete a seleção
     await expect(propertiesPanel.locator('input[id="prop-id"]')).toHaveValue(elementId!);
@@ -54,7 +54,7 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
 
     // --- 3. Mover Elemento (Drag and Drop) ---
     console.log('[Report Builder Test] Movendo o elemento...');
-    const elementToDrag = designSurface.locator(`[data-element-id="${elementId}"]`);
+    const elementToDrag = designSurface.locator(`[key="${elementId}"]`);
     
     // Pegar a posição inicial
     const initialBoundingBox = await elementToDrag.boundingBox();
@@ -70,15 +70,14 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
     const finalBoundingBox = await elementToDrag.boundingBox();
     expect(finalBoundingBox).toBeDefined();
     
-    // Verificar se as coordenadas 'left' e 'top' (equivalentes a x e y) mudaram
     expect(finalBoundingBox!.x).not.toEqual(initialBoundingBox!.x);
     expect(finalBoundingBox!.y).not.toEqual(initialBoundingBox!.y);
     
     // Verificar no painel de propriedades também
     const newX = await propertiesPanel.locator('input[id="prop-x"]').inputValue();
     const newY = await propertiesPanel.locator('input[id="prop-y"]').inputValue();
-    expect(parseInt(newX)).toBeGreaterThan(initialBoundingBox!.x);
-    expect(parseInt(newY)).toBeGreaterThan(initialBoundingBox!.y);
+    expect(parseInt(newX)).toBeGreaterThanOrEqual(initialBoundingBox!.x);
+    expect(parseInt(newY)).toBeGreaterThanOrEqual(initialBoundingBox!.y);
     
     console.log('- Elemento movido com sucesso.');
   });

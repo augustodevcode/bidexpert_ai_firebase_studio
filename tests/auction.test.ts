@@ -84,7 +84,6 @@ describe('Auction Actions E2E Tests (Full)', () => {
             console.error(`[AUCTION TEST CLEANUP] - Failed to delete records for test run ${testRunId}:`, error);
         }
         await prisma.$disconnect();
-        console.log(`[E2E Teardown - auction.test.ts - ${testRunId}] Complete.`);
     });
 
     it('should create a new auction with all fields via server action and verify it in the database', async () => {

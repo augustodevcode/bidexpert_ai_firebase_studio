@@ -75,8 +75,6 @@ export class AuctionService {
   async getAuctions(tenantId: string, limit?: number, isPublicCall = true): Promise<Auction[]> {
     const where: Prisma.AuctionWhereInput = {};
     
-    // A lógica agora é: SEMPRE filtrar, a menos que a chamada explicitamente não seja pública.
-    // Isso é mais seguro.
     if (isPublicCall) {
         where.status = { notIn: NON_PUBLIC_STATUSES };
     }
@@ -98,7 +96,7 @@ export class AuctionService {
     if (!auction) return null;
 
     if (isPublicCall && NON_PUBLIC_STATUSES.includes(auction.status)) {
-        return null; // Não retorna leilões em rascunho/preparação em chamadas públicas
+        return null; 
     }
 
     return this.mapAuctionsWithDetails([auction])[0];

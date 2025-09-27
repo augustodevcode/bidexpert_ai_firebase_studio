@@ -1,6 +1,6 @@
 // tests/ui/consignor-dashboard.spec.ts
 import { test, expect } from '@playwright/test';
-import { prisma } from '../../src/lib/prisma';
+import { prisma as prismaClient } from '../../src/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { createUser } from '../../src/app/admin/users/actions';
 import { createSeller } from '../../src/app/admin/sellers/actions';
@@ -16,10 +16,10 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
   test.beforeAll(async () => {
     console.log(`[Consignor Dashboard Test] Setting up for run: ${testRunId}`);
     
-    testTenant = await prisma.tenant.create({ data: { name: `Consignor Test Tenant ${testRunId}`, subdomain: `consignor-test-${testRunId}` } });
+    testTenant = await prismaClient.tenant.create({ data: { name: `Consignor Test Tenant ${testRunId}`, subdomain: `consignor-test-${testRunId}` } });
 
-    const userRole = await prisma.role.findFirst({ where: { name: 'USER' } });
-    const consignorRole = await prisma.role.upsert({
+    const userRole = await prismaClient.role.findFirst({ where: { name: 'USER' } });
+    const consignorRole = await prismaClient.role.upsert({
       where: { nameNormalized: 'CONSIGNOR' },
       update: {},
       create: { name: 'Consignor', nameNormalized: 'CONSIGNOR', permissions: ['consignor_dashboard:view'] }
@@ -49,11 +49,11 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
     expect(sellerRes.success).toBe(true);
 
     // Buscar os perfis completos para usar no teste
-    consignorUser = (await prisma.user.findUnique({ where: { id: userRes.userId! }, include: { roles: { include: { role: true }}, tenants: { include: { tenant: true }}} })) as any;
-    testSeller = (await prisma.seller.findUnique({ where: { id: sellerRes.sellerId! } }))!;
+    consignorUser = (await prismaClient.user.findUnique({ where: { id: userRes.userId! }, include: { roles: { include: { role: true }}, tenants: { include: { tenant: true }}} })) as any;
+    testSeller = (await prismaClient.seller.findUnique({ where: { id: sellerRes.sellerId! } }))!;
     
     // Vincular sellerId ao perfil de usuário para que o `useAuth` possa encontrá-lo
-    await prisma.user.update({
+    await prismaClient.user.update({
         where: { id: consignorUser.id },
         data: { sellerId: testSeller.id }
     });
@@ -64,17 +64,17 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
   test.afterAll(async () => {
     console.log(`[Consignor Dashboard Test] Cleaning up for run: ${testRunId}`);
     try {
-      if (testSeller) await prisma.seller.delete({ where: { id: testSeller.id } });
+      if (testSeller) await prismaClient.seller.delete({ where: { id: testSeller.id } });
       if (consignorUser) {
-        await prisma.usersOnRoles.deleteMany({ where: { userId: consignorUser.id }});
-        await prisma.usersOnTenants.deleteMany({ where: { userId: consignorUser.id }});
-        await prisma.user.delete({ where: { id: consignorUser.id } });
+        await prismaClient.usersOnRoles.deleteMany({ where: { userId: consignorUser.id }});
+        await prismaClient.usersOnTenants.deleteMany({ where: { userId: consignorUser.id }});
+        await prismaClient.user.delete({ where: { id: consignorUser.id } });
       }
-      if (testTenant) await prisma.tenant.delete({ where: { id: testTenant.id } });
+      if (testTenant) await prismaClient.tenant.delete({ where: { id: testTenant.id } });
     } catch (error) {
       console.error('[Consignor Dashboard Test] Cleanup failed:', error);
     }
-    await prisma.$disconnect();
+    await prismaClient.$disconnect();
   });
 
   test.beforeEach(async ({ page }) => {

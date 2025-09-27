@@ -34,7 +34,7 @@ export class UserWinService {
     return {
       ...win,
       winningBidAmount: Number(win.winningBidAmount),
-      lot: lotWithAuctionName,
+      lot: lotWithAuctionName as any,
     };
   }
 }

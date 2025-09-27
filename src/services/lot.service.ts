@@ -239,79 +239,32 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>, tenantId?: string): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
-      // Create a mutable copy to avoid side effects
-      const cleanData = { ...data };
+      const { assetIds, ...lotData } = data;
 
-      // Explicitly remove fields that are handled by relations to prevent Prisma errors
-      const winnerId = cleanData.winnerId;
-      const tenantIdFromData = cleanData.tenantId;
-      delete cleanData.winnerId;
-
-      const {
-        assetIds,
-        categoryId,
-        auctionId,
-        type,
-        sellerId,
-        subcategoryId,
-        stageDetails,
-        tenantId: _tenantId,
-        ...lotData
-      } = cleanData;
-
-      const finalCategoryId = categoryId || type;
-
-      if (!auctionId) {
+      if (!lotData.auctionId) {
         return { success: false, message: "É obrigatório associar o lote a um leilão." };
       }
-
-      const auction = await this.prisma.auction.findUnique({ where: { id: auctionId } });
-      if (!auction) {
-        return { success: false, message: "Leilão não encontrado." };
-      }
-      
-      const finalTenantId = tenantId || tenantIdFromData || auction.tenantId;
-
-      if (!finalCategoryId) {
+      if (!lotData.type) {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
-        type: type as string,
-        price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
+        price: Number(lotData.price) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),
-        auction: { connect: { id: auctionId } },
-        category: { connect: { id: finalCategoryId } },
-        isRelisted: data.isRelisted || false,
-        relistCount: data.relistCount || 0,
-        tenant: { connect: { id: finalTenantId } },
+        auction: { connect: { id: lotData.auctionId } },
+        category: { connect: { id: lotData.type } },
       };
 
-      if (winnerId) {
-        dataToCreate.winner = { connect: { id: winnerId } };
-      }
-      if (data.originalLotId) {
-        dataToCreate.originalLot = { connect: { id: data.originalLotId } };
-      }
-      if (sellerId) {
-        dataToCreate.seller = { connect: { id: sellerId } };
-      }
-      if (data.auctioneerId) {
-        dataToCreate.auctioneer = { connect: { id: data.auctioneerId } };
-      }
-      if (subcategoryId) {
-        dataToCreate.subcategory = { connect: { id: subcategoryId } };
+      if (tenantId) {
+        dataToCreate.tenant = { connect: { id: tenantId } };
       }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
       
       if (assetIds && assetIds.length > 0) {
-        await this.prisma.asset.updateMany({
-            where: { id: { in: assetIds } },
-            data: { status: 'LOTEADO' },
-        });
+        await this.assetService.updateAssetStatus(assetIds, 'LOTEADO');
       }
       
       return { success: true, message: 'Lote criado com sucesso.', lotId: newLot.id };
@@ -363,11 +316,10 @@ export class LotService {
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+      if (data.hasOwnProperty('inheritedMediaFromAssetId')) {
+        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
       }
       
-      // A atualização dos ativos vinculados e a atualização dos detalhes das etapas são agora transacionais
       await this.repository.update(id, dataToUpdate, assetIds);
 
       return { success: true, message: 'Lote atualizado com sucesso.' };
@@ -379,7 +331,6 @@ export class LotService {
 
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // Find the lot to get associated assetIds before deleting
       const lotToDelete = await this.prisma.lot.findUnique({
         where: { id },
         include: { assets: { select: { assetId: true } } },
@@ -387,16 +338,9 @@ export class LotService {
 
       if (lotToDelete) {
         const assetIdsToRelease = lotToDelete.assets.map(a => a.assetId);
-
-        // The repository handles the transactional deletion of Lot and AssetsOnLots.
         await this.repository.delete(id);
-        
-        // After successful deletion, update the status of the previously linked assets
         if (assetIdsToRelease.length > 0) {
-          await this.prisma.asset.updateMany({
-            where: { id: { in: assetIdsToRelease } },
-            data: { status: 'DISPONIVEL' },
-          });
+          await this.assetService.updateAssetStatus(assetIdsToRelease, 'DISPONIVEL');
         }
       } else {
          return { success: false, message: 'Lote não encontrado para exclusão.' };
@@ -434,12 +378,8 @@ export class LotService {
                   winDate: nowInSaoPaulo()
               }
           });
-          // After sale, update the associated 'asset' status to 'VENDIDO'
            if (lot.assetIds && lot.assetIds.length > 0) {
-                await this.prisma.asset.updateMany({
-                    where: { id: { in: lot.assetIds } },
-                    data: { status: 'VENDIDO' },
-                });
+                await this.assetService.updateAssetStatus(lot.assetIds, 'VENDIDO');
             }
           return { success: true, message: `Lote finalizado! Vencedor: ${winningBid.bidderDisplay} com R$ ${winningBid.amount.toLocaleString('pt-BR')}.`};
       } else {
@@ -447,12 +387,8 @@ export class LotService {
               where: { id: lot.id },
               data: { status: 'NAO_VENDIDO' },
           });
-          // If not sold, release the 'assets' back to 'DISPONIVEL'
            if (lot.assetIds && lot.assetIds.length > 0) {
-                await this.prisma.asset.updateMany({
-                    where: { id: { in: lot.assetIds } },
-                    data: { status: 'DISPONIVEL' },
-                });
+                await this.assetService.updateAssetStatus(lot.assetIds, 'DISPONIVEL');
             }
            return { success: true, message: "Lote finalizado como 'Não Vendido' por falta de lances." };
       }

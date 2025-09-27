@@ -40,7 +40,7 @@ test.describe('Módulo 1: Administração - CRUD de Ativo (Bem) (UI)', () => {
     await expect(page.getByRole('heading', { name: 'Gerenciar Ativos' })).toBeVisible();
 
     // --- READ ---
-    await page.getByPlaceholder('Buscar por título...').fill(testAssetName);
+    await page.getByPlaceholder('Buscar por título ou ID do processo...').fill(testAssetName);
     const newRow = page.getByRole('row', { name: new RegExp(testAssetName, 'i') });
     await expect(newRow).toBeVisible();
 

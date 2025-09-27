@@ -38,8 +38,8 @@ test.describe('Módulo 1: Administração - CRUD de Modelo de Veículo (UI)', ()
 
     // Selecionar a marca criada
     await page.getByRole('button', { name: 'Selecione a marca' }).click();
-    await page.locator('div').filter({ hasText: new RegExp(`^${testMakeName}$`) }).locator('div').first().click();
-
+    await page.getByText(testMakeName, { exact: true }).click();
+    
     // Preencher o nome do modelo
     await page.getByLabel('Nome do Modelo').fill(testModelName);
     await page.getByRole('button', { name: 'Criar Modelo' }).click();

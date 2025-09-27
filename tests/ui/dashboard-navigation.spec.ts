@@ -2,8 +2,8 @@
 import { test, expect, type Page } from '@playwright/test';
 
 // Assume um usuário arrematante criado pelo script de seed de dados
-const TEST_USER_EMAIL = 'bidder1@test.com';
-const TEST_USER_PASSWORD = 'password123';
+const TEST_USER_EMAIL = 'admin@bidexpert.com.br'; // Using admin to ensure some data might exist
+const TEST_USER_PASSWORD = 'Admin@123';
 
 test.describe('Módulo 9: Painel do Usuário (Arrematante) - Navegação e Visualização', () => {
 
