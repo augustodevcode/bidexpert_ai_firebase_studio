@@ -46,6 +46,7 @@ describe('Seller Actions E2E Tests', () => {
             await prisma.seller.deleteMany({
                 where: { name: testSellerName, tenantId: testTenant.id }
             });
+             await prisma.user.deleteMany({ where: { email: { contains: testRunId } } });
              await prisma.tenant.delete({ where: { id: testTenant.id } });
         } catch (error) {
             console.error(`[SELLER TEST CLEANUP] - Failed to delete records:`, error);
@@ -68,7 +69,6 @@ describe('Seller Actions E2E Tests', () => {
             isJudicial: false,
             description: null,
             userId: null,
-            tenantId: testTenant.id,
             logoUrl: null,
             logoMediaId: null,
             dataAiHintLogo: null,

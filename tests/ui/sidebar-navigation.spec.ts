@@ -1,11 +1,12 @@
 // tests/ui/sidebar-navigation.spec.ts
 import { test, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 import { createUser } from '../../src/app/admin/users/actions';
-import { RoleRepository } from '../../src/repositories/role.repository';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '../../src/types';
 import { UserService } from '../../src/services/user.service';
+import { RoleRepository } from '../../src/repositories/role.repository';
+
 
 const testRunId = `sidebar-nav-${uuidv4().substring(0, 8)}`;
 const userService = new UserService();

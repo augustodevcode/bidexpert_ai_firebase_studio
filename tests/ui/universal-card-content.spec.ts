@@ -1,6 +1,6 @@
 // tests/ui/universal-card-content.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { slugify } from '../../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
@@ -24,7 +24,7 @@ const testData = {
     auctionType: 'EXTRAJUDICIAL' as const,
     isFeaturedOnMarketplace: true,
     totalLots: 5,
-    initialOffer: 1500,
+    initialOffer: new Prisma.Decimal(1500),
     imageUrl: 'https://placehold.co/600x400/9b59b6/ffffff.png?text=LeilaoNotebooks',
     dataAiHint: 'leilao card test'
   },
@@ -32,9 +32,9 @@ const testData = {
     title: `Notebook Gamer Alienware ${testRunId}`,
     number: '101',
     description: 'Notebook de alta performance com poucas marcas de uso.',
-    price: 3800.00,
-    initialPrice: 5000.00,
-    secondInitialPrice: 3000.00, // 40% discount from initialPrice
+    price: new Prisma.Decimal(3800.00),
+    initialPrice: new Prisma.Decimal(5000.00),
+    secondInitialPrice: new Prisma.Decimal(3000.00), // 40% discount from initialPrice
     bidsCount: 15, // Hot bid
     views: 600, // Popular
     cityName: 'Curitiba',
@@ -48,16 +48,22 @@ let createdLot: Lot;
 async function createTestData() {
     console.log(`[createTestData] Starting for run: ${testRunId}`);
     
+    const tenant = await prismaClient.tenant.upsert({
+      where: { id: '1' },
+      update: {},
+      create: { id: '1', name: 'Landlord', subdomain: 'www' }
+    });
+    
     const category = await prismaClient.lotCategory.create({
         data: { name: testData.category.name, slug: slugify(testData.category.name), hasSubcategories: false }
     });
 
     const auctioneer = await prismaClient.auctioneer.create({
-        data: { name: testData.auctioneer.name, slug: slugify(testData.auctioneer.name), publicId: `auct-pub-${testRunId}` }
+        data: { tenantId: tenant.id, name: testData.auctioneer.name, slug: slugify(testData.auctioneer.name), publicId: `auct-pub-${testRunId}` }
     });
 
     const seller = await prismaClient.seller.create({
-        data: { name: testData.seller.name, slug: slugify(testData.seller.name), publicId: `seller-pub-${testRunId}`, logoUrl: testData.seller.logoUrl, isJudicial: false }
+        data: { tenantId: tenant.id, name: testData.seller.name, slug: slugify(testData.seller.name), publicId: `seller-pub-${testRunId}`, logoUrl: testData.seller.logoUrl, isJudicial: false }
     });
 
     const now = new Date();
@@ -72,12 +78,13 @@ async function createTestData() {
         categoryId: category.id,
         auctionDate: now,
         endDate: endDate,
+        tenantId: tenant.id
     };
   
   const auction = await prismaClient.auction.create({
     data: auctionData,
   });
-  createdAuction = auction as Auction;
+  createdAuction = auction as unknown as Auction;
 
     const lot = await prismaClient.lot.create({
         data: {
@@ -88,10 +95,11 @@ async function createTestData() {
             sellerId: seller.id,
             auctioneerId: auctioneer.id,
             type: category.name,
-            status: 'ABERTO_PARA_LANCES'
-        } as any
+            status: 'ABERTO_PARA_LANCES',
+            tenantId: tenant.id
+        }
     });
-    createdLot = lot as Lot;
+    createdLot = lot as unknown as Lot;
 
     console.log(`[createTestData] Test data created for run ${testRunId}.`);
     return { auction, lot };
@@ -118,7 +126,7 @@ async function cleanupTestData() {
   }
 }
 
-test.describe('Universal Card UI Validation', () => {
+test.describe('Módulo 20: Universal Card UI Validation', () => {
     test.beforeAll(async () => {
         prismaClient = new PrismaClient();
         await prismaClient.$connect();
@@ -140,7 +148,7 @@ test.describe('Universal Card UI Validation', () => {
         await expect(page.locator('header').getByRole('button')).toBeVisible();
     });
 
-    test('should correctly display all data on a Lot Card', async ({ page }) => {
+    test('Cenário 20.1: should correctly display all data on a Lot Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Lot Card Content ---');
         await page.goto('/search?type=lots');
         const cardLocator = page.locator(`[data-ai-id="lot-card-${createdLot.id}"]`);
@@ -153,12 +161,12 @@ test.describe('Universal Card UI Validation', () => {
         await expect(cardLocator.locator(`[data-ai-id="lot-card-bid-count"]`)).toContainText(`${testData.lot.bidsCount} Lances`);
         await expect(cardLocator.locator(`[data-ai-id="lot-card-location"]`)).toContainText(`${testData.lot.cityName} - ${testData.lot.stateUf}`);
         await expect(cardLocator.locator(`[data-ai-id="lot-card-title"]`)).toContainText(testData.lot.title);
-        await expect(cardLocator.locator(`[data-ai-id="lot-card-footer"]`)).toContainText(`R$ ${testData.lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+        await expect(cardLocator.locator(`[data-ai-id="lot-card-footer"]`)).toContainText(`R$ ${Number(testData.lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
         
         console.log('--- ✅ Lot Card Test Case Passed ---');
     });
 
-    test('should correctly display all data on an Auction Card', async ({ page }) => {
+    test('Cenário 20.2: should correctly display all data on an Auction Card', async ({ page }) => {
         console.log('--- [Test Case] Validating Auction Card Content ---');
         await page.goto('/search?type=auctions');
         const cardLocator = page.locator(`[data-ai-id="auction-card-${createdAuction.id}"]`);
@@ -171,7 +179,7 @@ test.describe('Universal Card UI Validation', () => {
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);
-        await expect(cardLocator.locator(`[data-ai-id="auction-card-footer"]`)).toContainText(`R$ ${testData.auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-footer"]`)).toContainText(`R$ ${Number(testData.auction.initialOffer).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`);
         
         console.log('--- ✅ Auction Card Test Case Passed ---');
     });

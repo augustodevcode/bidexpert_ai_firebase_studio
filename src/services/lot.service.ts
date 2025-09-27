@@ -37,7 +37,7 @@ export class LotService {
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
-      sellerName: lot.seller?.name,
+      sellerName: lot.seller?.name || null, // Garante que seja null se não existir
     };
   }
 
@@ -292,8 +292,8 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromAssetId = data.inheritedMediaFromBemId;
+      if (data.hasOwnProperty('inheritedMediaFromAssetId') && data.inheritedMediaFromAssetId) {
+        dataToCreate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
       }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
@@ -355,8 +355,8 @@ export class LotService {
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromBemId;
+      if (data.hasOwnProperty('inheritedMediaFromAssetId')) {
+        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
       }
       
       // A atualização dos ativos vinculados e a atualização dos detalhes das etapas são agora transacionais

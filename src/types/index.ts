@@ -107,7 +107,7 @@ export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 
   inheritedMediaFromBemId?: string | null;
 };
 export type BidInfo = PmBid;
-export type UserWin = PmUserWin & { lot: Lot };
+export type UserWin = Omit<PmUserWin, 'winningBidAmount'> & { winningBidAmount: number; lot: Lot };
 export type Review = PmReview;
 export type LotQuestion = PmLotQuestion;
 export type UserDocument = PmUserDocument & { documentType: PmDocumentType };

@@ -38,8 +38,8 @@ export class AuctionService {
       initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
       estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
       achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
-      decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : undefined,
-      floorPrice: a.floorPrice ? Number(a.floorPrice) : undefined,
+      decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : null,
+      floorPrice: a.floorPrice ? Number(a.floorPrice) : null,
       latitude: a.latitude ? Number(a.latitude) : null,
       longitude: a.longitude ? Number(a.longitude) : null,
       totalLots: a._count?.lots ?? a.lots?.length ?? 0,
@@ -49,7 +49,7 @@ export class AuctionService {
       sellerName: a.seller?.name,
       auctioneerName: a.auctioneer?.name,
       categoryName: a.category?.name,
-      auctionStages: (a.stages || []).map((stage: any) => ({
+      auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
         ...stage,
         initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
       })),

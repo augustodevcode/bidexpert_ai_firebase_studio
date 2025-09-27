@@ -1,6 +1,6 @@
 // tests/ui/bidding-journey.spec.ts
 import { test, expect } from '@playwright/test';
-import { prisma } from '../../src/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { createUser } from '../../src/app/admin/users/actions';
 import { createAuction } from '../../src/app/admin/auctions/actions';
@@ -13,15 +13,16 @@ let bidderUser: UserProfileWithPermissions;
 let testAuction: Auction;
 let testLot: Lot;
 let testTenant: Tenant;
+let prismaClient = new PrismaClient();
 
 test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
 
   test.beforeAll(async () => {
     console.log(`[Bidding Journey Test] Setting up for run: ${testRunId}`);
     
-    testTenant = await prisma.tenant.create({ data: { name: `Bidding Test Tenant ${testRunId}`, subdomain: `bidding-test-${testRunId}` } });
+    testTenant = await prismaClient.tenant.create({ data: { name: `Bidding Test Tenant ${testRunId}`, subdomain: `bidding-test-${testRunId}` } });
 
-    const bidderRole = await prisma.role.upsert({
+    const bidderRole = await prismaClient.role.upsert({
       where: { nameNormalized: 'BIDDER' },
       update: {},
       create: { name: 'Bidder', nameNormalized: 'BIDDER', permissions: ['place_bids'] }
@@ -36,14 +37,14 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       tenantId: testTenant.id,
     });
     expect(userRes.success).toBe(true);
-    const createdUser = await prisma.user.findUnique({where: {id: userRes.userId!}, include: {roles: {include: {role: true}}, tenants: {include: {tenant: true}}}});
+    const createdUser = await prismaClient.user.findUnique({where: {id: userRes.userId!}, include: {roles: {include: {role: true}}, tenants: {include: {tenant: true}}}});
     bidderUser = createdUser as any;
     expect(bidderUser).toBeDefined();
 
     // Criar dados para leilão e lote
-    const seller = await prisma.seller.create({ data: { name: `Seller Bidding ${testRunId}`, publicId: `seller-bid-${testRunId}`, slug: `seller-bid-${testRunId}`, isJudicial: false, tenantId: testTenant.id } });
-    const auctioneer = await prisma.auctioneer.create({ data: { name: `Auctioneer Bidding ${testRunId}`, publicId: `auct-bid-${testRunId}`, slug: `auct-bid-${testRunId}`, tenantId: testTenant.id } });
-    const category = await prisma.lotCategory.create({ data: { name: `Cat Bidding ${testRunId}`, slug: `cat-bid-${testRunId}`, hasSubcategories: false } });
+    const seller = await prismaClient.seller.create({ data: { name: `Seller Bidding ${testRunId}`, publicId: `seller-bid-${testRunId}`, slug: `seller-bid-${testRunId}`, isJudicial: false, tenantId: testTenant.id } });
+    const auctioneer = await prismaClient.auctioneer.create({ data: { name: `Auctioneer Bidding ${testRunId}`, publicId: `auct-bid-${testRunId}`, slug: `auct-bid-${testRunId}`, tenantId: testTenant.id } });
+    const category = await prismaClient.lotCategory.create({ data: { name: `Cat Bidding ${testRunId}`, slug: `cat-bid-${testRunId}`, hasSubcategories: false } });
 
     const auctionRes = await createAuction({
       title: `Bidding Test Auction ${testRunId}`,
@@ -54,7 +55,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       tenantId: testTenant.id
     } as any);
     expect(auctionRes.success).toBe(true);
-    testAuction = (await prisma.auction.findUnique({ where: { id: auctionRes.auctionId! } })) as Auction;
+    testAuction = (await prismaClient.auction.findUnique({ where: { id: auctionRes.auctionId! } })) as unknown as Auction;
 
     const lotRes = await createLot({
       title: `Bidding Test Lot ${testRunId}`,
@@ -68,7 +69,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       tenantId: testTenant.id
     } as any);
     expect(lotRes.success).toBe(true);
-    testLot = (await prisma.lot.findUnique({ where: { id: lotRes.lotId! } })) as Lot;
+    testLot = (await prismaClient.lot.findUnique({ where: { id: lotRes.lotId! } })) as unknown as Lot;
     
     // Habilitar o usuário para o leilão
     await habilitateForAuctionAction(bidderUser.id, testAuction.id);
@@ -79,21 +80,21 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
   test.afterAll(async () => {
     console.log(`[Bidding Journey Test] Cleaning up for run: ${testRunId}`);
     try {
-      if (testLot) await prisma.lot.deleteMany({ where: { id: testLot.id } });
-      if (testAuction) await prisma.auction.deleteMany({ where: { id: testAuction.id } });
+      if (testLot) await prismaClient.lot.deleteMany({ where: { id: testLot.id } });
+      if (testAuction) await prismaClient.auction.deleteMany({ where: { id: testAuction.id } });
       if (bidderUser) {
-        await prisma.usersOnRoles.deleteMany({ where: { userId: bidderUser.id } });
-        await prisma.usersOnTenants.deleteMany({ where: { userId: bidderUser.id } });
-        await prisma.user.delete({ where: { id: bidderUser.id } });
+        await prismaClient.usersOnRoles.deleteMany({ where: { userId: bidderUser.id }});
+        await prismaClient.usersOnTenants.deleteMany({ where: { userId: bidderUser.id }});
+        await prismaClient.user.delete({ where: { id: bidderUser.id } });
       }
-      await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
-      await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
-      await prisma.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
-      if (testTenant) await prisma.tenant.delete({ where: { id: testTenant.id } });
+      await prismaClient.seller.deleteMany({ where: { name: { contains: testRunId } } });
+      await prismaClient.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+      await prismaClient.lotCategory.deleteMany({ where: { name: { contains: testRunId } } });
+      if (testTenant) await prismaClient.tenant.delete({ where: { id: testTenant.id } });
     } catch (error) {
       console.error('[Bidding Journey Test] Cleanup failed:', error);
     }
-    await prisma.$disconnect();
+    await prismaClient.$disconnect();
   });
 
   test.beforeEach(async ({ page }) => {
@@ -115,13 +116,13 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     const biddingPanel = page.locator('[data-ai-id="bidding-panel-card"]');
     await expect(biddingPanel).toBeVisible();
     
-    const initialPriceText = `R$ ${testLot.initialPrice!.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const initialPriceText = `R$ ${Number(testLot.initialPrice!).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     await expect(biddingPanel.getByText(initialPriceText, { exact: false })).toBeVisible();
     
     // 2. Inserir um lance válido
     console.log('[Bidding Journey Test] Placing a valid bid...');
     const bidInput = biddingPanel.locator('input[type="number"]');
-    const newBidAmount = testLot.initialPrice! + testLot.bidIncrementStep!;
+    const newBidAmount = Number(testLot.initialPrice!) + Number(testLot.bidIncrementStep!);
     await bidInput.fill(String(newBidAmount));
     
     // 3. Clicar no botão para dar o lance

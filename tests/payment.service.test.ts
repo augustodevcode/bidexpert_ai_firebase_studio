@@ -1,76 +1,81 @@
 // tests/payment.service.test.ts
-import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
+import { describe, it, beforeAll, afterAll, expect, vi } from 'vitest';
 import assert from 'node:assert';
 import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
-import type { UserProfileWithPermissions, Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, UserWin } from '@/types';
-import { UserService } from '@/services/user.service';
-import { RoleRepository } from '@/repositories/role.repository';
+import type { UserProfileWithPermissions, Lot, Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, UserWin, Tenant } from '@/types';
 import { processPaymentAction } from '@/app/checkout/[winId]/actions';
 import type { CheckoutFormValues } from '@/app/checkout/[winId]/checkout-form-schema';
-import { LotService } from '@/services/lot.service';
+import { callActionAsUser } from './test-utils';
 
-const userService = new UserService();
-const lotService = new LotService();
+// Mock server-only and next/headers
+vi.mock('server-only', () => ({}));
+vi.mock('next/headers', () => ({
+  cookies: () => ({ set: vi.fn(), get: vi.fn(), delete: vi.fn() }),
+  headers: () => new Headers(),
+}));
+import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
 
-const testRunId = `payment-e2e-${uuidv4().substring(0, 8)}`;
+
+const testRunId = `payment-e2e-action-${uuidv4().substring(0, 8)}`;
 let testUser: UserProfileWithPermissions;
 let testWin: UserWin;
 let testLot: Lot;
+let testTenant: Tenant;
 
-describe('Payment Service E2E Tests', () => {
+describe('Payment Action E2E Tests', () => {
 
     beforeAll(async () => {
-        const userRole = await prisma.role.findFirst({where: {name: 'USER'}});
+        testTenant = await prisma.tenant.create({ data: { name: `Payment Test Tenant ${testRunId}`, subdomain: `payment-${testRunId}` } });
+        const userRole = await prisma.role.findFirst({ where: { name: 'USER' } });
         assert.ok(userRole, "USER role must exist");
-        
-        const userRes = await userService.createUser({
+
+        const userRes = await callActionAsUser(createUser, null, {
             fullName: `Pagador ${testRunId}`,
             email: `pagador-${testRunId}@test.com`,
             password: 'password123',
             roleIds: [userRole.id],
-            habilitationStatus: 'HABILITADO'
+            habilitationStatus: 'HABILITADO',
+            tenantId: testTenant.id,
         });
         assert.ok(userRes.success && userRes.userId);
-        testUser = (await userService.getUserById(userRes.userId))!;
+        testUser = (await callActionAsUser(getUserProfileData, null, userRes.userId))!;
         
-        // Create dummy Lot/Auction for the win
-        const seller = await prisma.seller.create({ data: { name: `Seller Pay ${testRunId}`, publicId: `pub-seller-pay-${testRunId}`, slug: `seller-pay-${testRunId}`, isJudicial: false } });
-        const auctioneer = await prisma.auctioneer.create({ data: { name: `Auct Pay ${testRunId}`, publicId: `pub-auct-pay-${testRunId}`, slug: `auct-pay-${testRunId}` } });
-        const auction = await prisma.auction.create({ data: { title: `Auction Pay ${testRunId}`, publicId: `pub-auc-pay-${testRunId}`, slug: `auc-pay-${testRunId}`, auctioneerId: auctioneer.id, sellerId: seller.id, status: 'FINALIZADO', auctionDate: new Date() } });
-        const lotRes = await lotService.createLot({ title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id } as any);
-        assert.ok(lotRes.success && lotRes.lotId);
-        testLot = (await lotService.getLotById(lotRes.lotId))!;
+        await callActionAsUser(tenantContext.run, { tenantId: testTenant.id }, async () => {
+            const seller = await prisma.seller.create({ data: { name: `Seller Pay ${testRunId}`, publicId: `pub-seller-pay-${testRunId}`, slug: `seller-pay-${testRunId}`, isJudicial: false, tenantId: testTenant.id } });
+            const auctioneer = await prisma.auctioneer.create({ data: { name: `Auct Pay ${testRunId}`, publicId: `pub-auct-pay-${testRunId}`, slug: `auct-pay-${testRunId}`, tenantId: testTenant.id } });
+            const auction = await prisma.auction.create({ data: { title: `Auction Pay ${testRunId}`, publicId: `pub-auc-pay-${testRunId}`, slug: `auc-pay-${testRunId}`, auctioneerId: auctioneer.id, sellerId: seller.id, status: 'FINALIZADO', auctionDate: new Date(), tenantId: testTenant.id } });
+            testLot = (await prisma.lot.create({ data: { title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id, tenantId: testTenant.id, type: 'GENERAL' } })) as Lot;
+        });
 
-        testWin = await prisma.userWin.create({
+        testWin = (await prisma.userWin.create({
             data: {
                 userId: testUser.id,
                 lotId: testLot.id,
                 winningBidAmount: 1200.00,
                 paymentStatus: 'PENDENTE'
-            }
-        });
+            },
+            include: { lot: true }
+        })) as UserWin;
     });
     
     afterAll(async () => {
         try {
             await prisma.installmentPayment.deleteMany({ where: { userWinId: testWin.id } });
             await prisma.userWin.deleteMany({ where: { id: testWin.id } });
-            await prisma.lot.deleteMany({ where: { id: testLot.id } });
-            const auction = await prisma.auction.findFirst({ where: { title: { contains: `Auction Pay ${testRunId}`}}});
-            if(auction) await prisma.auction.delete({ where: { id: auction.id } });
-            const seller = await prisma.seller.findFirst({ where: { name: { contains: `Seller Pay ${testRunId}`}}});
-            if(seller) await prisma.seller.delete({ where: { id: seller.id } });
-            const auctioneer = await prisma.auctioneer.findFirst({ where: { name: { contains: `Auct Pay ${testRunId}`}}});
-            if(auctioneer) await prisma.auctioneer.delete({ where: { id: auctioneer.id } });
-            await userService.deleteUser(testUser.id);
+            await prisma.lot.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.auction.deleteMany({ where: { title: { contains: testRunId } } });
+            await prisma.seller.deleteMany({ where: { name: { contains: testRunId } } });
+            await prisma.auctioneer.deleteMany({ where: { name: { contains: testRunId } } });
+            await deleteUser(testUser.id);
+            await prisma.tenant.delete({ where: { id: testTenant.id }});
         } catch (e) {
              console.error(`[PAYMENT TEST CLEANUP] Error during cleanup for run ${testRunId}:`, e);
         }
         await prisma.$disconnect();
     });
 
-    it('should create installment records for a win', async () => {
+    it('should create installment records for a win via action', async () => {
         // Arrange
         const paymentData: CheckoutFormValues = {
             paymentMethod: 'installments',
@@ -78,7 +83,7 @@ describe('Payment Service E2E Tests', () => {
         };
 
         // Act
-        const result = await processPaymentAction(testWin.id, paymentData);
+        const result = await callActionAsUser(processPaymentAction, testUser, testWin.id, paymentData);
 
         // Assert
         assert.ok(result.success, `Installment processing should succeed. Message: ${result.message}`);

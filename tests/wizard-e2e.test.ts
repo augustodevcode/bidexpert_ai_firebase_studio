@@ -2,7 +2,7 @@
 import { describe, test, beforeAll, afterAll, expect, it } from 'vitest';
 import assert from 'node:assert';
 import { prisma } from '../src/lib/prisma';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Asset, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData, Tenant, AssetFormData } from '@/types';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Asset, JudicialProcess, StateInfo, JudicialDistrict, Court, JudicialBranch, WizardData, Tenant, AssetFormData } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 import { getWizardInitialData, createAuctionFromWizard } from '@/app/admin/wizard/actions';
 import { createSeller } from '@/app/admin/sellers/actions';
@@ -30,13 +30,13 @@ describe(`[E2E] Módulo 8 & 29: Auction Creation Wizard Lifecycle (ID: ${testRun
     beforeAll(async () => {
         const prereqs = await createTestPrerequisites(testRunId, 'wizard');
         testTenant = prereqs.tenant;
-        adminUser = prereqs.adminUser;
-        unauthorizedUser = prereqs.unauthorizedUser;
+        adminUser = prereqs.adminUser as UserProfileWithPermissions;
+        unauthorizedUser = prereqs.unauthorizedUser as UserProfileWithPermissions;
         testCategory = prereqs.category;
         testAuctioneer = prereqs.auctioneer;
         testJudicialSeller = prereqs.judicialSeller;
-        testJudicialProcess = prereqs.judicialProcess;
-        testAsset = prereqs.asset;
+        testJudicialProcess = prereqs.judicialProcess as JudicialProcess;
+        testAsset = prereqs.asset as Asset;
     }, 80000);
 
     afterAll(async () => {

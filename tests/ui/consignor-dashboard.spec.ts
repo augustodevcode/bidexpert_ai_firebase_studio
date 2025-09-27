@@ -47,20 +47,7 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
         name: `Comitente Company ${testRunId}`,
         isJudicial: false,
         userId: userRes.userId,
-        tenantId: testTenant.id,
-        description: null,
-        contactName: null,
-        email: null,
-        phone: null,
-        address: null,
-        city: null,
-        state: null,
-        zipCode: null,
-        website: null,
-        logoUrl: null,
-        logoMediaId: null,
-        dataAiHintLogo: null,
-        judicialBranchId: null
+        description: null, contactName: null, email: null, phone: null, address: null, city: null, state: null, zipCode: null, website: null, logoUrl: null, logoMediaId: null, dataAiHintLogo: null, judicialBranchId: null
     };
 
     const sellerRes = await createSeller(sellerData);
