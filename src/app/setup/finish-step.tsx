@@ -19,7 +19,6 @@ export default function FinishStep() {
     setIsFinishing(true);
     console.log("[FinishStep] Finalizando o setup e marcando como completo...");
     
-    // 1. Set the cookie on the server via Server Action
     const result = await markSetupAsComplete();
 
     if (result.success) {
@@ -27,7 +26,7 @@ export default function FinishStep() {
         title: "Configuração Concluída!",
         description: "Você será redirecionado para o painel de administração.",
       });
-      // 2. Redirect. A sessão do admin já foi criada no passo anterior.
+      // A sessão do admin já foi criada no passo anterior, apenas redirecionamos.
       router.push('/admin/dashboard');
     } else {
        toast({
@@ -60,3 +59,4 @@ export default function FinishStep() {
     </>
   );
 }
+```

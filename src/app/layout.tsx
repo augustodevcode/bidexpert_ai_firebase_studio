@@ -60,8 +60,9 @@ export default async function RootLayout({
   
   const { initialUser, initialTenantId } = await getInitialAuthData();
   const { platformSettings } = await getLayoutData();
-
-  const isSetupComplete = !!process.env.DB_INIT_COMPLETE;
+  
+  // Agora, a conclusão do setup é verificada através do banco de dados, não de uma variável de ambiente.
+  const isSetupComplete = platformSettings?.isSetupComplete ?? false;
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>

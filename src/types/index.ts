@@ -1,4 +1,3 @@
-
 // src/types/index.ts
 
 import type { 
@@ -163,6 +162,7 @@ export type UserProfileWithPermissions = User & {
 export type Theme = PmTheme;
 export type ThemeColors = PmThemeColors;
 export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
+  isSetupComplete: boolean; // Adicionando o novo campo
   themes?: Theme[];
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;
@@ -318,3 +318,4 @@ export type WizardData = {
     selectedAssets?: Asset[];
     createdLots?: Lot[];
 };
+```
