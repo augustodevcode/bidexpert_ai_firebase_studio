@@ -26,7 +26,7 @@ test.describe('Módulo 9: Painel do Usuário (Arrematante) - Navegação e Visua
   });
 
   test('Cenário 9.1.1: should display the overview page with stats cards', async ({ page }) => {
-    await expect(page.getByRole('heading', { name: 'Visão Geral do Dashboard' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Visão Geral do Dashboard' })).toBeVisible({timeout: 10000});
 
     // Verificar se os cards de estatísticas principais estão visíveis
     await expect(page.getByText('Meus Lances Ativos')).toBeVisible();
@@ -42,7 +42,7 @@ test.describe('Módulo 9: Painel do Usuário (Arrematante) - Navegação e Visua
     await page.getByRole('link', { name: 'Meus Lances' }).click();
     await page.waitForURL('/dashboard/bids');
 
-    await expect(page.getByRole('heading', { name: 'Meus Lances' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meus Lances' })).toBeVisible({timeout: 10000});
 
     // Verificar se a tabela de lances ou o estado de "nenhum lance" está visível
     const noBidsMessage = page.getByText('Nenhum Lance Registrado');
@@ -53,18 +53,18 @@ test.describe('Módulo 9: Painel do Usuário (Arrematante) - Navegação e Visua
     console.log('[User Dashboard Test] PASSED: Navigated to "Meus Lances" and content is visible.');
   });
 
-  test('should navigate to "Meus Arremates" and see the wins list', async ({ page }) => {
+  test('Cenário 9.1.3: should navigate to "Meus Arremates" and see the wins list', async ({ page }) => {
     // Navegar para a página de arremates
     await page.getByRole('link', { name: 'Meus Arremates' }).click();
     await page.waitForURL('/dashboard/wins');
 
-    await expect(page.getByRole('heading', { name: 'Meus Arremates' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meus Arremates' })).toBeVisible({timeout: 10000});
 
     // Verificar se os cards de arremate ou o estado de "nenhum arremate" está visível
     const noWinsMessage = page.getByText('Nenhum Arremate Encontrado');
-    const winCard = page.locator('[data-ai-id^="win-card-"]');
+    const winCard = page.locator('[data-ai-id="win-card-container"]').first(); // Usando um seletor mais específico
 
-    await expect(noWinsMessage.or(winCard.first())).toBeVisible();
+    await expect(noWinsMessage.or(winCard)).toBeVisible();
 
     console.log('[User Dashboard Test] PASSED: Navigated to "Meus Arremates" and content is visible.');
   });

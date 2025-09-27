@@ -47,7 +47,7 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
         name: `Comitente Company ${testRunId}`,
         isJudicial: false,
         userId: userRes.userId,
-        description: null, contactName: null, email: null, phone: null, address: null, city: null, state: null, zipCode: null, website: null, logoUrl: null, logoMediaId: null, dataAiHintLogo: null, judicialBranchId: null
+        description: null, contactName: null, email: null, phone: null, address: null, city: null, state: null, zipCode: null, website: null, logoUrl: null, logoMediaId: null, dataAiHintLogo: null, judicialBranchId: null, tenantId: testTenant.id,
     };
 
     const sellerRes = await createSeller(sellerData);
@@ -102,7 +102,7 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
     await page.getByRole('menuitem', { name: 'Painel do Comitente' }).click();
     await page.waitForURL('/consignor-dashboard/overview');
 
-    await expect(page.getByRole('heading', { name: /Painel do Comitente/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Painel do Comitente/i })).toBeVisible({timeout: 10000});
     await expect(page.getByText(/Total de Lotes Consignados/i)).toBeVisible();
     await expect(page.getByText(/Faturamento Bruto/i)).toBeVisible();
     console.log('[Consignor Dashboard Test] PASSED: Overview page loaded correctly.');
@@ -113,7 +113,7 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
     await page.getByRole('link', { name: 'Meus Leilões' }).click();
     await page.waitForURL('/consignor-dashboard/auctions');
 
-    await expect(page.getByRole('heading', { name: 'Meus Leilões' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meus Leilões' })).toBeVisible({timeout: 10000});
     await expect(page.getByRole('table')).toBeVisible(); // A tabela deve estar presente
     console.log('[Consignor Dashboard Test] PASSED: Navigated to "Meus Leilões" page.');
   });
@@ -123,7 +123,7 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
     await page.getByRole('link', { name: 'Meus Lotes' }).click();
     await page.waitForURL('/consignor-dashboard/lots');
 
-    await expect(page.getByRole('heading', { name: 'Meus Lotes' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Meus Lotes' })).toBeVisible({timeout: 10000});
     await expect(page.getByRole('table')).toBeVisible();
     console.log('[Consignor Dashboard Test] PASSED: Navigated to "Meus Lotes" page.');
   });

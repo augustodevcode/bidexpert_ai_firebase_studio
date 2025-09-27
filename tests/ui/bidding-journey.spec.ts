@@ -27,12 +27,13 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       update: {},
       create: { name: 'Bidder', nameNormalized: 'BIDDER', permissions: ['place_bids'] }
     });
+     const userRole = await prismaClient.role.findFirst({ where: { name: 'USER' } });
 
     const userRes = await createUser({
       fullName: `Bidder User ${testRunId}`,
       email: `bidder-${testRunId}@test.com`,
       password: 'password123',
-      roleIds: [bidderRole.id],
+      roleIds: [userRole!.id, bidderRole.id],
       habilitationStatus: 'HABILITADO',
       tenantId: testTenant.id,
     });
@@ -52,7 +53,8 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       auctioneerId: auctioneer.id,
       sellerId: seller.id,
       categoryId: category.id,
-      tenantId: testTenant.id
+      tenantId: testTenant.id,
+      auctionStages: [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 10 * 60 * 1000) }]
     } as any);
     expect(auctionRes.success).toBe(true);
     testAuction = (await prismaClient.auction.findUnique({ where: { id: auctionRes.auctionId! } })) as unknown as Auction;
@@ -64,6 +66,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
       initialPrice: 500,
       bidIncrementStep: 50,
       type: category.name,
+      categoryId: category.id,
       status: 'ABERTO_PARA_LANCES',
       endDate: new Date(Date.now() + 10 * 60 * 1000), // 10 minutes from now
       tenantId: testTenant.id
@@ -111,6 +114,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     console.log('[Bidding Journey Test] Navigating to lot page...');
     const lotUrl = `/auctions/${testLot.auctionId}/lots/${testLot.publicId || testLot.id}`;
     await page.goto(lotUrl);
+    await expect(page.locator('h1', { hasText: testLot.title })).toBeVisible({ timeout: 15000 });
 
     // 1. Localizar o painel de lances e verificar o preço inicial
     const biddingPanel = page.locator('[data-ai-id="bidding-panel-card"]');
@@ -134,7 +138,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     
     // Verificar se o preço atual foi atualizado na UI
     const updatedPriceText = `R$ ${newBidAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    await expect(biddingPanel.getByText(updatedPriceText)).toBeVisible({ timeout: 5000 });
+    await expect(biddingPanel.getByText(updatedPriceText, { exact: false })).toBeVisible({ timeout: 5000 });
 
     // Verificar se o nome do usuário aparece no histórico
     const bidHistoryPanel = biddingPanel.locator('div:has-text("Histórico Recente")');
