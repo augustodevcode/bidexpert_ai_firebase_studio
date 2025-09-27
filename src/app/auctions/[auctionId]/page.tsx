@@ -16,7 +16,6 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
-import { getBensByIdsAction } from '@/app/admin/lots/actions';
 
 export const dynamic = 'force-dynamic';
 

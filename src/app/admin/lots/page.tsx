@@ -15,14 +15,13 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import { PlusCircle, Package, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SearchResultsFrame from '@/components/search-results-frame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { createColumns } from './columns';
-
 
 const sortOptions = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
