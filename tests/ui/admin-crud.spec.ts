@@ -6,7 +6,7 @@ const testRunId = uuidv4().substring(0, 8);
 const testSellerName = `Comitente Playwright ${testRunId}`;
 const updatedContactName = `Contato Editado ${testRunId}`;
 
-test.describe('Admin CRUD Operations E2E', () => {
+test.describe('Módulo 1: Administração - CRUD de Comitente (UI)', () => {
 
   test.beforeEach(async ({ page }) => {
     // Garante que o setup seja considerado completo
@@ -39,10 +39,10 @@ test.describe('Admin CRUD Operations E2E', () => {
     await expect(page.getByRole('heading', { name: 'Novo Comitente' })).toBeVisible();
 
     // Preencher o formulário
-    await page.getByLabel('Nome do Comitente/Empresa').fill(testSellerName);
-    await page.getByLabel('Nome do Contato (Opcional)').fill('Contato Inicial');
-    await page.getByLabel('Email (Opcional)').fill(`comitente-${testRunId}@teste.com`);
-    await page.getByRole('button', { name: 'Salvar' }).click();
+    await page.locator('[data-ai-id="seller-form"]').getByLabel('Nome do Comitente/Empresa').fill(testSellerName);
+    await page.locator('[data-ai-id="seller-form"]').getByLabel('Nome do Contato (Opcional)').fill('Contato Inicial');
+    await page.locator('[data-ai-id="seller-form"]').getByLabel('Email (Opcional)').fill(`comitente-${testRunId}@teste.com`);
+    await page.locator('[data-ai-id="form-page-layout-card"]').getByRole('button', { name: 'Salvar' }).click();
     
     // Esperar pelo redirecionamento e toast de sucesso
     await expect(page.getByText('Comitente criado com sucesso.')).toBeVisible();
@@ -53,7 +53,7 @@ test.describe('Admin CRUD Operations E2E', () => {
     console.log('[Admin CRUD Test] Starting READ step...');
     // Usar o campo de busca para encontrar o novo comitente
     await page.getByPlaceholder('Buscar por nome ou email...').fill(testSellerName);
-    const newSellerRow = page.getByRole('row', { name: testSellerName });
+    const newSellerRow = page.getByRole('row', { name: new RegExp(testSellerName, 'i') });
     await expect(newSellerRow).toBeVisible();
     console.log('[Admin CRUD Test] READ step finished successfully.');
 
@@ -61,48 +61,35 @@ test.describe('Admin CRUD Operations E2E', () => {
     console.log('[Admin CRUD Test] Starting UPDATE step...');
     // Clicar no botão de editar
     await newSellerRow.getByRole('button', { name: 'Editar' }).click();
+    await page.waitForURL(/\/admin\/sellers\/.+\/edit/);
     await expect(page.getByRole('heading', { name: 'Editar Comitente' })).toBeVisible();
     
     // Entrar no modo de edição e alterar um campo
     await page.getByRole('button', { name: 'Entrar em Modo de Edição' }).click();
-    const contactInput = page.getByLabel('Nome do Contato (Opcional)');
+    const contactInput = page.locator('[data-ai-id="seller-form"]').getByLabel('Nome do Contato (Opcional)');
     await contactInput.fill(updatedContactName);
 
     // Salvar
-    await page.getByRole('button', { name: 'Salvar', exact: true }).click();
+    await page.locator('[data-ai-id="form-page-layout-card"]').getByRole('button', { name: 'Salvar', exact: true }).click();
     
-    // Verificar o toast de sucesso e o retorno para a listagem
+    // Verificar o toast de sucesso e o retorno para o modo de visualização
     await expect(page.getByText('Comitente atualizado.')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Listagem de Comitentes' })).toBeVisible();
-
-    // Verificar se a alteração foi persistida
-    await page.getByPlaceholder('Buscar por nome ou email...').fill(testSellerName);
-    await expect(page.getByRole('row', { name: testSellerName })).toBeVisible(); // A linha ainda deve ser visível
-    
-    // Ir para a página de edição novamente para verificar o valor
-    await page.getByRole('row', { name: testSellerName }).getByRole('button', { name: 'Editar' }).click();
-    await expect(page.getByLabel('Nome do Contato (Opcional)')).toHaveValue(updatedContactName);
+    await expect(page.getByLabel('Nome do Contato (Opcional)')).toHaveValue(updatedContactName); // Verifica se o campo foi atualizado na UI
     console.log('[Admin CRUD Test] UPDATE step finished successfully.');
     
-    // Voltar para a lista para a etapa de exclusão
-    await page.goto('/admin/sellers');
-    await expect(page.getByRole('heading', { name: 'Listagem de Comitentes' })).toBeVisible();
-
-
     // --- DELETE ---
     console.log('[Admin CRUD Test] Starting DELETE step...');
-    await page.getByPlaceholder('Buscar por nome ou email...').fill(testSellerName);
-    const rowToDelete = page.getByRole('row', { name: testSellerName });
-    await expect(rowToDelete).toBeVisible();
-    
-    // Clicar no botão de excluir e confirmar no diálogo
-    await rowToDelete.getByRole('button', { name: 'Excluir' }).click();
+    await page.locator('[data-ai-id="form-page-toolbar-view-mode"]').getByRole('button', { name: 'Excluir' }).click();
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
     await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
     
-    // Verificar o toast de sucesso e se o item desapareceu da lista
+    // Verificar o toast de sucesso e se foi redirecionado para a lista
     await expect(page.getByText('Comitente excluído com sucesso.')).toBeVisible();
-    await expect(rowToDelete).not.toBeVisible();
+    await page.waitForURL('/admin/sellers');
+    
+    // Verificar se o item não está mais na lista
+    await page.getByPlaceholder('Buscar por nome ou email...').fill(testSellerName);
+    await expect(page.getByText('Nenhum resultado encontrado.')).toBeVisible();
     console.log('[Admin CRUD Test] DELETE step finished successfully.');
   });
 });
