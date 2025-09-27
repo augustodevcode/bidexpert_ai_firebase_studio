@@ -155,7 +155,7 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, ...restOfData } = data;
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, tenantId: _tenantId, ...restOfData } = data;
 
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         const createdAuction = await tx.auction.create({

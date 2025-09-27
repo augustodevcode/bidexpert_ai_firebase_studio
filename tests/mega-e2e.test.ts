@@ -574,7 +574,7 @@ describe('[E2E] Módulo 14: Pagamento Parcelado', () => {
             const seller = await prisma.seller.create({ data: { name: `Seller Pay ${testRunId}`, publicId: `pub-seller-pay-${testRunId}`, slug: `seller-pay-${testRunId}`, isJudicial: false, tenantId: testTenant.id } });
             const auctioneer = await prisma.auctioneer.create({ data: { name: `Auct Pay ${testRunId}`, publicId: `pub-auct-pay-${testRunId}`, slug: `auct-pay-${testRunId}`, tenantId: testTenant.id } });
             const auction = await prisma.auction.create({ data: { title: `Auction Pay ${testRunId}`, publicId: `pub-auc-pay-${testRunId}`, slug: `auc-pay-${testRunId}`, auctioneerId: auctioneer.id, sellerId: seller.id, status: 'FINALIZADO', auctionDate: new Date(), tenantId: testTenant.id } as any });
-            testLot = (await prisma.lot.create({ data: { title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id, tenantId: testTenant.id } as any })) as Lot;
+            testLot = (await prisma.lot.create({ data: { title: `Lot Pay ${testRunId}`, auctionId: auction.id, price: 1200, status: 'VENDIDO', winnerId: testUser.id, tenantId: testTenant.id, type: 'GENERAL' } as any })) as Lot;
         });
 
         testWin = (await prisma.userWin.create({ data: { userId: testUser.id, lotId: testLot.id, winningBidAmount: 1200.00, paymentStatus: 'PENDENTE' } })) as UserWin;

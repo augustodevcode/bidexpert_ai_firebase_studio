@@ -26,7 +26,7 @@ export class DirectSaleOfferService {
     return this.repository.findById(id);
   }
 
-  async createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
+  async createDirectSaleOffer(tenantId: string, data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
     try {
       const { categoryId, sellerId, ...offerData } = data;
 
@@ -35,6 +35,7 @@ export class DirectSaleOfferService {
         publicId: `VD-${uuidv4().substring(0, 8)}`,
         category: { connect: { id: categoryId } },
         seller: { connect: { id: sellerId } },
+        tenant: { connect: { id: tenantId } },
       };
 
       const newOffer = await this.repository.create(dataToCreate);

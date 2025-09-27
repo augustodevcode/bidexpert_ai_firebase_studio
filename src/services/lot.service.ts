@@ -239,6 +239,15 @@ export class LotService {
 
   async createLot(data: Partial<LotFormData>, tenantId?: string): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
+      // Create a mutable copy to avoid side effects
+      const cleanData = { ...data };
+
+      // Explicitly remove fields that are handled by relations to prevent Prisma errors
+      const winnerId = cleanData.winnerId;
+      const tenantIdFromData = cleanData.tenantId;
+      delete cleanData.winnerId;
+      delete cleanData.tenantId;
+
       const { 
         assetIds, 
         categoryId, 
@@ -246,10 +255,10 @@ export class LotService {
         type, 
         sellerId, 
         subcategoryId,
-        stageDetails, // Captura os detalhes das etapas
-        ...lotData 
-      } = data;
-      delete (lotData as any).tenantId; // Remove tenantId to avoid conflict
+        stageDetails,
+        ...lotData
+      } = cleanData;
+
       const finalCategoryId = categoryId || type;
 
       if (!auctionId) {
@@ -261,13 +270,12 @@ export class LotService {
         return { success: false, message: "Leilão não encontrado." };
       }
       
-      const finalTenantId = tenantId || auction.tenantId;
+      const finalTenantId = tenantId || tenantIdFromData || auction.tenantId;
 
       if (!finalCategoryId) {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
-      // Prepara os dados para o Prisma, convertendo os campos numéricos e removendo os que não pertencem ao modelo Lot.
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
         type: type as string,
@@ -281,6 +289,9 @@ export class LotService {
         tenant: { connect: { id: finalTenantId } },
       };
 
+      if (winnerId) {
+        dataToCreate.winner = { connect: { id: winnerId } };
+      }
       if (data.originalLotId) {
         dataToCreate.originalLot = { connect: { id: data.originalLotId } };
       }
@@ -293,13 +304,9 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
-      }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
       
-      // Update the status of the linked 'assets' to 'LOTEADO'
       if (assetIds && assetIds.length > 0) {
         await this.prisma.asset.updateMany({
             where: { id: { in: assetIds } },

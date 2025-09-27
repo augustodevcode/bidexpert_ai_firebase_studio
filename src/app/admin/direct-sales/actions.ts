@@ -11,6 +11,7 @@
 import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
 import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
+import { tenantContext } from '@/lib/prisma';
 
 const offerService = new DirectSaleOfferService();
 
@@ -23,7 +24,11 @@ export async function getDirectSaleOffer(id: string): Promise<DirectSaleOffer | 
 }
 
 export async function createDirectSaleOffer(data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
-  const result = await offerService.createDirectSaleOffer(data);
+  const tenantId = tenantContext.getStore();
+  if (!tenantId) {
+      return { success: false, message: "Tenant ID não encontrado." };
+  }
+  const result = await offerService.createDirectSaleOffer(tenantId, data);
   if (result.success && process.env.NODE_ENV !== 'test') {
     revalidatePath('/admin/direct-sales');
   }

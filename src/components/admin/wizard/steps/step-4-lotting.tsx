@@ -2,56 +2,57 @@
 'use client';
 
 import { useWizard } from '../wizard-context';
-import type { Bem, Auction, Lot } from '@/types';
+import type { Asset, Auction, Lot } from '@/types';
 import { useState, useMemo } from 'react';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from '@/components/admin/lotting/columns';
 import { Button } from '@/components/ui/button';
-import { Boxes, Box, Eye } from 'lucide-react';
-import CreateLotFromBensModal from '@/components/admin/lotting/create-lot-modal';
+import { Boxes, Box, Eye, PackagePlus } from 'lucide-react';
+import CreateLotFromAssetsModal from '@/components/admin/lotting/create-lot-modal';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
-import BemDetailsModal from '@/components/admin/bens/bem-details-modal';
+import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
+import { createLot } from '@/app/admin/lots/actions'; 
 
 interface Step4LottingProps {
-  availableBens: Bem[];
+  availableAssets: Asset[];
   auctionData: Partial<Auction>;
 }
 
-export default function Step4Lotting({ availableBens, auctionData }: Step4LottingProps) {
+export default function Step4Lotting({ availableAssets, auctionData }: Step4LottingProps) {
   const { wizardData, setWizardData } = useWizard();
   const [rowSelection, setRowSelection] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isBemModalOpen, setIsBemModalOpen] = useState(false);
-  const [selectedBemForModal, setSelectedBemForModal] = useState<Bem | null>(null);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [selectedAssetForModal, setSelectedAssetForModal] = useState<Asset | null>(null);
   const { toast } = useToast();
   const [isCreatingIndividualLots, setIsCreatingIndividualLots] = useState(false);
 
-  const bensForLotting = useMemo(() => {
-    // Filter out bens that have already been lotted in this wizard session
-    const lottedBemIds = new Set(wizardData.createdLots?.flatMap(lot => lot.bemIds || []) || []);
-    return availableBens.filter(bem => bem.status === 'DISPONIVEL' && !lottedBemIds.has(bem.id));
-  }, [availableBens, wizardData.createdLots]);
+  const assetsForLotting = useMemo(() => {
+    // Filter out assets that have already been lotted in this wizard session
+    const lottedAssetIds = new Set(wizardData.createdLots?.flatMap(lot => lot.assetIds || []) || []);
+    return availableAssets.filter(asset => asset.status === 'DISPONIVEL' && !lottedAssetIds.has(asset.id));
+  }, [availableAssets, wizardData.createdLots]);
 
-  const selectedBens = useMemo(() => {
+  const selectedAssets = useMemo(() => {
     const selectedIndices = Object.keys(rowSelection).map(Number);
-    return selectedIndices.map(index => bensForLotting[index]).filter(Boolean) as Bem[];
-  }, [rowSelection, bensForLotting]);
+    return selectedIndices.map(index => assetsForLotting[index]).filter(Boolean) as Asset[];
+  }, [rowSelection, assetsForLotting]);
   
-  const handleViewBemDetails = (bem: Bem) => {
-    setSelectedBemForModal(bem);
-    setIsBemModalOpen(true);
+  const handleViewAssetDetails = (asset: Asset) => {
+    setSelectedAssetForModal(asset);
+    setIsAssetModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewBemDetails }), []);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
 
   
   const handleCreateGroupedLotClick = () => {
-    if (selectedBens.length === 0) {
+    if (selectedAssets.length === 0) {
       toast({
-        title: "Nenhum bem selecionado",
-        description: "Por favor, selecione um ou mais bens da lista para criar um lote.",
+        title: "Nenhum ativo selecionado",
+        description: "Por favor, selecione um ou mais ativos da lista para criar um lote.",
         variant: "destructive",
       });
       return;
@@ -59,36 +60,52 @@ export default function Step4Lotting({ availableBens, auctionData }: Step4Lottin
     setIsModalOpen(true);
   };
 
-  const handleCreateIndividualLotsClick = () => {
-    if (selectedBens.length === 0) {
-      toast({ title: "Nenhum bem selecionado", variant: "destructive" });
-      return;
+  const handleCreateIndividualLotsClick = async () => {
+    if (selectedAssets.length === 0 || !auctionData.id) {
+        toast({ title: "Seleção Incompleta", description: "Por favor, selecione um leilão de destino e pelo menos um ativo.", variant: "destructive" });
+        return;
     }
     setIsCreatingIndividualLots(true);
-    const newLots: Lot[] = selectedBens.map((bem, index) => {
-      const lotNumber = String((wizardData.createdLots?.length || 0) + index + 1).padStart(3, '0');
-      return {
-        id: `temp-lot-${uuidv4()}`,
-        publicId: `temp-pub-${uuidv4().substring(0,8)}`,
-        title: bem.title,
-        number: lotNumber,
-        price: bem.evaluationValue || 0,
-        initialPrice: bem.evaluationValue || 0,
-        bemIds: [bem.id],
-        status: 'EM_BREVE',
-        categoryId: bem.categoryId,
-        subcategoryId: bem.subcategoryId,
-        auctionId: auctionData.id || 'TBD',
-        imageUrl: bem.imageUrl,
-        dataAiHint: bem.dataAiHint,
-      } as Lot;
+    let successCount = 0;
+    let errorCount = 0;
+
+    const selectedAuction = wizardData.auctionDetails;
+
+    for (const asset of selectedAssets) {
+        const lotNumber = String((wizardData.createdLots?.length || 0) + successCount + 1).padStart(3, '0');
+        const newLotData: Partial<Lot> = {
+            title: asset.title,
+            number: lotNumber,
+            price: asset.evaluationValue || 0,
+            initialPrice: asset.evaluationValue || 0,
+            status: 'EM_BREVE',
+            auctionId: selectedAuction?.id,
+            sellerId: selectedAuction?.sellerId,
+            categoryId: asset.categoryId,
+            type: asset.categoryId || '',
+            assetIds: [asset.id],
+            imageUrl: asset.imageUrl,
+            dataAiHint: asset.dataAiHint,
+        };
+        const result = await createLot(newLotData);
+        if (result.success) {
+            successCount++;
+             // Optimistically update the local state to remove the newly lotted asset
+            setWizardData(prev => ({
+                ...prev,
+                createdLots: [...(prev.createdLots || []), { ...newLotData, id: result.lotId, publicId: '' } as Lot]
+            }));
+        } else {
+            errorCount++;
+            toast({ title: `Erro ao criar lote para "${asset.title}"`, description: result.message, variant: "destructive"});
+        }
+    }
+
+    toast({
+        title: "Processamento Concluído",
+        description: `${successCount} lote(s) criado(s) com sucesso. ${errorCount > 0 ? `${errorCount} falharam.` : ''}`,
     });
 
-    setWizardData(prev => ({
-        ...prev,
-        createdLots: [...(prev.createdLots || []), ...newLots]
-    }));
-    toast({ title: "Sucesso!", description: `${newLots.length} lotes individuais preparados.` });
     setRowSelection({});
     setIsCreatingIndividualLots(false);
   };
@@ -114,14 +131,14 @@ export default function Step4Lotting({ availableBens, auctionData }: Step4Lottin
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
-                <h3 className="text-lg font-semibold">Loteamento de Bens</h3>
-                <p className="text-sm text-muted-foreground">Selecione os bens disponíveis para criar lotes individuais ou agrupados.</p>
+                <h3 className="text-lg font-semibold">Loteamento de Ativos</h3>
+                <p className="text-sm text-muted-foreground">Selecione os ativos disponíveis para criar lotes individuais ou agrupados.</p>
             </div>
             <div className="flex gap-2 w-full sm:w-auto flex-wrap justify-end">
-                <Button onClick={handleCreateIndividualLotsClick} variant="outline" className="flex-1" disabled={selectedBens.length === 0 || isCreatingIndividualLots}>
+                <Button onClick={handleCreateIndividualLotsClick} variant="outline" className="flex-1" disabled={selectedAssets.length === 0 || isCreatingIndividualLots}>
                     <Box className="mr-2 h-4 w-4" /> Lotear Individualmente
                 </Button>
-                <Button onClick={handleCreateGroupedLotClick} className="flex-1" disabled={selectedBens.length === 0 || isCreatingIndividualLots}>
+                <Button onClick={handleCreateGroupedLotClick} className="flex-1" disabled={selectedAssets.length === 0 || isCreatingIndividualLots}>
                     <Boxes className="mr-2 h-4 w-4" /> Agrupar em Lote Único
                 </Button>
             </div>
@@ -129,11 +146,11 @@ export default function Step4Lotting({ availableBens, auctionData }: Step4Lottin
         
         <DataTable
           columns={columns}
-          data={bensForLotting}
+          data={assetsForLotting}
           rowSelection={rowSelection}
           setRowSelection={setRowSelection}
           searchColumnId="title"
-          searchPlaceholder="Buscar por título do bem..."
+          searchPlaceholder="Buscar por título do ativo..."
         />
       </div>
 
@@ -146,7 +163,7 @@ export default function Step4Lotting({ availableBens, auctionData }: Step4Lottin
                     <div key={lot.id} className="text-sm p-2 bg-secondary/50 rounded-md">
                         <p className="font-medium">Lote {lot.number}: {lot.title}</p>
                         <p className="text-xs text-muted-foreground">
-                            {lot.bemIds?.length} bem(ns) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
+                            {lot.assetIds?.length} ativo(s) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br', {minimumFractionDigits: 2})}
                         </p>
                     </div>
                 ))}
@@ -154,16 +171,18 @@ export default function Step4Lotting({ availableBens, auctionData }: Step4Lottin
         </div>
       )}
 
-      {isModalOpen && <CreateLotFromBensModal
+      {isModalOpen && <CreateLotFromAssetsModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        selectedBens={selectedBens}
+        selectedAssets={selectedAssets}
+        auctionId={auctionData.id || ''}
+        sellerId={auctionData.sellerId}
         onLotCreated={handleLotCreatedInModal}
       />}
-       <BemDetailsModal 
-        bem={selectedBemForModal} 
-        isOpen={isBemModalOpen} 
-        onClose={() => setIsBemModalOpen(false)} 
+       <AssetDetailsModal 
+        asset={selectedAssetForModal} 
+        isOpen={isAssetModalOpen} 
+        onClose={() => setIsAssetModalOpen(false)} 
       />
     </>
   );
