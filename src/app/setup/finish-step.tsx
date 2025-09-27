@@ -26,8 +26,10 @@ export default function FinishStep() {
         title: "Configuração Concluída!",
         description: "Você será redirecionado para o painel de administração.",
       });
-      // A sessão do admin já foi criada no passo anterior, apenas redirecionamos.
+      // A sessão do admin já foi criada no passo anterior.
+      // Apenas redirecionamos APÓS a confirmação do update.
       router.push('/admin/dashboard');
+      router.refresh(); // Força a revalidação do layout raiz.
     } else {
        toast({
         title: "Erro ao Finalizar",
