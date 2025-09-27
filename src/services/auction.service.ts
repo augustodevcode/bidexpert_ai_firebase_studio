@@ -1,4 +1,3 @@
-
 // src/services/auction.service.ts
 /**
  * @fileoverview Este arquivo contém a classe AuctionService, que encapsula

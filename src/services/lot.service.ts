@@ -1,5 +1,11 @@
-
 // src/services/lot.service.ts
+/**
+ * @fileoverview Este arquivo contém a classe LotService, que encapsula a
+ * lógica de negócio para o gerenciamento de Lotes. Ele atua como um
+ * intermediário entre as server actions (controllers) e o repositório de lotes,
+ * aplicando regras como validação de lances, atualização de status e
+ * tratamento de dados antes de serem enviados para a camada de visualização.
+ */
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
@@ -33,12 +39,15 @@ export class LotService {
       latitude: lot.latitude ? Number(lot.latitude) : null,
       longitude: lot.longitude ? Number(lot.longitude) : null,
       evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-      assets: assets,
+      assets: assets.map((a: any) => ({
+          ...a,
+          evaluationValue: a.evaluationValue ? Number(a.evaluationValue) : null,
+      })),
       assetIds: assets.map((a: any) => a.id),
       auctionName: lot.auction?.title,
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
-      sellerName: lot.seller?.name || null, // Garante que seja null se não existir
+      sellerName: lot.seller?.name || null,
     };
   }
 
