@@ -1,7 +1,14 @@
-// Este arquivo contém o cabeçalho do schema Prisma.
-// É usado pelo script 'build-prisma-schema.ts' para gerar o schema.prisma final.
+// prisma/header.prisma
+/**
+ * Este é o cabeçalho do schema do Prisma.
+ * Ele contém as configurações do gerador e da fonte de dados.
+ * NÃO adicione modelos de dados aqui. Os modelos devem ser definidos
+ * em arquivos individuais no diretório `prisma/models`.
+ */
+
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters", "fullTextSearch"]
 }
 
 datasource db {
