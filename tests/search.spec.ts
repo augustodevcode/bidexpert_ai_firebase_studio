@@ -1,13 +1,14 @@
 // tests/ui/search-and-filter.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { prisma as prismaClient } from '../src/lib/prisma';
-import { slugify } from '../src/lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../src/types';
+import { PrismaClient } from '@prisma/client';
+import { slugify } from '../../src/lib/ui-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const testRunId = `search-e2e-${uuidv4().substring(0, 8)}`;
 console.log(`[search-and-filter.spec.ts] Using testRunId: ${testRunId}`);
 
+let prismaClient: PrismaClient;
 let testTenant: Tenant;
 let category1: LotCategory, category2: LotCategory;
 let seller1: SellerProfileInfo, seller2: SellerProfileInfo;
@@ -120,15 +121,22 @@ test.describe('Módulo 5: Funcionalidades Públicas - Busca e Filtro (UI)', () =
         
         await page.getByRole('button', { name: 'Filtros' }).click();
         
-        await page.locator('aside').getByRole('radio', { name: `Imóveis ${testRunId}` }).click();
+        // Clicar para expandir a seção de categorias
+        await page.getByRole('button', { name: 'Categorias' }).click();
         
+        // Selecionar a categoria "Veículos" (assumindo que existe do seed)
+        await page.locator('aside').getByLabel(new RegExp(`Veículos ${testRunId}`)).check();
+        
+        // Aplicar os filtros
         await page.locator('aside').getByRole('button', { name: 'Aplicar Filtros' }).click();
 
+        // Esperar os resultados atualizarem e verificar
         await expect(page.locator('[data-ai-id^="lot-card-"]').first()).toBeVisible({ timeout: 15000 });
         
+        // Verificar se todos os cards visíveis são da categoria "Veículos"
         for (const card of await page.locator('[data-ai-id^="lot-card-"]').all()) {
-          await expect(card.locator('[data-ai-id="lot-card-category"]')).toContainText(/Imóveis/i);
+          await expect(card.locator('[data-ai-id="lot-card-category"]')).toContainText(new RegExp(`Veículos ${testRunId}`));
         }
-        console.log('- PASSED: Search results correctly filtered by "Imóveis" category.');
+        console.log('- PASSED: Search results correctly filtered by "Veículos" category.');
     });
 });

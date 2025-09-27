@@ -74,8 +74,8 @@ export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' 
   auctioneer?: AuctioneerProfileInfo;
   category?: LotCategory;
   auctionStages?: AuctionStage[];
-  sellerName?: string;
-  auctioneerName?: string;
+  sellerName?: string | null;
+  auctioneerName?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   initialOffer?: number;
@@ -92,10 +92,10 @@ export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' 
 export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 'latitude' | 'longitude' | 'bidIncrementStep' | 'evaluationValue'> & {
   assets?: Asset[];
   auction?: Auction;
-  auctionName?: string | null | undefined;
+  auctionName?: string | null;
   categoryName?: string;
-  subcategoryName?: string;
-  sellerName?: string;
+  subcategoryName?: string | null;
+  sellerName?: string | null;
   evaluationValue?: number | null;
   price: number;
   initialPrice: number | null;
@@ -308,3 +308,12 @@ export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCateg
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;
 export type UserFormData = Partial<User>;
+export type BemFormData = AssetFormData; // Alias
+export type Bem = Asset; // Alias
+export type WizardData = {
+    auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
+    judicialProcess?: JudicialProcess;
+    auctionDetails?: Partial<Auction>;
+    selectedAssets?: Asset[];
+    createdLots?: Lot[];
+};

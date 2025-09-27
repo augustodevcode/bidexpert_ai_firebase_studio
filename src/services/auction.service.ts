@@ -60,7 +60,10 @@ export class AuctionService {
         secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
         bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
         evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-        assets: (lot.assets || []).map((assetRelation: any) => assetRelation.asset) // Correção: extrai o 'asset' da relação
+        assets: (lot.assets || []).map((assetRelation: any) => ({
+          ...assetRelation.asset,
+          evaluationValue: assetRelation.asset.evaluationValue ? Number(assetRelation.asset.evaluationValue) : null,
+        }))
       }))
     }));
   }

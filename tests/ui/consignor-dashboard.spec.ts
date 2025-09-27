@@ -1,20 +1,23 @@
 // tests/ui/consignor-dashboard.spec.ts
 import { test, expect } from '@playwright/test';
-import { prisma as prismaClient } from '../../src/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { createUser } from '../../src/app/admin/users/actions';
 import { createSeller } from '../../src/app/admin/sellers/actions';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '../../src/types';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant, SellerFormData } from '../../src/types';
 
 const testRunId = `consignor-dash-${uuidv4().substring(0, 8)}`;
 let consignorUser: UserProfileWithPermissions;
 let testSeller: SellerProfileInfo;
 let testTenant: Tenant;
+let prismaClient: PrismaClient;
 
 test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', () => {
 
   test.beforeAll(async () => {
     console.log(`[Consignor Dashboard Test] Setting up for run: ${testRunId}`);
+    prismaClient = new PrismaClient();
+    await prismaClient.$connect();
     
     testTenant = await prismaClient.tenant.create({ data: { name: `Consignor Test Tenant ${testRunId}`, subdomain: `consignor-test-${testRunId}` } });
 
@@ -40,16 +43,27 @@ test.describe('Módulo 4: Painel do Comitente - Navegação e Visualização', (
     expect(userRes.success).toBe(true);
 
     // Criar o perfil de comitente (seller) e associá-lo ao usuário
-    const sellerRes = await createSeller({
-      name: `Comitente Company ${testRunId}`,
-      isJudicial: false,
-      userId: userRes.userId,
-      tenantId: testTenant.id,
-      // Add other required fields for SellerFormData
-      contactName: `Contact ${testRunId}`,
-      email: `contact-${testRunId}@seller.com`,
-      description: 'Test seller',
-    });
+    const sellerData: SellerFormData = {
+        name: `Comitente Company ${testRunId}`,
+        isJudicial: false,
+        userId: userRes.userId,
+        tenantId: testTenant.id,
+        description: null,
+        contactName: null,
+        email: null,
+        phone: null,
+        address: null,
+        city: null,
+        state: null,
+        zipCode: null,
+        website: null,
+        logoUrl: null,
+        logoMediaId: null,
+        dataAiHintLogo: null,
+        judicialBranchId: null
+    };
+
+    const sellerRes = await createSeller(sellerData);
     expect(sellerRes.success).toBe(true);
 
     // Buscar os perfis completos para usar no teste

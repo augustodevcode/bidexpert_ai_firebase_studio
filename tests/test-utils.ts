@@ -33,8 +33,8 @@ export async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>
 export async function createTestPrerequisites(testRunId: string, prefix: string) {
     const tenant = await prisma.tenant.create({ data: { name: `${prefix} Tenant ${testRunId}`, subdomain: `${prefix}-${testRunId}` } });
 
-    const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { id: 'role-admin', name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
-    const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { id: 'role-user', name: 'User', nameNormalized: 'USER', permissions: ['view_auctions'] } });
+    const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
+    const userRole = await prisma.role.upsert({ where: { nameNormalized: 'USER' }, update: {}, create: { name: 'User', nameNormalized: 'USER', permissions: ['view_auctions'] } });
     
     // Admin user must be created in the context of the new tenant
     const adminRes = await callActionAsUser(createUser, null, {

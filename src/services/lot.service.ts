@@ -298,6 +298,7 @@ export class LotService {
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
       
+      // Update the status of the linked 'assets' to 'LOTEADO'
       if (assetIds && assetIds.length > 0) {
         await this.prisma.asset.updateMany({
             where: { id: { in: assetIds } },
@@ -354,8 +355,8 @@ export class LotService {
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromAssetId')) {
-        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
+        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromBemId;
       }
       
       // A atualização dos ativos vinculados e a atualização dos detalhes das etapas são agora transacionais

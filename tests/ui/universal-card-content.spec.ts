@@ -5,7 +5,7 @@ import { slugify } from '../../src/lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
-let prismaClient: any;
+let prismaClient: PrismaClient;
 const testRunId = `universal-card-${uuidv4().substring(0, 8)}`;
 console.log(`[universal-card-content.spec.ts] Using testRunId: ${testRunId}`);
 
@@ -167,7 +167,7 @@ test.describe('Universal Card UI Validation', () => {
         const sellerLogo = cardLocator.locator(`[data-ai-id="auction-card-seller-logo"] img`);
         await expect(sellerLogo).toHaveAttribute('src', testData.seller.logoUrl);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-title"]`)).toContainText(testData.auction.title);
-        await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId!);
+        await expect(cardLocator.locator(`[data-ai-id="auction-card-public-id"]`)).toContainText(createdAuction.publicId as string);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalLots} Lotes`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.visits} Visitas`);
         await expect(cardLocator.locator(`[data-ai-id="auction-card-counters"]`)).toContainText(`${testData.auction.totalHabilitatedUsers} Habilitados`);

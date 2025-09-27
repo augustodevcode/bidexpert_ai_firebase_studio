@@ -1,21 +1,26 @@
 // tests/ui/sidebar-navigation.spec.ts
-import { test, expect, type Page } from '@playwright/test';
-import { prisma } from '../../lib/prisma';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo } from '../../types';
+import { test, expect } from '@playwright/test';
+import { PrismaClient } from '@prisma/client';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
-import { UserService } from '../../services/user.service';
-import { RoleRepository } from '../../repositories/role.repository';
+import { createUser } from '../../src/app/admin/users/actions';
+import { RoleRepository } from '../../src/repositories/role.repository';
+import { UserService } from '../../src/services/user.service';
 
 const testRunId = `sidebar-nav-${uuidv4().substring(0, 8)}`;
 const userService = new UserService();
 const roleRepository = new RoleRepository();
+const prisma = new PrismaClient();
 
 let adminUser: UserProfileWithPermissions;
 let consignorUser: UserProfileWithPermissions;
+let testTenant: Tenant;
 
 async function createTestUsers() {
     console.log(`[Sidebar Test] Creating users for run: ${testRunId}`);
     
+    testTenant = await prisma.tenant.create({ data: { name: `Sidebar Test Tenant ${testRunId}`, subdomain: `sidebar-test-${testRunId}` } });
+
     // Ensure roles exist
     const adminRole = await roleRepository.findByNormalizedName('ADMINISTRATOR');
     const consignorRole = await roleRepository.findByNormalizedName('CONSIGNOR');
@@ -25,24 +30,26 @@ async function createTestUsers() {
     expect(userRole).toBeDefined();
 
     // Create Admin User
-    const adminRes = await userService.createUser({
+    const adminRes = await createUser({
         fullName: `Admin Sidebar ${testRunId}`,
         email: `admin-sidebar-${testRunId}@test.com`,
         password: 'password123',
         roleIds: [adminRole!.id],
-        habilitationStatus: 'HABILITADO'
+        habilitationStatus: 'HABILITADO',
+        tenantId: testTenant.id,
     });
     expect(adminRes.success).toBe(true);
     adminUser = (await userService.getUserById(adminRes.userId!))!;
     expect(adminUser).toBeDefined();
 
     // Create Consignor User
-    const consignorRes = await userService.createUser({
+    const consignorRes = await createUser({
         fullName: `Consignor Sidebar ${testRunId}`,
         email: `consignor-sidebar-${testRunId}@test.com`,
         password: 'password123',
         roleIds: [consignorRole!.id, userRole!.id],
-        habilitationStatus: 'HABILITADO'
+        habilitationStatus: 'HABILITADO',
+        tenantId: testTenant.id,
     });
      expect(consignorRes.success).toBe(true);
      consignorUser = (await userService.getUserById(consignorRes.userId!))!;
@@ -59,7 +66,11 @@ async function cleanupTestData() {
     const userIds = users.map(u => u.id);
     if (userIds.length > 0) {
         await prisma.usersOnRoles.deleteMany({ where: { userId: { in: userIds } } });
+        await prisma.usersOnTenants.deleteMany({ where: { userId: { in: userIds } } });
         await prisma.user.deleteMany({ where: { id: { in: userIds } } });
+    }
+    if (testTenant) {
+        await prisma.tenant.delete({ where: { id: testTenant.id } });
     }
 }
 
@@ -71,6 +82,7 @@ test.describe('Sidebar Navigation UI Validation', () => {
 
     test.afterAll(async () => {
         await cleanupTestData();
+        await prisma.$disconnect();
     });
 
     test('should display admin links for an administrator', async ({ page }) => {
