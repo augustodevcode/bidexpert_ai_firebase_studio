@@ -19,7 +19,7 @@ test.describe('Search and Filter UI Test', () => {
     // Mudar para a aba de Lotes
     await page.getByRole('tab', { name: /Lotes/ }).click();
     
-    // Digitar um termo de busca
+    // Digitar um termo de busca que sabemos que existe do seed
     await page.getByPlaceholder('O que você está procurando?').fill('Notebook');
     
     // Clicar no botão de busca
