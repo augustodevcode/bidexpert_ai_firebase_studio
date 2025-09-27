@@ -14,7 +14,7 @@ import { updateConsignorProfile } from '../actions';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import type { SellerProfileInfo, JudicialBranch, SellerFormData } from '@/types';
 import { Loader2, Users } from 'lucide-react';
-import SellerForm from '@/app/admin/sellers/seller-form';
+import SellerForm from '@/components/admin/sellers/seller-form';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { hasPermission } from '@/lib/permissions';
@@ -98,7 +98,7 @@ export default function ConsignorSettingsPage() {
         setError("Você precisa ter um perfil de comitente vinculado para ver esta página.");
        }
     }
-  }, [authLoading, userProfileWithPermissions, fetchData, isUserAdmin, selectedSellerId]);
+  }, [authLoading, userProfileWithPermissions, fetchData, isUserAdmin, selectedSellerId, allSellers.length]);
 
   const handleUpdate = async (data: SellerFormData) => {
     setIsSubmitting(true);

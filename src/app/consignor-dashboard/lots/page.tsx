@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotsForConsignorAction } from './actions';
 import type { Lot, Auction, SellerProfileInfo } from '@/types';
-import { PlusCircle, ListChecks, Users } from 'lucide-react';
+import { PlusCircle, ListChecks, Users, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorLotColumns } from './columns';

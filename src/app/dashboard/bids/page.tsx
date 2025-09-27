@@ -43,7 +43,7 @@ const getBidStatusInfo = (bidStatus: UserBid['bidStatus']) => {
 
 
 export default function MyBidsPage() {
-  const { userProfileWithPermissions } = useAuth();
+  const { userProfileWithPermissions, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const [bids, setBids] = useState<UserBid[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,12 +68,12 @@ export default function MyBidsPage() {
   useEffect(() => {
     if (userProfileWithPermissions?.uid) {
       fetchBids(userProfileWithPermissions.uid);
-    } else {
+    } else if (!authLoading) {
       setIsLoading(false);
     }
-  }, [userProfileWithPermissions, fetchBids]);
+  }, [userProfileWithPermissions, authLoading, fetchBids]);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]" data-ai-id="my-bids-loading-spinner">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

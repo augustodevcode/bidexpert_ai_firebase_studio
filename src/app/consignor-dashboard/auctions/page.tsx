@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctionsForConsignorAction } from './actions';
 import type { Auction, SellerProfileInfo } from '@/types';
-import { PlusCircle, Briefcase, Users } from 'lucide-react';
+import { PlusCircle, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createConsignorAuctionColumns } from './columns';
@@ -78,7 +78,7 @@ export default function ConsignorAuctionsPage() {
   
   const statusOptions = useMemo(() => 
     [...new Set(auctions.map(a => a.status))]
-      .map(status => ({ value: status, label: getAuctionStatusText(status) })),
+      .map(status => ({ value: status!, label: getAuctionStatusText(status) })),
   [auctions]);
 
   const facetedFilterColumns = useMemo(() => [
