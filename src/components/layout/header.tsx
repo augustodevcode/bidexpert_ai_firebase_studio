@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Coins, Search as SearchIcon, Menu, Home as HomeIcon, Info, Percent, Tag, HelpCircle, Phone, History, ListChecks, Landmark, Gavel, Users, Briefcase as ConsignorIcon, UserCog, ShieldCheck, Tv, MapPin } from 'lucide-react';
 import { useAuth } from '@/contexts/auth-context';
-import { useEffect, useState, useRef, useCallback, forwardRef, useMemo } from 'react';
+import { useEffect, useState, useRef, useCallback, forwardRef, useMemo, Suspense } from 'react';
 import { slugify } from '@/lib/ui-helpers';
 import UserNav from './user-nav';
 import MainNav, { type NavItem } from './main-nav';
@@ -281,7 +281,7 @@ export default function Header({
         twoColumnMegaMenuProps: {
             sidebarTitle: 'Tipos de Leilão',
             mainContent: {
-                imageUrl: 'https://placehold.co/400x225.png?text=Leiloes+Judiciais',
+                imageUrl: 'https://picsum.photos/seed/judicial/400/225',
                 imageAlt: 'Imagem Leilões Judiciais',
                 dataAiHint: 'martelo tribunal',
                 title: 'Oportunidades Únicas',
@@ -301,7 +301,7 @@ export default function Header({
         twoColumnMegaMenuProps: {
             sidebarTitle: 'Nossos Comitentes',
             mainContent: {
-                imageUrl: 'https://placehold.co/400x225.png?text=Venda+Seus+Bens',
+                imageUrl: 'https://picsum.photos/seed/sell/400/225',
                 imageAlt: 'Imagem Venda Seus Bens',
                 dataAiHint: 'acordo negocios',
                 title: 'Venda Seus Ativos Conosco',
@@ -321,7 +321,7 @@ export default function Header({
         twoColumnMegaMenuProps: {
             sidebarTitle: 'Leiloeiros Parceiros',
             mainContent: {
-                imageUrl: 'https://placehold.co/400x225.png?text=Leiloeiros+Parceiros',
+                imageUrl: 'https://picsum.photos/seed/auctioneer/400/225',
                 imageAlt: 'Imagem Leiloeiros Parceiros',
                 dataAiHint: 'leiloeiro publico',
                 title: 'Profissionais Qualificados',
@@ -544,25 +544,7 @@ export default function Header({
                 </TooltipTrigger>
                 <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
             </Tooltip>
-            {userProfileWithPermissions && (
-              <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Notificações">
-                <Link href="/dashboard/notifications">
-                  <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-                  {unreadNotificationsCount > 0 && (
-                    <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">
-                      {unreadNotificationsCount}
-                    </Badge>
-                  )}
-                </Link>
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" className="relative hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" asChild aria-label="Favoritos">
-              <Link href="/dashboard/favorites">
-                <Heart className="h-4 w-4 sm:h-5 sm:w-5" />
-                {favoriteCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">{favoriteCount}</Badge>}
-              </Link>
-            </Button>
-             <UserNav />
+            <UserNav />
           </div>
         </div>
       </div>

@@ -8,8 +8,7 @@ import { AppContentWrapper } from './app-content-wrapper';
 import { getSession } from '@/server/lib/session';
 import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { UserService } from '@/services/user.service'; // Importar UserService
-
+import { UserService } from '@/services/user.service';
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -20,7 +19,6 @@ export const metadata: Metadata = {
 
 /**
  * Fetches only the essential data for the main layout, which is platform settings.
- * Other data will be fetched on the client side.
  */
 async function getLayoutData() {
   try {
@@ -43,7 +41,7 @@ async function getInitialAuthData() {
     return { initialUser: null, initialTenantId: '1' };
   }
 
-  // No server, vamos buscar o usuário completo para ter todos os dados na primeira carga
+  // No servidor, vamos buscar o usuário completo para ter todos os dados na primeira carga
   const userService = new UserService();
   const fullUser = await userService.getUserById(session.userId);
 
@@ -63,8 +61,7 @@ export default async function RootLayout({
   const { initialUser, initialTenantId } = await getInitialAuthData();
   const { platformSettings } = await getLayoutData();
 
-  // Força o setup se a variável de ambiente estiver definida, senão assume que está completo
-  const isSetupComplete = process.env.NEXT_PUBLIC_FORCE_SETUP !== 'true';
+  const isSetupComplete = !!process.env.DB_INIT_COMPLETE;
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>

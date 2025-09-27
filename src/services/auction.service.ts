@@ -146,7 +146,7 @@ export class AuctionService {
    * @param {Partial<AuctionFormData>} data - Os dados do formulário do leilão.
    * @returns {Promise<{success: boolean; message: string; auctionId?: string;}>} O resultado da operação.
    */
-  async createAuction(tenantId: string, data: Partial<AuctionFormData & { auctionStages?: any[], onlineUrl?: string }>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
+  async createAuction(tenantId: string, data: Partial<AuctionFormData>): Promise<{ success: boolean; message: string; auctionId?: string; }> {
     try {
       if (!data.title) throw new Error("O título do leilão é obrigatório.");
       if (!data.auctioneerId) throw new Error("O ID do leiloeiro é obrigatório.");

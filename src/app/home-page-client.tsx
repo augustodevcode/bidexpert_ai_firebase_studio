@@ -94,7 +94,7 @@ export default function HomePageClient({
         <PromoCard 
             title="Venda seus Ativos Conosco"
             description="Transforme seus bens em liquidez de forma rápida e segura. Nossa plataforma conecta você a milhares de compradores qualificados."
-            imageUrl="https://placehold.co/400x300.png?text=Venda+Conosco"
+            imageUrl="https://picsum.photos/seed/sell/400/300"
             imageAlt="Pessoa assinando contrato para vender em leilão"
             dataAiHint="contrato acordo"
             link="/sell-with-us"
@@ -102,7 +102,7 @@ export default function HomePageClient({
          <PromoCard 
             title="Leilões Judiciais"
             description="Acesse oportunidades únicas de processos judiciais com a transparência e segurança que só o BidExpert oferece."
-            imageUrl="https://placehold.co/400x300.png?text=Leiloes+Judiciais"
+            imageUrl="https://picsum.photos/seed/judicial/400/300"
             imageAlt="Martelo da justiça em frente a um tribunal"
             dataAiHint="justica tribunal"
             link="/search?type=auctions&auctionType=JUDICIAL"

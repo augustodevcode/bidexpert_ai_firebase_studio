@@ -1,6 +1,5 @@
 // src/app/page.tsx
 import { Suspense } from 'react';
-import { Loader2 } from 'lucide-react';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getLotCategories } from './admin/categories/actions';

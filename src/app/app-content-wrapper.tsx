@@ -1,11 +1,13 @@
 // src/app/app-content-wrapper.tsx
-'use client'; // This component MUST be a client component to use hooks like usePathname
+'use client'; 
 
+import { Suspense } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from '@/components/layout/header';
 import Footer from '@/components/layout/footer';
 import { SetupRedirect } from './setup/setup-redirect';
 import type { PlatformSettings } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 export function AppContentWrapper({ 
   children, 
@@ -27,9 +29,11 @@ export function AppContentWrapper({
     <>
       <SetupRedirect isSetupComplete={isSetupComplete} />
       <div className="flex flex-col min-h-screen">
-        <Header 
-          platformSettings={platformSettings}
-        />
+        <Suspense fallback={<div className="h-48 border-b flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+            <Header 
+              platformSettings={platformSettings}
+            />
+        </Suspense>
         <main className="flex-grow container mx-auto px-4 py-8">
           {children}
         </main>

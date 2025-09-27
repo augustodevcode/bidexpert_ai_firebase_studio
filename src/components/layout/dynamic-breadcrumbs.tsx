@@ -55,6 +55,15 @@ export default function DynamicBreadcrumbs() {
           roles: 'Perfis',
           settings: 'Configurações',
           media: 'Mídia',
+          "judicial-processes": 'Processos Judiciais',
+          "judicial-districts": 'Comarcas',
+          "judicial-branches": 'Varas',
+          "courts": "Tribunais",
+          "direct-sales": "Vendas Diretas",
+          "document-templates": "Templates de Documento",
+          "habilitations": "Habilitações",
+          "reports": "Relatórios",
+          "import": "Importação"
         };
         label = entityMap[segment] || label;
 
@@ -75,6 +84,11 @@ export default function DynamicBreadcrumbs() {
             label = 'Upload';
             href = `${currentPath}/upload`;
             i++;
+        } else if (nextSegment === 'analysis') {
+           breadcrumbItems.push({ label, href: `/admin/${segment}` });
+           label = 'Análise';
+           href = `${currentPath}/analysis`;
+           i++;
         }
       } else if (segment === 'auctions' && i + 1 < pathSegments.length && pathSegments[i + 1] !== 'create') {
         label = 'Leilões'; // Parent
