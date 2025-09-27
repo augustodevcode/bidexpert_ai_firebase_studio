@@ -126,10 +126,10 @@ export const getAuctionStatusColor = (status: AuctionStatus | undefined): string
 export const getAuctionTypeDisplayData = (type?: AuctionType) => {
     if (!type) return null;
     switch (type) {
-      case 'JUDICIAL': return { label: 'Judicial', iconName: 'Gavel', icon: Gavel };
-      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', iconName: 'Gavel', icon: Gavel };
-      case 'PARTICULAR': return { label: 'Particular', iconName: 'Gavel', icon: Gavel };
-      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', iconName: 'FileText', icon: TomadaPrecosIcon };
+      case 'JUDICIAL': return { label: 'Judicial', icon: Gavel };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: Gavel };
+      case 'PARTICULAR': return { label: 'Particular', icon: Gavel };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: TomadaPrecosIcon };
       default: return null;
     }
 };
@@ -278,7 +278,7 @@ export const getActiveStage = (stages?: AuctionStage[]): AuctionStage | null => 
  * @param activeStageId The ID of the currently active auction stage.
  * @returns An object with initialBid and increment or null.
  */
-export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number; increment: number } | null => {
+export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initialBid: number | null, bidIncrement: number | null } | null => {
     if (!lot) return null;
 
     // If there's a specific price for the active stage, use it
@@ -287,7 +287,7 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
         if (stagePrice) {
             return {
                 initialBid: stagePrice.initialBid,
-                increment: stagePrice.bidIncrement,
+                bidIncrement: stagePrice.bidIncrement,
             };
         }
     }
@@ -295,6 +295,6 @@ export const getLotPriceForStage = (lot: Lot, activeStageId?: string): { initial
     // Fallback to the lot's main price details
     return {
         initialBid: lot.initialPrice,
-        increment: lot.bidIncrementStep,
+        bidIncrement: lot.bidIncrementStep,
     };
 };

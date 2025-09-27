@@ -2,7 +2,7 @@
 import { test, expect, type Page } from '@playwright/test';
 import { prisma } from '../../src/lib/prisma';
 import { slugify } from '../../src/lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot } from '../../src/types';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 let prismaClient: any;
@@ -146,9 +146,9 @@ test.describe('Universal Card UI Validation', () => {
         const cardLocator = page.locator(`[data-ai-id="lot-card-${createdLot.id}"]`);
         await expect(cardLocator).toBeVisible({ timeout: 15000 });
 
-        await expect(cardLocator.locator(`[data-ai-id="card-status-badges"]`)).toContainText('Aberto para Lances');
-        await expect(cardLocator.locator(`[data-ai-id="card-mental-triggers"]`)).toContainText('LANCE QUENTE');
-        await expect(cardLocator.locator(`[data-ai-id="card-mental-triggers"]`)).toContainText('MAIS VISITADO');
+        await expect(cardLocator.locator(`[data-ai-id="lot-card-status-badges"]`)).toContainText('Aberto para Lances');
+        await expect(cardLocator.locator(`[data-ai-id="lot-card-mental-triggers"]`)).toContainText('LANCE QUENTE');
+        await expect(cardLocator.locator(`[data-ai-id="lot-card-mental-triggers"]`)).toContainText('MAIS VISITADO');
         await expect(cardLocator.locator(`[data-ai-id="lot-card-category"]`)).toContainText(testData.category.name);
         await expect(cardLocator.locator(`[data-ai-id="lot-card-bid-count"]`)).toContainText(`${testData.lot.bidsCount} Lances`);
         await expect(cardLocator.locator(`[data-ai-id="lot-card-location"]`)).toContainText(`${testData.lot.cityName} - ${testData.lot.stateUf}`);
