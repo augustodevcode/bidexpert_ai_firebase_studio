@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions';
+import { logout as logoutAction, getCurrentUser, login } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -57,23 +57,56 @@ export function AuthProvider({
      }
   }, [router, userProfileWithPermissions?.id, fetchUnreadCount]);
   
+  const loginUser = useCallback((user: UserProfileWithPermissions, tenantId: string) => {
+    setUserProfileWithPermissions(user);
+    setActiveTenantId(tenantId);
+    fetchUnreadCount(user.id);
+  }, [fetchUnreadCount]);
+
   useEffect(() => {
     async function checkUserSession() {
+      // Se o usuário já estiver no contexto (vindo do SSR), não fazemos nada
       if (userProfileWithPermissions) {
           setLoading(false);
+          await fetchUnreadCount(userProfileWithPermissions.id);
           return;
       }
+      
+      // Auto-login em desenvolvimento
+      if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER) {
+          console.log("[AuthContext] Development auto-login enabled for:", process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER);
+          const formData = new FormData();
+          formData.append('email', process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER);
+          // A senha é validada, mas o serviço de login pode ser ajustado para bypass em dev.
+          // Por agora, usaremos a senha padrão do admin.
+          formData.append('password', 'Admin@123'); 
+          formData.append('tenantId', '1'); // Auto-login sempre no tenant landlord
 
+          try {
+            const result = await login(formData);
+            if (result.success && result.user) {
+              console.log("[AuthContext] Auto-login successful.");
+              loginUser(result.user, result.user.tenants?.[0].id || '1');
+            } else {
+              console.warn("[AuthContext] Auto-login failed:", result.message);
+            }
+          } catch(e) {
+            console.error('[AuthContext] Error during auto-login:', e);
+          } finally {
+            setLoading(false);
+          }
+          return;
+      }
+      
+      // Verificação normal de sessão
       console.log("[AuthContext] No initial user. Checking session on client...");
       try {
         const user = await getCurrentUser();
         if (user) {
           console.log("[AuthContext] User found in session. Setting context.");
-          // @ts-ignore - a sessão do getCurrentUser não tem o tenantId, mas o login sim.
+          // @ts-ignore
           const tenantId = user.tenants?.[0]?.id || '1';
-          setUserProfileWithPermissions(user);
-          setActiveTenantId(tenantId);
-          fetchUnreadCount(user.id);
+          loginUser(user, tenantId);
         } else {
             console.log("[AuthContext] No user found in session.");
         }
@@ -96,8 +129,7 @@ export function AuthProvider({
       window.removeEventListener('notifications-updated', handleStorageChange);
     };
 
-  }, [fetchUnreadCount, userProfileWithPermissions]);
-
+  }, []); // Dependências removidas para executar apenas uma vez
 
   const logout = async () => {
     try {
@@ -111,12 +143,6 @@ export function AuthProvider({
         console.error("Logout error", error);
         toast({ title: "Erro ao fazer logout.", variant: 'destructive'});
     }
-  };
-  
-  const loginUser = (user: UserProfileWithPermissions, tenantId: string) => {
-    setUserProfileWithPermissions(user);
-    setActiveTenantId(tenantId);
-    fetchUnreadCount(user.id);
   };
   
   if (loading) {
