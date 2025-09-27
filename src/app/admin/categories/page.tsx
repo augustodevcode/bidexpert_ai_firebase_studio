@@ -17,6 +17,7 @@ import { ListChecks, PlusCircle, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminCategoriesPage() {
   const [categories, setCategories] = useState<LotCategory[]>([]);
@@ -58,6 +59,23 @@ export default function AdminCategoriesPage() {
   }, [toast]);
   
   const columns = useMemo(() => createColumns(), []);
+
+  const renderSkeleton = () => (
+     <div className="space-y-6">
+        <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                <Skeleton className="h-10 w-36"/>
+            </CardHeader>
+            <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+        </Card>
+    </div>
+  );
+
+  if (isLoading) {
+      return renderSkeleton();
+  }
+
 
   return (
     <div className="space-y-6" data-ai-id="admin-categories-page-container">

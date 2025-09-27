@@ -9,7 +9,7 @@ import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight, Tabl
 import type { PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
 import { DataTableFacetedFilter } from './ui/data-table-faceted-filter';
-import { useReactTable, getCoreRowModel, getFilteredRowModel, getFacetedRowModel, getFacetedUniqueValues, Column, Table, ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from './ui/data-table';
 import { Input } from './ui/input'; // Importar o Input
 
@@ -129,7 +129,7 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   itemsPerPage: controlledItemsPerPage,
   onItemsPerPageChange,
 }: SearchResultsFrameProps<TItem>) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('table');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>(dataTableColumns ? 'table' : 'grid');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
   
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);

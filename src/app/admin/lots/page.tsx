@@ -100,19 +100,22 @@ export default function AdminLotsPage() {
       ];
   }, [lots, auctions]);
   
+  const renderSkeleton = () => (
+     <div className="space-y-6">
+        <Card className="shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                <Skeleton className="h-10 w-36"/>
+            </CardHeader>
+            <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+        </Card>
+    </div>
+  );
+  
   if (isLoading || !platformSettings) {
-    return (
-        <div className="space-y-6">
-            <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                    <Skeleton className="h-10 w-36"/>
-                </CardHeader>
-                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
-            </Card>
-        </div>
-    );
+    return renderSkeleton();
   }
+
 
   return (
     <div className="space-y-6" data-ai-id="admin-lots-page-container">
