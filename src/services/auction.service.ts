@@ -216,7 +216,7 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {

@@ -28,7 +28,7 @@ export class DirectSaleOfferService {
 
   async createDirectSaleOffer(tenantId: string, data: DirectSaleOfferFormData): Promise<{ success: boolean; message: string; offerId?: string; }> {
     try {
-      const { categoryId, sellerId, ...offerData } = data;
+      const { categoryId, sellerId, tenantId: _tenantId, ...offerData } = data;
 
       const dataToCreate: Prisma.DirectSaleOfferCreateInput = {
         ...(offerData as any),
@@ -48,7 +48,7 @@ export class DirectSaleOfferService {
 
   async updateDirectSaleOffer(id: string, data: Partial<DirectSaleOfferFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { categoryId, sellerId, ...offerData } = data;
+      const { categoryId, sellerId, tenantId: _tenantId, ...offerData } = data;
       const dataToUpdate: Prisma.DirectSaleOfferUpdateInput = { ...offerData };
 
       if (categoryId) {

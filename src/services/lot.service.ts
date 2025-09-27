@@ -246,16 +246,16 @@ export class LotService {
       const winnerId = cleanData.winnerId;
       const tenantIdFromData = cleanData.tenantId;
       delete cleanData.winnerId;
-      delete cleanData.tenantId;
 
-      const { 
-        assetIds, 
-        categoryId, 
-        auctionId, 
-        type, 
-        sellerId, 
+      const {
+        assetIds,
+        categoryId,
+        auctionId,
+        type,
+        sellerId,
         subcategoryId,
         stageDetails,
+        tenantId: _tenantId,
         ...lotData
       } = cleanData;
 

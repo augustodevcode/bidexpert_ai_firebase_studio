@@ -1,5 +1,5 @@
 // tests/ui/search-and-filter.spec.ts
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { prisma } from '../../lib/prisma';
 import { slugify } from '../../lib/ui-helpers';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../types';
@@ -70,7 +70,7 @@ async function cleanupSearchTestData() {
 
 test.describe('Search and Filter E2E Test', () => {
     test.beforeAll(async () => {
-        prismaClient = new PrismaClient();
+        prismaClient = new prisma();
         await prismaClient.$connect();
         await cleanupSearchTestData();
         await createSearchTestData();
@@ -97,7 +97,7 @@ test.describe('Search and Filter E2E Test', () => {
         await page.getByRole('button', { name: /Lotes/ }).click();
         await page.locator('input[type="search"]').fill('Ford Ka');
         await expect(page.locator('[data-ai-id^="lot-card-"]').first()).toBeVisible();
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        await expect(page.getByText(/1 lote\(s\) encontrado\(s\)/)).toBeVisible();
         await expect(page.getByText(lot1.title)).toBeVisible();
         await expect(page.getByText(lot2.title)).not.toBeVisible();
     });
@@ -108,7 +108,7 @@ test.describe('Search and Filter E2E Test', () => {
         await page.locator('aside').getByRole('radio', { name: `Imóveis ${testRunId}` }).click();
         await page.locator('aside').getByRole('button', { name: 'Aplicar Filtros' }).click();
 
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        await expect(page.getByText(/1 lote\(s\) encontrado\(s\)/)).toBeVisible();
         await expect(page.getByText(lot2.title)).toBeVisible();
         await expect(page.getByText(lot1.title)).not.toBeVisible();
     });
@@ -119,7 +119,7 @@ test.describe('Search and Filter E2E Test', () => {
         await page.locator('aside').getByLabel('Rio de Janeiro - RJ').check();
         await page.locator('aside').getByRole('button', { name: 'Aplicar Filtros' }).click();
         
-        await expect(page.getByText(`1 lotes encontrado(s)`)).toBeVisible();
+        await expect(page.getByText(/1 lote\(s\) encontrado\(s\)/)).toBeVisible();
         await expect(page.getByText(lot2.title)).toBeVisible();
         await expect(page.getByText(lot1.title)).not.toBeVisible();
     });
