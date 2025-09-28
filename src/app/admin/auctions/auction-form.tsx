@@ -424,7 +424,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                     )} />
                     <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-            )
+            );
         case "opcoes": return (
             <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
