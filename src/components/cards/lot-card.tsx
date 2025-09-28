@@ -125,19 +125,22 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
+  const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
+  const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
+
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} className="card-lot">
+      <Card data-ai-id={`lot-card-${lot.id}`} className="card-lot group">
         <div className="container-lot-image">
           <Link href={lotDetailUrl} className="link-lot-image">
             <div className="wrapper-lot-image">
               <Image
-                src={isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`}
+                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : `https://picsum.photos/seed/${lot.id}/600/400`}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 className="img-lot"
-                data-ai-hint="marina home"
+                data-ai-hint={lot.dataAiHint || 'imagem lote'}
                 data-ai-id="lot-card-main-image"
               />
             </div>

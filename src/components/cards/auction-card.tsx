@@ -1,4 +1,3 @@
-
 // src/components/cards/auction-card.tsx
 'use client';
 
@@ -144,7 +143,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   return (
     <TooltipProvider>
       <>
-        <Card data-ai-id={`auction-card-${auction.id}`} className="card-auction">
+        <Card data-ai-id={`auction-card-${auction.id}`} className="card-auction group">
           <div className="container-auction-image">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-image">
               <div className="wrapper-auction-image">
@@ -154,7 +153,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="img-auction"
-                  data-ai-hint="marina home"
+                  data-ai-hint={mainImageDataAiHint}
                   data-ai-id="auction-card-main-image"
                 />
                  {sellerLogoUrl && (
