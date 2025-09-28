@@ -111,6 +111,39 @@ const accordionItemsData = [
     { value: "opcoes", title: "Opções Avançadas" },
 ];
 
+const DatePickerWithTime = ({ field, label, disabled }: { field: any; label: string; disabled: boolean; }) => {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <FormControl>
+          <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")} disabled={disabled}>
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {field.value ? format(field.value, "PPP HH:mm", { locale: ptBR }) : <span>{label}</span>}
+          </Button>
+        </FormControl>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus disabled={disabled} />
+        <div className="p-3 border-t border-border">
+            <Input
+                type="time"
+                value={field.value ? format(field.value, 'HH:mm') : ''}
+                onChange={(e) => {
+                    const time = e.target.value;
+                    const [hours, minutes] = time.split(':').map(Number);
+                    const newDate = field.value ? new Date(field.value) : new Date();
+                    newDate.setHours(hours, minutes);
+                    field.onChange(newDate);
+                }}
+                disabled={disabled}
+            />
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
+
 const AuctionForm = forwardRef<any, AuctionFormProps>(({
   initialData,
   categories: initialCategories,
@@ -372,30 +405,26 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             </div>
         );
-        case "midia": return (
-            <div className="space-y-4">
-                 <FormField control={form.control} name="imageMediaId" render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>Imagem Principal do Leilão</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value || ''} >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione a fonte da imagem..." />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              <SelectItem value="custom">Imagem Customizada (URL)</SelectItem>
-                              {lots.filter(l => l.isFeatured).map(lot => (
-                                <SelectItem key={lot.id} value={lot.id}>Herdar do Lote em Destaque: {lot.title}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                  </FormItem>
-                )} />
-                 <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
-            </div>
-        );
+        case "midia": 
+            const featuredLot = lots.find(l => l.isFeatured);
+            return (
+                <div className="space-y-4">
+                    <FormField control={form.control} name="imageMediaId" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Imagem Principal do Leilão</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value || 'custom'}>
+                              <FormControl><SelectTrigger><SelectValue placeholder="Selecione a fonte da imagem..." /></SelectTrigger></FormControl>
+                              <SelectContent>
+                                  <SelectItem value="custom">Imagem Customizada (URL)</SelectItem>
+                                  {featuredLot && (<SelectItem value={featuredLot.id}>Herdar do Lote em Destaque: {featuredLot.title}</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                    )} />
+                    <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+            );
         case "opcoes": return (
             <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
@@ -473,5 +502,3 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
-
-  
