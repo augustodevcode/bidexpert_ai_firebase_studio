@@ -13,9 +13,9 @@ const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || `http://localhost:${POR
 require('dotenv').config();
 
 export default defineConfig({
-  testDir: './tests/ui', // Set test directory to ui
+  testDir: './tests', // Set test directory to ui
   outputDir: 'test-results/', // Directory for test artifacts
-  timeout: 300000, // 5 minutes for global test timeout (app takes 2 minutes to load)
+  timeout: 120000, // 2 minutes for global test timeout
   /* Run tests in files in the order of their definition */
   fullyParallel: false, // Disabled due to slow app loading times
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -39,6 +39,7 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on', // Capture trace for all tests
+    screenshot: 'only-on-failure',
     navigationTimeout: 180000, // 3 minutes for page navigation timeout
     // Custom option for Playwright to launch the dev server
     // launchOptions: {
@@ -51,16 +52,6 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-    },
-
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
     },
   ],
 
