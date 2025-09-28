@@ -29,7 +29,6 @@ import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
-import { getCities } from '@/app/admin/cities/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
@@ -39,6 +38,7 @@ import { getPlatformSettings } from '../settings/actions';
 import { addDays } from 'date-fns';
 import { getMediaItems } from '@/app/admin/media/actions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import { getCities } from '../cities/actions';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -73,6 +73,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   submitButtonText = "Salvar",
   isWizardMode = false,
   onWizardDataChange,
+  formRef,
 }, ref) => {
   
   const { toast } = useToast();
@@ -80,6 +81,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
+  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -91,6 +93,10 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     },
   });
   
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   const watchedValues = useWatch({ control: form.control });
 
   useEffect(() => {
@@ -210,7 +216,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "prazos": return (
             <AuctionStagesTimeline
-                stages={watchedAuctionStages}
+                stages={watchedAuctionStages || []}
                 isEditable={true}
                 platformSettings={platformSettings}
                 onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true })}
@@ -292,6 +298,3 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
-```
-</change>
-```
