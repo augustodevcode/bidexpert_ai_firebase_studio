@@ -19,7 +19,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
@@ -121,15 +121,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   
   const watchedAuctionStages = useWatch({ control: form.control, name: 'auctionStages' });
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
-  const watchedImageUrlField = useWatch({ control: form.control, name: 'imageUrl' });
+  const watchedImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
 
   const displayImageUrl = useMemo(() => {
     if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT') {
       const selectedMedia = mediaItems.find(item => item.id === watchedImageMediaId);
-      return selectedMedia?.urlOriginal || watchedImageUrlField;
+      return selectedMedia?.urlOriginal || watchedImageUrl;
     }
-    return watchedImageUrlField;
-  }, [watchedImageMediaId, watchedImageUrlField, mediaItems]);
+    return watchedImageUrl;
+  }, [watchedImageMediaId, watchedImageUrl, mediaItems]);
 
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
 
@@ -209,9 +209,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "localizacao": return (
             <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
-                <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
+                <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} zipCode={form.getValues('zipCode')} setValue={form.setValue} allCities={allCities} allStates={initialStates} />
+                <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/>
+                </div>
             </div>
         );
         case "prazos": return (

@@ -11,6 +11,7 @@ import { Button } from './ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { consultaCepAction } from '@/lib/actions/cep';
+import type { CityInfo, StateInfo } from '@/types';
 
 // Fix Leaflet's default icon path issue
 if (typeof window !== 'undefined') {
@@ -26,10 +27,13 @@ if (typeof window !== 'undefined') {
 interface MapPickerProps {
   latitude: number | null | undefined;
   longitude: number | null | undefined;
+  zipCode: string | null | undefined;
   setValue: UseFormSetValue<any>;
+  allCities: CityInfo[];
+  allStates: StateInfo[];
 }
 
-function LocationMarker({ latitude, longitude, setValue }: MapPickerProps) {
+function LocationMarker({ latitude, longitude, setValue }: Omit<MapPickerProps, 'allCities' | 'allStates' | 'zipCode'>) {
   const [position, setPosition] = useState<L.LatLng | null>(
     latitude && longitude ? L.latLng(latitude, longitude) : null
   );
@@ -57,9 +61,8 @@ function LocationMarker({ latitude, longitude, setValue }: MapPickerProps) {
   );
 }
 
-export default function MapPicker({ latitude, longitude, setValue }: MapPickerProps) {
+export default function MapPicker({ latitude, longitude, zipCode, setValue, allCities, allStates }: MapPickerProps) {
   const [isClient, setIsClient] = useState(false);
-  const [cep, setCep] = useState('');
   const [isCepLoading, setIsCepLoading] = useState(false);
   const { toast } = useToast();
 
@@ -68,36 +71,44 @@ export default function MapPicker({ latitude, longitude, setValue }: MapPickerPr
   }, []);
   
   const handleCepLookup = async () => {
-    if (!cep || cep.replace(/\D/g, '').length !== 8) {
+    const currentZipCode = zipCode;
+    if (!currentZipCode || currentZipCode.replace(/\D/g, '').length !== 8) {
       toast({ title: 'CEP inválido', description: 'Por favor, insira um CEP com 8 dígitos.', variant: 'destructive'});
       return;
     };
     setIsCepLoading(true);
-    const result = await consultaCepAction(cep);
+    const result = await consultaCepAction(currentZipCode);
     
     if (result.success && result.data) {
-      setValue('street', result.data.logradouro, { shouldDirty: true });
-      setValue('neighborhood', result.data.bairro, { shouldDirty: true });
-      setValue('city', result.data.localidade, { shouldDirty: true });
-      setValue('state', result.data.uf, { shouldDirty: true });
-      toast({ title: 'Endereço encontrado!', description: `${result.data.logradouro}, ${result.data.bairro}, ${result.data.localidade} - ${result.data.uf}` });
-
-      // Geocode the address to get lat/lng
-      try {
-        const query = encodeURIComponent(`${result.data.logradouro}, ${result.data.localidade}, ${result.data.uf}, Brazil`);
-        const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
-        const geoData = await geoResponse.json();
-        if (geoData && geoData.length > 0) {
-            const { lat, lon } = geoData[0];
-            setValue('latitude', parseFloat(lat), { shouldDirty: true });
-            setValue('longitude', parseFloat(lon), { shouldDirty: true });
-        } else {
-             toast({ title: 'Geolocalização não encontrada', description: 'Não foi possível encontrar as coordenadas para este CEP.', variant: 'default'});
+        setValue('address', result.data.logradouro, { shouldDirty: true });
+        
+        const foundState = allStates.find(s => s.uf === result.data?.uf);
+        if (foundState) {
+            setValue('stateId', foundState.id, { shouldDirty: true });
         }
-      } catch (geoError) {
-          console.error("Geocoding error:", geoError);
-          toast({ title: 'Erro de Geolocalização', description: 'Falha ao buscar coordenadas.', variant: 'destructive'});
-      }
+        
+        const foundCity = allCities.find(c => c.name === result.data?.localidade && c.stateUf === result.data?.uf);
+        if (foundCity) {
+            setValue('cityId', foundCity.id, { shouldDirty: true });
+        }
+
+        toast({ title: 'Endereço encontrado!', description: `${result.data.logradouro}, ${result.data.localidade} - ${result.data.uf}` });
+
+        try {
+            const query = encodeURIComponent(`${result.data.logradouro}, ${result.data.localidade}, ${result.data.uf}, Brazil`);
+            const geoResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${query}`);
+            const geoData = await geoResponse.json();
+            if (geoData && geoData.length > 0) {
+                const { lat, lon } = geoData[0];
+                setValue('latitude', parseFloat(lat), { shouldDirty: true });
+                setValue('longitude', parseFloat(lon), { shouldDirty: true });
+            } else {
+                 toast({ title: 'Geolocalização não encontrada', description: 'Não foi possível encontrar as coordenadas para este CEP.', variant: 'default'});
+            }
+        } catch (geoError) {
+            console.error("Geocoding error:", geoError);
+            toast({ title: 'Erro de Geolocalização', description: 'Falha ao buscar coordenadas.', variant: 'destructive'});
+        }
 
     } else {
       toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
@@ -118,18 +129,35 @@ export default function MapPicker({ latitude, longitude, setValue }: MapPickerPr
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-col sm:flex-row gap-2">
-        <Input 
-            placeholder="Digite o CEP para buscar o endereço"
-            value={cep}
-            onChange={(e) => setCep(e.target.value)}
-            disabled={isCepLoading}
-            maxLength={9}
-        />
-        <Button type="button" onClick={handleCepLookup} disabled={isCepLoading} className="w-full sm:w-auto">
-            {isCepLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search className="mr-2 h-4 w-4"/>}
-            Buscar CEP
-        </Button>
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2">
+          <FormField
+              control={form.control}
+              name="zipCode"
+              render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>CEP</FormLabel>
+                      <FormControl>
+                          <Input
+                              placeholder="00000-000"
+                              {...field}
+                              value={field.value ?? ''}
+                              onChange={(e) => {
+                                  field.onChange(e);
+                                  if (e.target.value.replace(/\D/g, '').length === 8) {
+                                      handleCepLookup();
+                                  }
+                              }}
+                              disabled={isCepLoading}
+                              maxLength={9}
+                          />
+                      </FormControl>
+                  </FormItem>
+              )}
+          />
+          <Button type="button" onClick={handleCepLookup} disabled={isCepLoading} className="w-full sm:w-auto self-end">
+              {isCepLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Search className="mr-2 h-4 w-4"/>}
+              Buscar CEP
+          </Button>
       </div>
        <MapContainer key={`${center.join('-')}-${zoom}`} center={center} zoom={zoom} scrollWheelZoom={true} className="h-64 w-full rounded-md z-0">
         <TileLayer
