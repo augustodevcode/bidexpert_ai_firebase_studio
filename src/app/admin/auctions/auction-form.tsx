@@ -46,6 +46,7 @@ import { getCities } from '@/app/admin/cities/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -232,9 +233,9 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
             </div>
         );
         case "opcoes": return (
-            <div className="container-opcoes-leilao" data-ai-id="auction-options-container">
+            <div className="container-opcoes-leilao">
                 {watchedAuctionMethod === 'DUTCH' && (
-                    <Card className="card-leilao-holandes" data-ai-id="dutch-auction-settings-card">
+                    <Card className="card-leilao-holandes">
                         <CardHeader className="card-header-leilao-holandes">
                             <CardTitle className="titulo-card-leilao-holandes">
                                 <TrendingDown className="icone-titulo-leilao-holandes"/>Configurações do Leilão Holandês
