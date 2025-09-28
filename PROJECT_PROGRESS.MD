@@ -33,10 +33,11 @@
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
-- **Item 31: Refatorar Testes de UI:** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
+- **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 - **Item 32: Correção de Estilo Responsivo:** Ajustado o contêiner principal da aplicação para remover restrições de largura máxima, permitindo que o layout se expanda corretamente em telas maiores.
 
 ## DOING
+- **Item 33: Refatoração e Verificação dos Testes de UI:** Revisar todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo inconsistências introduzidas pela padronização de nomes.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT

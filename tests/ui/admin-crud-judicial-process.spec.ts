@@ -22,6 +22,8 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI com Ve
 
   test.afterAll(async () => {
     if (createdProcessId) {
+        // Use Prisma directly to ensure cleanup even if actions change
+        await prisma.judicialParty.deleteMany({ where: { processId: createdProcessId } });
         await prisma.judicialProcess.delete({ where: { id: createdProcessId } }).catch(e => console.error(e));
     }
     if (testBranch) await prisma.judicialBranch.delete({ where: { id: testBranch.id } });
@@ -108,11 +110,14 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI com Ve
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
     
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
-    await page.locator('[data-ai-id="alert-dialog-confirm-button"]').click();
+    await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
 
     await expect(page.getByText('Processo judicial excluído com sucesso.')).toBeVisible();
     await expect(page.getByText(updatedProcessNumber)).not.toBeVisible();
     
     // --- DB VERIFICATION (DELETE) ---
     const deletedInDB = await prisma.judicialProcess.findUnique({ where: { id: createdProcessId } });
-    expect(deletedInDB).toBeNull
+    expect(deletedInDB).toBeNull();
+    createdProcessId = null;
+  });
+});
