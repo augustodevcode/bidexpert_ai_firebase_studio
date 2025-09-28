@@ -129,90 +129,90 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
 
   return (
     <>
-      <Card data-ai-id={`lot-card-${lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group">
-        <div className="relative">
-          <Link href={lotDetailUrl} className="block">
-            <div className="aspect-video relative bg-muted">
+      <Card data-ai-id={`lot-card-${lot.id}`} className="card-lot">
+        <div className="container-lot-image">
+          <Link href={lotDetailUrl} className="link-lot-image">
+            <div className="wrapper-lot-image">
               <Image
                 src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : `https://picsum.photos/seed/${lot.id}/600/400`}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                className="object-cover"
+                className="img-lot"
                 data-ai-hint="marina home"
                 data-ai-id="lot-card-main-image"
               />
             </div>
           </Link>
-          <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id="lot-card-status-badges">
+          <div className="container-lot-badges" data-ai-id="lot-card-status-badges">
             {sectionBadges.showStatusBadge !== false && (
-              <Badge className={`text-xs px-2 py-1 ${getLotStatusColor(lot.status)}`}>
+              <Badge className={`badge-lot-status ${getLotStatusColor(lot.status)}`}>
                 {getAuctionStatusText(lot.status)}
               </Badge>
             )}
             {isViewed && (
-                <Badge variant="outline" className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                    <Eye className="h-3 w-3 mr-0.5" /> Visto
+                <Badge variant="outline" className="badge-lot-viewed">
+                    <Eye className="icon-badge-viewed" /> Visto
                 </Badge>
             )}
           </div>
-          <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id="lot-card-mental-triggers">
+          <div className="container-lot-mental-triggers" data-ai-id="lot-card-mental-triggers">
             {sectionBadges.showDiscountBadge !== false && mentalTriggersGlobalSettings.showDiscountBadge && discountPercentage > 0 && (
-                <Badge variant="destructive" className="text-xs animate-pulse"><Percent className="h-3 w-3 mr-1" /> {discountPercentage}% OFF</Badge>
+                <Badge variant="destructive" className="badge-lot-discount"><Percent className="icon-badge-discount" /> {discountPercentage}% OFF</Badge>
             )}
             {mentalTriggers.map(trigger => (
-                <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
-                    {trigger === 'MAIS VISITADO' && <TrendingUp className="h-3 w-3 mr-0.5" />}
-                    {trigger === 'LANCE QUENTE' && <Zap className="h-3 w-3 mr-0.5 text-red-500 fill-red-500" />}
-                    {trigger === 'EXCLUSIVO' && <Crown className="h-3 w-3 mr-0.5 text-purple-600" />}
+                <Badge key={trigger} variant="secondary" className="badge-lot-mental-trigger">
+                    {trigger === 'MAIS VISITADO' && <TrendingUp className="icon-mental-trigger" />}
+                    {trigger === 'LANCE QUENTE' && <Zap className="icon-mental-trigger is-hot" />}
+                    {trigger === 'EXCLUSIVO' && <Crown className="icon-mental-trigger is-exclusive" />}
                     {trigger}
                 </Badge>
             ))}
           </div>
-          <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
+          <div className="container-card-actions">
             <TooltipProvider>
-                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
-                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="h-4 w-4 text-muted-foreground" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`icon-card-action ${isFavorite ? 'is-favorite' : ''}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
+                <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handlePreviewOpen} aria-label="Pré-visualizar"><Eye className="icon-card-action" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
                 <DropdownMenu>
-                    <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" aria-label="Compartilhar"><Share2 className="h-4 w-4 text-muted-foreground" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
-                    <DropdownMenuContent align="end" className="w-56">
-                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
-                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="flex items-center gap-2 text-xs"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
+                    <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" aria-label="Compartilhar"><Share2 className="icon-card-action" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
+                    <DropdownMenuContent align="end" className="dropdown-share-menu">
+                        <DropdownMenuItem asChild><a href={getSocialLink('x', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><X className="icon-social-share" /> X (Twitter)</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('facebook', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><Facebook className="icon-social-share" /> Facebook</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', lotFullUrl, lot.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><MessageSquareText className="icon-social-share" /> WhatsApp</a></DropdownMenuItem>
+                        <DropdownMenuItem asChild><a href={getSocialLink('email', lotFullUrl, lot.title)} className="item-share-dropdown"><Mail className="icon-social-share" /> Email</a></DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
                 {hasEditPermission && (<EntityEditMenu entityType="lot" entityId={lot.id} publicId={lot.publicId!} currentTitle={lot.title} isFeatured={lot.isFeatured || false} onUpdate={onUpdate}/>)}
             </TooltipProvider>
           </div>
         </div>
-        <CardContent className="p-3 flex-grow space-y-1.5">
-          <div className="flex justify-between items-center text-xs text-muted-foreground">
-             <div className="flex items-center gap-1" data-ai-id="lot-card-category">
-                <Tag className="h-3 w-3" />
-                <span>{lot.type}</span>
+        <CardContent className="card-content-lot">
+          <div className="container-lot-meta">
+             <div className="item-lot-meta" data-ai-id="lot-card-category">
+                <Tag className="icon-lot-meta" />
+                <span className="text-lot-meta">{lot.type}</span>
             </div>
-            <div className="flex items-center gap-1" data-ai-id="lot-card-bid-count">
-                <Gavel className="h-3 w-3" />
-                <span>{lot.bidsCount || 0} Lances</span>
+            <div className="item-lot-meta" data-ai-id="lot-card-bid-count">
+                <Gavel className="icon-lot-meta" />
+                <span className="text-lot-meta">{lot.bidsCount || 0} Lances</span>
             </div>
           </div>
-          <Link href={lotDetailUrl}>
-            <h3 data-ai-id="lot-card-title" className="text-sm font-semibold hover:text-primary transition-colors leading-tight min-h-[2.2em] line-clamp-2">
+          <Link href={lotDetailUrl} className="link-lot-title">
+            <h3 data-ai-id="lot-card-title" className="title-lot-card">
               Lote {lot.number || lot.id.replace('LOTE','')} - {lot.title}
             </h3>
           </Link>
-          <div className="flex items-center text-xs text-muted-foreground" data-ai-id="lot-card-location">
-            <MapPin className="h-3 w-3 mr-1" />
-            <span>{displayLocation}</span>
+          <div className="container-lot-location" data-ai-id="lot-card-location">
+            <MapPin className="icon-location" />
+            <span className="text-location">{displayLocation}</span>
           </div>
         </CardContent>
 
-        <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
-          <div className="w-full flex justify-between items-end" data-ai-id="lot-card-footer">
-            <div data-ai-id="lot-card-price-section">
-              <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-              <p className={`text-xl font-bold ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+        <CardFooter className="card-footer-lot">
+          <div className="container-lot-footer" data-ai-id="lot-card-footer">
+            <div className="section-lot-price" data-ai-id="lot-card-price-section">
+              <p className="label-lot-price">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
+              <p className={`text-lot-price ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'is-ended' : ''}`}>
                 R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </p>
             </div>
@@ -241,16 +241,16 @@ export default function LotCard(props: LotCardProps & {onUpdate?: () => void}) {
 
   if (!isClient) {
     return (
-        <Card data-ai-id={`lot-card-skeleton-${props.lot.id}`} className="flex flex-col overflow-hidden h-full shadow-md rounded-lg">
-            <div className="aspect-video relative bg-muted animate-pulse"></div>
-             <CardContent className="p-3 flex-grow space-y-1.5">
-                <Skeleton className="h-5 bg-muted rounded w-3/4" />
-                 <Skeleton className="h-4 bg-muted rounded w-1/2" />
-                 <Skeleton className="h-4 bg-muted rounded w-full" />
+        <Card data-ai-id={`lot-card-skeleton-${props.lot.id}`} className="card-lot-skeleton">
+            <div className="skeleton-lot-image"></div>
+             <CardContent className="skeleton-lot-content">
+                <Skeleton className="skeleton-lot-text-title" />
+                 <Skeleton className="skeleton-lot-text-meta" />
+                 <Skeleton className="skeleton-lot-text-full" />
              </CardContent>
-             <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
-                <Skeleton className="h-4 bg-muted rounded w-1/4" />
-                <Skeleton className="h-6 bg-muted rounded w-1/2" />
+             <CardFooter className="skeleton-lot-footer">
+                <Skeleton className="skeleton-lot-text-price-label" />
+                <Skeleton className="skeleton-lot-text-price" />
              </CardFooter>
         </Card>
     );

@@ -38,18 +38,18 @@ async function HomePageData() {
 
 function HomePageSkeleton() {
     return (
-        <div className="space-y-16 animate-pulse" data-ai-id="homepage-skeleton">
-            <Skeleton className="h-[450px] w-full rounded-lg bg-muted" />
-            <div className="space-y-6">
-                <Skeleton className="h-8 w-1/3" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full bg-muted" />)}
+        <div className="container-homepage-skeleton" data-ai-id="homepage-skeleton">
+            <Skeleton className="skeleton-hero-banner" />
+            <div className="section-skeleton-category">
+                <Skeleton className="skeleton-section-title" />
+                <div className="grid-skeleton-items">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" />)}
                 </div>
             </div>
-            <div className="space-y-6">
-                <Skeleton className="h-8 w-1/3" />
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-96 w-full bg-muted" />)}
+            <div className="section-skeleton-category">
+                <Skeleton className="skeleton-section-title" />
+                <div className="grid-skeleton-items">
+                    {[...Array(4)].map((_, i) => <Skeleton key={i} className="card-skeleton-item" />)}
                 </div>
             </div>
         </div>

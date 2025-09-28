@@ -12,23 +12,23 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 function StatCard({ title, value, icon: Icon, link, description, isLoading }: { title: string, value: number | string, icon: React.ElementType, link?: string, description: string, isLoading: boolean }) {
     const cardContent = (
-      <Card className="hover:shadow-md transition-shadow h-full">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <Icon className="h-5 w-5 text-muted-foreground" />
+      <Card className="card-stat">
+        <CardHeader className="card-header-stat">
+            <CardTitle className="card-title-stat">{title}</CardTitle>
+            <Icon className="icon-stat-card" />
         </CardHeader>
         <CardContent>
             {isLoading ? (
-                <Skeleton className="h-8 w-1/2 mb-2" />
+                <Skeleton className="skeleton-stat-value" />
             ) : (
-                <div className="text-3xl font-bold">{value}</div>
+                <div className="text-stat-value">{value}</div>
             )}
-            <p className="text-xs text-muted-foreground">{description}</p>
+            <p className="text-stat-description">{description}</p>
         </CardContent>
       </Card>
     );
 
-    return link ? <Link href={link} className="block hover:no-underline">{cardContent}</Link> : cardContent;
+    return link ? <Link href={link} className="link-stat-card">{cardContent}</Link> : cardContent;
 }
 
 
@@ -52,26 +52,26 @@ export default function AdminDashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-8" data-ai-id="admin-dashboard-page-container">
-      <Card className="shadow-lg" data-ai-id="admin-dashboard-header-card">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div className="container-admin-dashboard" data-ai-id="admin-dashboard-page-container">
+      <Card className="card-dashboard-header" data-ai-id="admin-dashboard-header-card">
+        <CardHeader className="card-header-dashboard">
           <div>
-            <CardTitle className="text-2xl font-bold font-headline flex items-center">
-              <LayoutDashboard className="h-7 w-7 mr-3 text-primary" />
+            <CardTitle className="title-dashboard">
+              <LayoutDashboard className="icon-dashboard-title" />
               Painel de Administração
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="description-dashboard">
               Bem-vindo à área de gerenciamento do BidExpert.
             </CardDescription>
           </div>
-           <Button asChild>
+           <Button asChild className="btn-detailed-reports">
               <Link href="/admin/reports">
-                <BarChart className="mr-2 h-4 w-4" /> Relatórios Detalhados
+                <BarChart className="icon-btn-reports" /> Relatórios Detalhados
               </Link>
             </Button>
         </CardHeader>
-        <CardContent className="space-y-6">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-ai-id="admin-dashboard-stats-grid">
+        <CardContent className="card-content-dashboard">
+           <div className="grid-stats" data-ai-id="admin-dashboard-stats-grid">
              <StatCard 
                 title="Faturamento Total" 
                 value={(stats?.totalRevenue ?? 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL'})} 

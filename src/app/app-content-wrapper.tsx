@@ -28,13 +28,13 @@ export function AppContentWrapper({
   return (
     <>
       <SetupRedirect isSetupComplete={isSetupComplete} />
-      <div className="flex flex-col min-h-screen">
-        <Suspense fallback={<div className="h-48 border-b flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+      <div className="container-main-app">
+        <Suspense fallback={<div className="container-header-suspense"><Loader2 className="icon-loading-spinner" /></div>}>
             <Header 
               platformSettings={platformSettings}
             />
         </Suspense>
-        <main className="flex-grow container mx-auto px-4 py-8">
+        <main className="container-main-content">
           {children}
         </main>
         <Footer />

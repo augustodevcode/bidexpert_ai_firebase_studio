@@ -26,25 +26,25 @@ export default function FilterLinkCard({
   bgColorClass = 'bg-secondary/30 dark:bg-secondary/20',
 }: FilterLinkCardProps) {
   return (
-    <Link href={link} className="block group h-full">
-      <Card className={`overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full ${bgColorClass}`}>
-        <CardContent className="p-4 md:p-5 flex flex-row items-center gap-4 h-full">
-          <div className="relative w-16 h-16 md:w-20 md:h-20 flex-shrink-0">
+    <Link href={link} className="link-filter-card">
+      <Card className={`card-filter ${bgColorClass}`}>
+        <CardContent className="card-content-filter">
+          <div className="container-image-filter">
             <Image
               src={imageUrl}
               alt={imageAlt}
               fill
-              className="object-contain rounded-md"
+              className="img-filter-card"
               data-ai-hint={dataAiHint}
             />
           </div>
-          <div className="flex-1 text-left">
-            <h3 className="text-md lg:text-lg font-semibold text-foreground mb-0.5 group-hover:text-primary transition-colors">
+          <div className="container-text-filter">
+            <h3 className="title-filter-card">
               {title}
             </h3>
-            <p className="text-xs text-muted-foreground mb-1.5">{subtitle}</p>
-            <div className="text-xs text-primary font-medium flex items-center group-hover:underline">
-              Ver Opções <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-0.5" />
+            <p className="subtitle-filter-card">{subtitle}</p>
+            <div className="link-view-options-filter">
+              Ver Opções <ArrowRight className="icon-arrow-filter" />
             </div>
           </div>
         </CardContent>

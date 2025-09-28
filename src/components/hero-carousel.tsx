@@ -54,33 +54,33 @@ export default function HeroCarousel() {
   }, [emblaApi]);
 
   return (
-    <section className="relative w-full bg-secondary/30 rounded-lg overflow-hidden mb-12 shadow-lg">
-      <div className="overflow-hidden" ref={emblaRef}>
-        <div className="flex">
+    <section className="section-hero-carousel">
+      <div className="container-carousel" ref={emblaRef}>
+        <div className="list-carousel-slides">
           {slides.map((slide, index) => (
-            <div className="flex-[0_0_100%] min-w-0 relative" key={index}>
-              <div className="container mx-auto px-4 py-8 md:py-16 grid md:grid-cols-2 items-center gap-8">
-                <div className="text-center md:text-left">
-                  <h2 className="text-4xl md:text-5xl font-bold text-primary mb-3 font-headline">
+            <div className="item-carousel-slide" key={index}>
+              <div className="grid-slide-content">
+                <div className="container-slide-text">
+                  <h2 className="title-carousel-slide">
                     {slide.title}
                   </h2>
-                  <h3 className="text-2xl md:text-3xl font-semibold text-foreground mb-4">
+                  <h3 className="subtitle-carousel-slide">
                     {slide.subtitle}
                   </h3>
-                  <p className="text-muted-foreground mb-8 text-lg">
+                  <p className="description-carousel-slide">
                     {slide.description}
                   </p>
-                  <Button size="lg" asChild>
+                  <Button size="lg" asChild className="btn-slide-action">
                     <a href={slide.buttonLink}>{slide.buttonText}</a>
                   </Button>
                 </div>
-                <div className="relative aspect-[4/3] md:aspect-[16/9]">
+                <div className="container-slide-image">
                   <Image
                     src={slide.imageUrl}
                     alt={slide.imageAlt}
                     fill
                     sizes="(max-width: 768px) 100vw, 50vw"
-                    className="object-contain md:object-cover rounded-md"
+                    className="img-carousel-slide"
                     data-ai-hint={slide.dataAiHint}
                     priority={index < 2} // Prioritize the first two images
                   />
@@ -95,28 +95,26 @@ export default function HeroCarousel() {
         variant="outline"
         size="icon"
         onClick={scrollPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-10 w-10 rounded-full shadow-md"
+        className="btn-carousel-prev"
         aria-label="Slide Anterior"
       >
-        <ChevronLeft className="h-6 w-6" />
+        <ChevronLeft className="icon-carousel-nav" />
       </Button>
       <Button
         variant="outline"
         size="icon"
         onClick={scrollNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-background/70 hover:bg-background h-10 w-10 rounded-full shadow-md"
+        className="btn-carousel-next"
         aria-label="Próximo Slide"
       >
-        <ChevronRight className="h-6 w-6" />
+        <ChevronRight className="icon-carousel-nav" />
       </Button>
 
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
+      <div className="container-carousel-dots">
         {slides.map((_, index) => (
           <button
             key={index}
-            className={`h-2 w-2 rounded-full ${
-              index === selectedIndex ? 'bg-primary' : 'bg-muted hover:bg-primary/50'
-            } transition-colors`}
+            className={`btn-carousel-dot ${index === selectedIndex ? 'is-selected' : ''}`}
             onClick={() => scrollTo(index)}
             aria-label={`Ir para o slide ${index + 1}`}
           />

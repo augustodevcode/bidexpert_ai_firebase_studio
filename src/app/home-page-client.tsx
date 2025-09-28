@@ -30,8 +30,8 @@ export default function HomePageClient({
 
   if (!platformSettings) {
     return (
-      <div className="text-center py-10">
-        <p className="text-destructive">Erro ao carregar as configurações da plataforma.</p>
+      <div className="container-error-message">
+        <p className="text-error-message">Erro ao carregar as configurações da plataforma.</p>
       </div>
     );
   }
@@ -53,31 +53,31 @@ export default function HomePageClient({
   const featuredSellers = sellers.filter(s => s.logoUrl).slice(0, 12);
 
   return (
-    <div className="space-y-16">
+    <div className="container-homepage">
       <HeroCarousel />
       
-      <section className="space-y-6">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h2 className="text-3xl font-bold">{lotsTitle}</h2>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Button variant="outline" size="sm" asChild>
+      <section className="section-spaced">
+        <div className="section-header-actions">
+          <h2 className="section-title">{lotsTitle}</h2>
+          <div className="container-action-buttons">
+            <Button variant="outline" size="sm" asChild className="btn-view-ended">
                 <Link href="/search?type=lots&status=ENCERRADO,VENDIDO,NAO_VENDIDO">
-                    <CalendarX className="mr-2 h-4 w-4" /> Ver Encerrados
+                    <CalendarX className="icon-action" /> Ver Encerrados
                 </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="btn-view-cancelled">
                 <Link href="/search?type=lots&status=CANCELADO">
-                    <XCircle className="mr-2 h-4 w-4" /> Ver Cancelados
+                    <XCircle className="icon-action" /> Ver Cancelados
                 </Link>
             </Button>
-            <Button variant="default" asChild>
+            <Button variant="default" asChild className="btn-view-all">
                 <Link href="/search?type=lots">
-                    Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                    Ver Todos <ArrowRight className="icon-arrow-right" />
                 </Link>
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid-lots">
           {lotsToDisplay.map((item) => (
               <UniversalCard
                 key={item.id}
@@ -90,7 +90,7 @@ export default function HomePageClient({
         </div>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch">
+      <div className="grid-promo-cards">
         <PromoCard 
             title="Venda seus Ativos Conosco"
             description="Transforme seus bens em liquidez de forma rápida e segura. Nossa plataforma conecta você a milhares de compradores qualificados."
@@ -110,28 +110,28 @@ export default function HomePageClient({
         />
       </div>
 
-       <section className="space-y-6">
-        <div className="flex justify-between items-center flex-wrap gap-2">
-          <h2 className="text-3xl font-bold">{auctionsTitle}</h2>
-          <div className="flex items-center gap-2 flex-wrap">
-              <Button variant="outline" size="sm" asChild>
+       <section className="section-spaced">
+        <div className="section-header-actions">
+          <h2 className="section-title">{auctionsTitle}</h2>
+          <div className="container-action-buttons">
+              <Button variant="outline" size="sm" asChild className="btn-view-ended">
                 <Link href="/search?type=auctions&status=ENCERRADO,FINALIZADO">
-                    <CalendarX className="mr-2 h-4 w-4" /> Ver Encerrados
+                    <CalendarX className="icon-action" /> Ver Encerrados
                 </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild className="btn-view-cancelled">
                 <Link href="/search?type=auctions&status=CANCELADO">
-                    <XCircle className="mr-2 h-4 w-4" /> Ver Cancelados
+                    <XCircle className="icon-action" /> Ver Cancelados
                 </Link>
             </Button>
-            <Button variant="default" asChild>
+            <Button variant="default" asChild className="btn-view-all">
                 <Link href="/search?type=auctions">
-                Ver Todos <ArrowRight className="ml-2 h-4 w-4" />
+                Ver Todos <ArrowRight className="icon-arrow-right" />
                 </Link>
             </Button>
           </div>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid-auctions">
           {auctionsToDisplay.map((item) => (
               <UniversalCard
                 key={item.id}
@@ -145,9 +145,9 @@ export default function HomePageClient({
       
       <FeaturedSellers sellers={featuredSellers} />
       
-      <section className="space-y-6">
-        <h2 className="text-3xl font-bold text-center">Navegue por Categorias</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <section className="section-spaced">
+        <h2 className="section-title text-center">Navegue por Categorias</h2>
+        <div className="grid-categories">
             {featuredCategories.map((category) => {
                  const assets = getCategoryAssets(category.name);
                  return (
