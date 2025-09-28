@@ -32,6 +32,7 @@
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
+- **Item 31: Refatorar Testes de UI:** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
 
 ## DOING

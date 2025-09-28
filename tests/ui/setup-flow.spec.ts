@@ -18,7 +18,7 @@ test.describe('Módulo 22: Fluxo de Configuração Inicial (Setup)', () => {
     
     // Wait for the redirect to the setup page and verify the welcome heading
     await page.waitForURL('/setup', { timeout: 20000 });
-    await expect(page.getByRole('heading', { name: /Bem-vindo ao Assistente de Configuração/i })).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('[data-ai-id="setup-page-container"]')).toBeVisible({ timeout: 10000 });
     console.log('[Setup Flow Test] Successfully redirected to setup page.');
   });
 
@@ -27,8 +27,8 @@ test.describe('Módulo 22: Fluxo de Configuração Inicial (Setup)', () => {
     // --- STEP 1: Welcome & DB Check ---
     console.log('[Setup Flow Test] Step 1: Welcome Screen...');
     // The DB check is visual. The "Next" button being enabled is a good sign.
-    await expect(page.getByRole('button', { name: 'Avançar para Dados Iniciais' })).toBeEnabled({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Avançar para Dados Iniciais' }).click();
+    await expect(page.getByRole('button', { name: 'Avançar' })).toBeEnabled({ timeout: 10000 });
+    await page.getByRole('button', { name: 'Avançar' }).click();
     
     await expect(page.getByRole('heading', { name: 'População Inicial do Banco de Dados' })).toBeVisible();
     console.log('- PASSED: Advanced to Seeding step.');
@@ -62,7 +62,7 @@ test.describe('Módulo 22: Fluxo de Configuração Inicial (Setup)', () => {
 
     // Verify redirection to the admin dashboard
     await page.waitForURL('/admin/dashboard', { timeout: 20000 });
-    await expect(page.getByRole('heading', { name: 'Painel de Administração' })).toBeVisible();
+    await expect(page.locator('[data-ai-id="admin-dashboard-page-container"]')).toBeVisible();
     console.log('- PASSED: Successfully redirected to the admin dashboard.');
 
     // --- FINAL VERIFICATION ---

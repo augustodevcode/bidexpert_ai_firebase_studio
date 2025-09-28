@@ -30,15 +30,15 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI com Verificaç
 
     console.log('[Admin CRUD Auctioneer] Logging in as Admin...');
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     
     await page.waitForURL('/dashboard/overview', { timeout: 20000 });
     console.log('[Admin CRUD Auctioneer] Login successful. Navigating to auctioneers page...');
 
     await page.goto('/admin/auctioneers');
-    await expect(page.getByRole('heading', { name: 'Listagem de Leiloeiros' })).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-ai-id="admin-auctioneers-page-container"]')).toBeVisible({ timeout: 20000 });
     console.log('[Admin CRUD Auctioneer] Arrived at auctioneers page.');
   });
 
@@ -47,14 +47,14 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI com Verificaç
     // --- CREATE ---
     console.log('[Admin CRUD Auctioneer] Starting CREATE step...');
     await page.getByRole('button', { name: 'Novo Leiloeiro' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Leiloeiro' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-ai-id="admin-new-auctioneer-page"]')).toBeVisible({ timeout: 15000 });
 
     await page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Leiloeiro/Empresa').fill(testAuctioneerName);
     await page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Contato (Opcional)').fill('Contato Leiloeiro');
-    await page.locator('[data-ai-id="admin-new-auctioneer-page"]').getByRole('button', { name: 'Salvar' }).click();
+    await page.locator('[data-ai-id="form-page-layout-card"]').getByRole('button', { name: 'Salvar' }).click();
     
     await expect(page.getByText('Leiloeiro criado com sucesso.')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Listagem de Leiloeiros' })).toBeVisible();
+    await expect(page.locator('[data-ai-id="admin-auctioneers-page-container"]')).toBeVisible();
     console.log('[Admin CRUD Auctioneer] CREATE step UI finished successfully.');
 
     // --- READ & DB VERIFICATION (CREATE) ---
@@ -62,9 +62,9 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI com Verificaç
     const createdAuctioneerInDB = await prisma.auctioneer.findFirst({ where: { name: testAuctioneerName } });
     expect(createdAuctioneerInDB).toBeDefined();
     expect(createdAuctioneerInDB?.name).toBe(testAuctioneerName);
-    createdAuctioneerId = createdAuctioneerInDB!.id; // Store ID for cleanup and update
+    createdAuctioneerId = createdAuctioneerInDB!.id;
     
-    await page.getByPlaceholder('Buscar por nome...').fill(testAuctioneerName);
+    await page.locator('[data-ai-id="search-results-frame-search-input"]').fill(testAuctioneerName);
     const newRow = page.getByRole('row', { name: new RegExp(testAuctioneerName, 'i') });
     await expect(newRow).toBeVisible();
     console.log('[Admin CRUD Auctioneer] READ and DB VERIFICATION (CREATE) step finished successfully.');
@@ -75,14 +75,14 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI com Verificaç
     await page.waitForURL(new RegExp(`/admin/auctioneers/${createdAuctioneerId}/edit`), { timeout: 15000 });
     await expect(page.getByRole('heading', { name: 'Visualizar Leiloeiro' })).toBeVisible();
     
-    await page.getByRole('button', { name: 'Entrar em Modo de Edição' }).click();
+    await page.locator('[data-ai-id="form-page-btn-edit-mode"]').click();
     const contactInput = page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Contato (Opcional)');
     await contactInput.fill(updatedContactName);
 
-    await page.locator('[data-ai-id="form-page-layout-card"]').getByRole('button', { name: 'Salvar', exact: true }).click();
+    await page.locator('[data-ai-id="form-page-btn-save"]').click();
     
     await expect(page.getByText('Leiloeiro atualizado.')).toBeVisible();
-    await expect(page.getByLabel('Nome do Contato (Opcional)')).toHaveValue(updatedContactName);
+    await expect(page.locator('[data-ai-id="auctioneer-form"]').getByLabel('Nome do Contato (Opcional)')).toHaveValue(updatedContactName);
     console.log('[Admin CRUD Auctioneer] UPDATE step UI finished successfully.');
     
     // --- DB VERIFICATION (UPDATE) ---
@@ -93,14 +93,14 @@ test.describe('Módulo 1: Administração - CRUD de Leiloeiro (UI com Verificaç
     
     // --- DELETE ---
     console.log('[Admin CRUD Auctioneer] Starting DELETE step...');
-    await page.locator('[data-ai-id="form-page-toolbar-view-mode"]').getByRole('button', { name: 'Excluir' }).click();
+    await page.locator('[data-ai-id="form-page-btn-delete-trigger"]').click();
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
+    await page.locator('[data-ai-id="form-page-btn-delete-confirm"]').click();
     
     await expect(page.getByText('Leiloeiro excluído com sucesso.')).toBeVisible();
     await page.waitForURL('/admin/auctioneers');
     
-    await page.getByPlaceholder('Buscar por nome...').fill(testAuctioneerName);
+    await page.locator('[data-ai-id="search-results-frame-search-input"]').fill(testAuctioneerName);
     await expect(page.getByText('Nenhum resultado encontrado.')).toBeVisible();
     console.log('[Admin CRUD Auctioneer] DELETE step UI finished successfully.');
     

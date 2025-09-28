@@ -11,14 +11,14 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
 
     // Autenticar como Admin
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     await page.waitForURL('/dashboard/overview');
 
     // Navegar para a página do Report Builder
     await page.goto('/admin/report-builder');
-    await expect(page.getByRole('heading', { name: 'Construtor de Relatórios' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-ai-id="report-builder-container"]')).toBeVisible({ timeout: 15000 });
   });
 
   test('Cenário 10.1: should add, select, edit, and move a text element', async ({ page }) => {
@@ -27,13 +27,13 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
     
     // --- 1. Adicionar Elemento ---
     console.log('[Report Builder Test] Adicionando elemento de texto...');
-    await page.getByRole('button', { name: 'Adicionar Texto' }).click();
+    await page.locator('[data-ai-id="report-toolbar"]').getByRole('button', { name: 'Texto' }).click();
     
     // Verificar se o elemento apareceu na área de design
     const newElement = designSurface.getByText('Novo TextBox');
     await expect(newElement).toBeVisible();
     const elementWrapper = newElement.locator('xpath=..');
-    const elementId = await elementWrapper.getAttribute('key'); // Supondo que a key seja o ID único
+    const elementId = await elementWrapper.getAttribute('key');
     expect(elementId).toBeTruthy();
     console.log(`- Elemento de texto adicionado com ID: ${elementId}`);
 
