@@ -15,7 +15,7 @@ import { notFound, useRouter, useParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3 } from 'lucide-react';
+import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3, Bot, Sparkles } from 'lucide-react';
 import { format, differenceInDays, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
@@ -36,7 +36,7 @@ import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
-import React, { useEffect, useCallback, useMemo, useState } from 'react'; 
+import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'; 
 import { useToast } from '@/hooks/use-toast';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -273,19 +273,33 @@ export default function EditAuctionPage() {
           onSave={handleSave}
           onDelete={handleDelete}
         >
-          <AuctionForm
-            formRef={formRef}
-            initialData={auction}
-            categories={categories}
-            auctioneers={auctioneers}
-            sellers={sellers}
-            states={states}
-            allCities={allCities}
-            onSubmitAction={handleUpdateAuction}
-            formTitle=""
-            formDescription=""
-            submitButtonText="Salvar Alterações"
-          />
+            <div className="absolute top-2 right-2 flex items-center gap-1">
+                <TooltipProvider>
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <Button type="button" variant="outline" size="sm" onClick={() => setIsAISuggestionModalOpen(true)} className="text-primary hover:bg-primary/10">
+                                <Sparkles className="mr-2 h-4 w-4" /> Sugestões da IA
+                            </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                            <p>Obtenha sugestões de título, descrição e mais com base em leilões similares.</p>
+                        </TooltipContent>
+                    </Tooltip>
+                </TooltipProvider>
+            </div>
+            <AuctionForm
+                formRef={formRef}
+                initialData={auction}
+                categories={categories}
+                auctioneers={auctioneers}
+                sellers={sellers}
+                states={states}
+                allCities={allCities}
+                onSubmitAction={handleUpdateAuction}
+                formTitle=""
+                formDescription=""
+                submitButtonText="Salvar Alterações"
+            />
         </FormPageLayout>
 
         <Separator className="my-8"/>
@@ -350,3 +364,5 @@ export default function EditAuctionPage() {
     </>
   );
 }
+
+  

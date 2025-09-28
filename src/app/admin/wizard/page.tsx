@@ -170,8 +170,8 @@ function WizardContent({
 
   return (
     <>
-      <div className="space-y-6" data-ai-id="admin-wizard-page-container">
-        <Card className="shadow-lg" data-ai-id="admin-wizard-main-card">
+      <div className="space-y-6">
+        <Card className="shadow-lg">
           <CardHeader>
               <CardTitle className="text-2xl font-bold font-headline flex items-center">
                 <Rocket className="h-7 w-7 mr-3 text-primary" />
@@ -183,7 +183,7 @@ function WizardContent({
             <>
               <CardContent className="p-6">
                 <WizardStepper steps={stepsToUse} currentStep={currentStep} onStepClick={goToStep} />
-                <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]" data-ai-id="admin-wizard-step-content">
+                <div className="mt-8 p-6 border rounded-lg bg-background min-h-[300px]">
                   {renderStep()}
                 </div>
               </CardContent>
@@ -214,7 +214,7 @@ function WizardContent({
           )}
         </Card>
         
-        <Card className="shadow-lg mt-8" data-ai-id="admin-wizard-flow-visualization-card">
+        <Card className="shadow-lg mt-8">
           <CardHeader className="flex flex-row justify-between items-center">
             <div>
               <CardTitle className="text-xl font-semibold flex items-center"><Workflow className="h-5 w-5 mr-2 text-primary" /> Visualização do Fluxo</CardTitle>
@@ -292,3 +292,5 @@ export default function WizardPage() {
     </WizardProvider>
   );
 }
+
+  

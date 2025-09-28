@@ -33,39 +33,46 @@ export class AuctionService {
    * @returns {Auction[]} Um array de leilões formatados.
    */
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {
-    return auctions.map(a => ({
-      ...a,
-      initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
-      estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
-      achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
-      decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : null,
-      floorPrice: a.floorPrice ? Number(a.floorPrice) : null,
-      latitude: a.latitude ? Number(a.latitude) : null,
-      longitude: a.longitude ? Number(a.longitude) : null,
-      totalLots: a._count?.lots ?? a.lots?.length ?? 0,
-      seller: a.seller ? { ...a.seller } : null,
-      auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
-      category: a.category ? { ...a.category } : null,
-      sellerName: a.seller?.name,
-      auctioneerName: a.auctioneer?.name,
-      categoryName: a.category?.name,
-      auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
-        ...stage,
-        initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
-      })),
-      lots: (a.lots || []).map((lot: any) => ({
-        ...lot,
-        price: Number(lot.price),
-        initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
-        secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
-        bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
-        evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
-        assets: (lot.assets || []).map((assetRelation: any) => ({
-          ...assetRelation.asset,
-          evaluationValue: assetRelation.asset.evaluationValue ? Number(assetRelation.asset.evaluationValue) : null,
-        }))
-      }))
-    }));
+    return auctions.map(a => {
+        // Encontra o lote em destaque, se houver
+        const featuredLot = a.lots?.find((lot: any) => lot.isFeatured);
+        
+        return {
+            ...a,
+            initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
+            estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
+            achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
+            decrementAmount: a.decrementAmount ? Number(a.decrementAmount) : null,
+            floorPrice: a.floorPrice ? Number(a.floorPrice) : null,
+            latitude: a.latitude ? Number(a.latitude) : null,
+            longitude: a.longitude ? Number(a.longitude) : null,
+            totalLots: a._count?.lots ?? a.lots?.length ?? 0,
+            seller: a.seller ? { ...a.seller } : null,
+            auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
+            category: a.category ? { ...a.category } : null,
+            sellerName: a.seller?.name,
+            auctioneerName: a.auctioneer?.name,
+            categoryName: a.category?.name,
+            // Se imageMediaId for 'INHERIT', usa a imagem do lote em destaque. Senão, usa a do leilão.
+            imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
+            auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
+                ...stage,
+                initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
+            })),
+            lots: (a.lots || []).map((lot: any) => ({
+                ...lot,
+                price: Number(lot.price),
+                initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
+                secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
+                bidIncrementStep: lot.bidIncrementStep ? Number(lot.bidIncrementStep) : null,
+                evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
+                assets: (lot.assets || []).map((assetRelation: any) => ({
+                ...assetRelation.asset,
+                evaluationValue: assetRelation.asset.evaluationValue ? Number(assetRelation.asset.evaluationValue) : null,
+                }))
+            }))
+        }
+    });
   }
 
   /**
@@ -291,3 +298,5 @@ export class AuctionService {
     }
   }
 }
+
+  

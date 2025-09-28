@@ -250,7 +250,7 @@ export default function AssetForm({
 
   return (
     <>
-      <Card className="max-w-4xl mx-auto shadow-lg">
+      <Card data-ai-id="asset-form" className="max-w-4xl mx-auto shadow-lg">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Package className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
           <CardDescription>{formDescription}</CardDescription>
@@ -370,3 +370,5 @@ export default function AssetForm({
     </>
   );
 }
+
+  

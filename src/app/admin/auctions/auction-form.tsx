@@ -29,8 +29,8 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType, StateInfo, CityInfo } from '@/types';
-import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp } from 'lucide-react';
+import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType, StateInfo, CityInfo, Lot } from '@/types';
+import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp, Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { format, differenceInMilliseconds } from 'date-fns';
@@ -40,7 +40,7 @@ import { Separator } from '@/components/ui/separator';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from './actions';
 import { getLotCategories as refetchCategories } from '../categories/actions';
@@ -52,6 +52,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { consultaCepAction } from '@/lib/actions/cep';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import dynamic from 'next/dynamic';
+import { getLots as getLotsAction } from '../lots/actions';
+
 
 const MapPicker = dynamic(() => import('@/components/map-picker'), {
   loading: () => <div className="h-64 w-full bg-muted animate-pulse rounded-md" />,
@@ -101,39 +103,6 @@ const methodOptions: { value: AuctionMethod, label: string, icon: React.ElementT
     { value: 'SILENT', label: 'Silencioso (Fechado)', icon: MicOff },
 ];
 
-const DatePickerWithTime = ({ field, label, disabled = false }: { field: any, label: string, disabled?: boolean }) => (
-    <FormItem className="flex flex-col">
-    <FormLabel className="text-xs">{label}</FormLabel>
-    <Popover>
-        <PopoverTrigger asChild>
-        <FormControl>
-            <Button
-            variant={"outline"}
-            className={cn("w-full pl-3 text-left font-normal bg-card", !field.value && "text-muted-foreground")}
-            disabled={disabled}
-            >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {field.value ? format(new Date(field.value), "dd/MM/yy HH:mm", { locale: ptBR }) : <span>Escolha</span>}
-            </Button>
-        </FormControl>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-        <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
-        <div className="p-2 border-t">
-            <Input type="time" defaultValue={field.value ? format(new Date(field.value), "HH:mm") : "10:00"}
-            onChange={(e) => {
-                const [hours, minutes] = e.target.value.split(':');
-                const newDate = field.value ? new Date(field.value) : new Date();
-                newDate.setHours(Number(hours), Number(minutes));
-                field.onChange(newDate);
-            }} />
-        </div>
-        </PopoverContent>
-    </Popover>
-    <FormMessage />
-    </FormItem>
-);
-
 const accordionItemsData = [
     { value: "geral", title: "Informações Gerais" },
     { value: "participacao", title: "Modalidade, Método e Local" },
@@ -168,6 +137,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   const [categories, setCategories] = React.useState(initialCategories);
   const [auctioneers, setAuctioneers] = React.useState(initialAuctioneers);
   const [sellers, setSellers] = React.useState(initialSellers);
+  const [lots, setLots] = useState<Lot[]>([]);
   
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingAuctioneers, setIsFetchingAuctioneers] = React.useState(false);
@@ -221,6 +191,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     setValue: form.setValue,
     requestSubmit: form.handleSubmit(onSubmit)
   }));
+  
+  useEffect(() => {
+    if (initialData?.id) {
+      getLotsAction(initialData.id).then(setLots);
+    }
+  }, [initialData?.id]);
 
   const { fields, append, remove, update } = useFieldArray({ control: form.control, name: "auctionStages" });
   const watchedParticipation = useWatch({ control: form.control, name: 'participation' });
@@ -302,7 +278,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 form.setValue('cityId', '');
             }
         } else {
-             toast({ title: 'Estado não encontrado', description: `O estado com UF "${result.data.uf}" não foi encontrado. Cadastre-o primeiro.`, variant: 'default' });
+             toast({ title: 'Estado não encontrado', description: `A UF "${result.data.uf}" não foi encontrada. Cadastre-o primeiro.`, variant: 'default' });
              form.setValue('stateId', '');
              form.setValue('cityId', '');
         }
@@ -398,7 +374,25 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
         );
         case "midia": return (
             <div className="space-y-4">
-                 <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem Principal do Leilão</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="imageMediaId" render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Imagem Principal do Leilão</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value || ''} >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione a fonte da imagem..." />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              <SelectItem value="custom">Imagem Customizada (URL)</SelectItem>
+                              {lots.filter(l => l.isFeatured).map(lot => (
+                                <SelectItem key={lot.id} value={lot.id}>Herdar do Lote em Destaque: {lot.title}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                  </FormItem>
+                )} />
                  <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
             </div>
         );
@@ -479,3 +473,5 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
+
+  

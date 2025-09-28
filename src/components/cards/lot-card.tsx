@@ -125,7 +125,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
   const inheritedAsset = (lot.inheritedMediaFromAssetId && lot.assets) ? lot.assets.find(b => b.id === lot.inheritedMediaFromAssetId) : null;
-  const imageUrlToDisplay = inheritedAsset ? inheritedAsset.imageUrl : lot.imageUrl;
+  const imageUrlToDisplay = lot.imageUrl || inheritedAsset?.imageUrl;
 
   return (
     <>
@@ -258,3 +258,5 @@ export default function LotCard(props: LotCardProps & {onUpdate?: () => void}) {
 
   return <LotCardClientContent {...props} />;
 }
+
+  
