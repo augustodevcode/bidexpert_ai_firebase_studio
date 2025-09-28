@@ -8,7 +8,7 @@
  */
 import { LotRepository } from '@/repositories/lot.repository';
 import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, Asset } from '@/types';
-import { slugify } from '@/lib/ui-helpers';
+import { slugify, isValidImageUrl } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { getPrismaInstance } from '@/lib/prisma';
@@ -30,6 +30,14 @@ export class LotService {
 
   private mapLotWithDetails(lot: any): Lot {
     const assets = lot.assets?.map((la: any) => la.asset).filter(Boolean) || [];
+    
+    // Lógica de herança de mídia centralizada aqui
+    const inheritedAsset = (lot.inheritedMediaFromBemId && assets.length > 0)
+      ? assets.find((a: any) => a.id === lot.inheritedMediaFromBemId)
+      : null;
+    
+    const finalImageUrl = inheritedAsset?.imageUrl || lot.imageUrl;
+
     return {
       ...lot,
       price: lot.price ? Number(lot.price) : 0,
@@ -48,6 +56,7 @@ export class LotService {
       categoryName: lot.category?.name,
       subcategoryName: lot.subcategory?.name,
       sellerName: lot.seller?.name || null,
+      imageUrl: finalImageUrl, // Usando a URL final determinada pela lógica de herança
     };
   }
 
@@ -64,7 +73,6 @@ export class LotService {
   async getLotsByIds(ids: string[], isPublicCall = false): Promise<Lot[]> {
     const lots = await this.repository.findByIds(ids);
     if (isPublicCall) {
-      // Garante que mesmo buscando por ID, os status não públicos e de leilões não publicados sejam respeitados
       return lots.filter(lot => 
         !NON_PUBLIC_STATUSES.includes(lot.status) &&
         lot.auction && !['RASCUNHO', 'EM_PREPARACAO'].includes(lot.auction.status)
@@ -322,8 +330,8 @@ export class LotService {
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromAssetId') && data.inheritedMediaFromAssetId) {
-        dataToCreate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
+      if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
+        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
@@ -383,8 +391,8 @@ export class LotService {
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromAssetId')) {
-        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
+      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
+        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       await this.repository.update(id, dataToUpdate, assetIds);
@@ -472,5 +480,3 @@ export class LotService {
       }
   }
 }
-
-  

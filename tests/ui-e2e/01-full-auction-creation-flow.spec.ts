@@ -132,21 +132,21 @@ test.describe('Cenário E2E: Criação Completa de Leilão com Loteamento e Hera
 
     // Lot 1 (Car) - Inherit media
     await lotForm.getByLabel('Título do Lote').fill(entityNames.carLot);
-    await lotForm.getByRole('button', { name: 'Bens Vinculados' }).click();
+    await lotForm.getByRole('button', { name: 'Bens do Lote' }).click();
     await page.locator('[data-ai-id="available-assets-table"] tbody tr').filter({ hasText: entityNames.carAsset }).locator('input[type="checkbox"]').check();
     await page.getByRole('button', { name: 'Vincular Bem' }).click();
     await expect(page.locator('[data-ai-id="linked-assets-section"]')).toContainText(entityNames.carAsset);
     await lotForm.getByRole('button', { name: 'Mídia' }).click();
     await lotForm.getByLabel('Herdar de um Bem Vinculado').click();
-    await lotForm.locator('[data-ai-id="entity-selector-trigger-inheritedMediaFromAssetId"]').click();
-    await page.locator(`[data-ai-id="entity-selector-modal-inheritedMediaFromAssetId"]`).getByText(entityNames.carAsset).click();
+    await lotForm.locator('[data-ai-id="entity-selector-trigger-inheritedMediaFromBemId"]').click();
+    await page.locator(`[data-ai-id="entity-selector-modal-inheritedMediaFromBemId"]`).getByText(entityNames.carAsset).click();
     await page.getByRole('button', { name: 'Criar Lote' }).click();
     await expect(page.getByText('Lote criado com sucesso.')).toBeVisible();
     
     // Lot 2 (Cattle) - Grouped with custom media
     await page.goto(`/admin/lots/new?auctionId=${createdEntityIds.auction}`);
     await lotForm.getByLabel('Título do Lote').fill(entityNames.cattleLot);
-    await lotForm.getByRole('button', { name: 'Bens Vinculados' }).click();
+    await lotForm.getByRole('button', { name: 'Bens do Lote' }).click();
     await page.locator('[data-ai-id="available-assets-table"] tbody tr').filter({ hasText: entityNames.cattleAsset1 }).locator('input[type="checkbox"]').check();
     await page.locator('[data-ai-id="available-assets-table"] tbody tr').filter({ hasText: entityNames.cattleAsset2 }).locator('input[type="checkbox"]').check();
     await page.getByRole('button', { name: 'Vincular Bem' }).click();
@@ -174,6 +174,7 @@ test.describe('Cenário E2E: Criação Completa de Leilão com Loteamento e Hera
 
     // 5. Final verification
     await page.goto(`/auctions/${createdEntityIds.auction}`);
-    await expect(page.locator(`img[alt*="${entityNames.auction}"]`)).toHaveAttribute('src', /placehold\.co\/600x400/);
+    const carAssetImage = await prisma.asset.findFirst({ where: { title: entityNames.carAsset }, select: { imageUrl: true } });
+    await expect(page.locator(`img[alt*="${entityNames.auction}"]`)).toHaveAttribute('src', carAssetImage!.imageUrl!);
   });
 });

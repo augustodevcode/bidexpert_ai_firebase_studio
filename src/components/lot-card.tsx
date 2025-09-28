@@ -7,9 +7,9 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
+import type { Auction, AuctionStage as AuctionStageType, Lot, PlatformSettings, BadgeVisibilitySettings, MentalTriggerSettings } from '@/types';
 import { Heart, Share2, Eye, MapPin, Gavel, Percent, Zap, TrendingUp, Crown, Tag, Pencil, Clock } from 'lucide-react';
-import { isPast } from 'date-fns';
+import { isPast, differenceInSeconds } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { isLotFavoriteInStorage, addFavoriteLotIdToStorage, removeFavoriteLotIdFromStorage } from '@/lib/favorite-store';
 import LotPreviewModal from './lot-preview-modal';
@@ -106,9 +106,6 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     }
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
-  
-  const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
-  const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
 
   return (
     <>
@@ -117,7 +114,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <Link href={lotDetailUrl} className="block">
             <div className="aspect-video relative bg-muted">
               <Image
-                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : 'https://placehold.co/600x400.png'}
+                src={isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : 'https://placehold.co/600x400.png'}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -254,5 +251,3 @@ export default function LotCard(props: LotCardProps & {onUpdate?: () => void}) {
 
   return <LotCardClientContent {...props} />;
 }
-
-    
