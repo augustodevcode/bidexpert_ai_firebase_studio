@@ -17,5 +17,6 @@ export const userHabilitationStatusValues: [string, ...string[]] = [
 ];
 export const accountTypeValues: [string, ...string[]] = ['PHYSICAL', 'LEGAL', 'DIRECT_SALE_CONSIGNOR'];
 export const paymentStatusValues: [string, ...string[]] = ['PENDENTE', 'PROCESSANDO', 'PAGO', 'FALHOU', 'REEMBOLSADO', 'CANCELADO'];
-
-  
+export const auctionTypeValues: [string, ...string[]] = ['JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS'];
+export const auctionMethodValues: [string, ...string[]] = ['STANDARD', 'DUTCH', 'SILENT'];
+export const auctionParticipationValues: [string, ...string[]] = ['ONLINE', 'PRESENCIAL', 'HIBRIDO'];
