@@ -48,6 +48,7 @@ import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, Save } from 'lucide-react';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -63,29 +64,24 @@ interface AuctionFormProps {
   allCities: CityInfo[];
   judicialProcesses?: JudicialProcess[];
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
-  onSuccessCallback?: () => void;
-  formRef?: React.Ref<any>;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  formRef?: React.Ref<any>;
 }
 
-const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((props, ref) => {
-  const {
-    initialData,
-    categories: initialCategories,
-    auctioneers: initialAuctioneers,
-    sellers: initialSellers,
-    states: initialStates,
-    allCities: initialAllCities,
-    judicialProcesses: initialJudicialProcesses,
-    onSubmitAction,
-    onSuccessCallback,
-    isWizardMode = false,
-    onWizardDataChange,
-  } = props;
+const AuctionForm = React.forwardRef<any, AuctionFormProps>((
+{
+  initialData,
+  categories: initialCategories,
+  auctioneers: initialAuctioneers,
+  sellers: initialSellers,
+  states: initialStates,
+  allCities: initialAllCities,
+  judicialProcesses: initialJudicialProcesses,
+  onSubmitAction,
+  isWizardMode = false,
+  onWizardDataChange,
+}, ref) => {
   
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -97,7 +93,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
         ...initialData,
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
-        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
+        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }],
     },
   });
 
@@ -105,7 +101,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
 
   React.useEffect(() => {
     if (isWizardMode && onWizardDataChange) {
-      const subscription = form.watch((value, { name, type }) => {
+      const subscription = form.watch((value) => {
         onWizardDataChange(value as Partial<AuctionFormValues>);
       });
       return () => subscription.unsubscribe();
@@ -115,6 +111,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
   React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmit),
     setValue: form.setValue,
+    getValues: form.getValues,
   }));
 
   const { fields, append, remove } = useFieldArray({
@@ -126,10 +123,6 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
   const watchedImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
 
-  const getInheritedImage = () => {
-    return 'https://placehold.co/150x100?text=Herdada';
-  };
-  
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
         form.setValue('imageMediaId', selectedItems[0]?.id || null);
@@ -141,15 +134,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
   async function onSubmit(values: AuctionFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(values);
-      if (result.success) {
-        toast({ title: "Sucesso!", description: result.message });
-        if (onSuccessCallback) {
-            onSuccessCallback();
-        }
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
+      await onSubmitAction(values);
     } catch (error) {
       toast({ title: 'Erro Inesperado', description: 'Ocorreu um erro ao processar sua solicitação.', variant: 'destructive' });
     } finally {
@@ -163,10 +148,9 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
             <div className="space-y-4">
                 <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão</FormLabel><FormControl><Input placeholder="Ex: Leilão de Veículos da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' /><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhum processo.' /><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
@@ -174,6 +158,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
              <div className="space-y-4">
                  <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' /><FormMessage /></FormItem>)} />
                  <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
              </div>
         );
         case "modalidade": return (
@@ -195,23 +180,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
         );
         case "prazos": return (
             <div className="space-y-4">
-              <div className="space-y-3">
-                {fields.map((field, index) => (
-                  <Card key={field.id} className="p-4 bg-background">
-                    <div className="flex justify-between items-start mb-2">
-                        <h4 className="font-semibold text-md">Praça / Etapa {index + 1}</h4>
-                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                      <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Data de Início</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal text-xs h-9", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yyyy HH:mm") : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"} onChange={(e)=>{ const time = e.target.value.split(':'); if(stageField.value) stageField.onChange(setHours(setMinutes(stageField.value, parseInt(time[1])), parseInt(time[0])));}}/></div></PopoverContent></Popover><FormMessage className="text-xs"/></FormItem>)}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal text-xs h-9", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yyyy HH:mm") : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "14:00"} onChange={(e)=>{ const time = e.target.value.split(':'); if(stageField.value) stageField.onChange(setHours(setMinutes(stageField.value, parseInt(time[1])), parseInt(time[0])));}}/></div></PopoverContent></Popover><FormMessage className="text-xs"/></FormItem>)}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.initialPrice`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Lance Inicial (R$)</FormLabel><FormControl><Input type="number" placeholder="1000.00" {...stageField} value={stageField.value ?? ''} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', startDate: new Date(), endDate: new Date() })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Praça/Etapa</Button>
+              <AuctionStagesTimeline stages={fields as any} onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value)} onAddStage={() => append({ name: '', startDate: new Date(), endDate: new Date() })} onRemoveStage={remove} isEditable />
             </div>
         );
         case "midia": return (
@@ -280,12 +249,11 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
                     <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{accordionContent("midia")}</AccordionContent></AccordionItem>
                     <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{accordionContent("opcoes")}</AccordionContent></AccordionItem>
                 </Accordion>
-
                  {!isWizardMode && (
                   <div className="flex justify-end pt-4">
-                    <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+                    <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      {props.submitButtonText}
+                      Salvar Alterações
                     </Button>
                   </div>
                 )}
