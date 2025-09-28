@@ -189,7 +189,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                     </Badge>
                 ))}
             </div>
-            <div className="container-card-actions">
+            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`icon-card-action ${isFavorite ? 'is-favorite' : ''}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={openPreviewModal} aria-label="Pré-visualizar"><Eye className="icon-card-action" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
               <DropdownMenu>
@@ -271,3 +271,4 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     </TooltipProvider>
   );
 }
+
