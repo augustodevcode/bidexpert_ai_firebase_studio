@@ -47,6 +47,7 @@ import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Loader2, Save } from 'lucide-react';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -90,6 +91,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
   } = props;
   
   const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
 
   const form = useForm<AuctionFormValues>({
@@ -140,14 +142,21 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
   };
   
   async function onSubmit(values: AuctionFormValues) {
-    const result = await onSubmitAction(values);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      if (onSuccessCallback) {
-          onSuccessCallback();
+    setIsSubmitting(true);
+    try {
+      const result = await onSubmitAction(values);
+      if (result.success) {
+        toast({ title: "Sucesso!", description: result.message });
+        if (onSuccessCallback) {
+            onSuccessCallback();
+        }
+      } else {
+        toast({ title: "Erro", description: result.message, variant: "destructive" });
       }
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: 'Erro Inesperado', description: 'Ocorreu um erro ao processar sua solicitação.', variant: 'destructive' });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
