@@ -7,7 +7,7 @@
  */
 'use client';
 
-import * as React from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -99,7 +99,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
         ...initialData,
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
-        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) }],
+        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
     },
   });
 
@@ -185,14 +185,20 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
             </div>
         );
         case "prazos": return (
-            <div className="space-y-4">
-              <AuctionStagesTimeline 
-                stages={fields as any} 
-                isEditable
-                onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value)} 
-                onAddStage={() => append({ name: '', startDate: new Date(), endDate: new Date() })} 
-                onRemoveStage={remove} 
-              />
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <Card key={field.id} className="p-3 bg-background relative">
+                   <p className="text-sm font-semibold mb-2">Praça / Etapa {index + 1}</p>
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => ( <FormItem> <FormLabel className="text-xs">Nome da Etapa</FormLabel> <FormControl> <Input placeholder={`Ex: 1ª Praça`} {...stageField} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.initialPrice`} render={({ field: stageField }) => ( <FormItem> <FormLabel className="text-xs">Lance Inicial (R$)</FormLabel> <FormControl> <Input type="number" placeholder="5000.00" {...stageField} value={stageField.value ?? ''} onChange={e => stageField.onChange(parseFloat(e.target.value))} /> </FormControl> <FormMessage /> </FormItem> )}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => ( <FormItem className="flex flex-col"> <FormLabel className="text-xs">Data de Início</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant={"outline"} className="w-full justify-start text-left font-normal h-9"> <CalendarIcon className="mr-2 h-4 w-4" /> {stageField.value ? format(stageField.value, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>} </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /></PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => ( <FormItem className="flex flex-col"> <FormLabel className="text-xs">Data de Fim</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant={"outline"} className="w-full justify-start text-left font-normal h-9"> <CalendarIcon className="mr-2 h-4 w-4" /> {stageField.value ? format(stageField.value, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>} </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /></PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
+                   </div>
+                   <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                </Card>
+              ))}
+              <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça</Button>
             </div>
         );
         case "midia": return (
@@ -263,7 +269,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                 </Accordion>
                  {!isWizardMode && (
                   <div className="flex justify-end pt-4">
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
                       {submitButtonText}
                     </Button>
