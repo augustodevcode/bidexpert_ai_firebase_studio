@@ -222,7 +222,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   
   useImperativeHandle(ref, () => ({
     setValue: form.setValue,
-    requestSubmit: form.handleSubmit(onSubmit)
+    requestSubmit: form.handleSubmit(onSubmitAction),
   }));
   
   useEffect(() => {
@@ -502,4 +502,3 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
-
