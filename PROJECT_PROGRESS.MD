@@ -37,7 +37,7 @@
 - **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
 
 ## DOING
-- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementar uma nova suíte de testes (`tests/ui-plus/`) para garantir que todos os campos de todos os principais formulários de criação (Leilão, Lote, Ativo) possam ser preenchidos e salvos corretamente, cobrindo todos os campos específicos de cada categoria e validando a integridade dos dados no DB.
+- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementar uma nova suíte de testes (`tests/ui-plus/`) para garantir que todos os campos de todos os principais formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente, cobrindo todos os campos específicos de cada categoria e validando a integridade dos dados no DB. **(Progresso: 50%)**
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
