@@ -85,9 +85,6 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
     onSuccessCallback,
     isWizardMode = false,
     onWizardDataChange,
-    formTitle,
-    formDescription,
-    submitButtonText,
   } = props;
   
   const { toast } = useToast();
@@ -168,15 +165,15 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialCategories.map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' /><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' /><FormMessage /></FormItem>)} />
                     <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhum processo.' /><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
         case "participantes": return (
              <div className="space-y-4">
-                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialAuctioneers.map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialSellers.map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' /><FormMessage /></FormItem>)} />
              </div>
         );
         case "modalidade": return (
@@ -192,24 +189,29 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
         case "localizacao": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialAllCities.map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={initialStates.map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
                 <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
             </div>
         );
         case "prazos": return (
-             <div className="space-y-4">
-                <div className="space-y-3">
-                    {fields.map((field, index) => (
-                    <Card key={field.id} className="p-3 bg-background">
-                        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-end">
-                            <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
-                            <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal text-xs h-9", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yyyy HH:mm") : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "14:00"} onChange={(e)=>{ const time = e.target.value.split(':'); if(stageField.value) stageField.onChange(setHours(setMinutes(stageField.value, parseInt(time[1])), parseInt(time[0])));}}/></div></PopoverContent></Popover><FormMessage className="text-xs"/></FormItem>)}/>
-                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 text-destructive hover:text-destructive/80" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-                        </div>
-                    </Card>
-                    ))}
-                </div>
-                <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', startDate: new Date(), endDate: new Date() })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Praça/Etapa</Button>
+            <div className="space-y-4">
+              <div className="space-y-3">
+                {fields.map((field, index) => (
+                  <Card key={field.id} className="p-4 bg-background">
+                    <div className="flex justify-between items-start mb-2">
+                        <h4 className="font-semibold text-md">Praça / Etapa {index + 1}</h4>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                      <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Nome da Etapa</FormLabel><FormControl><Input placeholder={`Ex: ${index+1}ª Praça`} {...stageField} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Data de Início</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal text-xs h-9", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yyyy HH:mm") : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "10:00"} onChange={(e)=>{ const time = e.target.value.split(':'); if(stageField.value) stageField.onChange(setHours(setMinutes(stageField.value, parseInt(time[1])), parseInt(time[0])));}}/></div></PopoverContent></Popover><FormMessage className="text-xs"/></FormItem>)}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Data de Encerramento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal text-xs h-9", !stageField.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{stageField.value ? format(stageField.value, "dd/MM/yyyy HH:mm") : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /><div className="p-2 border-t"><Input type="time" defaultValue={stageField.value ? format(stageField.value, "HH:mm") : "14:00"} onChange={(e)=>{ const time = e.target.value.split(':'); if(stageField.value) stageField.onChange(setHours(setMinutes(stageField.value, parseInt(time[1])), parseInt(time[0])));}}/></div></PopoverContent></Popover><FormMessage className="text-xs"/></FormItem>)}/>
+                      <FormField control={form.control} name={`auctionStages.${index}.initialPrice`} render={({ field: stageField }) => (<FormItem><FormLabel className="text-xs">Lance Inicial (R$)</FormLabel><FormControl><Input type="number" placeholder="1000.00" {...stageField} value={stageField.value ?? ''} /></FormControl><FormMessage className="text-xs"/></FormItem>)}/>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+              <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', startDate: new Date(), endDate: new Date() })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Praça/Etapa</Button>
             </div>
         );
         case "midia": return (
@@ -242,7 +244,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
             </div>
         );
         case "opcoes": return (
-            <div className="container-opcoes-leilao">
+            <div className="container-opcoes-leilao space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
                     <Card className="card-leilao-holandes">
                         <CardHeader className="card-header-leilao-holandes">
@@ -283,7 +285,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
                   <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      {submitButtonText}
+                      {props.submitButtonText}
                     </Button>
                   </div>
                 )}
