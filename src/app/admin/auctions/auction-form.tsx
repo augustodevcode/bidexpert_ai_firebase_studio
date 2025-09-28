@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, FormProvider } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -67,7 +67,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
   states: initialStates,
-  allCities,
+  allCities: initialAllCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
   submitButtonText = "Salvar",
@@ -86,8 +86,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
         ...initialData,
-        auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
-        endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
         auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [],
     },
   });
@@ -116,7 +114,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   
   const watchedAuctionStages = useWatch({ control: form.control, name: 'auctionStages' });
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
-  const watchedImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
+  const watchedImageUrl = form.watch('imageUrl');
 
   const displayImageUrl = useMemo(() => {
     if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT') {
@@ -204,18 +202,18 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "localizacao": return (
             <div className="space-y-4">
-                <MapPicker 
+                 <MapPicker 
                     latitude={form.getValues('latitude')} 
                     longitude={form.getValues('longitude')} 
                     zipCode={form.watch('zipCode')}
                     control={form.control}
                     setValue={form.setValue} 
-                    allCities={allCities} 
+                    allCities={initialAllCities} 
                     allStates={initialStates} 
                 />
                 <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
                     <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/>
                 </div>
             </div>
@@ -275,26 +273,28 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   return (
     <>
       <div data-ai-id="admin-auction-form-card">
-        <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                <Accordion type="multiple" defaultValue={["geral", "participantes"]} className="w-full">
-                    <AccordionItem value="geral"><AccordionTrigger>Informações Gerais</AccordionTrigger><AccordionContent className="p-4">{accordionContent("geral")}</AccordionContent></AccordionItem>
-                    <AccordionItem value="participantes"><AccordionTrigger>Participantes</AccordionTrigger><AccordionContent className="p-4">{accordionContent("participantes")}</AccordionContent></AccordionItem>
-                    <AccordionItem value="modalidade"><AccordionTrigger>Modalidade e Local</AccordionTrigger><AccordionContent className="p-4">{accordionContent("modalidade")}{accordionContent("localizacao")}</AccordionContent></AccordionItem>
-                    <AccordionItem value="prazos"><AccordionTrigger>Datas e Prazos</AccordionTrigger><AccordionContent className="p-4">{accordionContent("prazos")}</AccordionContent></AccordionItem>
-                    <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{accordionContent("midia")}</AccordionContent></AccordionItem>
-                    <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{accordionContent("opcoes")}</AccordionContent></AccordionItem>
-                </Accordion>
-                 {!isWizardMode && (
-                  <div className="flex justify-end pt-4">
-                    <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
-                      {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      {submitButtonText}
-                    </Button>
-                  </div>
-                )}
-            </form>
-        </Form>
+        <FormProvider {...form}>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                    <Accordion type="multiple" defaultValue={["geral", "participantes"]} className="w-full">
+                        <AccordionItem value="geral"><AccordionTrigger>Informações Gerais</AccordionTrigger><AccordionContent className="p-4">{accordionContent("geral")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="participantes"><AccordionTrigger>Participantes</AccordionTrigger><AccordionContent className="p-4">{accordionContent("participantes")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="modalidade"><AccordionTrigger>Modalidade e Local</AccordionTrigger><AccordionContent className="p-4">{accordionContent("modalidade")}{accordionContent("localizacao")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="prazos"><AccordionTrigger>Datas e Prazos</AccordionTrigger><AccordionContent className="p-4">{accordionContent("prazos")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{accordionContent("midia")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{accordionContent("opcoes")}</AccordionContent></AccordionItem>
+                    </Accordion>
+                    {!isWizardMode && (
+                    <div className="flex justify-end pt-4">
+                        <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+                        {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
+                        {submitButtonText}
+                        </Button>
+                    </div>
+                    )}
+                </form>
+            </Form>
+        </FormProvider>
       </div>
       <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
     </>

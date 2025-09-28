@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useState, useEffect } from 'react';
-import { UseFormSetValue, Control } from 'react-hook-form';
+import { UseFormSetValue, Control, useFormContext } from 'react-hook-form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Loader2, Search } from 'lucide-react';
@@ -68,13 +68,14 @@ export default function MapPicker({ latitude, longitude, zipCode, control, setVa
   const [isClient, setIsClient] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const { toast } = useToast();
+  const { getValues } = useFormContext(); // Using getValues from context
 
   useEffect(() => {
     setIsClient(true);
   }, []);
   
   const handleCepLookup = async () => {
-    const currentZipCode = zipCode;
+    const currentZipCode = getValues('zipCode'); // Get the latest value from the form state
     if (!currentZipCode || currentZipCode.replace(/\D/g, '').length !== 8) {
       toast({ title: 'CEP inválido', description: 'Por favor, insira um CEP com 8 dígitos.', variant: 'destructive'});
       return;
@@ -145,12 +146,13 @@ export default function MapPicker({ latitude, longitude, zipCode, control, setVa
                               {...field}
                               onChange={(e) => {
                                   field.onChange(e);
+                                  // Trigger lookup when 8 digits are entered
                                   if (e.target.value.replace(/\D/g, '').length === 8) {
                                       handleCepLookup();
                                   }
                               }}
                               disabled={isCepLoading}
-                              maxLength={9}
+                              maxLength={9} // Allows for the hyphen
                           />
                       </FormControl>
                   </FormItem>
