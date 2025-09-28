@@ -26,6 +26,7 @@ interface FormPageLayoutProps {
   isViewMode?: boolean;
   isLoading?: boolean;
   isSubmitting?: boolean;
+  headerActions?: React.ReactNode; // Nova prop para ações extras no cabeçalho
   onSave?: () => void;
   onSaveAndNew?: () => void;
   onDelete?: () => Promise<void>;
@@ -114,6 +115,7 @@ export default function FormPageLayout({
   isViewMode = false,
   isLoading = false,
   isSubmitting = false,
+  headerActions,
   onSave,
   onSaveAndNew,
   onDelete,
@@ -139,7 +141,7 @@ export default function FormPageLayout({
   return (
     <Card className="shadow-lg w-full" data-ai-id="form-page-layout-card">
       <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
             <div className="flex items-center gap-3">
               {Icon && <Icon className="h-8 w-8 text-primary" />}
               <div>
@@ -147,19 +149,22 @@ export default function FormPageLayout({
                 <CardDescription>{formDescription}</CardDescription>
               </div>
             </div>
-            <div className="hidden sm:block">
-                 <FormToolbar 
-                    isViewMode={isViewMode} 
-                    isSubmitting={isSubmitting}
-                    onSave={onSave}
-                    onSaveAndNew={onSaveAndNew}
-                    onDelete={onDelete}
-                    onEnterEditMode={onEnterEditMode}
-                    onNavigateNext={onNavigateNext}
-                    onNavigatePrev={onNavigatePrev}
-                    hasNext={hasNext}
-                    hasPrev={hasPrev}
-                />
+            <div className="flex items-center gap-2">
+                {headerActions}
+                <div className="hidden sm:block">
+                     <FormToolbar 
+                        isViewMode={isViewMode} 
+                        isSubmitting={isSubmitting}
+                        onSave={onSave}
+                        onSaveAndNew={onSaveAndNew}
+                        onDelete={onDelete}
+                        onEnterEditMode={onEnterEditMode}
+                        onNavigateNext={onNavigateNext}
+                        onNavigatePrev={onNavigatePrev}
+                        hasNext={hasNext}
+                        hasPrev={hasPrev}
+                    />
+                </div>
             </div>
         </div>
       </CardHeader>

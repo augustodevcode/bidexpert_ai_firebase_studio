@@ -245,6 +245,21 @@ export default function EditAuctionPage() {
   if (isLoading || !auction || !platformSettings) {
     return <div className="flex justify-center items-center min-h-screen"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>;
   }
+  
+  const aiSuggestionButton = (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button type="button" variant="outline" size="sm" onClick={() => setIsAISuggestionModalOpen(true)} className="text-primary hover:bg-primary/10">
+            <Sparkles className="mr-2 h-4 w-4" /> Sugestões da IA
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Obtenha sugestões de título, descrição e mais com base em leilões similares.</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
 
   return (
     <>
@@ -260,21 +275,8 @@ export default function EditAuctionPage() {
           onCancel={() => setIsViewMode(true)}
           onSave={handleSave}
           onDelete={handleDelete}
+          headerActions={aiSuggestionButton}
         >
-            <div className="absolute top-2 right-2 flex items-center gap-1">
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button type="button" variant="outline" size="sm" onClick={() => setIsAISuggestionModalOpen(true)} className="text-primary hover:bg-primary/10">
-                                <Sparkles className="mr-2 h-4 w-4" /> Sugestões da IA
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                            <p>Obtenha sugestões de título, descrição e mais com base em leilões similares.</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            </div>
             <AuctionForm
                 formRef={formRef}
                 initialData={auction}
@@ -352,5 +354,3 @@ export default function EditAuctionPage() {
     </>
   );
 }
-
-    
