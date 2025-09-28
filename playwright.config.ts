@@ -13,8 +13,8 @@ const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || `http://localhost:${POR
 require('dotenv').config();
 
 export default defineConfig({
-  testDir: './tests', // Set test directory to ui
-  outputDir: 'test-results/', // Directory for test artifacts
+  testDir: './tests/ui', // Set test directory to ui
+  outputDir: './tests/ui/test-results/', // Directory for test artifacts
   timeout: 120000, // 2 minutes for global test timeout
   /* Run tests in files in the order of their definition */
   fullyParallel: false, // Disabled due to slow app loading times
@@ -26,10 +26,10 @@ export default defineConfig({
   workers: 1, // Single worker due to slow app performance
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html'], // HTML report (default location: playwright-report/)
-    ['./playwright-custom-reporter.js', { outputFile: 'test-results/plaintext-report.txt' }], // Custom plaintext report
-    ['junit', { outputFile: 'test-results/junit-report.xml' }], // JUnit XML for CI/CD
-    ['json', { outputFile: 'test-results/test-results.json' }], // JSON report
+    ['html', { outputFolder: './tests/ui/playwright-report/' }], // HTML report
+    ['./playwright-custom-reporter.js', { outputFile: './tests/ui/test-results/plaintext-report.txt' }], // Custom plaintext report
+    ['junit', { outputFile: './tests/ui/test-results/junit-report.xml' }], // JUnit XML for CI/CD
+    ['json', { outputFile: './tests/ui/test-results/test-results.json' }], // JSON report
     ['line'] // Simple one-line per test output in console
   ],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */

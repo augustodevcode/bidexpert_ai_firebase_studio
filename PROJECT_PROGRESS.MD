@@ -34,9 +34,10 @@
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
 - **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
+- **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
 
 ## DOING
-- **Item 33: Refatoração e Verificação dos Testes de UI (50%):** Revisar todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo inconsistências introduzidas pela padronização de nomes.
+- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementar uma nova suíte de testes (`tests/ui-plus/`) para garantir que todos os campos de todos os principais formulários de criação (Leilão, Lote, Ativo) possam ser preenchidos e salvos corretamente, cobrindo todos os campos específicos de cada categoria e validando a integridade dos dados no DB.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
