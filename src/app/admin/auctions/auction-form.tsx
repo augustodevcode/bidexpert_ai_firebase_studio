@@ -43,7 +43,7 @@ import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, Save } from 'lucide-react';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
-import { getPlatformSettings } from '../settings/actions'; // Importar settings
+import { getPlatformSettings } from '../settings/actions';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -61,7 +61,6 @@ interface AuctionFormProps {
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
   formTitle: string;
   formDescription: string;
-  submitButtonText?: string;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
@@ -77,15 +76,12 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   allCities: initialAllCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
   isWizardMode = false,
   onWizardDataChange,
 }, ref) => {
   
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
@@ -115,7 +111,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   }, [form, isWizardMode, onWizardDataChange]);
 
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmit),
+    requestSubmit: form.handleSubmit(onSubmitAction),
     setValue: form.setValue,
     getValues: form.getValues,
   }));
@@ -157,7 +153,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
     if (lastStage?.endDate) {
       newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
     } else {
-      newStartDate = addDays(new Date(), 1); // Fallback se não houver etapa anterior
+      newStartDate = addDays(new Date(), 1); 
     }
     
     const newEndDate = addDays(newStartDate, durationDays);
@@ -166,8 +162,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   };
   
   const handleStageChange = (index: number, field: keyof (typeof fields)[0], value: any) => {
-    // @ts-ignore
-    form.setValue(`auctionStages.${index}.${field}`, value);
+    form.setValue(`auctionStages.${index}.${field as any}`, value, { shouldDirty: true });
   };
 
   const accordionContent = (section: string) => {
@@ -178,15 +173,15 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' /><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' createNewUrl="/admin/categories/new" /><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
         case "participantes": return (
              <div className="space-y-4">
-                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' createNewUrl="/admin/auctioneers/new" /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' createNewUrl="/admin/sellers/new" /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' createNewUrl="/admin/judicial-processes/new" /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
              </div>
         );
         case "modalidade": return (
@@ -213,6 +208,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                 onStageChange={handleStageChange}
                 onAddStage={handleAddStage}
                 onRemoveStage={remove}
+                platformSettings={platformSettings}
             />
         );
         case "midia": return (
@@ -285,7 +281,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                   <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      {submitButtonText}
+                      { "Salvar Alterações"}
                     </Button>
                   </div>
                 )}

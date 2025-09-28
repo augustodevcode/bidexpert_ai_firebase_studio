@@ -1,9 +1,9 @@
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
-import type { AuctionStage } from '@/types';
+import type { AuctionStage, PlatformSettings } from '@/types';
 import { CalendarDays, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
-import { format, isPast, isFuture, parseISO, setHours, setMinutes } from 'date-fns';
+import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect } from 'react';
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import type { PlatformSettings } from '@/types';
 
 interface StageFieldProps {
   stage: Partial<AuctionStage>;
@@ -51,7 +50,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
     };
     
     return (
-        <div className="p-3 border rounded-md bg-background relative">
+        <div className="p-3 border rounded-md bg-background relative" data-ai-id={`stage-editor-${index}`}>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs font-medium">Nome da Etapa</label>
