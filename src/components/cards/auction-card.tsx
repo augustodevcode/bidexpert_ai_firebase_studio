@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction } from '@/types';
+import type { Auction, AuctionStage as AuctionStageType } from '@/types';
 import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -189,7 +189,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                     </Badge>
                 ))}
             </div>
-            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
+            <div className="absolute bottom-2 left-0 right-0 z-20 flex justify-center items-center space-x-1.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`icon-card-action ${isFavorite ? 'is-favorite' : ''}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={openPreviewModal} aria-label="Pré-visualizar"><Eye className="icon-card-action" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
               <DropdownMenu>
@@ -271,4 +271,3 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     </TooltipProvider>
   );
 }
-
