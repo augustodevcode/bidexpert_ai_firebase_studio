@@ -1,11 +1,11 @@
 // tests/ui/sidebar-navigation.spec.ts
 import { test, expect, type Page } from '@playwright/test';
-import { prisma } from '../../lib/prisma';
-import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '../../types';
+import { prisma } from '../../src/lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import type { UserProfileWithPermissions, Role, SellerProfileInfo, Tenant } from '../../src/types';
 import { v4 as uuidv4 } from 'uuid';
-import { UserService } from '../../services/user.service';
-import { RoleRepository } from '../../repositories/role.repository';
-import { createUser, getUserProfileData } from '@/app/admin/users/actions';
+import { UserService } from '../../src/services/user.service';
+import { RoleRepository } from '../../src/repositories/role.repository';
 import { callActionAsUser } from 'tests/test-utils';
 
 const testRunId = `sidebar-nav-${uuidv4().substring(0, 8)}`;
@@ -20,6 +20,9 @@ let testTenant: Tenant;
 async function createTestUsers() {
     console.log(`[Sidebar Test] Creating users for run: ${testRunId}`);
     
+    // Dynamic imports to avoid client-side import issues
+    const { createUser, getUserProfileData } = await import('../../src/app/admin/users/actions');
+    
     testTenant = await prismaClient.tenant.create({ data: { name: `Sidebar Test Tenant ${testRunId}`, subdomain: `sidebar-test-${testRunId}` } });
 
     // Ensure roles exist
@@ -31,7 +34,7 @@ async function createTestUsers() {
     expect(userRole).toBeDefined();
 
     // Create Admin User
-    const adminRes = await createUser({
+    const adminRes = await callActionAsUser(createUser, null, {
         fullName: `Admin Sidebar ${testRunId}`,
         email: `admin-sidebar-${testRunId}@test.com`,
         password: 'password123',
@@ -45,7 +48,7 @@ async function createTestUsers() {
     adminUser = fetchedAdmin!;
 
     // Create Consignor User
-    const consignorRes = await createUser({
+    const consignorRes = await callActionAsUser(createUser, null, {
         fullName: `Consignor Sidebar ${testRunId}`,
         email: `consignor-sidebar-${testRunId}@test.com`,
         password: 'password123',
