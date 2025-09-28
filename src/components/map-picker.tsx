@@ -5,13 +5,15 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useState, useEffect } from 'react';
-import { UseFormSetValue } from 'react-hook-form';
+import { UseFormSetValue, Control } from 'react-hook-form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Loader2, Search } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { consultaCepAction } from '@/lib/actions/cep';
 import type { CityInfo, StateInfo } from '@/types';
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from './ui/form';
+
 
 // Fix Leaflet's default icon path issue
 if (typeof window !== 'undefined') {
@@ -28,12 +30,13 @@ interface MapPickerProps {
   latitude: number | null | undefined;
   longitude: number | null | undefined;
   zipCode: string | null | undefined;
+  control: Control<any>; // Add control prop
   setValue: UseFormSetValue<any>;
   allCities: CityInfo[];
   allStates: StateInfo[];
 }
 
-function LocationMarker({ latitude, longitude, setValue }: Omit<MapPickerProps, 'allCities' | 'allStates' | 'zipCode'>) {
+function LocationMarker({ latitude, longitude, setValue }: Pick<MapPickerProps, 'latitude' | 'longitude' | 'setValue'>) {
   const [position, setPosition] = useState<L.LatLng | null>(
     latitude && longitude ? L.latLng(latitude, longitude) : null
   );
@@ -61,7 +64,7 @@ function LocationMarker({ latitude, longitude, setValue }: Omit<MapPickerProps, 
   );
 }
 
-export default function MapPicker({ latitude, longitude, zipCode, setValue, allCities, allStates }: MapPickerProps) {
+export default function MapPicker({ latitude, longitude, zipCode, control, setValue, allCities, allStates }: MapPickerProps) {
   const [isClient, setIsClient] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const { toast } = useToast();
@@ -131,7 +134,7 @@ export default function MapPicker({ latitude, longitude, zipCode, setValue, allC
     <div className="space-y-2">
       <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2">
           <FormField
-              control={form.control}
+              control={control}
               name="zipCode"
               render={({ field }) => (
                   <FormItem>
@@ -140,7 +143,6 @@ export default function MapPicker({ latitude, longitude, zipCode, setValue, allC
                           <Input
                               placeholder="00000-000"
                               {...field}
-                              value={field.value ?? ''}
                               onChange={(e) => {
                                   field.onChange(e);
                                   if (e.target.value.replace(/\D/g, '').length === 8) {

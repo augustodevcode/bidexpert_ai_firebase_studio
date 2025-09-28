@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
+import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings, AuctionStage } from '@/types';
 import { cn } from '@/lib/utils';
 import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
@@ -81,7 +81,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
-  const [isClient, setIsClient] = useState(false);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -92,10 +91,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [],
     },
   });
-  
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const watchedValues = useWatch({ control: form.control });
 
@@ -209,7 +204,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "localizacao": return (
             <div className="space-y-4">
-                <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} zipCode={form.getValues('zipCode')} setValue={form.setValue} allCities={allCities} allStates={initialStates} />
+                <MapPicker 
+                    latitude={form.getValues('latitude')} 
+                    longitude={form.getValues('longitude')} 
+                    zipCode={form.watch('zipCode')}
+                    control={form.control}
+                    setValue={form.setValue} 
+                    allCities={allCities} 
+                    allStates={initialStates} 
+                />
                 <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
