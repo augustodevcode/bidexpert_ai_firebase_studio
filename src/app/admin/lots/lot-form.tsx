@@ -46,11 +46,12 @@ import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { createColumns as createAssetColumns } from '@/components/admin/lotting/columns';
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
-import { getAssetsForLotting as getAssets } from '@/app/admin/assets/actions';
+import { getAssets } from '@/app/admin/assets/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { DataTable } from '@/components/ui/data-table';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 
 
 interface LotFormProps {
@@ -262,7 +263,7 @@ export default function LotForm({
     setIsAssetModalOpen(true);
   };
 
-  const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails, handleDelete: () => {} }), [handleViewAssetDetails]);
+  const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
 
   const availableAssetsForTable = React.useMemo(() => {
     const linkedAssetIds = new Set(watchedAssetIds || []);
@@ -301,9 +302,10 @@ export default function LotForm({
                     </CardHeader>
                     <CardContent className="p-6">
                          <Tabs defaultValue="geral" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
+                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
                                 <TabsTrigger value="geral">Geral</TabsTrigger>
-                                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
+                                <TabsTrigger value="stage_values">Valores por Etapa</TabsTrigger>
+                                <TabsTrigger value="assets">Bens Vinculados</TabsTrigger>
                                 <TabsTrigger value="midia">Mídia</TabsTrigger>
                                 <TabsTrigger value="avancado">Avançado</TabsTrigger>
                             </TabsList>
@@ -320,9 +322,21 @@ export default function LotForm({
                                     <FormField control={form.control} name="condition" render={({ field }) => (<FormItem><FormLabel>Condição</FormLabel><FormControl><Input placeholder="Ex: Novo, Usado, Sucata" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                             </TabsContent>
-                             <TabsContent value="financeiro" className="pt-6 space-y-4">
-                               <p>A configuração de preços agora é feita por etapa do leilão.</p>
+                             <TabsContent value="stage_values" className="pt-6 space-y-4">
+                               <p className="text-sm text-muted-foreground">Configure os valores para cada etapa do leilão associado.</p>
+                                {/* A timeline vai aqui */}
                              </TabsContent>
+                              <TabsContent value="assets" className="pt-6 space-y-6">
+                                <div data-ai-id="linked-assets-section" className="container-bens-vinculados">
+                                    <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
+                                    <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                                </div>
+                                <Separator />
+                                <div className="container-bens-disponiveis">
+                                    <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
+                                    <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                                </div>
+                              </TabsContent>
                               <TabsContent value="midia" className="pt-6 space-y-4">
                                  <FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem className="space-y-3 p-4 border rounded-md bg-background"><FormLabel className="text-base font-semibold">Fonte da Galeria de Imagens</FormLabel><FormControl><RadioGroup onValueChange={(value) => field.onChange(value === "custom" ? null : value)} value={field.value ? field.value : "custom"} className="flex flex-col sm:flex-row gap-4"><Label className="flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1"><RadioGroupItem value="custom" /><span>Usar Galeria Customizada</span></Label><Label className={cn("flex items-center space-x-2 p-3 border rounded-md cursor-pointer has-[:checked]:bg-primary/10 has-[:checked]:border-primary flex-1", linkedAssetsDetails.length === 0 && "cursor-not-allowed opacity-50")}><RadioGroupItem value={linkedAssetsDetails[0]?.id || ''} disabled={linkedAssetsDetails.length === 0} /><span>Herdar de um Bem Vinculado</span></Label></RadioGroup></FormControl></FormItem>)}/>
                                   {inheritedMediaFromAssetId && (<FormField control={form.control} name="inheritedMediaFromBemId" render={({ field }) => (<FormItem><FormLabel>Selecione o Bem para Herdar a Galeria</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={linkedAssetsDetails.map(b => ({value: b.id, label: b.title}))} placeholder="Selecione um bem" searchPlaceholder="Buscar bem..." emptyStateMessage="Nenhum bem vinculado para selecionar."/><FormMessage /></FormItem>)}/>)}
@@ -339,21 +353,6 @@ export default function LotForm({
                                 <FormField control={form.control} name="dataAiHint" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Imagem)</FormLabel><FormControl><Input placeholder="Ex: carro antigo, relogio ouro" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Palavras-chave para ajudar a IA a gerar uma imagem placeholder.</FormDescription><FormMessage /></FormItem>)} />
                               </TabsContent>
                          </Tabs>
-                    </CardContent>
-                </Card>
-                
-                <Card className="shadow-lg mt-6 container-bens-lote">
-                    <CardHeader><CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle><CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription></CardHeader>
-                    <CardContent className="space-y-4 p-6 bg-secondary/30">
-                        <div data-ai-id="linked-assets-section" className="container-bens-vinculados">
-                            <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
-                            <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
-                        </div>
-                        <Separator />
-                        <div className="container-bens-disponiveis">
-                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
-                            <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
-                        </div>
                     </CardContent>
                 </Card>
                 <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button></div>
