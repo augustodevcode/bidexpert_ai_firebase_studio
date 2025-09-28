@@ -17,19 +17,15 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
-import { addDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
+import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -60,7 +56,7 @@ interface AuctionFormProps {
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
   formTitle: string;
   formDescription: string;
-  submitButtonText: string;
+  submitButtonText?: string;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
@@ -76,7 +72,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   allCities: initialAllCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
-  submitButtonText,
+  submitButtonText = "Salvar",
   isWizardMode = false,
   onWizardDataChange,
 }, ref) => {
@@ -96,7 +92,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         ...initialData,
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
-        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
+        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [],
     },
   });
   
@@ -109,7 +105,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
       });
       return () => subscription.unsubscribe();
     }
-  }, [form, isWizardMode, onWizardDataChange]);
+  }, [form, isWizardMode, onWizardDataChange, watchedValues]);
 
   useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmit),
@@ -144,27 +140,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
       setIsSubmitting(false);
     }
   }
-  
-  const handleAddStage = () => {
-    const lastStage = fields[fields.length - 1];
-    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
-    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
-
-    let newStartDate = new Date();
-    if (lastStage?.endDate) {
-      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
-    } else {
-      newStartDate = addDays(new Date(), 1); 
-    }
-    
-    const newEndDate = addDays(newStartDate, durationDays);
-
-    append({ name: `Praça ${fields.length + 1}`, startDate: newStartDate, endDate: newEndDate, initialPrice: null });
-  };
-  
-  const handleStageChange = (index: number, field: keyof AuctionFormValues['auctionStages'][0], value: any) => {
-    form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true });
-  };
 
   const accordionContent = (section: string) => {
     switch (section) {
@@ -198,17 +173,17 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         case "localizacao": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
                 <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
             </div>
         );
         case "prazos": return (
             <AuctionStagesTimeline
                 stages={fields}
-                isEditable={true}
-                onStageChange={handleStageChange}
-                onAddStage={handleAddStage}
+                onStageChange={(index, fieldName, value) => form.setValue(`auctionStages.${index}.${fieldName}`, value)}
+                onAddStage={append}
                 onRemoveStage={remove}
+                isEditable={true}
                 platformSettings={platformSettings}
             />
         );

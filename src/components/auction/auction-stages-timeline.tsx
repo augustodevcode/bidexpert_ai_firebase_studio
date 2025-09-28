@@ -30,8 +30,11 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
 
     const handleDateChange = (field: 'startDate' | 'endDate', date: Date | undefined) => {
         if (date) {
-            const time = field === 'startDate' ? startDate : endDate;
-            const newDate = setMinutes(setHours(date, time?.getHours() || 0), time?.getMinutes() || 0);
+            const timeSource = field === 'startDate' ? startDate : endDate;
+            const hours = timeSource ? timeSource.getHours() : (field === 'startDate' ? 9 : 18);
+            const minutes = timeSource ? timeSource.getMinutes() : 0;
+            const newDate = setMinutes(setHours(date, hours), minutes);
+            
             if (field === 'startDate') setStartDate(newDate);
             else setEndDate(newDate);
             onStageChange(index, field, newDate);
@@ -40,7 +43,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
     
     const handleTimeChange = (field: 'startDate' | 'endDate', time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
-        const dateToUpdate = field === 'startDate' ? startDate : endDate;
+        const dateToUpdate = field === 'startDate' ? startDate : new Date();
         if (dateToUpdate) {
             const newDate = setMinutes(setHours(dateToUpdate, hours), minutes);
             if (field === 'startDate') setStartDate(newDate);
@@ -61,7 +64,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                     />
                 </div>
                  <div className="space-y-1">
-                    <label className="text-xs font-medium">Lance Inicial (R$)</label>
+                    <label className="text-xs font-medium">Lance Inicial (R$) - Opcional</label>
                      <Input 
                         type="number"
                         defaultValue={stage.initialPrice ?? ''} 
@@ -145,7 +148,7 @@ interface AuctionStagesTimelineProps {
   isEditable?: boolean;
   platformSettings?: PlatformSettings | null;
   onStageChange?: (index: number, field: keyof AuctionStage, value: any) => void;
-  onAddStage?: () => void;
+  onAddStage?: (stage: Partial<AuctionStage>) => void;
   onRemoveStage?: (index: number) => void;
 }
 
@@ -163,6 +166,27 @@ export default function AuctionStagesTimeline({
   useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const handleAddStageWithDefaults = () => {
+    if (!onAddStage) return;
+    const lastStage = stages[stages.length - 1];
+    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
+    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
+
+    let newStartDate = new Date();
+    if (lastStage?.endDate) {
+      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
+    }
+    
+    const newEndDate = addDays(newStartDate, durationDays);
+
+    onAddStage({
+      name: `Praça ${stages.length + 1}`,
+      startDate: newStartDate,
+      endDate: newEndDate,
+      initialPrice: null
+    });
+  };
 
   if (!isClient && !isEditable) {
     return <div className="h-10 w-full bg-muted rounded-md animate-pulse"></div>;
@@ -181,7 +205,7 @@ export default function AuctionStagesTimeline({
       <div className="p-4 border rounded-md text-center">
         <p className="text-sm text-muted-foreground">Nenhuma etapa de leilão definida.</p>
         {isEditable && onAddStage && (
-          <Button type="button" variant="secondary" size="sm" onClick={onAddStage} className="mt-2">
+          <Button type="button" variant="secondary" size="sm" onClick={handleAddStageWithDefaults} className="mt-2">
             <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Primeira Etapa
           </Button>
         )}
@@ -210,7 +234,7 @@ export default function AuctionStagesTimeline({
           <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange} onRemoveStage={onRemoveStage} />
         ))}
         {onAddStage && (
-          <Button type="button" variant="outline" size="sm" onClick={onAddStage}>
+          <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
             <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
           </Button>
         )}
