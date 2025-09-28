@@ -1,9 +1,9 @@
 // src/components/admin/lots/lot-form.tsx
 /**
  * @fileoverview Componente de formulário reutilizável para criar e editar Lotes.
- * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
- * É um componente complexo que inclui seletores de entidade, campos dinâmicos
- * para diferentes métodos de leilão, e gerenciamento de etapas/praças.
+ * Utiliza react-hook-form para gerenciamento de estado, Zod para validação, e
+ * componentes de UI da ShadCN. Inclui lógica para abas, campos condicionais
+ * e seletores de entidade para uma experiência de usuário rica.
  */
 'use client';
 
@@ -184,7 +184,7 @@ export default function LotForm({
     const data = await refetchSellers();
     setSellers(data);
     setIsFetchingSellers(false);
-  }, []);
+  }, []); 
 
    const handleMediaSelect = (selectedItems: Partial<MediaItem>[], target: 'main' | 'gallery') => {
     if (selectedItems.length === 0) return;
@@ -271,20 +271,20 @@ export default function LotForm({
   
   const assetSortOptions = [ { value: 'title_asc', label: 'Título A-Z' }, { value: 'title_desc', label: 'Título Z-A' }, { value: 'evaluationValue_asc', label: 'Valor Crescente' }, { value: 'evaluationValue_desc', label: 'Valor Decrescente' }];
   const renderAssetGridItem = (asset: Asset) => (
-    <Card key={asset.id} className="flex flex-col shadow-sm hover:shadow-md transition-shadow">
-        <CardHeader className="p-3"><div className="relative aspect-video bg-muted rounded-md overflow-hidden"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="text-sm font-semibold line-clamp-2 h-8 mt-2">{asset.title}</CardTitle><CardDescription className="text-xs">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
+    <Card key={asset.id} className="container-bem-grid-item">
+        <CardHeader className="p-3"><div className="wrapper-bem-grid-image"><Image src={asset.imageUrl || 'https://placehold.co/400x300.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div><CardTitle className="title-bem-grid-item">{asset.title}</CardTitle><CardDescription className="description-bem-grid-item">ID: {asset.publicId || asset.id}</CardDescription></CardHeader>
         <CardContent className="p-3 flex-grow space-y-1 text-xs"><p className="font-medium">Avaliação: {asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p></CardContent>
         <CardFooter className="p-2 border-t flex justify-end items-center gap-1"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-7 w-7 text-sky-600"><Eye className="h-3.5 w-3.5" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-7 w-7 text-destructive"><Trash2 className="h-3.5 w-3.5" /></Button></CardFooter>
     </Card>
   );
 
   const renderAssetListItem = (asset: Asset) => (
-    <Card key={asset.id} className="shadow-sm hover:shadow-md transition-shadow">
-      <CardContent className="p-3 flex items-center gap-4">
-        <div className="relative w-24 h-16 bg-muted rounded-md overflow-hidden flex-shrink-0"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
-        <div className="flex-grow"><h4 className="font-semibold text-sm">{asset.title}</h4><p className="text-xs text-muted-foreground">ID: {asset.publicId || asset.id}</p></div>
-        <div className="flex-shrink-0 text-right"><p className="text-sm font-semibold">{asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="text-xs text-muted-foreground">Avaliação</p></div>
-         <div className="flex items-center flex-shrink-0 ml-4"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
+    <Card key={asset.id} className="container-bem-list-item">
+      <CardContent className="content-bem-list-item">
+        <div className="wrapper-bem-list-image"><Image src={asset.imageUrl || 'https://placehold.co/120x90.png'} alt={asset.title} fill className="object-cover" data-ai-hint={asset.dataAiHint || asset.categoryName?.toLowerCase() || 'bem item'} /></div>
+        <div className="flex-grow"><h4 className="title-bem-list-item">{asset.title}</h4><p className="description-bem-list-item">ID: {asset.publicId || asset.id}</p></div>
+        <div className="container-bem-list-price"><p className="price-bem-list-item">{asset.evaluationValue?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'N/A'}</p><p className="label-bem-list-price">Avaliação</p></div>
+         <div className="container-bem-list-actions"><Button variant="ghost" size="icon" onClick={() => handleViewAssetDetails(asset)} className="h-8 w-8 text-sky-600"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" onClick={() => handleUnlinkAsset(asset.id)} className="h-8 w-8 text-destructive"><Trash2 className="h-4 w-4" /></Button></div>
       </CardContent>
     </Card>
   );
@@ -292,7 +292,7 @@ export default function LotForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} data-ai-id="lot-form">
             <div className="space-y-6">
                 <Card className="shadow-lg">
                     <CardHeader>
@@ -342,14 +342,17 @@ export default function LotForm({
                     </CardContent>
                 </Card>
                 
-                <Card className="shadow-lg mt-6">
+                <Card className="shadow-lg mt-6 container-bens-lote">
                     <CardHeader><CardTitle className="flex items-center gap-2"><Layers /> Bens do Lote</CardTitle><CardDescription>Vincule os bens que compõem este lote. O primeiro bem vinculado definirá o título e preço inicial, se não preenchidos.</CardDescription></CardHeader>
                     <CardContent className="space-y-4 p-6 bg-secondary/30">
-                        <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                        <div data-ai-id="linked-assets-section" className="container-bens-vinculados">
+                            <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
+                            <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
+                        </div>
                         <Separator />
-                        <div>
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-2"><h4 className="text-sm font-semibold">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
-                            <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
+                        <div className="container-bens-disponiveis">
+                            <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
+                            <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                         </div>
                     </CardContent>
                 </Card>
