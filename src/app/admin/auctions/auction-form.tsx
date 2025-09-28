@@ -138,6 +138,7 @@ const accordionItemsData = [
     { value: "geral", title: "Informações Gerais" },
     { value: "participacao", title: "Modalidade, Método e Local" },
     { value: "datas", title: "Datas e Prazos" },
+    { value: "midia", title: "Mídia e Documentos" },
     { value: "opcoes", title: "Opções Avançadas" },
 ];
 
@@ -292,7 +293,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
         const foundState = initialStates.find(s => s.uf === result.data.uf);
         if (foundState) {
             form.setValue('stateId', foundState.id);
-            // After setting state, city needs to be found within the now-filtered list.
             const citiesOfState = initialAllCities.filter(c => c.stateId === foundState.id);
             const foundCity = citiesOfState.find(c => c.name.toLowerCase() === result.data.localidade.toLowerCase());
             if (foundCity) {
@@ -317,6 +317,19 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     else router.back();
   };
 
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('imageUrl', selectedMediaItem.urlOriginal);
+        form.setValue('imageMediaId', selectedMediaItem.id || null);
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
+  
   const accordionContent = (section: string) => {
     switch (section) {
         case "geral": return (
@@ -383,6 +396,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             </div>
         );
+        case "midia": return (
+            <div className="space-y-4">
+                 <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormItem><FormLabel>Imagem Principal do Leilão</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+        );
         case "opcoes": return (
             <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
@@ -406,7 +425,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                         <FormMessage />
                     </FormItem>
                     )}
-                />
                 )}
             </div>
         );
@@ -419,12 +437,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   return (
     <>
       <TooltipProvider>
-        <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={() => {}} allowMultiple={false} />
+        <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmitAction)}>
             <fieldset disabled={isViewMode} className="group">
               {isWizardMode ? (
-                <div className="p-4">
+                <div className="p-1">
                   <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full">
                     {accordionItemsData.map(item => (
                       <AccordionItem key={item.value} value={item.value}>
@@ -436,10 +454,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 </div>
               ) : (
                 <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-                    <CardDescription>{formDescription}</CardDescription>
-                  </CardHeader>
                   <CardContent className="p-6 bg-secondary/30 group-disabled:bg-background/30 group-disabled:cursor-not-allowed">
                     <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-4">
                         {accordionItemsData.map(item => (
@@ -452,10 +466,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                         ))}
                     </Accordion>
                   </CardContent>
-                  <CardFooter className="flex justify-end gap-2 p-6 border-t">
-                      <Button type="button" variant="outline" onClick={handleCancelClick} disabled={isSubmitting} className="group-disabled:hidden"><XCircle className="mr-2 h-4 w-4"/> Cancelar</Button>
-                      <Button type="submit" disabled={isSubmitting} className="group-disabled:hidden">{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button>
-                  </CardFooter>
                 </Card>
               )}
             </fieldset>
