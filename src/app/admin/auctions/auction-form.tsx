@@ -35,7 +35,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { cn } from '@/lib/utils';
 import { format, differenceInMilliseconds } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
 import { Separator } from '@/components/ui/separator';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import Image from 'next/image';
@@ -416,7 +416,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                               <FormControl><SelectTrigger><SelectValue placeholder="Selecione a fonte da imagem..." /></SelectTrigger></FormControl>
                               <SelectContent>
                                   <SelectItem value="custom">Imagem Customizada (URL)</SelectItem>
-                                  {featuredLot && (<SelectItem value={featuredLot.id}>Herdar do Lote em Destaque: {featuredLot.title}</SelectItem>)}
+                                  {featuredLot && (<SelectItem value={`INHERIT:${featuredLot.id}`}>Herdar do Lote em Destaque: {featuredLot.title}</SelectItem>)}
                               </SelectContent>
                           </Select>
                           <FormMessage />
