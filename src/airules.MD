@@ -98,3 +98,5 @@ This document contains specific rules and guidelines for the AI prototyper to fo
         2.  **Custom Image:** Ignore the lot images and select a new main image directly from the `MediaLibrary` (`MediaItem`).
 
 **Rationale:** This inheritance system with an override option provides maximum flexibility and consistency. It allows for rapid reuse of media (an `Asset` can be lotted multiple times, always using its default images), while giving the user control to customize the presentation of specific lots and auctions when needed, without duplicating files and maintaining `MediaItem` as the single source of truth.
+
+    

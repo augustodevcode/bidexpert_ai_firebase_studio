@@ -40,7 +40,7 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **Jornada do Arrematante** | Fluxo completo do usuário final, do cadastro ao arremate. | `User`, `Bid`, `UserWin`, `UserDocument`, `AuctionHabilitation`|
 | **Vendas Diretas** | Módulo para ofertas de compra direta, sem a dinâmica de leilão. | `DirectSaleOffer` |
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
-| **Relatórios e Análise** | **[CONCLUÍDO]** Geração e visualização de dashboards de performance para todas as entidades principais. | `Report`, `DataSource` |
+| **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` (futuro) |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Bem` |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
@@ -121,7 +121,7 @@ Baseado na estrutura de `src/app`:
 ### 5.2. Componentes de Exibição Unificados
 
 *   **Padrão `UniversalCard` e `UniversalListItem`:** Para garantir consistência visual e manutenibilidade, a exibição de itens em formato de card ou de lista (como em páginas de busca, dashboards e páginas de categoria) **deve** utilizar os componentes `UniversalCard.tsx` e `UniversalListItem.tsx`, respectivamente.
-*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriadovação (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
+*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriado (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
 *   **Não Uso Direto:** Os componentes `AuctionCard` e `LotCard` não devem ser importados ou utilizados diretamente nas páginas. As páginas devem interagir apenas com os componentes universais.
 
 ### 5.3. Fontes de Dados para Relatórios
@@ -130,14 +130,23 @@ Baseado na estrutura de `src/app`:
 *   **Seeding:** O script `seed-db.ts` é responsável por popular a tabela `DataSource` com metadados dos principais modelos da aplicação (`Auction`, `Lot`, `User`, `Seller`, etc.).
 *   **Estrutura:** Cada registro em `DataSource` define um `name` (amigável, ex: "Leilões"), um `modelName` (do Prisma, ex: "Auction") e um JSON `fields` que lista as colunas (`name` e `type`) que podem ser usadas como variáveis no relatório (ex: `{{Auction.title}}`).
 
+### 5.4. Gerenciamento Centralizado de Mídia (Herança e Substituição)
+
+*   **Fonte da Verdade:** A tabela `MediaItem` é a única fonte da verdade para os caminhos e metadados das imagens. O uso de URLs de imagem estáticas diretamente nos modelos (`Lot`, `Auction`, `Asset`) é proibido.
+*   **Herança de Mídia (Bem -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
+*   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
+*   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.
+
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
 
 *   **Sempre Use o Contexto de Tenant:** Ao criar novas `Server Actions` ou serviços, sempre utilize a função `getTenantIdFromRequest` para garantir que todas as operações sejam executadas no contexto do tenant correto.
+*   **Estrutura Modular do Schema Prisma:** Lembre-se que o arquivo `prisma/schema.prisma` é gerado automaticamente. **Nunca o edite diretamente**. Todas as alterações de modelo devem ser feitas nos arquivos individuais dentro de `prisma/models/`.
 *   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
 *   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
-*   **Testes são Essenciais:** **[IMPORTANTE]** Após a refatoração, todos os novos testes de integração **devem** ser escritos para chamar as `Server Actions` (ex: `createAuction`) em vez dos serviços diretamente (`auctionService.createAuction`). Use o helper `callActionAsUser` (em `tests/test-utils.ts`) para simular o contexto de usuário e tenant corretamente.
+*   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-*   **Construtor de Relatórios:** Para trabalhar no construtor de relatórios (`/admin/report-builder`), execute `npm run db:seed` para garantir que o modelo `DataSource` esteja populado no banco de dados. Sem isso, o painel de "Variáveis" ficará vazio.
+
+    

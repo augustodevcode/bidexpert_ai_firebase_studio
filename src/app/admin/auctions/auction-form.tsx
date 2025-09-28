@@ -319,7 +319,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
         toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
     }
     setIsCepLoading(false);
-  }
+  };
 
   const handleCancelClick = () => {
     if (onCancelEdit) onCancelEdit();
@@ -463,7 +463,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
         <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmitAction)}>
-            <fieldset disabled={isViewMode} className="group">
+            <fieldset disabled={isViewMode || isSubmitting} className="group">
               {isWizardMode ? (
                 <div className="p-1">
                   <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full">
@@ -502,3 +502,4 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
+
