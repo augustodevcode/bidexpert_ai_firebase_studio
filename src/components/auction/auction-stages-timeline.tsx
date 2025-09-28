@@ -1,16 +1,18 @@
+
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
 import type { AuctionStage, PlatformSettings } from '@/types';
 import { CalendarDays, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
-import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays } from 'date-fns';
+import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays, differenceInMilliseconds, formatDistanceStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface StageFieldProps {
   stage: Partial<AuctionStage>;
@@ -43,8 +45,8 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
     
     const handleTimeChange = (field: 'startDate' | 'endDate', time: string) => {
         const [hours, minutes] = time.split(':').map(Number);
-        const dateToUpdate = field === 'startDate' ? startDate : new Date();
-        if (dateToUpdate) {
+        const dateToUpdate = field === 'startDate' ? startDate : endDate;
+        if (dateToUpdate && !isNaN(hours) && !isNaN(minutes)) {
             const newDate = setMinutes(setHours(dateToUpdate, hours), minutes);
             if (field === 'startDate') setStartDate(newDate);
             else setEndDate(newDate);
@@ -54,7 +56,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
     
     return (
         <div className="p-3 border rounded-md bg-background relative" data-ai-id={`stage-editor-${index}`}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                     <label className="text-xs font-medium">Nome da Etapa</label>
                     <Input 
@@ -63,12 +65,12 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                         placeholder={`Praça ${index + 1}`}
                     />
                 </div>
-                 <div className="space-y-1">
+                <div className="space-y-1">
                     <label className="text-xs font-medium">Lance Inicial (R$) - Opcional</label>
                      <Input 
                         type="number"
                         defaultValue={stage.initialPrice ?? ''} 
-                        onBlur={(e) => onStageChange(index, 'initialPrice', parseFloat(e.target.value))}
+                        onBlur={(e) => onStageChange(index, 'initialPrice', parseFloat(e.target.value) || null)}
                         placeholder="Herdará do lote se vazio"
                     />
                 </div>
@@ -84,7 +86,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
                         </Popover>
-                         <Input type="time" defaultValue={startDate ? format(startDate, 'HH:mm') : '09:00'} onChange={(e) => handleTimeChange('startDate', e.target.value)} className="w-24 h-9"/>
+                         <Input type="time" defaultValue={startDate ? format(startDate, 'HH:mm') : '09:00'} onChange={(e) => handleTimeChange('startDate', e.target.value)} className="w-28 h-9 shrink-0"/>
                     </div>
                 </div>
                  <div className="space-y-1">
@@ -99,7 +101,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
                         </Popover>
-                        <Input type="time" defaultValue={endDate ? format(endDate, 'HH:mm') : '18:00'} onChange={(e) => handleTimeChange('endDate', e.target.value)} className="w-24 h-9"/>
+                        <Input type="time" defaultValue={endDate ? format(endDate, 'HH:mm') : '18:00'} onChange={(e) => handleTimeChange('endDate', e.target.value)} className="w-28 h-9 shrink-0"/>
                     </div>
                 </div>
             </div>
@@ -117,26 +119,37 @@ interface AuctionStageItemProps {
   stage: AuctionStage;
   isCompleted: boolean;
   isActive: boolean;
+  isFirst: boolean;
+  isLast: boolean;
+  timelineStyle: { left: string; width: string; };
 }
 
-const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted, isActive }) => {
+const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted, isActive, isFirst, isLast, timelineStyle }) => {
   const endDate = stage.endDate ? new Date(stage.endDate) : null;
+  const statusColor = isCompleted ? 'bg-muted-foreground' : isActive ? 'bg-primary' : 'bg-border';
+  const ringColor = isActive ? 'ring-primary/50' : 'ring-transparent';
+  
   return (
-    <div className="flex items-start gap-2 flex-1 min-w-0 px-1 text-xs">
-      <div className="flex flex-col items-center gap-1 mt-1">
-        <div className={cn(
-          "h-3.5 w-3.5 rounded-full border-2",
-          isCompleted ? "bg-primary border-primary" : (isActive ? "bg-background border-primary ring-2 ring-primary/30" : "bg-background border-border")
-        )} />
-      </div>
-      <div className="flex-grow">
-        <p className={cn("font-semibold truncate w-full", isActive ? 'text-primary' : (isCompleted ? 'text-muted-foreground line-through' : 'text-foreground'))} title={stage.name || ''}>
-          {stage.name || `Etapa`}
+    <div className="flex-1 min-w-0" style={{ flexBasis: timelineStyle.width }}>
+      <TooltipProvider>
+          <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="relative h-full flex flex-col items-center">
+                    <div className={cn("absolute top-1/2 -translate-y-1/2 w-full h-0.5", isFirst ? "left-1/2" : "right-1/2", statusColor)}></div>
+                    <div className={cn("relative h-3 w-3 rounded-full border-2 border-background", statusColor, ringColor, isActive && 'ring-2')}></div>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                  <p className="font-semibold">{stage.name}</p>
+                  <p className="text-xs">{endDate ? `Fim: ${format(endDate, 'dd/MM HH:mm')}` : 'Data indefinida'}</p>
+                   {isActive && <p className="text-xs text-primary font-bold">ETAPA ATUAL</p>}
+              </TooltipContent>
+          </Tooltip>
+      </TooltipProvider>
+      <div className="mt-2 text-center text-xs px-1">
+        <p className={cn("font-medium truncate", isActive ? "text-primary" : "text-muted-foreground")} title={stage.name || ''}>
+            {stage.name || `Etapa`}
         </p>
-        <p className="text-muted-foreground">{endDate ? `${format(endDate, 'dd/MM', { locale: ptBR })} às ${format(endDate, 'HH:mm')}` : 'Data indefinida'}</p>
-        {stage.initialPrice != null && (
-          <p className="text-primary font-medium">R$ {Number(stage.initialPrice).toLocaleString('pt-br')}</p>
-        )}
       </div>
     </div>
   );
@@ -188,8 +201,24 @@ export default function AuctionStagesTimeline({
     });
   };
 
-  if (!isClient && !isEditable) {
-    return <div className="h-10 w-full bg-muted rounded-md animate-pulse"></div>;
+  if (isEditable) {
+    return (
+      <div className="space-y-3">
+        <h4 className="text-sm font-semibold text-muted-foreground flex items-center"><CalendarDays className="h-4 w-4 mr-1.5" />ETAPAS DO LEILÃO</h4>
+        {stages.map((stage, index) => (
+          <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange!} onRemoveStage={onRemoveStage} />
+        ))}
+        {onAddStage && (
+          <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
+          </Button>
+        )}
+      </div>
+    );
+  }
+  
+  if (!isClient) {
+    return <div className="h-12 w-full bg-muted rounded-md animate-pulse"></div>;
   }
   
   const processedStages = stages
@@ -200,61 +229,58 @@ export default function AuctionStagesTimeline({
     }))
     .sort((a, b) => (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0));
 
-  if (!stages || stages.length === 0) {
-    return (
-      <div className="p-4 border rounded-md text-center">
-        <p className="text-sm text-muted-foreground">Nenhuma etapa de leilão definida.</p>
-        {isEditable && onAddStage && (
-          <Button type="button" variant="secondary" size="sm" onClick={handleAddStageWithDefaults} className="mt-2">
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Primeira Etapa
-          </Button>
-        )}
-      </div>
-    );
+  if (processedStages.length === 0 || !processedStages[0].startDate || !processedStages[processedStages.length - 1].endDate) {
+    return <p className="text-xs text-muted-foreground">Datas das etapas não definidas.</p>;
   }
+
+  const overallStart = processedStages[0].startDate.getTime();
+  const overallEnd = processedStages[processedStages.length - 1].endDate!.getTime();
+  const totalDuration = differenceInMilliseconds(overallEnd, overallStart);
 
   const now = new Date();
   let activeStageIndex = processedStages.findIndex(stage => 
     stage.startDate && stage.endDate && now >= stage.startDate && now < stage.endDate
   );
 
-  if (activeStageIndex === -1) {
-    const nextStageIndex = processedStages.findIndex(stage => stage.startDate && isFuture(stage.startDate));
-    if (nextStageIndex !== -1) {
-      activeStageIndex = nextStageIndex;
-    } else if (processedStages.every(s => s.endDate && isPast(s.endDate))) {
-      activeStageIndex = processedStages.length;
-    }
-  }
-
-  if (isEditable && onStageChange) {
-    return (
-      <div className="space-y-3">
-        {stages.map((stage, index) => (
-          <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange} onRemoveStage={onRemoveStage} />
-        ))}
-        {onAddStage && (
-          <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
-          </Button>
-        )}
-      </div>
-    );
+  if (activeStageIndex === -1 && isFuture(processedStages[0].startDate)) {
+      activeStageIndex = -1; // Not started yet
+  } else if (activeStageIndex === -1 && isPast(processedStages[processedStages.length - 1].endDate!)) {
+      activeStageIndex = processedStages.length; // All finished
   }
 
   return (
     <div>
-      <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />ETAPAS DO LEILÃO</h4>
-      <div className="relative flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-        <div className="absolute left-[6px] sm:left-1/2 sm:top-[7px] sm:bottom-auto sm:w-full sm:h-0.5 w-0.5 top-2 bottom-2 bg-border -translate-x-0 sm:-translate-x-1/2 sm:-translate-y-1/2 -z-10"></div>
-        {processedStages.map((stage, index) => {
-          const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
-          const isActive = index === activeStageIndex;
-          return (
-            <AuctionStageItem key={(stage.id as string) || index} stage={stage as AuctionStage} isActive={isActive} isCompleted={isCompleted} />
-          );
-        })}
-      </div>
+       <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />LINHA DO TEMPO</h4>
+       <div className="relative flex w-full h-10 items-center">
+            {processedStages.map((stage, index) => {
+                if (!stage.startDate || !stage.endDate) return null;
+                const prevStageEnd = index > 0 ? processedStages[index - 1].endDate!.getTime() : overallStart;
+                const stageStart = stage.startDate.getTime();
+                const stageEnd = stage.endDate.getTime();
+
+                const stageWidth = totalDuration > 0 ? ((stageEnd - stageStart) / totalDuration) * 100 : 0;
+                
+                const isCompleted = isPast(stage.endDate);
+                const isActive = index === activeStageIndex;
+
+                return (
+                    <AuctionStageItem
+                        key={(stage.id as string) || index}
+                        stage={stage as AuctionStage}
+                        isActive={isActive}
+                        isCompleted={isCompleted}
+                        isFirst={index === 0}
+                        isLast={index === processedStages.length - 1}
+                        timelineStyle={{ left: '0%', width: `${stageWidth}%` }}
+                    />
+                );
+            })}
+       </div>
+       <div className="flex justify-between text-xs text-muted-foreground mt-1">
+          <span>{format(overallStart, 'dd/MM')}</span>
+          <span className="font-medium">{formatDistanceStrict(overallEnd, overallStart, {locale: ptBR, unit: 'day'})} de duração</span>
+          <span>{format(overallEnd, 'dd/MM')}</span>
+       </div>
     </div>
   );
 }
