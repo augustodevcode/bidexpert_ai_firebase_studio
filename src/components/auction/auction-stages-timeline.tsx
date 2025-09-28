@@ -6,7 +6,7 @@ import { CalendarDays, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
 import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays, differenceInMilliseconds, formatDistanceStrict } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -20,6 +20,7 @@ interface StageFieldProps {
   onRemoveStage?: (index: number) => void;
 }
 
+// Componente de edição para cada etapa
 const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, onRemoveStage }) => {
     const [startDate, setStartDate] = useState<Date | undefined>(stage.startDate ? new Date(stage.startDate) : undefined);
     const [endDate, setEndDate] = useState<Date | undefined>(stage.endDate ? new Date(stage.endDate) : undefined);
@@ -114,49 +115,46 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
 };
 
 
-interface AuctionStageItemProps {
-  stage: AuctionStage;
+// Componente de visualização para cada item da timeline
+const AuctionStageItem: React.FC<{
+  stage: Partial<AuctionStage>;
   isCompleted: boolean;
   isActive: boolean;
-  isFirst: boolean;
-  isLast: boolean;
-  timelineStyle: { left: string; width: string; };
-}
+  timelineStyle: { left: string; width: string };
+}> = ({ stage, isCompleted, isActive, timelineStyle }) => {
+    const endDate = stage.endDate ? new Date(stage.endDate) : null;
+    const statusColor = isActive ? 'bg-primary' : isCompleted ? 'bg-muted-foreground' : 'bg-border';
+    const ringColor = isActive ? 'ring-primary/50' : 'ring-transparent';
 
-const AuctionStageItem: React.FC<AuctionStageItemProps> = ({ stage, isCompleted, isActive, isFirst, isLast, timelineStyle }) => {
-  const endDate = stage.endDate ? new Date(stage.endDate) : null;
-  const statusColor = isCompleted ? 'bg-muted-foreground' : isActive ? 'bg-primary' : 'bg-border';
-  const ringColor = isActive ? 'ring-primary/50' : 'ring-transparent';
-  
-  return (
-    <div className="flex-1 min-w-0" style={{ flexBasis: timelineStyle.width }}>
-      <TooltipProvider>
-          <Tooltip>
-              <TooltipTrigger asChild>
-                <div className="relative h-full flex flex-col items-center">
-                    <div className={cn("absolute top-1/2 -translate-y-1/2 w-full h-0.5", isFirst ? "left-1/2" : "right-1/2", statusColor)}></div>
-                    <div className={cn("relative h-3 w-3 rounded-full border-2 border-background", statusColor, ringColor, isActive && 'ring-2')}></div>
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                  <p className="font-semibold">{stage.name}</p>
-                  <p className="text-xs">{endDate ? `Fim: ${format(endDate, 'dd/MM HH:mm')}` : 'Data indefinida'}</p>
-                   {isActive && <p className="text-xs text-primary font-bold">ETAPA ATUAL</p>}
-              </TooltipContent>
-          </Tooltip>
-      </TooltipProvider>
-      <div className="mt-2 text-center text-xs px-1">
-        <p className={cn("font-medium truncate", isActive ? "text-primary" : "text-muted-foreground")} title={stage.name || ''}>
-            {stage.name || `Etapa`}
-        </p>
-      </div>
-    </div>
-  );
+    return (
+        <div className="absolute top-1/2 -translate-y-1/2 h-full flex items-center" style={timelineStyle}>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <div className="w-full h-full flex flex-col justify-center items-center">
+                            <div className={cn("w-full h-0.5", statusColor)}></div>
+                            <div className={cn("absolute left-0 h-3 w-3 rounded-full border-2 border-background", statusColor, ringColor, isActive && 'ring-2')}></div>
+                        </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                        <p className="font-semibold">{stage.name}</p>
+                        <p className="text-xs">{endDate ? `Fim: ${format(endDate, 'dd/MM HH:mm')}` : 'Data indefinida'}</p>
+                        {isActive && <p className="text-xs text-primary font-bold">ETAPA ATUAL</p>}
+                    </TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+            <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-center text-xs w-20">
+                <p className={cn("font-medium truncate", isActive ? "text-primary" : "text-muted-foreground")} title={stage.name || ''}>
+                    {stage.name || `Etapa`}
+                </p>
+            </div>
+        </div>
+    );
 };
+
 
 interface AuctionStagesTimelineProps {
   stages: Partial<AuctionStage>[];
-  auctionOverallStartDate?: Date;
   isEditable?: boolean;
   platformSettings?: PlatformSettings | null;
   onStageChange?: (index: number, field: keyof AuctionStage, value: any) => void;
@@ -166,7 +164,6 @@ interface AuctionStagesTimelineProps {
 
 export default function AuctionStagesTimeline({ 
   stages, 
-  auctionOverallStartDate, 
   isEditable = false,
   platformSettings,
   onStageChange,
@@ -200,86 +197,91 @@ export default function AuctionStagesTimeline({
     });
   };
 
-  if (isEditable) {
-    return (
-      <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-muted-foreground flex items-center"><CalendarDays className="h-4 w-4 mr-1.5" />ETAPAS DO LEILÃO</h4>
-        {stages.map((stage, index) => (
-          <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange!} onRemoveStage={onRemoveStage} />
-        ))}
-        {onAddStage && (
-          <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
-          </Button>
-        )}
-      </div>
-    );
-  }
-  
-  if (!isClient) {
-    return <div className="h-12 w-full bg-muted rounded-md animate-pulse"></div>;
-  }
-  
-  const processedStages = stages
+  const processedStages = useMemo(() => stages
     .map(stage => ({
       ...stage,
-      startDate: stage.startDate ? (stage.startDate instanceof Date ? stage.startDate : parseISO(stage.startDate as string)) : null,
-      endDate: stage.endDate ? (stage.endDate instanceof Date ? stage.endDate : parseISO(stage.endDate as string)) : null,
+      startDate: stage.startDate ? new Date(stage.startDate) : null,
+      endDate: stage.endDate ? new Date(stage.endDate) : null,
     }))
-    .sort((a, b) => (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0));
+    .sort((a, b) => (a.startDate?.getTime() || 0) - (b.startDate?.getTime() || 0)), [stages]);
 
-  if (processedStages.length === 0 || !processedStages[0].startDate || !processedStages[processedStages.length - 1].endDate) {
-    return <p className="text-xs text-muted-foreground">Datas das etapas não definidas.</p>;
+  const { overallStart, overallEnd, totalDuration, now } = useMemo(() => {
+    if (!isClient || processedStages.length === 0) return { overallStart: 0, overallEnd: 0, totalDuration: 0, now: new Date() };
+
+    const validDates = processedStages.flatMap(s => [s.startDate, s.endDate]).filter(d => d && isValid(d)) as Date[];
+    if (validDates.length < 2) return { overallStart: 0, overallEnd: 0, totalDuration: 0, now: new Date() };
+    
+    const start = Math.min(...validDates.map(d => d.getTime()));
+    const end = Math.max(...validDates.map(d => d.getTime()));
+    const duration = end - start;
+    
+    return { overallStart: start, overallEnd: end, totalDuration: duration, now: new Date() };
+  }, [isClient, processedStages]);
+
+  const activeStageIndex = useMemo(() => {
+    if (!isClient) return -1;
+    const activeIndex = processedStages.findIndex(stage => 
+      stage.startDate && stage.endDate && now >= stage.startDate && now < stage.endDate
+    );
+    if (activeIndex !== -1) return activeIndex;
+    if (processedStages[0]?.startDate && isFuture(processedStages[0].startDate)) return -1;
+    if (processedStages[processedStages.length - 1]?.endDate && isPast(processedStages[processedStages.length - 1].endDate!)) return processedStages.length;
+    return -1;
+  }, [isClient, processedStages, now]);
+
+
+  // Renderiza o modo de edição se isEditable for true
+  if (isEditable) {
+    return (
+        <div className="space-y-2">
+            {stages.map((stage, index) => (
+                <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange!} onRemoveStage={onRemoveStage} />
+            ))}
+            {onAddStage && (
+                <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
+                </Button>
+            )}
+        </div>
+    );
   }
 
-  const overallStart = processedStages[0].startDate.getTime();
-  const overallEnd = processedStages[processedStages.length - 1].endDate!.getTime();
-  const totalDuration = differenceInMilliseconds(overallEnd, overallStart);
-
-  const now = new Date();
-  let activeStageIndex = processedStages.findIndex(stage => 
-    stage.startDate && stage.endDate && now >= stage.startDate && now < stage.endDate
-  );
-
-  if (activeStageIndex === -1 && isFuture(processedStages[0].startDate)) {
-      activeStageIndex = -1; // Not started yet
-  } else if (activeStageIndex === -1 && isPast(processedStages[processedStages.length - 1].endDate!)) {
-      activeStageIndex = processedStages.length; // All finished
+  // Renderiza o modo de visualização (timeline)
+  if (totalDuration <= 0) {
+      return <div className="text-xs text-muted-foreground">Etapas do leilão não definidas.</div>
   }
 
   return (
-    <div>
-       <h4 className="text-xs font-semibold mb-2 flex items-center text-muted-foreground"><CalendarDays className="h-3 w-3 mr-1.5" />LINHA DO TEMPO</h4>
-       <div className="relative flex w-full h-10 items-center">
-            {processedStages.map((stage, index) => {
-                if (!stage.startDate || !stage.endDate) return null;
-                const prevStageEnd = index > 0 ? processedStages[index - 1].endDate!.getTime() : overallStart;
-                const stageStart = stage.startDate.getTime();
-                const stageEnd = stage.endDate.getTime();
+    <div className="space-y-3">
+      <div className="relative w-full h-12 pt-4">
+        {processedStages.map((stage, index) => {
+            if (!stage.startDate || !stage.endDate) return null;
+            
+            const stageStart = stage.startDate.getTime();
+            const stageEnd = stage.endDate.getTime();
+            
+            const leftPercent = ((stageStart - overallStart) / totalDuration) * 100;
+            const widthPercent = ((stageEnd - stageStart) / totalDuration) * 100;
+            
+            const isCompleted = isPast(stage.endDate);
+            const isActive = index === activeStageIndex;
 
-                const stageWidth = totalDuration > 0 ? ((stageEnd - stageStart) / totalDuration) * 100 : 0;
-                
-                const isCompleted = isPast(stage.endDate);
-                const isActive = index === activeStageIndex;
-
-                return (
-                    <AuctionStageItem
-                        key={(stage.id as string) || index}
-                        stage={stage as AuctionStage}
-                        isActive={isActive}
-                        isCompleted={isCompleted}
-                        isFirst={index === 0}
-                        isLast={index === processedStages.length - 1}
-                        timelineStyle={{ left: '0%', width: `${stageWidth}%` }}
-                    />
-                );
-            })}
-       </div>
-       <div className="flex justify-between text-xs text-muted-foreground mt-1">
-          <span>{format(overallStart, 'dd/MM')}</span>
-          <span className="font-medium">{formatDistanceStrict(overallEnd, overallStart, {locale: ptBR, unit: 'day'})} de duração</span>
-          <span>{format(overallEnd, 'dd/MM')}</span>
-       </div>
+            return (
+                <AuctionStageItem
+                    key={(stage.id as string) || index}
+                    stage={stage as AuctionStage}
+                    isActive={isActive}
+                    isCompleted={isCompleted}
+                    timelineStyle={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
+                />
+            );
+        })}
+      </div>
+      <div className="flex justify-between text-xs text-muted-foreground mt-1">
+        <span>{format(overallStart, 'dd/MM')}</span>
+        <span className="font-medium">Duração: {formatDistanceStrict(overallEnd, overallStart, {locale: ptBR})}</span>
+        <span>{format(overallEnd, 'dd/MM')}</span>
+      </div>
     </div>
   );
 }

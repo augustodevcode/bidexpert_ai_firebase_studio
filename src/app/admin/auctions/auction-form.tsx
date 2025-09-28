@@ -23,7 +23,7 @@ import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
-import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
+import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
@@ -37,8 +37,8 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '../settings/actions';
 import { addDays } from 'date-fns';
-import { isValidImageUrl } from '@/lib/ui-helpers';
 import { getMediaItems } from '@/app/admin/media/actions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -79,6 +79,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [mediaItems, setMediaItems] = useState<MediaItem[]>([]);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -112,10 +113,24 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     name: "auctionStages",
   });
   
+  const watchedAuctionStages = useWatch({ control: form.control, name: 'auctionStages' });
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
   const watchedImageUrlField = useWatch({ control: form.control, name: 'imageUrl' });
 
+  const displayImageUrl = useMemo(() => {
+    if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT') {
+      const selectedMedia = mediaItems.find(item => item.id === watchedImageMediaId);
+      return selectedMedia?.urlOriginal || watchedImageUrlField;
+    }
+    return watchedImageUrlField;
+  }, [watchedImageMediaId, watchedImageUrlField, mediaItems]);
+
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
+
+  useEffect(() => {
+    getPlatformSettings().then(settings => setPlatformSettings(settings as PlatformSettings));
+    getMediaItems().then(items => setMediaItems(items));
+  }, []);
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0 && selectedItems[0]) {
@@ -195,7 +210,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "prazos": return (
             <AuctionStagesTimeline
-                stages={fields}
+                stages={watchedAuctionStages}
                 isEditable={true}
                 platformSettings={platformSettings}
                 onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true })}
@@ -216,9 +231,9 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                 {watchedImageMediaId !== 'INHERIT' && (
                     <FormItem>
                         <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(watchedImageUrlField) ? (<Image src={watchedImageUrlField} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
+                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl!} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                             <div className="space-y-2 flex-grow">
-                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{isValidImageUrl(watchedImageUrlField) ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
+                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{isValidImageUrl(displayImageUrl) ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
                             </div>
                         </div>
                     </FormItem>
@@ -277,3 +292,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
+```
+</change>
+```
