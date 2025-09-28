@@ -79,12 +79,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [allMediaItems, setAllMediaItems] = useState<MediaItem[]>([]);
-
-  useEffect(() => {
-    getPlatformSettings().then(settings => setPlatformSettings(settings as PlatformSettings));
-    getMediaItems().then(items => setAllMediaItems(items));
-  }, []);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -121,21 +115,13 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
   const watchedImageUrlField = useWatch({ control: form.control, name: 'imageUrl' });
 
-  const watchedImageUrl = useMemo(() => {
-    if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT' && allMediaItems.length > 0) {
-      const foundItem = allMediaItems.find(item => item.id === watchedImageMediaId);
-      return foundItem?.urlOriginal || null;
-    }
-    return watchedImageUrlField;
-  }, [watchedImageMediaId, watchedImageUrlField, allMediaItems]);
-
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0 && selectedItems[0]) {
         const { id, urlOriginal } = selectedItems[0];
-        form.setValue('imageMediaId', id || null);
-        form.setValue('imageUrl', urlOriginal || null);
+        form.setValue('imageMediaId', id || null, { shouldDirty: true });
+        form.setValue('imageUrl', urlOriginal || null, { shouldDirty: true });
     }
     setIsMediaDialogOpen(false);
   };
@@ -230,10 +216,9 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                 {watchedImageMediaId !== 'INHERIT' && (
                     <FormItem>
                         <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{watchedImageUrl ? (<Image src={watchedImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
+                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(watchedImageUrlField) ? (<Image src={watchedImageUrlField} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                             <div className="space-y-2 flex-grow">
-                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{watchedImageUrl ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
-                                <FormField control={form.control} name="imageUrl" render={({ field: imageUrlField }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...imageUrlField} value={imageUrlField.value ?? ""} /></FormControl>)} />
+                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{isValidImageUrl(watchedImageUrlField) ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
                             </div>
                         </div>
                     </FormItem>

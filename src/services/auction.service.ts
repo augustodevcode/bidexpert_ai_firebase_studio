@@ -161,12 +161,19 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, cityId, stateId, judicialProcessId, auctionStages, tenantId: _tenantId, ...restOfData } = data;
+      const { auctioneerId, sellerId, cityId, stateId, judicialProcessId, auctionStages, imageUrl, ...restOfData } = data;
 
+      let finalImageUrl = imageUrl;
+      if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
+        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: data.imageMediaId }});
+        if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
+      }
+      
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         const createdAuction = await tx.auction.create({
           data: {
             ...(restOfData as any),
+            imageUrl: finalImageUrl,
             publicId: `AUC-${uuidv4()}`,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
@@ -221,11 +228,18 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
+      const { auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, imageUrl, ...restOfData } = data;
+
+      let finalImageUrl = imageUrl;
+      if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
+        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: data.imageMediaId }});
+        if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
+      }
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
             ...(restOfData as any),
+            imageUrl: finalImageUrl,
         };
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
