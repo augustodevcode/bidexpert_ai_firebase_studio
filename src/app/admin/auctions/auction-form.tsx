@@ -64,6 +64,9 @@ interface AuctionFormProps {
   allCities: CityInfo[];
   judicialProcesses?: JudicialProcess[];
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
+  formTitle: string;
+  formDescription: string;
+  submitButtonText: string;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
@@ -79,12 +82,15 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   allCities: initialAllCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
+  formTitle,
+  formDescription,
+  submitButtonText,
   isWizardMode = false,
   onWizardDataChange,
 }, ref) => {
   
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
 
   const form = useForm<AuctionFormValues>({
@@ -180,7 +186,13 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
         );
         case "prazos": return (
             <div className="space-y-4">
-              <AuctionStagesTimeline stages={fields as any} onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value)} onAddStage={() => append({ name: '', startDate: new Date(), endDate: new Date() })} onRemoveStage={remove} isEditable />
+              <AuctionStagesTimeline 
+                stages={fields as any} 
+                isEditable
+                onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value)} 
+                onAddStage={() => append({ name: '', startDate: new Date(), endDate: new Date() })} 
+                onRemoveStage={remove} 
+              />
             </div>
         );
         case "midia": return (
@@ -253,7 +265,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                   <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      Salvar Alterações
+                      {submitButtonText}
                     </Button>
                   </div>
                 )}
