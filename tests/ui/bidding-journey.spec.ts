@@ -22,12 +22,15 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     
     testTenant = await prismaClient.tenant.create({ data: { name: `Bidding Test Tenant ${testRunId}`, subdomain: `bidding-test-${testRunId}` } });
 
+    const userRole = await prismaClient.role.findFirst({ where: { name: 'USER' } });
     const bidderRole = await prismaClient.role.upsert({
       where: { nameNormalized: 'BIDDER' },
       update: {},
       create: { name: 'Bidder', nameNormalized: 'BIDDER', permissions: ['place_bids'] }
     });
-     const userRole = await prismaClient.role.findFirst({ where: { name: 'USER' } });
+    
+    expect(userRole).toBeDefined();
+    expect(bidderRole).toBeDefined();
 
     const userRes = await createUser({
       fullName: `Bidder User ${testRunId}`,
@@ -104,9 +107,9 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     await page.addInitScript(() => window.localStorage.setItem('bidexpert_setup_complete', 'true'));
     
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill(bidderUser.email);
-    await page.locator('input[name="password"]').fill('password123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill(bidderUser.email);
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('password123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     await page.waitForURL('/dashboard/overview');
   });
 
@@ -114,7 +117,7 @@ test.describe('Módulo 3: Jornada do Arrematante - Dar um Lance', () => {
     console.log('[Bidding Journey Test] Navigating to lot page...');
     const lotUrl = `/auctions/${testLot.auctionId}/lots/${testLot.publicId || testLot.id}`;
     await page.goto(lotUrl);
-    await expect(page.locator('h1', { hasText: testLot.title })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-ai-id="lot-detail-page-container"]')).toBeVisible({ timeout: 15000 });
 
     // 1. Localizar o painel de lances e verificar o preço inicial
     const biddingPanel = page.locator('[data-ai-id="bidding-panel-card"]');

@@ -91,16 +91,16 @@ test.describe('Módulo 2: Fluxo de Habilitação de Usuário (UI)', () => {
 
     // Login as Admin
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     await page.waitForURL('/dashboard/overview');
   });
 
   test('Cenário 2.1: Admin should be able to review and approve a document', async ({ page }) => {
     // 1. Navigate to the Habilitations page
     await page.goto('/admin/habilitations');
-    await expect(page.getByRole('heading', { name: 'Gerenciamento de Habilitações' })).toBeVisible({timeout: 15000});
+    await expect(page.locator('[data-ai-id="admin-habilitations-page-container"]')).toBeVisible({timeout: 15000});
 
     // 2. Find the test user's request
     const userRow = page.getByRole('row', { name: new RegExp(testUser.fullName!, 'i') });
@@ -128,8 +128,8 @@ test.describe('Módulo 2: Fluxo de Habilitação de Usuário (UI)', () => {
     console.log('[Habilitation UI Test] PASSED: Document status updated to "Aprovado" in UI.');
     
     // 6. Verify the user's overall status is now "Habilitado"
-    const statusBadge = page.locator('div:has-text("Status Atual:")').locator('xpath=following-sibling::*').first();
-    await expect(statusBadge.getByText('Habilitado')).toBeVisible({ timeout: 5000 });
+    const statusInfoCard = page.locator('[data-ai-id="my-documents-habilitation-status-card"]');
+    await expect(statusInfoCard.getByText('Habilitado')).toBeVisible({ timeout: 5000 });
     console.log('[Habilitation UI Test] PASSED: User overall status updated to "Habilitado".');
   });
 });
