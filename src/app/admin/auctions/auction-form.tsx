@@ -1,7 +1,7 @@
 // src/app/admin/auctions/auction-form.tsx
 'use client';
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -25,8 +25,8 @@ import { Calendar } from '@/components/ui/calendar';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
-import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem } from '@/types';
-import { format } from 'date-fns';
+import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
+import { addDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown } from 'lucide-react';
@@ -43,6 +43,7 @@ import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Loader2, Save } from 'lucide-react';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import { getPlatformSettings } from '../settings/actions'; // Importar settings
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -64,7 +65,6 @@ interface AuctionFormProps {
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
-  isViewMode?: boolean;
 }
 
 const AuctionForm = React.forwardRef<any, AuctionFormProps>((
@@ -87,6 +87,11 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+
+  useEffect(() => {
+    getPlatformSettings().then(settings => setPlatformSettings(settings as PlatformSettings));
+  }, []);
 
   const form = useForm<AuctionFormValues>({
     resolver: zodResolver(auctionFormSchema),
@@ -142,11 +147,21 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
       setIsSubmitting(false);
     }
   }
-
+  
   const handleAddStage = () => {
     const lastStage = fields[fields.length - 1];
-    const newStartDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
-    const newEndDate = new Date(newStartDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
+    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
+
+    let newStartDate = new Date();
+    if (lastStage?.endDate) {
+      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
+    } else {
+      newStartDate = addDays(new Date(), 1); // Fallback se não houver etapa anterior
+    }
+    
+    const newEndDate = addDays(newStartDate, durationDays);
+
     append({ name: `Praça ${fields.length + 1}`, startDate: newStartDate, endDate: newEndDate, initialPrice: null });
   };
   

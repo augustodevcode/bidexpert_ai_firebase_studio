@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import type { PlatformSettings } from '@/types';
 
 interface StageFieldProps {
   stage: Partial<AuctionStage>;
@@ -38,6 +39,17 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
         }
     };
     
+    const handleTimeChange = (field: 'startDate' | 'endDate', time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        const dateToUpdate = field === 'startDate' ? startDate : endDate;
+        if (dateToUpdate) {
+            const newDate = setMinutes(setHours(dateToUpdate, hours), minutes);
+            if (field === 'startDate') setStartDate(newDate);
+            else setEndDate(newDate);
+            onStageChange(index, field, newDate);
+        }
+    };
+    
     return (
         <div className="p-3 border rounded-md bg-background relative">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -49,38 +61,44 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                         placeholder={`Praça ${index + 1}`}
                     />
                 </div>
-                <div className="space-y-1">
-                    <label className="text-xs font-medium">Lance Inicial (Opcional)</label>
-                    <Input 
+                 <div className="space-y-1">
+                    <label className="text-xs font-medium">Lance Inicial (R$)</label>
+                     <Input 
                         type="number"
                         defaultValue={stage.initialPrice ?? ''} 
                         onBlur={(e) => onStageChange(index, 'initialPrice', parseFloat(e.target.value))}
-                        placeholder="Ex: 5000.00"
+                        placeholder="Herdará do lote se vazio"
                     />
                 </div>
                 <div className="space-y-1">
-                    <label className="text-xs font-medium">Data de Início</label>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                           <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {startDate ? format(startDate, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>}
+                    <label className="text-xs font-medium">Data/Hora de Início</label>
+                    <div className="flex gap-1">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {startDate ? format(startDate, 'dd/MM/yyyy') : <span>Selecione</span>}
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
-                    </Popover>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>
+                        </Popover>
+                         <Input type="time" defaultValue={startDate ? format(startDate, 'HH:mm') : '09:00'} onChange={(e) => handleTimeChange('startDate', e.target.value)} className="w-24 h-9"/>
+                    </div>
                 </div>
                  <div className="space-y-1">
-                    <label className="text-xs font-medium">Data de Fim</label>
-                     <Popover>
-                        <PopoverTrigger asChild>
-                           <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
-                               <CalendarIcon className="mr-2 h-4 w-4" />
-                               {endDate ? format(endDate, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>}
+                    <label className="text-xs font-medium">Data/Hora de Fim</label>
+                    <div className="flex gap-1">
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {endDate ? format(endDate, 'dd/MM/yyyy') : <span>Selecione</span>}
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
-                    </Popover>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={endDate} onSelect={(d) => handleDateChange('endDate', d)} initialFocus /></PopoverContent>
+                        </Popover>
+                        <Input type="time" defaultValue={endDate ? format(endDate, 'HH:mm') : '18:00'} onChange={(e) => handleTimeChange('endDate', e.target.value)} className="w-24 h-9"/>
+                    </div>
                 </div>
             </div>
             {onRemoveStage && (
@@ -126,6 +144,7 @@ interface AuctionStagesTimelineProps {
   stages: Partial<AuctionStage>[];
   auctionOverallStartDate?: Date;
   isEditable?: boolean;
+  platformSettings?: PlatformSettings | null;
   onStageChange?: (index: number, field: keyof AuctionStage, value: any) => void;
   onAddStage?: () => void;
   onRemoveStage?: (index: number) => void;
@@ -135,6 +154,7 @@ export default function AuctionStagesTimeline({
   stages, 
   auctionOverallStartDate, 
   isEditable = false,
+  platformSettings,
   onStageChange,
   onAddStage,
   onRemoveStage,
@@ -208,7 +228,7 @@ export default function AuctionStagesTimeline({
           const isCompleted = stage.endDate ? isPast(stage.endDate) : false;
           const isActive = index === activeStageIndex;
           return (
-            <AuctionStageItem key={(stage.id as string) || index} stage={stage} isActive={isActive} isCompleted={isCompleted} />
+            <AuctionStageItem key={(stage.id as string) || index} stage={stage as AuctionStage} isActive={isActive} isCompleted={isCompleted} />
           );
         })}
       </div>
