@@ -8,6 +8,7 @@ import Footer from '@/components/layout/footer';
 import { SetupRedirect } from './setup/setup-redirect';
 import type { PlatformSettings } from '@/types';
 import { Loader2 } from 'lucide-react';
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 export function AppContentWrapper({ 
   children, 
@@ -25,20 +26,31 @@ export function AppContentWrapper({
     return <>{children}</>;
   }
 
+  // Determine if the current path is a special dashboard/admin layout
+  const isDashboardLayout = pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/consignor-dashboard');
+
   return (
     <>
       <SetupRedirect isSetupComplete={isSetupComplete} />
-      <div className="container-main-app">
-        <Suspense fallback={<div className="container-header-suspense"><Loader2 className="icon-loading-spinner" /></div>}>
-            <Header 
-              platformSettings={platformSettings}
-            />
-        </Suspense>
-        <main className="container mx-auto flex-grow px-4 py-8">
+      {isDashboardLayout ? (
+        // For dashboard layouts, render children directly without main header/footer
+        <div className="flex min-h-screen flex-col bg-muted/40">
           {children}
-        </main>
-        <Footer />
-      </div>
+        </div>
+      ) : (
+        // For public pages, render the full site layout
+        <div className="container-main-app">
+          <Suspense fallback={<div className="container-header-suspense"><Loader2 className="icon-loading-spinner" /></div>}>
+              <Header 
+                platformSettings={platformSettings}
+              />
+          </Suspense>
+          <main className="container mx-auto flex-grow px-4 py-8">
+            {children}
+          </main>
+          <Footer />
+        </div>
+      )}
     </>
   );
 }

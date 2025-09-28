@@ -15,6 +15,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import ConsignorSidebar from '@/components/layout/consignor-sidebar';
 import { hasAnyPermission } from '@/lib/permissions'; 
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 export default function ConsignorDashboardLayout({
   children,
@@ -62,7 +63,7 @@ export default function ConsignorDashboardLayout({
           Você não tem permissão para acessar o Painel do Comitente.
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          (Perfil: {userProfileWithPermissions?.roleName || 'N/A'})
+          (Perfil: {userProfileWithPermissions?.roleNames?.join(', ') || 'N/A'})
         </p>
         <button
           onClick={() => router.push('/')}
@@ -77,8 +78,9 @@ export default function ConsignorDashboardLayout({
   return (
     <div className="flex min-h-screen">
       <ConsignorSidebar />
-      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 md:pl-8">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30">
         {children}
+        <DevInfoIndicator />
       </main>
     </div>
   );

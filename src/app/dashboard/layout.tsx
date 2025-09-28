@@ -17,6 +17,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import DashboardSidebar from '@/components/layout/dashboard-sidebar';
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 export default function DashboardLayout({
   children,
@@ -45,8 +46,9 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen">
       <DashboardSidebar />
-      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 md:pl-8">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30">
         {children}
+        <DevInfoIndicator />
       </main>
     </div>
   );

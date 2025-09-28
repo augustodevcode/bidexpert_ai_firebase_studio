@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 import { hasPermission } from '@/lib/permissions'; 
+import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 
 export default function AdminLayout({
   children,
@@ -65,10 +66,11 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="container-admin-layout">
+    <div className="flex min-h-screen">
       <AdminSidebar />
-      <main className="main-content-admin">
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30">
         {children}
+        <DevInfoIndicator />
       </main>
     </div>
   );
