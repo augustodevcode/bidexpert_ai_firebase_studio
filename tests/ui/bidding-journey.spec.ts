@@ -2,10 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { PrismaClient } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { createUser } from '../../src/app/admin/users/actions';
-import { createAuction } from '../../src/app/admin/auctions/actions';
-import { createLot } from '../../src/app/admin/lots/actions';
-import { habilitateForAuctionAction } from '../../src/app/admin/habilitations/actions';
+// Server actions will be imported dynamically to avoid client-side import issues
 import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Auction, Lot, Tenant } from '../../src/types';
 
 const testRunId = `bidding-journey-${uuidv4().substring(0, 8)}`;

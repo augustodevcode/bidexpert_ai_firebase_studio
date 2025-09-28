@@ -4,17 +4,7 @@ import type { UserProfileWithPermissions, Role, SellerProfileInfo, AuctioneerPro
 import { v4 as uuidv4 } from 'uuid';
 import { tenantContext } from '@/lib/prisma';
 
-// Import Server Actions
-import { createAuction, getAuction, deleteAuction } from '@/app/admin/auctions/actions';
-import { createLot, getLot, deleteLot, finalizeLot } from '@/app/admin/lots/actions';
-import { createUser, getUserProfileData, deleteUser } from '@/app/admin/users/actions';
-import { createSeller, getSeller, deleteSeller } from '@/app/admin/sellers/actions';
-import { createJudicialProcessAction, deleteJudicialProcess } from '@/app/admin/judicial-processes/actions';
-import { createAsset, deleteAsset } from '@/app/admin/assets/actions';
-import { createRole, getRoles } from '@/app/admin/roles/actions';
-import { habilitateForAuctionAction } from '@/app/admin/habilitations/actions';
-import { placeBidOnLot } from '@/app/auctions/[auctionId]/lots/[lotId]/actions';
-import { createAuctioneer } from '@/app/admin/auctioneers/actions';
+// Note: Server Actions are imported dynamically to avoid client-side import issues
 
 
 export async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>, user: UserProfileWithPermissions | null, ...args: any[]): Promise<T> {
@@ -31,6 +21,13 @@ export async function callActionAsUser<T>(action: (...args: any[]) => Promise<T>
 }
 
 export async function createTestPrerequisites(testRunId: string, prefix: string) {
+    // Dynamic imports to avoid client-side import issues
+    const { createUser, getUserProfileData } = await import('@/app/admin/users/actions');
+    const { createSeller, getSeller } = await import('@/app/admin/sellers/actions');
+    const { createJudicialProcessAction } = await import('@/app/admin/judicial-processes/actions');
+    const { createAsset } = await import('@/app/admin/assets/actions');
+    const { createAuctioneer } = await import('@/app/admin/auctioneers/actions');
+
     const tenant = await prisma.tenant.create({ data: { name: `${prefix} Tenant ${testRunId}`, subdomain: `${prefix}-${testRunId}` } });
 
     const adminRole = await prisma.role.upsert({ where: { nameNormalized: 'ADMINISTRATOR' }, update: {}, create: { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', permissions: ['manage_all'] } });
