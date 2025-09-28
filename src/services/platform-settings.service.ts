@@ -8,7 +8,7 @@
 import { PlatformSettingsRepository } from '@/repositories/platform-settings.repository';
 import type { PlatformSettings } from '@/types';
 import type { Prisma } from '@prisma/client';
-import { tenantContext } from '@/lib/prisma'; // Importa o contexto do tenant
+import { tenantContext } from '@/lib/tenant-context'; // Importa o contexto do tenant
 
 export class PlatformSettingsService {
   private repository: PlatformSettingsRepository;
