@@ -38,12 +38,12 @@ import { cn } from '@/lib/utils';
 import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { getLotCategories } from './categories/actions';
-import { getAuctioneers } from './auctioneers/actions';
-import { getSellers } from './sellers/actions';
-import { getStates } from './states/actions';
-import { getCities } from './cities/actions';
-import { getJudicialProcesses } from './judicial-processes/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getAuctioneers } from '@/app/admin/auctioneers/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
 
@@ -97,7 +97,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
         ...initialData,
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
-        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
+        auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
     },
   });
 
@@ -112,7 +112,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
     }
   }, [form, isWizardMode, onWizardDataChange]);
 
-  useImperativeHandle(ref, () => ({
+  React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmit),
     setValue: form.setValue,
   }));
@@ -215,9 +215,7 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
                 {watchedImageMediaId !== 'INHERIT' && (
                     <FormItem>
                         <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
-                                {watchedImageUrl ? (<Image src={watchedImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}
-                            </div>
+                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{watchedImageUrl ? (<Image src={watchedImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                             <div className="space-y-2 flex-grow">
                                 <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{watchedImageUrl ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
                                 <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
@@ -290,6 +288,3 @@ const AuctionForm = React.forwardRef<any, Omit<AuctionFormProps, 'formRef'>>((pr
 AuctionForm.displayName = "AuctionForm";
 
 export default AuctionForm;
-```
-
-I apologize again for the repeated errors. This version should finally resolve the build issue.
