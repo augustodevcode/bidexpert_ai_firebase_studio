@@ -1,9 +1,10 @@
+
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
 import type { AuctionStage, PlatformSettings } from '@/types';
 import { CalendarDays, PlusCircle, Trash2, CalendarIcon } from 'lucide-react';
-import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays, differenceInMilliseconds, formatDistanceStrict } from 'date-fns';
+import { format, isPast, isFuture, parseISO, setHours, setMinutes, addDays, differenceInMilliseconds, formatDistanceStrict, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -154,15 +155,17 @@ const AuctionStageItem: React.FC<{
 
 
 interface AuctionStagesTimelineProps {
+  auctionOverallStartDate: Date;
   stages: Partial<AuctionStage>[];
   isEditable?: boolean;
   platformSettings?: PlatformSettings | null;
   onStageChange?: (index: number, field: keyof AuctionStage, value: any) => void;
-  onAddStage?: (stage: Partial<AuctionStage>) => void;
+  onAddStage?: () => void;
   onRemoveStage?: (index: number) => void;
 }
 
 export default function AuctionStagesTimeline({ 
+  auctionOverallStartDate,
   stages, 
   isEditable = false,
   platformSettings,
@@ -176,26 +179,6 @@ export default function AuctionStagesTimeline({
     setIsClient(true);
   }, []);
   
-  const handleAddStageWithDefaults = () => {
-    if (!onAddStage) return;
-    const lastStage = stages[stages.length - 1];
-    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
-    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
-
-    let newStartDate = new Date();
-    if (lastStage?.endDate) {
-      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
-    }
-    
-    const newEndDate = addDays(newStartDate, durationDays);
-
-    onAddStage({
-      name: `Praça ${stages.length + 1}`,
-      startDate: newStartDate,
-      endDate: newEndDate,
-      initialPrice: null
-    });
-  };
 
   const processedStages = useMemo(() => stages
     .map(stage => ({
@@ -220,12 +203,18 @@ export default function AuctionStagesTimeline({
 
   const activeStageIndex = useMemo(() => {
     if (!isClient) return -1;
+    const nowTime = now.getTime();
     const activeIndex = processedStages.findIndex(stage => 
-      stage.startDate && stage.endDate && now >= stage.startDate && now < stage.endDate
+      stage.startDate && stage.endDate && nowTime >= stage.startDate.getTime() && nowTime < stage.endDate.getTime()
     );
     if (activeIndex !== -1) return activeIndex;
-    if (processedStages[0]?.startDate && isFuture(processedStages[0].startDate)) return -1;
-    if (processedStages[processedStages.length - 1]?.endDate && isPast(processedStages[processedStages.length - 1].endDate!)) return processedStages.length;
+
+    const firstStageStart = processedStages[0]?.startDate;
+    if (firstStageStart && isFuture(firstStageStart)) return -1;
+
+    const lastStageEnd = processedStages[processedStages.length - 1]?.endDate;
+    if (lastStageEnd && isPast(lastStageEnd)) return processedStages.length;
+    
     return -1;
   }, [isClient, processedStages, now]);
 
@@ -238,7 +227,7 @@ export default function AuctionStagesTimeline({
                 <StageField key={stage.id || index} stage={stage} index={index} onStageChange={onStageChange!} onRemoveStage={onRemoveStage} />
             ))}
             {onAddStage && (
-                <Button type="button" variant="outline" size="sm" onClick={handleAddStageWithDefaults}>
+                <Button type="button" variant="outline" size="sm" onClick={onAddStage}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça
                 </Button>
             )}
@@ -247,7 +236,7 @@ export default function AuctionStagesTimeline({
   }
 
   // Renderiza o modo de visualização (timeline)
-  if (totalDuration <= 0) {
+  if (!isClient || totalDuration <= 0) {
       return <div className="text-xs text-muted-foreground">Etapas do leilão não definidas.</div>
   }
 
