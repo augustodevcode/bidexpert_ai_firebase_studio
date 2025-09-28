@@ -1,0 +1,9 @@
+/// @Model {label: "Fonte de Dados de Relatório", icon: "database"}
+model DataSource {
+  id        String @id @default(cuid())
+  name      String
+  modelName String @unique
+  fields    Json
+
+  @@map("data_sources")
+}

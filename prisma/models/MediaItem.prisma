@@ -1,0 +1,21 @@
+model MediaItem {
+  id               String    @id @default(cuid())
+  fileName         String
+  storagePath      String
+  title            String?
+  altText          String?
+  caption          String?
+  description      String?   @db.Text
+  mimeType         String
+  sizeBytes        Int?
+  urlOriginal      String
+  urlThumbnail     String?
+  urlMedium        String?
+  urlLarge         String?
+  linkedLotIds     Json?
+  judicialProcessId String?
+  dataAiHint       String?
+  uploadedAt       DateTime  @default(now())
+  uploadedByUserId String?   // Made optional to work with onDelete: SetNull
+  uploadedBy       User?     @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+}

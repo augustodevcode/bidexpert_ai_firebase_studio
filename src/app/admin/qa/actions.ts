@@ -1,0 +1,290 @@
+// src/app/admin/qa/actions.ts
+/**
+ * @fileoverview Server Actions para o painel de Quality Assurance (QA).
+ * Este arquivo define funções que executam scripts de teste predefinidos
+ * (usando `node:child_process`) e retornam a saída (stdout e stderr) para a UI.
+ * Em caso de falha, ele invoca um fluxo de IA (Genkit) para analisar o log de erro
+ * e fornecer uma recomendação de correção, automatizando a primeira etapa do debugging.
+ */
+'use server';
+
+import { exec } from 'child_process';
+import util from 'util';
+import { analyzeTestFailure, analyzeErrorLog } from '@/ai/flows/analyze-test-failure-flow'; // Import analyzeErrorLog
+import * as fs from 'fs/promises';
+import path from 'path';
+
+const execPromise = util.promisify(exec);
+
+// Helper function to read project context files for the AI
+async function getProjectContextForAI(): Promise<string> {
+    try {
+        const rulesPath = path.join(process.cwd(), 'src/airules.MD');
+        const headerPath = path.join(process.cwd(), 'prisma/header.prisma');
+        const modelsDir = path.join(process.cwd(), 'prisma/models');
+
+        const rulesContent = await fs.readFile(rulesPath, 'utf-8');
+        let schemaContent = await fs.readFile(headerPath, 'utf-8');
+        
+        const modelFiles = await fs.readdir(modelsDir);
+        for (const file of modelFiles) {
+            if (file.endsWith('.prisma')) {
+                schemaContent += "\n" + await fs.readFile(path.join(modelsDir, file), 'utf-8');
+            }
+        }
+
+        return `
+            **Project Rules (airules.MD):**
+            ${rulesContent}
+
+            ---
+
+            **Database Schema (prisma/schema.prisma - built from parts):**
+            ${schemaContent}
+        `;
+    } catch (error) {
+        console.error("Error reading project context for AI:", error);
+        return "Could not load project context. Please analyze the log based on general best practices for a Next.js/Prisma application.";
+    }
+}
+
+
+// Helper function to run a test script and handle output/errors, now with AI analysis
+async function runTestAndAnalyze(command: string, testFileName: string): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    console.log(`[QA Action] Running command: ${command}`);
+    try {
+        const { stdout, stderr } = await execPromise(command);
+
+        if (stderr) {
+            if (stderr.includes('# fail') || stderr.toLowerCase().includes('error')) {
+                 console.error(`[QA Action] Test execution has stderr failures for command "${command}":`, stderr);
+                 throw new Error(stderr); // Throw to trigger AI analysis
+            }
+             console.log(`[QA Action] Test executed with stderr but no failures for command "${command}":`, stderr);
+        }
+        
+        console.log(`[QA Action] Test executed successfully for command "${command}". stdout:`, stdout);
+        return { success: true, output: stdout + (stderr ? `\n--- STDERR (No Failures) ---\n${stderr}` : '') };
+
+    } catch (error: any) {
+        console.error(`[QA Action] Error executing test script "${command}":`, error);
+        const outputLog = error.stdout || '';
+        const errorLog = error.stderr || error.message;
+        const fullLog = `--- STDOUT ---\n${outputLog}\n\n--- STDERR ---\n${errorLog}`;
+
+        try {
+            console.log("[QA Action] Test failed. Invoking AI analysis flow...");
+            const projectContext = await getProjectContextForAI();
+            
+            console.log("==================== AI ANALYSIS INPUT ====================");
+            console.log(`Test File: ${testFileName}`);
+            console.log("Project Context Length:", projectContext.length);
+            console.log("Full Log Length:", fullLog.length);
+            // console.log("Full Log Content:", fullLog); // Uncomment for very detailed debugging
+            console.log("=========================================================");
+
+            const analysisResult = await analyzeTestFailure({
+                testLog: fullLog,
+                testFileName: testFileName,
+                projectContext: projectContext,
+            });
+
+            console.log("[QA Action] AI analysis flow completed. Result:", analysisResult);
+
+            const recommendation = `
+================================================
+🤖 ANÁLISE E RECOMENDAÇÃO DA IA 🤖
+================================================
+
+🔍 **Análise:**
+${analysisResult.analysis}
+
+💡 **Recomendação:**
+${analysisResult.recommendation}
+
+================================================
+`;
+            return { success: false, output: fullLog, error: errorLog, recommendation };
+
+        } catch (aiError: any) {
+            console.error("[QA Action] CRITICAL: Error during AI analysis flow execution:", aiError);
+            const recommendation = "\n\n[ANÁLISE DA IA FALHOU]: Não foi possível analisar o erro automaticamente.";
+            return { success: false, output: fullLog, error: errorLog, recommendation };
+        }
+    }
+}
+
+/**
+ * Action to analyze a generic error log with AI.
+ * NOTE: Server log fetching is temporarily disabled due to a build issue.
+ * @param clientErrorLog The error message displayed on the client-side toast.
+ */
+export async function analyzeErrorWithLogsAction(clientErrorLog: string): Promise<{ success: boolean; analysis: string; recommendation: string }> {
+  try {
+    const projectContext = await getProjectContextForAI();
+    console.log("[analyzeErrorWithLogsAction] Analyzing client-side error log.");
+    
+    // Temporarily disabled fetching server logs. We'll only use the client error.
+    const fullErrorContext = `
+      **Client-Side Error Message:**
+      ${clientErrorLog}
+    `;
+    
+    console.log("[analyzeErrorWithLogsAction] Calling AI to analyze error context...");
+    const result = await analyzeErrorLog({
+      errorLog: fullErrorContext,
+      projectContext: projectContext,
+    });
+    
+    console.log("[analyzeErrorWithLogsAction] AI analysis complete.", result);
+    return { success: true, ...result };
+
+  } catch (error: any) {
+    console.error("[analyzeErrorWithLogsAction] Error during AI analysis:", error);
+    return {
+      success: false,
+      analysis: "Falha na Análise",
+      recommendation: `Não foi possível analisar o erro: ${error.message}`
+    };
+  }
+}
+
+export async function runBiddingEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/bidding-e2e.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runSearchAndFilterTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/search-and-filter.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+
+// --- Rest of the functions would follow the same pattern ---
+export async function runHabilitationEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/habilitation.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runMenuContentTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/menu-content.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runModalitiesMenuTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/modalities-menu.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runUserEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/user.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runSellerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/seller.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runAuctioneerEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/auctioneer.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runCategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/category.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runSubcategoryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/subcategory.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runRoleEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/role.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runStateEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/state.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runCityEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/city.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runCourtEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/court.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runJudicialDistrictEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/judicial-district.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runJudicialBranchEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/judicial-branch.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runJudicialProcessEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/judicial-process.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runBemEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/bem.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runLotEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/lot.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runWizardEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/wizard-e2e.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runMediaLibraryEndToEndTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/media.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runPlatformSettingsTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/platform-settings.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}
+
+export async function runAuctionDataValidationTest(): Promise<{ success: boolean; output: string; error?: string; recommendation?: string; }> {
+    const testFile = 'tests/auction-data.test.ts';
+    const command = `npx vitest run ${testFile}`;
+    return runTestAndAnalyze(command, testFile);
+}

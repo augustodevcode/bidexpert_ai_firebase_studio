@@ -1,0 +1,12 @@
+
+/// Tabela de junção para a relação muitos-para-muitos entre User e Tenant.
+model UsersOnTenants {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId   String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([userId, tenantId])
+}

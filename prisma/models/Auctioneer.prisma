@@ -1,0 +1,29 @@
+
+model Auctioneer {
+  id                   String    @id @default(cuid())
+  publicId             String    @unique
+  slug                 String    @unique
+  name                 String
+  registrationNumber   String?   @db.Text
+  contactName          String?   @db.Text
+  email                String?   @db.Text
+  phone                String?   @db.Text
+  address              String?   @db.Text
+  city                 String?   @db.Text
+  state                String?   @db.Text
+  zipCode              String?   @db.Text
+  website              String?   @db.Text
+  logoUrl              String?   @db.Text
+  logoMediaId          String?
+  dataAiHintLogo       String?   @db.Text
+  description          String?   @db.Text
+  userId               String?   @unique
+  user                 User?     @relation("UserAuctioneer", fields: [userId], references: [id], onDelete: SetNull)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  auctions             Auction[]
+  lots                 Lot[]
+  // Multi-Tenant
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId             String
+}

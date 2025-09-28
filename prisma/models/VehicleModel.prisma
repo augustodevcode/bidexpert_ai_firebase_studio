@@ -1,0 +1,10 @@
+model VehicleModel {
+  id     String      @id @default(cuid())
+  name   String
+  slug   String
+  makeId String
+  make   VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
+
+  @@unique([makeId, name])
+  @@index([slug])
+}

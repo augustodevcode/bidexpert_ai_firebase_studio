@@ -1,0 +1,71 @@
+
+model Auction {
+  id                            String                @id @default(cuid())
+  publicId                      String?               @unique
+  slug                          String?               @unique
+  title                         String
+  description                   String?               @db.Text
+  status                        AuctionStatus         @default(RASCUNHO)
+  auctionDate                   DateTime?             @default(now())
+  endDate                       DateTime?
+  totalLots                     Int                   @default(0)
+  visits                        Int                   @default(0)
+  initialOffer                  Decimal?
+  isFeaturedOnMarketplace       Boolean               @default(false)
+  marketplaceAnnouncementTitle  String?               @db.Text
+  totalHabilitatedUsers         Int?                  @default(0)
+  isFavorite                    Boolean?              @default(false)
+  dataAiHint                    String?
+  documentsUrl                  String?               @db.Text
+  evaluationReportUrl           String?               @db.Text
+  auctionCertificateUrl         String?               @db.Text
+  sellingBranch                 String?               @db.Text
+  automaticBiddingEnabled       Boolean               @default(false)
+  silentBiddingEnabled          Boolean               @default(false)
+  allowMultipleBidsPerUser      Boolean               @default(true)
+  allowInstallmentBids          Boolean               @default(true)
+  softCloseEnabled              Boolean               @default(false)
+  softCloseMinutes              Int                   @default(2)
+  estimatedRevenue              Decimal?
+  achievedRevenue               Decimal?
+  additionalTriggers            Json?
+  decrementAmount               Decimal?
+  decrementIntervalSeconds      Int?
+  floorPrice                    Decimal?
+  createdAt                     DateTime              @default(now())
+  updatedAt                     DateTime              @updatedAt
+  lots                          Lot[]
+  auctioneer                    Auctioneer?           @relation(fields: [auctioneerId], references: [id], onDelete: SetNull)
+  auctioneerId                  String?
+  seller                        Seller?               @relation(fields: [sellerId], references: [id], onDelete: SetNull)
+  sellerId                      String?
+  category                      LotCategory?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId                    String?
+  tenant                        Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId                      String
+  city                          City?                 @relation(fields: [cityId], references: [id], onDelete: SetNull)
+  cityId                        String?
+  state                         State?                @relation(fields: [stateId], references: [id], onDelete: SetNull)
+  stateId                       String?
+  zipCode                       String?
+  latitude                      Float?
+  longitude                     Float?
+  onlineUrl                     String?               @db.Text
+  address                       String?               @db.Text
+  auctionType                   AuctionType?
+  auctionMethod                 AuctionMethod?        @default(STANDARD)
+  participation                 AuctionParticipation? @default(ONLINE)
+  stages                        AuctionStage[]
+  judicialProcessId             String?
+  judicialProcess               JudicialProcess?      @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  habilitations                 AuctionHabilitation[]
+  reviews                       Review[]
+  questions                     LotQuestion[]
+  courtId                       String?
+  court                         Court?                @relation(map: "CourtAuctions", fields: [courtId], references: [id], onDelete: SetNull)
+  districtId                    String?
+  district                      JudicialDistrict?     @relation(map: "DistrictAuctions", fields: [districtId], references: [id], onDelete: SetNull)
+  branchId                      String?
+  branch                        JudicialBranch?       @relation(map: "BranchAuctions", fields: [branchId], references: [id], onDelete: SetNull)
+  bids                          Bid[]
+}
