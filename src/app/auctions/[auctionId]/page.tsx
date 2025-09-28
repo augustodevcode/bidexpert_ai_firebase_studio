@@ -109,13 +109,7 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
 }
 
 export async function generateStaticParams() {
-  try {
-    const auctions = await getAuctions(true); // Public call
-    return auctions.slice(0, 50).map((auction) => ({
-      auctionId: auction.publicId || auction.id,
-    }));
-  } catch (error) {
-     console.error("Error generating static params for auctions:", error);
-     return [];
-  }
+  // For now, return empty array to disable static generation
+  // This avoids the cookies context issue during build time
+  return [];
 }

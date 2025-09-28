@@ -42,7 +42,8 @@ import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntitySelector from '@/components/ui/entity-selector';
-import { getAuctioneers as refetchAuctioneers, getSellers as refetchSellers } from './actions';
+import { getAuctioneers as refetchAuctioneers } from '../auctioneers/actions';
+import { getSellers as refetchSellers } from '../sellers/actions';
 import { getLotCategories as refetchCategories } from '../categories/actions';
 import { getStates as refetchStates } from '../states/actions';
 import { getCities as refetchCities } from '../cities/actions';
@@ -80,9 +81,17 @@ interface AuctionFormProps {
   formRef?: React.Ref<any>;
 }
 
-const auctionStatusOptions: { value: AuctionStatus; label: string }[] = [
-  'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO'
-].map(status => ({ value: status, label: getAuctionStatusText(status) }));
+const auctionStatusOptions = [
+  { value: 'RASCUNHO' as AuctionStatus, label: getAuctionStatusText('RASCUNHO') },
+  { value: 'EM_PREPARACAO' as AuctionStatus, label: getAuctionStatusText('EM_PREPARACAO') },
+  { value: 'EM_BREVE' as AuctionStatus, label: getAuctionStatusText('EM_BREVE') },
+  { value: 'ABERTO' as AuctionStatus, label: getAuctionStatusText('ABERTO') },
+  { value: 'ABERTO_PARA_LANCES' as AuctionStatus, label: getAuctionStatusText('ABERTO_PARA_LANCES') },
+  { value: 'ENCERRADO' as AuctionStatus, label: getAuctionStatusText('ENCERRADO') },
+  { value: 'FINALIZADO' as AuctionStatus, label: getAuctionStatusText('FINALIZADO') },
+  { value: 'CANCELADO' as AuctionStatus, label: getAuctionStatusText('CANCELADO') },
+  { value: 'SUSPENSO' as AuctionStatus, label: getAuctionStatusText('SUSPENSO') }
+];
 
 const auctionTypeOptions: { value: AuctionType, label: string }[] = [
   { value: 'JUDICIAL', label: 'Judicial' },
@@ -197,8 +206,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       auctioneerId: initialData?.auctioneerId || '',
       sellerId: initialData?.sellerId || '',
       categoryId: initialData?.categoryId || '',
-      imageUrl: initialData?.imageUrl || '',
-      imageMediaId: initialData?.imageMediaId || null,
+      imageUrl: (initialData as any)?.imageUrl || '',
+      imageMediaId: (initialData as any)?.imageMediaId || null,
       documentsUrl: initialData?.documentsUrl || '',
       evaluationReportUrl: initialData?.evaluationReportUrl || '',
       auctionCertificateUrl: initialData?.auctionCertificateUrl || '',
@@ -222,7 +231,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   
   useImperativeHandle(ref, () => ({
     setValue: form.setValue,
-    requestSubmit: form.handleSubmit(onSubmitAction),
+    requestSubmit: form.handleSubmit(handleSubmit),
   }));
   
   useEffect(() => {
@@ -251,13 +260,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
       const auctioneerDetails = auctioneers.find(a => a.id === value.auctioneerId);
       const sellerDetails = sellers.find(s => s.id === value.sellerId);
       
-      const auctionDate = (value.auctionStages && value.auctionStages.length > 0 && value.auctionStages[0].startDate)
-        ? value.auctionStages[0].startDate
+      const auctionDate = (value.auctionStages && value.auctionStages.length > 0 && value.auctionStages[0]?.startDate)
+        ? value.auctionStages[0]?.startDate
         : new Date();
 
       const transformedData: Partial<Auction> = {
         ...(value as Partial<Auction>),
-        auctionDate: auctionDate,
         auctioneerName: auctioneerDetails?.name,
         sellerName: sellerDetails?.name,
       };
@@ -273,6 +281,18 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     if (entity === 'auctioneers') { setIsFetchingAuctioneers(true); const data = await refetchAuctioneers(); setAuctioneers(data); setIsFetchingAuctioneers(false); }
     if (entity === 'sellers') { setIsFetchingSellers(true); const data = await refetchSellers(); setSellers(data); setIsFetchingSellers(false); }
   }, []);
+
+  const handleSubmit = async (value: AuctionFormValues) => {
+    try {
+      setIsSubmitting(true);
+      return await onSubmitAction(value);
+    } catch (error) {
+      console.error(error);
+      return { success: false, message: 'Erro ao salvar o leilão.' };
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   async function onSubmit(values: AuctionFormValues) {
     if (!onSubmitAction) return;
@@ -294,31 +314,41 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   }
   
   const handleCepLookup = async (cep: string) => {
-    if (!cep || cep.replace(/\D/g, '').length !== 8) return;
+    if (!cep || cep.length < 8) return;
     setIsCepLoading(true);
-    const result = await consultaCepAction(cep);
-    if (result.success && result.data) {
+    try {
+      const result = await consultaCepAction(cep);
+      if (result.success && result.data) {
         form.setValue('address', result.data.logradouro);
-        const foundState = initialStates.find(s => s.uf === result.data.uf);
+        const foundState = initialStates.find(s => s.uf === result.data?.uf);
         if (foundState) {
-            form.setValue('stateId', foundState.id);
-            const citiesOfState = initialAllCities.filter(c => c.stateId === foundState.id);
-            const foundCity = citiesOfState.find(c => c.name.toLowerCase() === result.data.localidade.toLowerCase());
+          form.setValue('stateId', foundState.id);
+          const citiesOfState = initialAllCities.filter(c => c.stateId === foundState.id);
+          if (citiesOfState.length > 0) {
+            const foundCity = citiesOfState.find(c => c.name.toLowerCase() === result.data?.localidade?.toLowerCase());
             if (foundCity) {
-                form.setValue('cityId', foundCity.id);
+              form.setValue('cityId', foundCity.id);
             } else {
-                toast({ title: 'Cidade não encontrada', description: `A cidade "${result.data.localidade}" não foi encontrada no estado de ${foundState.name}. Cadastre-a primeiro.`, variant: 'default' });
-                form.setValue('cityId', '');
+              toast({ title: 'Cidade não encontrada', description: `A cidade "${result.data?.localidade}" não foi encontrada no estado de ${foundState.name}. Cadastre-a primeiro.`, variant: 'default' });
+              form.setValue('cityId', '');
             }
+          } else {
+            toast({ title: 'Nenhuma cidade encontrada', description: `Não foram encontradas cidades no estado de ${foundState.name}. Cadastre-as primeiro.`, variant: 'default' });
+            form.setValue('cityId', '');
+          }
         } else {
-             toast({ title: 'Estado não encontrado', description: `A UF "${result.data.uf}" não foi encontrada. Cadastre-o primeiro.`, variant: 'default' });
-             form.setValue('stateId', '');
-             form.setValue('cityId', '');
+          toast({ title: 'Estado não encontrado', description: `A UF "${result.data?.uf}" não foi encontrada. Cadastre-o primeiro.`, variant: 'default' });
+          form.setValue('stateId', '');
+          form.setValue('cityId', '');
         }
-    } else {
+      } else {
         toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
+      }
+    } catch (error) {
+      toast({ title: 'Erro ao buscar CEP', description: 'Ocorreu um erro ao buscar o CEP fornecido.', variant: 'destructive' });
+    } finally {
+      setIsCepLoading(false);
     }
-    setIsCepLoading(false);
   };
 
   const handleCancelClick = () => {
@@ -369,8 +399,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                         <FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><div className="flex flex-col sm:flex-row gap-2"><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''} onChange={(e) => { field.onChange(e); if (e.target.value.replace(/\D/g, '').length === 8) { handleCepLookup(e.target.value); }}}/></FormControl><Button type="button" variant="secondary" onClick={() => handleCepLookup(form.getValues('zipCode') || '')} disabled={isCepLoading} className="w-full sm:w-auto">{isCepLoading ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Buscar'}</Button></div><FormMessage /></FormItem>)}/>
                         <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço</FormLabel><FormControl><Input placeholder="Rua Exemplo, 123" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector entityName="state" value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector entityName="city" value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." onRefetch={() => {}} isFetching={false} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector entityName="state" value={field.value} onChange={field.onChange} options={initialStates.map(s => ({ value: s.id, label: `${s.name} (${s.uf})` }))} placeholder="Selecione o estado" searchPlaceholder="Buscar..." emptyStateMessage="Nenhum estado encontrado." onRefetch={() => {}} isFetching={false} /><FormMessage /></FormItem>)} />
+                            <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector entityName="city" value={field.value} onChange={field.onChange} options={filteredCities.map(c => ({ value: c.id, label: c.name }))} placeholder={!selectedStateId ? "Selecione um estado" : "Selecione a cidade"} searchPlaceholder="Buscar..." emptyStateMessage="Nenhuma cidade encontrada." onRefetch={() => {}} isFetching={false} disabled={!selectedStateId} /><FormMessage /></FormItem>)} />
                         </div>
                          <div className="space-y-2 pt-2">
                             <Label>Localização no Mapa</Label>
@@ -405,7 +435,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             </div>
         );
-        case "midia":
+        case "midia": {
             const featuredLot = lots.find(l => l.isFeatured);
             return (
                 <div className="space-y-4">
@@ -425,6 +455,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                     <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
             );
+        }
         case "opcoes": return (
             <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
@@ -439,15 +470,16 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <FormField control={form.control} name="softCloseEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel className="flex items-center gap-2"><Zap className="h-4 w-4 text-amber-500" /> Soft-Close</FormLabel><FormDescription className="text-xs">Estender o tempo final com novos lances?</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
                 {softCloseEnabled && (
                     <FormField
-                    control={form.control}
-                    name="softCloseMinutes"
-                    render={({ field }) => (
-                    <FormItem className="pl-4">
-                        <FormLabel>Minutos para Soft-Close</FormLabel>
-                        <FormControl><Input type="number" {...field} value={field.value ?? 2} onChange={e => field.onChange(parseInt(e.target.value, 10))} className="w-24" /></FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
+                        control={form.control}
+                        name="softCloseMinutes"
+                        render={({ field }) => (
+                            <FormItem className="pl-4">
+                                <FormLabel>Minutos para Soft-Close</FormLabel>
+                                <FormControl><Input type="number" {...field} value={field.value ?? 2} onChange={e => field.onChange(parseInt(e.target.value, 10))} className="w-24" /></FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                 )}
             </div>
         );
