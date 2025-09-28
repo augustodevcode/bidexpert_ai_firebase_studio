@@ -37,6 +37,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '../settings/actions';
 import { addDays } from 'date-fns';
+import { isValidImageUrl } from '@/lib/ui-helpers';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
