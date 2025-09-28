@@ -26,10 +26,10 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem, PlatformSettings } from '@/types';
-import { addDays, format } from 'date-fns';
+import { addDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
-import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown } from 'lucide-react';
+import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import { getLotCategories } from '@/app/admin/categories/actions';
@@ -41,7 +41,6 @@ import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Loader2, Save } from 'lucide-react';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '../settings/actions';
 
@@ -61,12 +60,13 @@ interface AuctionFormProps {
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
   formTitle: string;
   formDescription: string;
+  submitButtonText: string;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
 }
 
-const AuctionForm = React.forwardRef<any, AuctionFormProps>((
+const AuctionForm = forwardRef<any, AuctionFormProps>((
 {
   initialData,
   categories: initialCategories,
@@ -76,13 +76,14 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   allCities: initialAllCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
+  submitButtonText,
   isWizardMode = false,
   onWizardDataChange,
 }, ref) => {
   
   const { toast } = useToast();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   useEffect(() => {
@@ -101,7 +102,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
   
   const watchedValues = useWatch({ control: form.control });
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isWizardMode && onWizardDataChange) {
       const subscription = form.watch((value) => {
         onWizardDataChange(value as Partial<AuctionFormValues>);
@@ -110,8 +111,8 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
     }
   }, [form, isWizardMode, onWizardDataChange]);
 
-  React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
+  useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmit),
     setValue: form.setValue,
     getValues: form.getValues,
   }));
@@ -161,8 +162,8 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
     append({ name: `Praça ${fields.length + 1}`, startDate: newStartDate, endDate: newEndDate, initialPrice: null });
   };
   
-  const handleStageChange = (index: number, field: keyof (typeof fields)[0], value: any) => {
-    form.setValue(`auctionStages.${index}.${field as any}`, value, { shouldDirty: true });
+  const handleStageChange = (index: number, field: keyof AuctionFormValues['auctionStages'][0], value: any) => {
+    form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true });
   };
 
   const accordionContent = (section: string) => {
@@ -281,7 +282,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
                   <div className="flex justify-end pt-4">
                     <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
                       {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
-                      { "Salvar Alterações"}
+                      {submitButtonText}
                     </Button>
                   </div>
                 )}

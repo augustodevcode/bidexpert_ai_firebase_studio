@@ -92,28 +92,28 @@ export default function LotForm({
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const [isMainImageDialogOpen, setIsMainImageDialogOpen] = React.useState(false);
-  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = React.useState(false);
+  const [isMainImageDialogOpen, setIsMainImageDialogOpen] = useState(false);
+  const [isGalleryDialogOpen, setIsGalleryDialogOpen] = useState(false);
   
-  const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
-  const [isLoadingSubcategories, setIsLoadingSubcategories] = React.useState(false);
-  const [assetRowSelection, setAssetRowSelection] = React.useState({});
-  const [currentAvailableAssets, setCurrentAvailableAssets] = React.useState<Asset[]>(initialAvailableAssets);
+  const [availableSubcategories, setAvailableSubcategories] = useState<Subcategory[]>([]);
+  const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
+  const [assetRowSelection, setAssetRowSelection] = useState({});
+  const [currentAvailableAssets, setCurrentAvailableAssets] = useState<Asset[]>(initialAvailableAssets);
 
-  const [isAssetModalOpen, setIsAssetModalOpen] = React.useState(false);
-  const [selectedAssetForModal, setSelectedAssetForModal] = React.useState<Asset | null>(null);
+  const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
+  const [selectedAssetForModal, setSelectedAssetForModal] = useState<Asset | null>(null);
 
-  const [auctions, setAuctions] = React.useState(initialAuctions);
-  const [categories, setCategories] = React.useState(initialCategories);
-  const [sellers, setSellers] = React.useState(initialSellers); 
-  const [isFetchingAuctions, setIsFetchingAuctions] = React.useState(false);
-  const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
-  const [isFetchingSellers, setIsFetchingSellers] = React.useState(false); 
+  const [auctions, setAuctions] = useState(initialAuctions);
+  const [categories, setCategories] = useState(initialCategories);
+  const [sellers, setSellers] = useState(initialSellers); 
+  const [isFetchingAuctions, setIsFetchingAuctions] = useState(false);
+  const [isFetchingCategories, setIsFetchingCategories] = useState(false);
+  const [isFetchingSellers, setIsFetchingSellers] = useState(false); 
 
-  const [linkedAssetsSortBy, setLinkedAssetsSortBy] = React.useState('title_asc');
-  const [platformSettings, setPlatformSettings] = React.useState<PlatformSettings | null>(samplePlatformSettings as PlatformSettings);
+  const [linkedAssetsSortBy, setLinkedAssetsSortBy] = useState('title_asc');
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(samplePlatformSettings as PlatformSettings);
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
@@ -140,7 +140,7 @@ export default function LotForm({
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
 
   // UseEffect to automatically set seller based on selected auction
-  React.useEffect(() => {
+  useEffect(() => {
     async function updateSellerFromAuction() {
       if (watchedAuctionId) {
         const selectedAuction = await getAuction(watchedAuctionId);
@@ -152,13 +152,13 @@ export default function LotForm({
     updateSellerFromAuction();
   }, [watchedAuctionId, form]);
 
-  const linkedAssetsDetails = React.useMemo(() => {
+  const linkedAssetsDetails = useMemo(() => {
     const allPossibleAssets = [...currentAvailableAssets, ...(initialData?.assets || [])];
     const uniqueAssets = Array.from(new Map(allPossibleAssets.map(item => [item.id, item])).values());
     return (watchedAssetIds || []).map(id => uniqueAssets.find(asset => asset.id === id)).filter((b): b is Asset => !!b);
   }, [watchedAssetIds, currentAvailableAssets, initialData?.assets]);
 
-  const inheritedAssetDetails = React.useMemo(() => {
+  const inheritedAssetDetails = useMemo(() => {
       if (!inheritedMediaFromAssetId) return null;
       return linkedAssetsDetails.find(asset => asset.id === inheritedMediaFromAssetId);
   }, [inheritedMediaFromAssetId, linkedAssetsDetails]);
@@ -166,21 +166,21 @@ export default function LotForm({
   const displayImageUrl = inheritedAssetDetails?.imageUrl || imageUrlPreview;
 
 
-  const handleRefetchAuctions = React.useCallback(async () => {
+  const handleRefetchAuctions = useCallback(async () => {
     setIsFetchingAuctions(true);
     const data = await refetchAllAuctions();
     setAuctions(data);
     setIsFetchingAuctions(false);
   }, []);
   
-  const handleRefetchCategories = React.useCallback(async () => {
+  const handleRefetchCategories = useCallback(async () => {
     setIsFetchingCategories(true);
     const data = await refetchCategories();
     setCategories(data);
     setIsFetchingCategories(false);
   }, []);
 
-  const handleRefetchSellers = React.useCallback(async () => {
+  const handleRefetchSellers = useCallback(async () => {
     setIsFetchingSellers(true);
     const data = await refetchSellers();
     setSellers(data);
@@ -324,7 +324,7 @@ export default function LotForm({
                             </TabsContent>
                              <TabsContent value="stage_values" className="pt-6 space-y-4">
                                <p className="text-sm text-muted-foreground">Configure os valores para cada etapa do leilão associado.</p>
-                                {/* A timeline vai aqui */}
+                               <AuctionStagesTimeline stages={initialData?.auction?.auctionStages || []} isEditable={false} />
                              </TabsContent>
                               <TabsContent value="assets" className="pt-6 space-y-6">
                                 <div data-ai-id="linked-assets-section" className="container-bens-vinculados">
