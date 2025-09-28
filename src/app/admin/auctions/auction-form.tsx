@@ -38,6 +38,7 @@ import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline'
 import { getPlatformSettings } from '../settings/actions';
 import { addDays } from 'date-fns';
 import { isValidImageUrl } from '@/lib/ui-helpers';
+import { getMediaItems } from '@/app/admin/media/actions';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -78,9 +79,11 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMediaDialogOpen, setIsMediaDialogOpen] = useState(false);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+  const [allMediaItems, setAllMediaItems] = useState<MediaItem[]>([]);
 
   useEffect(() => {
     getPlatformSettings().then(settings => setPlatformSettings(settings as PlatformSettings));
+    getMediaItems().then(items => setAllMediaItems(items));
   }, []);
 
   const form = useForm<AuctionFormValues>({
@@ -116,12 +119,23 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   });
   
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
-  const watchedImageUrl = isValidImageUrl(initialData?.imageUrl) ? initialData!.imageUrl : null;
+  const watchedImageUrlField = useWatch({ control: form.control, name: 'imageUrl' });
+
+  const watchedImageUrl = useMemo(() => {
+    if (watchedImageMediaId && watchedImageMediaId !== 'INHERIT' && allMediaItems.length > 0) {
+      const foundItem = allMediaItems.find(item => item.id === watchedImageMediaId);
+      return foundItem?.urlOriginal || null;
+    }
+    return watchedImageUrlField;
+  }, [watchedImageMediaId, watchedImageUrlField, allMediaItems]);
+
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
-    if (selectedItems.length > 0) {
-        form.setValue('imageMediaId', selectedItems[0]?.id || null);
+    if (selectedItems.length > 0 && selectedItems[0]) {
+        const { id, urlOriginal } = selectedItems[0];
+        form.setValue('imageMediaId', id || null);
+        form.setValue('imageUrl', urlOriginal || null);
     }
     setIsMediaDialogOpen(false);
   };
@@ -219,6 +233,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                             <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{watchedImageUrl ? (<Image src={watchedImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                             <div className="space-y-2 flex-grow">
                                 <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{watchedImageUrl ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
+                                <FormField control={form.control} name="imageUrl" render={({ field: imageUrlField }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...imageUrlField} value={imageUrlField.value ?? ""} /></FormControl>)} />
                             </div>
                         </div>
                     </FormItem>
