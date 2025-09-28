@@ -5,7 +5,7 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { useState, useEffect } from 'react';
-import { UseFormSetValue, Control, useFormContext } from 'react-hook-form';
+import { UseFormSetValue, Control } from 'react-hook-form';
 import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Loader2, Search } from 'lucide-react';
@@ -13,7 +13,6 @@ import { useToast } from '@/hooks/use-toast';
 import { consultaCepAction } from '@/lib/actions/cep';
 import type { CityInfo, StateInfo } from '@/types';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from './ui/form';
-
 
 // Fix Leaflet's default icon path issue
 if (typeof window !== 'undefined') {
@@ -30,7 +29,7 @@ interface MapPickerProps {
   latitude: number | null | undefined;
   longitude: number | null | undefined;
   zipCode: string | null | undefined;
-  control: Control<any>; // Add control prop
+  control: Control<any>;
   setValue: UseFormSetValue<any>;
   allCities: CityInfo[];
   allStates: StateInfo[];
@@ -68,14 +67,13 @@ export default function MapPicker({ latitude, longitude, zipCode, control, setVa
   const [isClient, setIsClient] = useState(false);
   const [isCepLoading, setIsCepLoading] = useState(false);
   const { toast } = useToast();
-  const { getValues } = useFormContext(); // Using getValues from context
 
   useEffect(() => {
     setIsClient(true);
   }, []);
   
   const handleCepLookup = async () => {
-    const currentZipCode = getValues('zipCode'); // Get the latest value from the form state
+    const currentZipCode = control._getWatch("zipCode");
     if (!currentZipCode || currentZipCode.replace(/\D/g, '').length !== 8) {
       toast({ title: 'CEP inválido', description: 'Por favor, insira um CEP com 8 dígitos.', variant: 'destructive'});
       return;
@@ -146,7 +144,6 @@ export default function MapPicker({ latitude, longitude, zipCode, control, setVa
                               {...field}
                               onChange={(e) => {
                                   field.onChange(e);
-                                  // Trigger lookup when 8 digits are entered
                                   if (e.target.value.replace(/\D/g, '').length === 8) {
                                       handleCepLookup();
                                   }

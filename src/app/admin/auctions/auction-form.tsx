@@ -67,7 +67,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
   states: initialStates,
-  allCities: initialAllCities,
+  allCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
   submitButtonText = "Salvar",
@@ -202,19 +202,23 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         );
         case "localizacao": return (
             <div className="space-y-4">
-                 <MapPicker 
+                <MapPicker 
                     latitude={form.getValues('latitude')} 
                     longitude={form.getValues('longitude')} 
                     zipCode={form.watch('zipCode')}
                     control={form.control}
                     setValue={form.setValue} 
-                    allCities={initialAllCities} 
+                    allCities={allCities} 
                     allStates={initialStates} 
                 />
                 <FormField control={form.control} name="address" render={({ field }) => (<FormItem><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
+                    <FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/>
                     <FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/>
+                </div>
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="latitude" render={({ field }) => (<FormItem><FormLabel>Latitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-23.550520" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
+                    <FormField control={form.control} name="longitude" render={({ field }) => (<FormItem><FormLabel>Longitude</FormLabel><FormControl><Input type="number" step="any" placeholder="-46.633308" {...field} value={field.value ?? ''} /></FormControl></FormItem>)} />
                 </div>
             </div>
         );
@@ -279,7 +283,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                     <Accordion type="multiple" defaultValue={["geral", "participantes"]} className="w-full">
                         <AccordionItem value="geral"><AccordionTrigger>Informações Gerais</AccordionTrigger><AccordionContent className="p-4">{accordionContent("geral")}</AccordionContent></AccordionItem>
                         <AccordionItem value="participantes"><AccordionTrigger>Participantes</AccordionTrigger><AccordionContent className="p-4">{accordionContent("participantes")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="modalidade"><AccordionTrigger>Modalidade e Local</AccordionTrigger><AccordionContent className="p-4">{accordionContent("modalidade")}{accordionContent("localizacao")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="modalidade"><AccordionTrigger>Modalidade, Método e Local</AccordionTrigger><AccordionContent className="p-4">{accordionContent("modalidade")}{accordionContent("localizacao")}</AccordionContent></AccordionItem>
                         <AccordionItem value="prazos"><AccordionTrigger>Datas e Prazos</AccordionTrigger><AccordionContent className="p-4">{accordionContent("prazos")}</AccordionContent></AccordionItem>
                         <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{accordionContent("midia")}</AccordionContent></AccordionItem>
                         <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{accordionContent("opcoes")}</AccordionContent></AccordionItem>
