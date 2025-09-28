@@ -124,9 +124,6 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
-  const inheritedAsset = (lot.inheritedMediaFromAssetId && lot.assets) ? lot.assets.find(b => b.id === lot.inheritedMediaFromAssetId) : null;
-  const imageUrlToDisplay = lot.imageUrl || inheritedAsset?.imageUrl;
-
   return (
     <>
       <Card data-ai-id={`lot-card-${lot.id}`} className="card-lot">
@@ -134,7 +131,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
           <Link href={lotDetailUrl} className="link-lot-image">
             <div className="wrapper-lot-image">
               <Image
-                src={isValidImageUrl(imageUrlToDisplay) ? imageUrlToDisplay! : `https://picsum.photos/seed/${lot.id}/600/400`}
+                src={isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`}
                 alt={lot.title}
                 fill
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -258,5 +255,3 @@ export default function LotCard(props: LotCardProps & {onUpdate?: () => void}) {
 
   return <LotCardClientContent {...props} />;
 }
-
-  
