@@ -68,7 +68,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
   states: initialStates,
-  allCities: initialAllCities,
+  allCities,
   judicialProcesses: initialJudicialProcesses,
   onSubmitAction,
   submitButtonText = "Salvar",
