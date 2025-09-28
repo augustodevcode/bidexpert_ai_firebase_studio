@@ -9,7 +9,6 @@
 
 import AuctionForm from '../auction-form';
 import { createAuction, type AuctionFormData } from '../actions';
-import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
@@ -19,7 +18,7 @@ import { Gavel, Loader2 } from 'lucide-react';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import type { LotCategory, AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
+import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 
 function NewAuctionPageContent() {
   const router = useRouter();
@@ -32,14 +31,13 @@ function NewAuctionPageContent() {
   const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const [categories, auctioneers, sellers, states, cities] = await Promise.all([
-        getLotCategories(),
+      const [auctioneers, sellers, states, cities] = await Promise.all([
         getAuctioneers(),
         getSellers(),
         getStates(),
         getCities(),
       ]);
-      setInitialData({ categories, auctioneers, sellers, states, allCities: cities });
+      setInitialData({ auctioneers, sellers, states, allCities: cities });
     } catch (error) {
       toast({ title: "Erro ao Carregar Dados", description: "Não foi possível carregar os dados necessários para criar um leilão.", variant: "destructive" });
     } finally {
@@ -87,7 +85,6 @@ function NewAuctionPageContent() {
       >
         <AuctionForm
           formRef={formRef}
-          categories={initialData.categories}
           auctioneers={initialData.auctioneers}
           sellers={initialData.sellers}
           states={initialData.states}
@@ -96,9 +93,6 @@ function NewAuctionPageContent() {
           formTitle="" // Título e descrição já estão no layout
           formDescription=""
           submitButtonText="Criar Leilão"
-          isViewMode={false}
-          onUpdateSuccess={()=>{}} // Not used in create mode
-          onCancelEdit={()=>{}} // Not used in create mode
         />
       </FormPageLayout>
     </div>

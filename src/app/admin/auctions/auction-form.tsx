@@ -26,7 +26,6 @@ import { cn } from '@/lib/utils';
 import { Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown, Loader2, Save } from 'lucide-react';
 import EntitySelector from '@/components/ui/entity-selector';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
-import { getLotCategories } from '@/app/admin/categories/actions';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
@@ -46,7 +45,6 @@ const auctionMethodOptions = [ 'STANDARD', 'DUTCH', 'SILENT' ];
 
 interface AuctionFormProps {
   initialData?: Partial<Auction> | null;
-  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
   states: StateInfo[];
@@ -64,7 +62,6 @@ interface AuctionFormProps {
 const AuctionForm = forwardRef<any, AuctionFormProps>((
 {
   initialData,
-  categories: initialCategories,
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
   states: initialStates,
@@ -89,7 +86,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
         ...initialData,
-        categoryId: initialData?.categoryId || '',
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
         auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [],
@@ -119,13 +115,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   });
   
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
-  const watchedImageUrl = useWatch({ control: form.control, name: 'imageUrl' });
+  const watchedImageUrl = isValidImageUrl(initialData?.imageUrl) ? initialData!.imageUrl : null;
   const watchedAuctionMethod = useWatch({ control: form.control, name: 'auctionMethod' });
 
   const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
     if (selectedItems.length > 0) {
         form.setValue('imageMediaId', selectedItems[0]?.id || null);
-        form.setValue('imageUrl', selectedItems[0]?.urlOriginal || null);
     }
     setIsMediaDialogOpen(false);
   };
@@ -170,7 +165,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione..." searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' createNewUrl="/admin/categories/new" /><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
@@ -224,7 +218,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                             <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{watchedImageUrl ? (<Image src={watchedImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
                             <div className="space-y-2 flex-grow">
                                 <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{watchedImageUrl ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
-                                <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                             </div>
                         </div>
                     </FormItem>

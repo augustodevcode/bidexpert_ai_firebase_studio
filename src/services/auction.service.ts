@@ -49,10 +49,8 @@ export class AuctionService {
             totalLots: a._count?.lots ?? a.lots?.length ?? 0,
             seller: a.seller ? { ...a.seller } : null,
             auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
-            category: a.category ? { ...a.category } : null,
             sellerName: a.seller?.name,
             auctioneerName: a.auctioneer?.name,
-            categoryName: a.category?.name,
             // Se imageMediaId for 'INHERIT', usa a imagem do lote em destaque. Senão, usa a do leilão.
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
             auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
@@ -163,7 +161,7 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, tenantId: _tenantId, ...restOfData } = data;
+      const { auctioneerId, sellerId, cityId, stateId, judicialProcessId, auctionStages, tenantId: _tenantId, ...restOfData } = data;
 
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
         const createdAuction = await tx.auction.create({
@@ -175,7 +173,6 @@ export class AuctionService {
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
             auctioneer: { connect: { id: auctioneerId } },
             seller: { connect: { id: sellerId } },
-            category: categoryId ? { connect: { id: categoryId } } : undefined,
             tenant: { connect: { id: tenantId } },
             city: cityId ? { connect: { id: cityId } } : undefined,
             state: stateId ? { connect: { id: stateId } } : undefined,
@@ -224,7 +221,7 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
+      const { auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, ...restOfData } = data;
 
       await this.prisma.$transaction(async (tx: any) => {
         const dataToUpdate: Prisma.AuctionUpdateInput = {
@@ -235,7 +232,6 @@ export class AuctionService {
         
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
-        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         if (cityId) dataToUpdate.city = { connect: {id: cityId }};
         if (stateId) dataToUpdate.state = { connect: {id: stateId }};
         if (judicialProcessId) {
@@ -298,5 +294,3 @@ export class AuctionService {
     }
   }
 }
-
-  

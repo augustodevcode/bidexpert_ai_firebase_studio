@@ -12,7 +12,7 @@ import React from 'react';
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import type { Auction, Lot, PlatformSettings, AuctionStage, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
+import type { Auction, Lot, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import UniversalCard from '@/components/universal-card';
@@ -237,10 +237,6 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                   <Separator className="my-4"/>
                   
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                      <div className="flex items-center" title="Categoria">
-                          <Tag className="h-4 w-4 mr-2 text-primary"/>
-                          <span className="truncate">{auction.category?.name || 'Não informada'}</span>
-                      </div>
                       <div className="flex items-center" title="Localização Principal">
                           <MapPin className="h-4 w-4 mr-2 text-primary"/>
                           <span className="truncate">{displayLocation}</span>
@@ -325,7 +321,6 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
                onFilterReset={handleFilterReset}
                initialFilters={activeFilters}
                filterContext="lots"
-               disableCategoryFilter={true}
              />
            </aside>
 

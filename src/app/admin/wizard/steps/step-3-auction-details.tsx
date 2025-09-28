@@ -21,7 +21,6 @@ interface Step3AuctionDetailsProps {
 }
 
 export default function Step3AuctionDetails({ 
-    categories, 
     auctioneers, 
     sellers 
 }: Step3AuctionDetailsProps) {
@@ -91,7 +90,6 @@ export default function Step3AuctionDetails({
     <AuctionForm
         // @ts-ignore
         initialData={initialDataForForm}
-        categories={categories}
         auctioneers={auctioneers}
         sellers={sellers}
         states={states}

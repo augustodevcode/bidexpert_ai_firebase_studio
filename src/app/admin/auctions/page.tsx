@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardDescription, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctions as getAuctionsAction, deleteAuction } from './actions';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Gavel, Loader2 } from 'lucide-react';

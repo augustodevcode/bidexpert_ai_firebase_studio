@@ -1,0 +1,79 @@
+// prisma/models/auction.prisma
+model Auction {
+  id              String   @id @default(cuid())
+  publicId        String?  @unique
+  slug            String?  @unique
+  title           String
+  description     String?  @db.Text
+  status          AuctionStatus @default(RASCUNHO)
+  auctionDate     DateTime?
+  endDate         DateTime?
+  visits          Int      @default(0)
+  totalLots       Int      @default(0)
+  totalHabilitatedUsers Int @default(0)
+  initialOffer    Decimal? @db.Decimal(15, 2)
+  achievedRevenue Decimal? @db.Decimal(15, 2)
+  isFeaturedOnMarketplace Boolean @default(false)
+  additionalTriggers String?
+
+  imageMediaId    String?
+  documentsUrl    String? @db.VarChar(500)
+  evaluationReportUrl String? @db.VarChar(500)
+  auctionCertificateUrl String? @db.VarChar(500)
+
+  auctionType    AuctionType?
+  auctionMethod  AuctionMethod? @default(STANDARD)
+  participation  AuctionParticipation? @default(ONLINE)
+
+  onlineUrl       String? @db.VarChar(500)
+  address         String?
+  zipCode         String? @db.VarChar(10)
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+
+  softCloseEnabled Boolean? @default(false)
+  softCloseMinutes Int?
+  
+  decrementAmount Decimal? @db.Decimal(10, 2)
+  decrementIntervalSeconds Int?
+  floorPrice      Decimal? @db.Decimal(15, 2)
+  
+  isRelisted      Boolean  @default(false)
+  relistCount     Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  
+  auctioneerId    String?
+  auctioneer      Auctioneer? @relation(fields: [auctioneerId], references: [id])
+  
+  sellerId        String?
+  seller          Seller?     @relation(fields: [sellerId], references: [id])
+  
+  cityId          String?
+  city            City?       @relation(fields: [cityId], references: [id])
+  
+  stateId         String?
+  state           State?      @relation(fields: [stateId], references: [id])
+  
+  lots            Lot[]
+  bids            Bid[]
+  stages          AuctionStage[]
+  habilitations   AuctionHabilitation[]
+
+  judicialProcessId String?
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+
+  originalAuctionId String?   @unique
+  originalAuction   Auction?    @relation("RelistHistory", fields: [originalAuctionId], references: [id])
+  relistedAuction   Auction?    @relation("RelistHistory")
+
+  @@index([tenantId])
+  @@index([sellerId])
+  @@index([auctioneerId])
+  @@index([status])
+  @@index([auctionType])
+}
