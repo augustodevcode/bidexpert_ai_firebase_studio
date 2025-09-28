@@ -1,4 +1,3 @@
-
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 
@@ -81,7 +80,7 @@ const StageField: React.FC<StageFieldProps> = ({ stage, index, onStageChange, on
                             <PopoverTrigger asChild>
                             <Button variant="outline" className="w-full justify-start text-left font-normal h-9">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
-                                {startDate ? format(startDate, 'dd/MM/yyyy') : <span>Selecione</span>}
+                                {startDate ? format(startDate, 'dd/MM/yyyy', { locale: ptBR }) : <span>Selecione</span>}
                             </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={startDate} onSelect={(d) => handleDateChange('startDate', d)} initialFocus /></PopoverContent>

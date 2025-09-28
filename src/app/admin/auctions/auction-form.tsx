@@ -18,8 +18,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
@@ -173,18 +171,18 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         case "localizacao": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(states||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
                 <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
             </div>
         );
         case "prazos": return (
             <AuctionStagesTimeline
                 stages={fields}
-                onStageChange={(index, fieldName, value) => form.setValue(`auctionStages.${index}.${fieldName}`, value)}
-                onAddStage={append}
-                onRemoveStage={remove}
                 isEditable={true}
                 platformSettings={platformSettings}
+                onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true })}
+                onAddStage={handleAddStageWithDefaults}
+                onRemoveStage={remove}
             />
         );
         case "midia": return (
@@ -217,28 +215,37 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
             </div>
         );
         case "opcoes": return (
-            <div className="container-opcoes-leilao space-y-4">
+            <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
-                    <Card className="card-leilao-holandes">
-                        <CardHeader className="card-header-leilao-holandes">
-                            <CardTitle className="titulo-card-leilao-holandes">
-                                <TrendingDown className="icone-titulo-leilao-holandes"/>Configurações do Leilão Holandês
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="conteudo-card-leilao-holandes">
-                            <FormField control={form.control} name="decrementAmount" render={({ field }) => (<FormItem><FormLabel className="label-campo-form">Valor do Decremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (<FormItem><FormLabel className="label-campo-form">Intervalo do Decremento (Segundos)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                            <FormField control={form.control} name="floorPrice" render={({ field }) => (<FormItem><FormLabel className="label-campo-form">Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                        </CardContent>
-                    </Card>
+                    <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingDown />Configurações do Leilão Holandês</CardTitle></CardHeader><CardContent className="space-y-4"><FormField control={form.control} name="decrementAmount" render={({ field }) => (<FormItem><FormLabel>Valor do Decremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (<FormItem><FormLabel>Intervalo do Decremento (Segundos)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="floorPrice" render={({ field }) => (<FormItem><FormLabel>Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /></CardContent></Card>
                 )}
-                <FormField control={form.control} name="isFeaturedOnMarketplace" render={({ field }) => (<FormItem className="item-switch-form"><div className="espaco-label-switch"><FormLabel>Destaque no Marketplace</FormLabel><FormDescription className="descricao-switch">Exibir este leilão na seção de destaques da home page.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="item-switch-form"><div className="espaco-label-switch"><FormLabel>Permitir Lances Parcelados</FormLabel><FormDescription className="descricao-switch">Habilita a opção de checkout com parcelamento para os lotes deste leilão.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="isFeaturedOnMarketplace" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Destaque no Marketplace</FormLabel><FormDescription>Exibir este leilão na seção de destaques da home page.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Permitir Lances Parcelados</FormLabel><FormDescription>Habilita a opção de checkout com parcelamento para os lotes deste leilão.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             </div>
         );
         default: return null;
     }
   }
+  
+  const handleAddStageWithDefaults = useCallback(() => {
+    const lastStage = fields[fields.length - 1];
+    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
+    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
+
+    let newStartDate = new Date();
+    if (lastStage?.endDate) {
+      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
+    }
+    
+    const newEndDate = addDays(newStartDate, durationDays);
+
+    append({
+      name: `Praça ${fields.length + 1}`,
+      startDate: newStartDate,
+      endDate: newEndDate,
+      initialPrice: null
+    });
+  }, [fields, append, platformSettings]);
 
   return (
     <>
