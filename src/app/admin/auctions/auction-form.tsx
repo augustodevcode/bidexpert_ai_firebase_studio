@@ -27,7 +27,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, AuctionStatus, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, AuctionStage, MediaItem, WizardData, AuctionParticipation, AuctionMethod, AuctionType, StateInfo, CityInfo, Lot } from '@/types';
 import { Loader2, Save, CalendarIcon, Gavel, Bot, Percent, FileText, PlusCircle, Trash2, Landmark, ClockIcon, Image as ImageIcon, Zap, TrendingDown, HelpCircle, Repeat, MicOff, FileSignature, XCircle, MapPin, HandCoins, Globe, Building, TrendingUp, Sparkles } from 'lucide-react';
@@ -405,7 +405,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 <AuctionStagesTimeline stages={watchedStages as AuctionStage[]} />
             </div>
         );
-        case "midia": 
+        case "midia":
             const featuredLot = lots.find(l => l.isFeatured);
             return (
                 <div className="space-y-4">
@@ -416,7 +416,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                               <FormControl><SelectTrigger><SelectValue placeholder="Selecione a fonte da imagem..." /></SelectTrigger></FormControl>
                               <SelectContent>
                                   <SelectItem value="custom">Imagem Customizada (URL)</SelectItem>
-                                  {featuredLot && (<SelectItem value={`INHERIT:${featuredLot.id}`}>Herdar do Lote em Destaque: {featuredLot.title}</SelectItem>)}
+                                  {featuredLot && (<SelectItem value={`INHERIT`}>Herdar do Lote em Destaque: {featuredLot.title}</SelectItem>)}
                               </SelectContent>
                           </Select>
                           <FormMessage />
@@ -424,7 +424,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                     )} />
                     <FormField control={form.control} name="documentsUrl" render={({ field }) => (<FormItem><FormLabel>Link para Edital / Documentos</FormLabel><FormControl><Input placeholder="https://..." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
-            );
+            )
         case "opcoes": return (
             <div className="space-y-4">
                 {watchedAuctionMethod === 'DUTCH' && (
@@ -476,7 +476,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                   </Accordion>
                 </div>
               ) : (
-                <Card className="shadow-lg">
+                <Card className="shadow-lg" data-ai-id="admin-auction-form-card">
                   <CardContent className="p-6 bg-secondary/30 group-disabled:bg-background/30 group-disabled:cursor-not-allowed">
                     <Accordion type="multiple" defaultValue={defaultAccordionValues} className="w-full space-y-4">
                         {accordionItemsData.map(item => (
