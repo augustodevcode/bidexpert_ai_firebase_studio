@@ -37,6 +37,7 @@ import MapPicker from '@/components/map-picker';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '../settings/actions';
+import { addDays } from 'date-fns';
 
 const auctionStatusOptions = [ 'RASCUNHO', 'EM_PREPARACAO', 'EM_BREVE', 'ABERTO', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'FINALIZADO', 'CANCELADO', 'SUSPENSO' ];
 const auctionTypeOptions = [ 'JUDICIAL', 'EXTRAJUDICIAL', 'PARTICULAR', 'TOMADA_DE_PRECOS' ];
@@ -171,7 +172,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
         case "localizacao": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(states||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
                 <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
             </div>
         );
@@ -234,7 +235,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
 
     let newStartDate = new Date();
     if (lastStage?.endDate) {
-      newStartDate = addDays(new Date(lastStage.endDate), intervalDays);
+      newStartDate = addDays(new Date(lastStage.endDate as Date), intervalDays);
     }
     
     const newEndDate = addDays(newStartDate, durationDays);
