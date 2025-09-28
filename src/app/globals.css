@@ -1162,29 +1162,18 @@
 
 .container-main-content {
   flex-grow: 1;
-  width: 100%;
-  margin-left: auto;
-  margin-right: auto;
-  padding-left: 1rem; /* px-4 */
-  padding-right: 1rem; /* px-4 */
-  padding-top: 2rem; /* py-8 */
-  padding-bottom: 2rem; /* py-8 */
-}
-
-@media (min-width: 640px) {
-  .container-main-content {
-    max-width: 640px;
-    padding-left: 1.5rem; /* sm:px-6 */
-    padding-right: 1.5rem; /* sm:px-6 */
+  /* Retiramos max-width para permitir que o conteúdo se expanda */
+  /*
+  max-width: 768px; /* md:max-w-3xl */
+  /*
+  @media (min-width: 1024px) {
+    max-width: 1024px; /* lg:max-w-5xl */
+  /*
   }
-}
-
-@media (min-width: 768px) {
-  .container-main-content {
-    max-width: 768px;
-    padding-left: 2rem; /* md:px-8 */
-    padding-right: 2rem; /* md:px-8 */
-  }
+  @media (min-width: 1280px) {
+    max-width: 1280px; /* xl:max-w-7xl */
+  /* }
+  */
 }
 
 /* src/app/home-page-client.tsx */
