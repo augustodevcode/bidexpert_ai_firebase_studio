@@ -426,9 +426,9 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
                 </div>
             );
         case "opcoes": return (
-            <div className="space-y-4">
+            <div className="auction-form-advanced-options-container">
                 {watchedAuctionMethod === 'DUTCH' && (
-                    <Card className="p-4 bg-background border-amber-500/50"><CardHeader className="p-0 mb-2"><CardTitle className="text-md flex items-center gap-2"><TrendingDown className="text-amber-600"/>Configurações do Leilão Holandês</CardTitle></CardHeader><CardContent className="p-0 space-y-3">
+                    <Card className="dutch-auction-settings-card"><CardHeader className="dutch-auction-settings-header"><CardTitle className="dutch-auction-settings-title"><TrendingDown className="dutch-auction-settings-icon"/>Configurações do Leilão Holandês</CardTitle></CardHeader><CardContent className="dutch-auction-settings-content">
                         <FormField control={form.control} name="decrementAmount" render={({ field }) => (<FormItem><FormLabel className="text-xs">Valor do Decremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (<FormItem><FormLabel className="text-xs">Intervalo do Decremento (segundos)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                         <FormField control={form.control} name="floorPrice" render={({ field }) => (<FormItem><FormLabel className="text-xs">Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
