@@ -31,7 +31,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, BarChart as RechartsBarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend, Line } from 'recharts';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 import FormPageLayout from '@/components/admin/form-page-layout';
@@ -352,3 +352,5 @@ export default function EditAuctionPage() {
     </>
   );
 }
+
+    
