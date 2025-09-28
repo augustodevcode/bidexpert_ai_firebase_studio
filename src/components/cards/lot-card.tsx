@@ -1,3 +1,4 @@
+
 // src/components/cards/lot-card.tsx
 'use client';
 
