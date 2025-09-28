@@ -38,39 +38,39 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI com Ve
     });
 
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     await page.waitForURL('/dashboard/overview');
 
     await page.goto('/admin/judicial-processes');
-    await expect(page.getByRole('heading', { name: 'Gerenciar Processos Judiciais' })).toBeVisible({ timeout: 20000 });
+    await expect(page.locator('[data-ai-id="admin-judicial-processes-page-container"]')).toBeVisible({ timeout: 20000 });
   });
 
   test('Cenário: should perform a full CRUD cycle for a Judicial Process', async ({ page }) => {
     
     // --- CREATE ---
     await page.getByRole('button', { name: 'Novo Processo' }).click();
-    await expect(page.getByRole('heading', { name: 'Novo Processo Judicial' })).toBeVisible({ timeout: 15000 });
+    await expect(page.locator('[data-ai-id="admin-judicial-process-form-card"]')).toBeVisible({ timeout: 15000 });
 
-    // Preencher o formulário
-    await page.getByLabel('Número do Processo*').fill(testProcessNumber);
+    const processForm = page.locator('[data-ai-id="admin-judicial-process-form-card"]');
+    await processForm.getByLabel('Número do Processo*').fill(testProcessNumber);
     
-    await page.locator('[data-ai-id="entity-selector-trigger-court"]').click();
+    await processForm.locator('[data-ai-id="entity-selector-trigger-court"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-court"]').getByText(testCourt.name).click();
 
-    await page.locator('[data-ai-id="entity-selector-trigger-district"]').click();
+    await processForm.locator('[data-ai-id="entity-selector-trigger-district"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-district"]').getByText(testDistrict.name).click();
 
-    await page.locator('[data-ai-id="entity-selector-trigger-branch"]').click();
+    await processForm.locator('[data-ai-id="entity-selector-trigger-branch"]').click();
     await page.locator('[data-ai-id="entity-selector-modal-branch"]').getByText(testBranch.name).click();
     
-    await page.getByLabel('Nome', { exact: true }).fill(`Autor Teste ${testRunId}`);
+    await processForm.getByLabel('Nome', { exact: true }).fill(`Autor Teste ${testRunId}`);
     
-    await page.getByRole('button', { name: 'Criar Processo' }).click();
+    await processForm.getByRole('button', { name: 'Criar Processo' }).click();
     
     await expect(page.getByText('Processo judicial criado com sucesso.')).toBeVisible({ timeout: 10000 });
-    await expect(page.getByRole('heading', { name: 'Gerenciar Processos Judiciais' })).toBeVisible();
+    await expect(page.locator('[data-ai-id="admin-judicial-processes-page-container"]')).toBeVisible();
 
     // --- READ & DB VERIFICATION (CREATE) ---
     const createdInDB = await prisma.judicialProcess.findFirst({ where: { processNumber: testProcessNumber }, include: { parties: true } });
@@ -80,18 +80,19 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI com Ve
     expect(createdInDB?.parties.length).toBe(1);
     createdProcessId = createdInDB!.id;
 
-    await page.getByPlaceholder('Buscar por nº do processo...').fill(testProcessNumber);
+    await page.locator('[data-ai-id="data-table-search-input"]').fill(testProcessNumber);
     const newRow = page.getByRole('row', { name: new RegExp(testProcessNumber, 'i') });
     await expect(newRow).toBeVisible();
 
     // --- UPDATE ---
-    await newRow.getByRole('button', { name: 'Abrir menu' }).click();
+    await newRow.locator('[data-ai-id="data-table-row-actions-menu"]').click();
     await page.getByRole('menuitem', { name: 'Editar' }).click();
     await page.waitForURL(/\/admin\/judicial-processes\/.+\/edit/);
     
-    await expect(page.getByRole('heading', { name: 'Editar Processo Judicial' })).toBeVisible();
-    await page.getByLabel('Número do Processo*').fill(updatedProcessNumber);
-    await page.getByRole('button', { name: 'Salvar Alterações' }).click();
+    const editForm = page.locator('[data-ai-id="admin-judicial-process-form-card"]');
+    await expect(editForm.getByRole('heading', { name: 'Editar Processo Judicial' })).toBeVisible();
+    await editForm.getByLabel('Número do Processo*').fill(updatedProcessNumber);
+    await editForm.getByRole('button', { name: 'Salvar Alterações' }).click();
     
     await expect(page.getByText('Processo judicial atualizado com sucesso.')).toBeVisible();
     await page.waitForURL('/admin/judicial-processes');
@@ -103,18 +104,15 @@ test.describe('Módulo 1: Administração - CRUD de Processo Judicial (UI com Ve
 
     // --- DELETE ---
     const rowToDelete = page.getByRole('row', { name: new RegExp(updatedProcessNumber, 'i') });
-    await rowToDelete.getByRole('button', { name: 'Abrir menu' }).click();
+    await rowToDelete.locator('[data-ai-id="data-table-row-actions-menu"]').click();
     await page.getByRole('menuitem', { name: 'Excluir' }).click();
     
     await expect(page.getByRole('heading', { name: 'Você tem certeza?' })).toBeVisible();
-    await page.getByRole('button', { name: 'Confirmar Exclusão' }).click();
+    await page.locator('[data-ai-id="alert-dialog-confirm-button"]').click();
 
     await expect(page.getByText('Processo judicial excluído com sucesso.')).toBeVisible();
     await expect(page.getByText(updatedProcessNumber)).not.toBeVisible();
     
     // --- DB VERIFICATION (DELETE) ---
     const deletedInDB = await prisma.judicialProcess.findUnique({ where: { id: createdProcessId } });
-    expect(deletedInDB).toBeNull();
-    createdProcessId = null;
-  });
-});
+    expect(deletedInDB).toBeNull
