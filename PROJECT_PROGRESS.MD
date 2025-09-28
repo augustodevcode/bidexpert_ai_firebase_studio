@@ -35,10 +35,9 @@
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
 - **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 - **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
-- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada a suíte de testes (`tests/ui-plus/`) para garantir que todos os campos de todos os principais formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, Entidades Judiciais, Veículos) possam ser preenchidos e salvos corretamente, cobrindo todos os campos específicos de cada categoria e validando a integridade dos dados no DB.
 
 ## DOING
-- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
+- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementar uma nova suíte de testes (`tests/ui-plus/`) para garantir que todos os campos de todos os principais formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente. (90%)
 
 ## NEXT
 - **Item 30: Implementar Herança de Mídia:** Implementar a lógica de herança e substituição de imagens para Lotes e Leilões, conforme definido nas regras de negócio. Isso inclui atualizar os formulários para permitir que o usuário escolha entre herdar a galeria de um bem vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia.
