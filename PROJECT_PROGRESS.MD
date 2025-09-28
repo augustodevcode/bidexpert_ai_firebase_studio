@@ -38,9 +38,9 @@
 - **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
 
 ## DOING
-- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
+- **(Em andamento) Item 30: Implementar Herança de Mídia:** Implementar a lógica de herança e substituição de imagens para Lotes e Leilões, conforme definido nas regras de negócio. Isso inclui atualizar os formulários para permitir que o usuário escolha entre herdar a galeria de um bem vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia.
+- **(Em andamento) Item 35: Criar Testes de UI por Cenários Específicos:** Criar testes na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças. (Progresso: 10%)
 
 ## NEXT
-- **Item 30: Implementar Herança de Mídia:** Implementar a lógica de herança e substituição de imagens para Lotes e Leilões, conforme definido nas regras de negócio. Isso inclui atualizar os formulários para permitir que o usuário escolha entre herdar a galeria de um bem vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

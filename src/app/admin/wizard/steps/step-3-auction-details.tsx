@@ -100,6 +100,7 @@ export default function Step3AuctionDetails({
         formDescription="Preencha as informações principais, datas e configurações do leilão."
         isWizardMode={true}
         onWizardDataChange={handleWizardDataChange}
+        onSubmitAction={async () => ({success: true, message: ""})} // Noop for wizard
     />
   );
 }

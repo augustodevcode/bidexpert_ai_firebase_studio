@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 import { v4 as uuidv4 } from 'uuid';
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
+import { createLot } from '@/app/admin/lots/actions'; // Import the createLot server action
 
 interface Step4LottingProps {
   availableAssets: Asset[];
@@ -44,7 +45,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
     setIsAssetModalOpen(true);
   };
   
-  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), []);
+  const columns = useMemo(() => createColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
 
   
   const handleCreateGroupedLotClick = () => {
@@ -77,7 +78,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
         assetIds: [asset.id],
         status: 'EM_BREVE',
         categoryId: asset.categoryId,
-        type: asset.categoryId || '',
+        type: asset.categoryId || '', 
         subcategoryId: asset.subcategoryId,
         imageUrl: asset.imageUrl,
         dataAiHint: asset.dataAiHint,
@@ -111,7 +112,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
 
   return (
     <>
-      <div className="space-y-4">
+      <div className="space-y-4" data-ai-id="wizard-step4-lotting">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h3 className="text-lg font-semibold">Loteamento de Ativos</h3>
@@ -146,7 +147,7 @@ export default function Step4Lotting({ availableAssets, auctionData }: Step4Lott
                     <div key={lot.id} className="text-sm p-2 bg-secondary/50 rounded-md">
                         <p className="font-medium">Lote {lot.number}: {lot.title}</p>
                         <p className="text-xs text-muted-foreground">
-                            {lot.assetIds?.length} ativo(s) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br')}
+                            {lot.assetIds?.length} ativo(s) | Lance Inicial: R$ {lot.initialPrice?.toLocaleString('pt-br', {minimumFractionDigits: 2})}
                         </p>
                     </div>
                 ))}

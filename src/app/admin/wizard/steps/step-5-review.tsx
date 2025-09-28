@@ -58,7 +58,7 @@ export default function Step5Review() {
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-ai-id="wizard-step5-review-card">
       <h3 className="text-lg font-semibold mb-4">Revise e Confirme as Informações</h3>
       
       {/* Resumo do Leilão */}
