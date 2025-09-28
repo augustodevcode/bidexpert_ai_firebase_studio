@@ -89,6 +89,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     resolver: zodResolver(auctionFormSchema),
     defaultValues: {
         ...initialData,
+        categoryId: initialData?.categoryId || '',
         auctionDate: initialData?.auctionDate ? new Date(initialData.auctionDate) : new Date(),
         endDate: initialData?.endDate ? new Date(initialData.endDate) : undefined,
         auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [],
@@ -139,6 +140,27 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
       setIsSubmitting(false);
     }
   }
+  
+  const handleAddStageWithDefaults = useCallback(() => {
+    const lastStage = fields[fields.length - 1];
+    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
+    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
+
+    let newStartDate = new Date();
+    if (lastStage?.endDate) {
+      newStartDate = addDays(new Date(lastStage.endDate as Date), intervalDays);
+    }
+    
+    const newEndDate = addDays(newStartDate, durationDays);
+
+    append({
+      name: `Praça ${fields.length + 1}`,
+      startDate: newStartDate,
+      endDate: newEndDate,
+      initialPrice: null
+    });
+  }, [fields, append, platformSettings]);
+
 
   const accordionContent = (section: string) => {
     switch (section) {
@@ -228,25 +250,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
     }
   }
   
-  const handleAddStageWithDefaults = useCallback(() => {
-    const lastStage = fields[fields.length - 1];
-    const durationDays = platformSettings?.biddingSettings?.defaultStageDurationDays || 7;
-    const intervalDays = platformSettings?.biddingSettings?.defaultDaysBetweenStages || 1;
-
-    let newStartDate = new Date();
-    if (lastStage?.endDate) {
-      newStartDate = addDays(new Date(lastStage.endDate as Date), intervalDays);
-    }
-    
-    const newEndDate = addDays(newStartDate, durationDays);
-
-    append({
-      name: `Praça ${fields.length + 1}`,
-      startDate: newStartDate,
-      endDate: newEndDate,
-      initialPrice: null
-    });
-  }, [fields, append, platformSettings]);
 
   return (
     <>
