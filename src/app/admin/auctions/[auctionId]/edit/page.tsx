@@ -16,29 +16,13 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { PlusCircle, Edit, Trash2, Eye, Info, Settings, BarChart2, FileText, Users, CheckCircle, XCircle, Loader2, ExternalLink, ListChecks, AlertTriangle, Package as PackageIcon, Clock as ClockIcon, LandPlot, ShoppingCart, Layers, Gavel, FileSignature, Lightbulb, TrendingUp, BarChart3, Bot, Sparkles } from 'lucide-react';
-import { format, differenceInDays, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { getAuctionStatusText } from '@/lib/ui-helpers';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
 import { getAuctioneers } from '@/app/admin/auctioneers/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import { Separator } from '@/components/ui/separator';
 import React, { useEffect, useCallback, useMemo, useState, useRef } from 'react'; 
-import { useToast } from '@/hooks/use-toast';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -47,10 +31,11 @@ import { hasAnyPermission } from '@/lib/permissions';
 import AISuggestionModal from '@/components/ai/ai-suggestion-modal';
 import { fetchListingDetailsSuggestions } from '@/app/auctions/create/actions';
 import { getAuctionDashboardDataAction } from '../../analysis/actions';
-import { LineChart, BarChart as RechartsBarChart, Bar, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
+import { LineChart, BarChart as RechartsBarChart, Bar, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Legend } from 'recharts';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 import FormPageLayout from '@/components/admin/form-page-layout';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -159,6 +144,7 @@ export default function EditAuctionPage() {
   const [sellers, setSellersList] = React.useState<SellerProfileInfo[]>([]);
   const [states, setStates] = React.useState<StateInfo[]>([]);
   const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
+  const [judicialProcesses, setJudicialProcesses] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -174,7 +160,7 @@ export default function EditAuctionPage() {
     if (!auctionId) return;
     setIsLoading(true);
     try {
-        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities] = await Promise.all([
+        const [fetchedAuction, fetchedCategories, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities, fetchedProcesses] = await Promise.all([
             getAuction(auctionId),
             getLotCategories(),
             getLots(auctionId),
@@ -183,6 +169,7 @@ export default function EditAuctionPage() {
             getPlatformSettings(),
             getStates(),
             getCities(),
+            getJudicialProcesses(),
         ]);
 
         if (!fetchedAuction) {
@@ -197,6 +184,7 @@ export default function EditAuctionPage() {
         setSellersList(fetchedSellers);
         setStates(fetchedStates);
         setAllCities(fetchedCities);
+        setJudicialProcesses(fetchedProcesses);
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
@@ -295,10 +283,10 @@ export default function EditAuctionPage() {
                 sellers={sellers}
                 states={states}
                 allCities={allCities}
+                judicialProcesses={judicialProcesses}
                 onSubmitAction={handleUpdateAuction}
                 formTitle=""
                 formDescription=""
-                submitButtonText="Salvar Alterações"
             />
         </FormPageLayout>
 
@@ -364,5 +352,3 @@ export default function EditAuctionPage() {
     </>
   );
 }
-
-  

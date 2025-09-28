@@ -1,10 +1,4 @@
 // src/app/admin/auctions/auction-form.tsx
-/**
- * @fileoverview Componente de formulário reutilizável para criar e editar Leilões.
- * Utiliza react-hook-form para gerenciamento de estado, Zod para validação, e
- * componentes de UI da ShadCN. Inclui lógica para abas, campos condicionais
- * e seletores de entidade para uma experiência de usuário rica.
- */
 'use client';
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
@@ -32,7 +26,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { auctionFormSchema, type AuctionFormValues } from './auction-form-schema';
 import type { Auction, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, JudicialProcess, StateInfo, CityInfo, MediaItem } from '@/types';
-import { format, setHours, setMinutes } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { CalendarIcon, Info, Users, Landmark, Map, Gavel, FileText as FileTextIcon, Image as ImageIcon, Settings, DollarSign, Repeat, Clock, PlusCircle, Trash2, TrendingDown } from 'lucide-react';
@@ -66,10 +60,11 @@ interface AuctionFormProps {
   onSubmitAction: (data: Partial<AuctionFormValues>) => Promise<any>;
   formTitle: string;
   formDescription: string;
-  submitButtonText: string;
+  submitButtonText?: string;
   isWizardMode?: boolean;
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
+  isViewMode?: boolean;
 }
 
 const AuctionForm = React.forwardRef<any, AuctionFormProps>((
@@ -102,7 +97,7 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
         auctionStages: initialData?.auctionStages?.map(s => ({...s, startDate: new Date(s.startDate), endDate: new Date(s.endDate)})) || [{ name: '1ª Praça', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000), initialPrice: null }],
     },
   });
-
+  
   const watchedValues = useWatch({ control: form.control });
 
   React.useEffect(() => {
@@ -148,6 +143,18 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
     }
   }
 
+  const handleAddStage = () => {
+    const lastStage = fields[fields.length - 1];
+    const newStartDate = lastStage?.endDate ? new Date(lastStage.endDate) : new Date();
+    const newEndDate = new Date(newStartDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+    append({ name: `Praça ${fields.length + 1}`, startDate: newStartDate, endDate: newEndDate, initialPrice: null });
+  };
+  
+  const handleStageChange = (index: number, field: keyof (typeof fields)[0], value: any) => {
+    // @ts-ignore
+    form.setValue(`auctionStages.${index}.${field}`, value);
+  };
+
   const accordionContent = (section: string) => {
     switch (section) {
         case "geral": return (
@@ -180,26 +187,18 @@ const AuctionForm = React.forwardRef<any, AuctionFormProps>((
         case "localizacao": return (
             <div className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-[1fr_150px] gap-2"><FormField control={form.control} name="zipCode" render={({ field }) => (<FormItem><FormLabel>CEP</FormLabel><FormControl><Input placeholder="00000-000" {...field} value={field.value ?? ''}/></FormControl></FormItem>)}/><FormField control={form.control} name="address" render={({ field }) => (<FormItem className="sm:col-span-2"><FormLabel>Endereço Completo</FormLabel><FormControl><Input placeholder="Rua, Número, Bairro..." {...field} value={field.value ?? ''} /></FormControl></FormItem>)}/></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAllCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4"><FormField control={form.control} name="cityId" render={({ field }) => (<FormItem><FormLabel>Cidade</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(allCities||[]).map(c=>({value:c.id, label:`${c.name} - ${c.stateUf}`}))} placeholder="Selecione a cidade" searchPlaceholder='Buscar cidade...' emptyStateMessage='Nenhuma cidade.'/><FormMessage /></FormItem>)}/><FormField control={form.control} name="stateId" render={({ field }) => (<FormItem><FormLabel>Estado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialStates||[]).map(s=>({value: s.id, label: s.name}))} placeholder="Selecione o estado" searchPlaceholder='Buscar estado...' emptyStateMessage='Nenhum estado.'/><FormMessage /></FormItem>)}/></div>
                 <MapPicker latitude={form.getValues('latitude')} longitude={form.getValues('longitude')} setValue={form.setValue} />
             </div>
         );
         case "prazos": return (
-            <div className="space-y-3">
-              {fields.map((field, index) => (
-                <Card key={field.id} className="p-3 bg-background relative">
-                   <p className="text-sm font-semibold mb-2">Praça / Etapa {index + 1}</p>
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <FormField control={form.control} name={`auctionStages.${index}.name`} render={({ field: stageField }) => ( <FormItem> <FormLabel className="text-xs">Nome da Etapa</FormLabel> <FormControl> <Input placeholder={`Ex: 1ª Praça`} {...stageField} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.initialPrice`} render={({ field: stageField }) => ( <FormItem> <FormLabel className="text-xs">Lance Inicial (R$)</FormLabel> <FormControl> <Input type="number" placeholder="5000.00" {...stageField} value={stageField.value ?? ''} onChange={e => stageField.onChange(parseFloat(e.target.value))} /> </FormControl> <FormMessage /> </FormItem> )}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.startDate`} render={({ field: stageField }) => ( <FormItem className="flex flex-col"> <FormLabel className="text-xs">Data de Início</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant={"outline"} className="w-full justify-start text-left font-normal h-9"> <CalendarIcon className="mr-2 h-4 w-4" /> {stageField.value ? format(stageField.value, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>} </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /></PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
-                      <FormField control={form.control} name={`auctionStages.${index}.endDate`} render={({ field: stageField }) => ( <FormItem className="flex flex-col"> <FormLabel className="text-xs">Data de Fim</FormLabel> <Popover> <PopoverTrigger asChild> <FormControl> <Button variant={"outline"} className="w-full justify-start text-left font-normal h-9"> <CalendarIcon className="mr-2 h-4 w-4" /> {stageField.value ? format(stageField.value, 'dd/MM/yyyy HH:mm') : <span>Selecione</span>} </Button> </FormControl> </PopoverTrigger> <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={stageField.value} onSelect={stageField.onChange} initialFocus /></PopoverContent> </Popover> <FormMessage /> </FormItem> )}/>
-                   </div>
-                   <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7 text-destructive" onClick={() => remove(index)}><Trash2 className="h-4 w-4" /></Button>
-                </Card>
-              ))}
-              <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', startDate: new Date(), endDate: new Date(new Date().getTime() + 7 * 24 * 60 * 60 * 1000) })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Etapa/Praça</Button>
-            </div>
+            <AuctionStagesTimeline
+                stages={fields}
+                isEditable={true}
+                onStageChange={handleStageChange}
+                onAddStage={handleAddStage}
+                onRemoveStage={remove}
+            />
         );
         case "midia": return (
             <div className="space-y-4">

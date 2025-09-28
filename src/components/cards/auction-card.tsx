@@ -1,4 +1,4 @@
-// src/components/cards/auction-card.tsx
+
 'use client';
 
 import * as React from 'react';
@@ -7,10 +7,9 @@ import Image from 'next/image';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import type { Auction, AuctionStage as AuctionStageType } from '@/types';
-import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSquareText, Mail, Gavel as AuctionTypeIcon, FileText as TomadaPrecosIcon, Pencil, Clock, Users, Star, ListChecks, CheckSquare } from 'lucide-react';
-import { format, isPast, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import type { Auction } from '@/types';
+import { Heart, Share2, Eye, X, Facebook, MessageSquareText, Mail, Pencil, Clock, Users, Star, ListChecks } from 'lucide-react';
+import { isPast, differenceInDays } from 'date-fns';
 import AuctionPreviewModal from '../auction-preview-modal';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import {
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from '../entity-edit-menu';
-import AuctionStagesTimeline from '../auction/auction-stages-timeline'; // Importando o componente de timeline
+import AuctionStagesTimeline from '../auction/auction-stages-timeline'; 
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 
@@ -31,7 +30,7 @@ interface AuctionCardProps {
 }
 
 export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
-  const [isFavorite, setIsFavorite] = React.useState(false); // Default to false, check in useEffect
+  const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
@@ -72,9 +71,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
-      // Check favorite status on client-side
-      // This assumes you have a function to check favorites from localStorage
-      // setIsFavorite(isAuctionFavoriteInStorage(auction.id)); 
     }
   }, [auction.id, auction.publicId]);
 
@@ -83,7 +79,6 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     e.preventDefault(); 
     e.stopPropagation();
     setIsFavorite(!isFavorite);
-    // Add logic to save to localStorage here
   };
 
   const openPreviewModal = (e: React.MouseEvent) => {
@@ -153,7 +148,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="img-auction"
-                  data-ai-hint={mainImageDataAiHint}
+                  data-ai-hint="marina home"
                   data-ai-id="auction-card-main-image"
                 />
                  {sellerLogoUrl && (
