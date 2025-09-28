@@ -36,7 +36,7 @@
 - **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 
 ## DOING
-- **Item 33: Refatoração e Verificação dos Testes de UI:** Revisar todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo inconsistências introduzidas pela padronização de nomes.
+- **Item 33: Refatoração e Verificação dos Testes de UI (50%):** Revisar todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo inconsistências introduzidas pela padronização de nomes.
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT

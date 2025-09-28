@@ -27,7 +27,7 @@ test.describe('Homepage Smoke Test', () => {
     console.log('- Verified: Lots section title is visible.');
   
     // Verifica se existe pelo menos um card de lote visível dentro da seção
-    const firstLotCard = lotsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="lot-card-"]').first();
+    const firstLotCard = page.locator('[data-ai-id^="lot-card-"]').first();
     await expect(firstLotCard).toBeVisible({ timeout: 10000 });
     console.log('- Verified: At least one lot card is visible.');
   });
@@ -38,7 +38,7 @@ test.describe('Homepage Smoke Test', () => {
     await expect(auctionsSectionTitle).toBeVisible({ timeout: 20000 });
     
     // Verifica se existe pelo menos um card de leilão visível
-    const firstAuctionCard = auctionsSectionTitle.locator('xpath=following-sibling::div').locator('[data-ai-id^="auction-card-"]').first();
+    const firstAuctionCard = page.locator('[data-ai-id^="auction-card-"]').first();
     await expect(firstAuctionCard).toBeVisible({ timeout: 10000 });
     console.log('- Verified: At least one auction card is visible.');
   });

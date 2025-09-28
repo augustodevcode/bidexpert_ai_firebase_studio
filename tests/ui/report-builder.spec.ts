@@ -32,6 +32,7 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
     // Verificar se o elemento apareceu na área de design
     const newElement = designSurface.getByText('Novo TextBox');
     await expect(newElement).toBeVisible();
+    
     const elementWrapper = newElement.locator('xpath=..');
     const elementId = await elementWrapper.getAttribute('key');
     expect(elementId).toBeTruthy();
@@ -56,7 +57,7 @@ test.describe('Módulo 10: Construtor de Relatórios (Self-Service) UI Test', ()
 
     // --- 3. Mover Elemento (Drag and Drop) ---
     console.log('[Report Builder Test] Movendo o elemento...');
-    const elementToDrag = designSurface.locator(`[key="${elementId}"]`);
+    const elementToDrag = designSurface.locator(`div[key="${elementId}"]`);
     
     // Pegar a posição inicial
     const initialBoundingBox = await elementToDrag.boundingBox();

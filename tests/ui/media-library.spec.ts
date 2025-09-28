@@ -16,9 +16,9 @@ test.describe('Módulo 11: Media Library UI Flow', () => {
 
     // Autenticar como Admin
     await page.goto('/auth/login');
-    await page.locator('input[name="email"]').fill('admin@bidexpert.com.br');
-    await page.locator('input[name="password"]').fill('Admin@123');
-    await page.getByRole('button', { name: 'Login' }).click();
+    await page.locator('[data-ai-id="auth-login-email-input"]').fill('admin@bidexpert.com.br');
+    await page.locator('[data-ai-id="auth-login-password-input"]').fill('Admin@123');
+    await page.locator('[data-ai-id="auth-login-submit-button"]').click();
     await page.waitForURL('/dashboard/overview');
   });
 
@@ -26,7 +26,7 @@ test.describe('Módulo 11: Media Library UI Flow', () => {
     // 1. Navegar para a Biblioteca de Mídia
     console.log('[Media Test] Navigating to Media Library...');
     await page.goto('/admin/media');
-    await expect(page.getByRole('heading', { name: 'Biblioteca de Mídia' })).toBeVisible();
+    await expect(page.locator('[data-ai-id="admin-media-page-container"]')).toBeVisible({ timeout: 15000 });
 
     // 2. Iniciar o processo de upload
     await page.getByRole('button', { name: 'Enviar Nova Mídia' }).click();
@@ -53,7 +53,8 @@ test.describe('Módulo 11: Media Library UI Flow', () => {
 
     // 5. Verificar a notificação de sucesso e o redirecionamento
     await expect(page.getByText('Upload Concluído')).toBeVisible({ timeout: 20000 });
-    await page.waitForURL('/admin/media?refresh=*');
+    await page.waitForURL(/\/admin\/media/); // Wait for navigation to complete
+    await expect(page.locator('[data-ai-id="admin-media-page-container"]')).toBeVisible({ timeout: 15000 });
     console.log('[Media Test] Upload successful, redirected back to library.');
 
     // 6. Verificar se o novo item de mídia está na tabela
