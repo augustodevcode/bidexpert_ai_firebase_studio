@@ -19,7 +19,6 @@ export class AuctionRepository {
         _count: { select: { lots: true } },
         seller: true,
         auctioneer: true,
-        category: { select: { name: true } },
         stages: true,
       },
     });
