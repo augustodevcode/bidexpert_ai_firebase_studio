@@ -9,6 +9,7 @@ import { getSession } from '@/server/lib/session';
 import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { UserService } from '@/services/user.service';
+import SubscriptionPopup from '@/components/subscription-popup'; // Importar o novo componente
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -80,6 +81,7 @@ export default async function RootLayout({
             >
               {children}
             </AppContentWrapper>
+            <SubscriptionPopup />
             <Toaster />
           </TooltipProvider>
         </AuthProvider>

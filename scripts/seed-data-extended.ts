@@ -20,6 +20,7 @@ import {
   UserDocumentStatus,
   JudicialPartyType,
   AssetStatus,
+  User,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -35,7 +36,7 @@ export async function seedGeminiExtended() {
   const categories = await prisma.lotCategory.findMany();
   const judicialProcesses = await prisma.judicialProcess.findMany();
 
-  if (tenants.length === 0 || users.length === 0 || auctions.length === 0 || lots.length === 0 || categories.length === 0) {
+  if (tenants.length === 0 || users.length === 0 || categories.length === 0) {
     console.warn('Not enough base data to perform extended seeding. Please run the main seed script first.');
     return;
   }
@@ -43,8 +44,8 @@ export async function seedGeminiExtended() {
   const tenant1 = tenants[0];
   const user1 = users[0];
   const user2 = users[1] || users[0]; // Ensure at least two users for interactions
-  const auction1 = auctions[0];
-  const lot1 = lots[0];
+  const auction1 = auctions.length > 0 ? auctions[0] : null;
+  const lot1 = lots.length > 0 ? lots[0] : null;
   const category1 = categories[0];
   const judicialProcess1 = judicialProcesses.length > 0 ? judicialProcesses[0] : null;
 
@@ -116,7 +117,6 @@ export async function seedGeminiExtended() {
       {
         name: 'Leilões Ativos (Estendido)',
         modelName: 'Auction',
-        description: 'Leilões com status ABERTO_PARA_LANCES.',
         fields: {
           select: { id: true, title: true, status: true }
         },
@@ -124,7 +124,6 @@ export async function seedGeminiExtended() {
       {
         name: 'Usuários Habilitados (Estendido)',
         modelName: 'User',
-        description: 'Usuários com habilitação aprovada.',
         fields: {
           select: { id: true, email: true, fullName: true, habilitationStatus: true }
         },
@@ -160,7 +159,6 @@ export async function seedGeminiExtended() {
             urlOriginal: 'https://example.com/uploads/image1_extended.jpg',
             title: 'Imagem Estendida 1',
             uploadedByUserId: user1.id,
-            tenantId: tenant1.id
         },
         ],
         skipDuplicates: true,
@@ -302,6 +300,153 @@ export async function seedGeminiExtended() {
     });
   }
 
+  // ==================================================================
+  // START: NEW MASSIVE SEEDING LOGIC
+  // ==================================================================
+  console.log('\nStarting new massive data seeding...');
+
+  const bidderPool: User[] = [];
+  console.log('Creating a pool of 10 new bidder users...');
+  for (let i = 0; i < 10; i++) {
+    const user = await prisma.user.create({
+      data: {
+        email: `arrematante${i}@bidexpert.com`,
+        fullName: faker.person.fullName(),
+        password: 'hashed_password', // In a real scenario, hash this
+        habilitationStatus: UserHabilitationStatus.HABILITADO,
+        tenants: {
+          create: {
+            tenantId: tenant1.id,
+            assignedBy: 'seed-script',
+          },
+        },
+      },
+    });
+    bidderPool.push(user);
+  }
+  console.log(`${bidderPool.length} bidder users created.`);
+
+  const auctionTypes: AuctionType[] = [AuctionType.JUDICIAL, AuctionType.EXTRAJUDICIAL, AuctionType.VENDA_DIRETA];
+  
+  for (let i = 1; i <= 20; i++) {
+    const auctionType = auctionTypes[i % auctionTypes.length];
+    console.log(`\nCreating Auction ${i}/20 (Type: ${auctionType})...`);
+
+    let judicialProcessId: string | undefined = undefined;
+    if (auctionType === AuctionType.JUDICIAL) {
+      const newJudicialProcess = await prisma.judicialProcess.create({
+        data: {
+          processNumber: `PROC-${faker.string.numeric(10)}-${i}`,
+          publicId: faker.string.uuid(),
+          tenantId: tenant1.id,
+          sellerId: seller?.id,
+        },
+      });
+      judicialProcessId = newJudicialProcess.id;
+      console.log(`  - Created Judicial Process: ${newJudicialProcess.processNumber}`);
+    }
+
+    const newAuction = await prisma.auction.create({
+      data: {
+        title: `Leilão ${auctionType.toLowerCase()} em Massa #${i}`,
+        description: faker.lorem.sentence(),
+        status: AuctionStatus.ABERTO_PARA_LANCES,
+        auctionType: auctionType,
+        auctionDate: faker.date.past(),
+        endDate: faker.date.future(),
+        tenantId: tenant1.id,
+        auctioneerId: auctioneer?.id,
+        sellerId: seller?.id,
+        judicialProcessId: judicialProcessId,
+      },
+    });
+    console.log(`  - Auction "${newAuction.title}" created.`);
+
+    console.log(`  - Habilitating ${bidderPool.length} users for this auction...`);
+    await prisma.auctionHabilitation.createMany({
+      data: bidderPool.map(user => ({
+        userId: user.id,
+        auctionId: newAuction.id,
+      })),
+      skipDuplicates: true,
+    });
+
+    console.log(`  - Creating 30 sold lots with bids...`);
+    for (let j = 1; j <= 30; j++) {
+      const lotNumber = `${i}00${j}`;
+      const initialPrice = faker.number.float({ min: 100, max: 50000, multipleOf: 0.01 });
+
+      // Simulate 5 bids
+      const bids = [];
+      for (let k = 0; k < 5; k++) {
+        bids.push({
+          amount: initialPrice + (k * faker.number.float({ min: 50, max: 500, multipleOf: 0.01 })),
+          bidderId: bidderPool[faker.number.int({ min: 0, max: bidderPool.length - 1 })].id,
+        });
+      }
+
+      // Determine winner
+      const winningBid = bids.reduce((max, bid) => bid.amount > max.amount ? bid : max, bids[0]);
+      const winner = bidderPool.find(u => u.id === winningBid.bidderId);
+
+      if (!winner) {
+        console.error(`Could not find winner for lot ${lotNumber}`);
+        continue;
+      }
+
+      const createdLot = await prisma.lot.create({
+        data: {
+          number: lotNumber,
+          title: `Lote ${lotNumber} - ${faker.commerce.productName()}`,
+          description: faker.lorem.paragraph(),
+          price: winningBid.amount,
+          initialPrice: initialPrice,
+          status: LotStatus.VENDIDO,
+          type: 'GERAL',
+          auctionId: newAuction.id,
+          tenantId: tenant1.id,
+          winnerId: winner.id,
+          categoryId: category1.id,
+          bids: {
+            createMany: {
+              data: bids.map(b => ({
+                ...b,
+                auctionId: newAuction.id,
+                tenantId: tenant1.id,
+              })),
+            },
+          },
+        },
+      });
+
+      await prisma.userWin.create({
+        data: {
+          lotId: createdLot.id,
+          userId: winner.id,
+          winningBidAmount: winningBid.amount,
+          paymentStatus: PaymentStatus.PAGO,
+          winDate: new Date(),
+        },
+      });
+    }
+    console.log(`  - Finished creating 30 lots for auction ${i}.`);
+  }
+  // ==================================================================
+  // END: NEW MASSIVE SEEDING LOGIC
+  // ==================================================================
+
 
   console.log('Gemini extended seeding finished.');
+}
+
+// Execute the function if the script is run directly
+if (require.main === module) {
+  seedGeminiExtended()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
 }
