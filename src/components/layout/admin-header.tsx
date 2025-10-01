@@ -10,13 +10,13 @@ import Link from 'next/link';
 import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 import { Badge } from '../ui/badge';
 
-export default function AdminHeader() {
+interface AdminHeaderProps {
+  onSearchClick: () => void;
+}
+
+export default function AdminHeader({ onSearchClick }: AdminHeaderProps) {
   const { unreadNotificationsCount } = useAuth();
   
-  const handleSearchClick = () => {
-    console.log("Search button clicked - Command Palette will be implemented here.");
-  };
-
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-sidebar px-4 text-sidebar-foreground shadow-md sm:px-6">
       
@@ -24,7 +24,7 @@ export default function AdminHeader() {
           <Button 
             variant="ghost" 
             className="group w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent"
-            onClick={handleSearchClick}
+            onClick={onSearchClick}
           >
             <Search className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">Buscar leilões, lotes, usuários...</span>

@@ -39,21 +39,16 @@
 - **Item 35: Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças.
 - **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
 - **Item 32:** **Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
+- **Item 32.1: Implementar Cabeçalho do Painel de Administração:** Criado o componente `AdminHeader.tsx` e integrado ao `AdminLayout.tsx`. Adicionados ícones de ação e `UserNav`.
 
 ## DOING
-- **(Em andamento):** Melhorias contínuas e otimização da plataforma.
-
-## NEXT
-- **Item 32: Implementar Cabeçalho do Painel de Administração:**
-    - **32.1:** Criar o componente `AdminHeader.tsx`.
-    - **32.2:** Adicionar busca global ao cabeçalho (gatilho para a Paleta de Comandos).
-    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, configurações de widgets).
-    - **32.4:** Integrar o novo `AdminHeader` ao `AdminLayout.tsx`.
 - **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):**
     - **36.1:** Criar o componente `CommandPalette.tsx` usando `cmdk`.
     - **36.2:** Mapear e popular a paleta com comandos de navegação e ações.
     - **36.3:** Integrar a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
     - **36.4:** Implementar a lógica de filtro para os comandos.
+
+## NEXT
 - **Item 37: Implementar Dashboard Customizável (Novo):**
     - **37.1:** Adicionar um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
     - **37.2:** Criar o componente `WidgetConfigurationModal.tsx`.
