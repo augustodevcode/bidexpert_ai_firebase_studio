@@ -7,6 +7,7 @@ import { useAuth } from '@/contexts/auth-context';
 import UserNav from './user-nav';
 import Link from 'next/link';
 import { Badge } from '../ui/badge';
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
@@ -38,38 +39,63 @@ export default function AdminHeader({ onSearchClick }: AdminHeaderProps) {
       </div>
 
       <div className="flex items-center gap-1.5">
-        <Button variant="ghost" size="sm" className="h-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
-          <Link href="/">
-             <Globe className="h-4 w-4 mr-2" /> Ver Site
-          </Link>
-        </Button>
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-             <Sun className="h-4 w-4" />
-             <span className="sr-only">Alternar tema</span>
-        </Button>
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
-          <Link href="/admin/contact-messages">
-             <MessageSquare className="h-4 w-4" />
-             <span className="sr-only">Mensagens</span>
-          </Link>
-        </Button>
-         <Button variant="ghost" size="icon" className="h-9 w-9 relative text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
-           <Link href="/dashboard/notifications">
-            <Bell className="h-4 w-4" />
-            {unreadNotificationsCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
-                    {unreadNotificationsCount}
-                </Badge>
-            )}
-             <span className="sr-only">Notificações</span>
-           </Link>
-        </Button>
-        <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
-          <Link href="/admin/settings">
-             <Settings className="h-4 w-4" />
-             <span className="sr-only">Configurações</span>
-          </Link>
-        </Button>
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="sm" className="h-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+                      <Link href="/">
+                         <Globe className="h-4 w-4 mr-2" /> Ver Site
+                      </Link>
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Visualizar o site público</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                        <Sun className="h-4 w-4" />
+                        <span className="sr-only">Alternar tema</span>
+                    </Button>
+                </TooltipTrigger>
+                 <TooltipContent><p>Alternar tema (Light/Dark)</p></TooltipContent>
+            </Tooltip>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+                    <Link href="/admin/contact-messages">
+                        <MessageSquare className="h-4 w-4" />
+                        <span className="sr-only">Mensagens</span>
+                    </Link>
+                    </Button>
+                </TooltipTrigger>
+                 <TooltipContent><p>Mensagens de Contato</p></TooltipContent>
+            </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" className="h-9 w-9 relative text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>
+                       <Link href="/dashboard/notifications">
+                        <Bell className="h-4 w-4" />
+                        {unreadNotificationsCount > 0 && (
+                            <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
+                                {unreadNotificationsCount}
+                            </Badge>
+                        )}
+                         <span className="sr-only">Notificações</span>
+                       </Link>
+                    </Button>
+                </TooltipTrigger>
+                 <TooltipContent><p>Notificações</p></TooltipContent>
+             </Tooltip>
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                       <Settings className="h-4 w-4" />
+                       <span className="sr-only">Configurações do Dashboard</span>
+                    </Button>
+                </TooltipTrigger>
+                 <TooltipContent><p>Configurar widgets do dashboard</p></TooltipContent>
+             </Tooltip>
+        </TooltipProvider>
         <UserNav />
       </div>
     </header>
