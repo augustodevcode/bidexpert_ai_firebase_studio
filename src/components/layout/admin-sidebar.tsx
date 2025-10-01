@@ -15,6 +15,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useState } from 'react';
+import Image from 'next/image';
 
 const topLevelNavItems = [
   { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -105,10 +106,10 @@ const auctioneerManagementItems = [
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
     key={item.href}
-    variant={pathname.startsWith(item.href) && item.href !== '/admin/dashboard' ? 'secondary' : (pathname === item.href ? 'secondary' : 'ghost')}
+    variant={pathname === item.href ? 'secondary' : 'ghost'}
     className={cn(
-      'w-full justify-start',
-      (pathname.startsWith(item.href) && item.href !== '/admin/dashboard' || pathname === item.href) && !item.disabled && 'font-semibold text-primary hover:text-primary'
+      'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+      pathname === item.href && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
     )}
     asChild
     disabled={item.disabled}
@@ -125,83 +126,83 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     const pathname = usePathname();
     return (
         <>
-            <div className="p-4 border-b">
+            <div className="p-4 border-b border-sidebar-border">
                 <Link href="/admin/dashboard" className="flex items-center space-x-2">
-                <LayoutDashboard className="h-7 w-7 text-primary" />
-                <span className="font-bold text-xl text-primary">BidExpert Admin</span>
+                <Image src="/logo.svg" alt="BidExpert Logo" width={40} height={40} />
+                <span className="font-bold text-xl text-sidebar-foreground">BidExpert</span>
                 </Link>
             </div>
             <ScrollArea className="flex-1">
                 <nav className="p-2 space-y-1">
-                {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                 
                 <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'lot-management', 'asset-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
                     <AccordionItem value="auction-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão de Leilões</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão de Leilões</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="lot-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Lotes</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Lotes</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {lotManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {lotManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="asset-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Ativos e Estoque</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Ativos e Estoque</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {assetManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {assetManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="category-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Conteúdo e Mídia</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Conteúdo e Mídia</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {categoryManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
-                            {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {categoryManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                            {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="location-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Geográfica</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão Geográfica</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {locationManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {locationManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="judicial-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão Judicial</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão Judicial</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="sellers-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Comitentes</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Comitentes</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {sellerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {sellerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="auctioneers-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Leiloeiros</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Leiloeiros</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {auctioneerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {auctioneerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="user-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Usuários</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Usuários</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {userManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {userManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                     <AccordionItem value="platform-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-accent/50">Gestão da Plataforma</AccordionTrigger>
+                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão da Plataforma</AccordionTrigger>
                         <AccordionContent className="pt-1 space-y-1">
-                            {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} />)}
+                            {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
                 </nav>
             </ScrollArea>
-            <div className="p-4 border-t">
-                <Button variant="outline" className="w-full" asChild>
+            <div className="p-4 border-t border-sidebar-border">
+                <Button variant="outline" className="w-full bg-sidebar-accent/50 text-sidebar-foreground hover:bg-sidebar-accent" asChild>
                     <Link href="/">Voltar ao Site</Link>
                 </Button>
             </div>
@@ -222,14 +223,14 @@ export default function AdminSidebar() {
               <Menu className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] p-0 flex flex-col">
+          <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground">
             <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
           </SheetContent>
         </Sheet>
       </div>
 
       {/* Desktop Sidebar */}
-      <aside className="sticky top-0 h-screen w-64 bg-background border-r flex-col hidden md:flex">
+      <aside className="sticky top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex-col hidden md:flex">
          <SidebarContent />
       </aside>
     </>

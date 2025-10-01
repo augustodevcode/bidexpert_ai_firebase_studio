@@ -26,16 +26,16 @@ export default function AdminLayout({
 
   if (loading) {
     return (
-      <div className="container-loading-auth">
-        <Loader2 className="icon-loading-spinner-large" />
-        <p className="text-loading-status">Verificando autenticação e permissões...</p>
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
       </div>
     );
   }
 
   if (!userProfileWithPermissions) {
     return (
-      <div className="container-redirect-login">
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
         <p className="text-muted-foreground">Redirecionando para login...</p>
       </div>
     );
@@ -46,18 +46,18 @@ export default function AdminLayout({
 
   if (!hasAdminAccess) {
     return (
-      <div className="container-access-denied">
-        <ShieldAlert className="icon-access-denied" />
-        <h1 className="title-access-denied">Acesso Negado</h1>
-        <p className="text-access-denied-reason">
+      <div className="flex h-screen w-screen flex-col items-center justify-center bg-background text-center p-4">
+        <ShieldAlert className="h-16 w-16 text-destructive mb-4" />
+        <h1 className="text-2xl font-bold text-destructive">Acesso Negado</h1>
+        <p className="text-muted-foreground mt-2">
           Você não tem permissão para acessar esta área.
         </p>
-        <p className="text-user-role-info">
+        <p className="text-xs text-muted-foreground mt-1">
           (Perfil: {userProfileWithPermissions?.roleNames?.join(', ') || 'N/A'})
         </p>
         <button
           onClick={() => router.push('/')}
-          className="btn-back-home"
+          className="mt-6 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
         >
           Voltar para a Página Inicial
         </button>
@@ -68,9 +68,11 @@ export default function AdminLayout({
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
-      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30">
-        {children}
-        <DevInfoIndicator />
+      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-secondary">
+        <div className="mx-auto max-w-7xl">
+         {children}
+         <DevInfoIndicator />
+        </div>
       </main>
     </div>
   );
