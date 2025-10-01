@@ -26,25 +26,26 @@ export default function FilterLinkCard({
   bgColorClass = 'bg-secondary/30 dark:bg-secondary/20',
 }: FilterLinkCardProps) {
   return (
-    <Link href={link} className="link-filter-card">
-      <Card className={`card-filter ${bgColorClass}`}>
-        <CardContent className="card-content-filter">
-          <div className="container-image-filter">
+    <Link href={link} className="block group h-full">
+      <Card className={`overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 h-full ${bgColorClass}`}>
+        <CardContent className="p-0">
+          <div className="relative h-32 w-full">
             <Image
               src={imageUrl}
               alt={imageAlt}
               fill
-              className="img-filter-card"
+              className="object-cover"
               data-ai-hint={dataAiHint}
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             />
           </div>
-          <div className="container-text-filter">
-            <h3 className="title-filter-card">
+          <div className="p-4">
+            <h3 className="text-lg font-semibold text-foreground group-hover:text-primary transition-colors">
               {title}
             </h3>
-            <p className="subtitle-filter-card">{subtitle}</p>
-            <div className="link-view-options-filter">
-              Ver Opções <ArrowRight className="icon-arrow-filter" />
+            <p className="text-sm text-muted-foreground mb-2">{subtitle}</p>
+            <div className="text-xs text-primary font-medium flex items-center group-hover:underline">
+              Ver Opções <ArrowRight className="h-3 w-3 ml-1 transition-transform group-hover:translate-x-1" />
             </div>
           </div>
         </CardContent>
