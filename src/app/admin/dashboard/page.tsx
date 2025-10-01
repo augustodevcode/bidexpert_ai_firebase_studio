@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';

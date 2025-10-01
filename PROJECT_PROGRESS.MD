@@ -45,22 +45,22 @@
     - **36.2:** Mapeado e populado a paleta com comandos de navegação e ações.
     - **36.3:** Integrado a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
     - **36.4:** Implementado a lógica de filtro para os comandos.
-- **Item 37: Implementar Dashboard Customizável:**
-    - **37.1:** Adicionado um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração.
-    - **37.2:** Criado o componente de modal `WidgetConfigurationModal.tsx`.
-    - **37.3:** Listados os widgets disponíveis com checkboxes no modal de configuração.
-    - **37.4:** Implementada a lógica para salvar e carregar as preferências de widgets do usuário usando React Context e `localStorage`.
-    - **37.5:** A página `/admin/dashboard` agora renderiza os widgets dinamicamente com base nas preferências.
-- **Item 38.1:** Criado o Modelo `Subscriber` no Prisma.
-- **38.2:** Desenvolvido `SubscriptionService` e `subscribeToAction`.
 
 ## DOING
-- **Item 38.3:** Criar Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
+- **Item 37: Implementar Dashboard Customizável:**
+    - **37.1:** Adicionar um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração.
+    - **37.2:** Criar o componente de modal `WidgetConfigurationModal.tsx`.
+    - **37.3:** Listar os widgets disponíveis com checkboxes no modal de configuração.
+    - **37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário usando React Context e `localStorage`.
+    - **37.5:** Fazer com que a página `/admin/dashboard` renderize os widgets dinamicamente com base nas preferências salvas.
 
 ## NEXT
-- **Item 38.4:** Criar Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
-- **Item 38.5:** Integrar os componentes no layout.
-- **Item 38.6:** Configurar notificações no `platformSettings`.
-- **Item 38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações.
+- **Item 38.1:** Criar o Modelo `Subscriber` no Prisma.
+- **38.2:** Desenvolver `SubscriptionService` e `subscribeToAction`.
+- **38.3:** Criar Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
+- **38.4:** Criar Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
+- **38.5:** Integrar os componentes no layout.
+- **38.6:** Configurar notificações no `platformSettings`.
+- **38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

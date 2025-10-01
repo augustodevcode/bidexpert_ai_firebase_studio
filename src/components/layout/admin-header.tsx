@@ -11,9 +11,10 @@ import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
+  onSettingsClick: () => void;
 }
 
-export default function AdminHeader({ onSearchClick }: AdminHeaderProps) {
+export default function AdminHeader({ onSearchClick, onSettingsClick }: AdminHeaderProps) {
   const { unreadNotificationsCount } = useAuth();
   
   return (
@@ -88,12 +89,12 @@ export default function AdminHeader({ onSearchClick }: AdminHeaderProps) {
              </Tooltip>
              <Tooltip>
                 <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
+                     <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" onClick={onSettingsClick}>
                        <Settings className="h-4 w-4" />
                        <span className="sr-only">Configurações</span>
                     </Button>
                 </TooltipTrigger>
-                 <TooltipContent><p>Configurações</p></TooltipContent>
+                 <TooltipContent><p>Configurações do Dashboard</p></TooltipContent>
              </Tooltip>
         </TooltipProvider>
         <UserNav />
