@@ -29,7 +29,7 @@ export class LotService {
   }
 
   private mapLotWithDetails(lot: any): Lot {
-    const assets = lot.assets?.map((la: any) => la.asset).filter(Boolean) || [];
+    const assets: Asset[] = lot.assets?.map((la: any) => la.asset).filter(Boolean) || [];
     
     // Lógica de herança de mídia centralizada aqui
     const inheritedAsset = (lot.inheritedMediaFromBemId && assets.length > 0)
@@ -264,7 +264,7 @@ export class LotService {
         type, 
         sellerId, 
         subcategoryId,
-        stageDetails,
+        stageDetails, // Captura os detalhes das etapas
         ...lotData 
       } = data;
       const finalCategoryId = categoryId || type;
@@ -301,7 +301,8 @@ export class LotService {
       if (assetIds && assetIds.length === 1) {
           const singleAsset = await this.assetService.getAssetById(finalTenantId!, assetIds[0]);
           if (singleAsset) {
-              // Herda endereço se não for fornecido no lote
+              dataToCreate.inheritedMediaFromBemId = singleAsset.id;
+
               if (!data.cityName && !data.stateUf) {
                   dataToCreate.cityName = singleAsset.locationCity;
                   dataToCreate.stateUf = singleAsset.locationState;
@@ -309,7 +310,6 @@ export class LotService {
                   dataToCreate.latitude = singleAsset.latitude;
                   dataToCreate.longitude = singleAsset.longitude;
               }
-              // Herda valor se não for fornecido
               if (!data.price && !data.initialPrice && singleAsset.evaluationValue) {
                   dataToCreate.price = singleAsset.evaluationValue;
                   dataToCreate.initialPrice = singleAsset.evaluationValue;
