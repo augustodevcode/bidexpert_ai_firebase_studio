@@ -18,7 +18,7 @@ import {
   DirectSaleOfferType,
   DocumentTemplateType,
   UserDocumentStatus,
-  JudicialPartyType,
+  ProcessPartyType,
   AssetStatus,
   User,
 } from '@prisma/client';
@@ -279,8 +279,8 @@ export async function seedGeminiExtended() {
   if (judicialProcess1) {
     await prisma.judicialParty.createMany({
       data: [
-        { name: faker.person.fullName(), partyType: JudicialPartyType.ADVOGADO_AUTOR, processId: judicialProcess1.id, },
-        { name: faker.person.fullName(), partyType: JudicialPartyType.ADVOGADO_REU, processId: judicialProcess1.id, },
+        { name: faker.person.fullName(), partyType: ProcessPartyType.ADVOGADO_AUTOR, processId: judicialProcess1.id, },
+        { name: faker.person.fullName(), partyType: ProcessPartyType.ADVOGADO_REU, processId: judicialProcess1.id, },
       ],
       skipDuplicates: true,
     });

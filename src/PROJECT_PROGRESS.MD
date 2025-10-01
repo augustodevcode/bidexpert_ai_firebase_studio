@@ -53,12 +53,12 @@
     - **37.5:** A página `/admin/dashboard` agora renderiza os widgets dinamicamente com base nas preferências.
 - **Item 38.1:** Criado o Modelo `Subscriber` no Prisma.
 - **38.2:** Desenvolvido `SubscriptionService` e `subscribeToAction`.
+- **Item 38.3:** Criado o Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
 
 ## DOING
-- **Item 38.3:** Criar Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
+- **Item 38.4:** Criar Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
 
 ## NEXT
-- **Item 38.4:** Criar Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
 - **Item 38.5:** Integrar os componentes no layout.
 - **Item 38.6:** Configurar notificações no `platformSettings`.
 - **Item 38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações.
