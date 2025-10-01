@@ -47,12 +47,18 @@
 - **Item 32: Implementar Cabeçalho do Painel de Administração:**
     - **32.1:** Criar o componente `AdminHeader.tsx`.
     - **32.2:** Adicionar busca global ao cabeçalho (gatilho para a Paleta de Comandos).
-    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, etc.).
+    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, configurações de widgets).
     - **32.4:** Integrar o novo `AdminHeader` ao `AdminLayout.tsx`.
 - **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):**
     - **36.1:** Criar o componente `CommandPalette.tsx` usando `cmdk`.
     - **36.2:** Mapear e popular a paleta com comandos de navegação e ações.
     - **36.3:** Integrar a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
     - **36.4:** Implementar a lógica de filtro para os comandos.
+- **Item 37: Implementar Dashboard Customizável (Novo):**
+    - **37.1:** Adicionar um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
+    - **37.2:** Criar o componente `WidgetConfigurationModal.tsx`.
+    - **37.3:** Listar widgets disponíveis (ex: Faturamento, Leilões Ativos, Novos Usuários, Taxa de Venda) com checkboxes.
+    - **37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário.
+    - **37.5:** Fazer com que a página `/admin/dashboard` renderize os widgets dinamicamente com base nas preferências.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
