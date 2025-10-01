@@ -124,8 +124,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     return Array.from(new Set(triggers));
   }, [lot.views, lot.bidsCount, lot.status, lot.additionalTriggers, lot.isExclusive, mentalTriggersGlobalSettings, sectionBadges]);
   
-  const inheritedBem = (lot.inheritedMediaFromBemId && lot.bens) ? lot.bens.find(b => b.id === lot.inheritedMediaFromBemId) : null;
-  const imageUrlToDisplay = inheritedBem ? inheritedBem.imageUrl : lot.imageUrl;
+  const imageUrlToDisplay = lot.imageUrl;
 
   return (
     <>

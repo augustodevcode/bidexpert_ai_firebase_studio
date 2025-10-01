@@ -20,4 +20,6 @@ model Tenant {
   bids              Bid[]
   reports           Report[]
   platformSettings  PlatformSettings?
+
+  Subscriber Subscriber[]
 }
