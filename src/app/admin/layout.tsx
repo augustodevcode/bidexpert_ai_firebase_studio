@@ -8,7 +8,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 import { hasPermission } from '@/lib/permissions'; 
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
-import AdminHeader from '@/components/layout/admin-header'; // Import the new header
+import AdminHeader from '@/components/layout/admin-header';
 
 export default function AdminLayout({
   children,
@@ -42,7 +42,6 @@ export default function AdminLayout({
     );
   }
   
-  // Use a granular permission or the master admin permission
   const hasAdminAccess = hasPermission(userProfileWithPermissions, 'manage_all');
 
   if (!hasAdminAccess) {
@@ -71,7 +70,7 @@ export default function AdminLayout({
       <AdminSidebar />
       <div className="flex flex-1 flex-col">
         <AdminHeader />
-        <main className="flex-1 p-4 sm:p-6 md:p-8">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
           <div className="mx-auto max-w-7xl">
            {children}
            <DevInfoIndicator />

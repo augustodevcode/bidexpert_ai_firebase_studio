@@ -4,18 +4,18 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%; /* White */
+    --background: 210 40% 98%; /* Light Grayish Blue */
     --foreground: 222.2 84% 4.9%; /* Default dark for text */
     --card: 0 0% 100%; /* White */
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* New Color Scheme based on MartFury */
+    /* New Color Scheme */
     --primary: 217 91% 60%; /* #3b82f6 - A strong, modern blue */
     --primary-foreground: 0 0% 100%; /* White text on blue */
     
-    --secondary: 210 40% 96.1%; /* #f1f5f9 - Light gray for backgrounds */
+    --secondary: 210 40% 96.1%; /* #f1f5f9 - Light gray for main backgrounds */
     --secondary-foreground: 222.2 47.4% 11.2%;
     
     --muted: 210 40% 96.1%; /* Light Gray */
@@ -33,7 +33,7 @@
     
     --radius: 0.5rem; /* 8px */
 
-    /* Chart Colors for consistency */
+    /* Chart Colors */
     --chart-1: 217 91% 60%; /* Blue */
     --chart-2: 173 80% 40%; /* Teal/Green */
     --chart-3: 0 84% 60%;   /* Red */
@@ -50,7 +50,7 @@
     --sidebar-accent: 217 32.6% 17.5%; /* Dark blue/gray for hover */
     --sidebar-accent-foreground: 210 40% 98%; /* White text on hover */
     
-    --sidebar-border: 217 32.6% 17.5%;
+    --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 217 91% 60%;
   }
 
@@ -80,6 +80,16 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 217 91% 60%;
+    
+    /* Dark Sidebar variables (can be same as dark theme) */
+    --sidebar-background: 222.2 84% 4.9%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 217 91% 60%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 217 91% 60%;
   }
 }
 
@@ -89,31 +99,5 @@
   }
   body {
     @apply bg-background text-foreground;
-  }
-  
-  /* Add z-index to layout components */
-  header {
-    @apply z-50;
-  }
-
-  main {
-    @apply z-10;
-  }
-  
-  /* Responsive Table Styles */
-  @media screen and (max-width: 768px) {
-    .responsive-table tr {
-        @apply block mb-4 border rounded-lg shadow-md;
-    }
-    .responsive-table td {
-        @apply flex justify-between items-center px-4 py-2 border-b;
-    }
-    .responsive-table td:last-child {
-        @apply border-b-0;
-    }
-    .responsive-table td::before {
-        content: attr(data-label);
-        @apply font-bold mr-2 text-sm;
-    }
   }
 }
