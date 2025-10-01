@@ -38,10 +38,16 @@
 - **Item 30: Implementar Herança de Mídia:** Implementada a lógica completa de herança e substituição de imagens e outros atributos (endereço, valores) para Lotes e Leilões, conforme definido nas regras de negócio.
 - **Item 35: Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças.
 - **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
+- **Item 32:** **Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
 
 ## DOING
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
+- **Item 32: Implementar Cabeçalho do Painel de Administração:**
+    - **32.1:** Criar o componente `AdminHeader.tsx`.
+    - **32.2:** Adicionar busca global ao cabeçalho.
+    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, etc.).
+    - **32.4:** Integrar o novo `AdminHeader` ao `AdminLayout.tsx`.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.

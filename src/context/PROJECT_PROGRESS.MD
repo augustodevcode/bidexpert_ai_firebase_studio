@@ -35,11 +35,19 @@
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
 - **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 - **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
+- **Item 30: Implementar Herança de Mídia:** Implementada a lógica completa de herança e substituição de imagens e outros atributos (endereço, valores) para Lotes e Leilões, conforme definido nas regras de negócio.
+- **Item 35: Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças.
+- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
+- **Item 32:** **Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
 
 ## DOING
 - **(Em andamento):** Melhorias contínuas e otimização da plataforma.
 
 ## NEXT
-- **Item 30: Implementar Herança de Mídia:** Implementar a lógica de herança e substituição de imagens para Lotes e Leilões, conforme definido nas regras de negócio. Isso inclui atualizar os formulários para permitir que o usuário escolha entre herdar a galeria de um bem vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia.
+- **Item 32: Implementar Cabeçalho do Painel de Administração:**
+    - **32.1:** Criar o componente `AdminHeader.tsx`.
+    - **32.2:** Adicionar busca global ao cabeçalho.
+    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, etc.).
+    - **32.4:** Integrar o novo `AdminHeader` ao `AdminLayout.tsx`.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
