@@ -1,13 +1,14 @@
+// prisma/models/subscriber.prisma
 model Subscriber {
-  id          String   @id @default(cuid())
+  id          String   @id @default(uuid())
   email       String   @unique
   name        String?
   phone       String?
   preferences Json?
-  subscribedAt DateTime @default(now())
-  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
 
   @@index([tenantId])
 }
