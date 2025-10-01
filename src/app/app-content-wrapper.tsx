@@ -9,6 +9,7 @@ import { SetupRedirect } from './setup/setup-redirect';
 import type { PlatformSettings } from '@/types';
 import { Loader2 } from 'lucide-react';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
+import SubscriptionForm from '@/components/subscription-form'; // Importar o novo componente
 
 export function AppContentWrapper({ 
   children, 
@@ -48,6 +49,7 @@ export function AppContentWrapper({
           <main className="container mx-auto flex-grow px-4 py-8">
             {children}
           </main>
+          <SubscriptionForm />
           <Footer />
         </div>
       )}
