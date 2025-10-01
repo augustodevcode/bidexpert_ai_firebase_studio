@@ -57,8 +57,30 @@ export class PlatformSettingsService {
       
       const { tenantId, ...updateData } = data;
       
-      await this.repository.update(currentSettings.id, updateData);
-      return { success: true, message: 'Configurações atualizadas com sucesso.' };
+      const dataToUpdate: Partial<Prisma.PlatformSettingsUpdateInput> = {};
+      
+      const jsonFields: (keyof PlatformSettings)[] = [
+        'themes', 'platformPublicIdMasks', 'mapSettings', 'variableIncrementTable', 
+        'biddingSettings', 'paymentGatewaySettings', 'notificationSettings', 'homepageSections', 
+        'mentalTriggerSettings', 'sectionBadgeVisibility'
+      ];
+
+      for (const key in updateData) {
+        if (Object.prototype.hasOwnProperty.call(updateData, key)) {
+          const typedKey = key as keyof PlatformSettings;
+          if (jsonFields.includes(typedKey)) {
+            // @ts-ignore
+            dataToUpdate[key] = updateData[typedKey] || Prisma.JsonNull;
+          } else {
+            // @ts-ignore
+            dataToUpdate[key] = updateData[typedKey];
+          }
+        }
+      }
+        
+    const updatedSettings = await this.repository.update(currentSettings.id, dataToUpdate as any);
+    
+    return { success: true, message: 'Configurações atualizadas com sucesso.' };
     } catch (error: any) {
       console.error(`Error in PlatformSettingsService.updateSettings:`, error);
       return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };

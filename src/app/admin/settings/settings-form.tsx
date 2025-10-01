@@ -18,8 +18,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
-import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings, PaymentGatewaySettings } from '@/types';
-import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, CreditCard } from 'lucide-react';
+import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings, PaymentGatewaySettings, NotificationSettings } from '@/types';
+import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, CreditCard, Bell } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
@@ -51,6 +51,13 @@ const defaultPaymentGatewaySettings: PaymentGatewaySettings = {
   gatewayEncryptionKey: '',
 };
 
+const defaultNotificationSettings: NotificationSettings = {
+  notifyOnNewAuction: true,
+  notifyOnFeaturedLot: false,
+  notifyOnAuctionEndingSoon: true,
+  notifyOnPromotions: true,
+};
+
 export default function SettingsForm({ initialData, activeSection, onUpdateSuccess }: SettingsFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -68,7 +75,8 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
       platformPublicIdMasksJson: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
       mapSettingsJson: initialData?.mapSettings || defaultMapSettings,
       biddingSettingsJson: initialData?.biddingSettings || defaultBiddingSettings,
-      paymentGatewaySettingsJson: initialData?.paymentGatewaySettings || defaultPaymentGatewaySettings, // Adicionado
+      paymentGatewaySettingsJson: initialData?.paymentGatewaySettings || defaultPaymentGatewaySettings,
+      notificationSettingsJson: initialData?.notificationSettings || defaultNotificationSettings,
       searchPaginationType: initialData?.searchPaginationType || 'loadMore',
       searchItemsPerPage: initialData?.searchItemsPerPage || 12,
       searchLoadMoreCount: initialData?.searchLoadMoreCount || 12,
@@ -92,6 +100,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         mapSettingsJson: initialData?.mapSettings || defaultMapSettings,
         biddingSettingsJson: initialData?.biddingSettings || defaultBiddingSettings,
         paymentGatewaySettingsJson: initialData?.paymentGatewaySettings || defaultPaymentGatewaySettings,
+        notificationSettingsJson: initialData?.notificationSettings || defaultNotificationSettings,
         themesJson: initialData?.themes || [],
         variableIncrementTableJson: initialData?.variableIncrementTable || [],
     });
@@ -104,7 +113,6 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
         if (onUpdateSuccess) {
-          // Await the refetch to ensure data is fresh before continuing.
           await onUpdateSuccess();
         }
       } else {
@@ -190,39 +198,19 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         
         {activeSection === 'payments' && (
           <section className="space-y-6">
-            <FormField
-              control={form.control}
-              name="paymentGatewaySettingsJson.defaultGateway"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Gateway de Pagamento Padrão</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value || 'Manual'}>
-                    <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                    <SelectContent>
-                      <SelectItem value="Manual">Processamento Manual</SelectItem>
-                      <SelectItem value="Pagarme">Pagar.me (Em breve)</SelectItem>
-                      <SelectItem value="Stripe">Stripe (Em breve)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>Selecione o provedor para processar pagamentos.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="paymentGatewaySettingsJson.platformCommissionPercentage"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Comissão da Plataforma (%)</FormLabel>
-                  <FormControl><Input type="number" step="0.1" {...field} value={field.value ?? 5} /></FormControl>
-                  <FormDescription>Percentual da comissão retida sobre cada venda.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <FormField control={form.control} name="paymentGatewaySettingsJson.defaultGateway" render={({ field }) => (<FormItem><FormLabel>Gateway de Pagamento Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value || 'Manual'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Manual">Processamento Manual</SelectItem><SelectItem value="Pagarme">Pagar.me (Em breve)</SelectItem><SelectItem value="Stripe">Stripe (Em breve)</SelectItem></SelectContent></Select><FormDescription>Selecione o provedor para processar pagamentos.</FormDescription><FormMessage /></FormItem>)} />
+             <FormField control={form.control} name="paymentGatewaySettingsJson.platformCommissionPercentage" render={({ field }) => (<FormItem><FormLabel>Comissão da Plataforma (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} value={field.value ?? 5} /></FormControl><FormDescription>Percentual da comissão retida sobre cada venda.</FormDescription><FormMessage /></FormItem>)} />
              <FormField control={form.control} name="paymentGatewaySettingsJson.gatewayApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API do Gateway</FormLabel><FormControl><Input placeholder="Sua chave de API" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
              <FormField control={form.control} name="paymentGatewaySettingsJson.gatewayEncryptionKey" render={({ field }) => (<FormItem><FormLabel>Chave de Criptografia do Gateway</FormLabel><FormControl><Input placeholder="Sua chave de criptografia" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+          </section>
+        )}
+        
+        {activeSection === 'notifications' && (
+          <section className="space-y-4">
+             <FormField control={form.control} name="notificationSettingsJson.notifyOnNewAuction" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Novos Leilões</FormLabel><FormDescription>Enviar notificação quando um novo leilão for publicado.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+             <FormField control={form.control} name="notificationSettingsJson.notifyOnFeaturedLot" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Lotes em Destaque</FormLabel><FormDescription>Notificar assinantes sobre novos lotes em destaque.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+             <FormField control={form.control} name="notificationSettingsJson.notifyOnAuctionEndingSoon" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Leilões Encerrando</FormLabel><FormDescription>Enviar alerta quando leilões estiverem próximos do fim.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+             <FormField control={form.control} name="notificationSettingsJson.notifyOnPromotions" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Promoções e Banners</FormLabel><FormDescription>Enviar e-mails sobre promoções especiais da plataforma.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
           </section>
         )}
         

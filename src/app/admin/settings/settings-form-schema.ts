@@ -23,13 +23,21 @@ const biddingSettingsSchema = z.object({
   biddingInfoCheckIntervalSeconds: z.coerce.number().min(1, "O intervalo deve ser de no mínimo 1 segundo.").max(60, "O intervalo não pode ser maior que 60 segundos.").optional().default(1),
 }).optional();
 
-// Novo schema para configurações de pagamento
 const paymentGatewaySettingsSchema = z.object({
     defaultGateway: z.enum(['Pagarme', 'Stripe', 'Manual']).optional().default('Manual'),
     platformCommissionPercentage: z.coerce.number().min(0, "A comissão não pode ser negativa.").max(20, "A comissão não pode exceder 20%.").optional().default(5),
     gatewayApiKey: z.string().max(100).optional().nullable(),
     gatewayEncryptionKey: z.string().max(100).optional().nullable(),
 }).optional();
+
+// Novo schema para configurações de notificação
+const notificationSettingsSchema = z.object({
+    notifyOnNewAuction: z.boolean().optional().default(true),
+    notifyOnFeaturedLot: z.boolean().optional().default(false),
+    notifyOnAuctionEndingSoon: z.boolean().optional().default(true),
+    notifyOnPromotions: z.boolean().optional().default(true),
+}).optional();
+
 
 export const platformSettingsFormSchema = z.object({
   siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).optional(),
@@ -60,6 +68,7 @@ export const platformSettingsFormSchema = z.object({
     staticImageMapZoom: z.coerce.number().min(1, {message: "Zoom deve ser entre 1 e 20."}).max(20, {message: "Zoom deve ser entre 1 e 20."}).optional().default(15),
     staticImageMapMarkerColor: z.string().max(50, {message: "Cor do marcador não pode exceder 50 caracteres."}).optional().default('blue'),
   }).optional(),
+  notificationSettingsJson: notificationSettingsSchema, // Adicionado
   searchPaginationType: z.enum(['loadMore', 'numberedPages'], {
     errorMap: () => ({ message: "Selecione um tipo de paginação válido."})
   }).optional().default('loadMore'),
@@ -72,7 +81,7 @@ export const platformSettingsFormSchema = z.object({
   defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional(),
   variableIncrementTableJson: z.array(variableIncrementRuleSchema).optional().default([]),
   biddingSettingsJson: biddingSettingsSchema,
-  paymentGatewaySettingsJson: paymentGatewaySettingsSchema, // Adicionado
+  paymentGatewaySettingsJson: paymentGatewaySettingsSchema,
   defaultListItemsPerPage: z.coerce.number().min(5, "Mínimo de 5 itens por página").max(100, "Máximo de 100 itens por página").optional().default(10),
 }).refine(data => {
   const table = data.variableIncrementTableJson;

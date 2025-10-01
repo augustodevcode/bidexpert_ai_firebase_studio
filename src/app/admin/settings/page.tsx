@@ -4,10 +4,10 @@
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { getPlatformSettings, resetSampleDataAction, dropAllTablesAction, runFullSeedAction } from './actions';
+import { getPlatformSettings, runFullSeedAction } from './actions';
 import SettingsForm from './settings-form';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react';
+import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, Trash2, Bell, CreditCard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
@@ -33,6 +33,8 @@ const settingsSections = [
     { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
     { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' },
     { id: 'listDisplay', label: 'Listas de Cadastros', icon: Rows, description: 'Opções de exibição para as tabelas do admin.' },
+    { id: 'notifications', label: 'Notificações', icon: Bell, description: 'Gerencie as notificações por e-mail para assinantes.' },
+    { id: 'payments', label: 'Pagamentos', icon: CreditCard, description: 'Configure gateways de pagamento e comissões.' },
     { id: 'bidding', label: 'Lances e Automação', icon: Zap, description: 'Configure lances instantâneos e incrementos.'},
     { id: 'variableIncrements', label: 'Incremento de Lance', icon: ArrowUpDown, description: 'Defina incrementos variáveis para faixas de preço.' },
     { id: 'maps', label: 'Configurações de Mapa', icon: MapPin, description: 'Provedor de mapa padrão e chaves API.' },

@@ -28,6 +28,7 @@ import type {
     MapSettings as PmMapSettings,
     BiddingSettings as PmBiddingSettings,
     PaymentGatewaySettings as PmPaymentGatewaySettings,
+    NotificationSettings as PmNotificationSettings, // Adicionado
     MentalTriggerSettings as PmMentalTriggerSettings,
     SectionBadgeVisibility as PmSectionBadgeVisibility,
     UserLotMaxBid as PmUserLotMaxBid,
@@ -163,11 +164,13 @@ export type UserProfileWithPermissions = User & {
 
 export type Theme = PmTheme;
 export type ThemeColors = PmThemeColors;
-export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
+export type NotificationSettings = PmNotificationSettings;
+export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'notificationSettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
   isSetupComplete: boolean; // Adicionando o novo campo
   themes?: Theme[];
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;
+  notificationSettings?: PmNotificationSettings | null;
   variableIncrementTable?: PmVariableIncrementRule[] | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
