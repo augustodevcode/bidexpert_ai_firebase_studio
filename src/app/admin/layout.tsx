@@ -10,7 +10,7 @@ import { hasPermission } from '@/lib/permissions';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
 import CommandPalette from '@/components/layout/command-palette';
-import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context'; // Import the new provider
+import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 
 export default function AdminLayout({
   children,
@@ -70,7 +70,7 @@ export default function AdminLayout({
 
   return (
     <>
-      <WidgetPreferencesProvider> {/* Wrap the layout with the provider */}
+      <WidgetPreferencesProvider>
         <div className="flex min-h-screen bg-secondary">
           <AdminSidebar />
           <div className="flex flex-1 flex-col">
