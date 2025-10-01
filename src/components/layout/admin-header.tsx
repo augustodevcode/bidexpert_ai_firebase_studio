@@ -3,11 +3,9 @@
 
 import { Search, Bell, Settings, MessageSquare, Menu, Globe, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/auth-context';
 import UserNav from './user-nav';
 import Link from 'next/link';
-import DynamicBreadcrumbs from './dynamic-breadcrumbs';
 import { Badge } from '../ui/badge';
 
 interface AdminHeaderProps {
@@ -25,6 +23,7 @@ export default function AdminHeader({ onSearchClick }: AdminHeaderProps) {
             variant="ghost" 
             className="group w-full justify-start text-left text-sm text-sidebar-foreground/80 md:w-[250px] lg:w-[350px] h-9 bg-sidebar-accent/50 hover:bg-sidebar-accent"
             onClick={onSearchClick}
+            data-ai-id="admin-header-search-button"
           >
             <Search className="mr-2 h-4 w-4 shrink-0" />
             <span className="truncate">Buscar leilões, lotes, usuários...</span>

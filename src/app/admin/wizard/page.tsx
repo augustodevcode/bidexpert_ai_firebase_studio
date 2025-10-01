@@ -156,7 +156,7 @@ function WizardContent({
     switch (currentStepId) {
       case 'type': return <Step1TypeSelection />;
       case 'judicial': return <Step2JudicialSetup processes={fetchedData.judicialProcesses} onAddNewProcess={() => setWizardMode('judicial_process')} onRefetchRequest={() => refetchData()} />;
-      case 'auction': return <Step3AuctionDetails categories={fetchedData.categories} auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
+      case 'auction': return <Step3AuctionDetails auctioneers={fetchedData.auctioneers} sellers={fetchedData.sellers} />;
       case 'lotting': {
         return <Step4Lotting 
                   availableAssets={assetsForLotting} 
@@ -292,5 +292,3 @@ export default function WizardPage() {
     </WizardProvider>
   );
 }
-
-  

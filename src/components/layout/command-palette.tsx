@@ -60,7 +60,7 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
-      if ((e.key === 'k' && (e.metaKey || e.ctrlKey)) || e.key === 'Escape') {
+      if ((e.key === 'k' && (e.metaKey || e.ctrlKey))) {
         e.preventDefault();
         onOpenChange(!isOpen);
       }
@@ -82,7 +82,7 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
         
         <CommandGroup heading="Navegação Principal">
           {mainNavCommands.map(({ href, label, icon: Icon }) => (
-            <CommandItem key={href} onSelect={() => runCommand(href)}>
+            <CommandItem key={href} onSelect={() => runCommand(href)} data-ai-id={`cmd-nav-${label.toLowerCase()}`}>
               <Icon className="mr-2 h-4 w-4" />
               <span>{label}</span>
             </CommandItem>
@@ -93,7 +93,7 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
         
         <CommandGroup heading="Entidades">
           {entityCommands.map(({ href, label, icon: Icon }) => (
-            <CommandItem key={href} onSelect={() => runCommand(href)}>
+            <CommandItem key={href} onSelect={() => runCommand(href)} data-ai-id={`cmd-entity-${label.toLowerCase()}`}>
               <Icon className="mr-2 h-4 w-4" />
               <span>{label}</span>
             </CommandItem>
@@ -104,7 +104,7 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
 
         <CommandGroup heading="Gestão Judicial">
           {judicialCommands.map(({ href, label, icon: Icon }) => (
-            <CommandItem key={href} onSelect={() => runCommand(href)}>
+            <CommandItem key={href} onSelect={() => runCommand(href)} data-ai-id={`cmd-judicial-${label.toLowerCase().replace(/ /g, '-')}`}>
               <Icon className="mr-2 h-4 w-4" />
               <span>{label}</span>
             </CommandItem>
@@ -115,7 +115,7 @@ export default function CommandPalette({ isOpen, onOpenChange }: CommandPaletteP
         
         <CommandGroup heading="Administração">
           {settingsCommands.map(({ href, label, icon: Icon }) => (
-            <CommandItem key={href} onSelect={() => runCommand(href)}>
+            <CommandItem key={href} onSelect={() => runCommand(href)} data-ai-id={`cmd-admin-${label.toLowerCase().replace(/ /g, '-')}`}>
               <Icon className="mr-2 h-4 w-4" />
               <span>{label}</span>
             </CommandItem>

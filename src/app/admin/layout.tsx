@@ -9,7 +9,7 @@ import AdminSidebar from '@/components/layout/admin-sidebar';
 import { hasPermission } from '@/lib/permissions'; 
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
-import CommandPalette from '@/components/layout/command-palette'; // Importar a Command Palette
+import CommandPalette from '@/components/layout/command-palette';
 
 export default function AdminLayout({
   children,

@@ -11,11 +11,11 @@ import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import AuctionForm from '@/app/admin/auctions/auction-form'; // Import the main form
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { Loader2 } from 'lucide-react';
 
 
 interface Step3AuctionDetailsProps {
-  categories: LotCategory[];
   auctioneers: AuctioneerProfileInfo[];
   sellers: SellerProfileInfo[];
 }
@@ -27,17 +27,20 @@ export default function Step3AuctionDetails({
   const { wizardData, setWizardData } = useWizard();
   const [states, setStates] = useState<StateInfo[]>([]);
   const [cities, setCities] = useState<CityInfo[]>([]);
+  const [judicialProcesses, setJudicialProcesses] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLocationData() {
         try {
-            const [fetchedStates, fetchedCities] = await Promise.all([
+            const [fetchedStates, fetchedCities, fetchedProcesses] = await Promise.all([
                 getStates(),
-                getCities()
+                getCities(),
+                getJudicialProcesses(),
             ]);
             setStates(fetchedStates);
             setCities(fetchedCities);
+            setJudicialProcesses(fetchedProcesses);
         } catch (error) {
             console.error("Failed to load location data for wizard form", error);
         } finally {
@@ -94,6 +97,7 @@ export default function Step3AuctionDetails({
         sellers={sellers}
         states={states}
         allCities={cities}
+        judicialProcesses={judicialProcesses}
         formTitle="Detalhes do Leilão"
         formDescription="Preencha as informações principais, datas e configurações do leilão."
         isWizardMode={true}
