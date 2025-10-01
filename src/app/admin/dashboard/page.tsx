@@ -9,6 +9,7 @@ import { useEffect, useState } from 'react';
 import type { AdminReportData } from '@/types';
 import { getAdminReportDataAction } from '../reports/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 function StatCard({ title, value, icon: Icon, description, isLoading, colorClass = 'bg-primary text-primary-foreground', link }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean, colorClass?: string, link?: string }) {
     const cardContent = (
