@@ -1,4 +1,6 @@
 // src/hooks/use-local-storage.ts
+'use client'; // This hook is for client-side use only
+
 import { useState, useEffect } from 'react';
 
 /**
@@ -13,6 +15,7 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
   const [storedValue, setStoredValue] = useState<T>(() => {
+    // Prevent SSR errors by checking for window
     if (typeof window === 'undefined') {
       return initialValue;
     }
@@ -40,10 +43,9 @@ export function useLocalStorage<T>(key: string, initialValue: T): [T, (value: T 
       window.localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
       // A more advanced implementation would handle the error case
-      console.error(error);
+      console.error(`Error saving to localStorage key “${key}”:`, error);
     }
   }, [key, storedValue]);
 
   return [storedValue, setStoredValue];
 }
-

@@ -10,6 +10,7 @@ import { hasPermission } from '@/lib/permissions';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
 import CommandPalette from '@/components/layout/command-palette';
+import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context'; // Import the new provider
 
 export default function AdminLayout({
   children,
@@ -69,22 +70,24 @@ export default function AdminLayout({
 
   return (
     <>
-      <div className="flex min-h-screen bg-secondary">
-        <AdminSidebar />
-        <div className="flex flex-1 flex-col">
-          <AdminHeader onSearchClick={() => setCommandPaletteOpen(true)} />
-          <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-            <div className="mx-auto max-w-7xl">
-            {children}
-            <DevInfoIndicator />
-            </div>
-          </main>
+      <WidgetPreferencesProvider> {/* Wrap the layout with the provider */}
+        <div className="flex min-h-screen bg-secondary">
+          <AdminSidebar />
+          <div className="flex flex-1 flex-col">
+            <AdminHeader onSearchClick={() => setCommandPaletteOpen(true)} />
+            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+              <div className="mx-auto max-w-7xl">
+              {children}
+              <DevInfoIndicator />
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
-      <CommandPalette 
-        isOpen={isCommandPaletteOpen}
-        onOpenChange={setCommandPaletteOpen}
-      />
+        <CommandPalette 
+          isOpen={isCommandPaletteOpen}
+          onOpenChange={setCommandPaletteOpen}
+        />
+      </WidgetPreferencesProvider>
     </>
   );
 }
