@@ -6,6 +6,7 @@ import type {
     Lot, Auction, UserProfileWithPermissions, Role, LotCategory, AuctioneerProfileInfo, 
     SellerProfileInfo, MediaItem, PlatformSettings, Bem, Subcategory
 } from '@/types';
+import { sanitizeArray, sanitizeObject } from './query-helpers';
 
 export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   const settings = await prisma.platformSettings.findUnique({
@@ -23,7 +24,7 @@ export async function fetchPlatformSettings(): Promise<PlatformSettings> {
   if (!settings) {
     throw new Error("Platform settings could not be loaded.");
   }
-  return settings as PlatformSettings;
+  return sanitizeObject(settings) as PlatformSettings;
 }
 
 export async function fetchAuctions(): Promise<Auction[]> {
@@ -34,7 +35,8 @@ export async function fetchAuctions(): Promise<Auction[]> {
     }
   });
   // Prisma doesn't do virtual fields, so we map it here.
-  return auctions.map(a => ({ ...a, totalLots: a.lots.length }));
+  const processedAuctions = auctions.map(a => ({ ...a, totalLots: a.lots.length }));
+  return sanitizeArray(processedAuctions);
 }
 
 export async function fetchAuction(id: string): Promise<Auction | null> {
@@ -46,7 +48,8 @@ export async function fetchAuction(id: string): Promise<Auction | null> {
         }
     });
     if (!auction) return null;
-    return { ...auction, totalLots: auction.lots.length };
+    const processedAuction = { ...auction, totalLots: auction.lots.length };
+    return sanitizeObject(processedAuction);
 }
 
 
@@ -59,61 +62,70 @@ export async function fetchLots(auctionId?: string): Promise<Lot[]> {
     },
     orderBy: { number: 'asc' }
   });
-  return lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
+  const processedLots = lots.map(lot => ({ ...lot, auctionName: lot.auction?.title }));
+  return sanitizeArray(processedLots);
 }
 
 export async function fetchLot(id: string): Promise<Lot | null> {
-  return prisma.lot.findFirst({
+  const lot = await prisma.lot.findFirst({
     where: { OR: [{ id }, { publicId: id }] },
     include: { 
         bens: true,
         auction: true,
     }
   });
+  return sanitizeObject(lot);
 }
 
 export async function fetchLotsByIds(ids: string[]): Promise<Lot[]> {
   if (ids.length === 0) return [];
-  return prisma.lot.findMany({
+  const lots = await prisma.lot.findMany({
     where: { id: { in: ids } },
     include: { auction: true }
   });
+  return sanitizeArray(lots);
 }
 
 export async function fetchBensByIds(ids: string[]): Promise<Bem[]> {
   if (!ids || ids.length === 0) return [];
-  return prisma.bem.findMany({ where: { id: { in: ids } }});
+  const bens = await prisma.bem.findMany({ where: { id: { in: ids } }});
+  return sanitizeArray(bens);
 }
 
 export async function fetchAuctionsByIds(ids: string[]): Promise<Auction[]> {
   if (ids.length === 0) return [];
-  return prisma.auction.findMany({
+  const auctions = await prisma.auction.findMany({
     where: { OR: [{id: {in: ids}}, {publicId: {in: ids}}] },
     include: { lots: true }
   });
+  return sanitizeArray(auctions);
 }
 
 export async function fetchSellers(): Promise<SellerProfileInfo[]> {
-  return prisma.seller.findMany({ orderBy: { name: 'asc' } });
+  const sellers = await prisma.seller.findMany({ orderBy: { name: 'asc' } });
+  return sanitizeArray(sellers);
 }
 
 export async function fetchAuctioneers(): Promise<AuctioneerProfileInfo[]> {
-  return prisma.auctioneer.findMany({ orderBy: { name: 'asc' } });
+  const auctioneers = await prisma.auctioneer.findMany({ orderBy: { name: 'asc' } });
+  return sanitizeArray(auctioneers);
 }
 
 export async function fetchCategories(): Promise<LotCategory[]> {
-  return prisma.lotCategory.findMany({ orderBy: { name: 'asc' } });
+  const categories = await prisma.lotCategory.findMany({ orderBy: { name: 'asc' } });
+  return sanitizeArray(categories);
 }
 
 export async function fetchSubcategoriesByParent(parentCategoryId: string): Promise<Subcategory[]> {
-    return prisma.subcategory.findMany({
+    const subcategories = await prisma.subcategory.findMany({
         where: { parentCategoryId },
         orderBy: { displayOrder: 'asc' }
     });
+    return sanitizeArray(subcategories);
 }
 
 export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): Promise<Auction[]> {
-  return prisma.auction.findMany({
+  const auctions = await prisma.auction.findMany({
     where: {
       seller: {
         OR: [
@@ -125,10 +137,11 @@ export async function fetchAuctionsBySellerSlug(sellerSlugOrPublicId: string): P
     },
     include: { lots: true }
   });
+  return sanitizeArray(auctions);
 }
 
 export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Promise<Auction[]> {
-  return prisma.auction.findMany({
+  const auctions = await prisma.auction.findMany({
     where: {
       auctioneer: {
         OR: [
@@ -140,4 +153,5 @@ export async function fetchAuctionsByAuctioneerSlug(auctioneerSlug: string): Pro
     },
     include: { lots: true }
   });
+  return sanitizeArray(auctions);
 }

@@ -23,10 +23,8 @@ export class SubscriptionService {
    * @returns The result of the creation operation.
    */
   async createSubscriber(data: SubscriptionFormData): Promise<{ success: boolean; message: string; }> {
-    const tenantId = tenantContext.getStore()?.tenantId;
-    if (!tenantId) {
-        return { success: false, message: 'Contexto de tenant não encontrado.' };
-    }
+    // CORRECTION: Default to tenant '1' (Landlord) for public subscriptions
+    const tenantId = tenantContext.getStore()?.tenantId || '1';
 
     try {
       const { email, name, phone, preferences } = data;
