@@ -38,26 +38,29 @@
 - **Item 30: Implementar Herança de Mídia:** Implementada a lógica completa de herança e substituição de imagens e outros atributos (endereço, valores) para Lotes e Leilões, conforme definido nas regras de negócio.
 - **Item 35: Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças.
 - **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
-- **Item 32:** **Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
+- **Item 32: Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
+- **Item 32.1: Implementar Cabeçalho do Painel de Administração:** Criado o componente `AdminHeader.tsx` e integrado ao `AdminLayout.tsx`. Adicionados ícones de ação e `UserNav`.
+- **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):**
+    - **36.1:** Criado o componente `CommandPalette.tsx` usando `cmdk`.
+    - **36.2:** Mapeado e populado a paleta com comandos de navegação e ações.
+    - **36.3:** Integrado a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
+    - **36.4:** Implementado a lógica de filtro para os comandos.
+- **Item 37.1:** Adicionado um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
 
 ## DOING
-- **Item 32: Implementar Cabeçalho do Painel de Administração:**
-    - **32.1:** Criar o componente `AdminHeader.tsx`.
-    - **32.2:** Adicionar busca global ao cabeçalho.
-    - **32.3:** Integrar `UserNav` e ícones de ação (notificações, mensagens, etc.).
-    - **32.4:** Integrar o novo `AdminHeader` ao `AdminLayout.tsx`.
+- **Item 37.2:** Criar o componente `WidgetConfigurationModal.tsx`.
 
 ## NEXT
-- **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):**
-    - **36.1:** Criar o componente `CommandPalette.tsx` usando `cmdk`.
-    - **36.2:** Mapear e popular a paleta com comandos de navegação e ações.
-    - **36.3:** Integrar a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
-    - **36.4:** Implementar a lógica de filtro para os comandos.
-- **Item 37: Implementar Dashboard Customizável (Novo):**
-    - **37.1:** Adicionar um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
-    - **37.2:** Criar o componente `WidgetConfigurationModal.tsx`.
-    - **37.3:** Listar widgets disponíveis (ex: Faturamento, Leilões Ativos, Novos Usuários, Taxa de Venda) com checkboxes.
-    - **37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário.
-    - **37.5:** Fazer com que a página `/admin/dashboard` renderize os widgets dinamicamente com base nas preferências.
+- **Item 37.3:** Listar widgets disponíveis (ex: Faturamento, Leilões Ativos, Novos Usuários, Taxa de Venda) com checkboxes.
+- **Item 37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário.
+- **Item 37.5:** Fazer com que a página `/admin/dashboard` renderize os widgets dinamicamente com base nas preferências.
+- **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):**
+    - **38.1:** Criar Modelo `Subscriber` no Prisma.
+    - **38.2:** Desenvolver `SubscriptionService` e `subscribeToAction`.
+    - **38.3:** Criar Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
+    - **38.4:** Criar Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
+    - **38.5:** Integrar os componentes no layout.
+    - **38.6:** Configurar notificações no `platformSettings`.
+    - **38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
