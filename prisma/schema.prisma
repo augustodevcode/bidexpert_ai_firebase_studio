@@ -1166,3 +1166,24 @@ model Report {
 
   @@map("reports")
 }
+
+// prisma/models/subscriber.prisma
+/**
+ * Modelo para armazenar os assinantes da newsletter e notificações.
+ */
+model Subscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  phone       String?
+  preferences Json     @default("{}") // Ex: { "newAuctions": true, "weeklySummary": false }
+
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([email])
+}

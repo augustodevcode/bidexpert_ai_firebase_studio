@@ -45,16 +45,14 @@
     - **36.2:** Mapeado e populado a paleta com comandos de navegação e ações.
     - **36.3:** Integrado a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
     - **36.4:** Implementado a lógica de filtro para os comandos.
-- **Item 37: Implementar Dashboard Customizável (Novo):**
-    - **37.1:** Adicionado um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
+- **Item 37.1:** Adicionado um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração de widgets.
+- **Item 37.2:** Criado o componente `WidgetConfigurationModal.tsx`.
+- **Item 37.3:** Listados os widgets disponíveis com checkboxes no `WidgetConfigurationModal.tsx`.
 
 ## DOING
-- **Item 37: Implementar Dashboard Customizável (Novo):**
-    - **37.2:** Criar o componente `WidgetConfigurationModal.tsx`.
+- **Item 37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário.
 
 ## NEXT
-- **Item 37.3:** Listar widgets disponíveis (ex: Faturamento, Leilões Ativos, Novos Usuários, Taxa de Venda) com checkboxes.
-- **Item 37.4:** Implementar a lógica para salvar e carregar as preferências de widgets do usuário.
 - **Item 37.5:** Fazer com que a página `/admin/dashboard` renderize os widgets dinamicamente com base nas preferências.
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):**
     - **38.1:** Criar Modelo `Subscriber` no Prisma.
