@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from '../ui/skeleton';
 import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
+import { Badge } from '../ui/badge';
 
 
 export default function UserNav() {
@@ -80,7 +81,7 @@ export default function UserNav() {
               <AvatarFallback>{userInitial}</AvatarFallback>
             </Avatar>
              {unreadNotificationsCount > 0 && (
-                <Badge variant="destructive" className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs">
+                <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center rounded-full p-0 text-[10px]">
                     {unreadNotificationsCount}
                 </Badge>
             )}
