@@ -1153,6 +1153,43 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
+// prisma/models/platform-settings.prisma
+model PlatformSettings {
+  id                                String                      @id @default(uuid())
+  siteTitle                         String?
+  siteTagline                       String?
+  logoUrl                           String?
+  faviconUrl                        String?
+  galleryImageBasePath              String?
+  storageProvider                   String?
+  firebaseStorageBucket             String?
+  activeThemeName                   String?
+  themes                            Json?
+  platformPublicIdMasks             Json?
+  mapSettings                       Json?
+  biddingSettings                   Json?
+  paymentGatewaySettings            Json?
+  notificationSettings              Json?                       @default("{}") // Adicionado
+  mentalTriggerSettings             Json?
+  sectionBadgeVisibility            Json?
+  variableIncrementTable            Json?
+  homepageSections                  Json?
+  searchPaginationType              String?
+  searchItemsPerPage                Int?
+  searchLoadMoreCount               Int?
+  showCountdownOnLotDetail          Boolean?
+  showCountdownOnCards              Boolean?
+  showRelatedLotsOnLotDetail        Boolean?
+  relatedLotsCount                  Int?
+  defaultUrgencyTimerHours          Int?
+  defaultListItemsPerPage           Int?
+  isSetupComplete                   Boolean                     @default(false)
+  createdAt                         DateTime                    @default(now())
+  updatedAt                         DateTime                    @updatedAt
+  tenantId                          String                      @unique
+  tenant                            Tenant                      @relation(fields: [tenantId], references: [id])
+}
+
 
 model Report {
   id          String   @id @default(uuid())
