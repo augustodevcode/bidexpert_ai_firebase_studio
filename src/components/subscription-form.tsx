@@ -29,7 +29,16 @@ export default function SubscriptionForm() {
       setEmail('');
       setName('');
     } else {
-      toast({ title: 'Erro na Inscrição', description: result.message, variant: 'destructive' });
+      if (result.message.includes('Este e-mail já está inscrito.')) {
+         toast({
+          title: 'Você já está inscrito!',
+          description: 'Que bom ter você conosco! Fique de olho na sua caixa de entrada para novidades.',
+        });
+        setEmail('');
+        setName('');
+      } else {
+        toast({ title: 'Erro na Inscrição', description: result.message, variant: 'destructive' });
+      }
     }
     setIsLoading(false);
   };

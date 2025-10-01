@@ -57,7 +57,15 @@ export default function SubscriptionPopup() {
       toast({ title: 'Inscrição realizada!', description: result.message });
       handleClose();
     } else {
-      toast({ title: 'Erro na Inscrição', description: result.message, variant: 'destructive' });
+      if (result.message.includes('Este e-mail já está inscrito.')) {
+        toast({
+          title: 'Você já está inscrito!',
+          description: 'Que bom ter você conosco! Você já está na nossa lista de notificações.',
+        });
+        handleClose();
+      } else {
+        toast({ title: 'Erro na Inscrição', description: result.message, variant: 'destructive' });
+      }
     }
     setIsLoading(false);
   };
