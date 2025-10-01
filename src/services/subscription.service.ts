@@ -1,7 +1,9 @@
 // src/services/subscription.service.ts
 /**
  * @fileoverview Service layer for handling newsletter subscriptions.
- * Encapsulates the business logic for creating and managing subscribers.
+ * Encapsulates the business logic for creating and managing subscribers,
+ * ensuring that public sign-ups are correctly associated with the main
+ * platform tenant.
  */
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
@@ -23,7 +25,7 @@ export class SubscriptionService {
    * @returns The result of the creation operation.
    */
   async createSubscriber(data: SubscriptionFormData): Promise<{ success: boolean; message: string; }> {
-    // CORRECTION: Default to tenant '1' (Landlord) for public subscriptions
+    // For public-facing forms, if no tenant is in context, default to '1' (Landlord).
     const tenantId = tenantContext.getStore()?.tenantId || '1';
 
     try {

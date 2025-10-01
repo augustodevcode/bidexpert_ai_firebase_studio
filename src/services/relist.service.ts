@@ -5,16 +5,18 @@
  * de um lote que não foi vendido (ou encerrado sem lances) e associá-lo a um
  * novo leilão, opcionalmente com um desconto, mantendo um vínculo com o lote original.
  */
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import { LotService } from './lot.service';
 import type { Lot } from '@/types';
 import { v4 as uuidv4 } from 'uuid';
 
 export class RelistService {
   private lotService: LotService;
+  private prisma;
 
   constructor() {
     this.lotService = new LotService();
+    this.prisma = getPrismaInstance();
   }
 
   async relistLot(
