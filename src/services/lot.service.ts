@@ -264,7 +264,7 @@ export class LotService {
         type, 
         sellerId, 
         subcategoryId,
-        stageDetails, // Captura os detalhes das etapas
+        stageDetails,
         ...lotData 
       } = data;
       const finalCategoryId = categoryId || type;
@@ -297,26 +297,32 @@ export class LotService {
         tenant: { connect: { id: finalTenantId } },
       };
 
-      // --- START INHERITANCE LOGIC ---
-      if (assetIds && assetIds.length === 1) {
-          const singleAsset = await this.assetService.getAssetById(finalTenantId!, assetIds[0]);
-          if (singleAsset) {
-              dataToCreate.inheritedMediaFromBemId = singleAsset.id;
-
-              if (!data.cityName && !data.stateUf) {
-                  dataToCreate.cityName = singleAsset.locationCity;
-                  dataToCreate.stateUf = singleAsset.locationState;
-                  dataToCreate.mapAddress = singleAsset.address;
-                  dataToCreate.latitude = singleAsset.latitude;
-                  dataToCreate.longitude = singleAsset.longitude;
-              }
-              if (!data.price && !data.initialPrice && singleAsset.evaluationValue) {
-                  dataToCreate.price = singleAsset.evaluationValue;
-                  dataToCreate.initialPrice = singleAsset.evaluationValue;
-              }
-          }
+      // Determine which asset to inherit from, if any
+      let assetForInheritanceId: string | null = data.inheritedMediaFromBemId || null;
+      if (!assetForInheritanceId && assetIds?.length === 1) {
+          assetForInheritanceId = assetIds[0];
+          dataToCreate.inheritedMediaFromBemId = assetForInheritanceId; // Persist this choice
       }
-      // --- END INHERITANCE LOGIC ---
+
+      // If an inheritance source is determined, pull data from it
+      if (assetForInheritanceId) {
+        const sourceAsset = await this.assetService.getAssetById(finalTenantId!, assetForInheritanceId);
+        if (sourceAsset) {
+            // Inherit location only if not explicitly provided on the lot
+            if (!data.cityName && !data.stateUf) {
+                dataToCreate.cityName = sourceAsset.locationCity;
+                dataToCreate.stateUf = sourceAsset.locationState;
+                dataToCreate.mapAddress = sourceAsset.address;
+                dataToCreate.latitude = sourceAsset.latitude;
+                dataToCreate.longitude = sourceAsset.longitude;
+            }
+            // Inherit price only if not explicitly provided on the lot
+            if (!data.price && !data.initialPrice && sourceAsset.evaluationValue) {
+                dataToCreate.price = sourceAsset.evaluationValue;
+                dataToCreate.initialPrice = sourceAsset.evaluationValue;
+            }
+        }
+      }
       
       if (data.originalLotId) {
         dataToCreate.originalLot = { connect: { id: data.originalLotId } };
@@ -329,9 +335,6 @@ export class LotService {
       }
       if (subcategoryId) {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
-      }
-      if (data.hasOwnProperty('inheritedMediaFromBemId') && data.inheritedMediaFromBemId) {
-        dataToCreate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
       }
       
       const newLot = await this.repository.create(dataToCreate, assetIds || []);
