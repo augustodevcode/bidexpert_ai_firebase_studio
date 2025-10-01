@@ -57,11 +57,11 @@
     - **38.3:** Criado Componente de Popup de Inscrição (`SubscriptionPopup.tsx`).
     - **38.4:** Criado Componente de Inscrição Embarcado (`SubscriptionForm.tsx`).
     - **38.5:** Integrado os componentes (`SubscriptionPopup` e `SubscriptionForm`) no layout principal da aplicação.
+    - **38.6:** Configurar notificações no `platformSettings`.
 
 ## DOING
-- **Item 38.6:** Configurar notificações no `platformSettings`.
+- **Item 38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações (placeholder inicial criado).
 
 ## NEXT
-- **Item 38.7 (Futuro):** Implementar o serviço de envio de e-mails/notificações.
 - **Melhoria Contínua:** Revisar e otimizar o desempenho de consultas críticas no banco de dados.
 - **Documentação Final:** Gerar a documentação final do projeto e da API.
