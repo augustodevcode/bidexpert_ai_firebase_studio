@@ -308,8 +308,10 @@ export async function seedGeminiExtended() {
   const bidderPool: User[] = [];
   console.log('Creating a pool of 10 new bidder users...');
   for (let i = 0; i < 10; i++) {
-    const user = await prisma.user.create({
-      data: {
+    const user = await prisma.user.upsert({
+      where: { email: `arrematante${i}@bidexpert.com` },
+      update: { habilitationStatus: UserHabilitationStatus.HABILITADO },
+      create: {
         email: `arrematante${i}@bidexpert.com`,
         fullName: faker.person.fullName(),
         password: 'hashed_password', // In a real scenario, hash this
@@ -428,6 +430,10 @@ export async function seedGeminiExtended() {
           winDate: new Date(),
         },
       });
+
+      if (j % 5 === 0) {
+        console.log(`    ... ${j}/30 lots created for auction ${i}.`);
+      }
     }
     console.log(`  - Finished creating 30 lots for auction ${i}.`);
   }
