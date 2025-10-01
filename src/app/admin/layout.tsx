@@ -8,6 +8,7 @@ import { Loader2, ShieldAlert } from 'lucide-react';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 import { hasPermission } from '@/lib/permissions'; 
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
+import AdminHeader from '@/components/layout/admin-header'; // Import the new header
 
 export default function AdminLayout({
   children,
@@ -66,14 +67,17 @@ export default function AdminLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-secondary">
       <AdminSidebar />
-      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-secondary">
-        <div className="mx-auto max-w-7xl">
-         {children}
-         <DevInfoIndicator />
-        </div>
-      </main>
+      <div className="flex flex-1 flex-col">
+        <AdminHeader />
+        <main className="flex-1 p-4 sm:p-6 md:p-8">
+          <div className="mx-auto max-w-7xl">
+           {children}
+           <DevInfoIndicator />
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

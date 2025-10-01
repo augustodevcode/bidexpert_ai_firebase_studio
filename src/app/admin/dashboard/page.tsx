@@ -55,12 +55,7 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6" data-ai-id="admin-dashboard-page-container">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
-        <Button variant="outline">
-            Gerenciar Widgets
-        </Button>
-      </div>
+      {/* O cabeçalho com título foi movido para o AdminHeader e AdminLayout */}
 
        <Alert variant="default" className="bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/30 dark:border-blue-700 dark:text-blue-300">
           <AlertTriangle className="h-4 w-4" />
