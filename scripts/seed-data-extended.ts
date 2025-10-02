@@ -20,12 +20,12 @@ import { JudicialDistrictService } from '../src/services/judicial-district.servi
 import { JudicialBranchService } from '../src/services/judicial-branch.service';
 import { StateService } from '../src/services/state.service';
 import { CityService } from '../src/services/city.service';
-import { LotQuestionService } from '../src/services/lot-question.service';
-import { ReviewService } from '../src/services/review.service';
-import { BidService } from '../src/services/bid.service';
+// import { LotQuestionService } from '../src/services/lot-question.service';
+// import { ReviewService } from '../src/services/review.service';
+// import { BidService } from '../src/services/bid.service';
 import { UserWinService } from '../src/services/user-win.service';
 import { DirectSaleOfferService } from '../src/services/direct-sale-offer.service';
-import { InstallmentPaymentService } from '../src/services/installment-payment.service';
+// import { InstallmentPaymentService } from '../src/services/installment-payment.service';
 import { NotificationService } from '../src/services/notification.service';
 import { ContactMessageService } from '../src/services/contact-message.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
@@ -115,12 +115,12 @@ const lotService = new LotService();
 const bidService = new BidService();
 const userWinService = new UserWinService();
 const directSaleOfferService = new DirectSaleOfferService();
-const installmentPaymentService = new InstallmentPaymentService();
+// const installmentPaymentService = new InstallmentPaymentService();
 const notificationService = new NotificationService();
 const contactMessageService = new ContactMessageService();
 const documentTemplateService = new DocumentTemplateService();
-const lotQuestionService = new LotQuestionService();
-const reviewService = new ReviewService();
+// const lotQuestionService = new LotQuestionService();
+// const reviewService = new ReviewService();
 
 // --- Seeding Phases ---
 
