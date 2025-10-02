@@ -112,15 +112,11 @@ const judicialBranchService = new JudicialBranchService();
 const judicialProcessService = new JudicialProcessService();
 const auctionService = new AuctionService();
 const lotService = new LotService();
-const bidService = new BidService();
 const userWinService = new UserWinService();
 const directSaleOfferService = new DirectSaleOfferService();
-// const installmentPaymentService = new InstallmentPaymentService();
 const notificationService = new NotificationService();
 const contactMessageService = new ContactMessageService();
 const documentTemplateService = new DocumentTemplateService();
-// const lotQuestionService = new LotQuestionService();
-// const reviewService = new ReviewService();
 
 // --- Seeding Phases ---
 
@@ -243,19 +239,25 @@ async function seedBaseData() {
   log('Seeding Location Data (States and Cities)...', 1);
   const locationData = { SP: 'São Paulo', RJ: 'Rio de Janeiro', MG: 'Belo Horizonte' };
   for (const [uf, cityName] of Object.entries(locationData)) {
-    const stateResult = await stateService.createState({ name: uf, uf });
-    if (stateResult.success && stateResult.stateId) {
-      entityStore.states[uf] = stateResult.stateId;
-      log(`State "${uf}" created.`, 2);
-      const cityResult = await cityService.createCity({
+    const state = await prisma.state.upsert({
+      where: { uf },
+      update: {},
+      create: { name: uf, uf },
+    });
+    entityStore.states[uf] = state.id;
+    log(`State "${uf}" created.`, 2);
+    
+    const city = await prisma.city.upsert({
+      where: { name_stateId: { name: cityName, stateId: state.id } },
+      update: {},
+      create: {
         name: cityName,
-        stateId: stateResult.stateId,
-      });
-      if (cityResult.success && cityResult.cityId) {
-        entityStore.cities[cityName] = cityResult.cityId;
-        log(`City "${cityName}" created.`, 3);
-      }
-    }
+        stateId: state.id,
+        ibgeCode: `${Math.floor(Math.random() * 9000000) + 1000000}`,
+      },
+    });
+    entityStore.cities[cityName] = city.id;
+    log(`City "${cityName}" created.`, 3);
   }
 
   // 2.3. Vehicle Makes and Models
@@ -296,16 +298,17 @@ async function seedParticipants() {
   log('Seeding Auctioneers...', 1);
   for (let i = 0; i < 3; i++) {
     const name = `Leiloeiro Oficial ${i + 1}`;
-    const data = {
-      name,
-      email: faker.internet.email(),
-      phone: faker.phone.number(),
-    };
-    const result = await auctioneerService.createAuctioneer(entityStore.tenantId, data);
-    if (result.success && result.auctioneerId) {
-      entityStore.auctioneers.push(result.auctioneerId);
-      log(`Auctioneer "${name}" created.`, 2);
-    }
+    const auctioneer = await prisma.auctioneer.create({
+      data: {
+        name,
+        email: faker.internet.email(),
+        phone: faker.phone.number(),
+        description: `Leiloeiro oficial certificado pela JUCERJA`,
+        tenantId: entityStore.tenantId,
+      },
+    });
+    entityStore.auctioneers.push(auctioneer.id);
+    log(`Auctioneer "${name}" created.`, 2);
   }
 
   // 3.2. Sellers
@@ -633,7 +636,7 @@ async function seedInteractions() {
     for (let i = 0; i < 5; i++) {
       const bidder = faker.helpers.arrayElement(bidderUsers);
       currentPrice += faker.number.int({ min: 100, max: 500 });
-      await bidService.placeBid(lot.id, bidder.id, currentPrice, bidder.fullName || 'Bidder');
+      await lotService.placeBid(lot.id, bidder.id, currentPrice, bidder.fullName || 'Bidder');
       log(`Bid placed on lot "${lot.title}" by "${bidder.fullName}" for ${currentPrice}.`, 2);
     }
   }
