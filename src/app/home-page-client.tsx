@@ -2,7 +2,9 @@
 'use client';
 
 import { Suspense, useState, useEffect } from 'react';
-import HeroCarousel from '@/components/hero-carousel';
+import HeroSection from '@/components/hero-section';
+import ClosingSoonCarousel from '@/components/closing-soon-carousel';
+import TopCategories from '@/components/top-categories';
 import FilterLinkCard from '@/components/filter-link-card';
 import PromoCard from '@/components/promo-card';
 import { Button } from '@/components/ui/button';
@@ -19,13 +21,15 @@ export default function HomePageClient({
     allAuctions,
     allLots,
     categories,
-    sellers
+    sellers,
+    closingSoonLots = []
 }: {
     platformSettings: PlatformSettings | null;
     allAuctions: Auction[];
     allLots: Lot[];
     categories: LotCategory[];
     sellers: SellerProfileInfo[];
+    closingSoonLots?: Lot[];
 }) {
 
   if (!platformSettings) {
@@ -44,7 +48,11 @@ export default function HomePageClient({
   const lotsToDisplay = featuredLots.length > 0 ? featuredLots : recentActiveLots;
   const lotsTitle = featuredLots.length > 0 ? "Lotes em Destaque" : "Lotes Recentes";
 
-  const featuredAuctions = allAuctions.filter(a => a.isFeaturedOnMarketplace && activeAuctionStatuses.includes(a.status as any)).sort((a, b) => new Date(b.auctionDate as string).getTime() - new Date(a.auctionDate as string).getTime()).slice(0, 4);
+  const featuredAuctions = allAuctions.filter(a => a.isFeaturedOnMarketplace && activeAuctionStatuses.includes(a.status as any)).sort((a, b) => {
+    const dateA = b.auctionDate ? new Date(b.auctionDate).getTime() : 0;
+    const dateB = a.auctionDate ? new Date(a.auctionDate).getTime() : 0;
+    return dateA - dateB;
+  }).slice(0, 4);
   const recentActiveAuctions = allAuctions.filter(a => activeAuctionStatuses.includes(a.status as any)).slice(0, 4);
   const auctionsToDisplay = featuredAuctions.length > 0 ? featuredAuctions : recentActiveAuctions;
   const auctionsTitle = featuredAuctions.length > 0 ? "Leilões em Destaque" : "Leilões Recentes";
@@ -54,7 +62,9 @@ export default function HomePageClient({
 
   return (
     <div className="space-y-12 md:space-y-16 lg:space-y-20">
-      <HeroCarousel />
+      <HeroSection />
+      
+      {closingSoonLots.length > 0 && <ClosingSoonCarousel lots={closingSoonLots} />}
       
       <section className="space-y-6">
         <div className="flex justify-between items-center">
@@ -79,6 +89,8 @@ export default function HomePageClient({
             ))}
         </div>
       </section>
+
+      <TopCategories categories={categories.slice(0, 8)} />
 
       <div className="grid md:grid-cols-2 gap-6">
         <PromoCard 

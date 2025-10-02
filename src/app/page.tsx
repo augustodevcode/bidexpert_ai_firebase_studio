@@ -25,6 +25,50 @@ async function HomePageData() {
         getSellers(true),
     ]);
 
+    // Buscar lotes encerrando em breve baseado na última etapa do leilão
+    const { PrismaClient } = await import('@prisma/client');
+    const prisma = new PrismaClient();
+    
+    const sevenDaysFromNow = new Date();
+    sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+    const now = new Date();
+    
+    const closingSoonLotsWithStages = await prisma.lot.findMany({
+        where: {
+            status: 'ABERTO_PARA_LANCES',
+            auction: {
+                stages: {
+                    some: {
+                        endDate: {
+                            gte: now,
+                            lte: sevenDaysFromNow,
+                        }
+                    }
+                }
+            }
+        },
+        include: {
+            auction: {
+                include: {
+                    stages: {
+                        orderBy: { endDate: 'desc' },
+                        take: 1,
+                    }
+                }
+            }
+        },
+        take: 8,
+    });
+
+    // Mapear para adicionar a data da última etapa ao lote
+    const closingSoonLots = closingSoonLotsWithStages.map(lot => ({
+        ...lot,
+        endDate: lot.auction?.stages[0]?.endDate || lot.endDate,
+        auction: undefined, // Remove para evitar conflito de tipo
+    })) as unknown as Lot[];
+
+    await prisma.$disconnect();
+
     return (
         <HomePageClient
             platformSettings={settings}
@@ -32,6 +76,7 @@ async function HomePageData() {
             allLots={lotsData}
             categories={categoriesData}
             sellers={sellersData}
+            closingSoonLots={closingSoonLots}
         />
     );
 }
