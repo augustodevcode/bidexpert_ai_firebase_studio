@@ -8,7 +8,6 @@
  */
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
     LineChart as LineChartIcon, 
     PieChart as PieChartIcon, 
@@ -42,6 +41,7 @@ import { getAdminReportDataAction } from './actions';
 import type { AdminReportData } from '@/types';
 import { Skeleton } from '@/components/ui/skeleton';
 import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
 const initialStats: AdminReportData = {
   users: 0,
@@ -177,7 +177,7 @@ export default function AdminReportsPage() {
              {isLoading ? <Skeleton className="w-full h-full" /> : (
             <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                    <Pie data={stats.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} fill="#8884d8" label>
+                    <Pie data={stats.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
                          {stats.categoryData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}

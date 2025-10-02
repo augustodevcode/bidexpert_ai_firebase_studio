@@ -8,7 +8,8 @@
  */
 import { getPrismaInstance } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
-import { subDays } from 'date-fns';
+import { subDays, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
 import type { AdminReportData } from '@/types';
 
@@ -59,9 +60,20 @@ export class DashboardService {
         
         const salesByMonthMap = new Map<string, number>();
         const soldLotsForSales = await this.prisma.lot.findMany({ where: { status: 'VENDIDO' }, select: { price: true, updatedAt: true } });
+        
+        // Initialize map for the last 12 months to ensure all months are present
+        const now = nowInSaoPaulo();
+        for (let i = 11; i >= 0; i--) {
+            const date = subMonths(now, i);
+            const monthKey = format(date, 'MMM/yy', { locale: ptBR });
+            salesByMonthMap.set(monthKey, 0);
+        }
+
         soldLotsForSales.forEach(lot => {
             const monthKey = formatInSaoPaulo(lot.updatedAt, 'MMM/yy');
-            salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
+            if (salesByMonthMap.has(monthKey)) {
+                salesByMonthMap.set(monthKey, (salesByMonthMap.get(monthKey) || 0) + (lot.price ? Number(lot.price) : 0));
+            }
         });
 
         const salesData = Array.from(salesByMonthMap, ([name, Sales]) => ({ name, Sales }));

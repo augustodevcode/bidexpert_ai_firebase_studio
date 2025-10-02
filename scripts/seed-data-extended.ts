@@ -1,458 +1,951 @@
-// scripts/seed-data-extended.ts
 /**
- * @fileoverview This script extends the existing seed data to cover additional tables
- * and ensure comprehensive test cases for all ENUM values and relationships.
- * It is designed to be run after the main seed-data-extended.ts script.
+ * @fileoverview Script de seed completo para a plataforma BidExpert.
+ * Popula TODAS as tabelas do banco de dados usando a camada de serviços.
+ * 
+ * Para executar: `npx tsx scripts/seed-data-extended-complete.ts`
  */
-
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import {
-  AuctionMethod,
+  AuctionService,
+  LotService,
+  UserService,
+  SellerService,
+  AuctioneerService,
+  CategoryService,
+  SubcategoryService,
+  AssetService,
+  JudicialProcessService,
+  CourtService,
+  JudicialDistrictService,
+  JudicialBranchService,
+  StateService,
+  CityService,
+  LotQuestionService,
+  ReviewService,
+  BidService,
+  UserWinService,
+  DirectSaleOfferService,
+  InstallmentPaymentService,
+  NotificationService,
+  ContactMessageService,
+  DocumentTemplateService,
+  RoleService,
+} from '@/services';
+import {
   AuctionStatus,
   AuctionType,
   LotStatus,
   UserHabilitationStatus,
   PaymentStatus,
-  DirectSaleOfferStatus,
-  DirectSaleOfferType,
-  DocumentTemplateType,
-  UserDocumentStatus,
-  ProcessPartyType,
   AssetStatus,
-  User,
+  AccountType,
+  ProcessPartyType,
+  DocumentTemplateType,
 } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export async function seedGeminiExtended() {
-  console.log('Starting Gemini extended seeding...');
+// --- Helper Functions ---
+const log = (message: string, level = 0) => {
+  console.log(`${'  '.repeat(level)}- ${message}`);
+};
 
-  // Fetch existing data to link new data
-  const tenants = await prisma.tenant.findMany();
-  const users = await prisma.user.findMany();
-  const auctions = await prisma.auction.findMany();
-  const lots = await prisma.lot.findMany();
-  const categories = await prisma.lotCategory.findMany();
-  const judicialProcesses = await prisma.judicialProcess.findMany();
+const randomEnum = <T extends object>(e: T): T[keyof T] => {
+  const values = Object.values(e);
+  return values[Math.floor(Math.random() * values.length)];
+};
 
-  if (tenants.length === 0 || users.length === 0 || categories.length === 0) {
-    console.warn('Not enough base data to perform extended seeding. Please run the main seed script first.');
+const entityStore: {
+  tenantId: string;
+  roles: Record<string, string>;
+  users: Record<string, string>;
+  categories: Record<string, { id: string; subcategoryIds: string[] }>;
+  states: Record<string, string>;
+  cities: Record<string, string>;
+  courts: Record<string, string>;
+  judicialDistricts: Record<string, string>;
+  judicialBranches: Record<string, string>;
+  sellers: string[];
+  auctioneers: string[];
+  judicialProcesses: string[];
+  assets: { id: string; status: AssetStatus }[];
+  auctions: string[];
+  lots: string[];
+  vehicleMakes: Record<string, string>;
+  vehicleModels: string[];
+  mediaItems: string[];
+  documentTypes: string[];
+} = {
+  tenantId: '1',
+  roles: {},
+  users: {},
+  categories: {},
+  states: {},
+  cities: {},
+  courts: {},
+  judicialDistricts: {},
+  judicialBranches: {},
+  sellers: [],
+  auctioneers: [],
+  judicialProcesses: [],
+  assets: [],
+  auctions: [],
+  lots: [],
+  vehicleMakes: {},
+  vehicleModels: [],
+  mediaItems: [],
+  documentTypes: [],
+};
+
+// --- Service Instances ---
+const userService = new UserService();
+const roleService = new RoleService();
+const sellerService = new SellerService();
+const auctioneerService = new AuctioneerService();
+const categoryService = new CategoryService();
+const subcategoryService = new SubcategoryService();
+const assetService = new AssetService();
+const stateService = new StateService();
+const cityService = new CityService();
+const courtService = new CourtService();
+const judicialDistrictService = new JudicialDistrictService();
+const judicialBranchService = new JudicialBranchService();
+const judicialProcessService = new JudicialProcessService();
+const auctionService = new AuctionService();
+const lotService = new LotService();
+const bidService = new BidService();
+const userWinService = new UserWinService();
+const directSaleOfferService = new DirectSaleOfferService();
+const installmentPaymentService = new InstallmentPaymentService();
+const notificationService = new NotificationService();
+const contactMessageService = new ContactMessageService();
+const documentTemplateService = new DocumentTemplateService();
+const lotQuestionService = new LotQuestionService();
+const reviewService = new ReviewService();
+
+// --- Seeding Phases ---
+
+async function seedCoreInfra() {
+  log('Phase 1: Seeding Core Infrastructure...', 0);
+
+  // 1.1. Tenant (garantir que existe)
+  log('Ensuring Tenant exists...', 1);
+  const tenant = await prisma.tenant.upsert({
+    where: { id: entityStore.tenantId },
+    update: {},
+    create: {
+      id: entityStore.tenantId,
+      name: 'BidExpert Platform',
+      subdomain: 'bidexpert',
+      domain: 'bidexpert.com',
+    },
+  });
+  log(`Tenant "${tenant.name}" ready.`, 2);
+
+  // 1.2. Roles
+  log('Seeding Roles...', 1);
+  const roleNames = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN'];
+  for (const name of roleNames) {
+    const result = await roleService.createRole({
+      name,
+      nameNormalized: name,
+      description: `${name} role`,
+    });
+    if (result.success && result.roleId) {
+      entityStore.roles[name] = result.roleId;
+      log(`Role "${name}" created.`, 2);
+    } else {
+      const existingRole = await prisma.role.findUnique({ where: { nameNormalized: name } });
+      if (existingRole) {
+        entityStore.roles[name] = existingRole.id;
+        log(`Role "${name}" already exists.`, 2);
+      }
+    }
+  }
+
+  // 1.3. Admin User
+  log('Seeding Admin User...', 1);
+  const adminData = {
+    email: 'admin@bidexpert.com',
+    password: 'admin123',
+    fullName: 'Admin BidExpert',
+    habilitationStatus: UserHabilitationStatus.HABILITADO,
+    accountType: AccountType.PHYSICAL,
+    roleIds: [entityStore.roles.ADMIN],
+    tenantId: entityStore.tenantId,
+  };
+  const adminResult = await userService.createUser(adminData);
+  if (adminResult.success && adminResult.userId) {
+    entityStore.users.admin = adminResult.userId;
+    log(`Admin user created: ${adminData.email}`, 2);
+  } else {
+    const existingAdmin = await userService.findUserByEmail(adminData.email);
+    if (existingAdmin) {
+      entityStore.users.admin = existingAdmin.id;
+      log(`Admin user already exists: ${adminData.email}`, 2);
+    }
+  }
+
+  // 1.4. Document Types
+  log('Seeding Document Types...', 1);
+  const docTypes = [
+    { name: 'CPF', description: 'Cadastro de Pessoa Física', isRequired: true, appliesTo: 'PHYSICAL' },
+    { name: 'RG', description: 'Registro Geral', isRequired: true, appliesTo: 'PHYSICAL' },
+    { name: 'Comprovante de Residência', description: 'Comprovante de endereço', isRequired: true, appliesTo: 'BOTH' },
+    { name: 'CNPJ', description: 'Cadastro Nacional de Pessoa Jurídica', isRequired: true, appliesTo: 'LEGAL' },
+    { name: 'Contrato Social', description: 'Contrato social da empresa', isRequired: true, appliesTo: 'LEGAL' },
+  ];
+  
+  for (const docType of docTypes) {
+    const created = await prisma.documentType.upsert({
+      where: { name: docType.name },
+      update: {},
+      create: docType,
+    });
+    entityStore.documentTypes.push(created.id);
+    log(`Document Type "${docType.name}" created.`, 2);
+  }
+}
+
+async function seedBaseData() {
+  log('Phase 2: Seeding Base Data...', 0);
+
+  // 2.1. Categories & Subcategories
+  log('Seeding Categories and Subcategories...', 1);
+  const categoryData = {
+    'Veículos': ['Carros', 'Motos', 'Caminhões'],
+    'Imóveis': ['Apartamentos', 'Casas', 'Terrenos'],
+    'Eletrônicos': ['Celulares', 'Notebooks', 'TVs'],
+  };
+  for (const catName of Object.keys(categoryData)) {
+    const catResult = await categoryService.createCategory({
+      name: catName,
+      description: `Categoria de ${catName}`,
+    });
+    if (catResult.success && catResult.categoryId) {
+      const categoryId = catResult.categoryId;
+      entityStore.categories[catName] = { id: categoryId, subcategoryIds: [] };
+      log(`Category "${catName}" created.`, 2);
+
+      for (const subcatName of categoryData[catName as keyof typeof categoryData]) {
+        const subcatResult = await subcategoryService.createSubcategory({
+          name: subcatName,
+          parentCategoryId: categoryId,
+        });
+        if (subcatResult.success && subcatResult.subcategoryId) {
+          entityStore.categories[catName].subcategoryIds.push(subcatResult.subcategoryId);
+          log(`Subcategory "${subcatName}" created under "${catName}".`, 3);
+        }
+      }
+    }
+  }
+
+  // 2.2. Location Data
+  log('Seeding Location Data (States and Cities)...', 1);
+  const locationData = { SP: 'São Paulo', RJ: 'Rio de Janeiro', MG: 'Belo Horizonte' };
+  for (const [uf, cityName] of Object.entries(locationData)) {
+    const stateResult = await stateService.createState({ name: uf, uf });
+    if (stateResult.success && stateResult.stateId) {
+      entityStore.states[uf] = stateResult.stateId;
+      log(`State "${uf}" created.`, 2);
+      const cityResult = await cityService.createCity({
+        name: cityName,
+        stateId: stateResult.stateId,
+      });
+      if (cityResult.success && cityResult.cityId) {
+        entityStore.cities[cityName] = cityResult.cityId;
+        log(`City "${cityName}" created.`, 3);
+      }
+    }
+  }
+
+  // 2.3. Vehicle Makes and Models
+  log('Seeding Vehicle Makes and Models...', 1);
+  const vehicleData = {
+    'Ford': ['Ka', 'Fiesta', 'Focus', 'Ranger'],
+    'Chevrolet': ['Onix', 'Prisma', 'S10', 'Tracker'],
+    'Volkswagen': ['Gol', 'Polo', 'Tiguan', 'Amarok'],
+  };
+
+  for (const [makeName, models] of Object.entries(vehicleData)) {
+    const makeSlug = makeName.toLowerCase().replace(/\s+/g, '-');
+    const make = await prisma.vehicleMake.upsert({
+      where: { slug: makeSlug },
+      update: {},
+      create: { name: makeName, slug: makeSlug },
+    });
+    entityStore.vehicleMakes[makeName] = make.id;
+    log(`Vehicle Make "${makeName}" created.`, 2);
+
+    for (const modelName of models) {
+      const modelSlug = `${makeSlug}-${modelName.toLowerCase().replace(/\s+/g, '-')}`;
+      const model = await prisma.vehicleModel.upsert({
+        where: { makeId_name: { makeId: make.id, name: modelName } },
+        update: {},
+        create: { name: modelName, slug: modelSlug, makeId: make.id },
+      });
+      entityStore.vehicleModels.push(model.id);
+      log(`Vehicle Model "${modelName}" created under "${makeName}".`, 3);
+    }
+  }
+}
+
+async function seedParticipants() {
+  log('Phase 3: Seeding Participants...', 0);
+
+  // 3.1. Auctioneers
+  log('Seeding Auctioneers...', 1);
+  for (let i = 0; i < 3; i++) {
+    const name = `Leiloeiro Oficial ${i + 1}`;
+    const data = {
+      name,
+      email: faker.internet.email(),
+      phone: faker.phone.number(),
+    };
+    const result = await auctioneerService.createAuctioneer(entityStore.tenantId, data);
+    if (result.success && result.auctioneerId) {
+      entityStore.auctioneers.push(result.auctioneerId);
+      log(`Auctioneer "${name}" created.`, 2);
+    }
+  }
+
+  // 3.2. Sellers
+  log('Seeding Sellers...', 1);
+  for (let i = 0; i < 5; i++) {
+    const name = `Vendedor Extrajudicial ${i + 1}`;
+    const data = {
+      name,
+      email: faker.internet.email(),
+      isJudicial: false,
+    };
+    const result = await sellerService.createSeller(entityStore.tenantId, data);
+    if (result.success && result.sellerId) {
+      entityStore.sellers.push(result.sellerId);
+      log(`Seller "${name}" created.`, 2);
+    }
+  }
+
+  // 3.3. Bidder Users
+  log('Seeding Bidder Users...', 1);
+  for (let i = 0; i < 10; i++) {
+    const email = `arrematante${i}@bidexpert.com`;
+    const userData = {
+      email,
+      password: 'bidder123',
+      fullName: faker.person.fullName(),
+      habilitationStatus: UserHabilitationStatus.HABILITADO,
+      accountType: AccountType.PHYSICAL,
+      roleIds: [entityStore.roles.BIDDER, entityStore.roles.USER],
+      tenantId: entityStore.tenantId,
+    };
+    const result = await userService.createUser(userData);
+    if (result.success && result.userId) {
+      entityStore.users[`bidder${i}`] = result.userId;
+      log(`Bidder user created: ${email}`, 2);
+    } else {
+      const existingUser = await userService.findUserByEmail(email);
+      if (existingUser) {
+        entityStore.users[`bidder${i}`] = existingUser.id;
+        log(`Bidder user already exists: ${email}`, 2);
+      }
+    }
+  }
+
+  // 3.4. Subscribers (Newsletter)
+  log('Seeding Subscribers...', 1);
+  for (let i = 0; i < 5; i++) {
+    await prisma.subscriber.create({
+      data: {
+        email: faker.internet.email(),
+        name: faker.person.fullName(),
+        phone: faker.phone.number(),
+        preferences: { categories: ['Veículos', 'Imóveis'] },
+        tenantId: entityStore.tenantId,
+      },
+    });
+  }
+  log('5 subscribers created.', 2);
+}
+
+async function seedJudicialData() {
+  log('Phase 4: Seeding Judicial Data...', 0);
+
+  // 4.1. Courts, Districts, Branches
+  log('Seeding Courts, Districts, and Branches...', 1);
+  const courtResult = await courtService.createCourt({
+    name: 'Tribunal de Justiça de São Paulo',
+    stateUf: 'SP',
+  });
+  if (courtResult.success && courtResult.courtId) {
+    entityStore.courts.TJSP = courtResult.courtId;
+    log('Court "TJSP" created.', 2);
+
+    const districtResult = await judicialDistrictService.createDistrict({
+      name: 'Comarca da Capital',
+      courtId: courtResult.courtId,
+      stateId: entityStore.states.SP,
+    });
+    if (districtResult.success && districtResult.districtId) {
+      entityStore.judicialDistricts.Capital = districtResult.districtId;
+      log('District "Capital" created.', 3);
+
+      const branchResult = await judicialBranchService.createBranch({
+        name: '1ª Vara Cível',
+        districtId: districtResult.districtId,
+      });
+      if (branchResult.success && branchResult.branchId) {
+        entityStore.judicialBranches.Vara1 = branchResult.branchId;
+        log('Branch "1ª Vara Cível" created.', 4);
+
+        // Judicial seller linked to branch
+        const sellerName = `Vendedor Judicial - 1ª Vara Cível`;
+        const sellerData = {
+          name: sellerName,
+          email: faker.internet.email(),
+          isJudicial: true,
+          judicialBranchId: branchResult.branchId,
+        };
+        const sellerResult = await sellerService.createSeller(entityStore.tenantId, sellerData);
+        if (sellerResult.success && sellerResult.sellerId) {
+          entityStore.sellers.push(sellerResult.sellerId);
+          log(`Judicial Seller "${sellerName}" created.`, 5);
+        }
+      }
+    }
+  }
+
+  // 4.2. Judicial Processes
+  log('Seeding Judicial Processes...', 1);
+  const judicialSeller = await prisma.seller.findFirst({ where: { isJudicial: true } });
+  if (judicialSeller) {
+    for (let i = 0; i < 3; i++) {
+      const data = {
+        processNumber: `0001234-56.202${i}.8.26.0100`,
+        courtId: entityStore.courts.TJSP,
+        districtId: entityStore.judicialDistricts.Capital,
+        branchId: entityStore.judicialBranches.Vara1,
+        sellerId: judicialSeller.id,
+        parties: [
+          { name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR },
+          { name: faker.person.fullName(), partyType: ProcessPartyType.REU },
+        ],
+      };
+      const result = await judicialProcessService.createJudicialProcess(entityStore.tenantId, data);
+      if (result.success && result.processId) {
+        entityStore.judicialProcesses.push(result.processId);
+        log(`Judicial Process "${data.processNumber}" created.`, 2);
+      }
+    }
+  }
+}
+
+async function seedMediaLibrary() {
+  log('Phase 5: Seeding Media Library...', 0);
+  
+  // Criar alguns itens de mídia fictícios
+  for (let i = 0; i < 10; i++) {
+    const mediaItem = await prisma.mediaItem.create({
+      data: {
+        fileName: `image-${i + 1}.jpg`,
+        mimeType: 'image/jpeg',
+        sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
+        storagePath: `/uploads/media/image-${i + 1}.jpg`,
+        urlOriginal: `https://storage.example.com/media/image-${i + 1}.jpg`,
+        urlThumbnail: `https://storage.example.com/media/thumb-image-${i + 1}.jpg`,
+        altText: faker.lorem.words(3),
+        title: faker.lorem.words(5),
+        uploadedByUserId: entityStore.users.admin,
+      },
+    });
+    entityStore.mediaItems.push(mediaItem.id);
+  }
+  log(`${entityStore.mediaItems.length} media items created.`, 1);
+}
+
+async function seedAssets() {
+  log('Phase 6: Seeding Assets...', 0);
+  const sellers = await prisma.seller.findMany({ where: { tenantId: entityStore.tenantId } });
+  if (sellers.length === 0) throw new Error('No sellers found to assign assets.');
+
+  for (let i = 0; i < 20; i++) {
+    const categoryName = faker.helpers.arrayElement(Object.keys(entityStore.categories));
+    const category = entityStore.categories[categoryName];
+    const seller = faker.helpers.arrayElement(sellers);
+
+    const data = {
+      title: `${faker.vehicle.vehicle()} (Asset ${i})`,
+      description: faker.lorem.paragraph(),
+      status: AssetStatus.DISPONIVEL,
+      categoryId: category.id,
+      subcategoryId: faker.helpers.arrayElement(category.subcategoryIds),
+      sellerId: seller.id,
+      evaluationValue: faker.number.int({ min: 5000, max: 150000 }),
+      locationCity: faker.location.city(),
+      locationState: faker.location.state({ abbreviated: true }),
+      address: faker.location.streetAddress(),
+      make: faker.vehicle.manufacturer(),
+      model: faker.vehicle.model(),
+      year: faker.number.int({ min: 2010, max: 2023 }),
+    };
+    const result = await assetService.createAsset(entityStore.tenantId, data);
+    if (result.success && result.assetId) {
+      entityStore.assets.push({ id: result.assetId, status: AssetStatus.DISPONIVEL });
+    }
+  }
+  log(`${entityStore.assets.length} assets created.`, 1);
+}
+
+async function seedAuctionsAndLots() {
+  log('Phase 7: Seeding Auctions and Lots...', 0);
+
+  for (let i = 0; i < 5; i++) {
+    const isJudicial = i % 2 === 0;
+    const seller = await prisma.seller.findFirst({
+      where: { tenantId: entityStore.tenantId, isJudicial },
+    });
+    if (!seller) continue;
+
+    const auctionData = {
+      title: `Grande Leilão ${isJudicial ? 'Judicial' : 'Extrajudicial'} #${i + 1}`,
+      description: faker.lorem.sentences(3),
+      status: randomEnum(AuctionStatus),
+      auctionType: isJudicial ? AuctionType.JUDICIAL : AuctionType.EXTRAJUDICIAL,
+      auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers),
+      sellerId: seller.id,
+      judicialProcessId: isJudicial
+        ? faker.helpers.arrayElement(entityStore.judicialProcesses)
+        : undefined,
+      auctionStages: [
+        {
+          name: '1ª Praça',
+          startDate: faker.date.soon(),
+          endDate: faker.date.soon({ days: 7 }),
+        },
+        {
+          name: '2ª Praça',
+          startDate: faker.date.soon({ days: 8 }),
+          endDate: faker.date.soon({ days: 15 }),
+        },
+      ],
+    };
+
+    const auctionResult = await auctionService.createAuction(entityStore.tenantId, auctionData);
+    if (auctionResult.success && auctionResult.auctionId) {
+      const auctionId = auctionResult.auctionId;
+      entityStore.auctions.push(auctionId);
+      log(`Auction "${auctionData.title}" created.`, 1);
+
+      // Populate many-to-many relationships
+      if (isJudicial) {
+        await prisma.$executeRaw`
+          INSERT IGNORE INTO _AuctionToCourt (A, B) 
+          VALUES (${auctionId}, ${entityStore.courts.TJSP})
+        `;
+        await prisma.$executeRaw`
+          INSERT IGNORE INTO _AuctionToJudicialDistrict (A, B) 
+          VALUES (${auctionId}, ${entityStore.judicialDistricts.Capital})
+        `;
+        await prisma.$executeRaw`
+          INSERT IGNORE INTO _AuctionToJudicialBranch (A, B) 
+          VALUES (${auctionId}, ${entityStore.judicialBranches.Vara1})
+        `;
+      }
+
+      // Link categories
+      const categoryId = faker.helpers.arrayElement(
+        Object.values(entityStore.categories)
+      ).id;
+      await prisma.$executeRaw`
+        INSERT IGNORE INTO _AuctionToLotCategory (A, B) 
+        VALUES (${auctionId}, ${categoryId})
+      `;
+
+      const availableAssets = entityStore.assets.filter((a) => a.status === 'DISPONIVEL');
+      const assetsForLots = availableAssets.slice(0, 3);
+      if (assetsForLots.length === 0) continue;
+
+      for (const asset of assetsForLots) {
+        const category = await prisma.asset.findUnique({
+          where: { id: asset.id },
+          select: { categoryId: true },
+        });
+        const lotData = {
+          title: `Lote para ${asset.id.substring(0, 4)}`,
+          description: faker.lorem.sentence(),
+          auctionId: auctionId,
+          assetIds: [asset.id],
+          type: category?.categoryId || entityStore.categories['Veículos'].id,
+          initialPrice: faker.number.int({ min: 4000, max: 100000 }),
+          status: LotStatus.EM_BREVE,
+        };
+        const lotResult = await lotService.createLot(lotData, entityStore.tenantId);
+        if (lotResult.success && lotResult.lotId) {
+          entityStore.lots.push(lotResult.lotId);
+          log(`Lot "${lotData.title}" created for auction ${auctionId}.`, 2);
+          const assetIndex = entityStore.assets.findIndex((a) => a.id === asset.id);
+          if (assetIndex > -1) entityStore.assets[assetIndex].status = AssetStatus.LOTEADO;
+        }
+      }
+    }
+  }
+}
+
+async function seedInteractions() {
+  log('Phase 8: Seeding User Interactions...', 0);
+  
+  const openLots = await prisma.lot.findMany({
+    where: { status: LotStatus.ABERTO_PARA_LANCES },
+  });
+  const bidderUsers = await prisma.user.findMany({
+    where: { id: { in: Object.values(entityStore.users) } },
+  });
+
+  if (openLots.length === 0 || bidderUsers.length < 2) {
+    log('Not enough open lots or bidders to seed interactions.', 1);
     return;
   }
 
-  const tenant1 = tenants[0];
-  const user1 = users[0];
-  const user2 = users[1] || users[0]; // Ensure at least two users for interactions
-  const auction1 = auctions.length > 0 ? auctions[0] : null;
-  const lot1 = lots.length > 0 ? lots[0] : null;
-  const category1 = categories[0];
-  const judicialProcess1 = judicialProcesses.length > 0 ? judicialProcesses[0] : null;
-
-  // 1. Seed AuctionHabilitation
-  console.log('Seeding AuctionHabilitation...');
-  if(user1 && auction1) {
-    await prisma.auctionHabilitation.createMany({
-        data: [
-        { userId: user1.id, auctionId: auction1.id },
-        { userId: user2.id, auctionId: auction1.id },
-        ],
-        skipDuplicates: true,
-    });
-  }
-  console.log('AuctionHabilitation seeded.');
-
-  // 2. Seed AuctionStage
-  console.log('Seeding AuctionStage...');
-  if(auction1) {
-    await prisma.auctionStage.createMany({
-        data: [
-        {
-            name: 'Primeiro Leilão (Estendido)',
-            startDate: faker.date.past(),
-            endDate: faker.date.future(),
-            auctionId: auction1.id,
-            initialPrice: faker.number.float({ min: 1000, max: 5000, multipleOf: 0.01 }),
+  // 8.1. Auction Habilitation
+  log('Seeding Auction Habilitations...', 1);
+  for (const lot of openLots.slice(0, 3)) {
+    const auction = await prisma.auction.findUnique({ where: { id: lot.auctionId } });
+    if (!auction) continue;
+    
+    for (let i = 0; i < 3; i++) {
+      const bidder = faker.helpers.arrayElement(bidderUsers);
+      await prisma.auctionHabilitation.upsert({
+        where: {
+          userId_auctionId: { userId: bidder.id, auctionId: auction.id },
         },
-        {
-            name: 'Segundo Leilão (Estendido)',
-            startDate: faker.date.future(),
-            endDate: faker.date.future(),
-            auctionId: auction1.id,
-            initialPrice: faker.number.float({ min: 500, max: 2500, multipleOf: 0.01 }),
+        update: {},
+        create: {
+          userId: bidder.id,
+          auctionId: auction.id,
         },
-        ],
-        skipDuplicates: true,
-    });
-  }
-  console.log('AuctionStage seeded.');
-
-  // 3. Seed ContactMessage
-  console.log('Seeding ContactMessage...');
-  await prisma.contactMessage.createMany({
-    data: [
-      {
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        subject: 'Dúvida sobre Leilão (Estendido)',
-        message: faker.lorem.paragraph(),
-        isRead: false,
-      },
-      {
-        name: faker.person.fullName(),
-        email: faker.internet.email(),
-        subject: 'Feedback da Plataforma (Estendido)',
-        message: faker.lorem.paragraph(),
-        isRead: true,
-      },
-    ],
-    skipDuplicates: true,
-  });
-  console.log('ContactMessage seeded.');
-
-  // 4. Seed dataSource
-  console.log('Seeding dataSource...');
-  await prisma.dataSource.createMany({
-    data: [
-      {
-        name: 'Leilões Ativos (Estendido)',
-        modelName: 'Auction',
-        fields: {
-          select: { id: true, title: true, status: true }
-        },
-      },
-      {
-        name: 'Usuários Habilitados (Estendido)',
-        modelName: 'User',
-        fields: {
-          select: { id: true, email: true, fullName: true, habilitationStatus: true }
-        },
-      },
-    ],
-    skipDuplicates: true,
-  });
-  console.log('dataSource seeded.');
-
-  // 5. Seed DocumentTemplate
-  console.log('Seeding DocumentTemplate...');
-  await prisma.documentTemplate.createMany({
-    data: [
-      {
-        name: 'Termo de Arrematação Padrão (Estendido)',
-        type: DocumentTemplateType.WINNING_BID_TERM,
-        content: '<h1>Termo Estendido</h1><p>Lote: {{{lot.title}}}</p>',
-      },
-    ],
-    skipDuplicates: true,
-  });
-  console.log('DocumentTemplate seeded.');
-
-  // 6. Seed MediaItem (standalone examples)
-  console.log('Seeding MediaItem...');
-  if(user1 && user2) {
-    await prisma.mediaItem.createMany({
-        data: [
-        {
-            fileName: 'image1_extended.jpg',
-            mimeType: 'image/jpeg',
-            storagePath: 'uploads/image1_extended.jpg',
-            urlOriginal: 'https://example.com/uploads/image1_extended.jpg',
-            title: 'Imagem Estendida 1',
-            uploadedByUserId: user1.id,
-        },
-        ],
-        skipDuplicates: true,
-    });
-  }
-  console.log('MediaItem seeded.');
-
-  // 7. Seed Notification
-  console.log('Seeding Notification...');
-  if(user1 && user2 && lot1) {
-    await prisma.notification.createMany({
-        data: [
-        {
-            userId: user1.id,
-            tenantId: tenant1.id,
-            message: 'Seu lance foi superado (Estendido).',
-            link: `/dashboard/bids/${lot1.id}`,
-            isRead: false,
-        },
-        ],
-        skipDuplicates: true,
-    });
-  }
-  console.log('Notification seeded.');
-
-  // 8. Ensure ENUM coverage
-  const auctioneer = await prisma.auctioneer.findFirst({ where: { tenantId: tenant1.id } });
-  const seller = await prisma.seller.findFirst({ where: { tenantId: tenant1.id } });
-
-  if(auctioneer && seller) {
-    const existingDraft = await prisma.auction.findFirst({ where: { status: AuctionStatus.RASCUNHO, tenantId: tenant1.id } });
-    if (!existingDraft) {
-      await prisma.auction.create({
-          data: {
-          tenantId: tenant1.id,
-          title: 'Leilão de Rascunho (Estendido)',
-          description: 'Este leilão está em rascunho.',
-          status: AuctionStatus.RASCUNHO,
-          auctioneerId: auctioneer.id,
-          sellerId: seller.id,
-          },
       });
     }
+    log(`Habilitations created for auction ${auction.id}`, 2);
+  }
 
-     const existingCancelled = await prisma.auction.findFirst({ where: { status: AuctionStatus.CANCELADO, tenantId: tenant1.id } });
-    if (!existingCancelled) {
-      await prisma.auction.create({
-          data: {
-          tenantId: tenant1.id,
-          title: 'Leilão Cancelado (Estendido)',
-          description: 'Este leilão foi cancelado.',
-          status: AuctionStatus.CANCELADO,
-          auctioneerId: auctioneer.id,
-          sellerId: seller.id,
-          },
-      });
+  // 8.2. Bids
+  log('Seeding Bids...', 1);
+  for (const lot of openLots.slice(0, 2)) {
+    let currentPrice = Number(lot.initialPrice) || 500;
+    for (let i = 0; i < 5; i++) {
+      const bidder = faker.helpers.arrayElement(bidderUsers);
+      currentPrice += faker.number.int({ min: 100, max: 500 });
+      await bidService.placeBid(lot.id, bidder.id, currentPrice, bidder.fullName || 'Bidder');
+      log(`Bid placed on lot "${lot.title}" by "${bidder.fullName}" for ${currentPrice}.`, 2);
     }
   }
 
-  if(auction1) {
-    const existingUnsold = await prisma.lot.findFirst({ where: { status: LotStatus.NAO_VENDIDO, tenantId: tenant1.id } });
-    if (!existingUnsold) {
-      await prisma.lot.create({
-          data: {
-          auctionId: auction1.id,
-          tenantId: tenant1.id,
-          title: 'Lote Não Vendido (Estendido)',
-          description: 'Este lote não foi vendido.',
-          price: faker.number.float({ min: 100, max: 1000, multipleOf: 0.01 }),
-          status: LotStatus.NAO_VENDIDO,
-          type: 'GERAL',
-          categoryId: category1.id,
-          },
-      });
-    }
-  }
-
-  // User Habilitation Statuses
-  await prisma.user.update({ where: { id: user1.id }, data: { habilitationStatus: UserHabilitationStatus.HABILITADO } });
-  await prisma.user.update({ where: { id: user2.id }, data: { habilitationStatus: UserHabilitationStatus.REJECTED_DOCUMENTS } });
-  
-  // DirectSaleOffer Statuses
-  if (seller) {
-    const existingExpired = await prisma.directSaleOffer.findFirst({ where: { status: DirectSaleOfferStatus.EXPIRED, tenantId: tenant1.id } });
-    if (!existingExpired) {
-        await prisma.directSaleOffer.create({
-            data: {
-                tenantId: tenant1.id,
-                sellerId: seller.id,
-                categoryId: category1.id,
-                publicId: faker.string.uuid(),
-                title: 'Oferta Expirada (Estendida)',
-                offerType: DirectSaleOfferType.BUY_NOW,
-                price: 100,
-                status: DirectSaleOfferStatus.EXPIRED,
-                expiresAt: faker.date.past(),
-            }
-        });
-    }
-  }
-  
-  // UserDocument Statuses
-  const documentType1 = await prisma.documentType.findFirst();
-  if (documentType1 && user1) {
-      await prisma.userDocument.upsert({
-          where: { userId_documentTypeId: { userId: user1.id, documentTypeId: documentType1.id } },
-          update: { status: UserDocumentStatus.APPROVED },
-          create: {
-            userId: user1.id,
-            documentTypeId: documentType1.id,
-            fileUrl: faker.internet.url(),
-            status: UserDocumentStatus.APPROVED,
-          },
-      });
-  }
-
-  // JudicialParty Types
-  if (judicialProcess1) {
-    await prisma.judicialParty.createMany({
-      data: [
-        { name: faker.person.fullName(), partyType: ProcessPartyType.ADVOGADO_AUTOR, processId: judicialProcess1.id, },
-        { name: faker.person.fullName(), partyType: ProcessPartyType.ADVOGADO_REU, processId: judicialProcess1.id, },
-      ],
-      skipDuplicates: true,
-    });
-  }
-  
-  // Asset Statuses
-  if(seller) {
-    await prisma.asset.create({
-        data: {
-            tenantId: tenant1.id,
-            publicId: faker.string.uuid(),
-            title: 'Ativo Loteado (Estendido)',
-            status: AssetStatus.LOTEADO,
-            categoryId: category1.id,
-            sellerId: seller.id,
-        },
-    });
-  }
-
-  // ==================================================================
-  // START: NEW MASSIVE SEEDING LOGIC
-  // ==================================================================
-  console.log('\nStarting new massive data seeding...');
-
-  const bidderPool: User[] = [];
-  console.log('Creating a pool of 10 new bidder users...');
-  for (let i = 0; i < 10; i++) {
-    const user = await prisma.user.upsert({
-      where: { email: `arrematante${i}@bidexpert.com` },
-      update: { habilitationStatus: UserHabilitationStatus.HABILITADO },
-      create: {
-        email: `arrematante${i}@bidexpert.com`,
-        fullName: faker.person.fullName(),
-        password: 'hashed_password', // In a real scenario, hash this
-        habilitationStatus: UserHabilitationStatus.HABILITADO,
-        tenants: {
-          create: {
-            tenantId: tenant1.id,
-            assignedBy: 'seed-script',
-          },
-        },
-      },
-    });
-    bidderPool.push(user);
-  }
-  console.log(`${bidderPool.length} bidder users created.`);
-
-  const auctionTypes: AuctionType[] = [AuctionType.JUDICIAL, AuctionType.EXTRAJUDICIAL, AuctionType.VENDA_DIRETA];
-  
-  for (let i = 1; i <= 20; i++) {
-    const auctionType = auctionTypes[i % auctionTypes.length];
-    console.log(`\nCreating Auction ${i}/20 (Type: ${auctionType})...`);
-
-    let judicialProcessId: string | undefined = undefined;
-    if (auctionType === AuctionType.JUDICIAL) {
-      const newJudicialProcess = await prisma.judicialProcess.create({
-        data: {
-          processNumber: `PROC-${faker.string.numeric(10)}-${i}`,
-          publicId: faker.string.uuid(),
-          tenantId: tenant1.id,
-          sellerId: seller?.id,
-        },
-      });
-      judicialProcessId = newJudicialProcess.id;
-      console.log(`  - Created Judicial Process: ${newJudicialProcess.processNumber}`);
-    }
-
-    const newAuction = await prisma.auction.create({
+  // 8.3. UserLotMaxBid (automatic bids)
+  log('Seeding Automatic Bids...', 1);
+  for (const lot of openLots.slice(0, 2)) {
+    const bidder = faker.helpers.arrayElement(bidderUsers);
+    await prisma.userLotMaxBid.create({
       data: {
-        title: `Leilão ${auctionType.toLowerCase()} em Massa #${i}`,
-        description: faker.lorem.sentence(),
-        status: AuctionStatus.ABERTO_PARA_LANCES,
-        auctionType: auctionType,
-        auctionDate: faker.date.past(),
-        endDate: faker.date.future(),
-        tenantId: tenant1.id,
-        auctioneerId: auctioneer?.id,
-        sellerId: seller?.id,
-        judicialProcessId: judicialProcessId,
+        userId: bidder.id,
+        lotId: lot.id,
+        maxAmount: faker.number.int({ min: 10000, max: 50000 }),
+        isActive: true,
       },
     });
-    console.log(`  - Auction "${newAuction.title}" created.`);
-
-    console.log(`  - Habilitating ${bidderPool.length} users for this auction...`);
-    await prisma.auctionHabilitation.createMany({
-      data: bidderPool.map(user => ({
-        userId: user.id,
-        auctionId: newAuction.id,
-      })),
-      skipDuplicates: true,
-    });
-
-    console.log(`  - Creating 30 sold lots with bids...`);
-    for (let j = 1; j <= 30; j++) {
-      const lotNumber = `${i}00${j}`;
-      const initialPrice = faker.number.float({ min: 100, max: 50000, multipleOf: 0.01 });
-
-      // Simulate 5 bids
-      const bids = [];
-      for (let k = 0; k < 5; k++) {
-        bids.push({
-          amount: initialPrice + (k * faker.number.float({ min: 50, max: 500, multipleOf: 0.01 })),
-          bidderId: bidderPool[faker.number.int({ min: 0, max: bidderPool.length - 1 })].id,
-        });
-      }
-
-      // Determine winner
-      const winningBid = bids.reduce((max, bid) => bid.amount > max.amount ? bid : max, bids[0]);
-      const winner = bidderPool.find(u => u.id === winningBid.bidderId);
-
-      if (!winner) {
-        console.error(`Could not find winner for lot ${lotNumber}`);
-        continue;
-      }
-
-      const createdLot = await prisma.lot.create({
-        data: {
-          number: lotNumber,
-          title: `Lote ${lotNumber} - ${faker.commerce.productName()}`,
-          description: faker.lorem.paragraph(),
-          price: winningBid.amount,
-          initialPrice: initialPrice,
-          status: LotStatus.VENDIDO,
-          type: 'GERAL',
-          auctionId: newAuction.id,
-          tenantId: tenant1.id,
-          winnerId: winner.id,
-          categoryId: category1.id,
-          bids: {
-            createMany: {
-              data: bids.map(b => ({
-                ...b,
-                auctionId: newAuction.id,
-                tenantId: tenant1.id,
-              })),
-            },
-          },
-        },
-      });
-
-      await prisma.userWin.create({
-        data: {
-          lotId: createdLot.id,
-          userId: winner.id,
-          winningBidAmount: winningBid.amount,
-          paymentStatus: PaymentStatus.PAGO,
-          winDate: new Date(),
-        },
-      });
-
-      if (j % 5 === 0) {
-        console.log(`    ... ${j}/30 lots created for auction ${i}.`);
-      }
-    }
-    console.log(`  - Finished creating 30 lots for auction ${i}.`);
+    log(`Automatic bid set for lot "${lot.title}".`, 2);
   }
-  // ==================================================================
-  // END: NEW MASSIVE SEEDING LOGIC
-  // ==================================================================
 
+  // 8.4. Finalize a lot and create a win
+  log('Seeding a UserWin...', 1);
+  const lotToWin = openLots[0];
+  const finalizationResult = await lotService.finalizeLot(lotToWin.id);
+  if (finalizationResult.success) {
+    log(`Lot "${lotToWin.title}" finalized. ${finalizationResult.message}`, 2);
+    const win = await prisma.userWin.findFirst({ where: { lotId: lotToWin.id } });
+    if (win) {
+      // 8.5. Create Installment Payments for the win
+      log('Seeding Installment Payments...', 1);
+      await installmentPaymentService.createInstallmentsForWin(win.id, 3);
+      log(`3 installments created for win ${win.id}.`, 2);
 
-  console.log('Gemini extended seeding finished.');
-}
+      // Link installments to lot (many-to-many)
+      const installments = await prisma.installmentPayment.findMany({
+        where: { userWinId: win.id },
+      });
+      for (const installment of installments) {
+        await prisma.$executeRaw`
+          INSERT IGNORE INTO _InstallmentPaymentToLot (A, B) 
+          VALUES (${installment.id}, ${lotToWin.id})
+        `;
+      }
+      log('Installment-Lot relationships created.', 2);
+    }
+  }
 
-// Execute the function if the script is run directly
-if (require.main === module) {
-  seedGeminiExtended()
-    .catch((e) => {
-      console.error(e);
-      process.exit(1);
-    })
-    .finally(async () => {
-      await prisma.$disconnect();
+  // 8.6. Questions and Reviews
+  log('Seeding Questions and Reviews...', 1);
+  const reviewedLot = openLots[1];
+  const questioner = bidderUsers[0];
+  const reviewer = bidderUsers[1];
+  
+  await lotQuestionService.createQuestion(
+    reviewedLot.id,
+    questioner.id,
+    questioner.fullName || '',
+    'Qual o estado dos pneus?'
+  );
+  log(`Question posted on lot "${reviewedLot.title}".`, 2);
+  
+  await reviewService.createReview(
+    reviewedLot.id,
+    reviewer.id,
+    reviewer.fullName || '',
+    4,
+    'Ótimo estado, mas a entrega demorou.'
+  );
+  log(`Review posted on lot "${reviewedLot.title}".`, 2);
+
+  // 8.7. Notifications
+  log('Seeding Notifications...', 1);
+  for (let i = 0; i < 5; i++) {
+    const user = faker.helpers.arrayElement(bidderUsers);
+    await notificationService.createNotification({
+      userId: user.id,
+      tenantId: entityStore.tenantId,
+      message: faker.lorem.sentence(),
+      link: `/auctions/${faker.helpers.arrayElement(entityStore.auctions)}`,
     });
+  }
+  log('5 notifications created.', 2);
 }
+
+async function seedMiscData() {
+  log('Phase 9: Seeding Miscellaneous Data...', 0);
+
+  // 9.1. Direct Sale Offers
+  log('Seeding Direct Sale Offers...', 1);
+  const seller = await prisma.seller.findFirst({ where: { id: { in: entityStore.sellers } } });
+  if (seller) {
+    const offerData = {
+      title: 'Oferta Direta: Monitor Dell 24"',
+      description: 'Pouco usado, em perfeito estado.',
+      offerType: 'BUY_NOW',
+      price: 800,
+      status: 'ACTIVE',
+      sellerId: seller.id,
+      categoryId: entityStore.categories['Eletrônicos'].id,
+    };
+    await directSaleOfferService.createDirectSaleOffer(entityStore.tenantId, offerData);
+    log(`Direct Sale Offer "${offerData.title}" created.`, 2);
+  }
+
+  // 9.2. Contact Messages
+  log('Seeding Contact Messages...', 1);
+  for (let i = 0; i < 3; i++) {
+    await contactMessageService.createContactMessage({
+      name: faker.person.fullName(),
+      email: faker.internet.email(),
+      subject: 'Parceria Comercial',
+      message: faker.lorem.paragraph(),
+    });
+  }
+  log('3 contact messages created.', 2);
+
+  // 9.3. Document Templates
+  log('Seeding Document Templates...', 1);
+  const templates = [
+    {
+      name: 'Certificado de Leilão Judicial',
+      type: DocumentTemplateType.AUCTION_CERTIFICATE,
+      content: '<h1>Certificado</h1><p>Leilão: {{auction.title}}</p>',
+    },
+    {
+      name: 'Termo de Arrematação',
+      type: DocumentTemplateType.WINNING_BID_TERM,
+      content: '<h1>Termo de Arrematação</h1><p>Lote: {{lot.title}}</p>',
+    },
+    {
+      name: 'Laudo de Avaliação',
+      type: DocumentTemplateType.EVALUATION_REPORT,
+      content: '<h1>Laudo de Avaliação</h1><p>Bem: {{asset.title}}</p>',
+    },
+  ];
+
+  for (const template of templates) {
+    await documentTemplateService.createDocumentTemplate(template);
+    log(`Document template "${template.name}" created.`, 2);
+  }
+
+  // 9.4. Platform Settings
+  log('Seeding Platform Settings...', 1);
+  await prisma.platformSettings.upsert({
+    where: { id: 'global' },
+    update: {},
+    create: {
+      id: 'global',
+      tenantId: entityStore.tenantId,
+      siteTitle: 'BidExpert - Plataforma de Leilões',
+      siteTagline: 'Os melhores leilões em um só lugar',
+      searchPaginationType: 'loadMore',
+      searchItemsPerPage: 12,
+      searchLoadMoreCount: 12,
+      showCountdownOnLotDetail: true,
+      showCountdownOnCards: true,
+      showRelatedLotsOnLotDetail: true,
+      relatedLotsCount: 5,
+      defaultListItemsPerPage: 10,
+      isSetupComplete: true,
+      homepageSections: {
+        hero: true,
+        featuredAuctions: true,
+        categories: true,
+        upcomingLots: true,
+      },
+      mentalTriggerSettings: {
+        urgencyTimer: true,
+        socialProof: true,
+        scarcity: true,
+      },
+      biddingSettings: {
+        allowAutoBid: true,
+        softCloseEnabled: true,
+        softCloseMinutes: 5,
+      },
+    },
+  });
+  log('Platform settings configured.', 2);
+
+  // 9.5. Data Sources (for report builder)
+  log('Seeding Data Sources...', 1);
+  const dataSources = [
+    {
+      name: 'Leilões',
+      modelName: 'Auction',
+      fields: ['id', 'title', 'status', 'auctionDate', 'totalLots'],
+    },
+    {
+      name: 'Lotes',
+      modelName: 'Lot',
+      fields: ['id', 'title', 'price', 'status', 'bidsCount'],
+    },
+    {
+      name: 'Usuários',
+      modelName: 'User',
+      fields: ['id', 'fullName', 'email', 'habilitationStatus'],
+    },
+  ];
+
+  for (const ds of dataSources) {
+    await prisma.data_sources.upsert({
+      where: { modelName: ds.modelName },
+      update: {},
+      create: ds,
+    });
+  }
+  log('3 data sources created.', 2);
+
+  // 9.6. User Documents
+  log('Seeding User Documents...', 1);
+  const bidder = await prisma.user.findFirst({
+    where: { id: entityStore.users.bidder0 },
+  });
+  if (bidder && entityStore.documentTypes.length > 0) {
+    for (let i = 0; i < 2; i++) {
+      const docType = entityStore.documentTypes[i];
+      await prisma.userDocument.create({
+        data: {
+          userId: bidder.id,
+          documentTypeId: docType,
+          fileName: `documento-${i + 1}.pdf`,
+          fileUrl: `https://storage.example.com/docs/documento-${i + 1}.pdf`,
+          status: 'APPROVED',
+        },
+      });
+    }
+    log(`2 user documents created for ${bidder.email}.`, 2);
+  }
+}
+
+async function seedReports() {
+  log('Phase 10: Seeding Custom Reports...', 0);
+  
+  const reportDefinitions = [
+    {
+      name: 'Relatório de Vendas Mensais',
+      description: 'Análise de vendas por mês',
+      definition: {
+        type: 'chart',
+        dataSource: 'Lot',
+        groupBy: 'createdAt',
+        aggregation: 'count',
+        chartType: 'bar',
+      },
+    },
+    {
+      name: 'Performance de Leiloeiros',
+      description: 'Ranking de leiloeiros por faturamento',
+      definition: {
+        type: 'table',
+        dataSource: 'Auctioneer',
+        columns: ['name', 'totalAuctions', 'totalRevenue'],
+        sortBy: 'totalRevenue',
+        sortOrder: 'desc',
+      },
+    },
+  ];
+
+  for (const report of reportDefinitions) {
+    await prisma.reports.create({
+      data: {
+        ...report,
+        tenantId: entityStore.tenantId,
+      },
+    });
+    log(`Report "${report.name}" created.`, 1);
+  }
+}
+
+// --- Main Execution ---
+
+async function main() {
+  console.log('Starting comprehensive database seed...');
+  console.log('=====================================================\n');
+  
+  try {
+    await seedCoreInfra();
+    await seedBaseData();
+    await seedParticipants();
+    await seedJudicialData();
+    await seedMediaLibrary();
+    await seedAssets();
+    await seedAuctionsAndLots();
+    await seedInteractions();
+    await seedMiscData();
+    await seedReports();
+    
+    console.log('\n=====================================================');
+    console.log('✅ Comprehensive database seed finished successfully!');
+    console.log('=====================================================');
+    console.log('\nSummary:');
+    console.log(`- Tenants: 1`);
+    console.log(`- Roles: ${Object.keys(entityStore.roles).length}`);
+    console.log(`- Users: ${Object.keys(entityStore.users).length}`);
+    console.log(`- Categories: ${Object.keys(entityStore.categories).length}`);
+    console.log(`- Auctioneers: ${entityStore.auctioneers.length}`);
+    console.log(`- Sellers: ${entityStore.sellers.length}`);
+    console.log(`- Assets: ${entityStore.assets.length}`);
+    console.log(`- Auctions: ${entityStore.auctions.length}`);
+    console.log(`- Lots: ${entityStore.lots.length}`);
+    console.log(`- Vehicle Makes: ${Object.keys(entityStore.vehicleMakes).length}`);
+    console.log(`- Media Items: ${entityStore.mediaItems.length}`);
+    console.log('=====================================================\n');
+  } catch (error) {
+    console.error('\n❌ An error occurred during the seeding process:');
+    console.error(error);
+    process.exit(1);
+  } finally {
+    await prisma.$disconnect();
+  }
+}
+
+main();
