@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { 
   ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
   Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
-  Boxes, Rocket, FileUp, BarChart, BookOpen, UserCheck, MessageSquare, Files, 
+  Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files, 
   ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -27,13 +27,13 @@ const topLevelNavItems = [
 const auctionManagementItems = [
   { title: 'Listar Leilões', href: '/admin/auctions', icon: Gavel },
   { title: 'Novo Leilão', href: '/admin/auctions/new', icon: PlusCircle },
-  { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart },
+  { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart3 },
 ];
 
 const lotManagementItems = [
     { title: 'Listar Lotes', href: '/admin/lots', icon: ListChecks },
     { title: 'Novo Lote', href: '/admin/lots/new', icon: PlusCircle },
-    { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart },
+    { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart3 },
     { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
 ];
 
@@ -41,20 +41,20 @@ const lotManagementItems = [
 const assetManagementItems = [
     { title: 'Listar Ativos', href: '/admin/assets', icon: Package },
     { title: 'Novo Ativo', href: '/admin/assets/new', icon: PlusCircle },
-    { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart },
+    { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart3 },
 ];
 
 const categoryManagementItems = [
     { title: 'Listar Categorias', href: '/admin/categories', icon: ListChecks },
-    { title: 'Análise de Categorias', href: '/admin/categories/analysis', icon: BarChart },
+    { title: 'Análise de Categorias', href: '/admin/categories/analysis', icon: BarChart3 },
     { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
 ];
 
 const locationManagementItems = [
     { title: 'Listar Cidades', href: '/admin/cities', icon: Building2 },
-    { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart },
+    { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart3 },
     { title: 'Listar Estados', href: '/admin/states', icon: MapPin },
-    { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart },
+    { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart3 },
 ];
 
 const contentManagementItems = [
@@ -64,11 +64,11 @@ const contentManagementItems = [
 
 const judicialManagementItems = [
     { title: 'Listar Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart },
+    { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart3 },
     { title: 'Listar Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart },
+    { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart3 },
     { title: 'Listar Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart },
+    { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart3 },
     { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
 ]
 
@@ -79,7 +79,7 @@ const platformManagementItems = [
   { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: FileSpreadsheet },
   { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
   { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart },
+  { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart3 },
   { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
   { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
   { title: 'Configurações', href: '/admin/settings', icon: Settings },
@@ -88,19 +88,19 @@ const platformManagementItems = [
 const userManagementItems = [
     { title: 'Listar Usuários', href: '/admin/users', icon: Users },
     { title: 'Novo Usuário', href: '/admin/users/new', icon: PlusCircle },
-    { title: 'Análise de Usuários', href: '/admin/users/analysis', icon: BarChart },
+    { title: 'Análise de Usuários', href: '/admin/users/analysis', icon: BarChart3 },
 ];
 
 const sellerManagementItems = [
     { title: 'Listar Comitentes', href: '/admin/sellers', icon: Users },
     { title: 'Novo Comitente', href: '/admin/sellers/new', icon: PlusCircle },
-    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart },
+    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart3 },
 ];
 
 const auctioneerManagementItems = [
     { title: 'Listar Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
     { title: 'Novo Leiloeiro', href: '/admin/auctioneers/new', icon: PlusCircle },
-    { title: 'Análise de Leiloeiros', href: '/admin/auctioneers/analysis', icon: BarChart },
+    { title: 'Análise de Leiloeiros', href: '/admin/auctioneers/analysis', icon: BarChart3 },
 ];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (

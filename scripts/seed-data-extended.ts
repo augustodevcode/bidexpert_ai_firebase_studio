@@ -6,32 +6,30 @@
  */
 import { PrismaClient, Prisma } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import {
-  AuctionService,
-  LotService,
-  UserService,
-  SellerService,
-  AuctioneerService,
-  CategoryService,
-  SubcategoryService,
-  AssetService,
-  JudicialProcessService,
-  CourtService,
-  JudicialDistrictService,
-  JudicialBranchService,
-  StateService,
-  CityService,
-  LotQuestionService,
-  ReviewService,
-  BidService,
-  UserWinService,
-  DirectSaleOfferService,
-  InstallmentPaymentService,
-  NotificationService,
-  ContactMessageService,
-  DocumentTemplateService,
-  RoleService,
-} from '@/services';
+import { AuctionService } from '../src/services/auction.service';
+import { LotService } from '../src/services/lot.service';
+import { UserService } from '../src/services/user.service';
+import { SellerService } from '../src/services/seller.service';
+import { AuctioneerService } from '../src/services/auctioneer.service';
+import { CategoryService } from '../src/services/category.service';
+import { SubcategoryService } from '../src/services/subcategory.service';
+import { AssetService } from '../src/services/asset.service';
+import { JudicialProcessService } from '../src/services/judicial-process.service';
+import { CourtService } from '../src/services/court.service';
+import { JudicialDistrictService } from '../src/services/judicial-district.service';
+import { JudicialBranchService } from '../src/services/judicial-branch.service';
+import { StateService } from '../src/services/state.service';
+import { CityService } from '../src/services/city.service';
+import { LotQuestionService } from '../src/services/lot-question.service';
+import { ReviewService } from '../src/services/review.service';
+import { BidService } from '../src/services/bid.service';
+import { UserWinService } from '../src/services/user-win.service';
+import { DirectSaleOfferService } from '../src/services/direct-sale-offer.service';
+import { InstallmentPaymentService } from '../src/services/installment-payment.service';
+import { NotificationService } from '../src/services/notification.service';
+import { ContactMessageService } from '../src/services/contact-message.service';
+import { DocumentTemplateService } from '../src/services/document-template.service';
+import { RoleService } from '../src/services/role.service';
 import {
   AuctionStatus,
   AuctionType,

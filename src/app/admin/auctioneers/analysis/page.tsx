@@ -2,8 +2,8 @@
 /**
  * @fileoverview Página do painel de administração para análise de performance de Leiloeiros.
  * Exibe um dashboard com cartões de estatísticas (KPIs), um gráfico de barras com
- * o faturamento dos principais leiloeiros, uma tabela detalhada com os dados de
- * todos os leiloeiros, e uma análise textual gerada por IA.
+ * o faturamento dos principais leiloeiros, uma tabela de dados detalhada e uma análise
+ * textual gerada por IA.
  */
 'use client';
 
