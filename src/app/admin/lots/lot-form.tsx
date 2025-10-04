@@ -46,13 +46,13 @@ import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { createColumns as createAssetColumns } from '@/components/admin/lotting/columns';
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
-import { getAssets } from '@/app/admin/assets/actions';
+import { getAssets as refetchAvailableAssets } from '@/app/admin/assets/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { DataTable } from '@/components/ui/data-table';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
-
+import CreateAssetModal from '@/components/admin/lotting/create-asset-modal';
 
 interface LotFormProps {
   initialData?: Lot | null;
@@ -65,7 +65,10 @@ interface LotFormProps {
   onSubmitAction: (data: LotFormValues) => Promise<{ success: boolean; message: string; lotId?: string }>;
   formTitle: string;
   formDescription: string;
-  submitButtonText: string;
+  submitButtonText?: string;
+  isWizardMode?: boolean;
+  onWizardDataChange?: (data: Partial<LotFormValues>) => void;
+  formRef?: React.Ref<any>;
   defaultAuctionId?: string;
   onSuccessCallback?: () => void;
 }
@@ -85,10 +88,14 @@ export default function LotForm({
   onSubmitAction,
   formTitle,
   formDescription,
-  submitButtonText,
+  submitButtonText = "Salvar",
+  isWizardMode = false,
+  onWizardDataChange,
+  formRef,
   defaultAuctionId,
   onSuccessCallback,
 }: LotFormProps) {
+  
   const { toast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -96,6 +103,7 @@ export default function LotForm({
   
   const [isMainImageDialogOpen, setIsMainImageDialogOpen] = useState(false);
   const [isGalleryDialogOpen, setIsGalleryDialogOpen] = useState(false);
+  const [isAssetCreateModalOpen, setIsAssetCreateModalOpen] = useState(false);
   
   const [availableSubcategories, setAvailableSubcategories] = useState<Subcategory[]>([]);
   const [isLoadingSubcategories, setIsLoadingSubcategories] = useState(false);
@@ -262,6 +270,15 @@ export default function LotForm({
     setSelectedAssetForModal(asset);
     setIsAssetModalOpen(true);
   };
+  
+  const handleAssetCreated = async (newAssetId?: string) => {
+    if (newAssetId) {
+      const newAssets = await refetchAvailableAssets({ sellerId: form.getValues('sellerId') || undefined });
+      setCurrentAvailableAssets(newAssets);
+      toast({ title: "Lista de bens atualizada!" });
+    }
+    setIsAssetCreateModalOpen(false);
+  }
 
   const assetColumns = React.useMemo(() => createAssetColumns({ onOpenDetails: handleViewAssetDetails }), [handleViewAssetDetails]);
 
@@ -333,7 +350,7 @@ export default function LotForm({
                                 </div>
                                 <Separator />
                                 <div className="container-bens-disponiveis">
-                                    <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><PackagePlus className="mr-2 h-4 w-4" /> Vincular Bem</Button></div>
+                                    <div className="header-bens-disponiveis"><h4 className="title-bens-disponiveis">Bens Disponíveis para Vincular</h4><div className="flex gap-2"><Button type="button" variant="secondary" size="sm" onClick={() => setIsAssetCreateModalOpen(true)}><PackagePlus className="mr-2 h-4 w-4"/>Cadastrar Novo Bem</Button><Button type="button" size="sm" onClick={handleLinkAssets} disabled={Object.keys(assetRowSelection).length === 0}><LinkIcon className="mr-2 h-4 w-4" /> Vincular Bem</Button></div></div>
                                     <DataTable columns={assetColumns} data={availableAssetsForTable} rowSelection={assetRowSelection} setRowSelection={setAssetRowSelection} searchPlaceholder="Buscar bem disponível..." searchColumnId="title" />
                                 </div>
                               </TabsContent>
@@ -364,6 +381,14 @@ export default function LotForm({
       <ChooseMediaDialog isOpen={isGalleryDialogOpen} onOpenChange={setIsGalleryDialogOpen} onMediaSelect={(items) => handleMediaSelect(items, 'gallery')} allowMultiple={true} />
       
       <AssetDetailsModal asset={selectedAssetForModal} isOpen={isAssetModalOpen} onClose={() => setIsAssetModalOpen(false)} />
+      
+      <CreateAssetModal
+        isOpen={isAssetCreateModalOpen}
+        onClose={() => setIsAssetCreateModalOpen(false)}
+        onAssetCreated={handleAssetCreated}
+        initialSellerId={form.getValues('sellerId') || undefined}
+        initialJudicialProcessId={form.getValues('auctionType') === 'JUDICIAL' ? initialData?.auction?.judicialProcessId : undefined}
+      />
     </>
   );
 }

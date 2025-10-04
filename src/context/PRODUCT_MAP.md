@@ -34,14 +34,14 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | :--- | :--- | :--- |
 | **Arquitetura Multi-Tenant** | Garante o isolamento de dados entre diferentes leiloeiros (tenants) e automatiza a criação de novos ambientes. | `Tenant`, `User`, `Auction` (e todos os outros modelos relevantes) |
 | **Gestão de Leilões** | Criação, configuração e gerenciamento de leilões de diversos tipos. | `Auction`, `AuctionStage`, `Lot` |
-| **Gestão de Lotes & Bens**| Cadastro de bens (ativos) e sua organização em lotes dentro de um leilão. | `Lot`, `Bem`, `LotBens` |
+| **Gestão de Lotes & Ativos**| Cadastro de ativos (bens) e sua organização em lotes dentro de um leilão. Inclui a criação de ativos "em contexto" diretamente da tela de lote. | `Lot`, `Asset`, `AssetsOnLots` |
 | **Módulo Judicial** | Gerenciamento de processos judiciais, varas, comarcas e partes. | `JudicialProcess`, `Court`, `JudicialDistrict`, `JudicialBranch`|
 | **Painel do Administrador** | Hub central para todas as operações de gerenciamento da plataforma. | `User`, `Role`, `PlatformSettings`, `Seller`, `Auctioneer` |
 | **Jornada do Arrematante** | Fluxo completo do usuário final, do cadastro ao arremate. | `User`, `Bid`, `UserWin`, `UserDocument`, `AuctionHabilitation`|
 | **Vendas Diretas** | Módulo para ofertas de compra direta, sem a dinâmica de leilão. | `DirectSaleOffer` |
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
 | **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` (futuro) |
-| **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Bem` |
+| **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Asset` |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
 
@@ -139,6 +139,15 @@ Baseado na estrutura de `src/app`:
     2.  No modal de pré-visualização rápida de um lote (`LotPreviewModal.tsx`).
 *   **Lógica da Query:** A busca por lotes "encerrando em breve" (`closingSoonLots`) é feita no `page.tsx` da homepage, filtrando lotes com status `ABERTO_PARA_LANCES` e cuja data de término da última etapa do leilão esteja nos próximos 7 dias.
 
+### 5.5. **[NOVO]** Criação de Ativos (Bens) em Contexto
+
+*   **Objetivo:** Melhorar o fluxo de trabalho do administrador ao criar lotes, permitindo a criação de um novo ativo sem sair da tela de edição do lote.
+*   **Implementação:**
+    1.  Na página de edição de um lote (`/admin/lots/[lotId]/edit`), na seção "Bens Disponíveis para Vincular", um botão **"Cadastrar Novo Bem"** foi adicionado.
+    2.  Clicar neste botão abre um **modal (`CreateAssetModal.tsx`)** que contém o formulário de criação de ativos (`AssetForm.tsx`).
+    3.  O formulário no modal é pré-populado com o `sellerId` ou `judicialProcessId` do leilão ao qual o lote pertence, garantindo a associação correta.
+    4.  Ao salvar o novo ativo, o modal se fecha, e a lista de "Bens Disponíveis" na página de edição do lote é **automaticamente atualizada** para incluir o item recém-criado, que já pode ser vinculado ao lote.
+
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
@@ -150,6 +159,6 @@ Baseado na estrutura de `src/app`:
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-*   **Herança de Mídia (Bem -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
+*   **Herança de Mídia (Asset -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
 *   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
 *   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.

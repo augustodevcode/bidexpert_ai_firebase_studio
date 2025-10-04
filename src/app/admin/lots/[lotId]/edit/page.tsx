@@ -20,6 +20,7 @@ import { notFound, useParams } from 'next/navigation';
 import type { Lot, Auction, Asset, StateInfo, CityInfo, LotCategory, SellerProfileInfo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { CheckCircle, Loader2, Gavel, Repeat } from 'lucide-react';
 import {
   AlertDialog,
@@ -36,7 +37,6 @@ import React, { useEffect, useCallback, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getSellers } from '@/app/admin/sellers/actions';
 import RelistLotModal from '../../relist-lot-modal';
-import Link from 'next/link';
 
 export default function EditLotPage() {
   const params = useParams();
@@ -49,7 +49,7 @@ export default function EditLotPage() {
   const [sellers, setSellers] = useState<SellerProfileInfo[]>([]);
   const [states, setStates] = useState<StateInfo[]>([]);
   const [allCities, setAllCities] = useState<CityInfo[]>([]);
-  const [availableBens, setAvailableBens] = useState<Asset[]>([]);
+  const [availableAssets, setAvailableAssets] = useState<Asset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [isRelistModalOpen, setIsRelistModalOpen] = useState(false);
@@ -65,16 +65,16 @@ export default function EditLotPage() {
       }
       
       const parentAuction = await getAuction(fetchedLot.auctionId);
-      const filterForBens = parentAuction?.auctionType === 'JUDICIAL' && parentAuction.judicialProcessId
+      const filterForAssets = parentAuction?.auctionType === 'JUDICIAL' && parentAuction.judicialProcessId
         ? { judicialProcessId: parentAuction.judicialProcessId }
         : (parentAuction?.sellerId ? { sellerId: parentAuction.sellerId } : {});
 
-      const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedBens, fetchedSellers] = await Promise.all([
+      const [fetchedCategories, fetchedAuctions, fetchedStates, fetchedCities, fetchedAssets, fetchedSellers] = await Promise.all([
         getLotCategories(),
         getAllAuctions(),
         getStates(),
         getCities(),
-        getAssetsForLotting(filterForBens),
+        getAssetsForLotting(filterForAssets),
         getSellers(),
       ]);
       
@@ -84,7 +84,7 @@ export default function EditLotPage() {
       setSellers(fetchedSellers);
       setStates(fetchedStates);
       setAllCities(fetchedCities);
-      setAvailableBens(fetchedBens);
+      setAvailableAssets(fetchedAssets);
 
     } catch (error) {
       console.error("Error fetching lot data:", error);
@@ -146,7 +146,7 @@ export default function EditLotPage() {
           sellers={sellers}
           states={states}
           allCities={allCities}
-          initialAvailableAssets={availableBens}
+          initialAvailableAssets={availableAssets}
           onSubmitAction={handleUpdateLot}
           formTitle="Editar Lote"
           formDescription="Modifique os detalhes do lote existente."
