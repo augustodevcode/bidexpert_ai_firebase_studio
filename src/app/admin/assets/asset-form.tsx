@@ -87,8 +87,8 @@ export default function AssetForm({
   processes: initialProcesses,
   categories: initialCategories,
   sellers: initialSellers,
-  allStates,
-  allCities,
+  allStates: initialStates,
+  allCities: initialCities,
   onSubmitAction,
   onSuccess,
   onCancel,
@@ -108,6 +108,9 @@ export default function AssetForm({
   const [categories, setCategories] = React.useState(initialCategories);
   const [processes, setProcesses] = React.useState(initialProcesses);
   const [sellers, setSellers] = React.useState(initialSellers);
+  const [allStates, setAllStates] = React.useState(initialStates);
+  const [allCities, setAllCities] = React.useState(initialCities);
+
   const [isFetchingCategories, setIsFetchingCategories] = React.useState(false);
   const [isFetchingProcesses, setIsFetchingProcesses] = React.useState(false);
   const [isFetchingSellers, setIsFetchingSellers] = React.useState(false);
@@ -334,7 +337,7 @@ export default function AssetForm({
                     </TabsContent>
 
                     <TabsContent value="localizacao" className="mt-4 space-y-4">
-                       <AddressGroup form={form} allStates={allStates} allCities={allCities} />
+                       <AddressGroup form={form} allCities={allCities} allStates={allStates} />
                     </TabsContent>
 
                     <TabsContent value="midia" className="mt-4 space-y-4">
