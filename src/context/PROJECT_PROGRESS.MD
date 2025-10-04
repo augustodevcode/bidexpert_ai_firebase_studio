@@ -53,11 +53,10 @@
     - **37.5:** A página `/admin/dashboard` agora renderiza os widgets dinamicamente com base nas preferências.
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas (38.1 a 38.7) foram concluídas, incluindo a criação do modelo, serviços, componentes de UI e a lógica de configuração.
 - **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
+- **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
 
 ## DOING
-- **Item 39: Validação de Formulários e Feedback de UI (90%):** Mapear todos os formulários, adicionar indicadores de campos obrigatórios (`*`), desabilitar botões de submissão em formulários inválidos e garantir feedback de `toast` para todas as ações.
 
 ## NEXT
-- **Item 39.1:** Aplicar a validação e feedback ao formulário de registro público (`/auth/register`).
 - **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores, explicando as principais seções do painel.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.

@@ -17,9 +17,9 @@ export const registrationFormSchema = z.object({
   
   // Common fields
   email: z.string().email({ message: "Por favor, insira um email válido." }),
-  emailConfirmation: z.string().email(),
+  emailConfirmation: z.string().email({ message: "Por favor, insira um email de confirmação válido." }),
   cellPhone: z.string().min(10, { message: "Número de celular inválido." }),
-  cellPhoneConfirmation: z.string().min(10),
+  cellPhoneConfirmation: z.string().min(10, { message: "Confirmação de celular inválida." }),
   password: passwordSchema,
   passwordConfirmation: passwordSchema,
   zipCode: z.string().min(8, { message: "CEP inválido." }).optional().or(z.literal('')),
@@ -45,7 +45,7 @@ export const registrationFormSchema = z.object({
   inscricaoEstadual: z.string().optional(),
 
   // Consignor fields
-  website: z.string().url().or(z.literal('')).optional(),
+  website: z.string().url({ message: "Por favor, insira uma URL válida."}).or(z.literal('')).optional(),
   
   // Fields for PJ responsible person
   responsibleName: z.string().optional(),
