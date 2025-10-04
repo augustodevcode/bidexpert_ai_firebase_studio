@@ -1,4 +1,11 @@
 // src/app/subscribe/actions.ts
+/**
+ * @fileoverview Server Actions para o sistema de inscrição (newsletter).
+ * Este arquivo define a ação `subscribeToAction` que é chamada pelos formulários
+ * de front-end. Ele recebe os dados do formulário, invoca o `SubscriptionService`
+ * para executar a lógica de negócio de criação de um novo assinante e retorna
+ * o resultado da operação.
+ */
 'use server';
 
 import { SubscriptionService, type SubscriptionFormData } from '@/services/subscription.service';

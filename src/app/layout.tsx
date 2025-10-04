@@ -1,4 +1,13 @@
 // src/app/layout.tsx
+/**
+ * @fileoverview O layout raiz da aplicação.
+ * Este componente Server-Side é o ponto de entrada para toda a aplicação.
+ * Ele busca dados essenciais como configurações da plataforma e o estado de
+ * autenticação do usuário, envolve a aplicação com providers de contexto
+ * (Autenticação, Tooltip) e renderiza a estrutura HTML base. Também inclui
+ * o `AppContentWrapper` que decide qual layout principal renderizar (público ou admin)
+ * e o `SubscriptionPopup` para capturar novos inscritos.
+ */
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"

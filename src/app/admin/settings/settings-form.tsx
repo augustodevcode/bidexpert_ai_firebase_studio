@@ -1,4 +1,10 @@
 // src/app/admin/settings/settings-form.tsx
+/**
+ * @fileoverview Componente de formulário para as configurações da plataforma.
+ * Este formulário é dividido em seções (abas) e permite ao administrador
+ * configurar diversos aspectos do sistema, como identidade do site, armazenamento,
+ * regras de lances e notificações.
+ */
 'use client';
 
 import * as React from 'react';
@@ -16,7 +22,6 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { platformSettingsFormSchema, type PlatformSettingsFormValues } from './settings-form-schema';
 import type { PlatformSettings, MapSettings, SearchPaginationType, StorageProviderType, VariableIncrementRule, BiddingSettings, PaymentGatewaySettings, NotificationSettings } from '@/types';
 import { Loader2, Save, Palette, Fingerprint, Wrench, MapPin as MapIcon, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, PlusCircle, Trash2, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, CreditCard, Bell } from 'lucide-react';
@@ -222,7 +227,7 @@ export default function SettingsForm({ initialData, activeSection, onUpdateSucce
         )}
 
         <div className="flex justify-end pt-4 border-t">
-          <Button type="submit" disabled={isSubmitting}>
+          <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar Configurações da Seção
           </Button>

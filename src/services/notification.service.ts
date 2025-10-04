@@ -43,6 +43,7 @@ export class NotificationService {
         where: {
           isVerified: true, // Apenas para assinantes verificados
           preferences: {
+            // @ts-ignore - Prisma JSON filtering might need specific types
             path: ['notifyOnNewAuction'],
             equals: true, // Ou não existe, assumindo como true
           },

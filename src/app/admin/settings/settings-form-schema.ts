@@ -1,4 +1,10 @@
 // src/app/admin/settings/settings-form-schema.ts
+/**
+ * @fileoverview Este arquivo define o schema de validação (usando Zod) para
+ * o formulário de configurações da plataforma. Ele abrange todas as seções de
+ * configuração, desde a identidade do site até as regras de lance e integrações,
+ * garantindo a consistência e a integridade dos dados de configuração.
+ */
 import * as z from 'zod';
 import type { MapSettings, SearchPaginationType, StorageProviderType } from '@/types'; // Import MapSettings, StorageProviderType
 

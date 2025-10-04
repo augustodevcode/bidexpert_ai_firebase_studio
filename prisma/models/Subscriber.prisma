@@ -1,0 +1,18 @@
+// prisma/models/Subscriber.prisma
+
+/// Represents a user who has subscribed to newsletters or notifications.
+model Subscriber {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  phone           String?
+  isVerified      Boolean  @default(false)
+  preferences     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}

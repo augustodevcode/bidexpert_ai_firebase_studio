@@ -1,4 +1,11 @@
 // src/app/app-content-wrapper.tsx
+/**
+ * @fileoverview Este componente de cliente age como um invólucro para o conteúdo
+ * principal da aplicação. Ele determina qual layout renderizar com base na rota atual
+ * (público vs. painéis de admin/dashboard) e lida com o redirecionamento
+ * para a página de setup se a configuração inicial da plataforma não estiver completa.
+ * Também integra o formulário de inscrição de newsletter no rodapé das páginas públicas.
+ */
 'use client'; 
 
 import { Suspense } from 'react';
@@ -40,13 +47,13 @@ export function AppContentWrapper({
         </div>
       ) : (
         // For public pages, render the full site layout
-        <div className="container-main-app">
-          <Suspense fallback={<div className="container-header-suspense"><Loader2 className="icon-loading-spinner" /></div>}>
+        <div className="flex flex-col min-h-screen">
+          <Suspense fallback={<div className="flex items-center justify-center h-24 border-b"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
               <Header 
                 platformSettings={platformSettings}
               />
           </Suspense>
-          <main className="container mx-auto flex-grow px-4 py-8">
+          <main className="flex-grow container mx-auto px-4 py-8">
             {children}
           </main>
           <SubscriptionForm />

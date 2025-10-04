@@ -6,7 +6,7 @@
  * além de permitir a sua atualização.
  */
 import { PlatformSettingsRepository } from '@/repositories/platform-settings.repository';
-import type { PlatformSettings } from '@/types';
+import type { PlatformSettings, NotificationSettings } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { tenantContext } from '@/lib/tenant-context'; // Importa o contexto do tenant
 
@@ -38,6 +38,12 @@ export class PlatformSettingsService {
             relatedLotsCount: 4,
             defaultListItemsPerPage: 10,
             homepageSections: [],
+            notificationSettings: {
+                notifyOnNewAuction: true,
+                notifyOnFeaturedLot: true,
+                notifyOnAuctionEndingSoon: true,
+                notifyOnPromotions: true,
+            } as Prisma.JsonObject
         };
         // O repositório já deve usar o getPrismaInstance() que respeita o contexto
         return this.repository.create(defaultSettingsData as any);
