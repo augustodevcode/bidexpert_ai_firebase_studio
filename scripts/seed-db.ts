@@ -1,7 +1,7 @@
 // src/scripts/seed-db.ts
-import { prisma } from '@/lib/prisma';
+import { prisma } from '../src/lib/prisma';
 import bcryptjs from 'bcryptjs';
-import { slugify } from '@/lib/ui-helpers';
+import { slugify } from '../src/lib/ui-helpers';
 
 /**
  * Dados essenciais para o funcionamento da plataforma.

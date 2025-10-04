@@ -947,6 +947,25 @@ model Subcategory {
 
   @@unique([name, parentCategoryId])
 }
+// prisma/models/Subscriber.prisma
+
+/// Represents a user who has subscribed to newsletters or notifications.
+model Subscriber {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  name            String?
+  phone           String?
+  isVerified      Boolean  @default(false)
+  preferences     Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
   id        String   @id @default(uuid())
@@ -1167,19 +1186,4 @@ model Report {
   updatedAt   DateTime @updatedAt
 
   @@map("reports")
-}
-
-/// Modelo para armazenar os assinantes da newsletter e notificações.
-model Subscriber {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String?
-  phone       String?
-  preferences Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
 }
