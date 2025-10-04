@@ -1,9 +1,8 @@
 // src/components/admin/lots/lot-form.tsx
 /**
  * @fileoverview Componente de formulário reutilizável para criar e editar Lotes.
- * Utiliza react-hook-form para gerenciamento de estado, Zod para validação, e
- * componentes de UI da ShadCN. Foi simplificado para usar um campo "Propriedades"
- * em vez de múltiplos campos específicos.
+ * Utiliza react-hook-form para gerenciamento de estado e Zod para validação.
+ * Foi simplificado para usar um campo "Propriedades" em vez de múltiplos campos específicos.
  */
 'use client';
 
@@ -410,3 +409,5 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
 LotForm.displayName = "LotForm";
 export default LotForm;
+
+    
