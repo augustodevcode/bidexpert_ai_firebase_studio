@@ -17,7 +17,7 @@ interface AddressGroupProps {
   allStates: StateInfo[];
 }
 
-export default function AddressGroup({ form, allCities, allStates }: AddressGroupProps) {
+export default function AddressGroup({ form, allCities = [], allStates = [] }: AddressGroupProps) {
   const [states, setStates] = React.useState(allStates);
   const [cities, setCities] = React.useState(allCities);
   const [isFetchingStates, setIsFetchingStates] = React.useState(false);
