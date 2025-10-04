@@ -18,7 +18,8 @@ import { Gavel, Loader2 } from 'lucide-react';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
+import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo, LotCategory } from '@/types';
+import { getLotCategories } from '../categories/actions';
 
 function NewAuctionPageContent() {
   const router = useRouter();
@@ -31,13 +32,14 @@ function NewAuctionPageContent() {
   const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const [auctioneers, sellers, states, cities] = await Promise.all([
+      const [auctioneers, sellers, states, cities, categories] = await Promise.all([
         getAuctioneers(),
         getSellers(),
         getStates(),
         getCities(),
+        getLotCategories(),
       ]);
-      setInitialData({ auctioneers, sellers, states, allCities: cities });
+      setInitialData({ auctioneers, sellers, states, allCities: cities, categories });
     } catch (error) {
       toast({ title: "Erro ao Carregar Dados", description: "Não foi possível carregar os dados necessários para criar um leilão.", variant: "destructive" });
     } finally {
@@ -73,28 +75,30 @@ function NewAuctionPageContent() {
   }
 
   return (
-    <div data-ai-id="admin-auction-form-card">
-      <FormPageLayout
-        formTitle="Novo Leilão"
-        formDescription="Preencha os detalhes para criar um novo leilão."
-        icon={Gavel}
-        isViewMode={false}
-        isSubmitting={isSubmitting}
-        onSave={handleSave}
-        onCancel={() => router.push('/admin/auctions')}
-      >
-        <AuctionForm
-          formRef={formRef}
-          auctioneers={initialData.auctioneers}
-          sellers={initialData.sellers}
-          states={initialData.states}
-          allCities={initialData.allCities}
-          onSubmitAction={handleCreateAuction}
-          formTitle="" // Título e descrição já estão no layout
-          formDescription=""
-          submitButtonText="Criar Leilão"
-        />
-      </FormPageLayout>
+     <div data-ai-id="admin-auction-form-card">
+        <FormPageLayout
+            formTitle="Novo Leilão"
+            formDescription="Preencha os detalhes para criar um novo leilão."
+            icon={Gavel}
+            isViewMode={false}
+            isSubmitting={isSubmitting}
+            isValid={formRef.current?.formState.isValid}
+            onSave={handleSave}
+            onCancel={() => router.push('/admin/auctions')}
+        >
+            <AuctionForm
+                formRef={formRef}
+                auctioneers={initialData.auctioneers}
+                sellers={initialData.sellers}
+                states={initialData.states}
+                allCities={initialData.allCities}
+                categories={initialData.categories}
+                onSubmitAction={handleCreateAuction}
+                formTitle=""
+                formDescription=""
+                submitButtonText="Criar Leilão"
+            />
+        </FormPageLayout>
     </div>
   );
 }

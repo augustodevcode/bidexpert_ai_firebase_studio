@@ -60,6 +60,7 @@ export const auctionFormSchema = z.object({
 
   auctioneerId: z.string().min(1, { message: "O leiloeiro é obrigatório."}),
   sellerId: z.string().min(1, { message: "O comitente é obrigatório."}),
+  categoryId: z.string().min(1, { message: "A categoria é obrigatória."}),
   
   imageUrl: optionalUrlSchema, // Mantido para o estado interno do formulário
   imageMediaId: z.string().optional().nullable(),

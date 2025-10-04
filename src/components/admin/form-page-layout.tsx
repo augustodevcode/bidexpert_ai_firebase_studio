@@ -26,7 +26,8 @@ interface FormPageLayoutProps {
   isViewMode?: boolean;
   isLoading?: boolean;
   isSubmitting?: boolean;
-  headerActions?: React.ReactNode; // Nova prop para ações extras no cabeçalho
+  isValid?: boolean; // Novo prop para o estado de validade do formulário
+  headerActions?: React.ReactNode; 
   onSave?: () => void;
   onSaveAndNew?: () => void;
   onDelete?: () => Promise<void>;
@@ -41,6 +42,7 @@ interface FormPageLayoutProps {
 function FormToolbar({
   isViewMode,
   isSubmitting,
+  isValid,
   onSave,
   onSaveAndNew,
   onDelete,
@@ -49,7 +51,7 @@ function FormToolbar({
   onNavigatePrev,
   hasNext,
   hasPrev,
-}: Pick<FormPageLayoutProps, 'isViewMode' | 'isSubmitting' | 'onSave' | 'onSaveAndNew' | 'onDelete' | 'onEnterEditMode' | 'onNavigateNext' | 'onNavigatePrev' | 'hasNext' | 'hasPrev'>) {
+}: Pick<FormPageLayoutProps, 'isViewMode' | 'isSubmitting' | 'isValid' | 'onSave' | 'onSaveAndNew' | 'onDelete' | 'onEnterEditMode' | 'onNavigateNext' | 'onNavigatePrev' | 'hasNext' | 'hasPrev'>) {
   
   if (isViewMode) {
     return (
@@ -91,13 +93,13 @@ function FormToolbar({
       </div>
       <div className="flex items-center gap-2">
         {onSaveAndNew && (
-            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting} data-ai-id="form-page-btn-save-new">
+            <Button variant="secondary" onClick={onSaveAndNew} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save-new">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
                 Salvar e Novo
             </Button>
         )}
         {onSave && (
-            <Button onClick={onSave} disabled={isSubmitting} data-ai-id="form-page-btn-save">
+            <Button onClick={onSave} disabled={isSubmitting || !isValid} data-ai-id="form-page-btn-save">
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Save className="mr-2 h-4 w-4" />}
                 Salvar
             </Button>
@@ -115,6 +117,7 @@ export default function FormPageLayout({
   isViewMode = false,
   isLoading = false,
   isSubmitting = false,
+  isValid = true, // Default to true to not break forms that don't pass it yet
   headerActions,
   onSave,
   onSaveAndNew,
@@ -155,6 +158,7 @@ export default function FormPageLayout({
                      <FormToolbar 
                         isViewMode={isViewMode} 
                         isSubmitting={isSubmitting}
+                        isValid={isValid}
                         onSave={onSave}
                         onSaveAndNew={onSaveAndNew}
                         onDelete={onDelete}
@@ -177,6 +181,7 @@ export default function FormPageLayout({
                  <FormToolbar 
                     isViewMode={isViewMode} 
                     isSubmitting={isSubmitting}
+                    isValid={isValid}
                     onSave={onSave}
                     onSaveAndNew={onSaveAndNew}
                     onDelete={onDelete}

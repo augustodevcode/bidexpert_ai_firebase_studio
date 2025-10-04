@@ -10,7 +10,7 @@
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo } from '@/types';
+import type { Auction, Lot, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo, LotCategory } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
+import { getLotCategories } from '../../categories/actions';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
@@ -143,6 +144,7 @@ export default function EditAuctionPage() {
   const [states, setStates] = React.useState<StateInfo[]>([]);
   const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
   const [judicialProcesses, setJudicialProcesses] = React.useState<any[]>([]);
+  const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -158,7 +160,7 @@ export default function EditAuctionPage() {
     if (!auctionId) return;
     setIsLoading(true);
     try {
-        const [fetchedAuction, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities, fetchedProcesses] = await Promise.all([
+        const [fetchedAuction, fetchedLots, fetchedAuctioneers, fetchedSellers, settings, fetchedStates, fetchedCities, fetchedProcesses, fetchedCategories] = await Promise.all([
             getAuction(auctionId),
             getLots(auctionId),
             getAuctioneers(),
@@ -167,6 +169,7 @@ export default function EditAuctionPage() {
             getStates(),
             getCities(),
             getJudicialProcesses(),
+            getLotCategories(),
         ]);
 
         if (!fetchedAuction) {
@@ -181,6 +184,7 @@ export default function EditAuctionPage() {
         setStates(fetchedStates);
         setAllCities(fetchedCities);
         setJudicialProcesses(fetchedProcesses);
+        setCategories(fetchedCategories);
     } catch (error) {
         console.error("Error fetching data for edit auction page:", error);
         toast({ title: "Erro ao carregar dados", description: "Não foi possível buscar os dados do leilão.", variant: "destructive"});
@@ -267,6 +271,7 @@ export default function EditAuctionPage() {
           isViewMode={isViewMode}
           isLoading={isLoading}
           isSubmitting={isSubmitting}
+          isValid={formRef.current?.formState.isValid}
           onEnterEditMode={() => setIsViewMode(false)}
           onCancel={() => setIsViewMode(true)}
           onSave={handleSave}
@@ -281,6 +286,7 @@ export default function EditAuctionPage() {
                 states={states}
                 allCities={allCities}
                 judicialProcesses={judicialProcesses}
+                categories={categories}
                 onSubmitAction={handleUpdateAuction}
                 formTitle=""
                 formDescription=""
