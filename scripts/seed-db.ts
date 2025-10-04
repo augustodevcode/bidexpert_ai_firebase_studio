@@ -1,5 +1,5 @@
 // src/scripts/seed-db.ts
-import { prisma } from '../src/lib/prisma/index';
+import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 import { slugify } from '../src/lib/ui-helpers';
 
