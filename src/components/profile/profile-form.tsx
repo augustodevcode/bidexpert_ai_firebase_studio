@@ -48,6 +48,7 @@ export default function ProfileForm({ initialData, onSubmitAction, context }: Pr
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
+    mode: 'onChange',
     defaultValues: {
       fullName: initialData?.fullName || '',
       email: initialData?.email || '',
@@ -92,7 +93,7 @@ export default function ProfileForm({ initialData, onSubmitAction, context }: Pr
   }
 
   return (
-    <Card className="shadow-lg">
+    <Card className="shadow-lg" data-ai-id="user-profile-form">
       <CardHeader>
         <CardTitle className="text-2xl font-bold font-headline flex items-center">
           <UserCog className="h-7 w-7 mr-3 text-primary" />
@@ -118,19 +119,19 @@ export default function ProfileForm({ initialData, onSubmitAction, context }: Pr
             {accountType === 'LEGAL' ? (
                  <section className="space-y-4">
                     <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Building/>Dados da Pessoa Jurídica</h3>
-                    <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="razaoSocial" render={({ field }) => (<FormItem><FormLabel>Razão Social<span className="text-destructive">*</span></FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                      <div className="grid md:grid-cols-2 gap-4">
-                         <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                         <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem><FormLabel>Nome do Responsável</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="cnpj" render={({ field }) => (<FormItem><FormLabel>CNPJ<span className="text-destructive">*</span></FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="responsibleName" render={({ field }) => (<FormItem><FormLabel>Nome do Responsável<span className="text-destructive">*</span></FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                      </div>
                  </section>
             ) : (
                  <section className="space-y-4">
                      <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Pessoais</h3>
-                    <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="fullName" render={({ field }) => (<FormItem><FormLabel>Nome Completo<span className="text-destructive">*</span></FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                      <div className="grid md:grid-cols-2 gap-4">
-                         <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                         <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} captionLayout="dropdown-buttons" fromYear={1920} toYear={new Date().getFullYear() - 18} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="cpf" render={({ field }) => (<FormItem><FormLabel>CPF<span className="text-destructive">*</span></FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                         <FormField control={form.control} name="dateOfBirth" render={({ field }) => (<FormItem className="flex flex-col"><FormLabel>Data de Nascimento<span className="text-destructive">*</span></FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}><CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "dd/MM/yyyy", { locale: ptBR }) : <span>Selecione</span>}</Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} captionLayout="dropdown-buttons" fromYear={1920} toYear={new Date().getFullYear() - 18} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>)} />
                      </div>
                  </section>
             )}
@@ -155,7 +156,7 @@ export default function ProfileForm({ initialData, onSubmitAction, context }: Pr
              </section>
           </CardContent>
           <CardFooter className="flex justify-end p-6 border-t">
-            <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid} data-ai-id="profile-form-save-button">
               {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4" />}
               Salvar Alterações
             </Button>

@@ -55,9 +55,9 @@
 - **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
 
 ## DOING
-- **Item 39: Validação de Formulários e Feedback de UI (80%):** Mapear todos os formulários, adicionar indicadores de campos obrigatórios (`*`), desabilitar botões de submissão em formulários inválidos e garantir feedback de `toast` para todas as ações.
+- **Item 39: Validação de Formulários e Feedback de UI (90%):** Mapear todos os formulários, adicionar indicadores de campos obrigatórios (`*`), desabilitar botões de submissão em formulários inválidos e garantir feedback de `toast` para todas as ações.
 
 ## NEXT
-- **Item 39.1:** Continuar a validação nos formulários de usuário e de registro público.
+- **Item 39.1:** Aplicar a validação e feedback ao formulário de registro público (`/auth/register`).
 - **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores, explicando as principais seções do painel.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.

@@ -62,7 +62,6 @@ const partyTypeOptions: { value: ProcessPartyType; label: string }[] = [
     { value: 'TERCEIRO_INTERESSADO', label: 'Terceiro Interessado' }, { value: 'OUTRO', label: 'Outro' },
 ];
 
-// Helper function to convert a fetched image URL to a Data URI
 async function toDataUri(url: string): Promise<string> {
     const response = await fetch(url);
     const blob = await response.blob();
@@ -105,7 +104,6 @@ export default function JudicialProcessForm({
   const [isValidationModalOpen, setIsValidationModalOpen] = React.useState(false);
   const [extractedData, setExtractedData] = React.useState<ExtractProcessDataOutput | null>(null);
   
-  // State for entity selectors
   const [courts, setCourts] = React.useState(initialCourts);
   const [allDistricts, setAllDistricts] = React.useState(initialAllDistricts);
   const [allBranches, setAllBranches] = React.useState(initialAllBranches);
@@ -152,8 +150,8 @@ export default function JudicialProcessForm({
         const formData = new FormData();
         formData.append('files', file);
         formData.append('userId', userProfileWithPermissions.id);
-        formData.append('judicialProcessId', initialData.id); // Associate with process
-        formData.append('path', 'judicial-documents'); // Specific path for these files
+        formData.append('judicialProcessId', initialData.id);
+        formData.append('path', 'judicial-documents');
         
         try {
             const response = await fetch('/api/upload', { method: 'POST', body: formData });
@@ -167,7 +165,7 @@ export default function JudicialProcessForm({
     if(successCount > 0) {
         toast({ title: 'Upload Concluído', description: `${successCount} arquivo(s) enviado(s).` });
     }
-    await fetchProcessDocuments(); // Refresh the list
+    await fetchProcessDocuments();
     setIsUploading(false);
   }, [initialData?.id, userProfileWithPermissions?.id, fetchProcessDocuments, toast]);
 
@@ -280,8 +278,6 @@ export default function JudicialProcessForm({
   
   const handleApplyValidatedData = (validatedData: ExtractProcessDataOutput) => {
     if (validatedData.processNumber) form.setValue('processNumber', validatedData.processNumber, { shouldValidate: true });
-    // Note: Applying court/district/branch names requires a lookup to get the ID.
-    // For now, we'll just log them. A more advanced implementation would search for the entity by name.
     console.log("IA Sugeriu - Tribunal:", validatedData.courtName, "Comarca:", validatedData.districtName, "Vara:", validatedData.branchName);
     
     if (validatedData.parties && validatedData.parties.length > 0) {

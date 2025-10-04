@@ -61,7 +61,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     },
   });
 
-  useImperativeHandle(ref, () => ({
+  React.useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
     formState: form.formState,
   }));
@@ -101,8 +101,8 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
-        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
-        form.setValue('logoMediaId', selectedMediaItem.id || null);
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal, { shouldDirty: true, shouldValidate: true });
+        form.setValue('logoMediaId', selectedMediaItem.id || null, { shouldDirty: true });
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }
@@ -115,9 +115,9 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsCepLoading(true);
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
-        form.setValue('address', result.data.logradouro);
-        form.setValue('city', result.data.localidade);
-        form.setValue('state', result.data.uf);
+        form.setValue('address', result.data.logradouro, { shouldDirty: true });
+        form.setValue('city', result.data.localidade, { shouldDirty: true });
+        form.setValue('state', result.data.uf, { shouldDirty: true, shouldValidate: true });
     } else {
         toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
     }

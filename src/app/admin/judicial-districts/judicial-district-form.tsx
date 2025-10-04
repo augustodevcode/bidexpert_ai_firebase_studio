@@ -52,6 +52,7 @@ export default function JudicialDistrictForm({
 
   const form = useForm<JudicialDistrictFormValues>({
     resolver: zodResolver(judicialDistrictFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: initialData?.name || '',
       courtId: initialData?.courtId || '',
@@ -93,7 +94,7 @@ export default function JudicialDistrictForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
+    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="judicial-district-form-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Map className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
@@ -102,11 +103,16 @@ export default function JudicialDistrictForm({
         <form onSubmit={form.handleSubmit(onSubmit)}>
           <CardContent className="space-y-6 p-6 bg-secondary/30">
             <FormField control={form.control} name="name" render={({ field }) => (
-              <FormItem><FormLabel>Nome da Comarca</FormLabel><FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl><FormMessage /></FormItem>
+              <FormItem>
+                <FormLabel>Nome da Comarca<span className="text-destructive">*</span></FormLabel>
+                <FormControl><Input placeholder="Ex: Comarca de Lagarto" {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
             )} />
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField control={form.control} name="courtId" render={({ field }) => (
-                <FormItem><FormLabel>Tribunal</FormLabel>
+                <FormItem>
+                  <FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel>
                     <EntitySelector
                       entityName="court"
                       value={field.value}
@@ -120,10 +126,12 @@ export default function JudicialDistrictForm({
                       onRefetch={() => handleRefetch('courts')}
                       isFetching={isFetchingCourts}
                     />
-                <FormMessage /></FormItem>
+                <FormMessage />
+                </FormItem>
                 )} />
                 <FormField control={form.control} name="stateId" render={({ field }) => (
-                <FormItem><FormLabel>Estado</FormLabel>
+                <FormItem>
+                  <FormLabel>Estado<span className="text-destructive">*</span></FormLabel>
                     <EntitySelector
                       entityName="state"
                       value={field.value}
@@ -137,7 +145,8 @@ export default function JudicialDistrictForm({
                       onRefetch={() => handleRefetch('states')}
                       isFetching={isFetchingStates}
                     />
-                <FormMessage /></FormItem>
+                <FormMessage />
+                </FormItem>
                 )} />
             </div>
             <FormField control={form.control} name="zipCode" render={({ field }) => (
@@ -146,7 +155,7 @@ export default function JudicialDistrictForm({
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-districts')} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {submitButtonText}
             </Button>

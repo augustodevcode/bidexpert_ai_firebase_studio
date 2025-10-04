@@ -14,7 +14,6 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Import RadioGroup
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import * as z from 'zod';
@@ -22,13 +21,7 @@ import type { Role, UserProfileWithPermissions } from '@/types';
 import { Loader2, Save, UserCog, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
-
-// Schema for a multiple role selection using checkboxes
-const userRoleFormSchema = z.object({
-  roleIds: z.array(z.string()).refine(value => value.length > 0, {
-    message: "O usuário deve ter pelo menos um perfil selecionado.",
-  }),
-});
+import { userRoleFormSchema } from './user-role-form-schema';
 
 type UserRoleFormValues = z.infer<typeof userRoleFormSchema>;
 
@@ -50,7 +43,6 @@ export default function UserRoleForm({
   const form = useForm<UserRoleFormValues>({
     resolver: zodResolver(userRoleFormSchema),
     defaultValues: {
-      // The user object has the role IDs already from the server action
       roleIds: user?.roles?.map(r => r.id) || [],
     },
   });
@@ -58,7 +50,7 @@ export default function UserRoleForm({
   async function onSubmit(values: UserRoleFormValues) {
     setIsSubmitting(true);
     try {
-      const result = await onSubmitAction(user.id, values.roleIds);
+      const result = await onSubmitAction(user.id, values.roleIds || []);
       if (result.success) {
         toast({
           title: 'Sucesso!',
@@ -86,7 +78,7 @@ export default function UserRoleForm({
   }
 
   return (
-    <Card className="max-w-lg mx-auto shadow-lg">
+    <Card className="max-w-lg mx-auto shadow-lg" data-ai-id="user-role-form">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <UserCog className="h-6 w-6 text-primary" /> Atribuir Perfis para {user.fullName}
@@ -102,7 +94,7 @@ export default function UserRoleForm({
               render={() => (
                 <FormItem>
                   <div className="mb-4">
-                    <FormLabel className="text-base font-semibold">Perfis de Usuário</FormLabel>
+                    <FormLabel className="text-base font-semibold">Perfis de Usuário<span className="text-destructive">*</span></FormLabel>
                     <FormDescription>
                       Selecione um ou mais perfis para este usuário.
                     </FormDescription>
@@ -157,7 +149,7 @@ export default function UserRoleForm({
             <Button type="button" variant="outline" onClick={() => router.push('/admin/users')} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               Salvar Perfis
             </Button>

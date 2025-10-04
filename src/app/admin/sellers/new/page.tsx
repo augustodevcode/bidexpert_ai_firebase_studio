@@ -57,7 +57,7 @@ export default function NewSellerPage() {
             icon={Users}
             isViewMode={false}
             isSubmitting={isSubmitting}
-            isValid={formRef.current?.formState.isValid}
+            isValid={formRef.current?.formState.isValid ?? false}
             onSave={handleSave}
             onCancel={() => router.push('/admin/sellers')}
         >

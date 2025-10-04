@@ -12,17 +12,15 @@ export const userFormSchema = z.object({
   password: z.string().min(6, {
     message: "A senha deve ter pelo menos 6 caracteres.",
   }).optional().or(z.literal('')),
-  roleId: z.string().optional().nullable(),
+  roleIds: z.array(z.string()).optional(), // Changed from roleId to handle multiple roles
   cpf: z.string().optional(), 
   cellPhone: z.string().optional(), 
   dateOfBirth: z.date().optional().nullable(), 
-  // Campos para Pessoa Jurídica / Comitente
   accountType: z.enum(['PHYSICAL', 'LEGAL', 'DIRECT_SALE_CONSIGNOR']).optional(),
   razaoSocial: z.string().optional(),
   cnpj: z.string().optional(),
   inscricaoEstadual: z.string().optional(),
   websiteComitente: z.string().url({ message: "URL do website inválida."}).optional().or(z.literal('')),
-  // Campos de endereço (comuns)
   zipCode: z.string().optional(),
   street: z.string().optional(),
   number: z.string().optional(),

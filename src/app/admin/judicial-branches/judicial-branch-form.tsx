@@ -1,4 +1,4 @@
-// src/app/admin/judicial-branches/judicial-branch-form.tsx
+// src/components/admin/judicial-branches/judicial-branch-form.tsx
 /**
  * @fileoverview Componente de formulário reutilizável para criar e editar Varas Judiciais.
  * Utiliza `react-hook-form` para gerenciamento de estado e Zod para validação.
@@ -47,6 +47,7 @@ export default function JudicialBranchForm({
 
   const form = useForm<JudicialBranchFormValues>({
     resolver: zodResolver(judicialBranchFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: initialData?.name || '',
       districtId: initialData?.districtId || '',
@@ -83,7 +84,7 @@ export default function JudicialBranchForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
+    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="judicial-branch-form-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
@@ -96,7 +97,7 @@ export default function JudicialBranchForm({
               name="districtId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Comarca</FormLabel>
+                  <FormLabel>Comarca<span className="text-destructive">*</span></FormLabel>
                    <EntitySelector
                       entityName="district"
                       value={field.value}
@@ -119,7 +120,7 @@ export default function JudicialBranchForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome da Vara</FormLabel>
+                  <FormLabel>Nome da Vara<span className="text-destructive">*</span></FormLabel>
                   <FormControl><Input placeholder="Ex: 1ª Vara Cível e Criminal" {...field} /></FormControl>
                   <FormMessage />
                 </FormItem>
@@ -163,7 +164,7 @@ export default function JudicialBranchForm({
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-branches')} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {submitButtonText}
             </Button>
