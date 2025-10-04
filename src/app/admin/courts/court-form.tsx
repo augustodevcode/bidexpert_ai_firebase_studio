@@ -53,6 +53,7 @@ export default function CourtForm({
 
   const form = useForm<CourtFormValues>({
     resolver: zodResolver(courtFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: initialData?.name || '',
       stateUf: initialData?.stateUf || '',
@@ -97,7 +98,7 @@ export default function CourtForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
+    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="admin-court-form-card">
       <CardHeader>
         <CardTitle className="flex items-center gap-2"><Scale className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
         <CardDescription>{formDescription}</CardDescription>
@@ -110,7 +111,7 @@ export default function CourtForm({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Nome do Tribunal</FormLabel>
+                  <FormLabel>Nome do Tribunal<span className="text-destructive">*</span></FormLabel>
                   <FormControl>
                     <Input placeholder="Ex: Tribunal de Justiça de São Paulo" {...field} />
                   </FormControl>
@@ -123,7 +124,7 @@ export default function CourtForm({
               name="stateUf"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Estado (UF)</FormLabel>
+                  <FormLabel>Estado (UF)<span className="text-destructive">*</span></FormLabel>
                    <EntitySelector
                       value={field.value}
                       onChange={field.onChange}
@@ -158,7 +159,7 @@ export default function CourtForm({
             <Button type="button" variant="outline" onClick={() => router.push('/admin/courts')} disabled={isSubmitting}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
               {submitButtonText}
             </Button>

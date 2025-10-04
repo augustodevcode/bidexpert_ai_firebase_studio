@@ -15,7 +15,7 @@ export const courtFormSchema = z.object({
     message: "O nome do tribunal não pode exceder 150 caracteres.",
   }),
   stateUf: z.string().length(2, {
-    message: "Selecione o estado (UF).",
+    message: "O estado (UF) é obrigatório e deve ter 2 caracteres.",
   }),
   website: optionalUrlSchema,
 });
