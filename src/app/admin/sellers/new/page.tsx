@@ -14,20 +14,32 @@ import { Users } from 'lucide-react';
 import * as React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
+import type { StateInfo, CityInfo } from '@/types';
+
 
 export default function NewSellerPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [judicialBranches, setJudicialBranches] = React.useState<any[]>([]);
+  const [allStates, setAllStates] = React.useState<StateInfo[]>([]);
+  const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
   const formRef = React.useRef<any>(null);
 
   React.useEffect(() => {
-    async function fetchBranches() {
-        const branches = await getJudicialBranches();
+    async function fetchDependencies() {
+        const [branches, states, cities] = await Promise.all([
+            getJudicialBranches(),
+            getStates(),
+            getCities(),
+        ]);
         setJudicialBranches(branches);
+        setAllStates(states);
+        setAllCities(cities);
     }
-    fetchBranches();
+    fetchDependencies();
   }, []);
 
   const handleSave = async () => {
@@ -64,6 +76,8 @@ export default function NewSellerPage() {
             <SellerForm
                 ref={formRef}
                 judicialBranches={judicialBranches}
+                allStates={allStates}
+                allCities={allCities}
                 onSubmitAction={handleCreateSeller}
             />
         </FormPageLayout>

@@ -10,12 +10,15 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import AuctioneerForm from '../../auctioneer-form';
 import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Gavel, BarChart3, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
 import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
+import type { StateInfo, CityInfo } from '@/types';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Separator } from '@/components/ui/separator';
@@ -96,6 +99,8 @@ export default function EditAuctioneerPage() {
   const router = useRouter();
   
   const [auctioneer, setAuctioneer] = useState<AuctioneerFormData | null>(null);
+  const [states, setStates] = useState<StateInfo[]>([]);
+  const [cities, setCities] = useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -106,12 +111,19 @@ export default function EditAuctioneerPage() {
     if (!auctioneerId) return;
     setIsLoading(true);
     try {
-        const fetchedAuctioneer = await getAuctioneer(auctioneerId);
+        const [fetchedAuctioneer, fetchedStates, fetchedCities] = await Promise.all([
+          getAuctioneer(auctioneerId),
+          getStates(),
+          getCities(),
+        ]);
+
         if (!fetchedAuctioneer) {
             notFound();
             return;
         }
         setAuctioneer(fetchedAuctioneer);
+        setStates(fetchedStates);
+        setCities(fetchedCities);
     } catch(e) {
         console.error("Failed to fetch auctioneer", e);
         toast({title: "Erro", description: "Falha ao buscar dados do leiloeiro.", variant: "destructive"})
@@ -168,6 +180,8 @@ export default function EditAuctioneerPage() {
           <AuctioneerForm
             ref={formRef}
             initialData={auctioneer}
+            allStates={states}
+            allCities={cities}
             onSubmitAction={handleFormSubmit}
           />
       </FormPageLayout>

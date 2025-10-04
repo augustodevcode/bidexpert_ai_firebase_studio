@@ -13,6 +13,8 @@ import SellerForm from '../../seller-form';
 import { getSeller, updateSeller, deleteSeller, type SellerFormData } from '../../actions';
 import { notFound, useRouter, useParams } from 'next/navigation';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import { Button } from '@/components/ui/button';
 import { BarChart3, Users, Gavel, Package, TrendingUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +24,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Loader2 } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout'; 
-import type { SellerProfileInfo } from '@/types';
+import type { SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -96,6 +98,8 @@ export default function EditSellerPage() {
   
   const [seller, setSeller] = useState<SellerProfileInfo | null>(null);
   const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
+  const [allStates, setAllStates] = useState<StateInfo[]>([]);
+  const [allCities, setAllCities] = useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isViewMode, setIsViewMode] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -105,9 +109,11 @@ export default function EditSellerPage() {
       if (!sellerId) return;
       setIsLoading(true);
       try {
-        const [sellerData, branchesData] = await Promise.all([
+        const [sellerData, branchesData, statesData, citiesData] = await Promise.all([
             getSeller(sellerId),
-            getJudicialBranches()
+            getJudicialBranches(),
+            getStates(),
+            getCities(),
         ]);
 
         if (!sellerData) {
@@ -116,6 +122,8 @@ export default function EditSellerPage() {
         }
         setSeller(sellerData as SellerProfileInfo);
         setJudicialBranches(branchesData);
+        setAllStates(statesData);
+        setAllCities(citiesData);
       } catch (e) {
           console.error("Error fetching seller data", e);
           notFound();
@@ -176,6 +184,8 @@ export default function EditSellerPage() {
                 ref={formRef} 
                 initialData={seller}
                 judicialBranches={judicialBranches}
+                allStates={allStates}
+                allCities={allCities}
                 onSubmitAction={handleFormSubmit}
             />
         </FormPageLayout>

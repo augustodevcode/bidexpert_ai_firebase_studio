@@ -21,10 +21,6 @@ export const auctioneerFormSchema = z.object({
   contactName: z.string().max(150).optional().nullable(),
   email: z.string().email({ message: "Formato de email inválido." }).optional().nullable().or(z.literal('')),
   phone: z.string().max(20).optional().nullable(),
-  address: z.string().max(200).optional().nullable(),
-  city: z.string().max(100).optional().nullable(),
-  state: z.string().max(50).optional().nullable(), // Pode ser UF (2) ou nome completo
-  zipCode: z.string().max(10).optional().nullable(),
   website: optionalUrlSchema,
   logoUrl: optionalUrlSchema,
   logoMediaId: z.string().optional().nullable(),
@@ -32,7 +28,17 @@ export const auctioneerFormSchema = z.object({
   description: z.string().max(2000, {
     message: "A descrição não pode exceder 2000 caracteres.",
   }).optional().nullable(),
-  userId: z.string().optional().nullable(), // Se o leiloeiro pode ser um usuário da plataforma
+  userId: z.string().optional().nullable(),
+  // Campos de Endereço
+  street: z.string().max(255).optional().nullable(),
+  number: z.string().max(20).optional().nullable(),
+  complement: z.string().max(100).optional().nullable(),
+  neighborhood: z.string().max(100).optional().nullable(),
+  cityId: z.string().optional().nullable(),
+  stateId: z.string().optional().nullable(),
+  zipCode: z.string().max(10).optional().nullable(),
+  latitude: z.coerce.number().optional().nullable(),
+  longitude: z.coerce.number().optional().nullable(),
 });
 
 export type AuctioneerFormValues = z.infer<typeof auctioneerFormSchema>;
