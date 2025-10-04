@@ -35,4 +35,5 @@ playwright/.cache/
 prisma/schema.prisma
 *.sql
 
-context/
+#context/
+_Aiexclude/

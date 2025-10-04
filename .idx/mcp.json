@@ -71,7 +71,18 @@
       "database_get_data",
       "database_set_data",
       "database_get_rules",
-      "database_validate_rules"
+      "database_validate_rules",
+      "firebase_get_security_rules",
+      "firebase_read_resources",
+      "remoteconfig_update_template",
+      "functions_get_logs",
+      "realtimedatabase_get_data",
+      "realtimedatabase_set_data",
+      "auth_update_user",
+      "auth_get_users",
+      "dataconnect_execute",
+      "dataconnect_generate_schema",
+      "firebase_validate_security_rules"
     ],
     "chrome-devtools": [
       "list_console_messages",

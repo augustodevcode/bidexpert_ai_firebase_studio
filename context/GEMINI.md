@@ -141,5 +141,3 @@ A estratégia de testes está documentada no arquivo `README.md` e deve ser segu
         2.  **Imagem Customizada:** Ignorar as imagens dos lotes e selecionar uma nova imagem principal diretamente da `MediaLibrary` (`MediaItem`).
 
 **Justificativa:** Este sistema de herança com opção de substituição oferece máxima flexibilidade e consistência. Ele permite o reaproveitamento rápido de mídias (um `Asset` pode ser loteado várias vezes, sempre usando suas imagens padrão), ao mesmo tempo que dá ao usuário o controle para customizar a apresentação de lotes e leilões específicos quando necessário, sem duplicar arquivos e mantendo `MediaItem` como a fonte única da verdade.
-
-    
