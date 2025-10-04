@@ -2,8 +2,8 @@
 /**
  * @fileoverview Página para criação de um novo Leilão.
  * Este componente busca os dados necessários para os seletores (categorias,
- * leiloeiros, etc.) e renderiza o `AuctionForm` para entrada de dados.
- * Utiliza a server action `createAuction` para persistir o novo registro.
+ * leiloeiros, etc.) e renderiza o `AuctionForm` para entrada de dados,
+ * utilizando a server action `createAuction` para persistir o novo registro.
  */
 'use client';
 
@@ -19,7 +19,8 @@ import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo, LotCategory } from '@/types';
-import { getLotCategories } from '../categories/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 
 function NewAuctionPageContent() {
   const router = useRouter();
@@ -27,19 +28,20 @@ function NewAuctionPageContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [initialData, setInitialData] = useState<any>(null);
-  const formRef = useRef<any>(null);
+  const formRef = React.useRef<any>(null);
 
   const loadInitialData = useCallback(async () => {
     setIsLoadingData(true);
     try {
-      const [auctioneers, sellers, states, cities, categories] = await Promise.all([
+      const [auctioneers, sellers, states, cities, categories, judicialProcesses] = await Promise.all([
         getAuctioneers(),
         getSellers(),
         getStates(),
         getCities(),
         getLotCategories(),
+        getJudicialProcesses(),
       ]);
-      setInitialData({ auctioneers, sellers, states, allCities: cities, categories });
+      setInitialData({ auctioneers, sellers, states, allCities: cities, categories, judicialProcesses });
     } catch (error) {
       toast({ title: "Erro ao Carregar Dados", description: "Não foi possível carregar os dados necessários para criar um leilão.", variant: "destructive" });
     } finally {
@@ -53,7 +55,8 @@ function NewAuctionPageContent() {
 
   const handleSave = async () => {
     if (formRef.current) {
-        formRef.current.requestSubmit();
+        // Trigger validation and submission
+        await formRef.current.requestSubmit();
     }
   };
 
@@ -82,7 +85,7 @@ function NewAuctionPageContent() {
             icon={Gavel}
             isViewMode={false}
             isSubmitting={isSubmitting}
-            isValid={formRef.current?.formState.isValid}
+            isValid={formRef.current?.formState.isValid ?? false}
             onSave={handleSave}
             onCancel={() => router.push('/admin/auctions')}
         >
@@ -93,6 +96,7 @@ function NewAuctionPageContent() {
                 states={initialData.states}
                 allCities={initialData.allCities}
                 categories={initialData.categories}
+                judicialProcesses={initialData.judicialProcesses}
                 onSubmitAction={handleCreateAuction}
                 formTitle=""
                 formDescription=""

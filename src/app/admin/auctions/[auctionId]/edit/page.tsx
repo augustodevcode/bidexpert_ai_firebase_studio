@@ -35,7 +35,7 @@ import { DataTable } from '@/components/ui/data-table';
 import { createColumns as createLotColumns } from '@/app/admin/lots/columns';
 import FormPageLayout from '@/components/admin/form-page-layout';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
-import { getLotCategories } from '../../categories/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
     <Card className="bg-secondary/40">
