@@ -71,15 +71,19 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
   {
     accessorKey: "lotInfo",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Vinculado" />,
-    cell: ({ row }) => {
-      const lotInfo = row.original.lotInfo;
-      if (!lotInfo) return <span className="text-xs text-muted-foreground">-</span>;
-      // Extrai o ID do lote para criar o link
-      const lotIdMatch = lotInfo.match(/Lote [^:]+: (.*)/);
-      return (
-        <span className="text-xs text-muted-foreground">{lotInfo}</span>
-      );
-    },
+    cell: ({ row }) => row.original.lotInfo ? <span className="text-xs text-muted-foreground">{row.original.lotInfo}</span> : <span className="text-xs text-muted-foreground">-</span>,
+    enableGrouping: true,
+  },
+  {
+    accessorKey: "judicialProcessNumber",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Processo Judicial" />,
+    cell: ({ row }) => row.original.judicialProcessNumber || '-',
+    enableGrouping: true,
+  },
+  {
+    accessorKey: "sellerName",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Comitente" />,
+    cell: ({ row }) => row.original.sellerName || '-',
     enableGrouping: true,
   },
   {
@@ -90,12 +94,6 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
         return <Badge variant={getStatusVariant(status)}>{status}</Badge>
     },
     filterFn: (row, id, value) => (value as string[]).includes(row.getValue(id)),
-  },
-  {
-    accessorKey: "categoryName",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria" />,
-    cell: ({ row }) => row.original.categoryName || '-',
-    enableGrouping: true,
   },
   {
     accessorKey: "evaluationValue",
