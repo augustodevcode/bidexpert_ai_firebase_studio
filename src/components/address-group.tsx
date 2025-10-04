@@ -43,14 +43,14 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
 
   return (
     <div className="space-y-4">
-      <MapPicker
-        latitude={latitude}
-        longitude={longitude}
+      <MapPicker 
+        latitude={latitude} 
+        longitude={longitude} 
         zipCode={zipCode}
         control={form.control}
-        setValue={form.setValue}
-        allCities={cities}
-        allStates={states}
+        setValue={form.setValue} 
+        allCities={cities} 
+        allStates={states} 
       />
       <FormField
         control={form.control}
