@@ -1,4 +1,11 @@
 // src/components/layout/admin-sidebar.tsx
+/**
+ * @fileoverview Barra lateral de navegação para o painel de administração principal.
+ * Este componente renderiza os links de navegação para todas as seções de
+ * gerenciamento da plataforma, como leilões, usuários, configurações, etc.
+ * Utiliza um componente Accordion para organizar os links em grupos expansíveis.
+ * É projetado para ser usado exclusivamente dentro do `AdminLayout`.
+ */
 'use client';
 
 import Link from 'next/link';
@@ -41,7 +48,7 @@ const lotManagementItems = [
 const assetManagementItems = [
     { title: 'Listar Ativos', href: '/admin/assets', icon: Package },
     { title: 'Novo Ativo', href: '/admin/assets/new', icon: PlusCircle },
-    { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart3 },
+    // { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart3 }, // TODO: Implementar
 ];
 
 const categoryManagementItems = [
@@ -51,24 +58,23 @@ const categoryManagementItems = [
 ];
 
 const locationManagementItems = [
-    { title: 'Listar Cidades', href: '/admin/cities', icon: Building2 },
+    { title: 'Cidades', href: '/admin/cities', icon: Building2 },
     { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart3 },
-    { title: 'Listar Estados', href: '/admin/states', icon: MapPin },
+    { title: 'Estados', href: '/admin/states', icon: MapPin },
     { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart3 },
 ];
 
 const contentManagementItems = [
-    { title: 'Blog', href: '/admin/blog', icon: BookOpen, disabled: true },
     { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
 ]
 
 const judicialManagementItems = [
-    { title: 'Listar Tribunais', href: '/admin/courts', icon: Scale },
+    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
     { title: 'Análise de Tribunais', href: '/admin/courts/analysis', icon: BarChart3 },
-    { title: 'Listar Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart3 },
-    { title: 'Listar Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart3 },
+    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
+     { title: 'Análise de Comarcas', href: '/admin/judicial-districts/analysis', icon: BarChart3 },
+    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
+     { title: 'Análise de Varas', href: '/admin/judicial-branches/analysis', icon: BarChart3 },
     { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
 ]
 
@@ -106,10 +112,10 @@ const auctioneerManagementItems = [
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
     key={item.href}
-    variant={pathname === item.href ? 'secondary' : 'ghost'}
+    variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
     className={cn(
       'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-      pathname === item.href && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
+      pathname.startsWith(item.href) && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
     )}
     asChild
     disabled={item.disabled}
@@ -201,11 +207,6 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 </Accordion>
                 </nav>
             </ScrollArea>
-            <div className="p-4 border-t border-sidebar-border">
-                <Button variant="outline" className="w-full bg-sidebar-accent/50 text-sidebar-foreground hover:bg-sidebar-accent" asChild>
-                    <Link href="/">Voltar ao Site</Link>
-                </Button>
-            </div>
         </>
     );
 }
@@ -215,19 +216,17 @@ export default function AdminSidebar() {
   
   return (
     <>
-      {/* Mobile Sidebar */}
-      <div className="md:hidden">
-        <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-          <SheetTrigger asChild>
-            <Button variant="ghost" size="icon" className="fixed top-4 left-4 z-50 bg-background/50 backdrop-blur-sm">
-              <Menu className="h-5 w-5" />
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground">
-            <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
-          </SheetContent>
-        </Sheet>
-      </div>
+      {/* Mobile Sidebar Trigger (only visible on mobile) */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetTrigger asChild>
+          <Button variant="ghost" size="icon" className="md:hidden fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm h-10 w-10">
+            <Menu className="h-5 w-5" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground">
+          <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
+        </SheetContent>
+      </Sheet>
 
       {/* Desktop Sidebar */}
       <aside className="sticky top-0 h-screen w-64 bg-sidebar border-r border-sidebar-border flex-col hidden md:flex">

@@ -1,4 +1,12 @@
 // src/app/admin/layout.tsx
+/**
+ * @fileoverview Layout principal para o painel de administração.
+ * Este componente de cliente é o invólucro para todas as páginas de administração,
+ * garantindo que apenas usuários autenticados e com as permissões corretas
+ * (especificamente 'manage_all') possam acessar a área. Ele renderiza a
+ * barra lateral de administração (`AdminSidebar`), o novo cabeçalho (`AdminHeader`),
+ * e o conteúdo da página solicitada.
+ */
 'use client';
 
 import { useEffect, useState } from 'react';

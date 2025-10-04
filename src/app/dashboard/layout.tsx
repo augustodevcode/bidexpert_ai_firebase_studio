@@ -1,23 +1,24 @@
 // src/app/dashboard/layout.tsx
 /**
- * @fileoverview Layout principal para o Painel do Usuário.
- * Este componente de cliente envolve todas as páginas do dashboard do arrematante,
- * como "Meus Lances" e "Meus Arremates". Ele é responsável por verificar a
- * autenticação do usuário, exibindo um estado de carregamento ou redirecionando
- * para o login se o usuário não estiver autenticado. Uma vez autenticado,
- * ele renderiza a barra lateral específica do usuário (`DashboardSidebar`)
- * e o conteúdo da página solicitada.
+ * @fileoverview Layout principal para o Painel do Usuário (Arrematante).
+ * Este componente de cliente envolve todas as páginas do dashboard do arrematante.
+ * Ele renderiza a barra lateral (`DashboardSidebar`), o novo cabeçalho (`AdminHeader`),
+ * e o conteúdo da página, garantindo uma experiência de usuário consistente e
+ * separada da área pública do site.
  */
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter, usePathname, redirect } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
-import { Loader2, ShieldAlert } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
+import { Loader2 } from 'lucide-react';
 import DashboardSidebar from '@/components/layout/dashboard-sidebar';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
+import AdminHeader from '@/components/layout/admin-header'; // Reutilizando o header
+import CommandPalette from '@/components/layout/command-palette';
+import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
+import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
+
 
 export default function DashboardLayout({
   children,
@@ -26,6 +27,8 @@ export default function DashboardLayout({
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
   const pathname = usePathname();
+  const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
   
   if (loading) {
     return (
@@ -37,19 +40,31 @@ export default function DashboardLayout({
   }
 
   if (!userProfileWithPermissions) {
-    // Se o código chegar aqui no lado do servidor, o redirect será usado.
-    // No lado do cliente, o useEffect em AuthProvider já pode ter redirecionado.
     redirect(`/auth/login?redirect=${pathname}`);
   }
 
-  // Se we reach here, loading is false and user exists. Render the dashboard.
   return (
-    <div className="flex min-h-screen">
-      <DashboardSidebar />
-      <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30">
-        {children}
-        <DevInfoIndicator />
-      </main>
-    </div>
+    <WidgetPreferencesProvider>
+        <div className="flex min-h-screen bg-secondary">
+          <DashboardSidebar />
+           <div className="flex flex-1 flex-col">
+            <AdminHeader 
+                onSearchClick={() => setCommandPaletteOpen(true)} 
+                onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
+            />
+            <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto">
+                <div className="mx-auto max-w-7xl">
+                    {children}
+                    <DevInfoIndicator />
+                </div>
+            </main>
+           </div>
+        </div>
+        <CommandPalette 
+            isOpen={isCommandPaletteOpen}
+            onOpenChange={setCommandPaletteOpen}
+        />
+        {/* O modal de configuração de widgets não é relevante para o usuário comum, então não é renderizado aqui. */}
+    </WidgetPreferencesProvider>
   );
 }

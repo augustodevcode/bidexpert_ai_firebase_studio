@@ -1,4 +1,10 @@
 // src/components/layout/admin-header.tsx
+/**
+ * @fileoverview Cabeçalho unificado para todas as áreas de dashboard (Admin, Comitente, Arrematante).
+ * Este componente fornece uma barra de navegação superior consistente com busca,
+ * notificações e acesso ao menu do usuário. Ele é projetado para ser usado
+ * dentro dos layouts de dashboard para separar a navegação administrativa da pública.
+ */
 'use client';
 
 import { Search, Bell, Settings, MessageSquare, Menu, Globe, Sun } from 'lucide-react';
