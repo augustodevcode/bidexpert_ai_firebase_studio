@@ -1,4 +1,3 @@
-
 // src/components/auction/auction-stages-timeline.tsx
 'use client';
 

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import * as React from 'react';
@@ -13,7 +12,7 @@ import { Heart, Share2, Eye, CalendarDays, Tag, MapPin, X, Facebook, MessageSqua
 import { format, isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import AuctionPreviewModal from './auction-preview-modal';
-import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
+import { getAuctionStatusText, isValidImageUrl } from '@/lib/ui-helpers';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -104,7 +103,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     }
   }
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://picsum.photos/seed/${auction.id}/600/400`;
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : 'https://placehold.co/600x400.png';
   const mainImageAlt = auction.title || 'Imagem do Leilão';
   const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
@@ -112,7 +111,18 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const sellerName = auction.seller?.name;
 
 
-  const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
+  const getAuctionTypeDisplay = (type?: Auction['auctionType']) => {
+    if (!type) return null;
+    switch(type) {
+      case 'JUDICIAL': return { label: 'Judicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'EXTRAJUDICIAL': return { label: 'Extrajudicial', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'PARTICULAR': return { label: 'Particular', icon: <AuctionTypeIcon className="h-3 w-3"/> };
+      case 'TOMADA_DE_PRECOS': return { label: 'Tomada de Preços', icon: <TomadaPrecosIcon className="h-3 w-3"/> };
+      default: return null;
+    }
+  };
+
+  const auctionTypeDisplay = getAuctionTypeDisplay(auction.auctionType);
   
   const getStatusDisplay = () => {
     if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
@@ -131,42 +141,30 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   };
 
   const statusDisplay = getStatusDisplay();
-  const getAuctionTypeIcon = (type: string | undefined) => {
-    const iconName = getAuctionTypeDisplayData(type)?.iconName;
-    if (!iconName) return null;
-
-    const IconComponent = {
-        'Gavel': AuctionTypeIcon,
-        'FileText': TomadaPrecosIcon
-    }[iconName];
-
-    return IconComponent ? <IconComponent className="h-3 w-3" /> : null;
-  };
-
 
   return (
     <TooltipProvider>
       <>
-        <Card data-ai-id={`auction-card-${auction.id}`} className="card-auction">
-          <div className="container-auction-image">
-            <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-image">
-              <div className="wrapper-auction-image">
+        <Card data-ai-id={`auction-card-${auction.id}`} className="flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg group">
+          <div className="relative">
+            <Link href={`/auctions/${auction.publicId || auction.id}`} className="block">
+              <div className="aspect-[16/10] relative bg-muted">
                 <Image
                   src={mainImageUrl!}
                   alt={mainImageAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  className="img-auction"
-                  data-ai-hint="marina home"
+                  className="object-cover"
+                  data-ai-hint={mainImageDataAiHint}
                   data-ai-id="auction-card-main-image"
                 />
                  {sellerLogoUrl && (
                     <Tooltip>
                         <TooltipTrigger asChild>
-                            <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="link-seller-logo">
-                                <Avatar className="avatar-seller-logo" data-ai-id="auction-card-seller-logo">
-                                    <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} className="img-seller-logo" data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente'} />
-                                    <AvatarFallback className="fallback-seller-logo">{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
+                            <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
+                                <Avatar className="h-12 w-12 border-2 bg-background border-border shadow-md" data-ai-id="auction-card-seller-logo">
+                                    <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente'} />
+                                    <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
                                 </Avatar>
                             </Link>
                         </TooltipTrigger>
@@ -177,88 +175,134 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                 )}
               </div>
             </Link>
-             <div className="container-auction-badges" data-ai-id="auction-card-badges">
-                <Badge className={`badge-auction-status ${statusDisplay.className}`}>
+             <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-10" data-ai-id="auction-card-badges">
+                <Badge className={`text-xs px-2 py-1 ${statusDisplay.className}`}>
                     {statusDisplay.text}
                 </Badge>
             </div>
-             <div className="container-mental-triggers" data-ai-id="auction-card-mental-triggers">
+             <div className="absolute top-2 right-2 flex flex-col items-end gap-1 z-10" data-ai-id="auction-card-mental-triggers">
                 {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="badge-mental-trigger">
-                        {trigger.startsWith('ENCERRA') && <Clock className="icon-mental-trigger" />}
-                        {trigger === 'ALTA DEMANDA' && <Users className="icon-mental-trigger" />}
-                        {trigger === 'DESTAQUE' && <Star className="icon-mental-trigger" />}
+                    <Badge key={trigger} variant="secondary" className="text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300">
+                        {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-0.5" />}
+                        {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-0.5" />}
                         {trigger}
                     </Badge>
                 ))}
             </div>
-            <div className="absolute bottom-2 left-1/2 z-20 flex -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
-              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`icon-card-action ${isFavorite ? 'is-favorite' : ''}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
-              <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={openPreviewModal} aria-label="Pré-visualizar"><Eye className="icon-card-action" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
+            <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}>
+                    <Heart className={`h-4 w-4 ${isFavorite ? 'text-red-500 fill-red-500' : 'text-muted-foreground'}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" onClick={openPreviewModal} aria-label="Pré-visualizar">
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent><p>Pré-visualizar</p></TooltipContent>
+              </Tooltip>
               <DropdownMenu>
-                  <Tooltip><TooltipTrigger asChild><DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" aria-label="Compartilhar"><Share2 className="icon-card-action" /></Button></DropdownMenuTrigger></TooltipTrigger><TooltipContent><p>Compartilhar</p></TooltipContent></Tooltip>
-                  <DropdownMenuContent align="end" className="dropdown-share-menu">
-                      <DropdownMenuItem asChild><a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><X className="icon-social-share" /> X (Twitter)</a></DropdownMenuItem>
-                      <DropdownMenuItem asChild><a href={getSocialLink('facebook', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><Facebook className="icon-social-share" /> Facebook</a></DropdownMenuItem>
-                      <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="item-share-dropdown"><MessageSquareText className="icon-social-share" /> WhatsApp</a></DropdownMenuItem>
-                      <DropdownMenuItem asChild><a href={getSocialLink('email', auctionFullUrl, auction.title)} className="item-share-dropdown"><Mail className="icon-social-share" /> Email</a></DropdownMenuItem>
-                  </DropdownMenuContent>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="icon" className="h-8 w-8 bg-background/80 hover:bg-background" aria-label="Compartilhar">
+                        <Share2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent><p>Compartilhar</p></TooltipContent>
+                </Tooltip>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('x', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <X className="h-3.5 w-3.5" /> X (Twitter)
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('facebook', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <Facebook className="h-3.5 w-3.5" /> Facebook
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('whatsapp', auctionFullUrl, auction.title)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs">
+                      <MessageSquareText className="h-3.5 w-3.5" /> WhatsApp
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <a href={getSocialLink('email', auctionFullUrl, auction.title)} className="flex items-center gap-2 text-xs">
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </a>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
               </DropdownMenu>
-              <EntityEditMenu entityType="auction" entityId={auction.id} publicId={auction.publicId!} currentTitle={auction.title} isFeatured={auction.isFeaturedOnMarketplace || false} onUpdate={onUpdate}/>
+              <EntityEditMenu
+                entityType="auction"
+                entityId={auction.id}
+                publicId={auction.publicId}
+                currentTitle={auction.title}
+                isFeatured={auction.isFeaturedOnMarketplace || false}
+                onUpdate={onUpdate}
+              />
             </div>
           </div>
 
-          <CardContent className="card-content-auction">
-            <div className="container-auction-meta">
-              <span className="text-auction-id" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
-              {auctionTypeDisplay?.label && (
-                <div className="container-auction-type" data-ai-id="auction-card-type">
-                    {getAuctionTypeIcon(auction.auctionType)}
-                    <span className="label-auction-type">{auctionTypeDisplay.label}</span>
+          <CardContent className="p-4 flex-grow">
+            <div className="flex justify-between items-start text-xs text-muted-foreground mb-1">
+              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
+              {auctionTypeDisplay && (
+                <div className="flex items-center gap-1" data-ai-id="auction-card-type">
+                    {auctionTypeDisplay.icon}
+                    <span>{auctionTypeDisplay.label}</span>
                 </div>
                 )}
             </div>
-            <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-title">
-              <h3 data-ai-id="auction-card-title" className="title-auction-card">
+            <Link href={`/auctions/${auction.publicId || auction.id}`}>
+              <h3 data-ai-id="auction-card-title" className="text-md font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2">
                 {auction.title}
               </h3>
             </Link>
             
-            <div className="grid-auction-counters" data-ai-id="auction-card-counters">
-                <div className="item-counter" title={`${auction.totalLots || 0} Lotes`}>
-                    <ListChecks className="icon-counter" />
-                    <span className="text-counter">{auction.totalLots || 0} Lotes</span>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2" data-ai-id="auction-card-counters">
+                <div className="flex items-center" title={`${auction.totalLots || 0} Lotes`}>
+                    <ListChecks className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.totalLots || 0} Lotes</span>
                 </div>
-                 <div className="item-counter" title={`${auction.visits || 0} Visitas`}>
-                    <Eye className="icon-counter" />
-                    <span className="text-counter">{auction.visits || 0} Visitas</span>
+                 <div className="flex items-center" title={`${auction.visits || 0} Visitas`}>
+                    <Eye className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.visits || 0} Visitas</span>
                 </div>
-                 <div className="item-counter" title={`${auction.totalHabilitatedUsers || 0} Usuários Habilitados`}>
-                    <Users className="icon-counter" />
-                    <span className="text-counter">{auction.totalHabilitatedUsers || 0} Habilitados</span>
+                 <div className="flex items-center" title={`${auction.totalHabilitatedUsers || 0} Usuários Habilitados`}>
+                    <Users className="h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80" />
+                    <span className="truncate">{auction.totalHabilitatedUsers || 0} Habilitados</span>
                 </div>
             </div>
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
-                <div className="container-auction-timeline" data-ai-id="auction-card-timeline">
+                <div className="space-y-1 mb-3 text-xs" data-ai-id="auction-card-timeline">
                     <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             ) : null}
 
 
           </CardContent>
-          <CardFooter className="card-footer-auction">
+          <CardFooter className="p-4 border-t flex-col items-start space-y-2">
             {auction.initialOffer && (
-              <div className="container-initial-offer" data-ai-id="auction-card-initial-offer">
-                <p className="label-initial-offer">
+              <div className="w-full" data-ai-id="auction-card-initial-offer">
+                <p className="text-xs text-muted-foreground">
                   {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
                 </p>
-                <p className="text-initial-offer">
+                <p className="text-2xl font-bold text-primary">
                   R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             )}
-            <Button asChild className="btn-view-lots">
+            <Button asChild className="w-full mt-2">
               <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots})</Link>
             </Button>
           </CardFooter>
