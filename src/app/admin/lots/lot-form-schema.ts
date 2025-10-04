@@ -40,7 +40,7 @@ export const lotFormSchema = z.object({
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
   assetIds: z.array(z.string()).optional(),
-  inheritedMediaFromBemId: z.string().optional().nullable(),
+  inheritedMediaFromAssetId: z.string().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
   isFeatured: z.boolean().default(false).optional(),

@@ -36,8 +36,6 @@ export class AssetService {
         return {
             ...asset,
             evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
-            totalArea: asset.totalArea ? Number(asset.totalArea) : null,
-            builtArea: asset.builtArea ? Number(asset.builtArea) : null,
             latitude: asset.latitude ? Number(asset.latitude) : null,
             longitude: asset.longitude ? Number(asset.longitude) : null,
             categoryName: asset.category?.name,

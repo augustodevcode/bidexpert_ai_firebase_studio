@@ -14,7 +14,6 @@
 - **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
 - **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):** All phases completed, including dashboards for general reports, group analysis, and individual performance sections.
-- **Item 15: Melhorar Formulários com Seletores de Localização e Mapa:** Replaced text fields with `EntitySelector` for locations and integrated an interactive map in all relevant entity forms (Auction, Asset, Seller, Auctioneer, User) and display pages.
 - **Item 19: Padronização de Identificadores `data-ai-id`:** Added `data-ai-id` attributes to all major UI containers and components.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** All subtasks completed.
 - **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** Layouts adjusted for all screen sizes.
@@ -34,9 +33,10 @@
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** All subtasks completed.
 - **Item 39: Validação de Formulários e Feedback de UI (100%):** All forms now have required field indicators, disabled submission buttons on invalid state, and provide toast feedback.
 - **Item 41: Criar Componente Reutilizável de Timeline para Etapas do Leilão:** Created and integrated the `AuctionStagesTimeline` component.
+- **Item 15: Melhorar Formulários com Seletores de Localização e Mapa:** Replaced text fields with a unified `AddressGroup` component (including `EntitySelector` for location and an interactive map) in all relevant entity forms (Auction, Asset, Seller, Auctioneer, User) and updated all display pages to show the full, structured address.
+- **Item 42: Simplificação dos Formulários de Ativos e Lotes:** Removidos campos específicos de categoria e substituídos por um único campo "Propriedades" (Textarea) em todos os formulários e modelos de dados de Ativos e Lotes.
 
 ## DOING
-- **Item 42: Simplificação dos Formulários de Ativos e Lotes:** Remover campos específicos de categoria e substituí-los por um único campo de "Propriedades" (Textarea) para maior flexibilidade.
 
 ## NEXT
 - **Item 16:** Implementar a lógica para relistar um lote que não foi vendido, incluindo a UI para o administrador.
