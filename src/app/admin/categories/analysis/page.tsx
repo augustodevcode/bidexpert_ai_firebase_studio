@@ -157,6 +157,7 @@ export default function CategoryAnalysisPage() {
             <DataTable 
                 columns={columns}
                 data={performanceData}
+                isLoading={isLoading}
                 searchColumnId="name"
                 searchPlaceholder="Buscar categoria..."
             />

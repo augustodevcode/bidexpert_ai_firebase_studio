@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getCities, deleteCity } from './actions';
 import type { CityInfo } from '@/types';
-import { PlusCircle, Building2 } from 'lucide-react';
+import { PlusCircle, Building2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
@@ -102,11 +102,18 @@ export default function AdminCitiesPage() {
               Adicione, edite ou remova cidades da plataforma.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/cities/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+                <Link href="/admin/cities/analysis">
+                    <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
+                </Link>
+            </Button>
+            <Button asChild>
+                <Link href="/admin/cities/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Nova Cidade
+                </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
            <DataTable

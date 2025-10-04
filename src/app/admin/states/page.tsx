@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getStates, deleteState } from './actions';
 import type { StateInfo } from '@/types';
-import { PlusCircle, Map } from 'lucide-react';
+import { PlusCircle, Map, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
@@ -92,11 +92,18 @@ export default function AdminStatesPage() {
               Adicione, edite ou remova estados da plataforma.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/states/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Estado
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline">
+                <Link href="/admin/states/analysis">
+                    <BarChart3 className="mr-2 h-4 w-4" /> Ver Análise
+                </Link>
+            </Button>
+            <Button asChild>
+                <Link href="/admin/states/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Estado
+                </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <DataTable

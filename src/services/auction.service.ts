@@ -51,6 +51,7 @@ export class AuctionService {
             auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
             sellerName: a.seller?.name,
             auctioneerName: a.auctioneer?.name,
+            categoryName: a.category?.name,
             // Se imageMediaId for 'INHERIT', usa a imagem do lote em destaque. Senão, usa a do leilão.
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
             auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
