@@ -117,6 +117,7 @@ export default function JudicialProcessForm({
 
   const form = useForm<JudicialProcessFormValues>({
     resolver: zodResolver(judicialProcessFormSchema),
+    mode: 'onChange',
     defaultValues: {
       processNumber: initialData?.processNumber || '',
       isElectronic: initialData?.isElectronic ?? true,
@@ -325,7 +326,7 @@ export default function JudicialProcessForm({
   return (
     <>
     <div className="space-y-6">
-      <Card className="max-w-3xl mx-auto shadow-lg">
+      <Card className="max-w-3xl mx-auto shadow-lg" data-ai-id="admin-judicial-process-form-card">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Gavel className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
           <CardDescription>{formDescription}</CardDescription>
@@ -333,14 +334,14 @@ export default function JudicialProcessForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6 p-6 bg-secondary/30">
-              <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo*</FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
+              <FormField control={form.control} name="processNumber" render={({ field }) => (<FormItem><FormLabel>Número do Processo<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="0000000-00.0000.0.00.0000" {...field} /></FormControl><FormMessage /></FormItem>)} />
               <FormField control={form.control} name="isElectronic" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Processo Eletrônico</FormLabel></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
               
               <Separator />
               <h3 className="text-md font-semibold text-muted-foreground pt-2">Localização e Comitente</h3>
-              <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" createNewUrl="/admin/judicial-districts/new" editUrlPrefix="/admin/judicial-districts" onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
-              <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara*</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="courtId" render={({ field }) => (<FormItem><FormLabel>Tribunal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={courts.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione o tribunal" searchPlaceholder="Buscar tribunal..." emptyStateMessage="Nenhum tribunal encontrado" createNewUrl="/admin/courts/new" editUrlPrefix="/admin/courts" onRefetch={() => handleRefetch('courts')} isFetching={isFetchingCourts} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="districtId" render={({ field }) => (<FormItem><FormLabel>Comarca<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredDistricts.map(d => ({ value: d.id, label: d.name }))} placeholder={!selectedCourtId ? "Selecione um tribunal" : "Selecione a comarca"} searchPlaceholder="Buscar comarca..." emptyStateMessage="Nenhuma comarca encontrada" createNewUrl="/admin/judicial-districts/new" editUrlPrefix="/admin/judicial-districts" onRefetch={() => handleRefetch('districts')} isFetching={isFetchingDistricts} disabled={!selectedCourtId} /><FormMessage /></FormItem>)}/>
+              <FormField control={form.control} name="branchId" render={({ field }) => (<FormItem><FormLabel>Vara<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={filteredBranches.map(b => ({ value: b.id, label: b.name }))} placeholder={!selectedDistrictId ? "Selecione uma comarca" : "Selecione a vara"} searchPlaceholder="Buscar vara..." emptyStateMessage="Nenhuma vara encontrada" createNewUrl="/admin/judicial-branches/new" editUrlPrefix="/admin/judicial-branches" onRefetch={() => handleRefetch('branches')} isFetching={isFetchingBranches} disabled={!selectedDistrictId} /><FormMessage /></FormItem>)}/>
               
               <FormField control={form.control} name="sellerId" render={({ field }) => (
                   <FormItem>
@@ -374,7 +375,7 @@ export default function JudicialProcessForm({
 
             <Separator />
             <div className="flex justify-between items-center pt-2">
-                <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas*</h3>
+                <h3 className="text-md font-semibold text-muted-foreground flex items-center gap-2"><Users className="h-5 w-5"/>Partes Envolvidas<span className="text-destructive">*</span></h3>
                 <Button type="button" variant="outline" size="sm" onClick={() => append({ name: '', partyType: 'OUTRO' })}><PlusCircle className="mr-2 h-4 w-4" /> Adicionar Parte</Button>
             </div>
             {fields.map((field, index) => (
@@ -389,7 +390,7 @@ export default function JudicialProcessForm({
           </CardContent>
           <CardFooter className="flex justify-end gap-2 p-6 border-t">
             <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
+            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{submitButtonText}</Button>
           </CardFooter>
         </form>
       </Form>
