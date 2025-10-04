@@ -33,12 +33,12 @@ import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import EntitySelector from '@/components/ui/entity-selector';
 import { getLotCategories } from '../categories/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getSellers } from '../sellers/actions';
 import AddressGroup from '@/components/address-group';
+import { Separator } from '@/components/ui/separator';
 
 interface AssetFormProps {
   initialData?: Partial<Asset> | null;
@@ -99,6 +99,7 @@ export default function AssetForm({
 
   const form = useForm<AssetFormData>({
     resolver: zodResolver(assetFormSchema),
+    mode: 'onChange',
     defaultValues: {
       ...initialData,
       status: initialData?.status || 'DISPONIVEL',
@@ -226,65 +227,67 @@ export default function AssetForm({
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-              <Tabs defaultValue="geral">
-                  <TabsList className="flex flex-wrap h-auto">
-                      <TabsTrigger value="geral">Informações Gerais</TabsTrigger>
-                      <TabsTrigger value="localizacao">Localização</TabsTrigger>
-                      <TabsTrigger value="midia">Mídia</TabsTrigger>
-                  </TabsList>
 
-                  <TabsContent value="geral" className="mt-4 space-y-4">
-                      <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem<span className='text-destructive'>*</span></FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                      <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado de conservação, etc." {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
-                       <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades Específicas</FormLabel><FormControl><Textarea placeholder="Ex: Placa: XYZ-1234, Ano: 2019, Combustível: Flex, Quartos: 3, Área: 120m²" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormDescription>Adicione aqui todas as características do bem, uma por linha (Ex: "Cor: Azul", "KM: 50.000").</FormDescription><FormMessage /></FormItem>)} />
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <FormField name="status" control={form.control} render={({ field }) => (<FormItem><FormLabel>Status<span className='text-destructive'>*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{assetStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                        <FormField name="evaluationValue" control={form.control} render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="150000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+              {/* Seção de Informações Gerais */}
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Gerais</h3>
+              <div className="space-y-4">
+                <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem<span className='text-destructive'>*</span></FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado de conservação, etc." {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades Específicas</FormLabel><FormControl><Textarea placeholder="Ex: Placa: XYZ-1234, Ano: 2019, Combustível: Flex, Quartos: 3, Área: 120m²" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormDescription>Adicione aqui todas as características do bem, uma por linha (Ex: "Cor: Azul", "KM: 50.000").</FormDescription><FormMessage /></FormItem>)} />
+                <div className="grid md:grid-cols-2 gap-4">
+                  <FormField name="status" control={form.control} render={({ field }) => (<FormItem><FormLabel>Status<span className='text-destructive'>*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{assetStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                  <FormField name="evaluationValue" control={form.control} render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="150000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
+                  <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+              </div>
+
+              <Separator className="my-8" />
+              
+              {/* Seção de Origem */}
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Origem / Proprietário</h3>
+              <div className="space-y-4">
+                <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isFetchingProcesses} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+                <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
+              </div>
+              
+              <Separator className="my-8" />
+
+              {/* Seção de Localização */}
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Localização</h3>
+              <AddressGroup form={form} allCities={allCities} allStates={allStates} />
+              
+              <Separator className="my-8" />
+
+              {/* Seção de Mídia */}
+              <h3 className="text-lg font-semibold text-primary border-b pb-2">Mídia</h3>
+              <div className="space-y-4">
+                <FormItem>
+                  <FormLabel>Imagem Principal</FormLabel>
+                  <div className="flex items-center gap-4">
+                      <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
+                      <div className="space-y-2 flex-grow">
+                          <Button type="button" variant="outline" onClick={() => { setDialogTarget('main'); setIsMediaDialogOpen(true); }}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
+                          <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
-                        <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                      </div>
-                      <Accordion type="single" collapsible defaultValue="item-1">
-                        <AccordionItem value="item-1">
-                          <AccordionTrigger className="text-md font-medium">Origem / Proprietário</AccordionTrigger>
-                          <AccordionContent className="space-y-4 pt-2">
-                             <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isFetchingProcesses} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
-                             <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                  </TabsContent>
+                  </div>
+                </FormItem>
+                <FormItem>
+                  <FormLabel>Galeria de Imagens Adicionais</FormLabel>
+                  <Button type="button" variant="outline" size="sm" onClick={() => { setDialogTarget('gallery'); setIsMediaDialogOpen(true); }}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
+                      {galleryUrls?.map((url, index) => (
+                          <div key={url} className="relative aspect-square bg-muted rounded overflow-hidden">
+                              <Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" />
+                              <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover"><Trash2 className="h-3.5 w-3.5" /></Button>
+                          </div>
+                      ))}
+                  </div>
+                </FormItem>
+              </div>
 
-                  <TabsContent value="localizacao" className="mt-4 space-y-4">
-                     <AddressGroup form={form} allCities={allCities} allStates={allStates} />
-                  </TabsContent>
-
-                  <TabsContent value="midia" className="mt-4 space-y-4">
-                      <FormItem>
-                        <FormLabel>Imagem Principal</FormLabel>
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{imageUrlPreview ? (<Image src={imageUrlPreview} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
-                            <div className="space-y-2 flex-grow">
-                                <Button type="button" variant="outline" onClick={() => { setDialogTarget('main'); setIsMediaDialogOpen(true); }}>{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
-                                <FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
-                            </div>
-                        </div>
-                      </FormItem>
-                      <FormItem>
-                        <FormLabel>Galeria de Imagens Adicionais</FormLabel>
-                        <Button type="button" variant="outline" size="sm" onClick={() => { setDialogTarget('gallery'); setIsMediaDialogOpen(true); }}><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button>
-                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">
-                            {galleryUrls?.map((url, index) => (
-                                <div key={url} className="relative aspect-square bg-muted rounded overflow-hidden">
-                                    <Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" />
-                                    <Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover"><Trash2 className="h-3.5 w-3.5" /></Button>
-                                </div>
-                            ))}
-                        </div>
-                      </FormItem>
-                  </TabsContent>
-              </Tabs>
             </CardContent>
             <CardFooter className="flex justify-end gap-2 p-6 border-t">
               <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
