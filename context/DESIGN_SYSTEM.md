@@ -48,6 +48,7 @@ Our color system is defined centrally in `src/app/globals.css` using HSL CSS var
 -   **Data Display**: For displaying tabular data, always use our styled `DataTable` component, which is built upon TanStack Table and includes built-in features for sorting, filtering, and pagination.
 
 -   **Forms**: All forms are built using `react-hook-form` with `zod` for validation. UI elements within forms must use ShadCN components like `Input`, `Select`, `Checkbox`, `RadioGroup`, etc.
+    -   **Address Input**: For any form requiring address information, the reusable `AddressGroup` component (`src/components/address-group.tsx`) **must** be used. This ensures a consistent UI with CEP lookup and map integration across all entities (Users, Sellers, Auctioneers, Auctions, etc.).
 
 -   **Admin Layout**: All administrative pages follow a consistent structure provided by `AdminLayout`, which includes a dark sidebar and a main content area. New admin pages must conform to this structure.
 
