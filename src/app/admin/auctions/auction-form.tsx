@@ -107,7 +107,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   }, [form, isWizardMode, onWizardDataChange, watchedValues]);
 
   useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmit),
+    requestSubmit: form.handleSubmit(onSubmitAction),
     setValue: form.setValue,
     getValues: form.getValues,
     formState: form.formState, // Expose form state
