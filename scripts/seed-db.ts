@@ -95,7 +95,6 @@ async function seedDataSources() {
     ];
 
     for (const source of dataSources) {
-        // @ts-ignore
         await prisma.dataSource.upsert({
             where: { modelName: source.modelName },
             update: {
@@ -233,7 +232,7 @@ async function seedEssentialData() {
     console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
     
     // 6. Seed Data Sources
-    // await seedDataSources();
+    await seedDataSources();
 
   } catch (error: any) {
     console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
@@ -246,7 +245,8 @@ async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
     try {
         await seedEssentialData();
-        console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
+        // The seedDataSources function is now called from within seedEssentialData
+        // console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
     } catch (error) {
         console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
         process.exit(1);

@@ -34,3 +34,5 @@ playwright/.cache/
 # Exclui o schema do prisma gerado e arquivos SQL que são para setup e não para a lógica do app.
 prisma/schema.prisma
 *.sql
+
+context/

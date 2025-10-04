@@ -8,6 +8,8 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { Lot } from '@/types';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface ClosingSoonCarouselProps {
   lots: Lot[];
@@ -54,21 +56,21 @@ function GlobalCountdown({ endDate }: { endDate: Date | string }) {
 
   return (
     <ul className="flex items-center gap-2">
-      <li className="flex flex-col items-center justify-center bg-white rounded-lg px-3 py-2 min-w-[60px] shadow-md">
-        <span className="text-2xl font-bold text-red-600">{String(days).padStart(2, '0')}</span>
-        <span className="text-xs text-gray-500 uppercase">Dias</span>
+      <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
+        <span className="text-2xl font-bold text-destructive">{String(days).padStart(2, '0')}</span>
+        <span className="text-xs text-muted-foreground uppercase">Dias</span>
       </li>
-      <li className="flex flex-col items-center justify-center bg-white rounded-lg px-3 py-2 min-w-[60px] shadow-md">
-        <span className="text-2xl font-bold text-red-600">{String(hours).padStart(2, '0')}</span>
-        <span className="text-xs text-gray-500 uppercase">Hrs</span>
+      <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
+        <span className="text-2xl font-bold text-destructive">{String(hours).padStart(2, '0')}</span>
+        <span className="text-xs text-muted-foreground uppercase">Hrs</span>
       </li>
-      <li className="flex flex-col items-center justify-center bg-white rounded-lg px-3 py-2 min-w-[60px] shadow-md">
-        <span className="text-2xl font-bold text-red-600">{String(minutes).padStart(2, '0')}</span>
-        <span className="text-xs text-gray-500 uppercase">Min</span>
+      <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
+        <span className="text-2xl font-bold text-destructive">{String(minutes).padStart(2, '0')}</span>
+        <span className="text-xs text-muted-foreground uppercase">Min</span>
       </li>
-      <li className="flex flex-col items-center justify-center bg-white rounded-lg px-3 py-2 min-w-[60px] shadow-md">
-        <span className="text-2xl font-bold text-red-600">{String(seconds).padStart(2, '0')}</span>
-        <span className="text-xs text-gray-500 uppercase">Seg</span>
+      <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
+        <span className="text-2xl font-bold text-destructive">{String(seconds).padStart(2, '0')}</span>
+        <span className="text-xs text-muted-foreground uppercase">Seg</span>
       </li>
     </ul>
   );
@@ -77,75 +79,56 @@ function GlobalCountdown({ endDate }: { endDate: Date | string }) {
 function LotCard({ lot }: { lot: Lot }) {
   const imageUrl = lot.imageUrl || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80';
   const currentPrice = lot.price || lot.initialPrice || 0;
+  
   const discount = lot.initialPrice && currentPrice < lot.initialPrice
     ? Math.round(((lot.initialPrice - currentPrice) / lot.initialPrice) * 100)
-    : 0;
+    : lot.discountPercentage || 0;
 
   return (
-    <Link 
-      href={`/auctions/${lot.auctionId}/lots/${lot.id}`}
-      className="group block bg-white rounded-lg overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 flex-[0_0_220px] mx-2"
-    >
-      {/* Image */}
-      <div className="relative h-48 bg-gray-100 overflow-hidden">
-        <Image
-          src={imageUrl}
-          alt={lot.title}
-          fill
-          className="object-cover group-hover:scale-110 transition-transform duration-300"
-          sizes="220px"
-        />
-        
-        {/* Discount Badge */}
-        {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded text-sm font-bold">
-            -{discount}%
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-3">
-        {/* Price */}
-        <div className="mb-2">
-          {lot.initialPrice && currentPrice < lot.initialPrice && (
-            <div className="text-xs text-gray-400 line-through">
-              R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          )}
-          <div className="text-lg font-bold text-green-600">
-            R$ {currentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-sm font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[40px]">
-          {lot.title}
-        </h3>
-
-        {/* Location */}
-        {(lot.cityName || lot.stateUf) && (
-          <div className="text-xs text-gray-500 mb-2">
-            📍 {lot.cityName}{lot.stateUf && ` - ${lot.stateUf}`}
-          </div>
-        )}
-
-        {/* Progress Bar */}
-        {lot.bidsCount && lot.bidsCount > 0 && (
-          <div className="mt-2">
-            <div className="w-full bg-gray-200 rounded-full h-1.5 mb-1 overflow-hidden">
-              <div 
-                className="bg-blue-600 h-1.5 rounded-full transition-all"
-                style={{ width: `${Math.min((lot.bidsCount / 10) * 100, 100)}%` } as React.CSSProperties}
+    <div className="flex-[0_0_240px] p-2">
+      <Card
+        className="group relative overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+      >
+        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
+          <CardContent className="p-0">
+            <div className="relative h-40 bg-muted overflow-hidden">
+              <Image
+                src={imageUrl}
+                alt={lot.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-300"
+                sizes="220px"
               />
+              {discount > 0 && (
+                <Badge variant="destructive" className="absolute top-2 left-2 animate-pulse">
+                  -{discount}%
+                </Badge>
+              )}
             </div>
-            <p className="text-xs text-gray-500">
-              Vendidos: {lot.bidsCount}
-            </p>
-          </div>
-        )}
-      </div>
-    </Link>
+            <div className="p-3 space-y-2">
+              <div>
+                {lot.initialPrice && currentPrice < lot.initialPrice && (
+                  <div className="text-xs text-muted-foreground line-through">
+                    R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  </div>
+                )}
+                <div className="text-lg font-bold text-primary">
+                  R$ {currentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+              </div>
+              <h3 className="text-sm font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors min-h-[40px]">
+                {lot.title}
+              </h3>
+              {(lot.cityName || lot.stateUf) && (
+                <div className="text-xs text-muted-foreground">
+                  📍 {lot.cityName}{lot.stateUf && ` - ${lot.stateUf}`}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Link>
+      </Card>
+    </div>
   );
 }
 
@@ -163,7 +146,6 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
     return null;
   }
 
-  // Pegar a data de encerramento mais próxima
   const closestEndDate = lots.reduce((closest, lot) => {
     if (!lot.endDate) return closest;
     if (!closest) return lot.endDate;
@@ -171,41 +153,38 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
   }, lots[0]?.endDate);
 
   return (
-    <section className="py-10 bg-white">
+    <section className="py-12 bg-secondary/40">
       <div className="container mx-auto px-4">
-        {/* Header with Countdown */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-1">
+            <h2 className="text-3xl font-bold text-foreground mb-1 font-headline">
               ⚡ Super Oportunidades
             </h2>
-            <p className="text-gray-600">Lotes em 2ª Praça com até 50% de desconto - Encerrando em breve!</p>
+            <p className="text-muted-foreground">Lotes em 2ª Praça com até 50% de desconto - Encerrando em breve!</p>
           </div>
           
           {closestEndDate && (
             <div className="flex items-center gap-3">
-              <span className="text-sm font-semibold text-gray-700 uppercase">Encerra em:</span>
+              <span className="text-sm font-semibold text-foreground uppercase">Encerra em:</span>
               <GlobalCountdown endDate={closestEndDate} />
             </div>
           )}
         </div>
 
-        {/* Carousel */}
-        <div className="relative">
+        <div className="relative -mx-2">
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex">
+            <div className="flex -ml-2">
               {lots.map((lot) => (
                 <LotCard key={lot.id} lot={lot} />
               ))}
             </div>
           </div>
 
-          {/* Navigation Buttons */}
           <Button
             variant="outline"
             size="icon"
             onClick={scrollPrev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
+            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-accent rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
             aria-label="Previous"
           >
             <ChevronLeft className="w-5 h-5" />
@@ -214,15 +193,14 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
             variant="outline"
             size="icon"
             onClick={scrollNext}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
+            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-accent rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
             aria-label="Next"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Info Banner */}
-        <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-blue-500 p-4 rounded-lg">
+        <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-primary p-4 rounded-lg">
           <p className="text-sm text-blue-900">
             💡 <strong>2ª Praça:</strong> Lotes que não foram arrematados na primeira etapa retornam com descontos de até 50%!
             Aproveite esta oportunidade única para arrematar com preços ainda mais vantajosos.

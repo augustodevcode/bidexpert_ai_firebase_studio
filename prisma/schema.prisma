@@ -188,19 +188,6 @@ model Asset {
   @@index([tenantId])
 }
 
-// /prisma/models/AssetsOnLots.prisma
-
-model AssetsOnLots {
-  lot      Lot    @relation(fields: [lotId], references: [id])
-  lotId    String
-  asset    Asset  @relation(fields: [assetId], references: [id])
-  assetId  String
-  assignedAt DateTime @default(now())
-  assignedBy String
-
-  @@id([lotId, assetId])
-}
-
 /// Status of an individual asset.
 enum AssetStatus {
   /// The asset is being registered and is not ready to be used.
@@ -216,6 +203,19 @@ enum AssetStatus {
   /// The asset is no longer active, but the record is kept.
   INATIVADO
 }
+// /prisma/models/AssetsOnLots.prisma
+
+model AssetsOnLots {
+  lot      Lot    @relation(fields: [lotId], references: [id])
+  lotId    String
+  asset    Asset  @relation(fields: [assetId], references: [id])
+  assetId  String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([lotId, assetId])
+}
+
 // prisma/models/auction.prisma
 model Auction {
   id              String   @id @default(cuid())
@@ -302,36 +302,6 @@ model Auction {
   Review Review[]
 }
 
-
-model Auctioneer {
-  id                   String    @id @default(cuid())
-  publicId             String    @unique
-  slug                 String    @unique
-  name                 String
-  registrationNumber   String?   @db.Text
-  contactName          String?   @db.Text
-  email                String?   @db.Text
-  phone                String?   @db.Text
-  address              String?   @db.Text
-  city                 String?   @db.Text
-  state                String?   @db.Text
-  zipCode              String?   @db.Text
-  website              String?   @db.Text
-  logoUrl              String?   @db.Text
-  logoMediaId          String?
-  dataAiHintLogo       String?   @db.Text
-  description          String?   @db.Text
-  userId               String?   @unique
-  user                 User?     @relation("UserAuctioneer", fields: [userId], references: [id], onDelete: SetNull)
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
-  auctions             Auction[]
-  lots                 Lot[]
-  // Multi-Tenant
-  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId             String
-}
-
 model AuctionHabilitation {
   userId      String
   auctionId   String
@@ -387,6 +357,36 @@ enum AuctionType {
   PARTICULAR
   TOMADA_DE_PRECOS
   VENDA_DIRETA
+}
+
+
+model Auctioneer {
+  id                   String    @id @default(cuid())
+  publicId             String    @unique
+  slug                 String    @unique
+  name                 String
+  registrationNumber   String?   @db.Text
+  contactName          String?   @db.Text
+  email                String?   @db.Text
+  phone                String?   @db.Text
+  address              String?   @db.Text
+  city                 String?   @db.Text
+  state                String?   @db.Text
+  zipCode              String?   @db.Text
+  website              String?   @db.Text
+  logoUrl              String?   @db.Text
+  logoMediaId          String?
+  dataAiHintLogo       String?   @db.Text
+  description          String?   @db.Text
+  userId               String?   @unique
+  user                 User?     @relation("UserAuctioneer", fields: [userId], references: [id], onDelete: SetNull)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  auctions             Auction[]
+  lots                 Lot[]
+  // Multi-Tenant
+  tenant               Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId             String
 }
 
 /// Representa um lance feito por um usuário em um lote.
@@ -794,19 +794,6 @@ model Notification {
   @@index([userId])
 }
 
-
-/// @model
-/// @description Armazena tokens temporários para redefinição de senha.
-model PasswordResetToken {
-  id        String   @id @default(cuid())
-  email     String
-  token     String   @unique
-  expires   DateTime
-  createdAt DateTime @default(now())
-
-  @@unique([email, token])
-}
-
 enum PaymentStatus {
   PENDENTE
   PROCESSANDO
@@ -862,20 +849,6 @@ enum ProcessPartyType {
   ADMINISTRADOR_JUDICIAL
   TERCEIRO_INTERESSADO
   OUTRO
-}
-
-
-model Report {
-  id          String   @id @default(uuid())
-  name        String
-  description String?
-  definition  Json
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@map("reports")
 }
 
 model Review {
@@ -974,21 +947,6 @@ model Subcategory {
 
   @@unique([name, parentCategoryId])
 }
-/// Modelo para armazenar os assinantes da newsletter e notificações.
-model Subscriber {
-  id          String   @id @default(cuid())
-  email       String   @unique
-  name        String?
-  phone       String?
-  preferences Json?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  tenantId    String
-  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
-}
-
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
   id        String   @id @default(uuid())
@@ -1127,6 +1085,21 @@ model UserLotMaxBid {
   @@index([lotId])
 }
 
+model UserWin {
+  id                String               @id @default(cuid())
+  lotId             String               @unique
+  userId            String
+  winningBidAmount  Decimal              @db.Decimal(15, 2)
+  winDate           DateTime             @default(now())
+  paymentStatus     PaymentStatus        @default(PENDENTE)
+  invoiceUrl        String?
+  installments      InstallmentPayment[]
+  lot               Lot                  @relation(fields: [lotId], references: [id])
+  user              User                 @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
 model UsersOnRoles {
   userId     String
   roleId     String
@@ -1151,21 +1124,6 @@ model UsersOnTenants {
   @@index([tenantId])
 }
 
-model UserWin {
-  id                String               @id @default(cuid())
-  lotId             String               @unique
-  userId            String
-  winningBidAmount  Decimal              @db.Decimal(15, 2)
-  winDate           DateTime             @default(now())
-  paymentStatus     PaymentStatus        @default(PENDENTE)
-  invoiceUrl        String?
-  installments      InstallmentPayment[]
-  lot               Lot                  @relation(fields: [lotId], references: [id])
-  user              User                 @relation(fields: [userId], references: [id])
-
-  @@index([userId])
-}
-
 model VehicleMake {
   id     String         @id @default(cuid())
   name   String         @unique
@@ -1182,4 +1140,46 @@ model VehicleModel {
 
   @@unique([makeId, name])
   @@index([slug])
+}
+
+
+/// @model
+/// @description Armazena tokens temporários para redefinição de senha.
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([email, token])
+}
+
+
+model Report {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  definition  Json
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("reports")
+}
+
+/// Modelo para armazenar os assinantes da newsletter e notificações.
+model Subscriber {
+  id          String   @id @default(cuid())
+  email       String   @unique
+  name        String?
+  phone       String?
+  preferences Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
 }
