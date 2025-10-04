@@ -21,6 +21,7 @@ import EntityEditMenu from '../entity-edit-menu';
 import { getRecentlyViewedIds } from '@/lib/recently-viewed-store';
 import { Skeleton } from '../ui/skeleton';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import LotCountdown from '../lot-countdown';
 
 
 interface LotCardProps {
@@ -29,9 +30,10 @@ interface LotCardProps {
   platformSettings: PlatformSettings;
   badgeVisibilityConfig?: BadgeVisibilitySettings;
   onUpdate?: () => void;
+  showCountdown?: boolean; // New prop to control countdown visibility
 }
 
-function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate }: LotCardProps) {
+function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSettings, onUpdate, showCountdown = false }: LotCardProps) {
   const [isFavorite, setIsFavorite] = React.useState(false);
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [isViewed, setIsViewed] = React.useState(false);
@@ -51,7 +53,7 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
     showExclusiveBadge: true,
   };
   
-  const showCountdownOnThisCard = platformSettings.showCountdownOnCards !== false;
+  const showCountdownOnThisCard = showCountdown && platformSettings.showCountdownOnCards !== false;
   
   const { effectiveLotEndDate } = React.useMemo(() => getEffectiveLotEndDate(lot, auction), [lot, auction]);
   const activeStage = React.useMemo(() => getActiveStage(auction?.auctionStages), [auction]);
@@ -208,14 +210,18 @@ function LotCardClientContent({ lot, auction, badgeVisibilityConfig, platformSet
         </CardContent>
 
         <CardFooter className="p-3 border-t flex-col items-start space-y-1.5">
-          <div className="w-full flex justify-between items-end" data-ai-id="lot-card-footer">
-            <div data-ai-id="lot-card-price-section">
-              <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
-              <p className={`text-xl font-bold ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
-                R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </p>
-            </div>
-          </div>
+           {showCountdownOnThisCard ? (
+                <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} />
+            ) : (
+                <div className="w-full flex justify-between items-end" data-ai-id="lot-card-footer">
+                    <div data-ai-id="lot-card-price-section">
+                    <p className="text-xs text-muted-foreground">{lot.bidsCount && lot.bidsCount > 0 ? 'Lance Atual' : 'Lance Inicial'}</p>
+                    <p className={`text-xl font-bold ${effectiveLotEndDate && isPast(effectiveLotEndDate) ? 'text-muted-foreground line-through' : 'text-primary'}`}>
+                        R$ {(activeLotPrices?.initialBid ?? lot.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </p>
+                    </div>
+                </div>
+            )}
         </CardFooter>
       </Card>
       {isPreviewModalOpen && (

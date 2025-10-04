@@ -130,12 +130,14 @@ Baseado na estrutura de `src/app`:
 *   **Seeding:** O script `seed-db.ts` é responsável por popular a tabela `DataSource` com metadados dos principais modelos da aplicação (`Auction`, `Lot`, `User`, `Seller`, etc.).
 *   **Estrutura:** Cada registro em `DataSource` define um `name` (amigável, ex: "Leilões"), um `modelName` (do Prisma, ex: "Auction") e um JSON `fields` que lista as colunas (`name` e `type`) que podem ser usadas como variáveis no relatório (ex: `{{Auction.title}}`).
 
-### 5.4. Gerenciamento Centralizado de Mídia (Herança e Substituição)
+### 5.4. **[NOVO]** Exibição Condicional de Cronômetro Regressivo
 
-*   **Fonte da Verdade:** A tabela `MediaItem` é a única fonte da verdade para os caminhos e metadados das imagens. O uso de URLs de imagem estáticas diretamente nos modelos (`Lot`, `Auction`, `Asset`) é proibido.
-*   **Herança de Mídia (Bem -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
-*   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
-*   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.
+*   **Componente Reutilizável (`LotCountdown.tsx`):** Um cronômetro de contagem regressiva foi criado para ser reutilizado. Ele calcula o tempo restante para uma data de término e exibe dias, horas, minutos e segundos.
+*   **Visibilidade Controlada:** O cronômetro **não deve** ser exibido por padrão em todos os lotes. Sua visibilidade é controlada por uma nova propriedade booleana `showCountdown` passada para os componentes de exibição de lotes (`LotCard.tsx`).
+*   **Contextos de Exibição:** Atualmente, o cronômetro só é ativado e exibido nos seguintes contextos:
+    1.  No carrossel "Super Oportunidades" (`ClosingSoonCarousel.tsx`) da página inicial.
+    2.  No modal de pré-visualização rápida de um lote (`LotPreviewModal.tsx`).
+*   **Lógica da Query:** A busca por lotes "encerrando em breve" (`closingSoonLots`) é feita no `page.tsx` da homepage, filtrando lotes com status `ABERTO_PARA_LANCES` e cuja data de término da última etapa do leilão esteja nos próximos 7 dias.
 
 ---
 
@@ -148,5 +150,6 @@ Baseado na estrutura de `src/app`:
 *   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
 *   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
 *   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-
-    
+*   **Herança de Mídia (Bem -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
+*   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
+*   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.

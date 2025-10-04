@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import LotStagesTimeline from './auction/lot-stages-timeline';
+import AuctionStagesTimeline from './auction/auction-stages-timeline';
 import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -20,6 +20,7 @@ import { ptBR } from 'date-fns/locale';
 import { Separator } from './ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { getAuctionStatusText, getLotStatusColor, getEffectiveLotEndDate, slugify, getAuctionStatusColor } from '@/lib/ui-helpers';
+import LotCountdown from './lot-countdown';
 
 
 interface LotPreviewModalProps {
@@ -41,36 +42,6 @@ const InfoItem = ({ icon: Icon, value, label }: { icon: React.ElementType, value
         </div>
     );
 };
-
-const TimeRemaining: React.FC<{endDate: Date | string | null}> = ({ endDate }) => {
-    const [remaining, setRemaining] = useState('');
-
-    React.useEffect(() => {
-        if (!endDate) return;
-
-        const interval = setInterval(() => {
-            const end = new Date(endDate);
-            if (isPast(end)) {
-                setRemaining('Encerrado');
-                clearInterval(interval);
-                return;
-            }
-            const totalSeconds = differenceInSeconds(end, new Date());
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            if (days > 0) setRemaining(`${days}d ${hours}h`);
-            else setRemaining(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`);
-
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [endDate]);
-
-    return <>{remaining || 'Calculando...'}</>;
-}
 
 
 export default function LotPreviewModal({ lot, auction, platformSettings, isOpen, onClose }: LotPreviewModalProps) {
@@ -120,8 +91,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
       { label: "Raça", value: lot.bens?.[0]?.breed, icon: Leaf },
   ].filter(spec => spec.value !== undefined && spec.value !== null);
 
-  const formattedEndDate = lot.endDate ? format(new Date(lot.endDate), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }) : 'Não definida';
-
+  const { effectiveLotEndDate } = getEffectiveLotEndDate(lot, auction);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -147,7 +117,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
                     <div className="grid grid-cols-5 gap-1.5">
                         {gallery.slice(0, 5).map((imgUrl, index) => (
                             <button key={index} onClick={() => setCurrentImageIndex(index)} className={`relative aspect-square bg-muted rounded-sm overflow-hidden border-2 flex-shrink-0 ${ index === currentImageIndex ? 'border-primary' : 'border-transparent' }`} >
-                                <Image src={imgUrl} alt={`Thumbnail ${index + 1}`} fill className="object-cover" />
+                                <Image src={imgUrl} alt={`Thumbnail ${index + 1}`} fill className="object-cover" data-ai-hint={lot.dataAiHint || 'miniatura galeria'}/>
                             </button>
                         ))}
                     </div>
@@ -155,35 +125,15 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
             </div>
             {/* Details & Triggers */}
             <div className="space-y-4">
-                <div className="p-3 border rounded-lg bg-amber-50 dark:bg-amber-900/20 border-amber-500/30">
-                    <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
-                        <TrendingUp className="h-5 w-5"/>
-                        <p className="font-bold">Alta Demanda!</p>
-                    </div>
-                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-1">
-                        {lot.views || 0} pessoas viram este lote. {lot.bidsCount || 0} lances já foram feitos.
-                    </p>
-                </div>
-
                 <div className="space-y-2">
                     <p className="text-sm text-muted-foreground">Lance Atual</p>
                     <p className="text-4xl font-bold text-primary">R$ {lot.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
                     <p className="text-sm text-muted-foreground">Próximo lance mínimo: R$ {(lot.price + (lot.bidIncrementStep || 100)).toLocaleString('pt-BR')}</p>
                 </div>
-                
-                <Separator />
-                
-                <div className="space-y-2">
-                    <div className="flex items-center text-destructive font-semibold">
-                        <Clock className="h-5 w-5 mr-2" />
-                        <span className="text-lg">Encerra em: <TimeRemaining endDate={lot.endDate} /></span>
-                    </div>
-                    {discountPercentage > 0 && (
-                        <div className="flex items-center text-green-600 font-semibold">
-                            <Percent className="h-5 w-5 mr-2" />
-                            <span className="text-lg">{discountPercentage}% de Desconto sobre a 1ª Praça</span>
-                        </div>
-                    )}
+
+                <div className="p-3 border rounded-lg text-center bg-card">
+                    <p className="text-sm text-destructive font-semibold uppercase mb-1">Encerramento</p>
+                    <LotCountdown endDate={effectiveLotEndDate} status={lot.status as any} />
                 </div>
                 
                  {keySpecs.length > 0 && (
@@ -200,10 +150,7 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
         </div>
 
         <DialogFooter className="p-4 sm:p-6 border-t bg-background flex justify-between w-full flex-shrink-0">
-          <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-1.5">
-              <CalendarDays className="h-4 w-4" />
-              <span>Prazo: {formattedEndDate}</span>
-          </div>
+          <Button variant="outline" onClick={onClose}> Fechar </Button>
           <Button asChild size="lg" onClick={onClose}>
             <Link href={lotDetailUrl}>
                 <Eye className="mr-2 h-5 w-5" /> Ver Detalhes e Dar Lance
@@ -214,5 +161,3 @@ export default function LotPreviewModal({ lot, auction, platformSettings, isOpen
     </Dialog>
   );
 }
-
-    
