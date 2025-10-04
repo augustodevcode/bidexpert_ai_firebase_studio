@@ -1,5 +1,5 @@
-// src/scripts/seed-db.ts
-import { prisma } from '../src/lib/prisma';
+{// src/scripts/seed-db.ts
+import { prisma } from '../src/lib/prisma/index';
 import bcryptjs from 'bcryptjs';
 import { slugify } from '../src/lib/ui-helpers';
 
@@ -256,3 +256,5 @@ async function main() {
 }
 
 main();
+
+    

@@ -10,20 +10,20 @@ logs/
 
 # 2. Arquivos de Compilação e Dependências
 # Exclui o diretório de compilação do Next.js e as dependências do Node.js.
-.next/
-node_modules/
-package-lock.json
-components.json
+#.next/
+#node_modules/
+#package-lock.json
+#components.json
 
 # 3. Arquivos de Configuração do IDE e Cache
 # Exclui arquivos específicos do ambiente de desenvolvimento local.
-.idx/
-.vscode/
-.cache/
+#.idx/
+#.vscode/
+#.cache/
 
 # 4. Mídia e Arquivos Públicos
 # Exclui mídias carregadas que não são relevantes para a estrutura do código.
-public/uploads/
+# public/uploads/
 
 # 5. Relatórios de Teste
 # Exclui relatórios gerados pelos testes automatizados.

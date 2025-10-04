@@ -11,10 +11,15 @@
 
 import type { Subscriber } from '@prisma/client';
 import type { Auction } from '@/types';
-import { prisma } from '@/lib/prisma';
+import { getPrismaInstance } from '@/lib/prisma';
 import logger from '@/lib/logger';
 
 export class NotificationService {
+  private prisma;
+
+  constructor() {
+    this.prisma = getPrismaInstance();
+  }
   
   /**
    * Simula o envio de um e-mail para um assinante sobre um novo leilão.
@@ -39,13 +44,13 @@ export class NotificationService {
    */
   async notifySubscribersOfNewAuction(auction: Auction): Promise<{ success: boolean; message: string; notificationsSent: number }> {
     try {
-      const allSubscribers = await prisma.subscriber.findMany({
+      const allSubscribers = await this.prisma.subscriber.findMany({
         where: {
           isVerified: true, // Apenas para assinantes verificados
           preferences: {
             // @ts-ignore - Prisma JSON filtering might need specific types
             path: ['notifyOnNewAuction'],
-            equals: true, // Ou não existe, assumindo como true
+            equals: true,
           },
         },
       });

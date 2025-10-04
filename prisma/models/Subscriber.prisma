@@ -1,18 +1,21 @@
-// prisma/models/Subscriber.prisma
+// prisma/models/subscriber.prisma
+/// @model Subscriber
+/// @description Armazena informações de usuários que se inscreveram na newsletter ou para receber notificações.
 
-/// Represents a user who has subscribed to newsletters or notifications.
 model Subscriber {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  name            String?
-  phone           String?
-  isVerified      Boolean  @default(false)
-  preferences     Json?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  isVerified Boolean  @default(false)
   
-  tenantId        String
-  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
+  // Preferências de notificação em formato JSON. Ex: { "notifyOnNewAuction": true, "categories": ["veiculos"] }
+  preferences Json?
+  
+  tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenantId  String
+  
   @@index([tenantId])
 }
