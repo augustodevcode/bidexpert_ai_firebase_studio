@@ -291,7 +291,7 @@ export default function AssetForm({
             </CardContent>
             <CardFooter className="flex justify-end gap-2 p-6 border-t">
               <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+              <Button type="submit" disabled={isSubmitting || !formState.isValid || !formState.isDirty}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {submitButtonText}
               </Button>
