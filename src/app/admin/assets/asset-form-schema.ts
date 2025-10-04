@@ -26,7 +26,7 @@ export const assetFormSchema = z.object({
   categoryId: z.string().min(1, "A categoria é obrigatória."),
   subcategoryId: z.string().optional().nullable(),
   judicialProcessId: z.string().optional().nullable(),
-  sellerId: z.string().optional().nullable(),
+  sellerId: z.string().min(1, "O comitente/vendedor é obrigatório."),
   evaluationValue: z.coerce.number().positive("O valor de avaliação deve ser positivo.").optional().nullable(),
   imageUrl: optionalUrlSchema,
   imageMediaId: z.string().optional().nullable(),

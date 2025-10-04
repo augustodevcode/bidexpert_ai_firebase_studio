@@ -31,6 +31,7 @@
 - **Item 25: Implementar Construtor de Relatórios (Self-Service):** Criada a interface de design, edição, salvamento e carregamento de relatórios customizados.
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
+- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
 - **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
 - **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
 - **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
@@ -51,10 +52,11 @@
     - **37.4:** Implementada a lógica para salvar e carregar as preferências de widgets do usuário usando React Context e `localStorage`.
     - **37.5:** A página `/admin/dashboard` agora renderiza os widgets dinamicamente com base nas preferências.
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas (38.1 a 38.7) foram concluídas, incluindo a criação do modelo, serviços, componentes de UI e a lógica de configuração.
-- **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
+- **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
 
 ## DOING
-- **Melhoria Contínua:** Revisando e otimizando o desempenho de consultas e a qualidade do código. (Fase final)
+- **(Em andamento):** Finalização do projeto.
 
 ## NEXT
+- **Item 39: Validação de Formulários e Feedback de UI (10%):** Mapear todos os formulários, adicionar indicadores de campos obrigatórios (`*`), desabilitar botões de submissão em formulários inválidos e garantir feedback de `toast` para todas as ações. Começar com o formulário de Ativos.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.

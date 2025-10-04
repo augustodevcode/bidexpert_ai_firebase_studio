@@ -148,6 +148,12 @@ Baseado na estrutura de `src/app`:
     3.  O formulário no modal é pré-populado com o `sellerId` ou `judicialProcessId` do leilão ao qual o lote pertence, garantindo a associação correta.
     4.  Ao salvar o novo ativo, o modal se fecha, e a lista de "Bens Disponíveis" na página de edição do lote é **automaticamente atualizada** para incluir o item recém-criado, que já pode ser vinculado ao lote.
 
+### 5.6. **[NOVO]** Validação de Formulários e Feedback ao Usuário
+
+*   **Marcação de Campos Obrigatórios:** Todos os campos de preenchimento obrigatório em formulários de criação ou edição **devem** ser visualmente indicados com um asterisco vermelho (`*`) ao lado do `Label`.
+*   **Desabilitação de Botão de Submissão:** Os botões de "Salvar", "Criar" ou "Enviar" **devem** permanecer desabilitados enquanto o formulário for inválido (i.e., enquanto campos obrigatórios não forem preenchidos ou dados inseridos não atenderem aos critérios de validação).
+*   **Feedback Imediato:** Após a submissão de um formulário, o sistema **deve** fornecer um feedback claro e imediato ao usuário, utilizando componentes `Toast` para indicar sucesso ou falha na operação. Submissões não devem falhar silenciosamente.
+
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
@@ -162,3 +168,4 @@ Baseado na estrutura de `src/app`:
 *   **Herança de Mídia (Asset -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
 *   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
 *   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.
+*   **Validação de Formulários:** Sempre utilize os schemas do Zod (`*-form-schema.ts`) em conjunto com o `react-hook-form` e o componente `<Form>` do `shadcn/ui` para garantir validação robusta no lado do cliente e do servidor. Para campos obrigatórios, use a anotação `*` no `FormLabel`.
