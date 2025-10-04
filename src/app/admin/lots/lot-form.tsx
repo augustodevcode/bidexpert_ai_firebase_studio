@@ -77,7 +77,7 @@ const lotStatusOptions: { value: LotStatus; label: string }[] = [
     'EM_BREVE', 'ABERTO_PARA_LANCES', 'ENCERRADO', 'VENDIDO', 'NAO_VENDIDO', 'CANCELADO'
 ].map(status => ({ value: status, label: getAuctionStatusText(status) }));
 
-export default function LotForm({
+const LotForm = forwardRef<any, LotFormProps>(({
   initialData,
   categories: initialCategories,
   auctions: initialAuctions,
@@ -91,10 +91,9 @@ export default function LotForm({
   submitButtonText = "Salvar",
   isWizardMode = false,
   onWizardDataChange,
-  formRef,
   defaultAuctionId,
   onSuccessCallback,
-}: LotFormProps) {
+}, ref) => {
   
   const { toast } = useToast();
   const router = useRouter();
@@ -125,19 +124,20 @@ export default function LotForm({
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
+    mode: 'onChange', // Validate on change to enable/disable submit button
     defaultValues: {
-      ...initialData,
-      auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
-      type: initialData?.categoryId || initialData?.type || '',
-      price: initialData?.price || undefined,
-      assetIds: initialData?.assetIds || [],
-      mediaItemIds: initialData?.mediaItemIds || [],
-      galleryImageUrls: initialData?.galleryImageUrls || [],
-      status: initialData?.status || 'EM_BREVE',
-      sellerId: initialData?.sellerId || undefined,
-      stateId: initialData?.stateId || undefined,
-      cityId: initialData?.cityId || undefined,
-      inheritedMediaFromBemId: initialData?.inheritedMediaFromBemId || undefined,
+        ...initialData,
+        auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
+        type: initialData?.categoryId || initialData?.type || '',
+        price: initialData?.price || undefined,
+        assetIds: initialData?.assetIds || [],
+        mediaItemIds: initialData?.mediaItemIds || [],
+        galleryImageUrls: initialData?.galleryImageUrls || [],
+        status: initialData?.status || 'EM_BREVE',
+        sellerId: initialData?.sellerId || undefined,
+        stateId: initialData?.stateId || undefined,
+        cityId: initialData?.cityId || undefined,
+        inheritedMediaFromBemId: initialData?.inheritedMediaFromBemId || undefined,
     },
   });
   
@@ -415,4 +415,9 @@ export default function LotForm({
       />
     </>
   );
-}
+});
+
+LotForm.displayName = "LotForm";
+export default LotForm;
+
+    
