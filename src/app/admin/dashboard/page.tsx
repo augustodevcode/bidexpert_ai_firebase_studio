@@ -2,7 +2,7 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Settings, DollarSign, Gavel, Package, Users, BarChart3, TrendingUp, AlertTriangle, LineChart as LineChartIcon, PieChart as PieChartIcon } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { useEffect, useState } from 'react';
@@ -10,7 +10,9 @@ import type { AdminReportData } from '@/types';
 import { getAdminReportDataAction } from '../reports/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useWidgetPreferences } from '@/contexts/widget-preferences-context'; // Import the hook
+import { useWidgetPreferences } from '@/contexts/widget-preferences-context';
+import { LineChart, PieChart, Pie, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, Cell } from 'recharts';
+
 
 function StatCard({ title, value, icon: Icon, description, isLoading, colorClass = 'bg-primary text-primary-foreground', link }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean, colorClass?: string, link?: string }) {
     const cardContent = (
@@ -34,11 +36,13 @@ function StatCard({ title, value, icon: Icon, description, isLoading, colorClass
      return link ? <Link href={link} className="block hover:no-underline">{cardContent}</Link> : cardContent;
 }
 
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#AF19FF'];
+
 
 export default function AdminDashboardPage() {
   const [stats, setStats] = useState<AdminReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isWidgetVisible } = useWidgetPreferences(); // Use the hook
+  const { isWidgetVisible } = useWidgetPreferences();
 
   useEffect(() => {
     async function fetchStats() {
@@ -114,13 +118,44 @@ export default function AdminDashboardPage() {
             )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="col-span-1 lg:col-span-2">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <Card className="col-span-1 lg:col-span-3">
             <CardHeader>
-                <CardTitle>Análise do Site</CardTitle>
+                <CardTitle className="flex items-center"><LineChartIcon className="mr-2 h-5 w-5"/> Vendas Mensais (Últimos 12 meses)</CardTitle>
             </CardHeader>
-            <CardContent className="h-64 flex items-center justify-center">
-                <p className="text-muted-foreground">Componente de gráfico de análise será adicionado aqui.</p>
+            <CardContent className="h-80">
+                {isLoading ? <Skeleton className="w-full h-full" /> : (
+                <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={stats?.salesData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" stroke="#888888" fontSize={12} />
+                    <YAxis stroke="#888888" fontSize={12} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
+                    <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`}/>
+                    <Legend />
+                    <Line type="monotone" dataKey="Sales" name="Vendas" stroke="hsl(var(--primary))" activeDot={{ r: 8 }} />
+                </LineChart>
+                </ResponsiveContainer>
+                )}
+            </CardContent>
+        </Card>
+         <Card className="col-span-1 lg:col-span-2">
+            <CardHeader>
+                <CardTitle className="flex items-center"><PieChartIcon className="mr-2 h-5 w-5"/> Lotes Vendidos por Categoria</CardTitle>
+            </CardHeader>
+            <CardContent className="h-80">
+                {isLoading ? <Skeleton className="w-full h-full" /> : (
+                <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                        <Pie data={stats?.categoryData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={100} label>
+                            {stats?.categoryData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+                )}
             </CardContent>
         </Card>
       </div>
