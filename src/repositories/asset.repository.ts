@@ -1,4 +1,9 @@
 // src/repositories/asset.repository.ts
+/**
+ * @fileoverview Repositório para a entidade Ativo (Asset/Bem), encapsulando
+ * todas as interações diretas com o banco de dados relacionadas a ativos.
+ * Garante que as consultas sejam consistentes e otimizadas.
+ */
 import { prisma } from '@/lib/prisma';
 import type { Asset, AssetFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
@@ -10,7 +15,7 @@ export class AssetRepository {
     this.prisma = prisma;
   }
 
-  async findAll(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string }): Promise<any[]> {
+  async findAll(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string; status?: string }): Promise<any[]> {
     const whereClause: Prisma.AssetWhereInput = {};
     if (filter?.judicialProcessId) {
       whereClause.judicialProcessId = filter.judicialProcessId;
@@ -21,6 +26,9 @@ export class AssetRepository {
     if (filter?.tenantId) {
       whereClause.tenantId = filter.tenantId;
     }
+    if (filter?.status) {
+      whereClause.status = filter.status as any;
+    }
     
     return this.prisma.asset.findMany({ 
         where: whereClause,
@@ -28,7 +36,18 @@ export class AssetRepository {
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
             judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } }
+            seller: { select: { name: true } },
+            lots: {
+              include: {
+                lot: {
+                  select: {
+                    id: true,
+                    number: true,
+                    title: true,
+                  }
+                }
+              }
+            }
         },
         orderBy: {
             createdAt: 'desc'
@@ -43,7 +62,14 @@ export class AssetRepository {
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
             judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } }
+            seller: { select: { name: true } },
+            lots: {
+              include: {
+                lot: {
+                  select: { id: true, number: true, title: true }
+                }
+              }
+            }
         }
     });
   }
@@ -56,7 +82,14 @@ export class AssetRepository {
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
             judicialProcess: { select: { processNumber: true } },
-            seller: { select: { name: true } }
+            seller: { select: { name: true } },
+            lots: {
+              include: {
+                lot: {
+                  select: { id: true, number: true, title: true }
+                }
+              }
+            }
         }
     });
   }

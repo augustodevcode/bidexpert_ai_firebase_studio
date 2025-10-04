@@ -69,6 +69,20 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
     ),
   },
   {
+    accessorKey: "lotInfo",
+    header: ({ column }) => <DataTableColumnHeader column={column} title="Lote Vinculado" />,
+    cell: ({ row }) => {
+      const lotInfo = row.original.lotInfo;
+      if (!lotInfo) return <span className="text-xs text-muted-foreground">-</span>;
+      // Extrai o ID do lote para criar o link
+      const lotIdMatch = lotInfo.match(/Lote [^:]+: (.*)/);
+      return (
+        <span className="text-xs text-muted-foreground">{lotInfo}</span>
+      );
+    },
+    enableGrouping: true,
+  },
+  {
     accessorKey: "status",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Status" />,
     cell: ({ row }) => {
@@ -82,11 +96,6 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
     header: ({ column }) => <DataTableColumnHeader column={column} title="Categoria" />,
     cell: ({ row }) => row.original.categoryName || '-',
     enableGrouping: true,
-  },
-  {
-    accessorKey: "judicialProcessNumber",
-    header: ({ column }) => <DataTableColumnHeader column={column} title="Processo Judicial" />,
-    cell: ({ row }) => row.original.judicialProcessNumber || '-',
   },
   {
     accessorKey: "evaluationValue",

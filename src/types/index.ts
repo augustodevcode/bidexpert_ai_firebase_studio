@@ -67,6 +67,7 @@ export type Asset = Omit<PmAsset, 'evaluationValue' | 'latitude' | 'longitude'> 
   evaluationValue?: number | null;
   latitude?: number | null;
   longitude?: number | null;
+  lotInfo?: string | null;
 };
 export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' | 'estimatedRevenue' | 'achievedRevenue' | 'decrementAmount' | 'floorPrice'> & {
   lots?: Lot[];
@@ -76,6 +77,7 @@ export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' 
   auctionStages?: AuctionStage[];
   sellerName?: string | null;
   auctioneerName?: string | null;
+  categoryName?: string;
   latitude?: number | null;
   longitude?: number | null;
   initialOffer?: number;
@@ -310,7 +312,7 @@ export type CourtFormData = Omit<Court, 'id' | 'slug'>;
 export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName'>;
-export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots'>;
+export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo'>;
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;

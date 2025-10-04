@@ -30,18 +30,23 @@ export class AssetService {
    * @returns {Asset[]} Um array de ativos formatados.
    */
   private mapAssetsWithDetails(assets: any[]): Asset[] {
-    return assets.map(asset => ({
-      ...asset,
-      evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
-      totalArea: asset.totalArea ? Number(asset.totalArea) : null,
-      builtArea: asset.builtArea ? Number(asset.builtArea) : null,
-      latitude: asset.latitude ? Number(asset.latitude) : null,
-      longitude: asset.longitude ? Number(asset.longitude) : null,
-      categoryName: asset.category?.name,
-      subcategoryName: asset.subcategory?.name,
-      judicialProcessNumber: asset.judicialProcess?.processNumber,
-      sellerName: asset.seller?.name,
-    }));
+    return assets.map(asset => {
+        const primaryLot = asset.lots?.[0]?.lot;
+        const lotInfo = primaryLot ? `Lote ${primaryLot.number || primaryLot.id.substring(0,4)}: ${primaryLot.title}` : null;
+        return {
+            ...asset,
+            evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
+            totalArea: asset.totalArea ? Number(asset.totalArea) : null,
+            builtArea: asset.builtArea ? Number(asset.builtArea) : null,
+            latitude: asset.latitude ? Number(asset.latitude) : null,
+            longitude: asset.longitude ? Number(asset.longitude) : null,
+            categoryName: asset.category?.name,
+            subcategoryName: asset.subcategory?.name,
+            judicialProcessNumber: asset.judicialProcess?.processNumber,
+            sellerName: asset.seller?.name,
+            lotInfo: lotInfo,
+        }
+    });
   }
 
   /**
@@ -62,6 +67,8 @@ export class AssetService {
    */
   async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
     const asset = await this.repository.findById(id);
+    // Embora o repositório possa ser chamado de múltiplos tenants, o serviço impõe a regra de negócio
+    // de que a busca por ID deve respeitar o tenant atual.
     if (!asset || asset.tenantId !== tenantId) return null;
     return this.mapAssetsWithDetails([asset])[0];
   }
