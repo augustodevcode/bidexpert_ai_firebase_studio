@@ -2,7 +2,7 @@
 /**
  * @fileoverview Página para criação de um novo Comitente (Vendedor).
  * Este componente de cliente gerencia o estado do formulário e de submissão,
- * busca dados de Varas Judiciais (se aplicável), e utiliza a server action
+ * busca dados de Varas Judiciais (se aplicável), e utiliza la server action
  * `createSeller` para persistir o novo registro no banco de dados.
  */
 'use client';
@@ -57,6 +57,7 @@ export default function NewSellerPage() {
             icon={Users}
             isViewMode={false}
             isSubmitting={isSubmitting}
+            isValid={formRef.current?.formState.isValid}
             onSave={handleSave}
             onCancel={() => router.push('/admin/sellers')}
         >
