@@ -18,6 +18,8 @@
     - **Fase 2:** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+    - **Fase 5 (NEXT):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
+- **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo nos formulários de Leilão e Ativo para definir a localização visualmente.
 - **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
 - **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
@@ -51,9 +53,6 @@
 - **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
 
 ## DOING
-- **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa (10%):** Substituir campos de texto por `EntitySelector` e integrar um mapa interativo no formulário para definir a localização visualmente.
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico) (95%):** Criação de painéis de análise de dados para todas as entidades principais.
-  - **Fase 5 (NEXT):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 
 ## NEXT
 - **Item 16:** Implementar a lógica para relistar um lote que não foi vendido, incluindo a UI para o administrador.

@@ -42,7 +42,7 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
   const zipCode = form.watch('zipCode');
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-ai-id="address-group-container">
       <MapPicker 
         latitude={latitude} 
         longitude={longitude} 
@@ -52,14 +52,14 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
         allCities={cities} 
         allStates={states} 
       />
-      <FormField
+       <FormField
         control={form.control}
         name="street"
         render={({ field }) => (
-          <FormItem>
+          <FormItem data-ai-id="address-group-street">
             <FormLabel>Logradouro (Rua/Avenida)</FormLabel>
             <FormControl>
-              <Input placeholder="Ex: Rua das Palmeiras" {...field} value={field.value ?? ''} />
+              <Input placeholder="Ex: Avenida Paulista" {...field} value={field.value ?? ''} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -70,10 +70,10 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="number"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-number">
               <FormLabel>Número</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: 123" {...field} value={field.value ?? ''} />
+                <Input placeholder="Ex: 1578" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -83,10 +83,10 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="complement"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-complement">
               <FormLabel>Complemento</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Ap 101, Bloco B" {...field} value={field.value ?? ''} />
+                <Input placeholder="Ex: Andar 4, Sala 10" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -96,10 +96,10 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="neighborhood"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-neighborhood">
               <FormLabel>Bairro</FormLabel>
               <FormControl>
-                <Input placeholder="Ex: Centro" {...field} value={field.value ?? ''} />
+                <Input placeholder="Ex: Bela Vista" {...field} value={field.value ?? ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -111,9 +111,10 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="cityId"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-city">
               <FormLabel>Cidade</FormLabel>
               <EntitySelector
+                entityName="city"
                 value={field.value}
                 onChange={field.onChange}
                 options={cities.map(c => ({ value: c.id, label: `${c.name} - ${c.stateUf}` }))}
@@ -131,9 +132,10 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="stateId"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-state">
               <FormLabel>Estado</FormLabel>
               <EntitySelector
+                entityName="state"
                 value={field.value}
                 onChange={field.onChange}
                 options={states.map(s => ({ value: s.id, label: s.name }))}
@@ -153,7 +155,7 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="latitude"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-latitude">
               <FormLabel>Latitude</FormLabel>
               <FormControl>
                 <Input type="number" step="any" placeholder="-23.550520" {...field} value={field.value ?? ''} />
@@ -165,7 +167,7 @@ export default function AddressGroup({ form, allCities, allStates }: AddressGrou
           control={form.control}
           name="longitude"
           render={({ field }) => (
-            <FormItem>
+            <FormItem data-ai-id="address-group-longitude">
               <FormLabel>Longitude</FormLabel>
               <FormControl>
                 <Input type="number" step="any" placeholder="-46.633308" {...field} value={field.value ?? ''} />

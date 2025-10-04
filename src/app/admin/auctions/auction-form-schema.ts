@@ -51,7 +51,10 @@ export const auctionFormSchema = z.object({
   participation: z.enum(auctionParticipationValues as [string, ...string[]]).default('ONLINE'),
   
   onlineUrl: optionalUrlSchema,
-  address: z.string().max(255).optional().nullable(),
+  street: z.string().max(255).optional().nullable(),
+  number: z.string().max(20).optional().nullable(),
+  complement: z.string().max(100).optional().nullable(),
+  neighborhood: z.string().max(100).optional().nullable(),
   cityId: z.string().optional().nullable(),
   stateId: z.string().optional().nullable(),
   zipCode: z.string().max(10).optional().nullable(),

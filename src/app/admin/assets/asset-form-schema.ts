@@ -33,11 +33,18 @@ export const assetFormSchema = z.object({
   galleryImageUrls: z.array(z.string().url()).optional(),
   mediaItemIds: z.array(z.string()).optional(),
   dataAiHint: z.string().max(50).optional(),
-  locationCity: z.string().max(100).optional(),
-  locationState: z.string().max(100).optional(),
-  address: z.string().max(255).optional(),
+  
+  // Endereço
+  street: z.string().max(255).optional().nullable(),
+  number: z.string().max(20).optional().nullable(),
+  complement: z.string().max(100).optional().nullable(),
+  neighborhood: z.string().max(100).optional().nullable(),
+  cityId: z.string().optional().nullable(),
+  stateId: z.string().optional().nullable(),
+  zipCode: z.string().max(10).optional().nullable(),
   latitude: z.coerce.number().optional().nullable(),
   longitude: z.coerce.number().optional().nullable(),
+
 
   // Veículos
   plate: z.string().max(10).optional().nullable(),
