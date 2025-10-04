@@ -10,13 +10,17 @@ import { createAsset } from '../actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 import type { AssetFormData } from '../asset-form-schema';
 
 export default async function NewAssetPage() {
-  const [processes, categories, sellers] = await Promise.all([
+  const [processes, categories, sellers, states, cities] = await Promise.all([
     getJudicialProcesses(),
     getLotCategories(),
-    getSellers()
+    getSellers(),
+    getStates(),
+    getCities(),
   ]);
 
   async function handleCreateAsset(data: AssetFormData) {
@@ -29,6 +33,8 @@ export default async function NewAssetPage() {
       processes={processes}
       categories={categories}
       sellers={sellers}
+      allStates={states}
+      allCities={cities}
       onSubmitAction={handleCreateAsset}
       formTitle="Novo Ativo"
       formDescription="Cadastre um novo ativo para que possa ser posteriormente loteado em um leilão."
