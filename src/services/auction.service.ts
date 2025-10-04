@@ -107,6 +107,15 @@ export class AuctionService {
         return null; 
     }
 
+    // Busca a categoria separadamente, já que o relacionamento direto foi removido
+    if (auction.categoryId) {
+        const category = await this.prisma.lotCategory.findUnique({ where: { id: auction.categoryId }});
+        // @ts-ignore
+        auction.category = category;
+        // @ts-ignore
+        auction.categoryName = category?.name;
+    }
+
     return this.mapAuctionsWithDetails([auction])[0];
   }
 
@@ -161,7 +170,7 @@ export class AuctionService {
         ? new Date(data.auctionStages[0].startDate as Date)
         : nowInSaoPaulo();
 
-      const { auctioneerId, sellerId, cityId, stateId, judicialProcessId, auctionStages, imageUrl, ...restOfData } = data;
+      const { auctioneerId, sellerId, categoryId, cityId, stateId, judicialProcessId, auctionStages, imageUrl, ...restOfData } = data;
 
       let finalImageUrl = imageUrl;
       if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
@@ -180,6 +189,7 @@ export class AuctionService {
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
             auctioneer: { connect: { id: auctioneerId } },
             seller: { connect: { id: sellerId } },
+            category: categoryId ? { connect: { id: categoryId } } : undefined,
             tenant: { connect: { id: tenantId } },
             city: cityId ? { connect: { id: cityId } } : undefined,
             state: stateId ? { connect: { id: stateId } } : undefined,
@@ -228,7 +238,7 @@ export class AuctionService {
       }
       const internalId = auctionToUpdate.id;
 
-      const { auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, imageUrl, ...restOfData } = data;
+      const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, imageUrl, ...restOfData } = data;
 
       let finalImageUrl = imageUrl;
       if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
@@ -246,6 +256,7 @@ export class AuctionService {
         
         if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
         if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
         if (cityId) dataToUpdate.city = { connect: {id: cityId }};
         if (stateId) dataToUpdate.state = { connect: {id: stateId }};
         if (judicialProcessId) {

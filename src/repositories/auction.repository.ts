@@ -31,10 +31,10 @@ export class AuctionRepository {
         ...(tenantId && { tenantId }), // Only apply tenantId if it exists
       },
       include: {
-        lots: { include: { assets: { include: { asset: true } } } }, // Correção: de bens para assets
+        lots: { include: { assets: { include: { asset: true } } } }, 
         auctioneer: true,
         seller: true,
-        category: true,
+        // category is no longer a direct relation, it will be fetched separately in the service
         stages: true,
       },
     });

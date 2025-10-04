@@ -101,3 +101,118 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Custom styles for component refactoring */
+@layer components {
+    .card-auction {
+        @apply flex flex-col overflow-hidden h-full shadow-lg hover:shadow-xl transition-shadow duration-300 rounded-lg;
+    }
+    .container-auction-image {
+        @apply relative;
+    }
+    .link-auction-image {
+        @apply block;
+    }
+    .wrapper-auction-image {
+        @apply aspect-[16/10] relative bg-muted;
+    }
+    .img-auction {
+        @apply object-cover;
+    }
+    .link-seller-logo {
+        @apply absolute bottom-2 right-2 z-10;
+    }
+    .avatar-seller-logo {
+        @apply h-12 w-12 border-2 bg-background border-border shadow-md;
+    }
+    .img-seller-logo {
+        @apply object-contain;
+    }
+    .fallback-seller-logo {
+        @apply text-xl;
+    }
+    .container-auction-badges {
+        @apply absolute top-2 left-2 flex flex-col items-start gap-1 z-10;
+    }
+    .badge-auction-status {
+        @apply text-xs px-2 py-1;
+    }
+    .container-mental-triggers {
+        @apply absolute top-2 right-2 flex flex-col items-end gap-1 z-10;
+    }
+    .badge-mental-trigger {
+        @apply text-xs px-1.5 py-0.5 bg-amber-100 text-amber-700 border-amber-300;
+    }
+    .icon-mental-trigger {
+        @apply h-3 w-3 mr-0.5;
+    }
+    .btn-card-action {
+        @apply h-8 w-8 bg-background/80 hover:bg-background;
+    }
+    .icon-card-action {
+        @apply h-4 w-4 text-muted-foreground;
+    }
+    .icon-card-action.is-favorite {
+        @apply text-red-500 fill-red-500;
+    }
+    .dropdown-share-menu {
+        @apply w-56;
+    }
+    .item-share-dropdown {
+        @apply flex items-center gap-2 text-xs cursor-pointer;
+    }
+    .icon-social-share {
+        @apply h-3.5 w-3.5;
+    }
+    .card-content-auction {
+        @apply p-4 flex-grow;
+    }
+    .container-auction-meta {
+        @apply flex justify-between items-start text-xs text-muted-foreground mb-1;
+    }
+    .text-auction-id {
+        @apply truncate;
+    }
+    .container-auction-type {
+        @apply flex items-center gap-1;
+    }
+    .label-auction-type {
+        @apply text-xs;
+    }
+    .link-auction-title {
+      @apply block;
+    }
+    .title-auction-card {
+        @apply text-base font-semibold hover:text-primary transition-colors mb-2 leading-tight min-h-[2.5em] line-clamp-2;
+    }
+    .grid-auction-counters {
+        @apply grid grid-cols-2 gap-x-2 gap-y-1 text-xs text-muted-foreground mb-2;
+    }
+    .item-counter {
+        @apply flex items-center;
+    }
+    .icon-counter {
+        @apply h-3.5 w-3.5 mr-1.5 flex-shrink-0 text-primary/80;
+    }
+    .text-counter {
+        @apply truncate;
+    }
+    .container-auction-timeline {
+        @apply space-y-1 mb-3 text-xs;
+    }
+    .card-footer-auction {
+        @apply p-4 border-t flex-col items-start space-y-2;
+    }
+    .container-initial-offer {
+        @apply w-full;
+    }
+    .label-initial-offer {
+        @apply text-xs text-muted-foreground;
+    }
+    .text-initial-offer {
+        @apply text-2xl font-bold text-primary;
+    }
+    .btn-view-lots {
+        @apply w-full mt-2;
+    }
+}

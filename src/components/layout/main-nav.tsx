@@ -26,7 +26,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import type { MegaMenuLinkItem } from './mega-menu-link-list';
 import Image from 'next/image';
 
-
 // Renomeado para não conflitar com o nome do componente
 export const HistoryListItem = forwardRef<
   HTMLAnchorElement,
