@@ -1,18 +1,19 @@
 // src/components/closing-soon-carousel.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
-import type { Lot } from '@/types';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+import type { Lot, Auction, PlatformSettings } from '@/types';
+import { differenceInSeconds, isPast, isValid } from 'date-fns';
+import UniversalCard from './universal-card';
 
 interface ClosingSoonCarouselProps {
   lots: Lot[];
+  auctions: Auction[];
+  platformSettings: PlatformSettings;
 }
 
 interface TimeRemaining {
@@ -22,10 +23,14 @@ interface TimeRemaining {
   seconds: number;
 }
 
-function calculateTimeRemaining(endDate: Date | string): TimeRemaining {
-  const end = new Date(endDate).getTime();
-  const now = new Date().getTime();
-  const diff = end - now;
+function calculateTimeRemaining(endDate: Date | string): TimeRemaining | null {
+  const end = new Date(endDate);
+  if (!isValid(end) || isPast(end)) {
+    return null;
+  }
+  
+  const now = new Date();
+  const diff = end.getTime() - now.getTime();
 
   if (diff <= 0) {
     return { days: 0, hours: 0, minutes: 0, seconds: 0 };
@@ -40,9 +45,7 @@ function calculateTimeRemaining(endDate: Date | string): TimeRemaining {
 }
 
 function GlobalCountdown({ endDate }: { endDate: Date | string }) {
-  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining>(
-    calculateTimeRemaining(endDate)
-  );
+  const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(() => calculateTimeRemaining(endDate));
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -52,14 +55,20 @@ function GlobalCountdown({ endDate }: { endDate: Date | string }) {
     return () => clearInterval(interval);
   }, [endDate]);
 
+  if (!timeRemaining) {
+    return <div className="text-sm font-semibold text-destructive">Encerrado</div>;
+  }
+
   const { days, hours, minutes, seconds } = timeRemaining;
 
   return (
     <ul className="flex items-center gap-2">
-      <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
-        <span className="text-2xl font-bold text-destructive">{String(days).padStart(2, '0')}</span>
-        <span className="text-xs text-muted-foreground uppercase">Dias</span>
-      </li>
+      {days > 0 && (
+          <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
+            <span className="text-2xl font-bold text-destructive">{String(days).padStart(2, '0')}</span>
+            <span className="text-xs text-muted-foreground uppercase">Dias</span>
+          </li>
+      )}
       <li className="flex flex-col items-center justify-center bg-background rounded-lg px-3 py-2 min-w-[60px] shadow-md">
         <span className="text-2xl font-bold text-destructive">{String(hours).padStart(2, '0')}</span>
         <span className="text-xs text-muted-foreground uppercase">Hrs</span>
@@ -76,67 +85,11 @@ function GlobalCountdown({ endDate }: { endDate: Date | string }) {
   );
 }
 
-function LotCard({ lot }: { lot: Lot }) {
-  const imageUrl = lot.imageUrl || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&q=80';
-  const currentPrice = lot.price || lot.initialPrice || 0;
-  
-  const discount = lot.initialPrice && currentPrice < lot.initialPrice
-    ? Math.round(((lot.initialPrice - currentPrice) / lot.initialPrice) * 100)
-    : lot.discountPercentage || 0;
 
-  return (
-    <div className="flex-[0_0_240px] p-2">
-      <Card
-        className="group relative overflow-hidden h-full flex flex-col transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
-      >
-        <Link href={`/auctions/${lot.auctionId}/lots/${lot.id}`} className="block">
-          <CardContent className="p-0">
-            <div className="relative h-40 bg-muted overflow-hidden">
-              <Image
-                src={imageUrl}
-                alt={lot.title}
-                fill
-                className="object-cover group-hover:scale-105 transition-transform duration-300"
-                sizes="220px"
-              />
-              {discount > 0 && (
-                <Badge variant="destructive" className="absolute top-2 left-2 animate-pulse">
-                  -{discount}%
-                </Badge>
-              )}
-            </div>
-            <div className="p-3 space-y-2">
-              <div>
-                {lot.initialPrice && currentPrice < lot.initialPrice && (
-                  <div className="text-xs text-muted-foreground line-through">
-                    R$ {lot.initialPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                  </div>
-                )}
-                <div className="text-lg font-bold text-primary">
-                  R$ {currentPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </div>
-              </div>
-              <h3 className="text-sm font-semibold text-foreground mb-2 line-clamp-2 group-hover:text-primary transition-colors min-h-[40px]">
-                {lot.title}
-              </h3>
-              {(lot.cityName || lot.stateUf) && (
-                <div className="text-xs text-muted-foreground">
-                  📍 {lot.cityName}{lot.stateUf && ` - ${lot.stateUf}`}
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Link>
-      </Card>
-    </div>
-  );
-}
-
-export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) {
+export default function ClosingSoonCarousel({ lots, auctions, platformSettings }: ClosingSoonCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ 
     loop: false, 
     align: 'start',
-    slidesToScroll: 1,
   });
 
   const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
@@ -173,9 +126,16 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
 
         <div className="relative -mx-2">
           <div className="overflow-hidden" ref={emblaRef}>
-            <div className="flex -ml-2">
+            <div className="flex -ml-4">
               {lots.map((lot) => (
-                <LotCard key={lot.id} lot={lot} />
+                <div key={lot.id} className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] min-w-0 pl-4">
+                    <UniversalCard
+                      item={lot}
+                      type="lot"
+                      platformSettings={platformSettings}
+                      parentAuction={auctions.find(a => a.id === lot.auctionId)}
+                    />
+                </div>
               ))}
             </div>
           </div>
@@ -185,7 +145,7 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
             size="icon"
             onClick={scrollPrev}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-background hover:bg-accent rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
-            aria-label="Previous"
+            aria-label="Anterior"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -194,14 +154,14 @@ export default function ClosingSoonCarousel({ lots }: ClosingSoonCarouselProps) 
             size="icon"
             onClick={scrollNext}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-background hover:bg-accent rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
-            aria-label="Next"
+            aria-label="Próximo"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
         </div>
 
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-primary p-4 rounded-lg">
-          <p className="text-sm text-blue-900">
+          <p className="text-sm text-primary-foreground/90">
             💡 <strong>2ª Praça:</strong> Lotes que não foram arrematados na primeira etapa retornam com descontos de até 50%!
             Aproveite esta oportunidade única para arrematar com preços ainda mais vantajosos.
           </p>

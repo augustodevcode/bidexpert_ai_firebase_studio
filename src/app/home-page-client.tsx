@@ -64,7 +64,7 @@ export default function HomePageClient({
     <div className="space-y-12 md:space-y-16 lg:space-y-20">
       <HeroSection />
       
-      {closingSoonLots.length > 0 && <ClosingSoonCarousel lots={closingSoonLots} />}
+      {closingSoonLots.length > 0 && <ClosingSoonCarousel lots={closingSoonLots} auctions={allAuctions} platformSettings={platformSettings} />}
       
       <section className="space-y-6">
         <div className="flex justify-between items-center">
