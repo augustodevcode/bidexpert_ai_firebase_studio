@@ -43,6 +43,8 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` (futuro) |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Asset` |
 | **Endereçamento Unificado** | Componente reutilizável para entrada e exibição de endereços, com busca de CEP e mapa interativo. | `AddressGroup.tsx`, `MapPicker.tsx` |
+| **Timeline de Etapas do Leilão** | Componente reutilizável para exibir visualmente o progresso das etapas de um leilão. | `AuctionStage` |
+
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
 
@@ -150,21 +152,25 @@ Baseado na estrutura de `src/app`:
     3.  O formulário no modal é pré-populado com o `sellerId` ou `judicialProcessId` do leilão ao qual o lote pertence, garantindo a associação correta.
     4.  Ao salvar o novo ativo, o modal se fecha, e a lista de "Bens Disponíveis" na página de edição do lote é **automaticamente atualizada** para incluir o item recém-criado, que já pode ser vinculado ao lote.
 
-### 5.6. **[NOVO]** Validação de Formulários e Feedback ao Usuário
+### 5.6. **[NOVO]** Validação de Formulários e Feedback de UI
 
 *   **Marcação de Campos Obrigatórios:** Todos os campos de preenchimento obrigatório em formulários de criação ou edição **devem** ser visualmente indicados com um asterisco vermelho (`*`) ao lado do `Label`.
 *   **Desabilitação de Botão de Submissão:** Os botões de "Salvar", "Criar" ou "Enviar" **devem** permanecer desabilitados enquanto o formulário for inválido (i.e., enquanto campos obrigatórios não forem preenchidos ou dados inseridos não atenderem aos critérios de validação).
 *   **Feedback Imediato:** Após a submissão de um formulário, o sistema **deve** fornecer um feedback claro e imediato ao usuário, utilizando componentes `Toast` para indicar sucesso ou falha na operação. Submissões não devem falhar silenciosamente.
     
-### 5.7. **[NOVO]** Entrada e Exibição de Endereços Unificados
+### 5.7. **[NOVO]** Endereçamento Unificado com `AddressGroup`
 
-*   **Componente `AddressGroup.tsx`:** Foi criado um componente reutilizável que agrupa todos os campos de endereço (CEP, logradouro, número, complemento, bairro, cidade, estado, latitude, longitude).
-*   **Integração:** Este componente foi integrado em todos os formulários que necessitam de um endereço: Leilão, Ativo (Bem), Comitente e Leiloeiro.
-*   **Funcionalidades:**
-    *   **Busca por CEP:** Preenche automaticamente os campos de logradouro, bairro, cidade e estado.
-    *   **Seletores de Entidade:** Utiliza `EntitySelector` para Cidade e Estado, garantindo a consistência dos dados.
-    *   **Mapa Interativo (`MapPicker.tsx`):** Permite a seleção visual da localização, atualizando as coordenadas de latitude e longitude.
-*   **Exibição Padronizada:** As páginas de perfil público (Leiloeiro, Comitente) e de detalhes (Leilão, Lote) foram atualizadas para exibir o endereço completo e formatado, utilizando os novos campos estruturados.
+*   **Componente Centralizado:** Todas as entradas de endereço na plataforma **devem** utilizar o componente reutilizável `src/components/address-group.tsx`.
+*   **Consistência:** Este componente garante uma experiência de usuário padronizada para preenchimento de endereço, incluindo busca por CEP, mapa interativo (`MapPicker`), e seletores de entidade (`EntitySelector`) para Estado e Cidade.
+*   **Modelos Impactados:** Os formulários para Leilão, Ativo (Bem), Comitente e Leiloeiro foram refatorados para usar este componente, e seus respectivos schemas (Prisma e Zod) foram atualizados para incluir os campos estruturados (`street`, `number`, `neighborhood`, `cityId`, `stateId`, `latitude`, etc.).
+*   **Exibição:** As páginas de perfil público e de detalhes também foram atualizadas para exibir o endereço formatado a partir destes campos estruturados.
+
+### 5.8. **[NOVO]** Timeline Visual de Etapas do Leilão
+
+*   **Componente Reutilizável:** A exibição das etapas de um leilão (praças) **deve** utilizar o componente `src/components/auction/auction-stages-timeline.tsx`.
+*   **Contexto:** Este componente é integrado aos cards de leilão (`AuctionCard` e `AuctionListItem`) para fornecer uma visão rápida e proporcional do progresso do leilão.
+*   **Funcionalidade:** O componente calcula a duração total de todas as etapas e renderiza cada etapa como um segmento em uma barra de progresso, indicando visualmente se a etapa está concluída, ativa ou futura. Um `Tooltip` exibe detalhes ao passar o mouse.
+
 
 ---
 
@@ -182,4 +188,3 @@ Baseado na estrutura de `src/app`:
 *   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.
 *   **Validação de Formulários:** Sempre utilize os schemas do Zod (`*-form-schema.ts`) em conjunto com o `react-hook-form` e o componente `<Form>` do `shadcn/ui` para garantir validação robusta no lado do cliente e do servidor. Para campos obrigatórios, use a anotação `*` no `FormLabel`.
 *   **Endereços:** Sempre utilize o componente `AddressGroup.tsx` em formulários que necessitem de endereço para manter a padronização de entrada de dados.
-

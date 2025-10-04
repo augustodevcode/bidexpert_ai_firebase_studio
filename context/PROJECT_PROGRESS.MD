@@ -19,7 +19,7 @@
     - **Fase 3:** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
     - **Fase 4:** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
     - **Fase 5:** Integrado o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
-- **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
+- **Item 15: Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo em todos os formulários de entidade que requerem endereço.
 - **Item 19: Padronização de Identificadores `data-ai-id`:** Adicionados atributos `data-ai-id` a todos os contêineres e componentes estruturais da interface do usuário para melhorar a testabilidade e a manipulação por IA.
 - **Item 20: Auditoria e Refatoração Arquitetural (Análise de GAPs):** Todas as subtarefas, incluindo padronização de nomenclatura, `data-ai-id`, e uso do `EntitySelector` foram concluídas.
 - **Item 21: Implementar Responsividade Completa (Mobile & Tablet):** O layout de tabelas, formulários e grids foi ajustado para garantir uma experiência de usuário consistente em todos os tamanhos de tela.
@@ -51,6 +51,7 @@
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas (38.1 a 38.7) foram concluídas, incluindo a criação do modelo, serviços, componentes de UI e a lógica de configuração.
 - **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
 - **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
+- **Item 41: Criar Componente Reutilizável de Timeline para Etapas do Leilão:** Criado e integrado o componente `AuctionStagesTimeline` nos cards e listas de leilões.
 
 ## DOING
 
@@ -59,5 +60,4 @@
 - **Item 17:** Implementar a lógica para "relotear" um bem, desvinculando-o de um lote não vendido.
 - **Item 18:** Implementar pagamento parcelado para arremates.
 - **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores, explicando as principais seções do painel.
-- **Item 41:** Criar Componente Reutilizável de Timeline para Etapas do Leilão.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.
