@@ -45,7 +45,7 @@ import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import SearchResultsFrame from '@/components/search-results-frame';
 import { createColumns as createAssetColumns } from '@/components/admin/lotting/columns';
 import { getAuction, getAuctions as refetchAllAuctions } from '@/app/admin/auctions/actions';
-import { getAssets as refetchAvailableAssets } from '@/app/admin/assets/actions';
+import { getAssetsForLotting } from '@/app/admin/assets/actions';
 import { samplePlatformSettings } from '@/lib/sample-data';
 import { DataTable } from '@/components/ui/data-table';
 import { Switch } from '@/components/ui/switch';
@@ -295,7 +295,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
   
   const handleAssetCreated = async (newAssetId?: string) => {
     if (newAssetId) {
-      const newAssets = await refetchAvailableAssets({ sellerId: form.getValues('sellerId') || undefined });
+      const newAssets = await getAssetsForLotting({ sellerId: form.getValues('sellerId') || undefined });
       setCurrentAvailableAssets(newAssets);
       toast({ title: "Lista de bens atualizada!" });
     }
@@ -349,15 +349,15 @@ const LotForm = forwardRef<any, LotFormProps>(({
                             </TabsList>
                             <TabsContent value="geral" className="pt-6 space-y-4">
                                 <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
                                 <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades</FormLabel><FormControl><Textarea placeholder="Descreva todas as características do lote aqui. Por exemplo:&#10;Cor: Azul&#10;KM: 50.000&#10;Combustível: Flex" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                                 </div>
                             </TabsContent>
                              <TabsContent value="financeiro" className="pt-6 space-y-4">
-                               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Lance Inicial (R$)<span className="text-destructive">*</span></FormLabel><FormControl><div className="relative"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="5000.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>Este é o valor que iniciará o leilão para este lote.</FormDescription><FormMessage /></FormItem>)}/>
-                               <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento Mínimo (R$)</FormLabel><FormControl><div className="relative"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="100.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>O valor mínimo que um lance deve ser acima do anterior.</FormDescription><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Lance Inicial (R$)<span className="text-destructive">*</span></FormLabel><FormControl><div className="relative"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="5000.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>Este é o valor que iniciará o leilão para este lote.</FormDescription><FormMessage /></FormItem>)}/>
+                                <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento Mínimo (R$)</FormLabel><FormControl><div className="relative"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="100.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>O valor mínimo que um lance deve ser acima do anterior.</FormDescription><FormMessage /></FormItem>)}/>
                              </TabsContent>
                               <TabsContent value="assets" className="pt-6 space-y-6 container-bens-vinculados">
                                 <div data-ai-id="linked-assets-section">
@@ -409,5 +409,3 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
 LotForm.displayName = "LotForm";
 export default LotForm;
-
-    
