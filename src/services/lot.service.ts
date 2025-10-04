@@ -11,7 +11,7 @@ import type { Lot, LotFormData, BidInfo, UserLotMaxBid, Review, LotQuestion, Ass
 import { slugify, isValidImageUrl } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
 import { AssetService } from './asset.service';
 
@@ -24,7 +24,7 @@ export class LotService {
 
   constructor() {
     this.repository = new LotRepository();
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
     this.assetService = new AssetService();
   }
 

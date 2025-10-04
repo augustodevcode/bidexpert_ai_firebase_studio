@@ -5,7 +5,7 @@ import type { SellerFormData, SellerProfileInfo, Lot, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { getPrismaInstance } from '@/lib/prisma'; // Import the instance getter
+import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
@@ -30,7 +30,7 @@ export class SellerService {
   constructor() {
     this.sellerRepository = new SellerRepository();
     this.auctionRepository = new AuctionRepository(); // Instanciar
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
   
   private mapAuctionsWithDetails(auctions: any[]): Auction[] {

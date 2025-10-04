@@ -11,14 +11,14 @@
 
 import type { Subscriber } from '@prisma/client';
 import type { Auction } from '@/types';
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import logger from '@/lib/logger';
 
 export class NotificationService {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
   
   /**

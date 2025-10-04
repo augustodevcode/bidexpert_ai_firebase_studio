@@ -9,12 +9,15 @@ import { JudicialBranchRepository } from '@/repositories/judicial-branch.reposit
 import type { JudicialBranch, JudicialBranchFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export class JudicialBranchService {
   private repository: JudicialBranchRepository;
+  private prisma;
 
   constructor() {
     this.repository = new JudicialBranchRepository();
+    this.prisma = prisma;
   }
 
   async getJudicialBranches(): Promise<JudicialBranch[]> {

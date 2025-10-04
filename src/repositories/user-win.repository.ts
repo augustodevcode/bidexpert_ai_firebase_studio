@@ -1,12 +1,12 @@
 // src/repositories/user-win.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Prisma, UserWin } from '@prisma/client';
 
 export class UserWinRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findByIdWithDetails(winId: string): Promise<any | null> {

@@ -1,5 +1,5 @@
 // src/repositories/asset.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Asset, AssetFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -7,7 +7,7 @@ export class AssetRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findAll(filter?: { judicialProcessId?: string; sellerId?: string; tenantId?: string }): Promise<any[]> {

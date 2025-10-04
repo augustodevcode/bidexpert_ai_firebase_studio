@@ -1,5 +1,5 @@
 // src/repositories/judicial-branch.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { JudicialBranch } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -7,7 +7,7 @@ export class JudicialBranchRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findAll(): Promise<any[]> {

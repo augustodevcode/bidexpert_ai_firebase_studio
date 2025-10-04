@@ -17,7 +17,11 @@ export interface SubscriptionFormData {
 }
 
 export class SubscriptionService {
+  private prisma;
   
+  constructor() {
+    this.prisma = prisma;
+  }
   /**
    * Creates a new subscriber for the current tenant.
    * Checks for duplicates before creating.
@@ -35,7 +39,7 @@ export class SubscriptionService {
         return { success: false, message: 'O e-mail é obrigatório.' };
       }
 
-      const existingSubscriber = await prisma.subscriber.findUnique({
+      const existingSubscriber = await this.prisma.subscriber.findUnique({
         where: { email },
       });
 
@@ -43,7 +47,7 @@ export class SubscriptionService {
         return { success: false, message: 'Este e-mail já está inscrito.' };
       }
 
-      await prisma.subscriber.create({
+      await this.prisma.subscriber.create({
         data: {
           email,
           name,

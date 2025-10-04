@@ -10,7 +10,7 @@ import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
@@ -31,7 +31,7 @@ export class AuctioneerService {
 
   constructor() {
     this.auctioneerRepository = new AuctioneerRepository();
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async getAuctioneers(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {

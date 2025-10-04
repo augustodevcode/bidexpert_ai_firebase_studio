@@ -6,7 +6,7 @@
  * A centralização dessa lógica evita a duplicação de consultas complexas
  * nas `server actions`.
  */
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 import { subDays, format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -17,7 +17,7 @@ export class DashboardService {
     private prisma;
 
     constructor() {
-        this.prisma = getPrismaInstance();
+        this.prisma = prisma;
     }
 
     /**

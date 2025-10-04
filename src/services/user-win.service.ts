@@ -8,12 +8,15 @@
  */
 import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { UserWin } from '@/types';
+import { prisma } from '@/lib/prisma';
 
 export class UserWinService {
   private repository: UserWinRepository;
+  private prisma;
 
   constructor() {
     this.repository = new UserWinRepository();
+    this.prisma = prisma;
   }
 
   async getWinDetailsById(winId: string): Promise<UserWin | null> {

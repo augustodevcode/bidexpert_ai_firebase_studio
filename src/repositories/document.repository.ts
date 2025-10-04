@@ -1,5 +1,5 @@
 // src/repositories/document.repository.ts
-import { getPrismaInstance, prisma as basePrisma } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { DocumentType, UserDocument } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -7,11 +7,11 @@ export class DocumentRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findAllTypes(): Promise<DocumentType[]> {
-    return basePrisma.documentType.findMany({ orderBy: { name: 'asc' } });
+    return this.prisma.documentType.findMany({ orderBy: { name: 'asc' } });
   }
 
   async findUserDocumentsByUserId(userId: string): Promise<any[]> {

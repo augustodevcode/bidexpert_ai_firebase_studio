@@ -6,7 +6,7 @@
  */
 'use server';
 
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
 import type { Auction, Lot, Asset, DirectSaleOffer, UserProfileData } from '@/types';
 
@@ -33,8 +33,7 @@ export interface AuditData {
  */
 export async function getAuditDataAction(): Promise<AuditData> {
   const tenantId = await getTenantIdFromRequest();
-  const prisma = getPrismaInstance();
-
+  
   try {
     const allAuctions = await prisma.auction.findMany({
       where: { tenantId },

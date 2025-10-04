@@ -12,7 +12,7 @@ import type { Prisma } from '@prisma/client';
 import { PrismaClientValidationError } from '@prisma/client/runtime/library';
 import { v4 as uuidv4 } from 'uuid';
 import { nowInSaoPaulo } from '@/lib/timezone';
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 // Status que NUNCA devem ser visíveis publicamente
 const NON_PUBLIC_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
@@ -23,7 +23,7 @@ export class AuctionService {
 
   constructor() {
     this.auctionRepository = new AuctionRepository();
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   /**

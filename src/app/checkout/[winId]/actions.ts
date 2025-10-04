@@ -7,7 +7,7 @@
  */
 'use server';
 
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { UserWin } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { checkoutFormSchema, type CheckoutFormValues } from './checkout-form-schema';
@@ -40,7 +40,6 @@ export async function getWinDetailsForCheckoutAction(winId: string): Promise<Use
  * @returns {Promise<{success: boolean, message: string}>} The result of the payment operation.
  */
 export async function processPaymentAction(winId: string, paymentData: CheckoutFormValues): Promise<{success: boolean; message: string}> {
-    const prisma = getPrismaInstance();
     console.log(`[Action - processPayment] Processing payment for win ID: ${winId}`, paymentData);
     
     const win = await winService.getWinDetailsById(winId);

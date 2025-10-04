@@ -1,5 +1,5 @@
 // src/repositories/auction.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Auction } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -7,7 +7,7 @@ export class AuctionRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
   
   async findAll(tenantId: string, where?: Prisma.AuctionWhereInput, limit?: number): Promise<any[]> {

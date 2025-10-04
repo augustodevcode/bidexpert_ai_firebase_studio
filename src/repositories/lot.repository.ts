@@ -1,5 +1,5 @@
 // src/repositories/lot.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -20,7 +20,7 @@ export class LotRepository {
         }
     }
     
-    return getPrismaInstance().lot.findMany({
+    return prisma.lot.findMany({
         where: finalWhere,
         take: limit,
         include: {
@@ -34,7 +34,6 @@ export class LotRepository {
   }
 
   async findById(id: string, tenantId?: string): Promise<any | null> {
-    const prisma = getPrismaInstance();
     const whereClause: Prisma.LotWhereInput = {
         OR: [{ id }, { publicId: id }],
     };
@@ -52,14 +51,14 @@ export class LotRepository {
   
   async findByIds(ids: string[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
-    return getPrismaInstance().lot.findMany({
+    return prisma.lot.findMany({
         where: { id: { in: ids } },
         include: { auction: true }
     });
   }
 
   async create(lotData: Prisma.LotCreateInput, assetIds: string[]): Promise<Lot> {
-    return getPrismaInstance().$transaction(async (tx) => {
+    return prisma.$transaction(async (tx) => {
       // 1. Create the Lot
       const newLot = await tx.lot.create({
         data: lotData,
@@ -80,7 +79,7 @@ export class LotRepository {
   }
 
   async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: string[]): Promise<Lot> {
-    return getPrismaInstance().$transaction(async (tx) => {
+    return prisma.$transaction(async (tx) => {
         const updatedLot = await tx.lot.update({
             where: { id },
             data: lotData,
@@ -104,7 +103,7 @@ export class LotRepository {
   }
 
   async delete(id: string): Promise<void> {
-     await getPrismaInstance().$transaction(async (tx) => {
+     await prisma.$transaction(async (tx) => {
         await tx.assetsOnLots.deleteMany({
             where: { lotId: id },
         });

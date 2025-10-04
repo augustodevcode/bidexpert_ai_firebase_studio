@@ -1,12 +1,12 @@
 // src/repositories/report.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Report, Prisma } from '@prisma/client';
 
 export class ReportRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findAll(tenantId: string): Promise<Report[]> {

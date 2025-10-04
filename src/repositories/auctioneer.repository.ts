@@ -1,5 +1,5 @@
 // src/repositories/auctioneer.repository.ts
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { AuctioneerFormData, AuctioneerProfileInfo } from '@/types';
 import type { Prisma } from '@prisma/client';
 
@@ -7,7 +7,7 @@ export class AuctioneerRepository {
   private prisma;
 
   constructor() {
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   async findAll(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {

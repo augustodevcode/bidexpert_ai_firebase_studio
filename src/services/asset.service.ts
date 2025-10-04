@@ -11,7 +11,7 @@ import { AssetRepository } from '@/repositories/asset.repository';
 import type { Asset, AssetFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { getPrismaInstance } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 export class AssetService {
   private repository: AssetRepository;
@@ -19,7 +19,7 @@ export class AssetService {
 
   constructor() {
     this.repository = new AssetRepository();
-    this.prisma = getPrismaInstance();
+    this.prisma = prisma;
   }
 
   /**

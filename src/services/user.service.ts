@@ -11,7 +11,7 @@ import type { UserProfileWithPermissions, UserCreationData, EditableUserProfileD
 import bcrypt from 'bcryptjs';
 import type { Prisma, UserDocument, DocumentType } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
-import { prisma as basePrisma, getPrismaInstance } from '@/lib/prisma';
+import { prisma as basePrisma } from '@/lib/prisma';
 
 
 export class UserService {
@@ -23,7 +23,7 @@ export class UserService {
     this.userRepository = new UserRepository();
     this.roleRepository = new RoleRepository();
     // A instância do serviço usará o prisma com contexto por padrão.
-    this.prisma = getPrismaInstance(); 
+    this.prisma = basePrisma; 
   }
   
   private formatUser(user: any): UserProfileWithPermissions | null {
