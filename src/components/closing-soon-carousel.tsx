@@ -3,7 +3,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { Lot, Auction, PlatformSettings } from '@/types';
@@ -110,8 +110,9 @@ export default function ClosingSoonCarousel({ lots, auctions, platformSettings }
       <div className="container mx-auto px-4">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-foreground mb-1 font-headline">
-              ⚡ Super Oportunidades
+            <h2 className="text-3xl font-bold text-foreground mb-1 font-headline flex items-center gap-2">
+              <Zap className="h-7 w-7 text-primary" />
+              Super Oportunidades
             </h2>
             <p className="text-muted-foreground">Lotes em 2ª Praça com até 50% de desconto - Encerrando em breve!</p>
           </div>
@@ -161,7 +162,7 @@ export default function ClosingSoonCarousel({ lots, auctions, platformSettings }
         </div>
 
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-primary p-4 rounded-lg">
-          <p className="text-sm text-primary-foreground/90">
+          <p className="text-sm text-blue-900">
             💡 <strong>2ª Praça:</strong> Lotes que não foram arrematados na primeira etapa retornam com descontos de até 50%!
             Aproveite esta oportunidade única para arrematar com preços ainda mais vantajosos.
           </p>
