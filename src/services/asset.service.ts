@@ -84,7 +84,7 @@ export class AssetService {
    */
   async createAsset(tenantId: string, data: AssetFormData): Promise<{ success: boolean; message: string; assetId?: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, ...assetData } = data;
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
 
       const dataToCreate: Prisma.AssetCreateInput = {
         ...(assetData as any),
@@ -96,6 +96,8 @@ export class AssetService {
       if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
       if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: judicialProcessId } };
       if (sellerId) dataToCreate.seller = { connect: { id: sellerId } };
+      if (cityId) dataToCreate.city = { connect: { id: cityId } };
+      if (stateId) dataToCreate.state = { connect: { id: stateId } };
       
       const newAsset = await this.repository.create(dataToCreate);
       return { success: true, message: 'Ativo criado com sucesso.', assetId: newAsset.id };
@@ -113,13 +115,16 @@ export class AssetService {
    */
   async updateAsset(id: string, data: Partial<AssetFormData>): Promise<{ success: boolean; message: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, ...assetData } = data;
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
       const dataToUpdate: Prisma.AssetUpdateInput = { ...assetData };
       
       if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
       if (subcategoryId) dataToUpdate.subcategory = { connect: { id: subcategoryId } };
       if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
       if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+      if (cityId) dataToUpdate.city = { connect: { id: cityId } };
+      if (stateId) dataToUpdate.state = { connect: { id: stateId } };
+
 
       await this.repository.update(id, dataToUpdate);
       return { success: true, message: 'Ativo atualizado com sucesso.' };
