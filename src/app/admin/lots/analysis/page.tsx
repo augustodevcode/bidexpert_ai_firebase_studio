@@ -44,7 +44,7 @@ function AIAnalysisSection({ performanceData, isLoading }: { performanceData: Lo
                 lotsSoldCount: lot.status === 'VENDIDO' ? 1 : 0,
                 totalRevenue: lot.price,
                 averageTicket: lot.price,
-                salesRate: lot.status === 'VENDIDO' ? 100 : 0
+                salesRate: lot.bidsCount > 0 ? 100 : 0 // Simplified sales rate for lots
             }));
 
             analyzeAuctionDataAction({ performanceData: dataForAI })
@@ -151,7 +151,7 @@ export default function LotAnalysisPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Faturamento Total" value={totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={DollarSign} description="Soma de todos os lotes vendidos" isLoading={isLoading} />
         <StatCard title="Total de Lotes" value={totalLots} icon={Package} description="Total de lotes cadastrados" isLoading={isLoading} />
-        <StatCard title="Total de Lances" value={totalBids} icon={Gavel} description="Total de lances em todos os lotes" isLoading={isLoading} />
+        <StatCard title="Total de Lances" value={totalBids} icon={Gavel} description="Total de lances feitos na plataforma" isLoading={isLoading} />
         <StatCard title="Ticket Médio (Vendido)" value={averageTicket.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={TrendingUp} description="Valor médio por lote vendido" isLoading={isLoading} />
       </div>
 
