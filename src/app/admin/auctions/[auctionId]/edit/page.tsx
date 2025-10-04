@@ -10,7 +10,7 @@
 import AuctionForm from '../../auction-form';
 import { getAuction, updateAuction, deleteAuction, type AuctionFormData } from '../../actions'; 
 import { getLots, deleteLot } from '@/app/admin/lots/actions'; 
-import type { Auction, Lot, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo, LotCategory } from '@/types';
+import type { Auction, Lot, PlatformSettings, AuctioneerProfileInfo, SellerProfileInfo, UserProfileWithPermissions, AuctionDashboardData, UserWin, StateInfo, CityInfo, LotCategory, JudicialProcess } from '@/types';
 import { notFound, useRouter, useParams } from 'next/navigation'; 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -143,7 +143,7 @@ export default function EditAuctionPage() {
   const [sellers, setSellersList] = React.useState<SellerProfileInfo[]>([]);
   const [states, setStates] = React.useState<StateInfo[]>([]);
   const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
-  const [judicialProcesses, setJudicialProcesses] = React.useState<any[]>([]);
+  const [judicialProcesses, setJudicialProcesses] = React.useState<JudicialProcess[]>([]);
   const [categories, setCategories] = React.useState<LotCategory[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isViewMode, setIsViewMode] = useState(true);

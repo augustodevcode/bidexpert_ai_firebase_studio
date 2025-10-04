@@ -13,6 +13,12 @@
 - **Item 10:** **Advanced UI/UX Features:** Implemented real-time updates for bids and auction status using polling and expanded the gamification system.
 - **Item 11:** **Payment Gateway Integration:** Integrated a simulated payment processor for handling final payments for won lots, including checkout page, form validation, and status updates.
 - **Item 13: Extração de Dados de Documentos com IA:** Implemented the full flow for document upload, AI data extraction, and a validation modal for user confirmation and form-filling.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico):**
+    - **Fase 1 (DONE):** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
+    - **Fase 2 (DONE):** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+    - **Fase 3 (DONE):** Adicionadas seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+    - **Fase 4 (DONE):** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+    - **Fase 5 (NEXT):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 - **Item 15:** **Melhorar Formulário de Leilão com Seletores de Localização e Mapa:** Substituídos os campos de texto por `EntitySelector` e integrado um mapa interativo no formulário para definir a localização visualmente.
 - **Item 16: Lógica de Relistagem de Lotes:** Implementada a funcionalidade para relistar um lote que não foi vendido, incluindo a UI no modal da página de edição do lote.
 - **Item 17: Reloteamento de Bens:** Criada a lógica para desvincular um `Bem` de um lote não vendido, revertendo seu status para "DISPONÍVEL".
@@ -50,11 +56,11 @@
 - **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
 
 ## DOING
-- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico) (60%):** Criação de painéis de análise de dados para todas as entidades principais.
+- **Item 14: BidExpertOkrs - Dashboards de Análise e KPIs (Estratégico) (90%):** Criação de painéis de análise de dados para todas as entidades principais.
   - **Fase 1 (DONE):** Implementado o Dashboard de Relatórios Gerais (`/admin/reports`).
-  - **Fase 2 (DOING):** Criando dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
-  - **Fase 3 (NEXT):** Adicionar seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
-  - **Fase 4 (NEXT):** Implementar dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
+  - **Fase 2 (DONE):** Criados dashboards de análise de grupo para Cidades, Estados, Comitentes, Leiloeiros, Categorias, Lotes e Leilões.
+  - **Fase 3 (DOING):** Adicionar seções de dashboard de performance individual nas páginas de edição de Comitentes, Leiloeiros e Leilões.
+  - **Fase 4 (DONE):** Implementados dashboards de análise para todas as entidades judiciais (Tribunais, Comarcas e Varas).
   - **Fase 5 (NEXT):** Integrar o Genkit para fornecer análises e recomendações inteligentes em todos os dashboards de análise de grupo.
 
 ## NEXT
