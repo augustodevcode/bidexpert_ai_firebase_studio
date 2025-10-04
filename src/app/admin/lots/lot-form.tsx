@@ -129,7 +129,7 @@ export default function LotForm({
       ...initialData,
       auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
       type: initialData?.categoryId || initialData?.type || '',
-      price: initialData?.price || 0,
+      price: initialData?.price || undefined,
       assetIds: initialData?.assetIds || [],
       mediaItemIds: initialData?.mediaItemIds || [],
       galleryImageUrls: initialData?.galleryImageUrls || [],
@@ -141,6 +141,25 @@ export default function LotForm({
     },
   });
   
+  const { formState } = form;
+
+  const watchedValues = useWatch({ control: form.control });
+
+  useEffect(() => {
+    if (isWizardMode && onWizardDataChange) {
+      const subscription = form.watch((value) => {
+        onWizardDataChange(value as Partial<LotFormValues>);
+      });
+      return () => subscription.unsubscribe();
+    }
+  }, [form, isWizardMode, onWizardDataChange, watchedValues]);
+
+  useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmit),
+    setValue: form.setValue,
+    getValues: form.getValues,
+  }));
+
   const watchedAuctionId = useWatch({ control: form.control, name: 'auctionId' });
   const watchedAssetIds = useWatch({ control: form.control, name: 'assetIds' });
   const inheritedMediaFromAssetId = useWatch({ control: form.control, name: 'inheritedMediaFromBemId' });
@@ -321,30 +340,30 @@ export default function LotForm({
                          <Tabs defaultValue="geral" className="w-full">
                             <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
                                 <TabsTrigger value="geral">Geral</TabsTrigger>
-                                <TabsTrigger value="stage_values">Valores por Etapa</TabsTrigger>
+                                <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                                 <TabsTrigger value="assets">Bens Vinculados</TabsTrigger>
                                 <TabsTrigger value="midia">Mídia</TabsTrigger>
                                 <TabsTrigger value="avancado">Avançado</TabsTrigger>
                             </TabsList>
                             <TabsContent value="geral" className="pt-6 space-y-4">
-                                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote</FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
                                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o lote em detalhes" {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Opcional. Se não for definido, será usado o comitente do leilão.</FormDescription><FormMessage /></FormItem>)} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Nº do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                     <FormField control={form.control} name="condition" render={({ field }) => (<FormItem><FormLabel>Condição</FormLabel><FormControl><Input placeholder="Ex: Novo, Usado, Sucata" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                             </TabsContent>
-                             <TabsContent value="stage_values" className="pt-6 space-y-4">
-                               <p className="text-sm text-muted-foreground">Configure os valores para cada etapa do leilão associado.</p>
-                               <AuctionStagesTimeline stages={initialData?.auction?.auctionStages || []} isEditable={false} />
+                             <TabsContent value="financeiro" className="pt-6 space-y-4">
+                               <FormField control={form.control} name="price" render={({ field }) => (<FormItem><FormLabel>Lance Inicial (R$)<span className="text-destructive">*</span></FormLabel><FormControl><div className="relative"><DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="5000.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>Este é o valor que iniciará o leilão para este lote.</FormDescription><FormMessage /></FormItem>)}/>
+                               <FormField control={form.control} name="bidIncrementStep" render={({ field }) => (<FormItem><FormLabel>Incremento Mínimo (R$)</FormLabel><FormControl><div className="relative"><Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"/><Input type="number" placeholder="100.00" {...field} value={field.value ?? ''} className="pl-8"/></div></FormControl><FormDescription>O valor mínimo que um lance deve ser acima do anterior.</FormDescription><FormMessage /></FormItem>)}/>
                              </TabsContent>
-                              <TabsContent value="assets" className="pt-6 space-y-6">
-                                <div data-ai-id="linked-assets-section" className="container-bens-vinculados">
+                              <TabsContent value="assets" className="pt-6 space-y-6 container-bens-vinculados">
+                                <div data-ai-id="linked-assets-section">
                                     <h4 className="title-bens-vinculados">Bens Vinculados a Este Lote</h4>
                                     <SearchResultsFrame items={linkedAssetsDetails} totalItemsCount={linkedAssetsDetails.length} renderGridItem={renderAssetGridItem} renderListItem={renderAssetListItem} sortOptions={assetSortOptions} initialSortBy={linkedAssetsSortBy} onSortChange={setLinkedAssetsSortBy} platformSettings={platformSettings!} isLoading={false} searchTypeLabel="bens vinculados" emptyStateMessage="Nenhum bem vinculado a este lote." />
                                 </div>
@@ -372,7 +391,12 @@ export default function LotForm({
                          </Tabs>
                     </CardContent>
                 </Card>
-                <div className="flex justify-end pt-4"><Button type="submit" disabled={isSubmitting}>{isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} {submitButtonText}</Button></div>
+                <div className="flex justify-end pt-4">
+                    <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        {submitButtonText}
+                    </Button>
+                </div>
             </div>
         </form>
       </Form>

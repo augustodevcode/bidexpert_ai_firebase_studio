@@ -24,7 +24,7 @@ export const lotFormSchema = z.object({
   }).max(200, {
     message: "O título do lote não pode exceder 200 caracteres.",
   }),
-  auctionId: z.string().min(1, { message: "O ID do Leilão é obrigatório."}),
+  auctionId: z.string().min(1, { message: "É obrigatório associar o lote a um leilão."}),
   auctionName: z.string().optional(),
   number: z.string().max(20, "Número do lote muito longo.").optional().nullable(),
   description: z.string().max(5000, {
@@ -40,12 +40,15 @@ export const lotFormSchema = z.object({
   winningBidTermUrl: optionalUrlSchema,
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  bemIds: z.array(z.string()).optional(),
+  assetIds: z.array(z.string()).optional(), // Renamed from bemIds
   inheritedMediaFromBemId: z.string().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
   isFeatured: z.boolean().default(false).optional(),
   isExclusive: z.boolean().default(false).optional(),
+  price: z.coerce.number().positive({message: "O valor deve ser positivo"}),
+  initialPrice: z.coerce.number().positive({message: "O valor deve ser positivo"}).optional().nullable(),
+  bidIncrementStep: z.coerce.number().positive({message: "O valor deve ser positivo"}).optional().nullable(),
   
   latitude: z.coerce.number().min(-90).max(90).optional().nullable(),
   longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
@@ -57,6 +60,11 @@ export const lotFormSchema = z.object({
   auctioneerId: z.string().optional().nullable(),
   
   stageDetails: z.array(lotStageDetailsSchema).optional(),
+  
+  // For relisting logic
+  originalLotId: z.string().optional(),
+  isRelisted: z.boolean().optional(),
+  relistCount: z.number().int().optional(),
 });
 
 export type LotFormValues = z.infer<typeof lotFormSchema>;
