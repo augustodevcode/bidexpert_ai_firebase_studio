@@ -1,10 +1,8 @@
 // src/app/admin/lots/lot-form-schema.ts
 /**
  * @fileoverview Define o schema de validação (usando Zod) para o formulário
- * de criação e edição de Lotes. Este schema é usado pelo `react-hook-form`
- * para garantir que os dados do formulário sejam consistentes e válidos antes
- * de serem enviados para as server actions, incluindo a validação dos detalhes
- * de preço para cada etapa do leilão.
+ * de criação e edição de Lotes. Este schema foi simplificado para ser mais
+ * flexível.
  */
 import * as z from 'zod';
 import { lotStatusValues } from '@/lib/zod-enums';
@@ -30,6 +28,7 @@ export const lotFormSchema = z.object({
   description: z.string().max(5000, {
     message: "A descrição não pode exceder 5000 caracteres.",
   }).optional().nullable(),
+  properties: z.string().max(10000, "As propriedades não podem exceder 10.000 caracteres.").optional().nullable(),
   status: z.enum(lotStatusValues as [string, ...string[]]),
   stateId: z.string().optional().nullable(),
   cityId: z.string().optional().nullable(),
@@ -40,7 +39,7 @@ export const lotFormSchema = z.object({
   winningBidTermUrl: optionalUrlSchema,
   galleryImageUrls: z.array(z.string().url({ message: "Uma das URLs da galeria é inválida." })).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  assetIds: z.array(z.string()).optional(), // Renamed from bemIds
+  assetIds: z.array(z.string()).optional(),
   inheritedMediaFromBemId: z.string().optional().nullable(),
   views: z.coerce.number().int().nonnegative().optional(),
   bidsCount: z.coerce.number().int().nonnegative().optional(),
@@ -54,7 +53,6 @@ export const lotFormSchema = z.object({
   longitude: z.coerce.number().min(-180).max(180).optional().nullable(),
   mapAddress: z.string().max(255, { message: "Endereço do mapa não pode exceder 255 caracteres." }).optional().nullable(),
   
-  condition: z.string().max(100).optional().nullable(),
   dataAiHint: z.string().max(100).optional().nullable(),
   sellerId: z.string().optional().nullable(),
   auctioneerId: z.string().optional().nullable(),

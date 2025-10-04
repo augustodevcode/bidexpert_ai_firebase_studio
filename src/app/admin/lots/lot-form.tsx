@@ -2,14 +2,14 @@
 /**
  * @fileoverview Componente de formulário reutilizável para criar e editar Lotes.
  * Utiliza react-hook-form para gerenciamento de estado, Zod para validação, e
- * componentes de UI da ShadCN. Inclui lógica para abas, campos condicionais
- * e seletores de entidade para uma experiência de usuário rica.
+ * componentes de UI da ShadCN. Foi simplificado para usar um campo "Propriedades"
+ * em vez de múltiplos campos específicos.
  */
 'use client';
 
 import React, { useEffect, useCallback, useState, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, type UseFormReturn } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -124,7 +124,7 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
   const form = useForm<LotFormValues>({
     resolver: zodResolver(lotFormSchema),
-    mode: 'onChange', // Validate on change to enable/disable submit button
+    mode: 'onChange',
     defaultValues: {
         ...initialData,
         auctionId: initialData?.auctionId || defaultAuctionId || searchParams.get('auctionId') || '',
@@ -166,7 +166,6 @@ const LotForm = forwardRef<any, LotFormProps>(({
   const imageUrlPreview = useWatch({ control: form.control, name: 'imageUrl' });
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
 
-  // UseEffect to automatically set seller based on selected auction
   useEffect(() => {
     async function updateSellerFromAuction() {
       if (watchedAuctionId) {
@@ -338,24 +337,18 @@ const LotForm = forwardRef<any, LotFormProps>(({
                     </CardHeader>
                     <CardContent className="p-6">
                          <Tabs defaultValue="geral" className="w-full">
-                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-5">
+                            <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
                                 <TabsTrigger value="geral">Geral</TabsTrigger>
                                 <TabsTrigger value="financeiro">Financeiro</TabsTrigger>
                                 <TabsTrigger value="assets">Bens Vinculados</TabsTrigger>
                                 <TabsTrigger value="midia">Mídia</TabsTrigger>
-                                <TabsTrigger value="avancado">Avançado</TabsTrigger>
                             </TabsList>
                             <TabsContent value="geral" className="pt-6 space-y-4">
                                 <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Lote<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Carro Ford Ka 2019" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                                <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição</FormLabel><FormControl><Textarea placeholder="Descreva o lote em detalhes" {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
+                                <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades</FormLabel><FormControl><Textarea placeholder="Descreva todas as características do lote aqui. Por exemplo:&#10;Cor: Azul&#10;KM: 50.000&#10;Combustível: Flex" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormMessage /></FormItem>)} />
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <FormField control={form.control} name="auctionId" render={({ field }) => (<FormItem><FormLabel>Leilão Associado<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={auctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))} placeholder="Selecione o leilão" searchPlaceholder="Buscar leilão..." emptyStateMessage="Nenhum leilão encontrado." createNewUrl="/admin/auctions/new" editUrlPrefix="/admin/auctions" onRefetch={handleRefetchAuctions} isFetching={isFetchingAuctions} /><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Selecione o comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente encontrado" createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={handleRefetchSellers} isFetching={isFetchingSellers} /><FormDescription>Opcional. Se não for definido, será usado o comitente do leilão.</FormDescription><FormMessage /></FormItem>)} />
-                                </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{lotStatusOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="number" render={({ field }) => (<FormItem><FormLabel>Nº do Lote</FormLabel><FormControl><Input placeholder="Ex: 001, A5" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-                                    <FormField control={form.control} name="condition" render={({ field }) => (<FormItem><FormLabel>Condição</FormLabel><FormControl><Input placeholder="Ex: Novo, Usado, Sucata" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                                 </div>
                             </TabsContent>
                              <TabsContent value="financeiro" className="pt-6 space-y-4">
@@ -380,13 +373,6 @@ const LotForm = forwardRef<any, LotFormProps>(({
                                       <FormItem><FormLabel>Imagem Principal</FormLabel><div className="flex items-center gap-4"><div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div><div className="space-y-2 flex-grow"><Button type="button" variant="outline" onClick={() => setIsMainImageDialogOpen(true)} className="group-disabled:cursor-not-allowed">{imageUrlPreview ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button><FormField control={form.control} name="imageUrl" render={({ field }) => (<FormControl><Input type="url" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} /><FormMessage /></div></div></FormItem>
                                       <FormItem><FormLabel>Galeria de Imagens Adicionais</FormLabel><Button type="button" variant="outline" size="sm" onClick={() => setIsGalleryDialogOpen(true)} className="group-disabled:cursor-not-allowed"><ImagePlus className="mr-2 h-4 w-4"/>Adicionar à Galeria</Button><div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 p-2 border rounded-md min-h-[80px]">{galleryUrls?.map((url, index) => (<div key={url} className="relative aspect-square bg-muted rounded overflow-hidden"><Image src={url} alt={`Imagem da galeria ${index+1}`} fill className="object-cover" /><Button type="button" size="icon" variant="destructive" className="absolute top-1 right-1 h-6 w-6 opacity-80 hover:opacity-100 p-0" onClick={() => handleRemoveFromGallery(url)} title="Remover"><Trash2 className="h-3.5 w-3.5" /></Button></div>))}</div></FormItem>
                                  </fieldset>
-                              </TabsContent>
-                              <TabsContent value="avancado" className="pt-6 space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <FormField control={form.control} name="isFeatured" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Destaque</FormLabel><FormDescription className="text-xs">Exibir este lote na seção de destaques.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                                  <FormField control={form.control} name="isExclusive" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Exclusivo</FormLabel><FormDescription className="text-xs">Marcar como um lote exclusivo ou raro.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                                </div>
-                                <FormField control={form.control} name="dataAiHint" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Imagem)</FormLabel><FormControl><Input placeholder="Ex: carro antigo, relogio ouro" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Palavras-chave para ajudar a IA a gerar uma imagem placeholder.</FormDescription><FormMessage /></FormItem>)} />
                               </TabsContent>
                          </Tabs>
                     </CardContent>
@@ -419,5 +405,3 @@ const LotForm = forwardRef<any, LotFormProps>(({
 
 LotForm.displayName = "LotForm";
 export default LotForm;
-
-    
