@@ -14,9 +14,9 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle, Award } from 'lucide-react';
+import { Loader2, UserCog, Mail, Phone, Home, Building, Briefcase, Calendar, ShieldCheck, BadgeInfo, FileText, Edit, AlertCircle, Award, MapPin } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -50,13 +50,8 @@ export default function ProfilePage() {
   const [formattedDateOfBirth, setFormattedDateOfBirth] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userProfileWithPermissions?.dateOfBirth) {
-      try {
+    if (userProfileWithPermissions?.dateOfBirth && isValid(new Date(userProfileWithPermissions.dateOfBirth))) {
         setFormattedDateOfBirth(format(new Date(userProfileWithPermissions.dateOfBirth), 'dd/MM/yyyy', { locale: ptBR }));
-      } catch (e) {
-        console.error("Failed to format dateOfBirth", e);
-        setFormattedDateOfBirth('Data inválida');
-      }
     } else {
         setFormattedDateOfBirth(null);
     }
@@ -91,6 +86,7 @@ export default function ProfilePage() {
   } = userProfileWithPermissions;
   
   const userInitial = fullName ? fullName.charAt(0).toUpperCase() : (email ? email.charAt(0).toUpperCase() : "U");
+  const fullAddress = [street, number, complement, neighborhood, city, state, zipCode].filter(Boolean).join(', ');
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
@@ -179,10 +175,10 @@ export default function ProfilePage() {
           <section>
             <h3 className="text-lg font-semibold text-primary border-b pb-1 mb-3 flex items-center"><Home className="mr-2 h-5 w-5"/>Endereço</h3>
             <div className="space-y-3">
-              <InfoItem icon={Home} label="Endereço" value={`${street || ''}${number ? ', ' + number : ''}${complement ? ' - ' + complement : ''}`.trim() || null} />
-              <InfoItem icon={Home} label="Bairro" value={neighborhood} />
-              <InfoItem icon={Home} label="Cidade/UF" value={`${city || ''}${state ? ' - ' + state : ''}`.trim() || null} />
-              <InfoItem icon={Home} label="CEP" value={zipCode} />
+                <InfoItem icon={Home} label="Logradouro" value={`${street || ''}${number ? ', ' + number : ''}`} />
+                <InfoItem icon={Home} label="Bairro" value={neighborhood} />
+                <InfoItem icon={Home} label="Cidade/UF" value={`${city || ''}${state ? ' - ' + state : ''}`.trim() || null} />
+                <InfoItem icon={MapPin} label="CEP" value={zipCode} />
             </div>
           </section>
         </CardContent>

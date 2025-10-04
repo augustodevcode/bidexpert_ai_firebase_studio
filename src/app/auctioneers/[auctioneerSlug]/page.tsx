@@ -211,6 +211,8 @@ export default function AuctioneerDetailsPage() {
   const placeholderPriceRange = `${((Math.random() * 50 + 10) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')} - ${((Math.random() * 2000 + 500) * 1000).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0 }).replace(/\s/g, '')}`;
   const editUrl = `/admin/auctioneers/${auctioneerProfile.id}/edit`;
   const validLogoUrl = isValidImageUrl(auctioneerProfile.logoUrl) ? auctioneerProfile.logoUrl! : `https://placehold.co/160x160.png?text=${auctioneerInitial}`;
+  const fullAddress = [auctioneerProfile.street, auctioneerProfile.number, auctioneerProfile.complement, auctioneerProfile.neighborhood, auctioneerProfile.city, auctioneerProfile.state, auctioneerProfile.zipCode].filter(Boolean).join(', ');
+
 
   return (
     <>
@@ -224,7 +226,6 @@ export default function AuctioneerDetailsPage() {
             </Avatar>
             <h1 className="text-3xl font-bold font-headline">{auctioneerProfile.name}</h1>
             <p className="text-sm text-muted-foreground">{auctioneerProfile.registrationNumber || 'Empresa de Leilões Credenciada'}</p>
-            <p className="text-sm text-muted-foreground -mt-1">{auctioneerProfile.city && auctioneerProfile.state ? `${auctioneerProfile.city} - ${auctioneerProfile.state}` : 'Localização não informada'}</p>
             {auctioneerProfile.rating !== undefined && auctioneerProfile.rating > 0 && (
               <div className="flex items-center justify-center lg:justify-start text-sm text-amber-600 mt-1">
                 <Star className="h-5 w-5 fill-amber-500 text-amber-500 mr-1" />
@@ -295,18 +296,10 @@ export default function AuctioneerDetailsPage() {
             <Card className="shadow-md">
               <CardHeader><CardTitle className="text-xl font-semibold flex items-center"><MessageSquare className="h-5 w-5 mr-2 text-primary" /> Contatar {auctioneerProfile.name}</CardTitle></CardHeader>
               <CardContent className="space-y-4">
-                <form onSubmit={(e) => e.preventDefault()} className="space-y-3">
-                  <div><Label htmlFor="contact-name" className="text-xs">Nome</Label><Input id="contact-name" placeholder="Seu Nome Completo" /></div>
-                  <div><Label htmlFor="contact-phone" className="text-xs">Telefone</Label><Input id="contact-phone" type="tel" placeholder="(XX) XXXXX-XXXX" /></div>
-                  <div><Label htmlFor="contact-email" className="text-xs">Email</Label><Input id="contact-email" type="email" placeholder="seu@email.com" /></div>
-                  <div><Label htmlFor="contact-message" className="text-xs">Mensagem</Label><Textarea id="contact-message" placeholder="Sua mensagem..." rows={3} /></div>
-                  <Button type="submit" className="w-full" disabled>Enviar Mensagem (Indisponível)</Button>
-                </form>
-                <Separator className="my-3"/>
                 <div className="space-y-2 text-sm">
                    {auctioneerProfile.phone && (<div className="flex items-center"><Phone className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`tel:${auctioneerProfile.phone}`} className="hover:text-primary">{auctioneerProfile.phone}</a></div>)}
                   {auctioneerProfile.email && (<div className="flex items-center"><Mail className="h-4 w-4 mr-2 text-muted-foreground" /><a href={`mailto:${auctioneerProfile.email}`} className="hover:text-primary">{auctioneerProfile.email}</a></div>)}
-                   {auctioneerProfile.address && (<div className="flex items-start"><Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" /><p>{auctioneerProfile.address}{auctioneerProfile.city && `, ${auctioneerProfile.city}`}{auctioneerProfile.state && ` - ${auctioneerProfile.state}`}</p></div>)}
+                   {fullAddress && (<div className="flex items-start"><Landmark className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground flex-shrink-0" /><p>{fullAddress}</p></div>)}
                   {auctioneerProfile.website && (<div className="flex items-center"><Globe className="h-4 w-4 mr-2 text-muted-foreground" /><a href={auctioneerProfile.website.startsWith('http') ? auctioneerProfile.website : `https://${auctioneerProfile.website}`} target="_blank" rel="noopener noreferrer" className="hover:text-primary truncate">{auctioneerProfile.website.replace(/^https?:\/\//, '')}</a></div>)}
                 </div>
               </CardContent>
