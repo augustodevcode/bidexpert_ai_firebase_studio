@@ -17,9 +17,8 @@ import { hasAnyPermission } from '@/lib/permissions';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header'; // Reutilizando o header
 import CommandPalette from '@/components/layout/command-palette';
-import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
-
+import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 
 export default function ConsignorDashboardLayout({
   children,
@@ -104,6 +103,10 @@ export default function ConsignorDashboardLayout({
             onOpenChange={setCommandPaletteOpen}
         />
         {/* O modal de configuração de widgets não é relevante para o comitente, então não é renderizado aqui. */}
+         <WidgetConfigurationModal 
+            isOpen={isWidgetConfigModalOpen}
+            onClose={() => setIsWidgetConfigModalOpen(false)}
+        />
     </WidgetPreferencesProvider>
   );
 }

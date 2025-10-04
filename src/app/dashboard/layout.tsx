@@ -16,8 +16,8 @@ import DashboardSidebar from '@/components/layout/dashboard-sidebar';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header'; // Reutilizando o header
 import CommandPalette from '@/components/layout/command-palette';
-import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
+import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 
 
 export default function DashboardLayout({
@@ -29,6 +29,7 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
+
   
   if (loading) {
     return (
@@ -64,7 +65,11 @@ export default function DashboardLayout({
             isOpen={isCommandPaletteOpen}
             onOpenChange={setCommandPaletteOpen}
         />
-        {/* O modal de configuração de widgets não é relevante para o usuário comum, então não é renderizado aqui. */}
+        {/* O modal de configuração não é relevante para o usuário comum neste dashboard */}
+         <WidgetConfigurationModal 
+            isOpen={isWidgetConfigModalOpen}
+            onClose={() => setIsWidgetConfigModalOpen(false)}
+        />
     </WidgetPreferencesProvider>
   );
 }

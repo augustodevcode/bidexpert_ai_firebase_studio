@@ -48,7 +48,6 @@ const lotManagementItems = [
 const assetManagementItems = [
     { title: 'Listar Ativos', href: '/admin/assets', icon: Package },
     { title: 'Novo Ativo', href: '/admin/assets/new', icon: PlusCircle },
-    // { title: 'Análise de Ativos', href: '/admin/assets/analysis', icon: BarChart3 }, // TODO: Implementar
 ];
 
 const categoryManagementItems = [
@@ -216,14 +215,9 @@ export default function AdminSidebar() {
   
   return (
     <>
-      {/* Mobile Sidebar Trigger (only visible on mobile) */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden fixed top-3 left-3 z-50 bg-background/50 backdrop-blur-sm h-10 w-10">
-            <Menu className="h-5 w-5" />
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground">
+        {/* O trigger do menu móvel foi movido para o AdminHeader */}
+        <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground md:hidden">
           <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
         </SheetContent>
       </Sheet>
