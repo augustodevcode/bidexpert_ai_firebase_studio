@@ -159,6 +159,7 @@ export default function EditAuctioneerPage() {
         isViewMode={isViewMode}
         isLoading={isLoading}
         isSubmitting={isSubmitting}
+        isValid={formRef.current?.formState.isValid}
         onEnterEditMode={() => setIsViewMode(false)}
         onCancel={() => setIsViewMode(true)}
         onSave={handleSave}

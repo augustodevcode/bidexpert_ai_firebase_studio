@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/new/page.tsx
 /**
  * @fileoverview Página para criação de um novo Leiloeiro.
- * Este componente renderiza o `FormPageLayout` e o `AuctioneerForm` para a entrada
+ * Este componente de cliente renderiza o `FormPageLayout` e o `AuctioneerForm` para a entrada
  * de dados, e utiliza a server action `createAuctioneer` para persistir
  * o novo registro no banco de dados.
  */
@@ -47,6 +47,7 @@ export default function NewAuctioneerPage() {
             icon={Landmark}
             isViewMode={false}
             isSubmitting={isSubmitting}
+            isValid={formRef.current?.formState.isValid}
             onSave={handleSave}
             onCancel={() => router.push('/admin/auctioneers')}
         >

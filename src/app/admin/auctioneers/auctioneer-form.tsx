@@ -47,6 +47,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
 
   const form = useForm<AuctioneerFormValues>({
     resolver: zodResolver(auctioneerFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: initialData?.name || '',
       registrationNumber: initialData?.registrationNumber || '',
@@ -88,9 +89,9 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     }
   }, [initialData, form]);
 
-  // Expor o método de submit via ref para o FormPageLayout
-  React.useImperativeHandle(ref, () => ({
+  useImperativeHandle(ref, () => ({
     requestSubmit: form.handleSubmit(onSubmitAction),
+    formState: form.formState,
   }));
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
@@ -99,8 +100,8 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     if (selectedItems.length > 0) {
       const selectedMediaItem = selectedItems[0];
       if (selectedMediaItem?.urlOriginal) {
-        form.setValue('logoUrl', selectedMediaItem.urlOriginal);
-        form.setValue('logoMediaId', selectedMediaItem.id || null);
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal, { shouldDirty: true, shouldValidate: true });
+        form.setValue('logoMediaId', selectedMediaItem.id || null, { shouldDirty: true });
       } else {
         toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
       }
@@ -113,9 +114,9 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     setIsCepLoading(true);
     const result = await consultaCepAction(cep);
     if (result.success && result.data) {
-        form.setValue('address', result.data.logradouro);
-        form.setValue('city', result.data.localidade);
-        form.setValue('state', result.data.uf);
+        form.setValue('address', result.data.logradouro, { shouldDirty: true });
+        form.setValue('city', result.data.localidade, { shouldDirty: true });
+        form.setValue('state', result.data.uf, { shouldDirty: true, shouldValidate: true });
     } else {
         toast({ title: 'CEP não encontrado', description: result.message, variant: 'destructive'});
     }
@@ -133,7 +134,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome do Leiloeiro/Empresa de Leilões</FormLabel>
+                    <FormLabel>Nome do Leiloeiro/Empresa de Leilões<span className="text-destructive">*</span></FormLabel>
                     <FormControl>
                       <Input placeholder="Ex: João Silva Leiloeiro Oficial, Leilões Brasil Ltda." {...field} />
                     </FormControl>
