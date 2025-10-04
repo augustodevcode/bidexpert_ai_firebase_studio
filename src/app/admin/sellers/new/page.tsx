@@ -16,31 +16,37 @@ import { useToast } from '@/hooks/use-toast';
 import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
-import type { StateInfo, CityInfo } from '@/types';
-
+import type { StateInfo, CityInfo, JudicialBranch } from '@/types';
 
 export default function NewSellerPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [judicialBranches, setJudicialBranches] = React.useState<any[]>([]);
+  const [judicialBranches, setJudicialBranches] = React.useState<JudicialBranch[]>([]);
   const [allStates, setAllStates] = React.useState<StateInfo[]>([]);
   const [allCities, setAllCities] = React.useState<CityInfo[]>([]);
+  const [isLoadingDependencies, setIsLoadingDependencies] = React.useState(true);
   const formRef = React.useRef<any>(null);
 
   React.useEffect(() => {
     async function fetchDependencies() {
-        const [branches, states, cities] = await Promise.all([
-            getJudicialBranches(),
-            getStates(),
-            getCities(),
-        ]);
-        setJudicialBranches(branches);
-        setAllStates(states);
-        setAllCities(cities);
+        try {
+            const [branchesData, statesData, citiesData] = await Promise.all([
+                getJudicialBranches(),
+                getStates(),
+                getCities(),
+            ]);
+            setJudicialBranches(branchesData);
+            setAllStates(statesData);
+            setAllCities(citiesData);
+        } catch (error) {
+            toast({ title: 'Erro ao carregar dados', description: 'Não foi possível buscar os dados de apoio.', variant: 'destructive'});
+        } finally {
+            setIsLoadingDependencies(false);
+        }
     }
     fetchDependencies();
-  }, []);
+  }, [toast]);
 
   const handleSave = async () => {
     if (formRef.current) {
@@ -68,18 +74,21 @@ export default function NewSellerPage() {
             formDescription="Preencha os detalhes para cadastrar um novo comitente/vendedor."
             icon={Users}
             isViewMode={false}
+            isLoading={isLoadingDependencies}
             isSubmitting={isSubmitting}
             isValid={formRef.current?.formState.isValid ?? false}
             onSave={handleSave}
             onCancel={() => router.push('/admin/sellers')}
         >
-            <SellerForm
-                ref={formRef}
-                judicialBranches={judicialBranches}
-                allStates={allStates}
-                allCities={allCities}
-                onSubmitAction={handleCreateSeller}
-            />
+            {!isLoadingDependencies && (
+                <SellerForm
+                    ref={formRef}
+                    judicialBranches={judicialBranches}
+                    allStates={allStates}
+                    allCities={allCities}
+                    onSubmitAction={handleCreateSeller}
+                />
+            )}
         </FormPageLayout>
     </div>
   );

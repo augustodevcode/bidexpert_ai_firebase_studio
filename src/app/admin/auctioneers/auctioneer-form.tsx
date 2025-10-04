@@ -77,6 +77,11 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     },
   });
 
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmitAction),
+    formState: form.formState,
+  }));
+  
   React.useEffect(() => {
     if (initialData) {
       form.reset({
@@ -104,11 +109,6 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
       });
     }
   }, [initialData, form]);
-
-  React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
-    formState: form.formState,
-  }));
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
 

@@ -2,7 +2,7 @@
 'use client';
 
 import * as React from 'react';
-import { UseFormReturn } from 'react-hook-form';
+import { UseFormReturn, useWatch } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from './ui/input';
 import MapPicker from './map-picker';
@@ -22,6 +22,29 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
   const [cities, setCities] = React.useState(allCities);
   const [isFetchingStates, setIsFetchingStates] = React.useState(false);
   const [isFetchingCities, setIsFetchingCities] = React.useState(false);
+
+  const selectedStateId = useWatch({
+    control: form.control,
+    name: 'stateId',
+  });
+
+  const filteredCities = React.useMemo(() => {
+    if (!selectedStateId) {
+      return []; // Return empty if no state is selected, forcing user to select a state first.
+    }
+    return cities.filter(city => city.stateId === selectedStateId);
+  }, [selectedStateId, cities]);
+
+  // Effect to reset city when state changes
+  React.useEffect(() => {
+    // When the filtered cities update (because the state changed),
+    // check if the currently selected city is still valid.
+    const currentCityId = form.getValues('cityId');
+    if (currentCityId && !filteredCities.some(city => city.id === currentCityId)) {
+      form.setValue('cityId', null, { shouldValidate: true });
+    }
+  }, [filteredCities, form]);
+
 
   const handleRefetchStates = React.useCallback(async () => {
     setIsFetchingStates(true);
@@ -107,28 +130,7 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
         />
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <FormField
-          control={form.control}
-          name="cityId"
-          render={({ field }) => (
-            <FormItem data-ai-id="address-group-city">
-              <FormLabel>Cidade</FormLabel>
-              <EntitySelector
-                entityName="city"
-                value={field.value}
-                onChange={field.onChange}
-                options={cities.map(c => ({ value: c.id, label: `${c.name} - ${c.stateUf}` }))}
-                placeholder="Selecione a cidade"
-                searchPlaceholder="Buscar cidade..."
-                emptyStateMessage="Nenhuma cidade encontrada."
-                onRefetch={handleRefetchCities}
-                isFetching={isFetchingCities}
-              />
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
+         <FormField
           control={form.control}
           name="stateId"
           render={({ field }) => (
@@ -144,6 +146,28 @@ export default function AddressGroup({ form, allCities = [], allStates = [] }: A
                 emptyStateMessage="Nenhum estado."
                 onRefetch={handleRefetchStates}
                 isFetching={isFetchingStates}
+              />
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name="cityId"
+          render={({ field }) => (
+            <FormItem data-ai-id="address-group-city">
+              <FormLabel>Cidade</FormLabel>
+              <EntitySelector
+                entityName="city"
+                value={field.value}
+                onChange={field.onChange}
+                options={filteredCities.map(c => ({ value: c.id, label: c.name }))}
+                placeholder={!selectedStateId ? "Selecione um estado primeiro" : "Selecione a cidade"}
+                searchPlaceholder="Buscar cidade..."
+                emptyStateMessage="Nenhuma cidade encontrada para este estado."
+                onRefetch={handleRefetchCities}
+                isFetching={isFetchingCities}
+                disabled={!selectedStateId}
               />
               <FormMessage />
             </FormItem>

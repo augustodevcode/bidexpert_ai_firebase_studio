@@ -24,7 +24,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/com
 import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Loader2 } from 'recharts';
 import { Separator } from '@/components/ui/separator';
 import FormPageLayout from '@/components/admin/form-page-layout'; 
-import type { SellerProfileInfo, StateInfo, CityInfo } from '@/types';
+import type { SellerProfileInfo, StateInfo, CityInfo, JudicialBranch } from '@/types';
 
 
 const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
@@ -97,7 +97,7 @@ export default function EditSellerPage() {
   const { toast } = useToast();
   
   const [seller, setSeller] = useState<SellerProfileInfo | null>(null);
-  const [judicialBranches, setJudicialBranches] = useState<any[]>([]);
+  const [judicialBranches, setJudicialBranches] = useState<JudicialBranch[]>([]);
   const [allStates, setAllStates] = useState<StateInfo[]>([]);
   const [allCities, setAllCities] = useState<CityInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
