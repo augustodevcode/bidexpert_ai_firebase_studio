@@ -1,0 +1,43 @@
+// prisma/models/location.prisma
+import { Auction } from './auction.prisma'
+import { Lot } from './lot.prisma'
+import { Asset } from './asset.prisma'
+
+model State {
+  id          String   @id @default(cuid())
+  name        String
+  uf          String   @unique
+  slug        String   @unique
+  
+  auctions    Auction[]
+  lots        Lot[]
+  cities      City[]
+  districts   JudicialDistrict[]
+  assets      Asset[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  @@map("states")
+}
+
+model City {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String
+  ibgeCode    String?  @unique @map("ibge_code")
+  
+  stateId     String   @map("state_id")
+  state       State    @relation(fields: [stateId], references: [id])
+  stateUf     String?  @map("state_uf") // Denormalized for easier access
+  
+  auctions    Auction[]
+  lots        Lot[]
+  assets      Asset[]
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@unique([name, stateId])
+  @@map("cities")
+}
