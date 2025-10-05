@@ -53,7 +53,6 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
     resolver: zodResolver(auctioneerFormSchema),
     mode: 'onChange',
     defaultValues: {
-      ...initialData,
       name: initialData?.name || '',
       registrationNumber: initialData?.registrationNumber || '',
       contactName: initialData?.contactName || '',
@@ -85,7 +84,6 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   React.useEffect(() => {
     if (initialData) {
       form.reset({
-        ...initialData,
         name: initialData?.name || '',
         registrationNumber: initialData?.registrationNumber || '',
         contactName: initialData?.contactName || '',

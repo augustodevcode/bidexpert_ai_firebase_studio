@@ -46,7 +46,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     resolver: zodResolver(sellerFormSchema),
     mode: 'onChange',
     defaultValues: {
-      ...initialData,
       name: initialData?.name || '',
       publicId: initialData?.publicId || '',
       contactName: initialData?.contactName || '',
