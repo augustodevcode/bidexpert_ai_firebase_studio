@@ -43,7 +43,10 @@ export class PlatformSettingsService {
                 notifyOnFeaturedLot: true,
                 notifyOnAuctionEndingSoon: true,
                 notifyOnPromotions: true,
-            } as Prisma.JsonObject
+            } as Prisma.JsonObject,
+            tenant: {
+                connect: { id: '1' } // Adicionando a relação obrigatória
+            }
         };
         // O repositório já deve usar o getPrismaInstance() que respeita o contexto
         return this.repository.create(defaultSettingsData as any);
