@@ -28,7 +28,7 @@ import type {
     MapSettings as PmMapSettings,
     BiddingSettings as PmBiddingSettings,
     PaymentGatewaySettings as PmPaymentGatewaySettings,
-    NotificationSettings as PmNotificationSettings, // Adicionado
+    NotificationSettings as PmNotificationSettings,
     MentalTriggerSettings as PmMentalTriggerSettings,
     SectionBadgeVisibility as PmSectionBadgeVisibility,
     UserLotMaxBid as PmUserLotMaxBid,
@@ -46,6 +46,7 @@ import type {
     VehicleModel as PmVehicleModel,
     AuctionHabilitation,
     InstallmentPayment,
+    AssetMedia, // Adicionado
 } from '@prisma/client';
 
 export type Role = PmRole;
@@ -63,11 +64,12 @@ export type Asset = Omit<PmAsset, 'evaluationValue' | 'latitude' | 'longitude'> 
   subcategoryName?: string | null;
   judicialProcessNumber?: string | null;
   sellerName?: string | null;
-  lots?: { lot: Lot }[];
+  gallery?: (AssetMedia & { mediaItem: MediaItem })[]; // Adicionado
   evaluationValue?: number | null;
   latitude?: number | null;
   longitude?: number | null;
   lotInfo?: string | null;
+  lots?: any[];
 };
 export type Auction = Omit<PmAuction, 'latitude' | 'longitude' | 'initialOffer' | 'estimatedRevenue' | 'achievedRevenue' | 'decrementAmount' | 'floorPrice'> & {
   lots?: Lot[];
@@ -108,6 +110,7 @@ export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 
   longitude?: number | null;
   stageDetails?: LotStageDetails[];
   inheritedMediaFromAssetId?: string | null;
+  galleryImageUrls?: string[] | null;
 };
 export type BidInfo = PmBid;
 export type UserWin = Omit<PmUserWin, 'winningBidAmount'> & { winningBidAmount: number; lot: Lot };
@@ -118,6 +121,7 @@ export type DocumentType = PmDocumentType;
 export type DirectSaleOffer = Omit<PmDirectSaleOffer, 'price' | 'minimumOfferPrice'> & {
     price?: number | null;
     minimumOfferPrice?: number | null;
+    galleryImageUrls?: string[] | null;
 };
 export type UserLotMaxBid = PmUserLotMaxBid;
 export type JudicialProcess = PmJudicialProcess & { parties: PmJudicialParty[], courtName?: string, districtName?: string, branchName?: string, sellerName?: string };
@@ -167,7 +171,7 @@ export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
 export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'notificationSettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
   isSetupComplete: boolean;
-  themes?: Theme[];
+  themes?: Theme[] | null;
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;
   notificationSettings?: NotificationSettings | null;
@@ -302,7 +306,7 @@ export interface ConsignorDashboardStats {
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: string | null };
 export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
-export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'bens' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null };
+export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
@@ -310,13 +314,11 @@ export type CourtFormData = Omit<Court, 'id' | 'slug'>;
 export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName'>;
-export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo'>;
+export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery'> & { cityId?: string; stateId?: string };
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;
 export type UserFormData = Partial<User>;
-export type BemFormData = AssetFormData; // Alias
-export type Bem = Asset; // Alias
 export type WizardData = {
     auctionType?: 'JUDICIAL' | 'EXTRAJUDICIAL' | 'PARTICULAR' | 'TOMADA_DE_PRECOS';
     judicialProcess?: JudicialProcess;
