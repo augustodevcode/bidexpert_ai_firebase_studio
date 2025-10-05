@@ -20,7 +20,7 @@ export const assetFormSchema = z.object({
   }).max(200, {
     message: "O título do bem não pode exceder 200 caracteres.",
   }),
-  description: z.string().max(5000).optional(),
+  description: z.string().max(5000).optional().nullable(),
   properties: z.string().max(10000, "As propriedades não podem exceder 10.000 caracteres.").optional().nullable(),
   status: z.enum(assetStatusValues),
   categoryId: z.string().min(1, "A categoria é obrigatória."),
@@ -32,7 +32,7 @@ export const assetFormSchema = z.object({
   imageMediaId: z.string().optional().nullable(),
   galleryImageUrls: z.array(z.string().url()).optional(),
   mediaItemIds: z.array(z.string()).optional(),
-  dataAiHint: z.string().max(50).optional(),
+  dataAiHint: z.string().max(50).optional().nullable(),
   
   // Endereço
   street: z.string().max(255).optional().nullable(),

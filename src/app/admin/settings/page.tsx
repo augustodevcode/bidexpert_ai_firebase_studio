@@ -2,13 +2,12 @@
 'use client';
 
 import { useEffect, useState, Suspense, useCallback } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { getPlatformSettings, runFullSeedAction } from './actions';
 import SettingsForm from './settings-form';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Settings as SettingsIcon, Palette, Fingerprint, Wrench, Loader2, MapPin, Search as SearchIconLucide, Clock as ClockIcon, Link2, Database, ArrowUpDown, Zap, Rows, RefreshCw, AlertTriangle, Trash2, Bell, CreditCard } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Settings as SettingsIcon, AlertTriangle, Database, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 import type { PlatformSettings } from '@/types';
 import { useToast } from '@/hooks/use-toast'; 
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
@@ -25,19 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-
-const settingsSections = [
-    { id: 'identity', label: 'Identidade do Site', icon: Fingerprint, description: 'Título, tagline, logo e favicon.' },
-    { id: 'general', label: 'Configurações Gerais', icon: Wrench, description: 'Máscaras de ID, assistente de setup, etc.' },
-    { id: 'storage', label: 'Armazenamento', icon: Database, description: 'Configure onde os arquivos de mídia são salvos.' },
-    { id: 'appearance', label: 'Aparência e Exibição', icon: Palette, description: 'Gerencie temas, paginação e cronômetros.' },
-    { id: 'listDisplay', label: 'Listas de Cadastros', icon: Rows, description: 'Opções de exibição para as tabelas do admin.' },
-    { id: 'notifications', label: 'Notificações', icon: Bell, description: 'Gerencie as notificações por e-mail para assinantes.' },
-    { id: 'payments', label: 'Pagamentos', icon: CreditCard, description: 'Configure gateways de pagamento e comissões.' },
-    { id: 'bidding', label: 'Lances e Automação', icon: Zap, description: 'Configure lances instantâneos e incrementos.'},
-    { id: 'variableIncrements', label: 'Incremento de Lance', icon: ArrowUpDown, description: 'Defina incrementos variáveis para faixas de preço.' },
-    { id: 'maps', label: 'Configurações de Mapa', icon: MapPin, description: 'Provedor de mapa padrão e chaves API.' },
-];
+import { Loader2 } from 'lucide-react';
 
 function DangerZone() {
     const { toast } = useToast();
@@ -52,7 +39,7 @@ function DangerZone() {
         }
     };
     
-    const handleAction = async (action: 'seed' | 'reset' | 'drop') => {
+    const handleAction = async (action: 'seed') => {
         setIsActionLoading(action);
         let result = { success: false, message: 'Ação não reconhecida.' };
         try {
@@ -76,7 +63,7 @@ function DangerZone() {
     }
 
     return (
-        <Card className="border-destructive mt-6">
+        <Card className="border-destructive mt-12">
             <CardHeader>
                 <CardTitle className="text-md text-destructive">Zona de Perigo</CardTitle>
                 <CardDescription>Ações importantes para o ambiente de desenvolvimento.</CardDescription>
@@ -96,7 +83,7 @@ function DangerZone() {
                     <Database className="h-4 w-4" />
                     <AlertTitle>Popular com Dados de Demonstração</AlertTitle>
                     <AlertDescription>
-                        Preenche o banco de dados com um conjunto completo de dados para testes (leilões, lotes, etc.), ignorando itens que já existem.
+                        Preenche o banco de dados com um conjunto completo de dados para testes, ignorando itens que já existem.
                     </AlertDescription>
                      <AlertDialog onOpenChange={() => setConfirmationText('')}>
                       <AlertDialogTrigger asChild>
@@ -131,28 +118,11 @@ function DangerZone() {
     );
 }
 
-interface AdminSettingsPageContentProps {
+function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: { 
     initialSettings: PlatformSettings | null;
     initialError?: string | null;
     onRetry?: () => void; 
-}
-
-function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: AdminSettingsPageContentProps) {
-    const router = useRouter();
-    const searchParams = useSearchParams();
-    const [activeSection, setActiveSection] = useState<string>(settingsSections[0]?.id || 'identity'); // Default to first or identity
-
-    useEffect(() => {
-        const section = searchParams.get('section');
-        if (section && settingsSections.some(s => s.id === section)) {
-            setActiveSection(section);
-        } else if (!searchParams.get('section') && settingsSections.length > 0) {
-             if (activeSection !== settingsSections[0].id) {
-                 router.replace(`/admin/settings?section=${settingsSections[0].id}`, { scroll: false });
-             }
-        }
-    }, [searchParams, router, activeSection]); 
-
+}) {
     if (initialError) {
         return (
              <Card className="shadow-lg">
@@ -179,58 +149,26 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: Ad
         );
     }
 
-    const currentSectionDetails = settingsSections.find(s => s.id === activeSection);
-
     return (
-        <div className="grid md:grid-cols-[280px_1fr] gap-8 items-start">
-            <nav className="sticky top-24 space-y-2 hidden md:block">
-                <h3 className="text-lg font-semibold text-primary px-3">Configurações</h3>
-                {settingsSections.map((section) => (
-                <Button
-                    key={section.id}
-                    variant={activeSection === section.id ? 'secondary' : 'ghost'}
-                    className="w-full justify-start"
-                    asChild
-                >
-                    <Link href={`/admin/settings?section=${section.id}`} scroll={false}>
-                    {section.icon && <section.icon className="mr-2 h-5 w-5" />}
-                    {section.label}
-                    </Link>
-                </Button>
-                ))}
-            </nav>
-
-            <div className="md:hidden mb-6">
-                <select 
-                    value={activeSection} 
-                    onChange={(e) => router.push(`/admin/settings?section=${e.target.value}`)}
-                    className="w-full p-2 border rounded-md bg-background"
-                >
-                {settingsSections.map(section => (
-                    <option key={section.id} value={section.id}>{section.label}</option>
-                ))}
-                </select>
-            </div>
-
-            <Card className="shadow-lg md:col-start-2">
+        <div className="max-w-4xl mx-auto space-y-8">
+            <Card className="shadow-lg">
                 <CardHeader>
                 <CardTitle className="text-2xl font-bold font-headline flex items-center">
-                    {currentSectionDetails?.icon && <currentSectionDetails.icon className="h-7 w-7 mr-3 text-primary" />}
-                    {currentSectionDetails?.label || 'Configurações'}
+                    <SettingsIcon className="h-7 w-7 mr-3 text-primary" />
+                    Configurações da Plataforma
                 </CardTitle>
                 <CardDescription>
-                    {currentSectionDetails?.description || 'Gerencie as configurações globais do BidExpert.'}
+                    Gerencie as configurações globais do BidExpert.
                 </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <SettingsForm initialData={initialSettings} activeSection={activeSection} onUpdateSuccess={onRetry} />
-                    {activeSection === 'general' && <DangerZone />}
+                    <SettingsForm initialData={initialSettings} onUpdateSuccess={onRetry} />
                 </CardContent>
             </Card>
+            <DangerZone />
         </div>
     );
 }
-
 
 export default function AdminSettingsPageWrapper() {
     const { toast } = useToast(); 

@@ -1,9 +1,6 @@
-// prisma/models/AssetMedia.prisma
-/**
- * @fileoverview Modelo de junção para a relação many-to-many
- * entre Ativos (Assets) e Itens de Mídia (MediaItem), representando
- * a galeria de imagens de um ativo.
- */
+/// Modelo de junção para a relação many-to-many
+/// entre Ativos (Assets) e Itens de Mídia (MediaItem), representando
+/// a galeria de imagens de um ativo.
 model AssetMedia {
   asset      Asset     @relation("AssetGallery", fields: [assetId], references: [id], onDelete: Cascade)
   assetId    String

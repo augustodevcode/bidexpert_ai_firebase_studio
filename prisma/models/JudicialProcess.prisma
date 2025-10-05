@@ -22,4 +22,5 @@ model JudicialProcess {
   parties           JudicialParty[] // Back-relation added here
 
   @@unique([processNumber, tenantId])
+  MediaItem MediaItem[]
 }

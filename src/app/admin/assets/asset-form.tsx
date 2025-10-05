@@ -32,7 +32,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getLotCategories } from '../categories/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
@@ -167,23 +166,23 @@ export default function AssetForm({
     if (selectedItems.length === 0) return;
     
     if (dialogTarget === 'main' && selectedItems[0]?.urlOriginal) {
-        form.setValue('imageUrl', selectedItems[0].urlOriginal);
-        form.setValue('imageMediaId', selectedItems[0].id || null);
+        form.setValue('imageUrl', selectedItems[0].urlOriginal, { shouldDirty: true });
+        form.setValue('imageMediaId', selectedItems[0].id || null, { shouldDirty: true });
     } else if (dialogTarget === 'gallery') {
         const currentImageUrls = form.getValues('galleryImageUrls') || [];
         const currentMediaIds = form.getValues('mediaItemIds') || [];
         const newImageUrls = selectedItems.map(item => item.urlOriginal).filter(Boolean) as string[];
         const newMediaIds = selectedItems.map(item => item.id).filter(Boolean) as string[];
         
-        form.setValue('galleryImageUrls', Array.from(new Set([...currentImageUrls, ...newImageUrls])));
-        form.setValue('mediaItemIds', Array.from(new Set([...currentMediaIds, ...newMediaIds])));
+        form.setValue('galleryImageUrls', Array.from(new Set([...currentImageUrls, ...newImageUrls])), { shouldDirty: true });
+        form.setValue('mediaItemIds', Array.from(new Set([...currentMediaIds, ...newMediaIds])), { shouldDirty: true });
     }
     setIsMediaDialogOpen(false);
     setDialogTarget(null);
   };
   
   const handleRemoveFromGallery = (urlToRemove: string) => {
-      form.setValue('galleryImageUrls', (form.getValues('galleryImageUrls') || []).filter(url => url !== urlToRemove));
+      form.setValue('galleryImageUrls', (form.getValues('galleryImageUrls') || []).filter(url => url !== urlToRemove), { shouldDirty: true });
   };
 
 
@@ -226,11 +225,10 @@ export default function AssetForm({
         </CardHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
 
-              {/* Seção de Informações Gerais */}
-              <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Gerais</h3>
-              <div className="space-y-4">
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2">Informações Gerais</h3>
                 <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem<span className='text-destructive'>*</span></FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField name="description" control={form.control} render={({ field }) => (<FormItem><FormLabel>Descrição Detalhada</FormLabel><FormControl><Textarea placeholder="Descreva todas as características, estado de conservação, etc." {...field} value={field.value ?? ""} rows={5} /></FormControl><FormMessage /></FormItem>)} />
                 <FormField name="properties" control={form.control} render={({ field }) => (<FormItem><FormLabel>Propriedades Específicas</FormLabel><FormControl><Textarea placeholder="Ex: Placa: XYZ-1234, Ano: 2019, Combustível: Flex, Quartos: 3, Área: 120m²" {...field} value={field.value ?? ""} rows={10} /></FormControl><FormDescription>Adicione aqui todas as características do bem, uma por linha (Ex: "Cor: Azul", "KM: 50.000").</FormDescription><FormMessage /></FormItem>)} />
@@ -242,28 +240,27 @@ export default function AssetForm({
                   <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isFetchingCategories} /><FormMessage /></FormItem>)} />
                   <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
-              </div>
+              </section>
 
-              <Separator className="my-8" />
+              <Separator />
               
-              {/* Seção de Origem */}
-              <h3 className="text-lg font-semibold text-primary border-b pb-2">Origem / Proprietário</h3>
-              <div className="space-y-4">
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2">Origem / Proprietário</h3>
                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isFetchingProcesses} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isFetchingSellers} /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
-              </div>
+              </section>
               
-              <Separator className="my-8" />
+              <Separator />
 
-              {/* Seção de Localização */}
-              <h3 className="text-lg font-semibold text-primary border-b pb-2">Localização</h3>
-              <AddressGroup form={form} allCities={allCities} allStates={allStates} />
-              
-              <Separator className="my-8" />
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2">Localização</h3>
+                <AddressGroup form={form} allCities={allCities} allStates={allStates} />
+              </section>
 
-              {/* Seção de Mídia */}
-              <h3 className="text-lg font-semibold text-primary border-b pb-2">Mídia</h3>
-              <div className="space-y-4">
+              <Separator />
+
+              <section className="space-y-4">
+                <h3 className="text-lg font-semibold text-primary border-b pb-2">Mídia</h3>
                 <FormItem>
                   <FormLabel>Imagem Principal</FormLabel>
                   <div className="flex items-center gap-4">
@@ -286,12 +283,12 @@ export default function AssetForm({
                       ))}
                   </div>
                 </FormItem>
-              </div>
+              </section>
 
             </CardContent>
             <CardFooter className="flex justify-end gap-2 p-6 border-t">
               <Button type="button" variant="outline" onClick={handleCancel} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="submit" disabled={isSubmitting || !formState.isValid || !formState.isDirty}>
+              <Button type="submit" disabled={isSubmitting || !formState.isDirty}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {submitButtonText}
               </Button>

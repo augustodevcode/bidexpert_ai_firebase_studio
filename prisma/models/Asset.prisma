@@ -1,9 +1,6 @@
-// src/prisma/models/asset.prisma
-/**
- * @fileoverview Modelo de Ativo (Bem). Representa um item individual
- * que pode ser leiloado, como um carro, uma casa, ou um equipamento.
- * Um ou mais ativos podem ser agrupados em um Lote.
- */
+/// Modelo de Ativo (Bem). Representa um item individual
+/// que pode ser leiloado, como um carro, uma casa, ou um equipamento.
+/// Um ou mais ativos podem ser agrupados em um Lote.
 model Asset {
   id                String   @id @default(cuid())
   publicId          String   @unique @map("public_id")

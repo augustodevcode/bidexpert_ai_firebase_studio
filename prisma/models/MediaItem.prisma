@@ -1,8 +1,5 @@
-// src/prisma/models/media-item.prisma
-/**
- * @fileoverview Modelo de Item de Mídia. Representa um único arquivo
- * (imagem, PDF, etc.) armazenado, com seus metadados.
- */
+/// Modelo de Item de Mídia. Representa um único arquivo
+/// (imagem, PDF, etc.) armazenado, com seus metadados.
 model MediaItem {
   id           String  @id @default(cuid())
   fileName     String
