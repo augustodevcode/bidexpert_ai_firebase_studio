@@ -1,23 +1,32 @@
+// prisma/models/media-item.prisma
 model MediaItem {
-  id               String    @id @default(cuid())
-  fileName         String
-  storagePath      String
-  title            String?
-  altText          String?
-  caption          String?
-  description      String?   @db.Text
-  mimeType         String
-  sizeBytes        Int?
-  urlOriginal      String
-  urlThumbnail     String?
-  urlMedium        String?
-  urlLarge         String?
-  linkedLotIds     Json?
+  id        String   @id @default(cuid())
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+  urlOriginal String  @db.Text
+  urlThumbnail String? @db.Text
+  storagePath String @db.Text
+  
+  // Metadados
+  title       String?
+  altText     String?
+  caption     String?
+  description String?
+  dataAiHint  String?
+  
+  // Relacionamentos
+  uploadedByUserId String?
+  uploadedByUser   User?   @relation(fields: [uploadedByUserId], references: [id])
+  
   judicialProcessId String?
-  dataAiHint       String?
-  uploadedAt       DateTime  @default(now())
-  uploadedByUserId String?   // Made optional to work with onDelete: SetNull
-  uploadedBy       User?     @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
-
-  Asset Asset[] @relation("AssetImage")
+  
+  // Relacionamentos Inversos
+  imageForAssets   Asset[] @relation("AssetImage")
+  galleryForAssets AssetMedia[] @relation("GalleryImages")
+  
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@map("media_items")
 }

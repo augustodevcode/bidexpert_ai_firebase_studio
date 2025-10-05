@@ -1,37 +1,30 @@
 // prisma/models/media-item.prisma
-import { User } from './user.prisma'
-import { Asset } from './asset.prisma'
-import { AssetMedia } from './asset-media.prisma'
-
-
 model MediaItem {
-  id        String   @id @default(cuid())
-  fileName  String
-  mimeType  String
-  sizeBytes Int
-  urlOriginal String  @db.Text
-  urlThumbnail String? @db.Text
-  storagePath String @db.Text
+  id            String    @id @default(cuid())
+  fileName      String
+  mimeType      String
+  sizeBytes     Int
+  storagePath   String
+  urlOriginal   String    @map("url_original")
+  urlThumbnail  String?   @map("url_thumbnail")
+  title         String?
+  altText       String?
+  caption       String?
+  description   String?
+  dataAiHint    String?
   
-  // Metadados
-  title       String?
-  altText     String?
-  caption     String?
-  description String?
-  dataAiHint  String?
-  
-  // Relacionamentos
+  uploadedAt    DateTime  @default(now())
   uploadedByUserId String?
-  uploadedByUser   User?   @relation(fields: [uploadedByUserId], references: [id])
-  
+  uploadedByUser  User?     @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  // Relações
+  // Um item de mídia pode ser a imagem principal de vários ativos
+  imageForAssets Asset[] @relation("AssetImage")
+
+  // Um item de mídia pode estar em várias galerias de ativos
+  galleryForAssets AssetMedia[] @relation("AssetGalleryItems")
+
   judicialProcessId String?
-  
-  // Relacionamentos Inversos
-  imageForAssets   Asset[] @relation("AssetImage")
-  galleryForAssets AssetMedia[] @relation("GalleryImages")
-  
-  uploadedAt DateTime @default(now())
-  updatedAt  DateTime @updatedAt
   
   @@map("media_items")
 }

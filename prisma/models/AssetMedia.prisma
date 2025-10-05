@@ -1,0 +1,11 @@
+// Tabela de junção para a galeria de um Ativo
+model AssetMedia {
+  assetId    String
+  asset      Asset     @relation("AssetGallery", fields: [assetId], references: [id], onDelete: Cascade)
+  mediaId    String
+  mediaItem  MediaItem @relation("GalleryImages", fields: [mediaId], references: [id], onDelete: Cascade)
+  order      Int       @default(0)
+
+  @@id([assetId, mediaId])
+  @@map("asset_media")
+}

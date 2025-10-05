@@ -1,15 +1,13 @@
 // prisma/models/asset-media.prisma
-import { Asset } from './asset.prisma'
-import { MediaItem } from './media-item.prisma'
-
-// Tabela de junção para a galeria de um Ativo
+// Modelo de junção para a relação muitos-para-muitos entre Asset e MediaItem (para galerias)
 model AssetMedia {
-  assetId    String
-  asset      Asset     @relation("AssetGallery", fields: [assetId], references: [id], onDelete: Cascade)
-  mediaId    String
-  mediaItem  MediaItem @relation("GalleryImages", fields: [mediaId], references: [id], onDelete: Cascade)
-  order      Int       @default(0)
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation("AssetGallery", fields: [assetId], references: [id], onDelete: Cascade)
+  mediaId   String
+  mediaItem MediaItem @relation("AssetGalleryItems", fields: [mediaId], references: [id], onDelete: Cascade)
+  order     Int?
 
-  @@id([assetId, mediaId])
+  @@unique([assetId, mediaId])
   @@map("asset_media")
 }
