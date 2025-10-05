@@ -108,8 +108,6 @@ export type Lot = Omit<PmLot, 'price' | 'initialPrice' | 'secondInitialPrice' | 
   longitude?: number | null;
   stageDetails?: LotStageDetails[];
   inheritedMediaFromAssetId?: string | null;
-  bens?: Asset[]; // Adicionando 'bens' como alias de 'assets' para compatibilidade
-  inheritedMediaFromBemId?: string | null; // Adicionado para compatibilidade com o card
 };
 export type BidInfo = PmBid;
 export type UserWin = Omit<PmUserWin, 'winningBidAmount'> & { winningBidAmount: number; lot: Lot };
@@ -168,11 +166,11 @@ export type Theme = PmTheme;
 export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
 export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'notificationSettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
-  isSetupComplete: boolean; // Adicionando o novo campo
+  isSetupComplete: boolean;
   themes?: Theme[];
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;
-  notificationSettings?: PmNotificationSettings | null;
+  notificationSettings?: NotificationSettings | null;
   variableIncrementTable?: PmVariableIncrementRule[] | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
@@ -301,7 +299,7 @@ export interface ConsignorDashboardStats {
 }
 
 // Para usar em formulários onde não temos o ID completo ainda
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { tenantId?: string };
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: string | null };
 export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
 export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'bens' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null };
