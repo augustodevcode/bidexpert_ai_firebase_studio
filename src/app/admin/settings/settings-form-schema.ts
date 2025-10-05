@@ -46,8 +46,8 @@ const notificationSettingsSchema = z.object({
 
 
 export const platformSettingsFormSchema = z.object({
-  siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}).optional(),
-  siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional(),
+  siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}),
+  siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional().nullable(),
   galleryImageBasePath: z.string()
     .min(1, { message: "O caminho base da galeria de imagens é obrigatório." })
     .startsWith("/", { message: "O caminho deve começar com uma barra '/'." })

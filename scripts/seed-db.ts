@@ -3,6 +3,8 @@ import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
 import { slugify } from '../src/lib/ui-helpers';
 
+const prisma = new PrismaClient();
+
 /**
  * Dados essenciais para o funcionamento da plataforma.
  */

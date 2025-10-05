@@ -1,9 +1,8 @@
 // src/app/admin/settings/settings-form.tsx
 /**
- * @fileoverview Componente de formulário para as configurações da plataforma.
- * Este formulário é uma visão única e rolável, permitindo ao administrador
- * configurar diversos aspectos do sistema, como identidade do site, armazenamento,
- * regras de lances e integrações.
+ * @fileoverview Este arquivo contém o componente de formulário para as configurações
+ * da plataforma. Ele permite a edição de várias configurações globais, organizadas
+ * em seções lógicas para facilitar o gerenciamento.
  */
 'use client';
 
@@ -68,6 +67,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
   const form = useForm<PlatformSettingsFormValues>({
     resolver: zodResolver(platformSettingsFormSchema),
+    mode: 'onChange', // Adicionado para validação em tempo real
     defaultValues: {
       siteTitle: initialData?.siteTitle || 'BidExpert',
       siteTagline: initialData?.siteTagline || 'Sua plataforma de leilões online.',
@@ -135,15 +135,15 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-12">
         
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-identity">
             <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Fingerprint />Identidade do Site</h3>
-            <FormField control={form.control} name="siteTitle" render={({ field }) => (<FormItem><FormLabel>Título do Site*</FormLabel><FormControl><Input placeholder="Ex: BidExpert Leilões" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+            <FormField control={form.control} name="siteTitle" render={({ field }) => (<FormItem><FormLabel>Título do Site<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: BidExpert Leilões" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
             <FormField control={form.control} name="siteTagline" render={({ field }) => (<FormItem><FormLabel>Slogan / Tagline</FormLabel><FormControl><Input placeholder="Sua plataforma de leilões" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
         </section>
 
         <Separator />
         
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-general">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Wrench />Configurações Gerais</h3>
              <FormField control={form.control} name="platformPublicIdMasksJson.auctions" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Leilões)</FormLabel><FormControl><Input placeholder="LEIL-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de leilões.</FormDescription><FormMessage /></FormItem>)} />
              <FormField control={form.control} name="platformPublicIdMasksJson.lots" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Lotes)</FormLabel><FormControl><Input placeholder="LOTE-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de lotes.</FormDescription><FormMessage /></FormItem>)} />
@@ -151,18 +151,18 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         
         <Separator />
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-storage">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Database />Armazenamento</h3>
             <FormField control={form.control} name="storageProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Armazenamento</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="local">Local</SelectItem><SelectItem value="firebase">Firebase Storage</SelectItem></SelectContent></Select><FormDescription>Onde os arquivos de mídia (imagens, documentos) serão salvos.</FormDescription><FormMessage /></FormItem>)} />
             {watchedStorageProvider === 'firebase' && (
                  <FormField control={form.control} name="firebaseStorageBucket" render={({ field }) => (<FormItem><FormLabel>Firebase Storage Bucket</FormLabel><FormControl><Input placeholder="seu-projeto.appspot.com" {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
             )}
-             <FormField control={form.control} name="galleryImageBasePath" render={({ field }) => (<FormItem><FormLabel>Caminho Base das Imagens (Local)</FormLabel><FormControl><Input placeholder="/uploads/media/" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Caminho público para acessar as imagens salvas localmente.</FormDescription><FormMessage /></FormItem>)} />
+             <FormField control={form.control} name="galleryImageBasePath" render={({ field }) => (<FormItem><FormLabel>Caminho Base das Imagens (Local)<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="/uploads/media/" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Caminho público para acessar as imagens salvas localmente.</FormDescription><FormMessage /></FormItem>)} />
         </section>
 
         <Separator />
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-display">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Palette />Aparência e Exibição</h3>
             <FormField control={form.control} name="showCountdownOnCards" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Contagem Regressiva nos Cards</FormLabel><FormDescription>Exibir o cronômetro de contagem regressiva nos cards de leilão/lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
             <FormField control={form.control} name="showRelatedLotsOnLotDetail" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Exibir Lotes Relacionados</FormLabel><FormDescription>Mostrar uma seção de &quot;Outros Lotes do Leilão&quot; na página de detalhes do lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)}/>
@@ -173,14 +173,14 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
         <Separator />
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-lists">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Rows />Listas de Cadastros</h3>
             <FormField control={form.control} name="defaultListItemsPerPage" render={({ field }) => (<FormItem><FormLabel>Itens por Página (Padrão)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Número padrão de itens a serem exibidos nas tabelas do painel de administração.</FormDescription><FormMessage /></FormItem>)} />
         </section>
 
         <Separator />
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-bidding">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Zap />Lances e Automação</h3>
              <FormField control={form.control} name="biddingSettingsJson.instantBiddingEnabled" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Habilitar Lances Instantâneos</FormLabel><FormDescription>Permitir que os lances sejam processados instantaneamente sem confirmação.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
             <FormField control={form.control} name="biddingSettingsJson.biddingInfoCheckIntervalSeconds" render={({ field }) => (<FormItem><FormLabel>Intervalo de Atualização (Segundos)</FormLabel><FormControl><Input type="number" {...field} /></FormControl><FormDescription>Intervalo em segundos para verificar novas informações de lances.</FormDescription><FormMessage /></FormItem>)} />
@@ -188,7 +188,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
         <Separator />
         
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-increment">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><ArrowUpDown />Incremento de Lance Variável</h3>
              <div className="space-y-2">
                 {fields.map((field, index) => (
@@ -205,7 +205,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
         <Separator />
 
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-payment">
             <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><CreditCard />Pagamentos</h3>
           <FormField control={form.control} name="paymentGatewaySettingsJson.defaultGateway" render={({ field }) => (<FormItem><FormLabel>Gateway de Pagamento Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value || 'Manual'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Manual">Processamento Manual</SelectItem><SelectItem value="Pagarme">Pagar.me (Em breve)</SelectItem><SelectItem value="Stripe">Stripe (Em breve)</SelectItem></SelectContent></Select><FormDescription>Selecione o provedor para processar pagamentos.</FormDescription><FormMessage /></FormItem>)} />
            <FormField control={form.control} name="paymentGatewaySettingsJson.platformCommissionPercentage" render={({ field }) => (<FormItem><FormLabel>Comissão da Plataforma (%)</FormLabel><FormControl><Input type="number" step="0.1" {...field} value={field.value ?? 5} /></FormControl><FormDescription>Percentual da comissão retida sobre cada venda.</FormDescription><FormMessage /></FormItem>)} />
@@ -213,7 +213,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
         <Separator />
         
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-notifications">
             <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Bell />Notificações por E-mail</h3>
           <FormField control={form.control} name="notificationSettingsJson.notifyOnNewAuction" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Novos Leilões</FormLabel><FormDescription>Enviar notificação quando um novo leilão for publicado.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
            <FormField control={form.control} name="notificationSettingsJson.notifyOnFeaturedLot" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Lotes em Destaque</FormLabel><FormDescription>Notificar assinantes sobre novos lotes em destaque.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
@@ -223,14 +223,14 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         
         <Separator />
         
-        <section className="space-y-6">
+        <section className="space-y-6" data-ai-id="settings-section-maps">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><MapIcon />Configurações de Mapa</h3>
             <FormField control={form.control} name="mapSettingsJson.defaultProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Mapa Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem><SelectItem value="google">Google Maps</SelectItem><SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem></SelectContent></Select></FormItem>)} />
             <FormField control={form.control} name="mapSettingsJson.googleMapsApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API - Google Maps</FormLabel><FormControl><Input {...field} value={field.value ?? ''} /></FormControl><FormDescription>Necessário se &quot;Google Maps&quot; for o provedor selecionado.</FormDescription><FormMessage /></FormItem>)} />
         </section>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isSubmitting || !form.formState.isDirty}>
+          <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar Todas as Configurações
           </Button>
