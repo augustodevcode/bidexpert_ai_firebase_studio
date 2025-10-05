@@ -1,32 +1,36 @@
-// prisma/models/media-item.prisma
+// src/prisma/models/media-item.prisma
+/**
+ * @fileoverview Modelo de Item de Mídia. Representa um único arquivo
+ * (imagem, PDF, etc.) armazenado, com seus metadados.
+ */
 model MediaItem {
-  id        String   @id @default(cuid())
-  fileName  String
-  mimeType  String
-  sizeBytes Int
-  urlOriginal String  @db.Text
-  urlThumbnail String? @db.Text
-  storagePath String @db.Text
+  id           String  @id @default(cuid())
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String  @unique
+  urlOriginal  String
+  urlThumbnail String?
+  title        String?
+  altText      String?
+  caption      String?
+  description  String?
+  dataAiHint   String? @map("data_ai_hint")
+
+  uploadedByUserId String?       @map("uploaded_by_user_id")
+  uploadedBy       User?         @relation(fields: [uploadedByUserId], references: [id])
   
-  // Metadados
-  title       String?
-  altText     String?
-  caption     String?
-  description String?
-  dataAiHint  String?
-  
-  // Relacionamentos
-  uploadedByUserId String?
-  uploadedByUser   User?   @relation(fields: [uploadedByUserId], references: [id])
-  
-  judicialProcessId String?
-  
-  // Relacionamentos Inversos
-  imageForAssets   Asset[] @relation("AssetImage")
-  galleryForAssets AssetMedia[] @relation("GalleryImages")
-  
-  uploadedAt DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
+  judicialProcessId String?       @map("judicial_process_id")
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+
+  // Relação para imagem principal de um Ativo
+  imageForAssets Asset[] @relation("AssetImage")
+
+  // Relação para galeria de um Ativo
+  galleryForAssets AssetMedia[] @relation("AssetMediaGallery")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@map("media_items")
 }
