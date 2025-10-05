@@ -1,0 +1,63 @@
+// prisma/models/asset.prisma
+import { AssetStatus } from '../enums'
+import { Lot } from './lot.prisma'
+import { Seller } from './seller.prisma'
+import { JudicialProcess } from './judicial-process.prisma'
+import { LotCategory, Subcategory } from './category.prisma'
+import { Tenant } from './tenant.prisma'
+import { City, State } from './location.prisma'
+import { MediaItem } from './media-item.prisma'
+import { AssetMedia } from './asset-media.prisma'
+
+model Asset {
+  id                String      @id @default(cuid())
+  publicId          String      @unique @default(uuid()) @map("public_id")
+  tenantId          String
+  title             String
+  description       String?     @db.Text
+  properties        Json?
+  status            AssetStatus @default(DISPONIVEL)
+  evaluationValue   Decimal?    @db.Decimal(12, 2) @map("evaluation_value")
+
+  // Imagem Principal
+  imageMediaId      String?     @map("image_media_id")
+  imageUrl          String?     @db.Text
+  mediaItem         MediaItem?  @relation("AssetImage", fields: [imageMediaId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  dataAiHint        String?
+
+  // Relacionamentos
+  lots              AssetMedia[] @relation("AssetGallery")
+
+  sellerId          String?
+  seller            Seller?      @relation(fields: [sellerId], references: [id])
+
+  judicialProcessId String?      @map("judicial_process_id")
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  
+  categoryId        String?      @map("category_id")
+  category          LotCategory? @relation(fields: [categoryId], references: [id])
+
+  subcategoryId     String?      @map("subcategory_id")
+  subcategory       Subcategory? @relation(fields: [subcategoryId], references: [id])
+
+  tenant            Tenant       @relation(fields: [tenantId], references: [id])
+
+  // Endereço
+  street            String?
+  number            String?
+  complement        String?
+  neighborhood      String?
+  zipCode           String?       @map("zip_code")
+  latitude          Decimal?      @db.Decimal(10, 8)
+  longitude         Decimal?      @db.Decimal(11, 8)
+
+  cityId            String?
+  city              City?         @relation(fields: [cityId], references: [id])
+  stateId           String?
+  state             State?        @relation(fields: [stateId], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("assets")
+}

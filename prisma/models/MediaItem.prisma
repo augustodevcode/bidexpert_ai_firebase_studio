@@ -18,4 +18,6 @@ model MediaItem {
   uploadedAt       DateTime  @default(now())
   uploadedByUserId String?   // Made optional to work with onDelete: SetNull
   uploadedBy       User?     @relation(fields: [uploadedByUserId], references: [id], onDelete: SetNull)
+
+  Asset Asset[] @relation("AssetImage")
 }

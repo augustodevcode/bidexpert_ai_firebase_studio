@@ -1,0 +1,37 @@
+// prisma/models/media-item.prisma
+import { User } from './user.prisma'
+import { Asset } from './asset.prisma'
+import { AssetMedia } from './asset-media.prisma'
+
+
+model MediaItem {
+  id        String   @id @default(cuid())
+  fileName  String
+  mimeType  String
+  sizeBytes Int
+  urlOriginal String  @db.Text
+  urlThumbnail String? @db.Text
+  storagePath String @db.Text
+  
+  // Metadados
+  title       String?
+  altText     String?
+  caption     String?
+  description String?
+  dataAiHint  String?
+  
+  // Relacionamentos
+  uploadedByUserId String?
+  uploadedByUser   User?   @relation(fields: [uploadedByUserId], references: [id])
+  
+  judicialProcessId String?
+  
+  // Relacionamentos Inversos
+  imageForAssets   Asset[] @relation("AssetImage")
+  galleryForAssets AssetMedia[] @relation("GalleryImages")
+  
+  uploadedAt DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  @@map("media_items")
+}

@@ -12,4 +12,5 @@ model City {
   auctions  Auction[]
 
   @@unique([name, stateId])
+  Asset Asset[]
 }

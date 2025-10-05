@@ -10,4 +10,6 @@ model State {
   judicialDistricts JudicialDistrict[]
   auctions          Auction[]
   lots              Lot[]
+
+  Asset Asset[]
 }
