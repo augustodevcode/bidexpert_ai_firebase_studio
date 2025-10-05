@@ -92,6 +92,8 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
       defaultListItemsPerPage: initialData?.defaultListItemsPerPage || 10,
     },
   });
+  
+  const { formState } = form; // Get form state
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -119,6 +121,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         if (onUpdateSuccess) {
           await onUpdateSuccess();
         }
+        form.reset(values); // Re-sync form state after successful submission
       } else {
         toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
       }
@@ -230,7 +233,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         </section>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+          <Button type="submit" disabled={isSubmitting || !formState.isDirty || !formState.isValid}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar Todas as Configurações
           </Button>
