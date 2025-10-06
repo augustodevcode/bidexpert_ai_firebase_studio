@@ -74,7 +74,7 @@ export const platformSettingsFormSchema = z.object({
     staticImageMapZoom: z.coerce.number().min(1, {message: "Zoom deve ser entre 1 e 20."}).max(20, {message: "Zoom deve ser entre 1 e 20."}).optional().default(15),
     staticImageMapMarkerColor: z.string().max(50, {message: "Cor do marcador não pode exceder 50 caracteres."}).optional().default('blue'),
   }).optional(),
-  notificationSettingsJson: notificationSettingsSchema, // Adicionado
+  notificationSettingsJson: notificationSettingsSchema,
   searchPaginationType: z.enum(['loadMore', 'numberedPages'], {
     errorMap: () => ({ message: "Selecione um tipo de paginação válido."})
   }).optional().default('loadMore'),
@@ -84,7 +84,7 @@ export const platformSettingsFormSchema = z.object({
   showCountdownOnCards: z.boolean().optional().default(true),
   showRelatedLotsOnLotDetail: z.boolean().optional().default(true),
   relatedLotsCount: z.coerce.number().min(1, {message: "Deve ser pelo menos 1."}).max(20, {message: "Não pode exceder 20."}).optional().default(5),
-  defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional(),
+  defaultUrgencyTimerHours: z.coerce.number().min(1, {message: "O tempo de urgência deve ser de no mínimo 1 hora."}).optional().nullable(),
   variableIncrementTableJson: z.array(variableIncrementRuleSchema).optional().default([]),
   biddingSettingsJson: biddingSettingsSchema,
   paymentGatewaySettingsJson: paymentGatewaySettingsSchema,
