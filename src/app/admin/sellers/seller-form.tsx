@@ -41,11 +41,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
-  const [isClient, setIsClient] = React.useState(false);
-
-  React.useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const form = useForm<SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
@@ -137,7 +132,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     <>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6" data-ai-id="seller-form">
-          {isClient && (
            <Accordion type="multiple" defaultValue={['general', 'contact', 'address']} className="w-full">
             <AccordionItem value="general">
               <AccordionTrigger className="text-md font-semibold">Informações Gerais</AccordionTrigger>
@@ -211,7 +205,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                </AccordionContent>
             </AccordionItem>
            </Accordion>
-          )}
         </form>
       </Form>
      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
@@ -221,5 +214,3 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
 
 SellerForm.displayName = "SellerForm";
 export default SellerForm;
-
-    
