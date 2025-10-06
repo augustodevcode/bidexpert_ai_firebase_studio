@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Settings as SettingsIcon, AlertTriangle, Database, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { PlatformSettings } from '@/types';
-import { useToast } from '@/hooks/use-toast'; 
+import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import {
   AlertDialog,
