@@ -8,7 +8,7 @@
  */
 import { prisma } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
-import { subDays, format } from 'date-fns';
+import { subDays, format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
 import type { AdminReportData } from '@/types';

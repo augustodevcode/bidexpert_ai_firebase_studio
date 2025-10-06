@@ -90,6 +90,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
       relatedLotsCount: initialData?.relatedLotsCount || 5,
       variableIncrementTableJson: initialData?.variableIncrementTable || [],
       defaultListItemsPerPage: initialData?.defaultListItemsPerPage || 10,
+      defaultUrgencyTimerHours: initialData?.defaultUrgencyTimerHours || 24,
     },
   });
   
@@ -109,8 +110,9 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         notificationSettingsJson: initialData?.notificationSettings || defaultNotificationSettings,
         themesJson: initialData?.themes || [],
         variableIncrementTableJson: initialData?.variableIncrementTable || [],
+        defaultUrgencyTimerHours: initialData?.defaultUrgencyTimerHours || 24,
     });
-  }, [initialData, form]);
+  }, [initialData]);
   
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
