@@ -152,18 +152,18 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: {
     return (
         <div className="max-w-4xl mx-auto space-y-8">
             <Card className="shadow-lg">
-                <CardHeader>
+              <CardHeader>
                 <CardTitle className="text-2xl font-bold font-headline flex items-center">
-                    <SettingsIcon className="h-7 w-7 mr-3 text-primary" />
-                    Configurações da Plataforma
+                  <SettingsIcon className="h-7 w-7 mr-3 text-primary" />
+                  Configurações da Plataforma
                 </CardTitle>
                 <CardDescription>
-                    Gerencie as configurações globais do BidExpert.
+                  Gerencie as configurações globais do BidExpert.
                 </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <SettingsForm initialData={initialSettings} onUpdateSuccess={onRetry} />
-                </CardContent>
+              </CardHeader>
+              <CardContent>
+                <SettingsForm initialData={initialSettings} onUpdateSuccess={onRetry} />
+              </CardContent>
             </Card>
             <DangerZone />
         </div>
@@ -198,7 +198,7 @@ export default function AdminSettingsPageWrapper() {
 
     if (isLoadingInitial) {
         return (
-             <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
+             <div className="flex items-center justify-center min-h-[calc(100vh-20rem)]">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <p className="ml-3 text-muted-foreground">Carregando página de configurações...</p>
             </div>
@@ -206,7 +206,7 @@ export default function AdminSettingsPageWrapper() {
     }
     
     return (
-        <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-10rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
+        <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
             <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetchInitialSettings} />
         </Suspense>
     );
