@@ -6,7 +6,7 @@ import type { Prisma } from '@prisma/client';
 export class MediaRepository {
   async findAll(): Promise<MediaItem[]> {
     // @ts-ignore
-    return prisma.mediaItem.findMany({ orderBy: { uploadedAt: 'desc' } });
+    return prisma.mediaItem.findMany({ orderBy: { createdAt: 'desc' } });
   }
 
   async findById(id: string): Promise<MediaItem | null> {
@@ -28,4 +28,3 @@ export class MediaRepository {
     await prisma.mediaItem.delete({ where: { id } });
   }
 }
-
