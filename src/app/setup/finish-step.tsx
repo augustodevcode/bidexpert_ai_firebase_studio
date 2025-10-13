@@ -49,7 +49,7 @@ export default function FinishStep() {
       </CardHeader>
       <CardContent className="text-center">
         <p className="text-muted-foreground">
-          O usuário administrador foi criado e logado. Você agora pode acessar o painel de administração para começar a gerenciar sua plataforma.
+          O usuário administrador foi criado e logado. Você agora pode acessar o painel de administração para começar a cadastrar leilões, lotes e gerenciar sua plataforma.
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">

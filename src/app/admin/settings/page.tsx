@@ -30,12 +30,23 @@ function DangerZone() {
     const { toast } = useToast();
     const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
     const [confirmationText, setConfirmationText] = useState('');
+    const router = useRouter();
     
-    const handleResetSetup = () => {
-        if(typeof window !== 'undefined') {
-            localStorage.removeItem('bidexpert_setup_complete');
-            toast({ title: "Assistente Reiniciado", description: "A página será recarregada para iniciar a configuração."});
-            setTimeout(() => window.location.href = '/setup', 1000);
+    const handleResetSetup = async () => {
+        setIsActionLoading('reset_setup');
+        // This action needs to be implemented. Let's assume it updates the DB.
+        const { updatePlatformSettings } = await import('./actions');
+        const result = await updatePlatformSettings({ isSetupComplete: false });
+        if(result.success) {
+            toast({ title: "Assistente Reiniciado", description: "A plataforma irá agora redirecionar para a tela de configuração inicial."});
+            // Give toast time to show before redirecting
+            setTimeout(() => {
+                router.push('/setup');
+                router.refresh();
+            }, 1500);
+        } else {
+            toast({ title: "Erro", description: `Não foi possível reiniciar o assistente: ${result.message}`, variant: "destructive"});
+            setIsActionLoading(null);
         }
     };
     
@@ -73,11 +84,28 @@ function DangerZone() {
                     <AlertTriangle className="h-4 w-4" />
                     <AlertTitle>Reiniciar Assistente de Configuração</AlertTitle>
                     <AlertDescription>
-                        Esta ação forçará o assistente de setup a ser exibido na próxima recarga da página para reconfigurar o ambiente.
+                        Esta ação forçará o assistente de setup a ser exibido na próxima visita à plataforma, ideal para reconfigurar o ambiente.
                     </AlertDescription>
-                     <Button variant="outline" size="sm" className="mt-3 border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={handleResetSetup}>
-                        <RefreshCw className="mr-2 h-4 w-4" /> Reiniciar Assistente
-                    </Button>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" className="mt-3">
+                                {isActionLoading === 'reset_setup' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
+                                Reiniciar Setup
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                             <AlertDialogHeader>
+                                <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Isso marcará a configuração como incompleta e forçará o redirecionamento para a tela de setup na próxima vez que alguém visitar o site.
+                                </AlertDialogDescription>
+                             </AlertDialogHeader>
+                             <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleResetSetup}>Confirmar</AlertDialogAction>
+                             </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </Alert>
                 <Alert variant="default" className="border-blue-500/50">
                     <Database className="h-4 w-4" />
