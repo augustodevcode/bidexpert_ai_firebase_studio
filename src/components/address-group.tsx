@@ -2,14 +2,21 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
 import { UseFormReturn, useWatch } from 'react-hook-form';
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from '@/components/ui/form';
 import { Input } from './ui/input';
-import MapPicker from './map-picker';
 import type { CityInfo, StateInfo } from '@/types';
 import EntitySelector from './ui/entity-selector';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
+import { Skeleton } from './ui/skeleton';
+
+const MapPicker = dynamic(() => import('./map-picker'), {
+  ssr: false,
+  loading: () => <Skeleton className="h-72 w-full rounded-md" />,
+});
+
 
 interface AddressGroupProps {
   form: UseFormReturn<any>;
