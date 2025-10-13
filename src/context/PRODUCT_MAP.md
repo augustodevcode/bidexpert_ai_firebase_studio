@@ -154,6 +154,17 @@ Baseado na estrutura de `src/app`:
 *   **Desabilitação de Botão de Submissão:** Os botões de "Salvar", "Criar" ou "Enviar" **devem** permanecer desabilitados enquanto o formulário for inválido (i.e., enquanto campos obrigatórios não forem preenchidos ou dados inseridos não atenderem aos critérios de validação).
 *   **Feedback Imediato:** Após a submissão de um formulário, o sistema **deve** fornecer um feedback claro e imediato ao usuário, utilizando componentes `Toast` para indicar sucesso ou falha na operação. Submissões não devem falhar silenciosamente.
 
+### 5.7. **[NOVO]** Fluxo de Configuração Inicial (Setup)
+
+*   **Flag de Conclusão:** O estado do setup inicial da aplicação é controlado por uma flag booleana `isSetupComplete` no modelo `PlatformSettings` do banco de dados.
+*   **Redirecionamento:** Na inicialização da aplicação, o layout raiz (`RootLayout`) verifica o estado desta flag. Se for `false`, todos os usuários são redirecionados para a página `/setup`, independentemente da rota solicitada.
+*   **Assistente de Setup:** A página `/setup` apresenta um assistente de múltiplos passos para:
+    1.  Confirmar a conexão com o banco de dados.
+    2.  Executar o `seed` de dados essenciais e de demonstração.
+    3.  Criar a conta de administrador principal.
+*   **Finalização:** Ao final do assistente, a ação `markSetupAsComplete` é chamada, atualizando a flag `isSetupComplete` para `true` no banco de dados.
+*   **Reset pelo Admin:** Na página de configurações (`/admin/settings`), um administrador pode resetar a flag `isSetupComplete` para `false`, forçando a re-exibição do assistente de setup na próxima visita, o que é útil para reconfiguração do ambiente.
+
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
