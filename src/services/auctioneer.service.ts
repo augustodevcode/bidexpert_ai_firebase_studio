@@ -51,10 +51,15 @@ export class AuctioneerService {
 
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
-      const { userId, ...auctioneerData } = data;
+      const { userId, street, number, complement, neighborhood, cityId, stateId, ...auctioneerData } = data;
+
+      const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
 
       const dataToCreate: Prisma.AuctioneerCreateInput = {
         ...(auctioneerData as any),
+        address: fullAddress,
+        city: cityId ? (await this.prisma.city.findUnique({where: {id: cityId}}))?.name : undefined,
+        state: stateId ? (await this.prisma.state.findUnique({where: {id: stateId}}))?.uf : undefined,
         slug: slugify(data.name),
         publicId: `LEILOE-${uuidv4()}`,
         tenant: { connect: { id: tenantId } },
@@ -77,8 +82,28 @@ export class AuctioneerService {
 
   async updateAuctioneer(tenantId: string, id: string, data: Partial<AuctioneerFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
-      await this.auctioneerRepository.update(tenantId, id, dataWithSlug);
+      const { street, number, complement, neighborhood, cityId, stateId, ...restOfData } = data;
+
+      const dataToUpdate: Partial<Prisma.AuctioneerUpdateInput> = { ...restOfData };
+      if (data.name) {
+        dataToUpdate.slug = slugify(data.name);
+      }
+      
+      const fullAddress = [
+        data.street !== undefined ? data.street : '',
+        data.number !== undefined ? data.number : '',
+        data.complement !== undefined ? data.complement : '',
+        data.neighborhood !== undefined ? data.neighborhood : ''
+      ].filter(Boolean).join(', ');
+
+      if (street !== undefined || number !== undefined || complement !== undefined || neighborhood !== undefined) {
+        dataToUpdate.address = fullAddress;
+      }
+
+      if (cityId) dataToUpdate.city = (await this.prisma.city.findUnique({where: {id: cityId}}))?.name;
+      if (stateId) dataToUpdate.state = (await this.prisma.state.findUnique({where: {id: stateId}}))?.uf;
+
+      await this.auctioneerRepository.update(tenantId, id, dataToUpdate);
       return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
     } catch (error: any) {
        console.error(`Error in AuctioneerService.updateAuctioneer for id ${id}:`, error);
