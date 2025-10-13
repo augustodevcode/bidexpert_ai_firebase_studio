@@ -75,6 +75,7 @@ const citiesByState: { [key: string]: string[] } = {
   'TO': ['Palmas']
 };
 
+
 async function seedDataSources() {
     console.log('[DB SEED] Seeding Data Sources for Report Builder...');
     
@@ -132,6 +133,7 @@ async function seedDataSources() {
     console.log(`[DB SEED] ✅ SUCCESS: ${dataSources.length} data sources processed.`);
 }
 
+
 async function seedCategoriesAndSubcategories() {
     console.log('[DB SEED] Seeding Categories and Subcategories...');
     let categoryCount = 0;
@@ -157,6 +159,7 @@ async function seedCategoriesAndSubcategories() {
     }
     console.log(`[DB SEED] ✅ SUCCESS: ${categoryCount} categories and ${subcategoryCount} subcategories processed.`);
 }
+
 
 async function seedCities() {
     console.log('[DB SEED] Seeding Cities...');
@@ -192,8 +195,11 @@ async function seedEssentialData() {
         where: { nameNormalized: role.nameNormalized },
         update: {},
         create: {
-          id: role.id, name: role.name, nameNormalized: role.nameNormalized,
-          description: role.description, permissions: role.permissions.split(','),
+          id: role.id,
+          name: role.name,
+          nameNormalized: role.nameNormalized,
+          description: role.description,
+          permissions: role.permissions.split(','),
         },
       });
     }
@@ -214,11 +220,20 @@ async function seedEssentialData() {
         where: { tenantId: '1' },
         update: {},
         create: {
-            tenantId: '1', siteTitle: 'BidExpert', siteTagline: 'Sua plataforma de leilões online.',
-            galleryImageBasePath: '/uploads/media/', storageProvider: 'local', searchPaginationType: 'loadMore',
-            searchItemsPerPage: 12, searchLoadMoreCount: 12, showCountdownOnLotDetail: true,
-            showCountdownOnCards: true, showRelatedLotsOnLotDetail: true, relatedLotsCount: 4,
-            defaultListItemsPerPage: 10, homepageSections: [],
+            tenantId: '1',
+            siteTitle: 'BidExpert',
+            siteTagline: 'Sua plataforma de leilões online.',
+            galleryImageBasePath: '/uploads/media/',
+            storageProvider: 'local',
+            searchPaginationType: 'loadMore',
+            searchItemsPerPage: 12,
+            searchLoadMoreCount: 12,
+            showCountdownOnLotDetail: true,
+            showCountdownOnCards: true,
+            showRelatedLotsOnLotDetail: true,
+            relatedLotsCount: 4,
+            defaultListItemsPerPage: 10,
+            homepageSections: [],
         }
     });
     console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
@@ -238,20 +253,38 @@ async function seedEssentialData() {
 
         adminUser = await prisma.user.create({
             data: {
-                email: adminEmail, fullName: 'Administrador', password: hashedPassword, habilitationStatus: 'HABILITADO',
+                email: adminEmail,
+                fullName: 'Administrador',
+                password: hashedPassword,
+                habilitationStatus: 'HABILITADO',
                 accountType: 'LEGAL',
-                roles: { create: { role: { connect: { id: adminRole.id } }, assignedBy: 'system-seed' } },
-                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
+                roles: {
+                    create: {
+                        role: { connect: { id: adminRole.id } },
+                        assignedBy: 'system-seed'
+                    }
+                },
+                tenants: {
+                    create: {
+                        tenant: { connect: { id: landlordTenant.id } },
+                        assignedBy: 'system-seed'
+                    }
+                }
             }
         });
         console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
     } else {
+        // Ensure admin user is linked to landlord tenant if they exist
         const adminTenantLink = await prisma.usersOnTenants.findUnique({
             where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } }
         });
         if (!adminTenantLink) {
             await prisma.usersOnTenants.create({
-                data: { userId: adminUser.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' }
+                data: {
+                    userId: adminUser.id,
+                    tenantId: landlordTenant.id,
+                    assignedBy: 'system-seed-fix'
+                }
             });
             console.log('[DB SEED] Admin user already existed and was linked to Landlord tenant.');
         } else {
@@ -259,31 +292,27 @@ async function seedEssentialData() {
         }
     }
     
-    // 5. Seed States, Categories, Subcategories, and Cities
-    await Promise.all([
-      (async () => {
-        console.log('[DB SEED] Seeding Brazilian States...');
-        for (const state of brazilianStates) {
-          await prisma.state.upsert({
+    // 5. Seed States
+    console.log('[DB SEED] Seeding Brazilian States...');
+    for (const state of brazilianStates) {
+        await prisma.state.upsert({
             where: { uf: state.uf },
             update: { name: state.name },
             create: { name: state.name, uf: state.uf, slug: slugify(state.name) },
-          });
-        }
-        console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
-      })(),
-      seedCategoriesAndSubcategories(),
-    ]);
+        });
+    }
+    console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
     
-    // Seed cities after states are seeded
+    // 6. Seed Categories, Subcategories, and Cities
+    await seedCategoriesAndSubcategories();
     await seedCities();
-
-    // 6. Seed Data Sources
+    
+    // 7. Seed Data Sources
     await seedDataSources();
 
   } catch (error: any) {
     console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
-    throw error;
+    throw error; // Throw error to stop the process if essential data fails
   }
 }
 
