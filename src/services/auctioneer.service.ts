@@ -51,12 +51,18 @@ export class AuctioneerService {
 
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
+      const { userId, ...auctioneerData } = data;
+
       const dataToCreate: Prisma.AuctioneerCreateInput = {
-        ...(data as any),
+        ...(auctioneerData as any),
         slug: slugify(data.name),
         publicId: `LEILOE-${uuidv4()}`,
         tenant: { connect: { id: tenantId } },
       };
+
+      if (userId) {
+        dataToCreate.user = { connect: { id: userId } };
+      }
       
       const newAuctioneer = await this.auctioneerRepository.create(dataToCreate);
       return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: newAuctioneer.id };
