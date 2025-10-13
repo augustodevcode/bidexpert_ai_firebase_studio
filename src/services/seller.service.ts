@@ -1,4 +1,12 @@
+
 // src/services/seller.service.ts
+/**
+ * @fileoverview Este arquivo funciona como a camada de Controller, expondo funções que o cliente
+ * pode chamar para executar operações de CRUD (Criar, Ler, Atualizar, Excluir)
+ * nos comitentes. Ele delega a lógica de negócio para a `SellerService` e garante
+ * a aplicação do isolamento de dados por tenant e a revalidação do cache do Next.js
+ * quando ocorrem mutações.
+ */
 import { SellerRepository } from '@/repositories/seller.repository';
 import { AuctionRepository } from '@/repositories/auction.repository'; // Importar
 import type { SellerFormData, SellerProfileInfo, Lot, Auction } from '@/types';
@@ -8,7 +16,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { prisma } from '@/lib/prisma';
 import { format, subMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone'; // Import timezone functions
+import { nowInSaoPaulo, formatInSaoPaulo } from '@/lib/timezone';
 
 export interface SellerDashboardData {
   totalRevenue: number;
@@ -77,17 +85,29 @@ export class SellerService {
         return { success: false, message: 'Já existe um comitente com este nome.' };
       }
 
-      const { userId, ...sellerData } = data;
+      const { 
+        userId, street, number, complement, neighborhood, 
+        cityId, stateId, latitude, longitude, ...sellerData 
+      } = data;
+
+      const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
 
       const dataToCreate: Prisma.SellerCreateInput = {
         ...(sellerData as any),
+        address: fullAddress,
         slug: slugify(data.name),
         publicId: `COM-${uuidv4()}`,
         tenant: { connect: { id: tenantId } },
       };
       
-      if (userId) {
-        dataToCreate.user = { connect: { id: userId } };
+      if (userId) dataToCreate.user = { connect: { id: userId } };
+      if (cityId) {
+        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        if (city) dataToCreate.city = city.name;
+      }
+      if (stateId) {
+        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        if (state) dataToCreate.state = state.uf;
       }
       
       const newSeller = await this.sellerRepository.create(dataToCreate);
@@ -100,8 +120,42 @@ export class SellerService {
 
   async updateSeller(tenantId: string, id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      const dataWithSlug = data.name ? { ...data, slug: slugify(data.name) } : data;
-      await this.sellerRepository.update(tenantId, id, dataWithSlug);
+       const { 
+        street, number, complement, neighborhood, 
+        cityId, stateId, latitude, longitude, ...restOfData 
+      } = data;
+
+      const dataToUpdate: Partial<Prisma.SellerUpdateInput> = { ...restOfData };
+
+      if (data.name) {
+        dataToUpdate.slug = slugify(data.name);
+      }
+      
+      const addressPartsToUpdate = [
+        street, number, complement, neighborhood
+      ].filter(val => val !== undefined);
+
+      if (addressPartsToUpdate.length > 0) {
+        const currentSeller = await this.sellerRepository.findById(tenantId, id);
+        const currentAddressParts = currentSeller?.address?.split(', ') || [];
+        dataToUpdate.address = [
+          street ?? currentAddressParts[0] ?? '',
+          number ?? currentAddressParts[1] ?? '',
+          complement ?? currentAddressParts[2] ?? '',
+          neighborhood ?? currentAddressParts[3] ?? ''
+        ].filter(Boolean).join(', ');
+      }
+      
+      if (cityId) {
+        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        if (city) dataToUpdate.city = city.name;
+      }
+      if (stateId) {
+        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        if (state) dataToUpdate.state = state.uf;
+      }
+
+      await this.sellerRepository.update(tenantId, id, dataToUpdate);
       return { success: true, message: 'Comitente atualizado com sucesso.' };
     } catch (error: any) {
        console.error(`Error in SellerService.updateSeller for id ${id}:`, error);
