@@ -31,6 +31,50 @@ const brazilianStates = [
   { name: 'Tocantins', uf: 'TO' }
 ];
 
+const categoriesAndSubcategories = {
+  'Imóveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões e Prédios', 'Imóveis Rurais'],
+  'Veículos': ['Carros', 'Motos', 'Caminhões e Ônibus', 'Veículos Pesados', 'Aeronaves', 'Embarcações'],
+  'Máquinas e Equipamentos': ['Máquinas Agrícolas', 'Máquinas Industriais', 'Equipamentos de Construção', 'Equipamentos Médicos'],
+  'Eletrônicos': ['Celulares e Tablets', 'Computadores e Notebooks', 'Televisores e Áudio', 'Componentes e Peças'],
+  'Casa e Decoração': ['Móveis Residenciais', 'Eletrodomésticos', 'Utensílios de Cozinha', 'Decoração e Iluminação'],
+  'Arte e Antiguidades': ['Obras de Arte', 'Antiguidades', 'Itens Colecionáveis', 'Numismática'],
+  'Joias e Acessórios': ['Joias', 'Relógios de Luxo', 'Bolsas de Grife'],
+  'Semoventes': ['Bovinos', 'Equinos', 'Ovinos e Caprinos'],
+  'Materiais e Sucatas': ['Materiais de Construção', 'Sucatas Metálicas', 'Resíduos Industriais'],
+  'Industrial Geral': ['Estoques Industriais', 'Matéria-prima', 'Mobiliário Corporativo'],
+  'Outros Itens e Oportunidades': ['Consórcios', 'Direitos Creditórios', 'Marcas e Patentes']
+};
+
+const citiesByState: { [key: string]: string[] } = {
+  'AC': ['Rio Branco'],
+  'AL': ['Maceió'],
+  'AP': ['Macapá'],
+  'AM': ['Manaus'],
+  'BA': ['Salvador', 'Feira de Santana'],
+  'CE': ['Fortaleza'],
+  'DF': ['Brasília'],
+  'ES': ['Vitória', 'Vila Velha'],
+  'GO': ['Goiânia', 'Aparecida de Goiânia'],
+  'MA': ['São Luís'],
+  'MT': ['Cuiabá', 'Várzea Grande'],
+  'MS': ['Campo Grande'],
+  'MG': ['Belo Horizonte', 'Uberlândia', 'Contagem'],
+  'PA': ['Belém', 'Ananindeua'],
+  'PB': ['João Pessoa'],
+  'PR': ['Curitiba', 'Londrina', 'Maringá'],
+  'PE': ['Recife', 'Jaboatão dos Guararapes'],
+  'PI': ['Teresina'],
+  'RJ': ['Rio de Janeiro', 'São Gonçalo', 'Duque de Caxias', 'Nova Iguaçu'],
+  'RN': ['Natal'],
+  'RS': ['Porto Alegre', 'Caxias do Sul'],
+  'RO': ['Porto Velho'],
+  'RR': ['Boa Vista'],
+  'SC': ['Florianópolis', 'Joinville'],
+  'SP': ['São Paulo', 'Guarulhos', 'Campinas', 'São Bernardo do Campo', 'Santo André'],
+  'SE': ['Aracaju'],
+  'TO': ['Palmas']
+};
+
 async function seedDataSources() {
     console.log('[DB SEED] Seeding Data Sources for Report Builder...');
     
@@ -39,59 +83,40 @@ async function seedDataSources() {
             name: 'Leilões',
             modelName: 'Auction',
             fields: [
-                { name: 'title', type: 'String' },
-                { name: 'status', type: 'String' },
-                { name: 'auctionDate', type: 'DateTime' },
-                { name: 'endDate', type: 'DateTime' },
-                { name: 'totalLots', type: 'Int' },
-                { name: 'initialOffer', type: 'Decimal' },
-                { name: 'visits', type: 'Int' },
+                { name: 'title', type: 'String' }, { name: 'status', type: 'String' }, { name: 'auctionDate', type: 'DateTime' },
+                { name: 'endDate', type: 'DateTime' }, { name: 'totalLots', type: 'Int' }, { name: 'initialOffer', type: 'Decimal' }, { name: 'visits', type: 'Int' },
             ]
         },
         {
             name: 'Lotes',
             modelName: 'Lot',
             fields: [
-                { name: 'title', type: 'String' },
-                { name: 'number', type: 'String' },
-                { name: 'status', type: 'String' },
-                { name: 'price', type: 'Decimal' },
-                { name: 'initialPrice', type: 'Decimal' },
-                { name: 'bidsCount', type: 'Int' },
-                { name: 'views', type: 'Int' },
-                { name: 'auctionName', type: 'String' },
+                { name: 'title', type: 'String' }, { name: 'number', type: 'String' }, { name: 'status', type: 'String' },
+                { name: 'price', type: 'Decimal' }, { name: 'initialPrice', type: 'Decimal' }, { name: 'bidsCount', type: 'Int' },
+                { name: 'views', type: 'Int' }, { name: 'auctionName', type: 'String' },
             ]
         },
         {
             name: 'Usuários',
             modelName: 'User',
             fields: [
-                { name: 'fullName', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'habilitationStatus', type: 'String' },
-                { name: 'accountType', type: 'String' },
+                { name: 'fullName', type: 'String' }, { name: 'email', type: 'String' }, { name: 'habilitationStatus', type: 'String' }, { name: 'accountType', type: 'String' },
             ]
         },
         {
             name: 'Comitentes',
             modelName: 'Seller',
             fields: [
-                { name: 'name', type: 'String' },
-                { name: 'contactName', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'city', type: 'String' },
-                { name: 'state', type: 'String' },
+                { name: 'name', type: 'String' }, { name: 'contactName', type: 'String' }, { name: 'email', type: 'String' },
+                { name: 'city', type: 'String' }, { name: 'state', type: 'String' },
             ]
         },
          {
             name: 'Leiloeiros',
             modelName: 'Auctioneer',
             fields: [
-                { name: 'name', type: 'String' },
-                { name: 'registrationNumber', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'city', type: 'String' },
-                { name: 'state', type: 'String' },
+                { name: 'name', type: 'String' }, { name: 'registrationNumber', type: 'String' }, { name: 'email', type: 'String' },
+                { name: 'city', type: 'String' }, { name: 'state', type: 'String' },
             ]
         },
     ];
@@ -99,20 +124,62 @@ async function seedDataSources() {
     for (const source of dataSources) {
         await prisma.dataSource.upsert({
             where: { modelName: source.modelName },
-            update: {
-                fields: source.fields,
-                name: source.name,
-            },
-            create: {
-                name: source.name,
-                modelName: source.modelName,
-                fields: source.fields,
-            },
+            update: { fields: source.fields, name: source.name },
+            create: { name: source.name, modelName: source.modelName, fields: source.fields },
         });
     }
 
     console.log(`[DB SEED] ✅ SUCCESS: ${dataSources.length} data sources processed.`);
 }
+
+async function seedCategoriesAndSubcategories() {
+    console.log('[DB SEED] Seeding Categories and Subcategories...');
+    let categoryCount = 0;
+    let subcategoryCount = 0;
+    for (const [categoryName, subcategoryNames] of Object.entries(categoriesAndSubcategories)) {
+        const categorySlug = slugify(categoryName);
+        const category = await prisma.lotCategory.upsert({
+            where: { slug: categorySlug },
+            update: { hasSubcategories: subcategoryNames.length > 0 },
+            create: { name: categoryName, slug: categorySlug, hasSubcategories: subcategoryNames.length > 0 },
+        });
+        categoryCount++;
+
+        for (const subcategoryName of subcategoryNames) {
+            const subcategorySlug = slugify(subcategoryName);
+            await prisma.subcategory.upsert({
+                where: { slug: subcategorySlug },
+                update: {},
+                create: { name: subcategoryName, slug: subcategorySlug, parentCategoryId: category.id },
+            });
+            subcategoryCount++;
+        }
+    }
+    console.log(`[DB SEED] ✅ SUCCESS: ${categoryCount} categories and ${subcategoryCount} subcategories processed.`);
+}
+
+async function seedCities() {
+    console.log('[DB SEED] Seeding Cities...');
+    let cityCount = 0;
+    const states = await prisma.state.findMany();
+    const stateMap = new Map(states.map(s => [s.uf, s.id]));
+
+    for (const [uf, cityNames] of Object.entries(citiesByState)) {
+        const stateId = stateMap.get(uf);
+        if (stateId) {
+            for (const cityName of cityNames) {
+                await prisma.city.upsert({
+                    where: { name_stateId: { name: cityName, stateId: stateId } },
+                    update: {},
+                    create: { name: cityName, stateId: stateId, slug: slugify(cityName) },
+                });
+                cityCount++;
+            }
+        }
+    }
+    console.log(`[DB SEED] ✅ SUCCESS: ${cityCount} cities processed.`);
+}
+
 
 async function seedEssentialData() {
   console.log('--- [DB SEED] Starting essential data seeding ---');
@@ -125,11 +192,8 @@ async function seedEssentialData() {
         where: { nameNormalized: role.nameNormalized },
         update: {},
         create: {
-          id: role.id,
-          name: role.name,
-          nameNormalized: role.nameNormalized,
-          description: role.description,
-          permissions: role.permissions.split(','),
+          id: role.id, name: role.name, nameNormalized: role.nameNormalized,
+          description: role.description, permissions: role.permissions.split(','),
         },
       });
     }
@@ -150,20 +214,11 @@ async function seedEssentialData() {
         where: { tenantId: '1' },
         update: {},
         create: {
-            tenantId: '1',
-            siteTitle: 'BidExpert',
-            siteTagline: 'Sua plataforma de leilões online.',
-            galleryImageBasePath: '/uploads/media/',
-            storageProvider: 'local',
-            searchPaginationType: 'loadMore',
-            searchItemsPerPage: 12,
-            searchLoadMoreCount: 12,
-            showCountdownOnLotDetail: true,
-            showCountdownOnCards: true,
-            showRelatedLotsOnLotDetail: true,
-            relatedLotsCount: 4,
-            defaultListItemsPerPage: 10,
-            homepageSections: [],
+            tenantId: '1', siteTitle: 'BidExpert', siteTagline: 'Sua plataforma de leilões online.',
+            galleryImageBasePath: '/uploads/media/', storageProvider: 'local', searchPaginationType: 'loadMore',
+            searchItemsPerPage: 12, searchLoadMoreCount: 12, showCountdownOnLotDetail: true,
+            showCountdownOnCards: true, showRelatedLotsOnLotDetail: true, relatedLotsCount: 4,
+            defaultListItemsPerPage: 10, homepageSections: [],
         }
     });
     console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
@@ -183,38 +238,20 @@ async function seedEssentialData() {
 
         adminUser = await prisma.user.create({
             data: {
-                email: adminEmail,
-                fullName: 'Administrador',
-                password: hashedPassword,
-                habilitationStatus: 'HABILITADO',
+                email: adminEmail, fullName: 'Administrador', password: hashedPassword, habilitationStatus: 'HABILITADO',
                 accountType: 'LEGAL',
-                roles: {
-                    create: {
-                        role: { connect: { id: adminRole.id } },
-                        assignedBy: 'system-seed'
-                    }
-                },
-                tenants: {
-                    create: {
-                        tenant: { connect: { id: landlordTenant.id } },
-                        assignedBy: 'system-seed'
-                    }
-                }
+                roles: { create: { role: { connect: { id: adminRole.id } }, assignedBy: 'system-seed' } },
+                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
             }
         });
         console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
     } else {
-        // Ensure admin user is linked to landlord tenant if they exist
         const adminTenantLink = await prisma.usersOnTenants.findUnique({
             where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } }
         });
         if (!adminTenantLink) {
             await prisma.usersOnTenants.create({
-                data: {
-                    userId: adminUser.id,
-                    tenantId: landlordTenant.id,
-                    assignedBy: 'system-seed-fix'
-                }
+                data: { userId: adminUser.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' }
             });
             console.log('[DB SEED] Admin user already existed and was linked to Landlord tenant.');
         } else {
@@ -222,23 +259,31 @@ async function seedEssentialData() {
         }
     }
     
-    // 5. Seed States
-    console.log('[DB SEED] Seeding Brazilian States...');
-    for (const state of brazilianStates) {
-        await prisma.state.upsert({
+    // 5. Seed States, Categories, Subcategories, and Cities
+    await Promise.all([
+      (async () => {
+        console.log('[DB SEED] Seeding Brazilian States...');
+        for (const state of brazilianStates) {
+          await prisma.state.upsert({
             where: { uf: state.uf },
             update: { name: state.name },
             create: { name: state.name, uf: state.uf, slug: slugify(state.name) },
-        });
-    }
-    console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
+          });
+        }
+        console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
+      })(),
+      seedCategoriesAndSubcategories(),
+    ]);
     
+    // Seed cities after states are seeded
+    await seedCities();
+
     // 6. Seed Data Sources
     await seedDataSources();
 
   } catch (error: any) {
     console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
-    throw error; // Throw error to stop the process if essential data fails
+    throw error;
   }
 }
 
@@ -247,8 +292,6 @@ async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
     try {
         await seedEssentialData();
-        // The seedDataSources function is now called from within seedEssentialData
-        // console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
     } catch (error) {
         console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
         process.exit(1);
