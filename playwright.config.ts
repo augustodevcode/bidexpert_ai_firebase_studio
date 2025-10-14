@@ -3,7 +3,7 @@ import { defineConfig, devices } from '@playwright/test';
 import path from 'path';
 
 // Use a custom port for Playwright to avoid conflicts with the main app
-const PORT = process.env.PORT || 9003;
+const PORT = process.env.PORT || 9002;
 const BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || `http://localhost:${PORT}`;
 
 /**
@@ -57,7 +57,7 @@ export default defineConfig({
 
   /* Run your local dev server before starting the tests */
   webServer: {
-    command: 'npm run dev:playwright',
+    command: 'npm run dev',
     url: BASE_URL,
     reuseExistingServer: !process.env.CI,
     timeout: 600 * 1000, // Increased timeout for server startup to 10 minutes (app is slow)
