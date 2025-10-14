@@ -24,13 +24,13 @@ export class DataSourceService {
     return this.repository.findById(id);
   }
 
-  async createDataSource(data: Omit<DataSource, 'id'>): Promise<{ success: boolean; message: string; dataSource?: DataSource }> {
+  async upsertDataSource(data: Omit<DataSource, 'id'>): Promise<{ success: boolean; message: string; dataSource?: DataSource }> {
     try {
-      const newDataSource = await this.repository.create(data as PrismaTypes.DataSourceCreateInput);
-      return { success: true, message: 'Fonte de dados criada com sucesso.', dataSource: newDataSource };
+      const newDataSource = await this.repository.upsert(data as PrismaTypes.DataSourceCreateInput);
+      return { success: true, message: 'Fonte de dados criada/atualizada com sucesso.', dataSource: newDataSource };
     } catch (error: any) {
-      console.error("Error in DataSourceService.create:", error);
-      return { success: false, message: `Falha ao criar fonte de dados: ${error.message}` };
+      console.error("Error in DataSourceService.upsert:", error);
+      return { success: false, message: `Falha ao criar/atualizar fonte de dados: ${error.message}` };
     }
   }
 

@@ -1,0 +1,26 @@
+RELATÓRIO DE TESTES PLAYWRIGHT - BIDEXPERT
+============================================================
+
+Data/Hora de Início: 14/10/2025, 19:55:57
+Data/Hora de Fim: 14/10/2025, 19:55:57
+Duração Total: 0s
+
+RESUMO EXECUTIVO
+------------------------------
+Total de Testes: 0
+Passou: 0
+Falhou: 0
+Pulado: 0
+Timeout: 0
+Taxa de Sucesso: 0%
+
+RESULTADOS DETALHADOS
+------------------------------
+
+ANÁLISE DE PERFORMANCE
+------------------------------
+Duração Média por Teste: 0ms
+
+Relatório gerado automaticamente pelo Playwright Custom Reporter
+Versão do Node.js: v20.19.1
+Sistema Operacional: linux

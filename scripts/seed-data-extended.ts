@@ -2,9 +2,10 @@
  * @fileoverview Script de seed completo para a plataforma BidExpert.
  * Popula TODAS as tabelas do banco de dados usando a camada de serviços.
  * 
- * Para executar: `npx tsx scripts/seed-data-extended-complete.ts`
+ * Para executar: `npx tsx scripts/seed-data-extended.ts`
  */
 import { PrismaClient, Prisma } from '@prisma/client';
+import { v4 as uuidv4 } from 'uuid';
 import { faker } from '@faker-js/faker';
 import { AuctionService } from '../src/services/auction.service';
 import { LotService } from '../src/services/lot.service';
@@ -20,12 +21,11 @@ import { JudicialDistrictService } from '../src/services/judicial-district.servi
 import { JudicialBranchService } from '../src/services/judicial-branch.service';
 import { StateService } from '../src/services/state.service';
 import { CityService } from '../src/services/city.service';
-// import { LotQuestionService } from '../src/services/lot-question.service';
-// import { ReviewService } from '../src/services/review.service';
-// import { BidService } from '../src/services/bid.service';
+import { LotQuestionService } from '../src/services/lot-question.service';
+import { ReviewService } from '../src/services/review.service';
 import { UserWinService } from '../src/services/user-win.service';
 import { DirectSaleOfferService } from '../src/services/direct-sale-offer.service';
-// import { InstallmentPaymentService } from '../src/services/installment-payment.service';
+import { InstallmentPaymentService } from '../src/services/installment-payment.service';
 import { NotificationService } from '../src/services/notification.service';
 import { ContactMessageService } from '../src/services/contact-message.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
@@ -41,11 +41,16 @@ import {
   LotStatus,
   UserHabilitationStatus,
   PaymentStatus,
-  AssetStatus,
   AccountType,
   ProcessPartyType,
   DocumentTemplateType,
 } from '@prisma/client';
+
+enum AssetStatus { 
+  DISPONIVEL = 'DISPONIVEL',
+  LOTEADO = 'LOTEADO',
+  VENDIDO = 'VENDIDO',
+}
 
 const prisma = new PrismaClient();
 
@@ -72,7 +77,7 @@ const entityStore: {
   sellers: string[];
   auctioneers: string[];
   judicialProcesses: string[];
-  assets: { id: string; status: Prisma.AssetStatus }[];
+  assets: { id: string; status: AssetStatus }[];
   auctions: string[];
   lots: string[];
   vehicleMakes: Record<string, string>;
@@ -127,6 +132,9 @@ const mediaService = new MediaService();
 const reportService = new ReportService();
 const dataSourceService = new DataSourceService();
 const documentService = new DocumentService();
+const lotQuestionService = new LotQuestionService();
+const reviewService = new ReviewService();
+const installmentPaymentService = new InstallmentPaymentService();
 
 // --- Seeding Phases ---
 
@@ -452,18 +460,19 @@ async function seedMediaLibrary() {
   
   // Criar alguns itens de mídia fictícios
   for (let i = 0; i < 10; i++) {
+    const uniqueId = `${uuidv4().substring(0, 8)}-${i + 1}`;
     const result = await mediaService.createMediaItem({
-      fileName: `image-${i + 1}.jpg`,
+      fileName: `image-${uniqueId}.jpg`,
       mimeType: 'image/jpeg',
       sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
       altText: faker.lorem.words(3),
       title: faker.lorem.words(5),
-    }, `https://storage.example.com/media/image-${i + 1}.jpg`, entityStore.users.admin);
+    }, `https://storage.example.com/media/image-${uniqueId}.jpg`, entityStore.users.admin);
     if (result.success && result.item) {
       entityStore.mediaItems.push(result.item.id);
     }
   }
-  log(`${entityStore.mediaItems.length} media items created.`, 1);
+
 }
 
 async function seedAssets() {
@@ -480,25 +489,23 @@ async function seedAssets() {
     const data = {
       title: `${faker.vehicle.vehicle()} (Asset ${i})`,
       description: faker.lorem.paragraph(),
-      status: Prisma.AssetStatus.DISPONIVEL,
+      status: AssetStatus.DISPONIVEL,
       categoryId: category.id,
       subcategoryId: faker.helpers.arrayElement(category.subcategoryIds),
       sellerId: seller.id,
       evaluationValue: faker.number.int({ min: 5000, max: 150000 }),
-      locationCity: faker.location.city(),
-      locationState: faker.location.state({ abbreviated: true }),
-      address: faker.location.streetAddress(),
       make: faker.vehicle.manufacturer(),
       model: faker.vehicle.model(),
       year: faker.number.int({ min: 2010, max: 2023 }),
+      cityId: faker.helpers.arrayElement(Object.values(entityStore.cities)),
+      stateId: faker.helpers.arrayElement(Object.values(entityStore.states)),
     };
     const result = await assetService.createAsset(entityStore.tenantId, data);
     if (result.success && result.assetId) {
-      entityStore.assets.push({ id: result.assetId, status: Prisma.AssetStatus.DISPONIVEL });
+      entityStore.assets.push({ id: result.assetId, status: AssetStatus.DISPONIVEL });
     }
   }
-  log(`${entityStore.assets.length} assets created.`, 1);
-  console.log("entityStore.assets after population:", entityStore.assets);
+
 }
 
 async function seedAuctionsAndLots() {
@@ -541,30 +548,23 @@ async function seedAuctionsAndLots() {
       entityStore.auctions.push(auctionId);
       log(`Auction "${auctionData.title}" created.`, 1);
 
-      // Populate many-to-many relationships
+      // Link M2M relationships using Prisma Update instead of Raw SQL
+      const categoryId = faker.helpers.arrayElement(Object.values(entityStore.categories)).id;
+      const updateData: any = {
+        LotCategory: { connect: { id: categoryId } },
+      };
+
       if (isJudicial) {
-        await prisma.$executeRaw`
-          INSERT IGNORE INTO _AuctionToCourt (A, B) 
-          VALUES (${auctionId}, ${entityStore.courts.TJSP})
-        `;
-        await prisma.$executeRaw`
-          INSERT IGNORE INTO _AuctionToJudicialDistrict (A, B) 
-          VALUES (${auctionId}, ${entityStore.judicialDistricts.Capital})
-        `;
-        await prisma.$executeRaw`
-          INSERT IGNORE INTO _AuctionToJudicialBranch (A, B) 
-          VALUES (${auctionId}, ${entityStore.judicialBranches.Vara1})
-        `;
+        updateData.Court = { connect: { id: entityStore.courts.TJSP } };
+        updateData.JudicialDistrict = { connect: { id: entityStore.judicialDistricts.Capital } };
+        updateData.JudicialBranch = { connect: { id: entityStore.judicialBranches.Vara1 } };
       }
 
-      // Link categories
-      const categoryId = faker.helpers.arrayElement(
-        Object.values(entityStore.categories)
-      ).id;
-      await prisma.$executeRaw`
-        INSERT IGNORE INTO _AuctionToLotCategory (A, B) 
-        VALUES (${auctionId}, ${categoryId})
-      `;
+      await prisma.auction.update({
+        where: { id: auctionId },
+        data: updateData,
+      });
+      log(`Linked M2M relationships for auction ${auctionId}.`, 2);
 
       const availableAssets = entityStore.assets.filter((a) => a.status === 'DISPONIVEL');
       const assetsForLots = availableAssets.slice(0, 3);
@@ -584,7 +584,7 @@ async function seedAuctionsAndLots() {
           initialPrice: faker.number.int({ min: 4000, max: 100000 }),
           status: LotStatus.EM_BREVE,
         };
-        const lotResult = await lotService.createLot(lotData, entityStore.tenantId);
+        const lotResult = await lotService.createLot(lotData, entityStore.tenantId, entityStore.users.admin);
         if (lotResult.success && lotResult.lotId) {
           entityStore.lots.push(lotResult.lotId);
           log(`Lot "${lotData.title}" created for auction ${auctionId}.`, 2);
@@ -640,6 +640,7 @@ async function seedInteractions() {
     for (let i = 0; i < 5; i++) {
       const bidder = faker.helpers.arrayElement(bidderUsers);
       currentPrice += faker.number.int({ min: 100, max: 500 });
+      // Assuming a bid service might exist, but lotService.placeBid is confirmed
       await lotService.placeBid(lot.id, bidder.id, currentPrice, bidder.fullName || 'Bidder');
       log(`Bid placed on lot "${lot.title}" by "${bidder.fullName}" for ${currentPrice}.`, 2);
     }
@@ -672,18 +673,6 @@ async function seedInteractions() {
       log('Seeding Installment Payments...', 1);
       await installmentPaymentService.createInstallmentsForWin(win.id, 3);
       log(`3 installments created for win ${win.id}.`, 2);
-
-      // Link installments to lot (many-to-many)
-      const installments = await prisma.installmentPayment.findMany({
-        where: { userWinId: win.id },
-      });
-      for (const installment of installments) {
-        await prisma.$executeRaw`
-          INSERT IGNORE INTO _InstallmentPaymentToLot (A, B) 
-          VALUES (${installment.id}, ${lotToWin.id})
-        `;
-      }
-      log('Installment-Lot relationships created.', 2);
     }
   }
 
@@ -747,7 +736,7 @@ async function seedMiscData() {
   // 9.2. Contact Messages
   log('Seeding Contact Messages...', 1);
   for (let i = 0; i < 3; i++) {
-    await contactMessageService.createContactMessage({
+    await contactMessageService.saveMessage({
       name: faker.person.fullName(),
       email: faker.internet.email(),
       subject: 'Parceria Comercial',
@@ -783,41 +772,60 @@ async function seedMiscData() {
 
   // 9.4. Platform Settings
   log('Seeding Platform Settings...', 1);
-  await prisma.platformSettings.upsert({
-    where: { id: 'global' },
-    update: {},
-    create: {
-      id: 'global',
-      tenantId: entityStore.tenantId,
-      siteTitle: 'BidExpert - Plataforma de Leilões',
-      siteTagline: 'Os melhores leilões em um só lugar',
-      searchPaginationType: 'loadMore',
-      searchItemsPerPage: 12,
-      searchLoadMoreCount: 12,
-      showCountdownOnLotDetail: true,
-      showCountdownOnCards: true,
-      showRelatedLotsOnLotDetail: true,
-      relatedLotsCount: 5,
-      defaultListItemsPerPage: 10,
-      isSetupComplete: true,
-      homepageSections: {
+      const homepageSections = {
         hero: true,
         featuredAuctions: true,
         categories: true,
         upcomingLots: true,
-      },
-      mentalTriggerSettings: {
+      };
+      const mentalTriggerSettings = {
         urgencyTimer: true,
         socialProof: true,
         scarcity: true,
-      },
-      biddingSettings: {
+      };
+      const biddingSettings = {
         allowAutoBid: true,
         softCloseEnabled: true,
         softCloseMinutes: 5,
-      },
-    },
-  });
+      };
+
+      await prisma.platformSettings.upsert({
+        where: { tenantId: entityStore.tenantId },
+        update: {
+          siteTitle: 'BidExpert - Plataforma de Leilões',
+          siteTagline: 'Os melhores leilões em um só lugar',
+          searchPaginationType: 'loadMore',
+          searchItemsPerPage: 12,
+          searchLoadMoreCount: 12,
+          showCountdownOnLotDetail: true,
+          showCountdownOnCards: true,
+          showRelatedLotsOnLotDetail: true,
+          relatedLotsCount: 5,
+          defaultListItemsPerPage: 10,
+          isSetupComplete: true,
+          homepageSections: homepageSections,
+          mentalTriggerSettings: mentalTriggerSettings,
+          biddingSettings: biddingSettings
+        },
+        create: {
+            id: 'global',
+            tenantId: entityStore.tenantId,
+            siteTitle: 'BidExpert - Plataforma de Leilões',
+            siteTagline: 'Os melhores leilões em um só lugar',
+            searchPaginationType: 'loadMore',
+            searchItemsPerPage: 12,
+            searchLoadMoreCount: 12,
+            showCountdownOnLotDetail: true,
+            showCountdownOnCards: true,
+            showRelatedLotsOnLotDetail: true,
+            relatedLotsCount: 5,
+            defaultListItemsPerPage: 10,
+            isSetupComplete: true,
+            homepageSections: homepageSections,
+            mentalTriggerSettings: mentalTriggerSettings,
+            biddingSettings: biddingSettings
+        }
+      });
   log('Platform settings configured.', 2);
 
   // 9.5. Data Sources (for report builder)
@@ -841,7 +849,7 @@ async function seedMiscData() {
   ];
 
   for (const ds of dataSources) {
-    await dataSourceService.createDataSource(ds);
+    await dataSourceService.upsertDataSource(ds);
   }
   log('3 data sources created.', 2);
 
@@ -852,8 +860,10 @@ async function seedMiscData() {
   });
   if (bidder && entityStore.documentTypes.length > 0) {
     for (let i = 0; i < 2; i++) {
-      const docType = entityStore.documentTypes[i];
-      await documentService.saveUserDocument(bidder.id, docType, `https://storage.example.com/docs/documento-${i + 1}.pdf`, `documento-${i + 1}.pdf`);
+      const docType = await prisma.documentType.findUnique({ where: { id: entityStore.documentTypes[i] }});
+      if (docType) {
+        await documentService.saveUserDocument(bidder.id, docType.id, `https://storage.example.com/docs/documento-${i + 1}.pdf`, `documento-${i + 1}.pdf`);
+      }
     }
     log(`2 user documents created for ${bidder.email}.`, 2);
   }
@@ -899,8 +909,13 @@ import { execSync } from 'child_process';
 
 async function main() {
   console.log('Cleaning database before seeding...');
-  execSync('npx tsx scripts/clear-database.ts', { stdio: 'inherit' });
-  console.log('Database cleaned.');
+  try {
+    execSync('npx tsx scripts/clear-database.ts', { stdio: 'inherit' });
+    console.log('Database cleaned.');
+  } catch (error) {
+      console.warn('Could not clean database. This might be the first run.');
+  }
+
 
   console.log('Starting comprehensive database seed...');
   console.log('=====================================================\n');

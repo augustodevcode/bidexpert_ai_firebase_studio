@@ -1,0 +1,93 @@
+{
+  "config": {
+    "configFile": "/home/user/studio/playwright.config.ts",
+    "rootDir": "/home/user/studio/tests/ui",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "reporter": [
+      [
+        "html",
+        {
+          "outputFolder": "./tests/ui/playwright-report/"
+        }
+      ],
+      [
+        "/home/user/studio/playwright-custom-reporter.js",
+        {
+          "outputFile": "./tests/ui/test-results/plaintext-report.txt"
+        }
+      ],
+      [
+        "junit",
+        {
+          "outputFile": "./tests/ui/test-results/junit-report.xml"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "./tests/ui/test-results/test-results.json"
+        }
+      ],
+      [
+        "line",
+        null
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "quiet": false,
+    "projects": [
+      {
+        "outputDir": "/home/user/studio/tests/ui/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/user/studio/tests/ui",
+        "testIgnore": [],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 120000
+      }
+    ],
+    "shard": null,
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.55.1",
+    "workers": 1,
+    "webServer": {
+      "command": "npm run dev:playwright",
+      "url": "http://localhost:9003",
+      "reuseExistingServer": true,
+      "timeout": 600000
+    }
+  },
+  "suites": [],
+  "errors": [
+    {
+      "message": "Error: Process from config.webServer exited early.",
+      "stack": "Error: Process from config.webServer exited early."
+    }
+  ],
+  "stats": {
+    "startTime": "2025-10-14T19:51:10.265Z",
+    "duration": 287432.368,
+    "expected": 0,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}

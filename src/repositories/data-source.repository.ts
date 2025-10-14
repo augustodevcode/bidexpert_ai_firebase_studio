@@ -13,8 +13,12 @@ export class DataSourceRepository {
     return prisma.dataSource.findUnique({ where: { id } });
   }
 
-  async create(data: PrismaTypes.DataSourceCreateInput): Promise<DataSource> {
-    return prisma.dataSource.create({ data });
+  async upsert(data: PrismaTypes.DataSourceCreateInput): Promise<DataSource> {
+    return prisma.dataSource.upsert({
+      where: { modelName: data.modelName },
+      update: data,
+      create: data,
+    });
   }
 
   async update(id: string, data: PrismaTypes.DataSourceUpdateInput): Promise<DataSource> {

@@ -89,12 +89,17 @@ export class AssetService {
    */
   async createAsset(tenantId: string, data: AssetFormData): Promise<{ success: boolean; message: string; assetId?: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, make, model, year, ...assetData } = data;
 
       const dataToCreate: Prisma.AssetCreateInput = {
         ...(assetData as any),
         publicId: `ASSET-${uuidv4()}`,
         tenant: { connect: { id: tenantId } },
+        properties: {
+          make,
+          model,
+          year,
+        },
       };
       
       if (categoryId) dataToCreate.category = { connect: { id: categoryId } };

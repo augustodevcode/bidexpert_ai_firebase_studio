@@ -255,7 +255,7 @@ export class LotService {
   }
 
 
-  async createLot(data: Partial<LotFormData>, tenantId?: string): Promise<{ success: boolean; message: string; lotId?: string; }> {
+  async createLot(data: Partial<LotFormData>, tenantId: string, creatorId: string): Promise<{ success: boolean; message: string; lotId?: string; }> {
     try {
       const { 
         assetIds, 
@@ -298,21 +298,28 @@ export class LotService {
       };
 
       // Determine which asset to inherit from, if any
-      let assetForInheritanceId: string | null = data.inheritedMediaFromBemId || null;
+      let assetForInheritanceId: string | null = (data as any).inheritedMediaFromBemId || null;
       if (!assetForInheritanceId && assetIds?.length === 1) {
           assetForInheritanceId = assetIds[0];
-          dataToCreate.inheritedMediaFromBemId = assetForInheritanceId; // Persist this choice
       }
 
       // If an inheritance source is determined, pull data from it
       if (assetForInheritanceId) {
         const sourceAsset = await this.assetService.getAssetById(finalTenantId!, assetForInheritanceId);
         if (sourceAsset) {
+            // Inherit media
+            if (!data.imageUrl && sourceAsset.imageUrl) {
+                dataToCreate.imageUrl = sourceAsset.imageUrl;
+            }
+            if (!(data as any).imageMediaId && sourceAsset.imageMediaId) {
+                dataToCreate.imageMediaId = sourceAsset.imageMediaId;
+            }
+
             // Inherit location only if not explicitly provided on the lot
-            if (!data.cityName && !data.stateUf) {
-                dataToCreate.cityName = sourceAsset.locationCity;
-                dataToCreate.stateUf = sourceAsset.locationState;
-                dataToCreate.mapAddress = sourceAsset.address;
+            if (!data.cityName && !data.stateUf && sourceAsset) {
+                dataToCreate.cityName = sourceAsset.city?.name;
+                dataToCreate.stateUf = sourceAsset.state?.uf;
+                dataToCreate.mapAddress = sourceAsset.street;
                 dataToCreate.latitude = sourceAsset.latitude;
                 dataToCreate.longitude = sourceAsset.longitude;
             }
@@ -337,7 +344,7 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       
-      const newLot = await this.repository.create(dataToCreate, assetIds || []);
+      const newLot = await this.repository.create(dataToCreate, assetIds || [], creatorId);
       
       if (assetIds && assetIds.length > 0) {
         await this.prisma.asset.updateMany({

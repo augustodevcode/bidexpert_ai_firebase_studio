@@ -57,7 +57,7 @@ export class LotRepository {
     });
   }
 
-  async create(lotData: Prisma.LotCreateInput, assetIds: string[]): Promise<Lot> {
+  async create(lotData: Prisma.LotCreateInput, assetIds: string[], assignedBy: string): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
       // 1. Create the Lot
       const newLot = await tx.lot.create({
@@ -70,6 +70,7 @@ export class LotRepository {
           data: assetIds.map(assetId => ({
             lotId: newLot.id,
             assetId: assetId,
+            assignedBy: assignedBy,
           })),
         });
       }
