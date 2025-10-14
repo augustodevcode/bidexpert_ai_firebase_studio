@@ -498,6 +498,7 @@ async function seedAssets() {
     }
   }
   log(`${entityStore.assets.length} assets created.`, 1);
+  console.log("entityStore.assets after population:", entityStore.assets);
 }
 
 async function seedAuctionsAndLots() {

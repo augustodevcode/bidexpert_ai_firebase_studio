@@ -12,28 +12,10 @@ import type { Lot, Asset, LotFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { LotService } from '@/services/lot.service';
 import { AssetService } from '@/services/asset.service';
-import { prisma } from '@/lib/prisma';
-import { getSession } from '@/app/auth/actions';
-import { headers } from 'next/headers';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const lotService = new LotService();
 const assetService = new AssetService();
-
-async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-    if (tenantIdFromHeader) {
-        return tenantIdFromHeader;
-    }
-    if (isPublicCall) {
-        return '1';
-    }
-    throw new Error("Acesso não autorizado ou tenant não identificado.");
-}
 
 
 export async function getLots(auctionId?: string, isPublicCall: boolean = false, limit?: number): Promise<Lot[]> {
@@ -42,7 +24,7 @@ export async function getLots(auctionId?: string, isPublicCall: boolean = false,
 }
 
 export async function getLot(id: string, isPublicCall: boolean = false): Promise<Lot | null> {
-  const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : undefined;
+  const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
   return lotService.getLotById(id, tenantId, isPublicCall);
 }
 

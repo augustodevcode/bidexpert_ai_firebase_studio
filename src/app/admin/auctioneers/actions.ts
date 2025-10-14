@@ -10,31 +10,9 @@
 import type { AuctioneerProfileInfo, AuctioneerFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { AuctioneerService } from '@/services/auctioneer.service';
-import { getSession } from '@/app/auth/actions';
-import { headers } from 'next/headers';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const auctioneerService = new AuctioneerService();
-
-async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-
-    if (tenantIdFromHeader) {
-        return tenantIdFromHeader;
-    }
-
-    // For public calls, we assume we want landlord data if no specific context is found
-    if (isPublicCall) {
-        return '1';
-    }
-    
-    throw new Error("Acesso não autorizado ou tenant não identificado.");
-}
 
 
 export async function getAuctioneers(isPublicCall: boolean = false, limit?: number): Promise<AuctioneerProfileInfo[]> {

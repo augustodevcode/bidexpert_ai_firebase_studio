@@ -11,28 +11,9 @@
 import type { JudicialProcess, JudicialProcessFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import { JudicialProcessService } from '@/services/judicial-process.service';
-import { getSession } from '@/app/auth/actions';
-import { headers } from 'next/headers';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const judicialProcessService = new JudicialProcessService();
-
-async function getTenantIdFromRequest(): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-
-    if (tenantIdFromHeader) {
-        return tenantIdFromHeader;
-    }
-    
-    // Unlike other actions, judicial processes likely should not have a public fallback.
-    // Throwing an error here is safer if no context can be found.
-    throw new Error("Acesso não autorizado ou tenant não identificado.");
-}
 
 
 export async function getJudicialProcesses(tenantId?: string): Promise<JudicialProcess[]> {

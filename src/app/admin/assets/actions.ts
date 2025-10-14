@@ -11,37 +11,9 @@
 import { revalidatePath } from 'next/cache';
 import type { Asset, AssetFormData } from '@/types';
 import { AssetService } from '@/services/asset.service';
-import { getSession } from '@/app/auth/actions';
-import { headers } from 'next/headers';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const assetService = new AssetService();
-
-/**
- * Obtém o tenantId do contexto da requisição (sessão ou header).
- * Essencial para garantir o isolamento de dados em um ambiente multi-tenant.
- * @param {boolean} isPublicCall - Se a chamada deve ser considerada pública, usando o tenant "Landlord".
- * @returns {Promise<string>} O ID do tenant.
- */
-async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-
-    if (tenantIdFromHeader) {
-        return tenantIdFromHeader;
-    }
-
-    if (isPublicCall) {
-        return '1'; // Landlord tenant ID for public data
-    }
-    
-    throw new Error("Acesso não autorizado ou tenant não identificado.");
-}
-
 
 /**
  * Busca uma lista de ativos, com filtros opcionais.

@@ -19,6 +19,7 @@ import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { UserService } from '@/services/user.service';
 import SubscriptionPopup from '@/components/subscription-popup'; // Importar o novo componente
+import { getCurrentUser } from '@/app/auth/actions';
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -45,19 +46,12 @@ async function getLayoutData() {
 }
 
 async function getInitialAuthData() {
+  const user = await getCurrentUser();
   const session = await getSession();
   
-  if (!session) {
-    return { initialUser: null, initialTenantId: '1' };
-  }
-
-  // No servidor, vamos buscar o usuário completo para ter todos os dados na primeira carga
-  const userService = new UserService();
-  const fullUser = await userService.getUserById(session.userId);
-
   return { 
-    initialUser: fullUser, 
-    initialTenantId: session.tenantId || '1' 
+    initialUser: user, 
+    initialTenantId: session?.tenantId || '1' 
   };
 }
 

@@ -11,31 +11,9 @@
 import { revalidatePath } from 'next/cache';
 import type { Auction, AuctionFormData } from '@/types';
 import { AuctionService } from '@/services/auction.service';
-import { getSession } from '@/app/auth/actions';
-import { headers } from 'next/headers';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const auctionService = new AuctionService();
-
-async function getTenantIdFromRequest(isPublicCall: boolean = false): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
-
-    if (tenantIdFromHeader) {
-        return tenantIdFromHeader;
-    }
-
-    if (isPublicCall) {
-        return '1'; // Landlord tenant ID for public data
-    }
-    
-    throw new Error("Acesso não autorizado ou tenant não identificado.");
-}
-
 
 export async function getAuctions(isPublicCall: boolean = false, limit?: number): Promise<Auction[]> {
     const tenantIdToUse = await getTenantIdFromRequest(isPublicCall);
@@ -43,7 +21,7 @@ export async function getAuctions(isPublicCall: boolean = false, limit?: number)
 }
 
 export async function getAuction(id: string, isPublicCall: boolean = false): Promise<Auction | null> {
-    const tenantId = isPublicCall ? await getTenantIdFromRequest(true) : await getTenantIdFromRequest(false);
+    const tenantId = await getTenantIdFromRequest(isPublicCall);
     return auctionService.getAuctionById(tenantId, id, isPublicCall);
 }
 

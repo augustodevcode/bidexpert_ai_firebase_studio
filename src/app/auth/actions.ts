@@ -13,7 +13,9 @@ import { createSession, getSession as getSessionFromCookie, deleteSession as del
 import type { UserProfileWithPermissions, Role, Tenant, UserCreationData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
-import { prisma as basePrisma } from '@/lib/prisma'; // Use a instância base para operações globais de usuário
+import { prisma as basePrisma } from '@/lib/prisma';
+import { UserService } from '@/services/user.service';
+
 
 /**
  * Formata um objeto de usuário bruto do Prisma para o tipo `UserProfileWithPermissions`,
@@ -147,17 +149,38 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         return null;
     }
 
-    const user = await basePrisma.user.findUnique({
-        where: { id: session.userId },
-        include: { 
-            roles: { include: { role: true } },
-            tenants: { include: { tenant: true } }
-        }
-    });
+    const userService = new UserService();
+    const user = await userService.getUserById(session.userId);
 
-    if (!user) {
-        return null;
-    }
+    return user;
+}
 
-    return formatUserWithPermissions(user);
+
+// Ação para resetar a senha
+export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
+  console.log(`[Password Reset] Solicitação para: ${email}`);
+  // Lógica de placeholder. Em um app real, isso geraria um token seguro,
+  // o salvaria no DB com uma expiração, e enviaria um email/SMS para o usuário.
+  // Por agora, vamos apenas retornar uma mensagem de sucesso para a UI.
+  return {
+    success: true,
+    message: 'Se uma conta com este e-mail existir, um link de redefinição de senha foi enviado.'
+  };
+}
+
+export async function verifyPasswordResetToken(token: string): Promise<{ success: boolean; message: string }> {
+  // Lógica de placeholder
+  if (token && token.length > 10) {
+    return { success: true, message: "Token válido." };
+  }
+  return { success: false, message: "Token inválido ou expirado." };
+}
+
+export async function resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
+  // Lógica de placeholder
+  console.log(`[Password Reset] Senha redefinida com token: ${token}`);
+  if (token && newPassword.length >= 6) {
+    return { success: true, message: "Senha redefinida com sucesso." };
+  }
+  return { success: false, message: "Falha ao redefinir a senha." };
 }

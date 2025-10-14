@@ -13,22 +13,14 @@ import type { WizardData } from '@/components/admin/wizard/wizard-context';
 import { revalidatePath } from 'next/cache';
 import { AuctionService } from '@/services/auction.service';
 import { LotService } from '@/services/lot.service';
-import { getSession } from '@/app/auth/actions';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { getCurrentUser } from '@/app/auth/actions';
 import { hasPermission } from '@/lib/permissions';
 
 /**
  * @fileoverview Server Actions para o assistente de criação de leilões (Wizard).
  * Agrega dados de diversas fontes e cria o leilão e seus lotes de forma transacional.
  */
-
-async function getTenantIdFromSession(): Promise<string> {
-    const session = await getSession();
-    if (!session?.tenantId) {
-        throw new Error("Tenant ID não encontrado na sessão para o wizard.");
-    }
-    return session.tenantId;
-}
-
 
 /**
  * Busca todos os dados iniciais necessários para popular os seletores e opções do wizard.
@@ -38,7 +30,7 @@ async function getTenantIdFromSession(): Promise<string> {
  */
 export async function getWizardInitialData() {
   try {
-    const tenantId = await getTenantIdFromSession();
+    const tenantId = await getTenantIdFromRequest();
 
     const [
       courts,
@@ -85,13 +77,12 @@ export async function getWizardInitialData() {
  * @returns {Promise<{success: boolean, message: string, auctionId?: string}>} O resultado da operação.
  */
 export async function createAuctionFromWizard(wizardData: WizardData): Promise<{success: boolean; message: string; auctionId?: string;}> {
-  const session = await getSession();
-  const user = session; // Assumindo que a sessão tem o perfil do usuário
+  const user = await getCurrentUser();
   if (!user || !hasPermission(user, 'auctions:create')) {
     return { success: false, message: "Acesso negado. Você não tem permissão para criar leilões." };
   }
 
-  const tenantId = session.tenantId;
+  const tenantId = await getTenantIdFromRequest();
   
   if (!wizardData.auctionDetails || !wizardData.auctionDetails.title || !wizardData.auctionDetails.auctioneerId) {
     return { success: false, message: "Detalhes do leilão incompletos." };
