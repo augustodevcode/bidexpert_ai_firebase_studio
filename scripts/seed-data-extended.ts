@@ -29,6 +29,11 @@ import { DirectSaleOfferService } from '../src/services/direct-sale-offer.servic
 import { NotificationService } from '../src/services/notification.service';
 import { ContactMessageService } from '../src/services/contact-message.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
+import { SubscriptionService } from '../src/services/subscription.service';
+import { MediaService } from '../src/services/media.service';
+import { ReportService } from '../src/services/report.service';
+import { DataSourceService } from '../src/services/data-source.service';
+import { DocumentService } from '../src/services/document.service';
 import { RoleService } from '../src/services/role.service';
 import {
   AuctionStatus,
@@ -67,7 +72,7 @@ const entityStore: {
   sellers: string[];
   auctioneers: string[];
   judicialProcesses: string[];
-  assets: { id: string; status: AssetStatus }[];
+  assets: { id: string; status: Prisma.AssetStatus }[];
   auctions: string[];
   lots: string[];
   vehicleMakes: Record<string, string>;
@@ -117,6 +122,11 @@ const directSaleOfferService = new DirectSaleOfferService();
 const notificationService = new NotificationService();
 const contactMessageService = new ContactMessageService();
 const documentTemplateService = new DocumentTemplateService();
+const subscriptionService = new SubscriptionService();
+const mediaService = new MediaService();
+const reportService = new ReportService();
+const dataSourceService = new DataSourceService();
+const documentService = new DocumentService();
 
 // --- Seeding Phases ---
 
@@ -298,17 +308,16 @@ async function seedParticipants() {
   log('Seeding Auctioneers...', 1);
   for (let i = 0; i < 3; i++) {
     const name = `Leiloeiro Oficial ${i + 1}`;
-    const auctioneer = await prisma.auctioneer.create({
-      data: {
-        name,
-        email: faker.internet.email(),
-        phone: faker.phone.number(),
-        description: `Leiloeiro oficial certificado pela JUCERJA`,
-        tenantId: entityStore.tenantId,
-      },
+    const result = await auctioneerService.createAuctioneer(entityStore.tenantId, {
+      name,
+      email: faker.internet.email(),
+      phone: faker.phone.number(),
+      description: `Leiloeiro oficial certificado pela JUCERJA`,
     });
-    entityStore.auctioneers.push(auctioneer.id);
-    log(`Auctioneer "${name}" created.`, 2);
+    if (result.success && result.auctioneerId) {
+      entityStore.auctioneers.push(result.auctioneerId);
+      log(`Auctioneer "${name}" created.`, 2);
+    }
   }
 
   // 3.2. Sellers
@@ -356,14 +365,11 @@ async function seedParticipants() {
   // 3.4. Subscribers (Newsletter)
   log('Seeding Subscribers...', 1);
   for (let i = 0; i < 5; i++) {
-    await prisma.subscriber.create({
-      data: {
-        email: faker.internet.email(),
-        name: faker.person.fullName(),
-        phone: faker.phone.number(),
-        preferences: { categories: ['Veículos', 'Imóveis'] },
-        tenantId: entityStore.tenantId,
-      },
+    await subscriptionService.createSubscriber({
+      email: faker.internet.email(),
+      name: faker.person.fullName(),
+      phone: faker.phone.number(),
+      preferences: { categories: ['Veículos', 'Imóveis'] },
     });
   }
   log('5 subscribers created.', 2);
@@ -382,7 +388,7 @@ async function seedJudicialData() {
     entityStore.courts.TJSP = courtResult.courtId;
     log('Court "TJSP" created.', 2);
 
-    const districtResult = await judicialDistrictService.createDistrict({
+    const districtResult = await judicialDistrictService.createJudicialDistrict({
       name: 'Comarca da Capital',
       courtId: courtResult.courtId,
       stateId: entityStore.states.SP,
@@ -391,7 +397,7 @@ async function seedJudicialData() {
       entityStore.judicialDistricts.Capital = districtResult.districtId;
       log('District "Capital" created.', 3);
 
-      const branchResult = await judicialBranchService.createBranch({
+      const branchResult = await judicialBranchService.createJudicialBranch({
         name: '1ª Vara Cível',
         districtId: districtResult.districtId,
       });
@@ -446,26 +452,23 @@ async function seedMediaLibrary() {
   
   // Criar alguns itens de mídia fictícios
   for (let i = 0; i < 10; i++) {
-    const mediaItem = await prisma.mediaItem.create({
-      data: {
-        fileName: `image-${i + 1}.jpg`,
-        mimeType: 'image/jpeg',
-        sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
-        storagePath: `/uploads/media/image-${i + 1}.jpg`,
-        urlOriginal: `https://storage.example.com/media/image-${i + 1}.jpg`,
-        urlThumbnail: `https://storage.example.com/media/thumb-image-${i + 1}.jpg`,
-        altText: faker.lorem.words(3),
-        title: faker.lorem.words(5),
-        uploadedByUserId: entityStore.users.admin,
-      },
-    });
-    entityStore.mediaItems.push(mediaItem.id);
+    const result = await mediaService.createMediaItem({
+      fileName: `image-${i + 1}.jpg`,
+      mimeType: 'image/jpeg',
+      sizeBytes: faker.number.int({ min: 100000, max: 5000000 }),
+      altText: faker.lorem.words(3),
+      title: faker.lorem.words(5),
+    }, `https://storage.example.com/media/image-${i + 1}.jpg`, entityStore.users.admin);
+    if (result.success && result.item) {
+      entityStore.mediaItems.push(result.item.id);
+    }
   }
   log(`${entityStore.mediaItems.length} media items created.`, 1);
 }
 
 async function seedAssets() {
   log('Phase 6: Seeding Assets...', 0);
+  entityStore.assets = []; // Clear assets before seeding
   const sellers = await prisma.seller.findMany({ where: { tenantId: entityStore.tenantId } });
   if (sellers.length === 0) throw new Error('No sellers found to assign assets.');
 
@@ -477,7 +480,7 @@ async function seedAssets() {
     const data = {
       title: `${faker.vehicle.vehicle()} (Asset ${i})`,
       description: faker.lorem.paragraph(),
-      status: AssetStatus.DISPONIVEL,
+      status: Prisma.AssetStatus.DISPONIVEL,
       categoryId: category.id,
       subcategoryId: faker.helpers.arrayElement(category.subcategoryIds),
       sellerId: seller.id,
@@ -491,7 +494,7 @@ async function seedAssets() {
     };
     const result = await assetService.createAsset(entityStore.tenantId, data);
     if (result.success && result.assetId) {
-      entityStore.assets.push({ id: result.assetId, status: AssetStatus.DISPONIVEL });
+      entityStore.assets.push({ id: result.assetId, status: Prisma.AssetStatus.DISPONIVEL });
     }
   }
   log(`${entityStore.assets.length} assets created.`, 1);
@@ -837,11 +840,7 @@ async function seedMiscData() {
   ];
 
   for (const ds of dataSources) {
-    await prisma.data_sources.upsert({
-      where: { modelName: ds.modelName },
-      update: {},
-      create: ds,
-    });
+    await dataSourceService.createDataSource(ds);
   }
   log('3 data sources created.', 2);
 
@@ -853,15 +852,7 @@ async function seedMiscData() {
   if (bidder && entityStore.documentTypes.length > 0) {
     for (let i = 0; i < 2; i++) {
       const docType = entityStore.documentTypes[i];
-      await prisma.userDocument.create({
-        data: {
-          userId: bidder.id,
-          documentTypeId: docType,
-          fileName: `documento-${i + 1}.pdf`,
-          fileUrl: `https://storage.example.com/docs/documento-${i + 1}.pdf`,
-          status: 'APPROVED',
-        },
-      });
+      await documentService.saveUserDocument(bidder.id, docType, `https://storage.example.com/docs/documento-${i + 1}.pdf`, `documento-${i + 1}.pdf`);
     }
     log(`2 user documents created for ${bidder.email}.`, 2);
   }
@@ -896,19 +887,20 @@ async function seedReports() {
   ];
 
   for (const report of reportDefinitions) {
-    await prisma.reports.create({
-      data: {
-        ...report,
-        tenantId: entityStore.tenantId,
-      },
-    });
+    await reportService.createReport(report, entityStore.tenantId);
     log(`Report "${report.name}" created.`, 1);
   }
 }
 
+import { execSync } from 'child_process';
+
 // --- Main Execution ---
 
 async function main() {
+  console.log('Cleaning database before seeding...');
+  execSync('npx tsx scripts/clear-database.ts', { stdio: 'inherit' });
+  console.log('Database cleaned.');
+
   console.log('Starting comprehensive database seed...');
   console.log('=====================================================\n');
   

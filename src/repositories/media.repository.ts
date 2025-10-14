@@ -27,4 +27,8 @@ export class MediaRepository {
   async delete(id: string): Promise<void> {
     await prisma.mediaItem.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.mediaItem.deleteMany({});
+  }
 }

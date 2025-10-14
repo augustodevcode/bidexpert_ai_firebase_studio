@@ -38,4 +38,8 @@ export class StateRepository {
   async countCities(stateId: string): Promise<number> {
     return prisma.city.count({ where: { stateId } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.state.deleteMany({});
+  }
 }

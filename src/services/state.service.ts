@@ -88,4 +88,13 @@ export class StateService {
       return { success: false, message: `Falha ao excluir estado: ${error.message}` };
     }
   }
+
+  async deleteAllStates(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todos os estados foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os estados.' };
+    }
+  }
 }

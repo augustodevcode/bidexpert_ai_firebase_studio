@@ -82,13 +82,16 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
+    // Se o tenant não foi especificado e o usuário só tem um, loga nele
     if (!tenantId && user.tenants?.length === 1) {
         tenantId = user.tenants[0].tenantId;
     } else if (!tenantId && user.tenants && user.tenants.length > 1) {
+        // Se tem múltiplos tenants e nenhum foi escolhido, retorna os dados para o seletor da UI
         const userProfile = formatUserWithPermissions(user);
         return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfile };
     }
     
+    // Se um tenantId foi especificado, verifica se o usuário pertence a ele
     const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
     if (tenantId && !userBelongsToTenant) {
         console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
@@ -108,6 +111,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Falha ao processar o perfil do usuário.' };
     }
 
+    // A sessão é criada para o tenant correto
     await createSession(userProfileWithPerms, tenantId!);
 
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
@@ -131,13 +135,7 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
   }
 }
 
-/**
- * Obtém a sessão atual do usuário a partir do cookie.
- * @returns {Promise<any | null>} O payload da sessão decodificado ou null.
- */
-export async function getSession() {
-    return await getSessionFromCookie();
-}
+
 
 /**
  * Obtém o perfil completo do usuário autenticado na sessão atual.

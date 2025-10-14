@@ -63,4 +63,13 @@ export class CourtService {
       return { success: false, message: `Falha ao excluir tribunal: ${error.message}` };
     }
   }
+
+  async deleteAllCourts(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.courtRepository.deleteAll();
+      return { success: true, message: 'Todos os tribunais foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os tribunais.' };
+    }
+  }
 }

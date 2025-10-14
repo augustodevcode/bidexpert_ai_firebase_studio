@@ -64,41 +64,18 @@ export function AuthProvider({
   }, [fetchUnreadCount]);
 
   useEffect(() => {
-    async function checkUserSession() {
-      // Se o usuário já estiver no contexto (vindo do SSR), não fazemos nada
-      if (userProfileWithPermissions) {
-          setLoading(false);
-          await fetchUnreadCount(userProfileWithPermissions.id);
-          return;
-      }
-      
-      // Auto-login em desenvolvimento
-      if (process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER) {
-          console.log("[AuthContext] Development auto-login enabled for:", process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER);
-          const formData = new FormData();
-          formData.append('email', process.env.NEXT_PUBLIC_DEV_AUTO_LOGIN_USER);
-          // A senha é validada, mas o serviço de login pode ser ajustado para bypass em dev.
-          // Por agora, usaremos a senha padrão do admin.
-          formData.append('password', 'Admin@123'); 
-          formData.append('tenantId', '1'); // Auto-login sempre no tenant landlord
+    // If user data is passed from the server (RootLayout), use it and stop loading.
+    if (initialUser) {
+        console.log("[AuthContext] Hydrating with initial user from server.");
+        setUserProfileWithPermissions(initialUser);
+        setActiveTenantId(initialTenantId);
+        fetchUnreadCount(initialUser.id);
+        setLoading(false);
+        return;
+    }
 
-          try {
-            const result = await login(formData);
-            if (result.success && result.user) {
-              console.log("[AuthContext] Auto-login successful.");
-              loginUser(result.user, result.user.tenants?.[0].id || '1');
-            } else {
-              console.warn("[AuthContext] Auto-login failed:", result.message);
-            }
-          } catch(e) {
-            console.error('[AuthContext] Error during auto-login:', e);
-          } finally {
-            setLoading(false);
-          }
-          return;
-      }
-      
-      // Verificação normal de sessão
+    // If no initial user, proceed with client-side session check.
+    async function checkUserSession() {
       console.log("[AuthContext] No initial user. Checking session on client...");
       try {
         const user = await getCurrentUser();
@@ -116,9 +93,10 @@ export function AuthProvider({
         setLoading(false);
       }
     }
-
+    
     checkUserSession();
     
+    // Listener for notification updates
     const handleStorageChange = () => {
       if (userProfileWithPermissions?.id) {
         fetchUnreadCount(userProfileWithPermissions.id);
@@ -129,7 +107,7 @@ export function AuthProvider({
       window.removeEventListener('notifications-updated', handleStorageChange);
     };
 
-  }, []); // Dependências removidas para executar apenas uma vez
+  }, [initialUser, initialTenantId, loginUser, fetchUnreadCount, userProfileWithPermissions?.id]);
 
   const logout = async () => {
     try {

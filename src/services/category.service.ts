@@ -63,4 +63,13 @@ export class CategoryService {
       return { success: false, message: 'Falha ao excluir categoria. Verifique se ela não está em uso.' };
     }
   }
+
+  async deleteAllCategories(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.categoryRepository.deleteAll();
+      return { success: true, message: 'Todas as categorias foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as categorias.' };
+    }
+  }
 }

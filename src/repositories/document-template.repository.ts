@@ -23,4 +23,8 @@ export class DocumentTemplateRepository {
   async delete(id: string): Promise<void> {
     await prisma.documentTemplate.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.documentTemplate.deleteMany({});
+  }
 }

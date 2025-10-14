@@ -88,4 +88,13 @@ export class JudicialBranchService {
       return { success: false, message: `Falha ao excluir vara: ${error.message}` };
     }
   }
+
+  async deleteAllJudicialBranches(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todas as varas judiciais foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as varas judiciais.' };
+    }
+  }
 }

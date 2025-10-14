@@ -40,4 +40,13 @@ export class UserWinService {
       lot: lotWithAuctionName as any,
     };
   }
+
+  async deleteAllUserWins(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.prisma.userWin.deleteMany({});
+      return { success: true, message: 'Todos os arremates de usuários foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os arremates de usuários.' };
+    }
+  }
 }

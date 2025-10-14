@@ -24,4 +24,8 @@ export class DataSourceRepository {
   async delete(id: string): Promise<void> {
     await prisma.dataSource.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.dataSource.deleteMany({});
+  }
 }

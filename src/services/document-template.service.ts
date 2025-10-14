@@ -54,4 +54,13 @@ export class DocumentTemplateService {
       return { success: false, message: `Falha ao excluir template: ${error.message}` };
     }
   }
+
+  async deleteAllDocumentTemplates(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todos os templates de documento foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os templates de documento.' };
+    }
+  }
 }

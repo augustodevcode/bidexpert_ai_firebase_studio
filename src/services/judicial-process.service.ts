@@ -125,4 +125,16 @@ export class JudicialProcessService {
       return { success: false, message: `Falha ao excluir processo: ${error.message}` };
     }
   }
+
+  async deleteAllJudicialProcesses(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const processes = await this.repository.findAll(tenantId);
+      for (const process of processes) {
+        await this.deleteJudicialProcess(tenantId, process.id);
+      }
+      return { success: true, message: 'Todos os processos judiciais foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os processos judiciais.' };
+    }
+  }
 }

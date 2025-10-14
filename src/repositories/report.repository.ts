@@ -38,4 +38,8 @@ export class ReportRepository {
       where: { id, tenantId },
     });
   }
+
+  async deleteAll(tenantId: string): Promise<void> {
+    await this.prisma.report.deleteMany({ where: { tenantId } });
+  }
 }

@@ -64,4 +64,13 @@ export class SubscriptionService {
       return { success: false, message: `Falha ao processar inscrição: ${error.message}` };
     }
   }
+
+  async deleteAllSubscribers(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.prisma.subscriber.deleteMany({});
+      return { success: true, message: 'Todos os inscritos foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os inscritos.' };
+    }
+  }
 }

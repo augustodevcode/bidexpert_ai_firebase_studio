@@ -1,18 +1,11 @@
 // src/lib/actions/auth.ts
 'use server';
 
-import { getSession } from '@/app/auth/actions';
+import { getTenantId } from '../get-tenant-id';
 import { headers } from 'next/headers';
-import { tenantContext } from '@/lib/prisma';
 
 export async function getTenantIdFromRequest(isPublicCall = false): Promise<string> {
-    const session = await getSession();
-    if (session?.tenantId) {
-        return session.tenantId;
-    }
-
-    const headersList = headers();
-    const tenantIdFromHeader = headersList.get('x-tenant-id');
+    const tenantIdFromHeader = headers().get('x-tenant-id');
     
     if (tenantIdFromHeader) {
         return tenantIdFromHeader;

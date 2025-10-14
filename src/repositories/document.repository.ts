@@ -38,4 +38,8 @@ export class DocumentRepository {
       create: data,
     });
   }
+
+  async deleteAllUserDocuments(): Promise<void> {
+    await this.prisma.userDocument.deleteMany({});
+  }
 }

@@ -85,4 +85,13 @@ export class JudicialDistrictService {
       return { success: false, message: `Falha ao excluir comarca: ${error.message}` };
     }
   }
+
+  async deleteAllJudicialDistricts(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todas as comarcas foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as comarcas.' };
+    }
+  }
 }

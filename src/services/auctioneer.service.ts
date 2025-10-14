@@ -138,11 +138,27 @@ export class AuctioneerService {
   
   async deleteAuctioneer(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
+      // Disconnect from related models
+      await this.prisma.auction.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
+      await this.prisma.lot.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
+
       await this.auctioneerRepository.delete(tenantId, id);
       return { success: true, message: 'Leiloeiro excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AuctioneerService.deleteAuctioneer for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir leiloeiro: ${error.message}` };
+    }
+  }
+
+  async deleteAllAuctioneers(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const auctioneers = await this.auctioneerRepository.findAll(tenantId);
+      for (const auctioneer of auctioneers) {
+        await this.deleteAuctioneer(tenantId, auctioneer.id);
+      }
+      return { success: true, message: 'Todos os leiloeiros foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os leiloeiros.' };
     }
   }
 

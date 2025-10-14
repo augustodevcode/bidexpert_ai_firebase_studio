@@ -7,7 +7,7 @@
  */
 import { ReportRepository } from '@/repositories/report.repository';
 import type { Report } from '@/types';
-import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { getTenantId } from '@/lib/get-tenant-id';
 import type { Prisma } from '@prisma/client';
 
 export class ReportService {
@@ -17,22 +17,31 @@ export class ReportService {
     this.repository = new ReportRepository();
   }
 
-  async getReports(): Promise<Report[]> {
-    const tenantId = await getTenantIdFromRequest();
-    return this.repository.findAll(tenantId);
+  async getReports(tenantId?: string): Promise<Report[]> {
+    const finalTenantId = await getTenantId(tenantId);
+    if (!finalTenantId) {
+      return [];
+    }
+    return this.repository.findAll(finalTenantId);
   }
 
-  async getReportById(id: string): Promise<Report | null> {
-    const tenantId = await getTenantIdFromRequest();
-    return this.repository.findById(tenantId, id);
+  async getReportById(id: string, tenantId?: string): Promise<Report | null> {
+    const finalTenantId = await getTenantId(tenantId);
+    if (!finalTenantId) {
+      return null;
+    }
+    return this.repository.findById(finalTenantId, id);
   }
   
-  async createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>): Promise<{ success: boolean; message: string; report?: Report }> {
-      const tenantId = await getTenantIdFromRequest();
+  async createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>, tenantId?: string): Promise<{ success: boolean; message: string; report?: Report }> {
+      const finalTenantId = await getTenantId(tenantId);
+      if (!finalTenantId) {
+        return { success: false, message: 'Tenant ID não encontrado.' };
+      }
       try {
           const reportData = {
               ...data,
-              tenant: { connect: { id: tenantId } },
+              tenant: { connect: { id: finalTenantId } },
           }
           const newReport = await this.repository.create(reportData as Prisma.ReportCreateInput);
           return { success: true, message: 'Relatório criado com sucesso.', report: newReport };
@@ -41,23 +50,38 @@ export class ReportService {
       }
   }
   
-  async updateReport(id: string, data: Partial<Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>>): Promise<{ success: boolean; message: string }> {
-      const tenantId = await getTenantIdFromRequest();
+  async updateReport(id: string, data: Partial<Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>>, tenantId?: string): Promise<{ success: boolean; message: string }> {
+      const finalTenantId = await getTenantId(tenantId);
+      if (!finalTenantId) {
+        return { success: false, message: 'Tenant ID não encontrado.' };
+      }
       try {
-          await this.repository.update(tenantId, id, data);
+          await this.repository.update(finalTenantId, id, data);
           return { success: true, message: 'Relatório atualizado com sucesso.'};
       } catch (error: any) {
           return { success: false, message: `Falha ao atualizar relatório: ${error.message}`};
       }
   }
   
-  async deleteReport(id: string): Promise<{ success: boolean; message: string }> {
-      const tenantId = await getTenantIdFromRequest();
+  async deleteReport(id: string, tenantId?: string): Promise<{ success: boolean; message: string }> {
+      const finalTenantId = await getTenantId(tenantId);
+      if (!finalTenantId) {
+        return { success: false, message: 'Tenant ID não encontrado.' };
+      }
       try {
-          await this.repository.delete(tenantId, id);
+          await this.repository.delete(finalTenantId, id);
           return { success: true, message: 'Relatório excluído com sucesso.'};
       } catch (error: any) {
           return { success: false, message: `Falha ao excluir relatório: ${error.message}`};
       }
+  }
+
+  async deleteAllReports(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll(tenantId);
+      return { success: true, message: 'Todos os relatórios foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os relatórios.' };
+    }
   }
 }

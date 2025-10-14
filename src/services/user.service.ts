@@ -151,11 +151,31 @@ export class UserService {
 
   async deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
     try {
+        await this.prisma.bid.deleteMany({ where: { bidderId: id } });
+        await this.prisma.userWin.deleteMany({ where: { userId: id } });
+        await this.prisma.notification.deleteMany({ where: { userId: id } });
+        await this.prisma.userLotMaxBid.deleteMany({ where: { userId: id } });
+        await this.prisma.userDocument.deleteMany({ where: { userId: id } });
+        await this.prisma.auctionHabilitation.deleteMany({ where: { userId: id } });
         await this.userRepository.delete(id);
         return { success: true, message: "Usuário excluído com sucesso." };
     } catch (error: any) {
         console.error(`Error in UserService.deleteUser for id ${id}:`, error);
         return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
+    }
+  }
+
+  async deleteAllUsers(): Promise<{ success: boolean; message: string; }> {
+    try {
+      const users = await this.userRepository.findAll();
+      for (const user of users) {
+        if (user.email !== 'admin@bidexpert.com') {
+          await this.deleteUser(user.id);
+        }
+      }
+      return { success: true, message: 'Todos os usuários não-administradores foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os usuários.' };
     }
   }
 

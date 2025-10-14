@@ -407,6 +407,44 @@ export class LotService {
     }
   }
 
+  async deleteAllBidsForLot(lotId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.prisma.bid.deleteMany({ where: { lotId } });
+      return { success: true, message: 'Todos os lances do lote foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir lances do lote.' };
+    }
+  }
+
+  async deleteAllReviewsForLot(lotId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      // @ts-ignore
+      await this.prisma.review.deleteMany({ where: { lotId } });
+      return { success: true, message: 'Todas as avaliações do lote foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir avaliações do lote.' };
+    }
+  }
+
+  async deleteAllQuestionsForLot(lotId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      // @ts-ignore
+      await this.prisma.lotQuestion.deleteMany({ where: { lotId } });
+      return { success: true, message: 'Todas as perguntas do lote foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir perguntas do lote.' };
+    }
+  }
+
+  async deleteAllMaxBidsForLot(lotId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.prisma.userLotMaxBid.deleteMany({ where: { lotId } });
+      return { success: true, message: 'Todos os lances máximos do lote foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir lances máximos do lote.' };
+    }
+  }
+
   async deleteLot(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       const lotToDelete = await this.prisma.lot.findUnique({
@@ -415,6 +453,11 @@ export class LotService {
       });
 
       if (lotToDelete) {
+        await this.deleteAllBidsForLot(id);
+        await this.deleteAllReviewsForLot(id);
+        await this.deleteAllQuestionsForLot(id);
+        await this.deleteAllMaxBidsForLot(id);
+
         const assetIdsToRelease = lotToDelete.assets.map(a => a.assetId);
 
         await this.repository.delete(id);
@@ -433,6 +476,18 @@ export class LotService {
     } catch (error: any) {
       console.error(`Error in LotService.deleteLot for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir lote: ${error.message}` };
+    }
+  }
+
+  async deleteAllLots(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const lots = await this.repository.findAll(tenantId);
+      for (const lot of lots) {
+        await this.deleteLot(lot.id);
+      }
+      return { success: true, message: 'Todos os lotes foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os lotes.' };
     }
   }
   

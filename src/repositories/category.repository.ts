@@ -34,4 +34,8 @@ export class CategoryRepository {
   async delete(id: string): Promise<void> {
     await prisma.lotCategory.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.lotCategory.deleteMany({});
+  }
 }

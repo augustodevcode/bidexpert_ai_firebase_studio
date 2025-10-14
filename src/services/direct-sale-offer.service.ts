@@ -76,4 +76,16 @@ export class DirectSaleOfferService {
       return { success: false, message: `Falha ao excluir oferta: ${error.message}` };
     }
   }
+
+  async deleteAllDirectSaleOffers(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const offers = await this.repository.findAll({ tenantId });
+      for (const offer of offers) {
+        await this.deleteDirectSaleOffer(offer.id);
+      }
+      return { success: true, message: 'Todas as ofertas de venda direta foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as ofertas de venda direta.' };
+    }
+  }
 }

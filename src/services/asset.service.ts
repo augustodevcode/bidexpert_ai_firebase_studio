@@ -146,25 +146,26 @@ export class AssetService {
    */
   async deleteAsset(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const linkedLots = await this.prisma.assetsOnLots.findMany({
-        where: { assetId: id },
-        include: { lot: { select: { status: true } } }
-      });
-
-      const isProtected = linkedLots.some(link => 
-        link.lot.status === 'ABERTO_PARA_LANCES' || 
-        link.lot.status === 'VENDIDO'
-      );
-      
-      if (isProtected) {
-          return { success: false, message: "Este ativo está vinculado a um lote ativo ou vendido e não pode ser excluído."};
-      }
+      // Disconnect asset from any lots it is linked to.
+      await this.prisma.assetsOnLots.deleteMany({ where: { assetId: id } });
 
       await this.repository.delete(id);
       return { success: true, message: 'Ativo excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.deleteAsset for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir ativo: ${error.message}` };
+    }
+  }
+
+  async deleteAllAssets(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const assets = await this.repository.findAll({ tenantId });
+      for (const asset of assets) {
+        await this.deleteAsset(asset.id);
+      }
+      return { success: true, message: 'Todos os ativos foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os ativos.' };
     }
   }
 }

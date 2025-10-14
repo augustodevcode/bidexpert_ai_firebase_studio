@@ -74,4 +74,13 @@ export class MediaService {
       return { success: false, message: `Falha ao excluir item de mídia: ${error.message}` };
     }
   }
+
+  async deleteAllMediaItems(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todos os itens de mídia foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os itens de mídia.' };
+    }
+  }
 }

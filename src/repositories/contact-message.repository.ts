@@ -19,4 +19,8 @@ export class ContactMessageRepository {
   async delete(id: string): Promise<void> {
     await prisma.contactMessage.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.contactMessage.deleteMany({});
+  }
 }

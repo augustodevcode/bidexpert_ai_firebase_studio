@@ -46,4 +46,13 @@ export class ContactMessageService {
       return { success: false, message: "Falha ao excluir mensagem." };
     }
   }
+
+  async deleteAllContactMessages(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todas as mensagens de contato foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as mensagens de contato.' };
+    }
+  }
 }

@@ -81,4 +81,19 @@ export class RoleService {
       return { success: false, message: `Falha ao excluir perfil: ${error.message}` };
     }
   }
+
+  async deleteAllNonEssentialRoles(): Promise<{ success: boolean; message: string; }> {
+    try {
+      const essentialRoles = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN'];
+      const roles = await this.repository.findAll();
+      for (const role of roles) {
+        if (!essentialRoles.includes(role.nameNormalized)) {
+          await this.deleteRole(role.id);
+        }
+      }
+      return { success: true, message: 'Todos os perfis não-essenciais foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os perfis não-essenciais.' };
+    }
+  }
 }

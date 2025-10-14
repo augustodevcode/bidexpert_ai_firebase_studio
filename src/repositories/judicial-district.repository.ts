@@ -35,4 +35,8 @@ export class JudicialDistrictRepository {
   async delete(id: string): Promise<void> {
     await prisma.judicialDistrict.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.judicialDistrict.deleteMany({});
+  }
 }

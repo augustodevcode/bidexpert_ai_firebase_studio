@@ -29,4 +29,8 @@ export class SubcategoryRepository {
   async delete(id: string): Promise<void> {
     await prisma.subcategory.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.subcategory.deleteMany({});
+  }
 }

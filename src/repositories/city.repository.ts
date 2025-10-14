@@ -40,4 +40,8 @@ export class CityRepository {
   async delete(id: string): Promise<void> {
     await prisma.city.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.city.deleteMany({});
+  }
 }

@@ -165,15 +165,29 @@ export class SellerService {
   
   async deleteSeller(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      const lots = await this.sellerRepository.findLotsBySellerId(tenantId, id);
-      if (lots.length > 0) {
-        return { success: false, message: `Não é possível excluir. O comitente está vinculado a ${lots.length} lote(s).` };
-      }
+      // Disconnect from related models
+      await this.prisma.auction.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
+      await this.prisma.lot.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
+      await this.prisma.asset.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
+      await this.prisma.judicialProcess.updateMany({ where: { sellerId: id }, data: { sellerId: null } });
+
       await this.sellerRepository.delete(tenantId, id);
       return { success: true, message: 'Comitente excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in SellerService.deleteSeller for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir comitente: ${error.message}` };
+    }
+  }
+
+  async deleteAllSellers(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const sellers = await this.sellerRepository.findAll(tenantId);
+      for (const seller of sellers) {
+        await this.deleteSeller(tenantId, seller.id);
+      }
+      return { success: true, message: 'Todos os comitentes foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os comitentes.' };
     }
   }
   

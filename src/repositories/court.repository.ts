@@ -23,4 +23,8 @@ export class CourtRepository {
   async delete(id: string): Promise<void> {
     await prisma.court.delete({ where: { id } });
   }
+
+  async deleteAll(): Promise<void> {
+    await prisma.court.deleteMany({});
+  }
 }

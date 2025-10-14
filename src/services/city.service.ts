@@ -127,4 +127,13 @@ export class CityService {
       return { success: false, message: `Falha ao excluir cidade: ${error.message}` };
     }
   }
+
+  async deleteAllCities(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.cityRepository.deleteAll();
+      return { success: true, message: 'Todas as cidades foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as cidades.' };
+    }
+  }
 }

@@ -53,4 +53,13 @@ export class DataSourceService {
       return { success: false, message: `Falha ao excluir fonte de dados: ${error.message}` };
     }
   }
+
+  async deleteAllDataSources(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todas as fontes de dados foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as fontes de dados.' };
+    }
+  }
 }

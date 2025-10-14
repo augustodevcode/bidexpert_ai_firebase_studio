@@ -310,6 +310,7 @@ export class AuctionService {
         return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
       }
       await this.prisma.$transaction(async (tx: any) => {
+          await tx.auctionHabilitation.deleteMany({ where: { auctionId: id } });
           await tx.auctionStage.deleteMany({ where: { auctionId: id }});
           await tx.auction.delete({ where: { id, tenantId } });
       });
@@ -317,6 +318,18 @@ export class AuctionService {
     } catch (error: any) {
       console.error(`Error in AuctionService.deleteAuction for id ${id}:`, error);
       return { success: false, message: `Falha ao excluir leilão: ${error.message}` };
+    }
+  }
+
+  async deleteAllAuctions(tenantId: string): Promise<{ success: boolean; message: string; }> {
+    try {
+      const auctions = await this.auctionRepository.findAll(tenantId);
+      for (const auction of auctions) {
+        await this.deleteAuction(tenantId, auction.id);
+      }
+      return { success: true, message: 'Todos os leilões foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os leilões.' };
     }
   }
 }

@@ -91,4 +91,13 @@ export class SubcategoryService {
       return { success: false, message: `Falha ao excluir subcategoria: ${error.message}` };
     }
   }
+
+  async deleteAllSubcategories(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAll();
+      return { success: true, message: 'Todas as subcategorias foram excluídas.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todas as subcategorias.' };
+    }
+  }
 }
