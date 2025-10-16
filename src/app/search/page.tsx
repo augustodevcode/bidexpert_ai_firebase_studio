@@ -21,8 +21,8 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import UniversalListItem from '@/components/universal-list-item';
-import UniversalCard from '@/components/universal-card';
+import BidExpertListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/universal-card';
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 
@@ -398,7 +398,7 @@ export default function SearchPage() {
     let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
     
     return (
-        <UniversalCard
+        <BidExpertCard
             key={`${itemType}-${item.id}-${index}`}
             item={item}
             type={itemType}
@@ -413,7 +413,7 @@ export default function SearchPage() {
      let itemType: 'auction' | 'lot' | 'direct_sale' = currentSearchType === 'auctions' || currentSearchType === 'tomada_de_precos' ? 'auction' : currentSearchType;
 
      return (
-        <UniversalListItem
+        <BidExpertListItem
             key={`${itemType}-list-${item.id}-${index}`}
             item={item}
             type={itemType as 'auction' | 'lot' | 'direct_sale'}

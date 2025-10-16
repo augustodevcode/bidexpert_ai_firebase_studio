@@ -22,12 +22,12 @@ import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import SearchResultsFrame from '@/components/search-results-frame'; 
+import SearchResultsFrame from '@/components/BidExpertSearchResultsFrame'; 
 import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getCategoryAssets } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/universal-card';
+import BidExpertListItem from '@/components/universal-list-item';
 
 const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <BidExpertFilterSkeleton />,
@@ -77,7 +77,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
   const [filteredLots, setFilteredLots] = useState<Lot[]>([]);
 
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
-  const [sortBy, setSortBy] = useState<string>('relevance');
+  const [sortBy, setSortByState] = useState<string>('relevance');
   
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
@@ -209,12 +209,12 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
   const renderGridItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <UniversalCard item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
+    return <BidExpertCard item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   const renderListItem = (item: Lot) => {
     const parentAuction = allAuctions.find(a => a.id === item.auctionId);
-    return <UniversalListItem item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
+    return <BidExpertListItem item={item} type="lot" auction={parentAuction} platformSettings={platformSettings!} />;
   };
 
   if (isLoading || !platformSettings) {
@@ -270,7 +270,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         </div>
       </Card>
 
-      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
+      <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
           <BidExpertFilter 
             categories={allCategoriesForFilter}
@@ -285,7 +285,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         </aside>
 
         <main className="min-w-0 space-y-6 md:ml-4">
-          <SearchResultsFrame
+          <BidExpertSearchResultsFrame
             items={sortedLots}
             totalItemsCount={sortedLots.length}
             renderGridItem={renderGridItem}

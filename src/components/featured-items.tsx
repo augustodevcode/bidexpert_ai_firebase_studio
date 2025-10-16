@@ -3,7 +3,7 @@ import type { Auction, Lot, PlatformSettings } from '@/types';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import UniversalCard from './universal-card'; // Importar o novo componente
+import BidExpertCard from './universal-card'; // Importar o novo componente
 
 interface FeaturedItemsProps {
   items: (Auction | Lot)[];
@@ -33,7 +33,7 @@ export default function FeaturedItems({ items, type, title, viewAllLink, platfor
         {items.map((item) => {
           const parentAuction = type === 'lot' ? allAuctions.find(a => a.id === (item as Lot).auctionId) : undefined;
           return (
-            <UniversalCard 
+            <BidExpertCard 
                 key={item.id} 
                 item={item}
                 type={type} 

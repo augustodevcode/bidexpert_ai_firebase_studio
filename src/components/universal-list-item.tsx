@@ -1,4 +1,4 @@
-// src/components/universal-list-item.tsx
+// src/components/BidExpertListItem.tsx
 'use client';
 
 import * as React from 'react';
@@ -14,7 +14,7 @@ import AssetListItem from './cards/asset-list-item';
 
 type Item = Partial<Auction & Lot & DirectSaleOffer & SellerProfileInfo & AuctioneerProfileInfo & UserProfileWithPermissions & Asset>;
 
-interface UniversalListItemProps {
+interface BidExpertListItemProps {
   item: Item;
   type: 'auction' | 'lot' | 'direct_sale' | 'seller' | 'auctioneer' | 'user' | 'asset';
   platformSettings: PlatformSettings;
@@ -22,7 +22,7 @@ interface UniversalListItemProps {
   onUpdate?: () => void;
 }
 
-export default function UniversalListItem({ item, type, platformSettings, parentAuction, onUpdate }: UniversalListItemProps) {
+export default function BidExpertListItem({ item, type, platformSettings, parentAuction, onUpdate }: BidExpertListItemProps) {
   if (!item) return null;
 
   if (type === 'auction') {

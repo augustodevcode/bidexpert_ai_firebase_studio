@@ -13,7 +13,7 @@ import Link from 'next/link';
 import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
 import FeaturedSellers from '@/components/featured-sellers';
-import UniversalCard from '@/components/universal-card';
+import BidExpertCard from '@/components/universal-card';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePageClient({ 
@@ -79,7 +79,7 @@ export default function HomePageClient({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {lotsToDisplay.map((item) => (
-              <UniversalCard
+              <BidExpertCard
                 key={item.id}
                 item={item}
                 type="lot"
@@ -123,7 +123,7 @@ export default function HomePageClient({
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {auctionsToDisplay.map((item) => (
-              <UniversalCard
+              <BidExpertCard
                 key={item.id}
                 item={item}
                 type="auction"

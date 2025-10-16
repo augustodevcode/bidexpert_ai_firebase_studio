@@ -1,8 +1,8 @@
-// src/components/universal-card.tsx
+// src/components/BidExpertCard.tsx
 'use client';
 
 import * as React from 'react';
-import type { Auction, Lot, PlatformSettings, DirectSaleOffer, SellerProfileInfo, AuctioneerProfileInfo, UserProfileWithPermissions } from '@/types';
+import type { Auction, Lot, PlatformSettings, DirectSaleOffer, SellerProfileInfo, AuctioneerProfileInfo, UserProfileWithPermissions, Asset } from '@/types';
 import AuctionCard from '@/components/cards/auction-card';
 import LotCard from '@/components/cards/lot-card';
 import DirectSaleOfferCard from '@/components/cards/direct-sale-offer-card';
@@ -11,9 +11,9 @@ import AuctioneerCard from '@/components/cards/auctioneer-card';
 import UserCard from './cards/user-card';
 import AssetCard from './cards/asset-card';
 
-type Item = Partial<Auction & Lot & DirectSaleOffer & SellerProfileInfo & AuctioneerProfileInfo & UserProfileWithPermissions>;
+type Item = Partial<Auction & Lot & DirectSaleOffer & SellerProfileInfo & AuctioneerProfileInfo & UserProfileWithPermissions & Asset>;
 
-interface UniversalCardProps {
+interface BidExpertCardProps {
   item: Item;
   type: 'auction' | 'lot' | 'direct_sale' | 'seller' | 'auctioneer' | 'user' | 'asset';
   platformSettings: PlatformSettings;
@@ -22,7 +22,7 @@ interface UniversalCardProps {
   showCountdown?: boolean;
 }
 
-export default function UniversalCard({ item, type, platformSettings, parentAuction, onUpdate, showCountdown }: UniversalCardProps) {
+export default function BidExpertCard({ item, type, platformSettings, parentAuction, onUpdate, showCountdown }: BidExpertCardProps) {
   if (type === 'auction') {
     return <AuctionCard auction={item as Auction} onUpdate={onUpdate} />;
   }
