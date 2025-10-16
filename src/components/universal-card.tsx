@@ -2,16 +2,18 @@
 'use client';
 
 import * as React from 'react';
-import type { Auction, Lot, PlatformSettings, DirectSaleOffer } from '@/types';
+import type { Auction, Lot, PlatformSettings, DirectSaleOffer, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import AuctionCard from '@/components/cards/auction-card';
 import LotCard from '@/components/cards/lot-card';
 import DirectSaleOfferCard from '@/components/cards/direct-sale-offer-card';
+import SellerCard from '@/components/cards/seller-card';
+import AuctioneerCard from '@/components/cards/auctioneer-card';
 
-type Item = Partial<Auction & Lot & DirectSaleOffer>;
+type Item = Partial<Auction & Lot & DirectSaleOffer & SellerProfileInfo & AuctioneerProfileInfo>;
 
 interface UniversalCardProps {
   item: Item;
-  type: 'auction' | 'lot' | 'direct_sale';
+  type: 'auction' | 'lot' | 'direct_sale' | 'seller' | 'auctioneer';
   platformSettings: PlatformSettings;
   parentAuction?: Auction;
   onUpdate?: () => void;
@@ -37,6 +39,14 @@ export default function UniversalCard({ item, type, platformSettings, parentAuct
   
   if (type === 'direct_sale') {
     return <DirectSaleOfferCard offer={item as DirectSaleOffer} platformSettings={platformSettings} onUpdate={onUpdate} />;
+  }
+
+  if (type === 'seller') {
+      return <SellerCard seller={item as SellerProfileInfo} onUpdate={onUpdate} />;
+  }
+  
+  if (type === 'auctioneer') {
+      return <AuctioneerCard auctioneer={item as AuctioneerProfileInfo} onUpdate={onUpdate} />;
   }
 
   return null;

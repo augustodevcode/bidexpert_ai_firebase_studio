@@ -2,7 +2,7 @@
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Leilões.
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
- * permitindo busca, ordenação, filtros por status e visualização em grade ou lista.
+ * permitindo busca, ordenação, filtros por status e visualização em grade, lista ou tabela.
  */
 'use client';
 

@@ -34,7 +34,6 @@ export default function AdminAuctioneersPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -59,15 +58,6 @@ export default function AdminAuctioneersPage() {
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
-  
-  const filteredAuctioneers = useMemo(() => {
-    if (!searchTerm) return allAuctioneers;
-    return allAuctioneers.filter(auct => 
-      auct.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      auct.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allAuctioneers, searchTerm]);
-
 
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
@@ -138,8 +128,8 @@ export default function AdminAuctioneersPage() {
       </Card>
 
       <BidExpertSearchResultsFrame
-        items={filteredAuctioneers}
-        totalItemsCount={filteredAuctioneers.length}
+        items={allAuctioneers}
+        totalItemsCount={allAuctioneers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
         dataTableColumns={columns}
@@ -152,8 +142,6 @@ export default function AdminAuctioneersPage() {
         emptyStateMessage="Nenhum leiloeiro encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
-        searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
         searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected}
       />

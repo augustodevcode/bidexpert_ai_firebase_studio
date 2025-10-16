@@ -34,7 +34,6 @@ export default function AdminSellersPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -60,14 +59,6 @@ export default function AdminSellersPage() {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
   
-  const filteredSellers = useMemo(() => {
-    if (!searchTerm) return allSellers;
-    return allSellers.filter(seller => 
-      seller.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      seller.email?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [allSellers, searchTerm]);
-
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
@@ -139,8 +130,8 @@ export default function AdminSellersPage() {
       </Card>
 
       <BidExpertSearchResultsFrame
-        items={filteredSellers}
-        totalItemsCount={filteredSellers.length}
+        items={allSellers}
+        totalItemsCount={allSellers.length}
         renderGridItem={renderGridItem}
         renderListItem={renderListItem}
         dataTableColumns={columns}
@@ -153,8 +144,6 @@ export default function AdminSellersPage() {
         emptyStateMessage="Nenhum comitente encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
-        searchTerm={searchTerm}
-        onSearchTermChange={setSearchTerm}
         searchPlaceholder='Buscar por nome ou email...'
         onDeleteSelected={handleDeleteSelected}
       />
