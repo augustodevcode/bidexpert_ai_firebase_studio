@@ -85,7 +85,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
                 return (
                   <Link
                     key={category.id}
-                    href={`/search?category=${category.slug}`}
+                    href={`/category/${category.slug}`}
                     className="group flex-[0_0_150px] sm:flex-[0_0_180px]"
                   >
                     <div className="bg-white rounded-xl p-4 shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 h-full">
@@ -124,7 +124,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
             size="icon"
             onClick={scrollPrev}
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
-            aria-label="Previous"
+            aria-label="Anterior"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -133,7 +133,7 @@ export default function TopCategories({ categories }: TopCategoriesProps) {
             size="icon"
             onClick={scrollNext}
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 bg-white hover:bg-gray-100 rounded-full shadow-lg w-10 h-10 z-10 hidden md:flex"
-            aria-label="Next"
+            aria-label="Próximo"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>

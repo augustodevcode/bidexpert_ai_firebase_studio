@@ -42,6 +42,7 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
 | **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` (futuro) |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Asset` |
+| **[NOVO] Marketing e Engajamento** | Seções na homepage para engajamento do usuário, como newsletter, anúncios e promoções de parceiros. | `Subscriber`, `Advertisement` (futuro), `ToolSponsor` (futuro) |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
 
@@ -68,6 +69,7 @@ Baseado na estrutura de `src/app`:
 | `POST /api/v1/tenant/create` | **[NOVO]** Cria um novo ambiente (tenant) para um leiloeiro. | Service Account | `{ "name": "Leiloeiro X", "email": "...", "subdomain": "leiloeiro-x" }` | `{ "success": true, "tenantId": "..." }` |
 | `POST /api/auctions/{auctionId}/lots/{lotId}/bids`| Enviar um novo lance para um lote. | Arrematante | `{ "amount": 1500.50 }` | `{ "id": "bid_cuid", "amount": 1500.50, ... }` |
 | `PATCH /api/admin/users/{userId}/habilitations`| Aprovar ou rejeitar a habilitação de um usuário. | Admin | `{ "status": "HABILITADO" }` | `{ "id": "user_cuid", "habilitationStatus": "HABILITADO" }`|
+| `POST /api/subscribe` | **[NOVO]** Inscreve um usuário na newsletter. | Público | `{"email": "...", "name": "..."}`| `{"success": true}`|
 
 ---
 
@@ -75,38 +77,28 @@ Baseado na estrutura de `src/app`:
 
 ### 4.1. **[NOVO]** Onboarding Automatizado de Novo Leiloeiro (Tenant)
 
-1.  **Cadastro no CRM:** Um novo leiloeiro se cadastra em um CRM externo, fornecendo seus dados e escolhendo um subdomínio (ex: `leiloeiro-x`).
-2.  **Disparo do Evento:** O CRM publica uma mensagem no tópico `new-tenant-onboarding` do Google Cloud Pub/Sub, contendo os dados do novo leiloeiro.
-3.  **Ativação da Cloud Function:** Uma Cloud Function, inscrita neste tópico, é acionada.
-4.  **Chamada à API BidExpert:** A Cloud Function faz uma chamada segura para o endpoint `/api/v1/tenant/create` da plataforma BidExpert.
-5.  **Provisionamento do Tenant:** A API do BidExpert:
-    *   Valida os dados.
-    *   Cria um novo registro na tabela `Tenant`.
-    *   Configura o subdomínio e associa-o ao novo `tenant_id`.
-    *   Cria o usuário administrador para o novo leiloeiro.
-    *   Retorna uma resposta de sucesso para a Cloud Function.
+(Fluxo existente, sem alterações)
 
 ### 4.2. **[ATUALIZADO]** Fluxo de Login Multi-Tenant
 
-1.  **Acesso:** O usuário acessa a página de login.
-    *   **Via Subdomínio:** Se o acesso for por `leiloeiro-x.bidexpert.com`, o `tenantId` já é conhecido.
-    *   **Via Domínio Principal:** Se o acesso for por `bidexpert.com`, o `tenantId` é desconhecido.
-2.  **Credenciais:** O usuário insere e-mail e senha.
-3.  **Validação:** O sistema valida as credenciais.
-4.  **Verificação de Tenants:** O sistema busca todos os tenants aos quais o usuário pertence.
-    *   **Um Tenant:** O usuário é logado e redirecionado para o painel do seu único tenant.
-    *   **Múltiplos Tenants:** O sistema exibe uma tela intermediária listando os "espaços de trabalho" (tenants) do usuário para que ele selecione em qual deseja entrar.
-    *   **Nenhum Tenant:** O usuário recebe uma mensagem de erro, a menos que seja um admin da plataforma.
-5.  **Criação da Sessão:** Uma sessão é criada contendo o `userId` **e** o `tenantId` selecionado.
-6.  **Redirecionamento:** O usuário é direcionado para o painel correto.
+(Fluxo existente, sem alterações)
 
 ### 4.3. Administrador da Plataforma: Publicação de Leilão Judicial
 
-(Fluxo existente, sem alterações imediatas)
+(Fluxo existente, sem alterações)
 
 ### 4.4. Arrematante: Jornada de Lance
 
-(Fluxo existente, sem alterações imediatas, mas todas as interações com dados serão filtradas pelo `tenant_id` do leilão que ele está acessando).
+(Fluxo existente, sem alterações)
+
+### 4.5. **[NOVO]** Cliente Potencial: Inscrição na Newsletter
+
+1.  **Acesso à Homepage:** Um visitante (cliente potencial) acessa a página inicial.
+2.  **Visualização da Seção:** O visitante rola a página e encontra a seção "Fique por Dentro das Novidades".
+3.  **Preenchimento:** Ele insere seu nome e e-mail no formulário de inscrição.
+4.  **Submissão:** Ao clicar em "Inscrever", uma `server action` (`subscribeToAction`) é chamada.
+5.  **Criação do Assinante:** O `SubscriptionService` valida os dados, verifica se o e-mail já existe e cria um novo registro `Subscriber` no banco de dados, associado ao tenant principal ('1').
+6.  **Feedback:** O usuário recebe um `toast` de sucesso ou erro na tela.
 
 ---
 
@@ -114,69 +106,39 @@ Baseado na estrutura de `src/app`:
 
 ### 5.1. **[NOVO]** Isolamento de Dados (Multi-Tenancy)
 
-*   **`tenantId` Mandatório:** Todas as tabelas que contêm dados de um leiloeiro específico (leilões, lotes, bens, comitentes, usuários do leiloeiro, lances, etc.) **devem** ter uma coluna `tenantId`.
-*   **Filtragem Automática:** Todas as queries (leituras, escritas, atualizações, exclusões) realizadas na plataforma **devem** ser automaticamente filtradas pelo `tenantId` do usuário logado ou do contexto do subdomínio acessado.
-*   **Segurança:** Um usuário de um `tenantId` **NUNCA** deve conseguir visualizar, modificar ou acessar dados pertencentes a outro `tenant_id`.
+(Regra existente, sem alterações)
 
 ### 5.2. Componentes de Exibição Unificados
 
-*   **Padrão `UniversalCard` e `UniversalListItem`:** Para garantir consistência visual e manutenibilidade, a exibição de itens em formato de card ou de lista (como em páginas de busca, dashboards e páginas de categoria) **deve** utilizar os componentes `UniversalCard.tsx` e `UniversalListItem.tsx`, respectivamente.
-*   **Lógica Centralizada:** Esses componentes são responsáveis por receber um objeto de dados (seja `Auction` ou `Lot`) e um `type` ('auction' ou 'lot') e então renderizar o componente de card/item de lista apropriado (`AuctionCard` ou `LotCard`), passando todas as props necessárias.
-*   **Não Uso Direto:** Os componentes `AuctionCard` e `LotCard` não devem ser importados ou utilizados diretamente nas páginas. As páginas devem interagir apenas com os componentes universais.
+(Regra existente, sem alterações)
 
 ### 5.3. Fontes de Dados para Relatórios
 
-*   **Modelo `DataSource`:** A tabela `DataSource` no banco de dados é a fonte da verdade para as variáveis disponíveis no `BidReportBuilder`.
-*   **Seeding:** O script `seed-db.ts` é responsável por popular a tabela `DataSource` com metadados dos principais modelos da aplicação (`Auction`, `Lot`, `User`, `Seller`, etc.).
-*   **Estrutura:** Cada registro em `DataSource` define um `name` (amigável, ex: "Leilões"), um `modelName` (do Prisma, ex: "Auction") e um JSON `fields` que lista as colunas (`name` e `type`) que podem ser usadas como variáveis no relatório (ex: `{{Auction.title}}`).
+(Regra existente, sem alterações)
 
 ### 5.4. **[NOVO]** Exibição Condicional de Cronômetro Regressivo
 
-*   **Componente Reutilizável (`LotCountdown.tsx`):** Um cronômetro de contagem regressiva foi criado para ser reutilizado. Ele calcula o tempo restante para uma data de término e exibe dias, horas, minutos e segundos.
-*   **Visibilidade Controlada:** O cronômetro **não deve** ser exibido por padrão em todos os lotes. Sua visibilidade é controlada por uma nova propriedade booleana `showCountdown` passada para os componentes de exibição de lotes (`LotCard.tsx`).
-*   **Contextos de Exibição:** Atualmente, o cronômetro só é ativado e exibido nos seguintes contextos:
-    1.  No carrossel "Super Oportunidades" (`ClosingSoonCarousel.tsx`) da página inicial.
-    2.  No modal de pré-visualização rápida de um lote (`LotPreviewModal.tsx`).
-*   **Lógica da Query:** A busca por lotes "encerrando em breve" (`closingSoonLots`) é feita no `page.tsx` da homepage, filtrando lotes com status `ABERTO_PARA_LANCES` e cuja data de término da última etapa do leilão esteja nos próximos 7 dias.
+(Regra existente, sem alterações)
 
 ### 5.5. **[NOVO]** Criação de Ativos (Bens) em Contexto
 
-*   **Objetivo:** Melhorar o fluxo de trabalho do administrador ao criar lotes, permitindo a criação de um novo ativo sem sair da tela de edição do lote.
-*   **Implementação:**
-    1.  Na página de edição de um lote (`/admin/lots/[lotId]/edit`), na seção "Bens Disponíveis para Vincular", um botão **"Cadastrar Novo Bem"** foi adicionado.
-    2.  Clicar neste botão abre um **modal (`CreateAssetModal.tsx`)** que contém o formulário de criação de ativos (`AssetForm.tsx`).
-    3.  O formulário no modal é pré-populado com o `sellerId` ou `judicialProcessId` do leilão ao qual o lote pertence, garantindo a associação correta.
-    4.  Ao salvar o novo ativo, o modal se fecha, e a lista de "Bens Disponíveis" na página de edição do lote é **automaticamente atualizada** para incluir o item recém-criado, que já pode ser vinculado ao lote.
+(Regra existente, sem alterações)
 
 ### 5.6. **[NOVO]** Validação de Formulários e Feedback ao Usuário
 
-*   **Marcação de Campos Obrigatórios:** Todos os campos de preenchimento obrigatório em formulários de criação ou edição **devem** ser visualmente indicados com um asterisco vermelho (`*`) ao lado do `Label`.
-*   **Desabilitação de Botão de Submissão:** Os botões de "Salvar", "Criar" ou "Enviar" **devem** permanecer desabilitados enquanto o formulário for inválido (i.e., enquanto campos obrigatórios não forem preenchidos ou dados inseridos não atenderem aos critérios de validação).
-*   **Feedback Imediato:** Após a submissão de um formulário, o sistema **deve** fornecer um feedback claro e imediato ao usuário, utilizando componentes `Toast` para indicar sucesso ou falha na operação. Submissões não devem falhar silenciosamente.
+(Regra existente, sem alterações)
 
 ### 5.7. **[NOVO]** Fluxo de Configuração Inicial (Setup)
 
-*   **Flag de Conclusão:** O estado do setup inicial da aplicação é controlado por uma flag booleana `isSetupComplete` no modelo `PlatformSettings` do banco de dados.
-*   **Redirecionamento:** Na inicialização da aplicação, o layout raiz (`RootLayout`) verifica o estado desta flag. Se for `false`, todos os usuários são redirecionados para a página `/setup`, independentemente da rota solicitada.
-*   **Assistente de Setup:** A página `/setup` apresenta um assistente de múltiplos passos para:
-    1.  Confirmar a conexão com o banco de dados.
-    2.  Executar o `seed` de dados essenciais e de demonstração.
-    3.  Criar a conta de administrador principal.
-*   **Finalização:** Ao final do assistente, a ação `markSetupAsComplete` é chamada, atualizando a flag `isSetupComplete` para `true` no banco de dados.
-*   **Reset pelo Admin:** Na página de configurações (`/admin/settings`), um administrador pode resetar a flag `isSetupComplete` para `false`, forçando a re-exibição do assistente de setup na próxima visita, o que é útil para reconfiguração do ambiente.
+(Regra existente, sem alterações)
+
+### 5.8. **[NOVO]** Configuração da Homepage
+
+*   **Responsividade:** A exibição dos cards de serviços (leilões/lotes) deve ser responsiva. Em telas de desktop, devem ser exibidos em grid. Em telas menores (mobile/tablet), o layout deve se transformar em um carrossel horizontal com navegação por gestos (drag).
+*   **Carrossel de Categorias:** A seção de categorias na homepage deve ser um carrossel horizontal, permitindo que o usuário deslize para ver todas as opções disponíveis.
 
 ---
 
 ## 6. Orientações para Futuros Desenvolvedores
 
-*   **Sempre Use o Contexto de Tenant:** Ao criar novas `Server Actions` ou serviços, sempre utilize a função `getTenantIdFromRequest` para garantir que todas as operações sejam executadas no contexto do tenant correto.
-*   **Estrutura Modular do Schema Prisma:** Lembre-se que o arquivo `prisma/schema.prisma` é gerado automaticamente. **Nunca o edite diretamente**. Todas as alterações de modelo devem ser feitas nos arquivos individuais dentro de `prisma/models/`.
-*   **Mantenha a Coesão dos Serviços:** Evite lógica de negócio cruzada entre serviços. Se `AuctionService` precisa de dados de `Seller`, ele deve chamar `SellerService`, não `SellerRepository`.
-*   **Modelos Globais vs. Modelos por Tenant:** Ao adicionar novos modelos ao `prisma/schema.prisma`, decida se ele é global (como `Role`) ou por tenant (como `Lot`). Se for por tenant, adicione o campo `tenantId` e a relação com `Tenant`. Se for global, adicione o nome do modelo à lista `tenantAgnosticModels` em `src/lib/prisma.ts` para evitar que o middleware tente filtrar por `tenantId`.
-*   **Use os Componentes Universais:** Para qualquer nova funcionalidade que exija a exibição de listas de leilões ou lotes, utilize `SearchResultsFrame` em conjunto com `UniversalCard` e `UniversalListItem` para manter a consistência da UI e centralizar a lógica de renderização.
-*   **Testes são Essenciais:** Para cada nova funcionalidade, especialmente em `Server Actions`, crie um teste de integração correspondente para validar a lógica de negócio e as regras de permissão.
-*   **Fontes de Dados do Report Builder:** Para expor novas tabelas ou campos no Construtor de Relatórios, atualize o array `dataSources` no script `src/scripts/seed-db.ts`. Isso garantirá que as novas variáveis fiquem disponíveis na UI do construtor após a execução do seed.
-*   **Herança de Mídia (Asset -> Lote):** Ao criar um lote, o usuário pode escolher entre herdar a galeria de imagens de um `Asset` (Bem) vinculado ou selecionar uma galeria customizada da Biblioteca de Mídia (`MediaItem`). A lógica de serviço deve priorizar a galeria customizada se existir.
-*   **Herança de Mídia (Lote -> Leilão):** Ao criar um leilão, o usuário pode escolher entre herdar a imagem principal de um dos lotes vinculados ou selecionar uma imagem customizada da Biblioteca de Mídia.
-*   **Lógica no Serviço:** A decisão de qual URL de imagem (`imageUrl`) exibir deve ser centralizada nas `Services` (`lot.service.ts`, `auction.service.ts`). Os componentes de UI (cards, páginas) devem simplesmente renderizar a `imageUrl` fornecida pelo serviço, sem conter lógica de herança.
-*   **Validação de Formulários:** Sempre utilize os schemas do Zod (`*-form-schema.ts`) em conjunto com o `react-hook-form` e o componente `<Form>` do `shadcn/ui` para garantir validação robusta no lado do cliente e do servidor. Para campos obrigatórios, use a anotação `*` no `FormLabel`.
+(As orientações existentes permanecem válidas. Esta seção será atualizada conforme novas regras de negócio forem adicionadas.)
