@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/BidExpertFilter'; 
-import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
+import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,8 +21,6 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
-import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 import UniversalListItem from '@/components/universal-list-item';
 import UniversalCard from '@/components/universal-card';
 import { getAuctions } from '@/app/admin/auctions/actions';
@@ -92,8 +90,6 @@ export default function SearchPage() {
   const [allCategoriesForFilter, setAllCategoriesForFilter] = useState<LotCategory[]>([]);
   const [uniqueLocationsForFilter, setUniqueLocationsForFilter] = useState<string[]>([]);
   const [uniqueSellersForFilter, setUniqueSellersForFilter] = useState<string[]>([]);
-  const [allMakesForFilter, setAllMakesForFilter] = useState<VehicleMake[]>([]);
-  const [allModelsForFilter, setAllModelsForFilter] = useState<VehicleModel[]>([]);
   const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   // State for UI and Filters
@@ -133,20 +129,16 @@ export default function SearchPage() {
     async function fetchSharedData() {
       setIsFilterDataLoading(true);
       try {
-        const [categories, offers, sellers, settings, makes, models] = await Promise.all([
+        const [categories, offers, sellers, settings] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
           getSellers(),
           getPlatformSettings(),
-          getVehicleMakes(),
-          getVehicleModels()
         ]);
         
         setAllDirectSales(offers);
         setAllCategoriesForFilter(categories);
         setPlatformSettings(settings as PlatformSettings);
-        setAllMakesForFilter(makes);
-        setAllModelsForFilter(models);
 
         const locations = new Set<string>();
         offers.forEach(offer => {
@@ -191,11 +183,7 @@ export default function SearchPage() {
             });
             break;
           case 'direct_sale':
-            const directSales = await getDirectSaleOffers();
-            setAllDirectSales(directSales);
-            directSales.forEach(item => {
-                if (item.locationCity && item.locationState) locations.add(`${item.locationCity} - ${item.locationState}`);
-            });
+            // Already fetched in shared data
             break;
         }
         if (uniqueLocationsForFilter.length === 0 && locations.size > 0) {
@@ -510,24 +498,20 @@ export default function SearchPage() {
                 onFilterReset={handleFilterReset}
                 initialFilters={activeFilters as ActiveFilters}
                 filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales' | 'lots')}
-                makes={allMakesForFilter}
-                models={allModelsForFilter}
             />
         </aside>
         
         <main className="min-w-0 space-y-6 md:ml-4">
             <SearchResultsFrame
               items={filteredAndSortedItems}
-              totalItemsCount={filteredAndSortedItems.length}
-              renderGridItem={renderGridItem}
-              renderListItem={renderListItem}
               sortOptions={currentSortOptions}
               initialSortBy={sortBy}
               onSortChange={setSortByState}
               platformSettings={platformSettings}
               isLoading={isLoading}
+              renderGridItem={renderGridItem}
+              renderListItem={renderListItem}
               searchTypeLabel={getSearchTypeLabel()}
-              emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
             />
         </main>
       </div>

@@ -14,7 +14,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import {
@@ -27,16 +27,16 @@ import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import type { ActiveFilters } from '@/components/sidebar-filters';
+import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import dynamic from 'next/dynamic';
-import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+import SidebarFiltersSkeleton from '@/components/BidExpertFilterSkeleton';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
+const SidebarFilters = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });

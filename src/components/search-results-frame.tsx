@@ -5,13 +5,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
-import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight, TableIcon, Search as SearchIcon } from 'lucide-react';
+import { LayoutGrid, List, Loader2, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { PlatformSettings } from '@/types';
 import { cn } from '@/lib/utils';
-import { DataTableFacetedFilter } from './ui/data-table-faceted-filter';
-import type { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from './ui/data-table';
-import { Input } from './ui/input'; // Importar o Input
 
 interface PaginationControlsProps {
     currentPage: number;
@@ -64,53 +60,39 @@ const PaginationControls: React.FC<PaginationControlsProps> = ({
                     Próxima <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
+             <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <p>Página {currentPage} de {totalPages}</p>
+            </div>
         </div>
     );
 };
 
 
 interface SearchResultsFrameProps<TItem> {
-  items: TItem[]; 
-  totalItemsCount?: number;
+  items: TItem[];
+  totalItemsCount: number;
   renderGridItem: (item: TItem, index: number) => React.ReactNode;
   renderListItem: (item: TItem, index: number) => React.ReactNode;
-  dataTableColumns?: ColumnDef<TItem, any>[];
   sortOptions: { value: string; label: string }[];
   initialSortBy?: string;
   onSortChange: (sortBy: string) => void;
-  platformSettings: PlatformSettings | null;
+  platformSettings: PlatformSettings;
   isLoading?: boolean;
   emptyStateMessage?: string;
   searchTypeLabel: string; 
-  facetedFilterColumns?: {
-    id: string;
-    title: string;
-    options: {
-        label: string;
-        value: string;
-        icon?: React.ComponentType<{ className?: string }>;
-    }[];
-  }[];
-  onDeleteSelected?: (selectedRows: TItem[]) => Promise<void>;
   
-  // Props para busca
-  searchTerm?: string;
-  onSearchTermChange?: (term: string) => void;
-  searchPlaceholder?: string;
-  searchColumnId?: string; // Para DataTable
-  
-  // Props para paginação controlada
+  // Props para paginação
   currentPage?: number;
   onPageChange?: (page: number) => void;
   itemsPerPage?: number;
   onItemsPerPageChange?: (size: number) => void;
 }
 
-export default function SearchResultsFrame<TItem extends { id: string | number; [key: string]: any }>({
+export default function SearchResultsFrame<TItem>({
   items,
+  totalItemsCount,
   renderGridItem,
   renderListItem,
-  dataTableColumns,
   sortOptions,
   initialSortBy = 'relevance',
   onSortChange,
@@ -118,29 +100,21 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   isLoading = false,
   emptyStateMessage = "Nenhum item encontrado com os filtros aplicados.",
   searchTypeLabel,
-  facetedFilterColumns = [],
-  onDeleteSelected,
-  searchTerm,
-  onSearchTermChange,
-  searchPlaceholder = "Buscar...",
-  searchColumnId,
   currentPage: controlledCurrentPage,
   onPageChange: onControlledPageChange,
   itemsPerPage: controlledItemsPerPage,
   onItemsPerPageChange,
 }: SearchResultsFrameProps<TItem>) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>(dataTableColumns ? 'table' : 'grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
   
+  // Fallback para paginação interna se as props de controle não forem fornecidas
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
-  const [internalItemsPerPage, setInternalItemsPerPage] = useState(platformSettings?.defaultListItemsPerPage || 10);
+  const itemsPerPage = controlledItemsPerPage || platformSettings?.searchItemsPerPage || 12;
   
-  const isPaginated = controlledCurrentPage !== undefined && onControlledPageChange !== undefined && controlledItemsPerPage !== undefined && onItemsPerPageChange !== undefined;
-
+  const isPaginated = controlledCurrentPage !== undefined && onControlledPageChange !== undefined;
   const currentPage = isPaginated ? controlledCurrentPage : internalCurrentPage;
-  const itemsPerPage = isPaginated ? controlledItemsPerPage : internalItemsPerPage;
   const onPageChange = isPaginated ? onControlledPageChange : setInternalCurrentPage;
-  const onItemsPerPageChangeInternal = isPaginated ? onItemsPerPageChange : setInternalItemsPerPage;
 
   
   const handleSortChangeInternal = (value: string) => {
@@ -151,36 +125,26 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
   
   const handlePageChangeInternal = (page: number) => {
     onPageChange(page);
-    window.scrollTo(0, 0);
+    window.scrollTo(0, 0); // Scroll to top on page change
   };
   
-  const handleItemsPerPageChangeInternal = (size: number) => {
-    onItemsPerPageChangeInternal(size);
-    onPageChange(1);
-  }
-  
+  // UseMemo para paginar apenas se não for controlado externamente.
+  // Se for controlado, a lista de `items` já deve vir paginada.
   const paginatedItems = useMemo(() => {
-    if (viewMode === 'table') return items; // DataTable handles its own pagination
+    if (isPaginated) return items;
     const startIndex = (currentPage - 1) * itemsPerPage;
     return items.slice(startIndex, startIndex + itemsPerPage);
-  }, [items, currentPage, itemsPerPage, viewMode]);
+  }, [items, currentPage, itemsPerPage, isPaginated]);
+  
+  const finalTotalItemsCount = totalItemsCount ?? items.length;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 p-4 bg-card border rounded-lg shadow-sm">
-        <div className="flex-1 w-full sm:w-auto">
-             {onSearchTermChange && (
-                <div className="relative">
-                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder={searchPlaceholder}
-                        value={searchTerm}
-                        onChange={(e) => onSearchTermChange(e.target.value)}
-                        className="h-9 pl-10 w-full sm:w-[250px] lg:w-[300px]"
-                        data-ai-id="search-results-frame-search-input"
-                    />
-                </div>
-            )}
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {isLoading ? `Buscando ${searchTypeLabel}...` : `${finalTotalItemsCount} ${searchTypeLabel} encontrado(s)`}
+          </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-end">
           <Select value={currentSortBy} onValueChange={handleSortChangeInternal}>
@@ -199,40 +163,25 @@ export default function SearchResultsFrame<TItem extends { id: string | number; 
             <span className="text-xs text-muted-foreground hidden sm:inline">Ver:</span>
             <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')} aria-label="Visualização em Grade"><LayoutGrid className="h-4 w-4" /></Button>
             <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')} aria-label="Visualização em Lista"><List className="h-4 w-4" /></Button>
-            {dataTableColumns && <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('table')} aria-label="Visualização em Tabela"><TableIcon className="h-4 w-4" /></Button>}
           </div>
         </div>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
-      ) : items.length > 0 ? (
+      ) : paginatedItems.length > 0 ? (
         <>
-          {viewMode === 'table' && dataTableColumns ? (
-            <DataTable 
-              columns={dataTableColumns}
-              data={items} // DataTable now receives all items and handles its own pagination
-              facetedFilterColumns={facetedFilterColumns}
-              searchColumnId={searchColumnId}
-              searchPlaceholder={searchPlaceholder}
-              onDeleteSelected={onDeleteSelected}
-            />
-          ) : (
-            <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
-              {paginatedItems.map((item, index) => (
-                viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
-              ))}
-            </div>
-          )}
-
-          {viewMode !== 'table' && (
-            <PaginationControls 
-                currentPage={currentPage}
-                totalItemsCount={items.length}
-                itemsPerPage={itemsPerPage}
-                onPageChange={handlePageChangeInternal}
-            />
-          )}
+          <div className={cn("grid gap-6", viewMode === 'grid' ? 'grid-cols-1 sm:grid-cols-2 xl:grid-cols-3' : 'grid-cols-1')}>
+            {paginatedItems.map((item, index) => (
+              viewMode === 'grid' ? renderGridItem(item, index) : renderListItem(item, index)
+            ))}
+          </div>
+          <PaginationControls 
+            currentPage={currentPage}
+            totalItemsCount={finalTotalItemsCount}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChangeInternal}
+          />
         </>
       ) : (
         <Card>
