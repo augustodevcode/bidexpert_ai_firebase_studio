@@ -51,7 +51,7 @@
 - **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas (38.1 a 38.7) foram concluídas, incluindo a criação do modelo, serviços, componentes de UI e a lógica de configuração.
 - **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
 - **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
-- **Item 41: Criar Componente Reutilizável de Timeline para Etapas do Leilão:** Criado e integrado o componente `AuctionStagesTimeline` nos cards e listas de leilões.
+- **Item 41: Refatoração da Timeline e Nomenclatura de Cards:** Substituído o componente de timeline legado pelo novo `BidExpertStagesTimeline` em toda a aplicação. Renomeados os componentes `UniversalCard` e `UniversalListItem` para `BidExpertCard` e `BidExpertListItem`, respectivamente, e atualizadas todas as referências.
 
 ## DOING
 
