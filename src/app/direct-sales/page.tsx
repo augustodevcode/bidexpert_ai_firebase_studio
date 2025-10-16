@@ -1,26 +1,16 @@
 // src/app/direct-sales/page.tsx
-/**
- * @fileoverview Página de listagem e busca para Ofertas de Venda Direta.
- * Este componente de cliente é a interface principal para que os usuários
- * encontrem produtos com preço fixo ou que aceitam propostas. Ele gerencia
- * o estado de busca e filtros, busca os dados via server actions e renderiza
- * os resultados usando o `SearchResultsFrame`.
- */
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
+import { ChevronRight, ShoppingCart, Loader2, Search as SearchIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
 import type { ActiveFilters } from '@/components/sidebar-filters'; 
-import type { DirectSaleOffer, LotCategory, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
+import type { DirectSaleOffer, LotCategory, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
 import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
@@ -28,13 +18,8 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getVehicleMakes } from '@/app/admin/vehicle-makes/actions';
-import { getVehicleModels } from '@/app/admin/vehicle-models/actions';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
-import { getAuctions } from '@/app/admin/auctions/actions';
-import { getLots } from '@/app/admin/lots/actions';
-
 
 const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
   loading: () => <SidebarFiltersSkeleton />,
@@ -50,7 +35,7 @@ const sortOptionsDirectSales = [
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
-const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' } = {
+const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL' } = {
   modality: 'TODAS', 
   category: 'TODAS', 
   priceRange: [0, 1000000],
@@ -62,7 +47,6 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
   endDate: undefined,
   status: ['ACTIVE'], 
   offerType: 'ALL',
-  searchType: 'direct_sale',
 };
 
 
@@ -80,7 +64,7 @@ export default function DirectSalesPage() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortByState] = useState<string>('relevance');
   
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL' }>(() => {
     const initial: typeof initialFiltersState = {...initialFiltersState};
     if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
     if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
@@ -95,13 +79,11 @@ export default function DirectSalesPage() {
     async function fetchSharedData() {
       setIsFilterDataLoading(true);
       try {
-        const [categories, offers, sellers, settings, makes, models] = await Promise.all([
+        const [categories, offers, sellers, settings] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
           getSellers(),
           getPlatformSettings(),
-          getVehicleMakes(),
-          getVehicleModels()
         ]);
         
         setAllOffers(offers);
@@ -129,7 +111,7 @@ export default function DirectSalesPage() {
   }, []);
   
   const handleFilterSubmit = (filters: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; }) => {
-    setActiveFilters(prev => ({...prev, ...filters, searchType: 'direct_sale'}));
+    setActiveFilters(prev => ({...prev, ...filters}));
     setIsFilterSheetOpen(false); 
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));
     currentParams.set('category', filters.category);
@@ -151,10 +133,10 @@ export default function DirectSalesPage() {
           const searchableText = `${offer.title.toLowerCase()} ${offer.description?.toLowerCase() || ''} ${offer.sellerName?.toLowerCase() || ''} ${offer.id}`;
           if (!searchableText.includes(term)) return false;
       }
-      if (activeFilters.category !== 'TODAS' && slugify(offer.category) !== activeFilters.category) {
+      if (activeFilters.category !== 'TODAS' && slugify(offer.category || '') !== activeFilters.category) {
         return false;
       }
-      if (offer.price !== undefined && (offer.price < activeFilters.priceRange[0] || offer.price > activeFilters.priceRange[1])) {
+      if (offer.price !== undefined && offer.price !== null && (offer.price < activeFilters.priceRange[0] || offer.price > activeFilters.priceRange[1])) {
         return false;
       }
       if (activeFilters.locations.length > 0) {
@@ -164,9 +146,9 @@ export default function DirectSalesPage() {
       if (activeFilters.sellers.length > 0 && !activeFilters.sellers.includes(offer.sellerName)) {
         return false;
       }
-      if (activeFilters.status && activeFilters.status.length > 0 && (!offer.status || !activeFilters.status.includes(offer.status as string))) {
-        return false;
-      }
+       if (activeFilters.status && activeFilters.status.length > 0 && (!offer.status || !activeFilters.status.includes(offer.status as string))) {
+         return false;
+       }
       if (activeFilters.offerType && activeFilters.offerType !== 'ALL' && offer.offerType !== activeFilters.offerType) {
         return false;
       }
@@ -183,7 +165,7 @@ export default function DirectSalesPage() {
     }
     return offers;
   }, [searchTerm, activeFilters, sortBy, allOffers]);
-
+  
   const handleSearchFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const currentParams = new URLSearchParams(Array.from(searchParamsHook.entries()));

@@ -19,7 +19,7 @@ interface DirectSaleOfferListItemProps {
 
 export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListItemProps) {
   const displayLocation = offer.locationCity && offer.locationState ? `${offer.locationCity} - ${offer.locationState}` : offer.locationState || offer.locationCity || 'N/A';
-  const mainImageUrl = isValidImageUrl(offer.imageUrl) ? offer.imageUrl : `https://placehold.co/600x400.png?text=Oferta`;
+  const mainImageUrl = isValidImageUrl(offer.imageUrl) ? offer.imageUrl! : `https://placehold.co/600x400.png?text=Oferta`;
   
   const getOfferTypeLabel = (type: string | undefined) => {
     switch(type) {
@@ -35,7 +35,7 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
         <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
           <Link href={`/direct-sales/${offer.id}`} className="block h-full w-full">
             <Image
-              src={mainImageUrl!}
+              src={mainImageUrl}
               alt={offer.title}
               fill
               className="object-cover"
@@ -85,7 +85,7 @@ export default function DirectSaleOfferListItem({ offer }: DirectSaleOfferListIt
              {offer.expiresAt && (
                 <div className="flex items-center">
                     <Clock className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                    <span>Expira em: {format(new Date(offer.expiresAt), 'dd/MM/yyyy')}</span>
+                    <span>Expira em: {format(new Date(offer.expiresAt as string), 'dd/MM/yyyy')}</span>
                 </div>
             )}
           </div>

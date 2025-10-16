@@ -23,6 +23,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
         item={lot}
         type="lot"
         platformSettings={platformSettings}
+        parentAuction={auction}
         onUpdate={onUpdate}
     />
   );

@@ -15,9 +15,10 @@ interface UniversalCardProps {
   platformSettings: PlatformSettings;
   parentAuction?: Auction;
   onUpdate?: () => void;
+  showCountdown?: boolean;
 }
 
-export default function UniversalCard({ item, type, platformSettings, parentAuction, onUpdate }: UniversalCardProps) {
+export default function UniversalCard({ item, type, platformSettings, parentAuction, onUpdate, showCountdown }: UniversalCardProps) {
   if (type === 'auction') {
     return <AuctionCard auction={item as Auction} onUpdate={onUpdate} />;
   }
@@ -29,6 +30,7 @@ export default function UniversalCard({ item, type, platformSettings, parentAuct
         auction={parentAuction} 
         platformSettings={platformSettings}
         onUpdate={onUpdate}
+        showCountdown={showCountdown}
       />
     );
   }
