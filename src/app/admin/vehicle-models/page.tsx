@@ -6,11 +6,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getVehicleModels, deleteVehicleModel } from './actions';
-import type { VehicleModel } from '@/types';
+import type { VehicleModel, PlatformSettings } from '@/types';
 import { PlusCircle, Car } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminVehicleModelsPage() {
   const [models, setModels] = useState<VehicleModel[]>([]);
@@ -18,13 +20,18 @@ export default function AdminVehicleModelsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedItems = await getVehicleModels();
+      const [fetchedItems, settings] = await Promise.all([
+        getVehicleModels(),
+        getPlatformSettings(),
+      ]);
       setModels(fetchedItems);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar modelos.";
       console.error("Error fetching vehicle models:", e);
@@ -49,7 +56,29 @@ export default function AdminVehicleModelsPage() {
     }
   }, [toast]);
   
+  const handleDeleteSelected = useCallback(async (selectedItems: VehicleModel[]) => {
+    for (const item of selectedItems) {
+      await deleteVehicleModel(item.id);
+    }
+    toast({ title: "Sucesso!", description: `${selectedItems.length} modelo(s) excluído(s).` });
+    setRefetchTrigger(c => c + 1);
+  }, [toast]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  if (isLoading || !platformSettings) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="admin-vehicle-models-page-container">
@@ -71,13 +100,18 @@ export default function AdminVehicleModelsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={models}
+           <BidExpertSearchResultsFrame
+            items={models}
+            totalItemsCount={models.length}
+            dataTableColumns={columns}
+            onSortChange={() => {}}
+            platformSettings={platformSettings}
             isLoading={isLoading}
-            error={error}
+            searchTypeLabel="modelos"
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do modelo..."
+            onDeleteSelected={handleDeleteSelected}
+            sortOptions={[{ value: 'name', label: 'Nome' }]}
           />
         </CardContent>
       </Card>

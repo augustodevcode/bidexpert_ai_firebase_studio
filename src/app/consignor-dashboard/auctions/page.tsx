@@ -13,16 +13,18 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctionsForConsignorAction } from './actions';
-import type { Auction, SellerProfileInfo } from '@/types';
+import type { Auction, SellerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Briefcase, Users, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createConsignorAuctionColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ConsignorAuctionsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
@@ -32,6 +34,7 @@ export default function ConsignorAuctionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
 
@@ -50,8 +53,12 @@ export default function ConsignorAuctionsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedAuctions = await getAuctionsForConsignorAction(sellerId);
+        const [fetchedAuctions, settings] = await Promise.all([
+            getAuctionsForConsignorAction(sellerId),
+            getPlatformSettings(),
+        ]);
       setAuctions(fetchedAuctions);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar seus leilões.";
       console.error("Error fetching consignor's auctions:", e);
@@ -84,6 +91,20 @@ export default function ConsignorAuctionsPage() {
   const facetedFilterColumns = useMemo(() => [
     { id: 'status', title: 'Status', options: statusOptions },
   ], [statusOptions]);
+
+  if (isLoading || authLoading || !platformSettings) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="consignor-auctions-page-container">
@@ -120,15 +141,19 @@ export default function ConsignorAuctionsPage() {
               </Select>
             </div>
           )}
-          <DataTable
-            columns={columns}
-            data={auctions}
-            isLoading={isLoading || authLoading}
-            error={error}
-            searchColumnId="title"
-            searchPlaceholder="Buscar por título..."
-            facetedFilterColumns={facetedFilterColumns}
-          />
+           <BidExpertSearchResultsFrame
+                items={auctions}
+                totalItemsCount={auctions.length}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={platformSettings}
+                isLoading={isLoading}
+                searchTypeLabel="leilões"
+                searchColumnId="title"
+                searchPlaceholder="Buscar por título..."
+                facetedFilterColumns={facetedFilterColumns}
+                sortOptions={[{ value: 'auctionDate', label: 'Data do Leilão' }]}
+            />
         </CardContent>
       </Card>
     </div>

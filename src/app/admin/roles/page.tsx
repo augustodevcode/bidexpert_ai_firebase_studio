@@ -1,8 +1,8 @@
 // src/app/admin/roles/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Perfis de Usuário (Roles).
- * Utiliza o componente DataTable para exibir os perfis de forma interativa,
- * permitindo busca e ações de edição e exclusão. Protege perfis essenciais
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os perfis de forma interativa,
+ * permitindo busca, ordenação e ações de edição e exclusão. Protege perfis essenciais
  * do sistema contra exclusão para manter a integridade da plataforma.
  */
 'use client';
@@ -12,11 +12,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getRoles, deleteRole } from './actions';
-import type { Role } from '@/types';
+import type { Role, PlatformSettings } from '@/types';
 import { PlusCircle, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 
 const PROTECTED_ROLES_NORMALIZED = ['ADMINISTRATOR', 'USER', 'CONSIGNOR', 'AUCTION_ANALYST', 'BIDDER', 'TENANT_ADMIN'];
 
@@ -26,13 +28,18 @@ export default function AdminRolesPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedRoles = await getRoles();
+      const [fetchedRoles, settings] = await Promise.all([
+          getRoles(),
+          getPlatformSettings()
+      ]);
       setRoles(fetchedRoles);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar perfis.";
       console.error("Error fetching roles:", e);
@@ -51,11 +58,11 @@ export default function AdminRolesPage() {
     const result = await deleteRole(id);
     if (result.success) {
       toast({ title: "Sucesso!", description: result.message });
-      fetchPageData();
+      setRefetchTrigger(c => c + 1);
     } else {
       toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
     }
-  }, [toast, fetchPageData]);
+  }, [toast]);
 
   const handleDeleteSelected = useCallback(async (selectedItems: Role[]) => {
     if (selectedItems.length === 0) return;
@@ -86,6 +93,20 @@ export default function AdminRolesPage() {
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
+  if (isLoading || !platformSettings) {
+    return (
+      <div className="space-y-6">
+          <Card className="shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                  <Skeleton className="h-10 w-36"/>
+              </CardHeader>
+              <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+          </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6" data-ai-id="admin-roles-page-container">
       <Card className="shadow-lg">
@@ -106,15 +127,19 @@ export default function AdminRolesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={roles}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome do perfil..."
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+              items={roles}
+              totalItemsCount={roles.length}
+              dataTableColumns={columns}
+              onSortChange={() => {}}
+              platformSettings={platformSettings}
+              isLoading={isLoading}
+              searchTypeLabel="perfis"
+              searchColumnId="name"
+              searchPlaceholder="Buscar por nome do perfil..."
+              onDeleteSelected={handleDeleteSelected}
+              sortOptions={[{ value: 'name', label: 'Nome' }]}
+            />
         </CardContent>
       </Card>
     </div>

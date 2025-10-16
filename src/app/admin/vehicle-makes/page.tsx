@@ -6,11 +6,14 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getVehicleMakes, deleteVehicleMake } from './actions';
-import type { VehicleMake } from '@/types';
+import type { VehicleMake, PlatformSettings } from '@/types';
 import { PlusCircle, Car } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
+
 
 export default function AdminVehicleMakesPage() {
   const [makes, setMakes] = useState<VehicleMake[]>([]);
@@ -18,13 +21,18 @@ export default function AdminVehicleMakesPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const fetchedItems = await getVehicleMakes();
+      const [fetchedItems, settings] = await Promise.all([
+        getVehicleMakes(),
+        getPlatformSettings(),
+      ]);
       setMakes(fetchedItems);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar marcas.";
       console.error("Error fetching vehicle makes:", e);
@@ -49,7 +57,29 @@ export default function AdminVehicleMakesPage() {
     }
   }, [toast]);
   
+  const handleDeleteSelected = useCallback(async (selectedItems: VehicleMake[]) => {
+    for (const item of selectedItems) {
+      await deleteVehicleMake(item.id);
+    }
+    toast({ title: "Sucesso!", description: `${selectedItems.length} marca(s) excluída(s).` });
+    setRefetchTrigger(c => c + 1);
+  }, [toast]);
+
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  
+  if (isLoading || !platformSettings) {
+     return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="admin-vehicle-makes-page-container">
@@ -71,13 +101,18 @@ export default function AdminVehicleMakesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={makes}
+           <BidExpertSearchResultsFrame
+            items={makes}
+            totalItemsCount={makes.length}
+            dataTableColumns={columns}
+            onSortChange={() => {}}
+            platformSettings={platformSettings}
             isLoading={isLoading}
-            error={error}
+            searchTypeLabel="marcas"
             searchColumnId="name"
             searchPlaceholder="Buscar por nome da marca..."
+            onDeleteSelected={handleDeleteSelected}
+            sortOptions={[{ value: 'name', label: 'Nome' }]}
           />
         </CardContent>
       </Card>

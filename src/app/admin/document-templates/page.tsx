@@ -1,7 +1,7 @@
 // src/app/admin/document-templates/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Templates de Documentos.
- * Utiliza o componente DataTable para exibir os templates de forma interativa,
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os templates de forma interativa,
  * permitindo busca, ordenação e ações como edição e exclusão. Fornece o ponto
  * de entrada para a administração dos modelos de documentos que serão gerados pela plataforma.
  */
@@ -12,11 +12,13 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getDocumentTemplates, deleteDocumentTemplate } from './actions';
-import type { DocumentTemplate } from '@/types';
+import type { DocumentTemplate, PlatformSettings } from '@/types';
 import { PlusCircle, Files } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createColumns } from './columns';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function AdminDocumentTemplatesPage() {
   const [templates, setTemplates] = useState<DocumentTemplate[]>([]);
@@ -24,51 +26,63 @@ export default function AdminDocumentTemplatesPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
+
 
   useEffect(() => {
-    let isMounted = true;
-    
-    const fetchTemplates = async () => {
-      if (!isMounted) return;
+    async function fetchPageData() {
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedTemplates = await getDocumentTemplates();
-        if (isMounted) {
-          setTemplates(fetchedTemplates);
-        }
-      } catch (e) {
-        const errorMessage = e instanceof Error ? e.message : "Falha ao buscar templates.";
-        if (isMounted) {
-          setError(errorMessage);
-          toast({ title: "Erro", description: errorMessage, variant: "destructive" });
-        }
+        const [fetchedTemplates, settings] = await Promise.all([
+          getDocumentTemplates(),
+          getPlatformSettings(),
+        ]);
+        setTemplates(fetchedTemplates);
+        setPlatformSettings(settings as PlatformSettings);
+      } catch (e: any) {
+        setError(e.message);
+        toast({ title: "Erro", description: e.message, variant: "destructive" });
       } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
+        setIsLoading(false);
       }
-    };
-    
-    fetchTemplates();
-
-    return () => { isMounted = false; };
+    }
+    fetchPageData();
   }, [toast, refetchTrigger]);
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const result = await deleteDocumentTemplate(id);
-      if (result.success) {
-        toast({ title: "Sucesso", description: result.message });
-        setRefetchTrigger(c => c + 1);
-      } else {
-        toast({ title: "Erro", description: result.message, variant: "destructive" });
-      }
-    },
-    [toast]
-  );
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteDocumentTemplate(id);
+    if (result.success) {
+      toast({ title: "Sucesso", description: result.message });
+      setRefetchTrigger(c => c + 1);
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast]);
+
+  const handleDeleteSelected = useCallback(async (selectedItems: DocumentTemplate[]) => {
+    for (const item of selectedItems) {
+      await deleteDocumentTemplate(item.id);
+    }
+    toast({ title: "Sucesso", description: `${selectedItems.length} template(s) excluído(s).` });
+    setRefetchTrigger(c => c + 1);
+  }, [toast]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+
+  if (isLoading || !platformSettings) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -90,13 +104,18 @@ export default function AdminDocumentTemplatesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={templates}
+           <BidExpertSearchResultsFrame
+            items={templates}
+            totalItemsCount={templates.length}
+            dataTableColumns={columns}
+            onSortChange={() => {}}
+            platformSettings={platformSettings}
             isLoading={isLoading}
-            error={error}
+            searchTypeLabel="templates"
             searchColumnId="name"
             searchPlaceholder="Buscar por nome do template..."
+            onDeleteSelected={handleDeleteSelected}
+            sortOptions={[{ value: 'name', label: 'Nome' }]}
           />
         </CardContent>
       </Card>

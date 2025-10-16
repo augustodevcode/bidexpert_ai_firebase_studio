@@ -13,10 +13,9 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getLotsForConsignorAction } from './actions';
-import type { Lot, Auction, SellerProfileInfo } from '@/types';
+import type { Lot, Auction, SellerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, ListChecks, Users, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
 import { createConsignorLotColumns } from './columns';
 import { useAuth } from '@/contexts/auth-context';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
@@ -24,6 +23,9 @@ import { getAuctionsForConsignorAction } from '../auctions/actions';
 import { hasPermission } from '@/lib/permissions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ConsignorLotsPage() {
   const { userProfileWithPermissions, loading: authLoading } = useAuth();
@@ -34,6 +36,7 @@ export default function ConsignorLotsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   
   const isUserAdmin = hasPermission(userProfileWithPermissions, 'manage_all');
 
@@ -52,12 +55,14 @@ export default function ConsignorLotsPage() {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedLots, fetchedAuctions] = await Promise.all([
+      const [fetchedLots, fetchedAuctions, settings] = await Promise.all([
         getLotsForConsignorAction(sellerId),
         getAuctionsForConsignorAction(sellerId),
+        getPlatformSettings(),
       ]);
       setLots(fetchedLots);
       setAuctions(fetchedAuctions);
+      setPlatformSettings(settings as PlatformSettings);
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar seus lotes.";
       console.error("Error fetching consignor's lots:", e);
@@ -95,6 +100,20 @@ export default function ConsignorLotsPage() {
     { id: 'status', title: 'Status', options: statusOptions },
     { id: 'auctionName', title: 'Leilão', options: auctionOptions },
   ], [statusOptions, auctionOptions]);
+  
+  if (isLoading || authLoading || !platformSettings) {
+    return (
+      <div className="space-y-6">
+          <Card className="shadow-lg">
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                  <Skeleton className="h-10 w-36"/>
+              </CardHeader>
+              <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+          </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6" data-ai-id="consignor-lots-page-container">
@@ -131,14 +150,18 @@ export default function ConsignorLotsPage() {
               </Select>
             </div>
           )}
-          <DataTable
-            columns={columns}
-            data={lots}
-            isLoading={isLoading || authLoading}
-            error={error}
+           <BidExpertSearchResultsFrame
+            items={lots}
+            totalItemsCount={lots.length}
+            dataTableColumns={columns}
+            onSortChange={() => {}}
+            platformSettings={platformSettings}
+            isLoading={isLoading}
+            searchTypeLabel="lotes"
             searchColumnId="title"
             searchPlaceholder="Buscar por título do lote..."
             facetedFilterColumns={facetedFilterColumns}
+            sortOptions={[{ value: 'title', label: 'Título' }]}
           />
         </CardContent>
       </Card>
