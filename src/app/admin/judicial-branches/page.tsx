@@ -14,7 +14,7 @@ import { getJudicialBranches, deleteJudicialBranch } from './actions';
 import type { JudicialBranch } from '@/types';
 import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 
 export default function AdminJudicialBranchesPage() {
@@ -106,16 +106,19 @@ export default function AdminJudicialBranchesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={branches}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome da vara..."
-            facetedFilterColumns={facetedFilterOptions}
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+                items={branches}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="varas"
+                searchColumnId="name"
+                searchPlaceholder="Buscar por nome da vara..."
+                facetedFilterColumns={facetedFilterOptions}
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'name', label: 'Nome' }, { value: 'districtName', label: 'Comarca' }]}
+            />
         </CardContent>
       </Card>
     </div>

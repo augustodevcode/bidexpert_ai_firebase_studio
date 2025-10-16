@@ -14,7 +14,7 @@ import { getJudicialProcesses, deleteJudicialProcess } from './actions';
 import type { JudicialProcess } from '@/types';
 import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 
 export default function AdminJudicialProcessesPage() {
@@ -108,16 +108,19 @@ export default function AdminJudicialProcessesPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={processes}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="processNumber"
-            searchPlaceholder="Buscar por nº do processo..."
-            facetedFilterColumns={facetedFilterOptions}
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+                items={processes}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="processos"
+                searchColumnId="processNumber"
+                searchPlaceholder="Buscar por nº do processo..."
+                facetedFilterColumns={facetedFilterOptions}
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'processNumber', label: 'Nº do Processo' }]}
+            />
         </CardContent>
       </Card>
     </div>

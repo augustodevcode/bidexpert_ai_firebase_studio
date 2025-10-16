@@ -14,7 +14,7 @@ import { getJudicialDistricts, deleteJudicialDistrict } from './actions';
 import type { JudicialDistrict } from '@/types';
 import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 
 export default function AdminJudicialDistrictsPage() {
@@ -98,15 +98,18 @@ export default function AdminJudicialDistrictsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={districts}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome da comarca..."
-            onDeleteSelected={handleDeleteSelected}
-          />
+            <BidExpertSearchResultsFrame
+                items={districts}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="comarcas"
+                searchColumnId="name"
+                searchPlaceholder="Buscar por nome da comarca..."
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'name', label: 'Nome' }]}
+            />
         </CardContent>
       </Card>
     </div>

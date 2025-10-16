@@ -15,7 +15,7 @@ import { getCities, deleteCity } from './actions';
 import type { CityInfo } from '@/types';
 import { PlusCircle, Building2, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 
 export default function AdminCitiesPage() {
@@ -116,16 +116,19 @@ export default function AdminCitiesPage() {
           </div>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={cities}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por cidade..."
-            facetedFilterColumns={facetedFilterColumns}
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+                items={cities}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="cidades"
+                searchColumnId="name"
+                searchPlaceholder="Buscar por cidade..."
+                facetedFilterColumns={facetedFilterColumns}
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'name', label: 'Nome' }]}
+            />
         </CardContent>
       </Card>
     </div>

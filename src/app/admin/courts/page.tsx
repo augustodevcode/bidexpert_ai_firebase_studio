@@ -14,7 +14,7 @@ import { getCourts, deleteCourt } from './actions';
 import type { Court } from '@/types';
 import { PlusCircle, Scale } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 
 export default function AdminCourtsPage() {
@@ -98,15 +98,18 @@ export default function AdminCourtsPage() {
           </Button>
         </CardHeader>
         <CardContent>
-           <DataTable
-            columns={columns}
-            data={courts}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome..."
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+                items={courts}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="tribunais"
+                searchColumnId="name"
+                searchPlaceholder="Buscar por nome..."
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'name', label: 'Nome' }]}
+            />
         </CardContent>
       </Card>
     </div>

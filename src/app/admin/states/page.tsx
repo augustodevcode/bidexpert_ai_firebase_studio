@@ -14,7 +14,7 @@ import { getStates, deleteState } from './actions';
 import type { StateInfo } from '@/types';
 import { PlusCircle, Map, BarChart3 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { DataTable } from '@/components/ui/data-table';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from './columns';
 import { useRouter } from 'next/navigation';
 
@@ -106,15 +106,18 @@ export default function AdminStatesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <DataTable
-            columns={columns}
-            data={states}
-            isLoading={isLoading}
-            error={error}
-            searchColumnId="name"
-            searchPlaceholder="Buscar por nome ou UF..."
-            onDeleteSelected={handleDeleteSelected}
-          />
+           <BidExpertSearchResultsFrame
+                items={states}
+                dataTableColumns={columns}
+                onSortChange={() => {}}
+                platformSettings={{ searchItemsPerPage: 10 } as any}
+                isLoading={isLoading}
+                searchTypeLabel="estados"
+                searchColumnId="name"
+                searchPlaceholder="Buscar por nome ou UF..."
+                onDeleteSelected={handleDeleteSelected as any}
+                sortOptions={[{ value: 'name', label: 'Nome' }]}
+            />
         </CardContent>
       </Card>
     </div>
