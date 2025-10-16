@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { Step, Stepper, StepLabel, StepIconProps } from '@/components/ui/stepper';
-import { Check, Loader, AlertCircle } from 'lucide-react';
+import { Check, Loader2, AlertCircle } from 'lucide-react';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { isPast, format, isValid, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
