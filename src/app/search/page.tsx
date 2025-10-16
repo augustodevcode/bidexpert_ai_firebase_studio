@@ -9,14 +9,14 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ActiveFilters } from '@/components/sidebar-filters'; 
+import type { ActiveFilters } from '@/components/BidExpertFilter'; 
 import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, PlatformSettings, SellerProfileInfo, VehicleMake, VehicleModel } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
-import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
@@ -29,8 +29,8 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
-  loading: () => <SidebarFiltersSkeleton />,
+const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
+  loading: () => <BidExpertFilterSkeleton />,
   ssr: false,
 });
 
@@ -49,7 +49,7 @@ const sortOptionsLots = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
   { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
   { value: 'price_asc', label: 'Preço: Menor para Maior' },
-  { value: 'price_desc', label: 'Preço: Maior para Maior' },
+  { value: 'price_desc', label: 'Preço: Maior para Menor' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
@@ -109,36 +109,16 @@ export default function SearchPage() {
 
     if (typeParam) {
         if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
-            initial.searchType = 'tomada_de_precos';
-            initial.modality = 'TOMADA_DE_PRECOS';
+            newSearchType = 'tomada_de_precos';
         } else {
-            initial.searchType = typeParam;
+            newSearchType = typeParam;
         }
     } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
-        initial.searchType = 'tomada_de_precos';
-        initial.modality = 'TOMADA_DE_PRECOS';
+        newSearchType = 'tomada_de_precos';
     }
+    setCurrentSearchType(newSearchType);
+  }, [searchParamsHook]);
 
-    if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
-
-    if (auctionTypeFromQuery && initial.searchType !== 'tomada_de_precos') {
-        initial.modality = auctionTypeFromQuery.toUpperCase();
-    }
-    
-    const statusParam = searchParamsHook.get('status');
-    if (statusParam) {
-      initial.status = statusParam.split(',').map(s => s.trim().toUpperCase());
-    } else {
-      initial.status = (initial.searchType === 'direct_sale' || initial.searchType === 'tomada_de_precos') ? ['ACTIVE'] : [];
-    }
-
-    if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
-
-    return initial;
-  });
-  
-  const [isLoading, setIsLoading] = useState(true);
-  const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
   useEffect(() => {
     async function fetchSharedData() {
@@ -480,7 +460,7 @@ export default function SearchPage() {
       
       <Card className="shadow-lg p-6 bg-secondary/30">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold font-headline">Resultados da Busca</h1>
+          <h1 className="text-3xl font-bold font-headline">Busca Avançada</h1>
           <p className="text-muted-foreground mt-2">
             Encontre leilões, lotes e ofertas de venda direta.
           </p>
@@ -513,7 +493,7 @@ export default function SearchPage() {
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
-             <SidebarFilters
+             <BidExpertFilter
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
                 sellers={uniqueSellersForFilter}

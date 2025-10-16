@@ -1,10 +1,10 @@
-# Especificação de Componentes - `SidebarFilters.tsx`
+# Especificação de Componentes - `BidExpertFilter.tsx`
 
 ## 1. Visão Geral
 
-O `SidebarFilters` é um componente de cliente reutilizável, projetado para fornecer uma interface de filtragem consistente em várias páginas da plataforma, como a página de busca principal e páginas de categoria. Ele é totalmente configurável através de `props`, permitindo que cada página defina exatamente quais filtros são relevantes para seu contexto (leilões, lotes, etc.).
+O `BidExpertFilter` é um componente de cliente reutilizável, projetado para fornecer uma interface de filtragem consistente em várias páginas da plataforma, como a página de busca principal e páginas de categoria. Ele é totalmente configurável através de `props`, permitindo que cada página defina exatamente quais filtros são relevantes para seu contexto (leilões, lotes, etc.).
 
-**Localização:** `src/components/sidebar-filters.tsx`
+**Localização:** `src/components/BidExpertFilter.tsx`
 
 ---
 
@@ -12,7 +12,7 @@ O `SidebarFilters` é um componente de cliente reutilizável, projetado para for
 
 O componente é projetado para ser "burro" (dumb component), o que significa que ele não realiza a filtragem dos dados por si só. Em vez disso, ele gerencia o estado interno dos controles do formulário (checkboxes, sliders, etc.) e, quando o usuário aplica os filtros, ele invoca uma `callback` (`onFilterSubmit`) passando um objeto com todos os filtros selecionados para o componente pai. O componente pai é o responsável por usar esses filtros para buscar ou refinar os dados exibidos.
 
-### Props Principais (`SidebarFiltersProps`)
+### Props Principais (`BidExpertFilterProps`)
 
 | Prop | Tipo | Obrigatório | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -58,7 +58,7 @@ export interface ActiveFilters {
 *   **Estado Controlado e Não Controlado:** O estado interno dos filtros é gerenciado pelo `useState`. No entanto, ele é inicializado com `initialFilters`, permitindo que a página pai controle o estado inicial com base em parâmetros de URL, garantindo que links compartilhados funcionem corretamente.
 *   **Componentes Reutilizáveis:** Utiliza os componentes de UI do `shadcn/ui` como `Accordion`, `Checkbox`, `Slider` e `RadioGroup` para construir a interface.
 *   **Reset de Filtros:** O botão "Limpar Filtros" reseta o estado interno do componente para os valores padrão e chama a `onFilterReset`, permitindo que a página pai também limpe seus filtros e busque os dados originais.
-*   **Esqueleto de Carregamento:** Para evitar saltos de layout (layout shift) enquanto as opções de filtro são carregadas de forma assíncrona, um componente de esqueleto (`SidebarFiltersSkeleton.tsx`) é exibido. O componente principal usa `useEffect` e `useState` para garantir que ele só seja renderizado no cliente.
+*   **Esqueleto de Carregamento:** Para evitar saltos de layout (layout shift) enquanto as opções de filtro são carregadas de forma assíncrona, um componente de esqueleto (`BidExpertFilterSkeleton.tsx`) é exibido. O componente principal usa `useEffect` e `useState` para garantir que ele só seja renderizado no cliente.
 
 ---
 
@@ -91,7 +91,7 @@ const handleReset = () => {
 return (
   <div className="grid md:grid-cols-[280px_1fr] gap-8">
     <aside>
-      <SidebarFilters
+      <BidExpertFilter
         categories={allCategories}
         locations={uniqueLocations}
         sellers={uniqueSellers}
@@ -126,7 +126,7 @@ const handleFilterChange = (newFilters: ActiveFilters) => {
 return (
   <div className="grid md:grid-cols-[280px_1fr] gap-8">
     <aside>
-      <SidebarFilters
+      <BidExpertFilter
         categories={allCategories}
         locations={uniqueLocationsForCategory}
         sellers={uniqueSellersForCategory}
@@ -146,4 +146,4 @@ return (
 
 ---
 
-**Conclusão:** O `SidebarFilters` centraliza a complexidade da UI de filtragem, promovendo a reutilização de código e garantindo uma experiência de usuário padronizada e robusta em toda a aplicação.
+**Conclusão:** O `BidExpertFilter` centraliza a complexidade da UI de filtragem, promovendo a reutilização de código e garantindo uma experiência de usuário padronizada e robusta em toda a aplicação.

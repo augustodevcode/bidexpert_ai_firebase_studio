@@ -1,4 +1,3 @@
-
 // src/app/category/[categorySlug]/category-display.tsx
 /**
  * @fileoverview Componente de cliente que renderiza o conteúdo de uma página de categoria.
@@ -19,19 +18,19 @@ import { getAuctions } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Lot, LotCategory, PlatformSettings, SellerProfileInfo, Auction } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
-import type { ActiveFilters } from '@/components/sidebar-filters';
+import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
-import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getCategoryAssets } from '@/lib/ui-helpers';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
-  loading: () => <SidebarFiltersSkeleton />,
+const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
+  loading: () => <BidExpertFilterSkeleton />,
   ssr: false,
 });
 
@@ -273,7 +272,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
 
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
         <aside className="hidden md:block sticky top-24 h-fit">
-          <SidebarFilters 
+          <BidExpertFilter 
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
             sellers={uniqueSellersForFilter}
@@ -285,7 +284,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
           />
         </aside>
 
-        <main className="min-w-0 md:ml-4">
+        <main className="min-w-0 space-y-6 md:ml-4">
           <SearchResultsFrame
             items={sortedLots}
             totalItemsCount={sortedLots.length}

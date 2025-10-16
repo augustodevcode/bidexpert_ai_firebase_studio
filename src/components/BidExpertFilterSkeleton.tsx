@@ -1,10 +1,10 @@
-// src/components/sidebar-filters-skeleton.tsx
+// src/components/BidExpertFilterSkeleton.tsx
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { Filter } from 'lucide-react';
 
-export default function SidebarFiltersSkeleton() {
+export default function BidExpertFilterSkeleton() {
   return (
     <aside className="w-full md:w-72 lg:w-80 space-y-6 p-1">
       <div className="animate-pulse">

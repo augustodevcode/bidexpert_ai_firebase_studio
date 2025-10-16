@@ -1,4 +1,4 @@
-// src/components/sidebar-filters.tsx
+// src/components/BidExpertFilter.tsx
 'use client';
 
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -16,7 +16,7 @@ import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { LotCategory, DirectSaleOfferType, VehicleMake, VehicleModel } from '@/types';
-import SidebarFiltersSkeleton from './sidebar-filters-skeleton';
+import BidExpertFilterSkeleton from './BidExpertFilterSkeleton';
 
 export interface ActiveFilters {
   modality: string; // For auctions
@@ -32,7 +32,7 @@ export interface ActiveFilters {
   offerType?: DirectSaleOfferType | 'ALL'; // Specific to Direct Sales
 }
 
-interface SidebarFiltersProps {
+interface BidExpertFilterProps {
   categories?: LotCategory[];
   locations?: string[];
   sellers?: string[];
@@ -75,7 +75,7 @@ const defaultOfferTypes = [
 ];
 
 
-export default function SidebarFilters({
+export default function BidExpertFilter({
   categories = [],
   locations = [],
   sellers = [],
@@ -89,7 +89,7 @@ export default function SidebarFilters({
   initialFilters,
   filterContext = 'auctions',
   disableCategoryFilter = false, // Default to enabled
-}: SidebarFiltersProps) {
+}: BidExpertFilterProps) {
   
   const statuses = filterContext === 'directSales' ? defaultDirectSaleStatuses : defaultAuctionStatuses;
 
@@ -201,7 +201,7 @@ export default function SidebarFilters({
   };
   
   if (!isClient) {
-    return <SidebarFiltersSkeleton />;
+    return <BidExpertFilterSkeleton />;
   }
 
 

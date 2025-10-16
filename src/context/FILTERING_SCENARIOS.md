@@ -1,6 +1,6 @@
 # Cenários de Teste (TDD) para o Componente de Filtro Reutilizável
 
-## Funcionalidade: `SidebarFilters.tsx`
+## Funcionalidade: `BidExpertFilter.tsx`
 
 **Objetivo:** Garantir que o componente de filtro funcione corretamente em diferentes contextos (leilões, lotes), que suas interações atualizem o estado corretamente, e que ele comunique as seleções ao componente pai através de callbacks.
 
@@ -8,7 +8,7 @@
 
 ### Cenário 1: Renderização Inicial com Filtros Padrão
 
-*   **Dado:** O componente `SidebarFilters` é renderizado na página de busca principal.
+*   **Dado:** O componente `BidExpertFilter` é renderizado na página de busca principal.
 *   **Quando:** Nenhum `initialFilters` é fornecido.
 *   **Então:** O componente DEVE exibir as seções de filtro padrão (ex: Categoria, Faixa de Preço, Localização).
 *   **E:** O filtro de categoria DEVE estar marcado em "Todas as Categorias".
@@ -75,7 +75,7 @@ await page.getByRole('button', { name: 'Aplicar Filtros' }).click();
 *   **Dado:** O usuário aplicou vários filtros (ex: categoria, preço, localização).
 *   **Quando:** O usuário clica no botão "Limpar Filtros".
 *   **Então:** A função `onFilterReset` DEVE ser chamada.
-*   **E:** O estado interno do `SidebarFilters` DEVE retornar aos seus valores padrão (categoria "Todas", range de preço completo, nenhuma localização selecionada, etc.).
+*   **E:** O estado interno do `BidExpertFilter` DEVE retornar aos seus valores padrão (categoria "Todas", range de preço completo, nenhuma localização selecionada, etc.).
 
 **Exemplo de Verificação (Playwright):**
 ```javascript
@@ -94,7 +94,7 @@ await expect(page.locator('input[type="radio"][value="TODAS"]')).toBeChecked();
 
 ### Cenário 5: Renderização em Contexto Específico (Venda Direta)
 
-*   **Dado:** O `SidebarFilters` é renderizado com a prop `filterContext="directSales"`.
+*   **Dado:** O `BidExpertFilter` é renderizado com a prop `filterContext="directSales"`.
 *   **Quando:** O usuário visualiza o componente.
 *   **Então:** A seção "Modalidade do Leilão" NÃO DEVE ser visível.
 *   **E:** A seção "Tipo de Oferta" (com opções "Comprar Já", "Aceita Propostas") DEVE ser visível.
