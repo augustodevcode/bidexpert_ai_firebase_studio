@@ -106,7 +106,8 @@ export default function SearchPage() {
     const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'};
     const typeParam = searchParamsHook.get('type') as typeof currentSearchType | null;
     const auctionTypeFromQuery = searchParamsHook.get('auctionType');
-
+    
+    let newSearchType: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' = 'auctions'; // Valor padrão
     if (typeParam) {
         if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
             newSearchType = 'tomada_de_precos';
@@ -116,9 +117,17 @@ export default function SearchPage() {
     } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
         newSearchType = 'tomada_de_precos';
     }
-    setCurrentSearchType(newSearchType);
-  }, [searchParamsHook]);
 
+    if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
+    if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
+    if (searchParamsHook.get('status')) initial.status = [searchParamsHook.get('status')!.toUpperCase()];
+    
+    initial.searchType = newSearchType;
+    return initial;
+  });
+  
+  const [isLoading, setIsLoading] = useState(true);
+  const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
 
   useEffect(() => {
     async function fetchSharedData() {
@@ -460,7 +469,7 @@ export default function SearchPage() {
       
       <Card className="shadow-lg p-6 bg-secondary/30">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold font-headline">Busca Avançada</h1>
+          <h1 className="text-3xl font-bold font-headline">Resultados da Busca</h1>
           <p className="text-muted-foreground mt-2">
             Encontre leilões, lotes e ofertas de venda direta.
           </p>

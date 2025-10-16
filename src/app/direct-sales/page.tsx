@@ -3,26 +3,32 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import Link from 'next/link';
-import { ChevronRight, ShoppingCart, Loader2, Search as SearchIcon } from 'lucide-react';
+import { ChevronRight, ShoppingCart, LayoutGrid, List, SlidersHorizontal, Loader2, Search as SearchIcon, FileText as TomadaPrecosIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Card, CardContent } from '@/components/ui/card';
-import type { ActiveFilters } from '@/components/sidebar-filters'; 
+import type { ActiveFilters } from '@/components/BidExpertFilter'; 
 import type { DirectSaleOffer, LotCategory, DirectSaleOfferType, PlatformSettings, SellerProfileInfo } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SearchResultsFrame from '@/components/search-results-frame';
 import dynamic from 'next/dynamic';
-import SidebarFiltersSkeleton from '@/components/sidebar-filters-skeleton';
+import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
+import { getAuctions } from '@/app/admin/auctions/actions';
+import { getLots } from '@/app/admin/lots/actions';
 
-const SidebarFilters = dynamic(() => import('@/components/sidebar-filters'), {
-  loading: () => <SidebarFiltersSkeleton />,
+
+const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
+  loading: () => <BidExpertFilterSkeleton />,
   ssr: false,
 });
 
@@ -34,6 +40,7 @@ const sortOptionsDirectSales = [
   { value: 'price_desc', label: 'Preço: Maior para Menor (Compra Já)' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
+
 
 const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL' } = {
   modality: 'TODAS', 
@@ -223,7 +230,7 @@ export default function DirectSalesPage() {
       
       <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8">
         <aside className="hidden md:block sticky top-24 h-fit">
-             <SidebarFilters
+             <BidExpertFilter
                 categories={allCategoriesForFilter}
                 locations={uniqueLocationsForFilter}
                 sellers={uniqueSellersForFilter}

@@ -197,7 +197,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
         case 'views_desc':
           return (b.views || 0) - (a.views || 0);
         case 'id_desc': 
-          return b.id.localeCompare(String(a.id));
+          return String(b.id).localeCompare(String(a.id));
         case 'relevance':
         default:
           if (a.status === 'ABERTO_PARA_LANCES' && b.status !== 'ABERTO_PARA_LANCES') return -1;
@@ -276,9 +276,9 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             categories={allCategoriesForFilter}
             locations={uniqueLocationsForFilter}
             sellers={uniqueSellersForFilter}
-            onFilterSubmit={handleFilterSubmit}
+            onFilterSubmit={handleFilterSubmit as any}
             onFilterReset={handleFilterReset}
-            initialFilters={activeFilters}
+            initialFilters={activeFilters as ActiveFilters}
             filterContext="lots"
             disableCategoryFilter={true}
           />
@@ -292,7 +292,7 @@ export default function CategoryDisplay({ params }: CategoryDisplayProps) {
             renderListItem={renderListItem}
             sortOptions={sortOptions}
             initialSortBy={sortBy}
-            onSortChange={setSortBy}
+            onSortChange={setSortByState}
             platformSettings={platformSettings}
             isLoading={isLoading}
             searchTypeLabel="lotes"
