@@ -1,7 +1,7 @@
 // src/app/admin/sellers/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Comitentes (Vendedores).
- * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
  */
 'use client';
@@ -15,7 +15,7 @@ import type { SellerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -138,7 +138,7 @@ export default function AdminSellersPage() {
         </CardHeader>
       </Card>
 
-      <SearchResultsFrame
+      <BidExpertSearchResultsFrame
         items={filteredSellers}
         totalItemsCount={filteredSellers.length}
         renderGridItem={renderGridItem}

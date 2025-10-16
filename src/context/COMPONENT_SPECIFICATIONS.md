@@ -1,4 +1,4 @@
-# Especificação de Componentes - `BidExpertFilter` e `SearchResultsFrame`
+# Especificação de Componentes - `BidExpertFilter` e `BidExpertSearchResultsFrame`
 
 ## 1. `BidExpertFilter.tsx`
 
@@ -40,19 +40,19 @@ export interface ActiveFilters {
 
 ---
 
-## 2. `SearchResultsFrame.tsx`
+## 2. `BidExpertSearchResultsFrame.tsx`
 
 ### 2.1. Visão Geral
 
-O `SearchResultsFrame` é um componente de cliente reutilizável responsável por encapsular toda a lógica de exibição de uma lista de resultados. Isso inclui a barra de ferramentas com opções de ordenação e modo de visualização (grade/lista), a renderização dos próprios itens, e os controles de paginação.
+O `BidExpertSearchResultsFrame` é um componente de cliente reutilizável responsável por encapsular toda a lógica de exibição de uma lista de resultados. Isso inclui a barra de ferramentas com opções de ordenação e modo de visualização (grade/lista), a renderização dos próprios itens, e os controles de paginação.
 
-**Localização:** `src/components/search-results-frame.tsx`
+**Localização:** `src/components/BidExpertSearchResultsFrame.tsx`
 
 ### 2.2. Arquitetura e Props
 
 Este componente recebe uma lista de itens e funções de renderização (`render functions`) como props. Isso o torna extremamente flexível, pois ele não precisa saber *o que* está renderizando, apenas *como* renderizar. A lógica de busca e filtragem dos dados permanece no componente pai (a página).
 
-#### Props Principais (`SearchResultsFrameProps<TItem>`)
+#### Props Principais (`BidExpertSearchResultsFrameProps<TItem>`)
 
 | Prop | Tipo | Obrigatório | Descrição |
 | :--- | :--- | :--- | :--- |
@@ -62,7 +62,7 @@ Este componente recebe uma lista de itens e funções de renderização (`render
 | `renderListItem` | `(item: TItem) => ReactNode` | **Sim** | Função que recebe um item e retorna o JSX para o modo de visualização em lista. |
 | `sortOptions` | `{ value: string; label: string }[]` | **Sim** | Array de opções para o seletor de ordenação. |
 | `initialSortBy`| `string` | Não | O valor da ordenação inicial. |
-| `onSortChange`| `(sortBy: string) => void` | **Sim** | Callback chamada quando o usuário altera a ordenação. |
+| `onSortChange`| `(sortBy: string) => void` | **Sim**| Callback chamada quando o usuário altera a ordenação. |
 | `platformSettings`| `PlatformSettings` | **Sim**| Objeto com as configurações da plataforma (para `itemsPerPage`). |
 | `isLoading`| `boolean`| Não | Se `true`, exibe um indicador de carregamento. |
 | `emptyStateMessage`| `string`| Não | Mensagem a ser exibida quando a lista de `items` está vazia. |

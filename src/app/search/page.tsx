@@ -14,7 +14,7 @@ import type { Auction, Lot, LotCategory, DirectSaleOffer, DirectSaleOfferType, P
 import { slugify } from '@/lib/ui-helpers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getLotCategories as getCategories } from '@/app/admin/categories/actions';
@@ -502,7 +502,7 @@ export default function SearchPage() {
         </aside>
         
         <main className="min-w-0 space-y-6 md:ml-4">
-            <SearchResultsFrame
+            <BidExpertSearchResultsFrame
               items={filteredAndSortedItems}
               sortOptions={currentSortOptions}
               initialSortBy={sortBy}

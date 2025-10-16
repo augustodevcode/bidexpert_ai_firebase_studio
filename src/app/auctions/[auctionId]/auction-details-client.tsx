@@ -22,7 +22,7 @@ import {
 } from 'lucide-react';
 import { isPast } from 'date-fns';
 import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusColor, isValidImageUrl, getActiveStage, getLotPriceForStage } from '@/lib/ui-helpers';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
@@ -36,7 +36,7 @@ import { hasAnyPermission } from '@/lib/permissions';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 
 
-const SidebarFilters = dynamic(() => import('@/components/BidExpertFilter'), {
+const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <SidebarFiltersSkeleton />,
   ssr: false,
 });
@@ -313,7 +313,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
         
         <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 items-start">
            <aside className="hidden md:block sticky top-24 h-fit">
-             <SidebarFilters
+             <BidExpertFilter
                categories={allCategories}
                locations={uniqueLocationsForFilter}
                sellers={sellersForFilter.map(s => s.name)}
@@ -325,7 +325,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
            </aside>
 
            <main className="min-w-0 md:ml-4">
-            <SearchResultsFrame
+            <BidExpertSearchResultsFrame
                 items={paginatedLots}
                 totalItemsCount={filteredAndSortedLots.length}
                 renderGridItem={renderGridItem}

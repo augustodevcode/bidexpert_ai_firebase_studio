@@ -14,7 +14,7 @@ import Image from 'next/image';
 import { useParams } from 'next/navigation';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, Lot, PlatformSettings, SellerProfileInfo } from '@/types';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -235,7 +235,7 @@ export default function SellerDetailsPage() {
           {sortedLots.length > 0 && (
             <section className="pt-6" data-ai-id="seller-details-related-lots-section">
               <h2 className="text-2xl font-bold mb-6 font-headline flex items-center"><TrendingUp className="h-6 w-6 mr-2 text-primary" /> Lotes de {sellerProfile.name}</h2>
-              <SearchResultsFrame
+              <BidExpertSearchResultsFrame
                   items={paginatedLots}
                   totalItemsCount={sortedLots.length}
                   renderGridItem={renderLotGridItemForSellerPage}

@@ -30,13 +30,13 @@
 
 ---
 
-## Funcionalidade 2: `SearchResultsFrame.tsx`
+## Funcionalidade 2: `BidExpertSearchResultsFrame.tsx`
 
 **Objetivo:** Garantir que o frame de resultados exiba corretamente os itens, a paginação, os controles de visualização e o estado de "nenhum resultado".
 
 ### Cenário 2.1: Exibição em Grade com Paginação
 
-*   **Dado:** O `SearchResultsFrame` recebe uma lista de 20 itens, com `itemsPerPage` definido como 8.
+*   **Dado:** O `BidExpertSearchResultsFrame` recebe uma lista de 20 itens, com `itemsPerPage` definido como 8.
 *   **Quando:** O componente é renderizado no `viewMode="grid"`.
 *   **Então:** Exatamente 8 itens DEVEM ser renderizados usando a função `renderGridItem`.
 *   **E:** Os controles de paginação DEVEM ser visíveis e indicar que há 3 páginas no total.
@@ -51,7 +51,7 @@
 
 ### Cenário 2.3: Exibição de Estado Vazio
 
-*   **Dado:** A prop `items` passada para `SearchResultsFrame` é um array vazio.
+*   **Dado:** A prop `items` passada para `BidExpertSearchResultsFrame` é um array vazio.
 *   **Quando:** O componente é renderizado.
 *   **Então:** A barra de ferramentas de ordenação e visualização DEVE estar visível.
 *   **E:** Em vez da grade ou lista de itens, uma mensagem customizável (via `emptyStateMessage`) DEVE ser exibida (ex: "Nenhum lote encontrado com os filtros aplicados.").
@@ -66,4 +66,4 @@
 
 ---
 
-**Conclusão dos Testes:** A combinação destes cenários garante que o `BidExpertFilter` e o `SearchResultsFrame` trabalhem juntos de forma harmoniosa para criar uma experiência de busca e navegação de dados robusta, flexível e consistente.
+**Conclusão dos Testes:** A combinação destes cenários garante que o `BidExpertFilter` e o `BidExpertSearchResultsFrame` trabalhem juntos de forma harmoniosa para criar uma experiência de busca e navegação de dados robusta, flexível e consistente.

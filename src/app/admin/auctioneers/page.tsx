@@ -1,7 +1,7 @@
 // src/app/admin/auctioneers/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Leiloeiros.
- * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
  */
 'use client';
@@ -15,7 +15,7 @@ import type { AuctioneerProfileInfo, PlatformSettings } from '@/types';
 import { PlusCircle, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -137,7 +137,7 @@ export default function AdminAuctioneersPage() {
         </CardHeader>
       </Card>
 
-      <SearchResultsFrame
+      <BidExpertSearchResultsFrame
         items={filteredAuctioneers}
         totalItemsCount={filteredAuctioneers.length}
         renderGridItem={renderGridItem}

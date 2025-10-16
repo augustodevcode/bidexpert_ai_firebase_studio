@@ -1,7 +1,7 @@
 // src/app/admin/auctions/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Leilões.
- * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros por status e visualização em grade ou lista.
  */
 'use client';
@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
 import { getAuctioneers } from '../auctioneers/actions';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -141,7 +141,7 @@ export default function AdminAuctionsPage() {
         </CardHeader>
       </Card>
 
-      <SearchResultsFrame
+      <BidExpertSearchResultsFrame
         items={auctions}
         totalItemsCount={auctions.length}
         renderGridItem={renderGridItem}

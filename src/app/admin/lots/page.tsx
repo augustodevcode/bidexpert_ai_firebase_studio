@@ -1,7 +1,7 @@
 // src/app/admin/lots/page.tsx
 /**
  * @fileoverview Página principal para listagem e gerenciamento de Lotes.
- * Utiliza o componente SearchResultsFrame para exibir os dados de forma interativa,
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação e visualização em grade ou lista.
  */
 'use client';
@@ -17,7 +17,7 @@ import { PlusCircle, Package, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import SearchResultsFrame from '@/components/search-results-frame';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import UniversalCard from '@/components/universal-card';
 import UniversalListItem from '@/components/universal-list-item';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -67,8 +67,8 @@ export default function AdminLotsPage() {
   }, [fetchPageData, refetchTrigger]);
   
   const handleDelete = useCallback(
-    async (lotId: string, auctionId?: string) => {
-      const result = await deleteLot(lotId, auctionId);
+    async (id: string, auctionId?: string) => {
+      const result = await deleteLot(id, auctionId);
       if (result.success) {
         toast({ title: 'Sucesso', description: result.message });
         setRefetchTrigger((c) => c + 1);
@@ -90,7 +90,7 @@ export default function AdminLotsPage() {
   const renderGridItem = (item: Lot) => <UniversalCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Lot) => <UniversalListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  
+
   const facetedFilterOptions = useMemo(() => {
       const statusOptions = [...new Set(lots.map(l => l.status))].map(status => ({ value: status, label: getAuctionStatusText(status) }));
       const auctionOptions = auctions.map(a => ({ value: a.title, label: a.title }));
@@ -138,7 +138,7 @@ export default function AdminLotsPage() {
         </CardHeader>
       </Card>
       
-       <SearchResultsFrame
+       <BidExpertSearchResultsFrame
         items={lots}
         totalItemsCount={lots.length}
         renderGridItem={renderGridItem}
