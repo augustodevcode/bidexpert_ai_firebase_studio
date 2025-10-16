@@ -1,4 +1,3 @@
-
 // src/app/search/page.tsx
 'use client';
 
@@ -50,7 +49,7 @@ const sortOptionsLots = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
   { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
   { value: 'price_asc', label: 'Preço: Menor para Maior' },
-  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'price_desc', label: 'Preço: Maior para Maior' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
@@ -103,11 +102,44 @@ export default function SearchPage() {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [sortBy, setSortByState] = useState<string>('relevance');
   
+  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
+    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'};
+    const typeParam = searchParamsHook.get('type') as typeof currentSearchType | null;
+    const auctionTypeFromQuery = searchParamsHook.get('auctionType');
+
+    if (typeParam) {
+        if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
+            initial.searchType = 'tomada_de_precos';
+            initial.modality = 'TOMADA_DE_PRECOS';
+        } else {
+            initial.searchType = typeParam;
+        }
+    } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
+        initial.searchType = 'tomada_de_precos';
+        initial.modality = 'TOMADA_DE_PRECOS';
+    }
+
+    if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
+
+    if (auctionTypeFromQuery && initial.searchType !== 'tomada_de_precos') {
+        initial.modality = auctionTypeFromQuery.toUpperCase();
+    }
+    
+    const statusParam = searchParamsHook.get('status');
+    if (statusParam) {
+      initial.status = statusParam.split(',').map(s => s.trim().toUpperCase());
+    } else {
+      initial.status = (initial.searchType === 'direct_sale' || initial.searchType === 'tomada_de_precos') ? ['ACTIVE'] : [];
+    }
+
+    if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
+
+    return initial;
+  });
+  
   const [isLoading, setIsLoading] = useState(true);
   const [isFilterDataLoading, setIsFilterDataLoading] = useState(true);
-  
 
-  // Effect to fetch shared data for filters once
   useEffect(() => {
     async function fetchSharedData() {
       setIsFilterDataLoading(true);
@@ -147,7 +179,6 @@ export default function SearchPage() {
     fetchSharedData();
   }, []);
   
-  // Effect to fetch main content data based on the active tab
   useEffect(() => {
     async function fetchContentData() {
       setIsLoading(true);
@@ -189,42 +220,6 @@ export default function SearchPage() {
     }
     fetchContentData();
   }, [currentSearchType, uniqueLocationsForFilter.length]);
-
-
-  const [activeFilters, setActiveFilters] = useState<ActiveFilters & { offerType?: DirectSaleOfferType | 'ALL'; searchType?: 'auctions' | 'lots' | 'direct_sale' | 'tomada_de_precos' }>(() => {
-    const initial: typeof initialFiltersState = {...initialFiltersState, searchType: 'auctions'};
-    const typeParam = searchParamsHook.get('type') as typeof currentSearchType | null;
-    const auctionTypeFromQuery = searchParamsHook.get('auctionType');
-
-    if (typeParam) {
-        if (typeParam === 'auctions' && auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
-            initial.searchType = 'tomada_de_precos';
-            initial.modality = 'TOMADA_DE_PRECOS';
-        } else {
-            initial.searchType = typeParam;
-        }
-    } else if (auctionTypeFromQuery === 'TOMADA_DE_PRECOS') {
-        initial.searchType = 'tomada_de_precos';
-        initial.modality = 'TOMADA_DE_PRECOS';
-    }
-
-    if (searchParamsHook.get('category')) initial.category = searchParamsHook.get('category')!;
-
-    if (auctionTypeFromQuery && initial.searchType !== 'tomada_de_precos') {
-        initial.modality = auctionTypeFromQuery.toUpperCase();
-    }
-    
-    const statusParam = searchParamsHook.get('status');
-    if (statusParam) {
-      initial.status = statusParam.split(',').map(s => s.trim().toUpperCase());
-    } else {
-      initial.status = (initial.searchType === 'direct_sale' || initial.searchType === 'tomada_de_precos') ? ['ACTIVE'] : [];
-    }
-
-    if (searchParamsHook.get('offerType')) initial.offerType = searchParamsHook.get('offerType') as any;
-
-    return initial;
-  });
 
 
   useEffect(() => {

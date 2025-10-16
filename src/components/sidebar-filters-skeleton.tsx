@@ -1,4 +1,4 @@
-
+// src/components/sidebar-filters-skeleton.tsx
 'use client';
 
 import { Skeleton } from '@/components/ui/skeleton';
