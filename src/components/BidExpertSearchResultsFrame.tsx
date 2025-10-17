@@ -129,7 +129,7 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
   onItemsPerPageChange,
   onDeleteSelected,
 }: BidExpertSearchResultsFrameProps<TItem>) {
-  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>(dataTableColumns ? 'table' : 'grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list' | 'table'>('grid');
   const [currentSortBy, setCurrentSortBy] = useState(initialSortBy);
   const [internalCurrentPage, setInternalCurrentPage] = useState(1);
   const itemsPerPage = controlledItemsPerPage || platformSettings?.searchItemsPerPage || 12;
@@ -139,15 +139,15 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
   const onPageChange = isPaginated ? onControlledPageChange : setInternalCurrentPage;
   
   useEffect(() => {
-    const validModes = [];
-    if (dataTableColumns) validModes.push('table');
-    if (renderGridItem) validModes.push('grid');
-    if (renderListItem) validModes.push('list');
-    
-    if (validModes.length > 0 && !validModes.includes(viewMode)) {
-      setViewMode(validModes[0] as 'grid' | 'list' | 'table');
+    // Se a view de tabela for a única opção, defina-a como padrão
+    if (dataTableColumns && !renderGridItem && !renderListItem) {
+        setViewMode('table');
+    } else if (renderGridItem) {
+        setViewMode('grid');
+    } else if (renderListItem) {
+        setViewMode('list');
     }
-  }, [dataTableColumns, renderGridItem, renderListItem, viewMode]);
+  }, [dataTableColumns, renderGridItem, renderListItem]);
 
   const handleSortChangeInternal = (value: string) => {
     setCurrentSortBy(value);
@@ -170,39 +170,37 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
 
   return (
     <div className="space-y-6" data-ai-id="bid-expert-search-results-frame">
-      {(!dataTableColumns || (viewMode !== 'table')) && (
-          <Card className="p-4 shadow-sm">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                <p className="text-sm text-muted-foreground w-full sm:w-auto text-center sm:text-left">
-                    {isLoading ? `Buscando ${searchTypeLabel}...` : `${finalTotalItemsCount} ${searchTypeLabel} encontrado(s)`}
-                </p>
-                <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-center">
-                    <Select value={currentSortBy} onValueChange={handleSortChangeInternal}>
-                        <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
-                            <SelectValue placeholder="Ordenar por" />
-                        </SelectTrigger>
-                        <SelectContent>
-                        {sortOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-1">
-                        {renderGridItem && <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')} aria-label="Visualização em Grade"><LayoutGrid className="h-4 w-4" /></Button>}
-                        {renderListItem && <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')} aria-label="Visualização em Lista"><List className="h-4 w-4" /></Button>}
-                        {dataTableColumns && <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('table')} aria-label="Visualização em Tabela"><TableIcon className="h-4 w-4" /></Button>}
-                    </div>
+      <Card className="p-4 shadow-sm">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+            <p className="text-sm text-muted-foreground w-full sm:w-auto text-center sm:text-left">
+                {isLoading ? `Buscando ${searchTypeLabel}...` : `${finalTotalItemsCount} ${searchTypeLabel} encontrado(s)`}
+            </p>
+            <div className="flex items-center gap-3 w-full sm:w-auto flex-wrap justify-center">
+                <Select value={currentSortBy} onValueChange={handleSortChangeInternal}>
+                    <SelectTrigger className="w-full sm:w-[180px] h-9 text-xs">
+                        <SelectValue placeholder="Ordenar por" />
+                    </SelectTrigger>
+                    <SelectContent>
+                    {sortOptions.map(option => (
+                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1">
+                    {renderGridItem && <Button variant={viewMode === 'grid' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('grid')} aria-label="Visualização em Grade"><LayoutGrid className="h-4 w-4" /></Button>}
+                    {renderListItem && <Button variant={viewMode === 'list' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('list')} aria-label="Visualização em Lista"><List className="h-4 w-4" /></Button>}
+                    {dataTableColumns && <Button variant={viewMode === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-8 w-8" onClick={() => setViewMode('table')} aria-label="Visualização em Tabela"><TableIcon className="h-4 w-4" /></Button>}
                 </div>
             </div>
-          </Card>
-      )}
+        </div>
+      </Card>
 
       {isLoading ? (
         <div className="flex justify-center items-center py-12"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>
-      ) : (items.length > 0 || (viewMode === 'table')) ? ( // A tabela deve sempre ser renderizada para que seus próprios estados internos funcionem
+      ) : (items.length > 0 || (viewMode === 'table' && dataTableColumns)) ? ( // A tabela deve sempre ser renderizada para que seus próprios estados internos funcionem
         <>
-            {viewMode === 'grid' && renderGridItem && <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">{paginatedItems.map((item, index) => renderGridItem(item, index))}</div>}
-            {viewMode === 'list' && renderListItem && <div className="space-y-4">{paginatedItems.map((item, index) => renderListItem(item, index))}</div>}
+            {viewMode === 'grid' && renderGridItem && <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">{paginatedItems.map((item, index) => <div key={item.id}>{renderGridItem(item, index)}</div>)}</div>}
+            {viewMode === 'list' && renderListItem && <div className="space-y-4">{paginatedItems.map((item, index) => <div key={item.id}>{renderListItem(item, index)}</div>)}</div>}
             {dataTableColumns && (
                 <div className={viewMode === 'table' ? 'block' : 'hidden'}>
                   <DataTable
@@ -211,8 +209,6 @@ export default function BidExpertSearchResultsFrame<TItem extends {id: string}>(
                     isLoading={isLoading}
                     searchColumnId={searchColumnId}
                     searchPlaceholder={searchPlaceholder}
-                    searchTerm={searchTerm}
-                    onSearchTermChange={onSearchTermChange}
                     facetedFilterColumns={facetedFilterColumns}
                     onDeleteSelected={onDeleteSelected}
                   />
