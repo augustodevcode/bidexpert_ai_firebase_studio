@@ -26,9 +26,8 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'N/A';
   const sellerName = auction.seller?.name;
 
-  const [mentalTriggers, setMentalTriggers] = React.useState<string[]>([]);
 
-  React.useEffect(() => {
+  const mentalTriggers = React.useMemo(() => {
     const triggers: string[] = [];
     const now = new Date();
 
@@ -53,7 +52,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
         triggers.push(...auction.additionalTriggers);
     }
     
-    setMentalTriggers(Array.from(new Set(triggers)));
+    return Array.from(new Set(triggers));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://picsum.photos/seed/${auction.id}/600/400`;
@@ -61,10 +60,12 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
   
   const IconComponent = auctionTypeDisplay?.icon;
 
+
   return (
     <TooltipProvider>
       <Card className="w-full shadow-md hover:shadow-lg transition-shadow duration-300 rounded-lg group overflow-hidden">
         <div className="flex flex-col md:flex-row">
+          {/* Image Column */}
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="block h-full w-full">
               <Image
@@ -92,6 +93,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             )}
           </div>
 
+          {/* Content Column */}
           <div className="flex flex-col flex-grow p-4">
             <div className="flex justify-between items-start mb-1.5">
               <div className="flex-grow min-w-0">
@@ -161,7 +163,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
 
             {auction.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="my-2 p-3 bg-muted/30 rounded-md">
-                    <BidExpertStagesTimeline variant="compact" stages={auction.auctionStages} />
+                    <BidExpertStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
                 </div>
             )}
             
@@ -186,4 +188,3 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     </TooltipProvider>
   );
 }
-    

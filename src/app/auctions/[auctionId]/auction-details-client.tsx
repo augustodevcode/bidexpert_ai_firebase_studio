@@ -25,7 +25,7 @@ import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusC
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import BidExpertStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -284,9 +284,10 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
 
             <Card className="shadow-md">
               <CardContent className="p-4 md:p-6">
-                <AuctionStagesTimeline 
+                <BidExpertStagesTimeline
                     auctionOverallStartDate={new Date(auction.auctionDate as string)}
                     stages={auction.auctionStages || []}
+                    variant="extended"
                 />
               </CardContent>
             </Card>

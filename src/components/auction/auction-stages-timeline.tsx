@@ -14,6 +14,7 @@ interface BidExpertStagesTimelineProps {
   stages: Partial<AuctionStage>[];
   variant?: 'compact' | 'extended';
   className?: string;
+  auctionOverallStartDate: Date; // Adicionar data de início geral do leilão para referência
 }
 
 const CustomStepIcon = (props: StepIconProps & { status: 'completed' | 'active' | 'upcoming' }) => {
@@ -35,19 +36,23 @@ const CustomStepIcon = (props: StepIconProps & { status: 'completed' | 'active' 
 export default function BidExpertStagesTimeline({
   stages,
   variant = 'compact',
-  className
+  className,
+  auctionOverallStartDate
 }: BidExpertStagesTimelineProps) {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+  
+  const now = new Date();
 
-  if (!isClient) {
+  // Se não for cliente ainda, ou não houver stages, não renderize nada ou um placeholder
+  if (!isClient || !stages || stages.length === 0) {
     return <div className="h-10 w-full animate-pulse rounded-md bg-muted" />;
   }
 
-  const now = new Date();
+
   let activeStep = -1;
 
   const steps = stages.map((stage, index) => {
@@ -58,17 +63,12 @@ export default function BidExpertStagesTimeline({
     if (startDate && endDate) {
       if (isPast(endDate)) {
         status = 'completed';
-      } else if (!isFuture(startDate) && isFuture(endDate)) {
+      } else if (isPast(startDate) && !isPast(endDate)) {
         status = 'active';
         if (activeStep === -1) activeStep = index;
       }
     }
     
-    // If no stage is active, set the first non-completed as active for visual cue
-    if (activeStep === -1 && status === 'upcoming') {
-        activeStep = index;
-    }
-
     return {
       label: stage.name || `Etapa ${index + 1}`,
       startDate,
@@ -77,10 +77,17 @@ export default function BidExpertStagesTimeline({
     };
   });
   
-  // If all are completed, the active step is the last one
-  if (activeStep === -1 && steps.length > 0) {
-      activeStep = steps.length;
-  }
+  // Se nenhuma etapa está ativa (porque todas são futuras), a "etapa ativa" é a primeira
+   if (activeStep === -1 && steps.length > 0) {
+      const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
+      if (firstUpcomingIndex !== -1) {
+        activeStep = firstUpcomingIndex;
+      } else {
+        // If all are completed, show the last one as the "active" (final) step
+        activeStep = steps.length;
+      }
+    }
+  
   
   if (variant === 'compact') {
       return (
