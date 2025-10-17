@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { Lot, Auction, PlatformSettings } from '@/types';
-import BidExpertCard from './universal-card';
+import BidExpertCard from './BidExpertCard';
 import LotCountdown from './lot-countdown';
 
 interface ClosingSoonCarouselProps {
@@ -96,4 +96,10 @@ export default function ClosingSoonCarousel({ lots, auctions, platformSettings }
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-primary p-4 rounded-lg">
           <p className="text-sm text-blue-900">
             💡 <strong>2ª Praça:</strong> Lotes que não foram arrematados na primeira etapa retornam com descontos de até 50%!
-            Aproveite esta oportunidade única para
+            Aproveite esta oportunidade única para fazer um excelente negócio.
+          </p>
+        </div>
+      </div>
+    </section>
+  );
+}

@@ -142,7 +142,7 @@ A estratégia de testes está documentada no arquivo `README.md` e deve ser segu
 
 **Justificativa:** Este sistema de herança com opção de substituição oferece máxima flexibilidade e consistência. Ele permite o reaproveitamento rápido de mídias (um `Asset` pode ser loteado várias vezes, sempre usando suas imagens padrão), ao mesmo tempo que dá ao usuário o controle para customizar a apresentação de lotes e leilões específicos quando necessário, sem duplicar arquivos e mantendo `MediaItem` como a fonte única da verdade.
 
-## 15. Componentização Universal (Nova Regra)
+## 15. Componentização Universal
 
 **Regra:** Para maximizar a reutilização de código e reduzir a complexidade da base de código, a exibição de itens de listagem e cards **deve** ser centralizada em dois componentes universais: `BidExpertCard.tsx` e `BidExpertListItem.tsx`.
 
