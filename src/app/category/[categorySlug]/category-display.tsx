@@ -22,7 +22,7 @@ import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import SearchResultsFrame from '@/components/search-results-frame'; 
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame'; 
 import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getCategoryAssets } from '@/lib/ui-helpers';

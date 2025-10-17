@@ -23,7 +23,7 @@ import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusC
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
