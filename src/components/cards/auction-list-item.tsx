@@ -12,7 +12,7 @@ import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks } from 'lu
 import { isPast, differenceInDays } from 'date-fns';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
+import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
 
@@ -163,7 +163,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
 
             {auction.auctionStages && auction.auctionStages.length > 0 && (
                 <div className="my-2 p-3 bg-muted/30 rounded-md">
-                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
+                    <AuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
                 </div>
             )}
             

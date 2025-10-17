@@ -1,4 +1,4 @@
-// src/components/auction/BidExpertAuctionStagesTimeline.tsx
+// src/components/auction/auction-stages-timeline.tsx
 'use client';
 
 import * as React from 'react';
@@ -10,7 +10,7 @@ import { isPast, format, isValid, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage } from '@/types';
 
-interface BidExpertAuctionStagesTimelineProps {
+interface AuctionStagesTimelineProps {
   stages: Partial<AuctionStage>[];
   variant?: 'compact' | 'extended';
   className?: string;
@@ -33,12 +33,12 @@ const CustomStepIcon = (props: StepIconProps & { status: 'completed' | 'active' 
 };
 
 
-export default function BidExpertAuctionStagesTimeline({
+export default function AuctionStagesTimeline({
   stages,
   variant = 'compact',
   className,
   auctionOverallStartDate
-}: BidExpertAuctionStagesTimelineProps) {
+}: AuctionStagesTimelineProps) {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
@@ -89,7 +89,7 @@ export default function BidExpertAuctionStagesTimeline({
   
   if (variant === 'compact') {
       return (
-        <div className={cn("container-auction-timeline w-full", className)} data-ai-id="auction-card-timeline">
+        <div className={cn("w-full", className)} data-ai-id="auction-card-timeline">
              <Stepper activeStep={activeStep}>
                 {steps.map((step, index) => (
                      <TooltipProvider key={index}>
