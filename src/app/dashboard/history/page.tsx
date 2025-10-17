@@ -21,7 +21,7 @@ import { getRecentlyViewedIds, removeRecentlyViewedId } from '@/lib/recently-vie
 import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getAuctionsByIds } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import UniversalCard from '@/components/universal-card';
+import BidExpertCard from '@/components/BidExpertCard';
 
 
 export default function BrowsingHistoryPage() {
@@ -142,7 +142,7 @@ export default function BrowsingHistoryPage() {
                 const parentAuction = auctionsMap.get(lot.auctionId);
                 return (
                   <div key={lot.id} className="relative group/history">
-                    <UniversalCard 
+                    <BidExpertCard 
                       item={lot} 
                       type="lot"
                       auction={parentAuction}

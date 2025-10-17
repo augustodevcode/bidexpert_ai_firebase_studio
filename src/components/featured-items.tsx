@@ -3,7 +3,7 @@ import type { Auction, Lot, PlatformSettings } from '@/types';
 import { Button } from './ui/button';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
-import BidExpertCard from './universal-card'; // Importar o novo componente
+import BidExpertCard from './BidExpertCard'; // Corrigido
 
 interface FeaturedItemsProps {
   items: (Auction | Lot)[];

@@ -1,4 +1,3 @@
-
 // src/app/auctions/[auctionId]/auction-details-client.tsx
 /**
  * @fileoverview Componente de cliente que renderiza a página de detalhes de um leilão.

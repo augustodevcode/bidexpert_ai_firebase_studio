@@ -22,12 +22,12 @@ import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Button } from '@/components/ui/button';
 import { Loader2, ChevronRight, AlertCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';
-import SearchResultsFrame from '@/components/BidExpertSearchResultsFrame'; 
+import SearchResultsFrame from '@/components/search-results-frame'; 
 import dynamic from 'next/dynamic';
 import BidExpertFilterSkeleton from '@/components/BidExpertFilterSkeleton';
 import { getCategoryAssets } from '@/lib/ui-helpers';
-import BidExpertCard from '@/components/universal-card';
-import BidExpertListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
   loading: () => <BidExpertFilterSkeleton />,

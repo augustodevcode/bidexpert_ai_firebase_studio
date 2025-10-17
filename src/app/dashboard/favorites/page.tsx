@@ -22,7 +22,7 @@ import { getFavoriteLotIdsFromStorage, removeFavoriteLotIdFromStorage } from '@/
 import { getLotsByIds } from '@/app/admin/lots/actions';
 import { getAuctionsByIds } from '@/app/admin/auctions/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import UniversalCard from '@/components/universal-card';
+import BidExpertCard from '@/components/BidExpertCard';
 
 
 export default function FavoriteLotsPage() {
@@ -135,7 +135,7 @@ export default function FavoriteLotsPage() {
                 const parentAuction = auctionsMap.get(lot.auctionId);
                 return (
                   <div key={lot.id} className="relative group/fav">
-                      <UniversalCard 
+                      <BidExpertCard 
                           item={lot} 
                           type="lot"
                           auction={parentAuction}

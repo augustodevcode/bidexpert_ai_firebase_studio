@@ -18,8 +18,8 @@ import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
 
@@ -87,8 +87,8 @@ export default function AdminLotsPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
-  const renderGridItem = (item: Lot) => <UniversalCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: Lot) => <UniversalListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: Lot) => <BidExpertCard item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: Lot) => <BidExpertListItem item={item} type="lot" auction={auctions.find(a => a.id === item.auctionId)} platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
@@ -100,20 +100,18 @@ export default function AdminLotsPage() {
       ];
   }, [lots, auctions]);
   
-  const renderSkeleton = () => (
-     <div className="space-y-6">
-        <Card className="shadow-lg">
-            <CardHeader className="flex flex-row items-center justify-between">
-                <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                <Skeleton className="h-10 w-36"/>
-            </CardHeader>
-            <CardContent><Skeleton className="h-96 w-full" /></CardContent>
-        </Card>
-    </div>
-  );
-  
   if (isLoading || !platformSettings) {
-    return renderSkeleton();
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
   }
 
 
@@ -151,7 +149,7 @@ export default function AdminLotsPage() {
         isLoading={isLoading}
         searchTypeLabel="lotes"
         emptyStateMessage="Nenhum lote encontrado."
-        facetedFilterColumns={facetedFilterColumns}
+        facetedFilterColumns={facetedFilterOptions}
         searchColumnId='title'
         searchPlaceholder='Buscar por título...'
       />
