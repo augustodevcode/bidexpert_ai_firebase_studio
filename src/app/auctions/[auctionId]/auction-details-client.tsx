@@ -6,7 +6,7 @@
  * Ele consome dados de leilão, lote e configurações da plataforma para construir uma
  * experiência de navegação rica e responsiva para o usuário final.
  */
-'use client';
+'use client'; 
 import React from 'react';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -15,8 +15,8 @@ import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
@@ -152,9 +152,9 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
     return lotsToProcess.sort((a, b) => {
         switch (sortBy) {
             case 'lotNumber_asc':
-              return (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0);
+              return (parseInt(String(a.number || a.id).replace(/\\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\\D/g,'')) || 0);
             case 'lotNumber_desc':
-              return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0);
+              return (parseInt(String(b.number || b.id).replace(/\\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\\D/g,'')) || 0);
             case 'endDate_asc':
                 return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
             case 'endDate_desc':
@@ -193,8 +193,8 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
   };
   
 
-  const renderGridItem = (lot: Lot) => <UniversalCard item={lot} type="lot" auction={auction} platformSettings={platformSettings} />;
-  const renderListItem = (lot: Lot) => <UniversalListItem item={lot} type="lot" auction={auction} platformSettings={platformSettings} />;
+  const renderGridItem = (lot: Lot) => <BidExpertCard item={lot} type="lot" auction={auction} platformSettings={platformSettings!} />;
+  const renderListItem = (lot: Lot) => <BidExpertListItem item={lot} type="lot" auction={auction} platformSettings={platformSettings!} />;
   
   const displayLocation = auction.city && auction.state ? `${auction.city} - ${auction.state}` : auction.state || auction.city || 'Nacional';
 

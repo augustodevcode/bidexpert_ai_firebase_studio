@@ -18,8 +18,8 @@ import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
 import { getAuctioneers } from '../auctioneers/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
@@ -91,8 +91,8 @@ export default function AdminAuctionsPage() {
     setRefetchTrigger(c => c + 1);
   }, []);
 
-  const renderGridItem = (item: Auction) => <UniversalCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: Auction) => <UniversalListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: Auction) => <BidExpertCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: Auction) => <BidExpertListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
