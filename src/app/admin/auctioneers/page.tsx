@@ -16,8 +16,8 @@ import { PlusCircle, Landmark, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
 
@@ -81,8 +81,8 @@ export default function AdminAuctioneersPage() {
       onUpdate();
   }, [onUpdate, toast]);
 
-  const renderGridItem = (item: AuctioneerProfileInfo) => <UniversalCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: AuctioneerProfileInfo) => <UniversalListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: AuctioneerProfileInfo) => <BidExpertCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: AuctioneerProfileInfo) => <BidExpertListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
   
   const facetedFilterOptions = useMemo(() => {
@@ -143,7 +143,7 @@ export default function AdminAuctioneersPage() {
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
         searchPlaceholder='Buscar por nome...'
-        onDeleteSelected={handleDeleteSelected}
+        onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
   );

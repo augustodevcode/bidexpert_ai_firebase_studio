@@ -17,10 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import { createColumns } from './columns';
 import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Mais Recentes' },
@@ -93,8 +93,8 @@ export default function AdminAssetsPage() {
   }, []);
   
   const columns = useMemo(() => createColumns({ handleDelete, onOpenDetails: handleOpenDetails }), [handleDelete, handleOpenDetails]);
-  const renderGridItem = (item: Asset) => <UniversalCard item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: Asset) => <UniversalListItem item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: Asset) => <BidExpertCard item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: Asset) => <BidExpertListItem item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 
   const assetStatusOptions = useMemo(() => 
     [...new Set(assets.map(a => a.status).filter(Boolean))]
@@ -156,7 +156,7 @@ export default function AdminAssetsPage() {
             facetedFilterColumns={facetedFilterColumns}
             searchColumnId="title"
             searchPlaceholder="Buscar por título ou ID do processo..."
-            onDeleteSelected={handleDeleteSelected}
+            onDeleteSelected={handleDeleteSelected as any}
           />
       </div>
        <AssetDetailsModal 

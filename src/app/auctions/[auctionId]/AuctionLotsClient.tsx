@@ -6,13 +6,13 @@ import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
 import {
   ChevronRight, FileText, Heart, Eye
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 interface AuctionLotsClientProps {
     auction: Auction;
@@ -42,7 +42,7 @@ export default function AuctionLotsClient({ auction, platformSettings }: Auction
                             </div>
                             <div className="mb-3 space-y-0.5">
                                 <p className="text-xs text-muted-foreground">
-                                    Data: {format(new Date(auction.auctionDate), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Lotes: {auction.totalLots} | Status: <span className="font-semibold text-primary">{auction.status}</span>
+                                    Data: {format(new Date(auction.auctionDate as string), "dd/MM/yyyy HH:mm", { locale: ptBR })} | Lotes: {auction.totalLots} | Status: <span className="font-semibold text-primary">{auction.status}</span>
                                 </p>
                                 <p className="text-xs text-muted-foreground">
                                     Leiloeiro: {auction.auctioneer?.name} | Categoria: {auction.category?.name}
@@ -110,13 +110,13 @@ export default function AuctionLotsClient({ auction, platformSettings }: Auction
                     viewMode === 'grid' ? (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {auction.lots.map((lot) => (
-                                <UniversalCard key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
+                                <BidExpertCard key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
                             ))}
                         </div>
                     ) : (
                         <div className="space-y-4">
                             {auction.lots.map((lot) => (
-                                <UniversalListItem key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
+                                <BidExpertListItem key={lot.id} item={lot} type="lot" platformSettings={platformSettings} parentAuction={auction} />
                             ))}
                         </div>
                     )

@@ -18,10 +18,10 @@ import { getRoles } from '../roles/actions';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
 import { createColumns } from './columns';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Mais Recentes' },
@@ -87,8 +87,8 @@ export default function AdminUsersPage() {
   }, [onUpdate, toast]);
   
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
-  const renderGridItem = (item: UserProfileWithPermissions) => <UniversalCard item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: UserProfileWithPermissions) => <UniversalListItem item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: UserProfileWithPermissions) => <BidExpertCard item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: UserProfileWithPermissions) => <BidExpertListItem item={item} type="user" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 
 
   const roleOptions = useMemo(() => 
@@ -144,6 +144,8 @@ export default function AdminUsersPage() {
        <BidExpertSearchResultsFrame
         items={users}
         totalItemsCount={users.length}
+        renderGridItem={renderGridItem}
+        renderListItem={renderListItem}
         dataTableColumns={columns}
         sortOptions={sortOptions}
         initialSortBy="createdAt_desc"
@@ -155,7 +157,7 @@ export default function AdminUsersPage() {
         facetedFilterColumns={facetedFilterColumns}
         searchColumnId="email"
         searchPlaceholder="Buscar por email ou nome..."
-        onDeleteSelected={handleDeleteSelected}
+        onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
   );

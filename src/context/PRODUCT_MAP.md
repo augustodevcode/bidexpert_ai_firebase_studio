@@ -42,7 +42,7 @@ Este documento detalha a arquitetura, funcionalidades, regras de negócio e mode
 | **CMS & Configurações** | Gestão de conteúdo (páginas, temas) e configurações da plataforma. | `PlatformSettings`, `MediaItem`, `DocumentTemplate` |
 | **Relatórios e Análise** | Geração e visualização de relatórios customizados. | `DataSource`, `Report` (futuro) |
 | **Componente de Card Unificado** | Componente reutilizável para exibir tanto Leilões quanto Lotes, adaptando-se ao tipo de dado. | `Lot`, `Auction`, `Asset` |
-| **[NOVO] Marketing e Engajamento** | Seções na homepage para engajamento do usuário, como newsletter, anúncios e promoções de parceiros. | `Subscriber`, `Advertisement` (futuro), `ToolSponsor` (futuro) |
+| **Marketing e Engajamento** | Seções na homepage para engajamento do usuário, como newsletter, anúncios e promoções de parceiros. | `Subscriber`, `Advertisement` (futuro), `ToolSponsor` (futuro) |
 
 ### 3.2. Mapa de Rotas (Frontend - Next.js)
 
@@ -69,17 +69,17 @@ Baseado na estrutura de `src/app`:
 | `POST /api/v1/tenant/create` | **[NOVO]** Cria um novo ambiente (tenant) para um leiloeiro. | Service Account | `{ "name": "Leiloeiro X", "email": "...", "subdomain": "leiloeiro-x" }` | `{ "success": true, "tenantId": "..." }` |
 | `POST /api/auctions/{auctionId}/lots/{lotId}/bids`| Enviar um novo lance para um lote. | Arrematante | `{ "amount": 1500.50 }` | `{ "id": "bid_cuid", "amount": 1500.50, ... }` |
 | `PATCH /api/admin/users/{userId}/habilitations`| Aprovar ou rejeitar a habilitação de um usuário. | Admin | `{ "status": "HABILITADO" }` | `{ "id": "user_cuid", "habilitationStatus": "HABILITADO" }`|
-| `POST /api/subscribe` | **[NOVO]** Inscreve um usuário na newsletter. | Público | `{"email": "...", "name": "..."}`| `{"success": true}`|
+| `POST /api/subscribe` | Inscreve um usuário na newsletter. | Público | `{"email": "...", "name": "..."}`| `{"success": true}`|
 
 ---
 
 ## 4. Fluxos de Usuário
 
-### 4.1. **[NOVO]** Onboarding Automatizado de Novo Leiloeiro (Tenant)
+### 4.1. Onboarding Automatizado de Novo Leiloeiro (Tenant)
 
 (Fluxo existente, sem alterações)
 
-### 4.2. **[ATUALIZADO]** Fluxo de Login Multi-Tenant
+### 4.2. Fluxo de Login Multi-Tenant
 
 (Fluxo existente, sem alterações)
 
@@ -91,7 +91,7 @@ Baseado na estrutura de `src/app`:
 
 (Fluxo existente, sem alterações)
 
-### 4.5. **[NOVO]** Cliente Potencial: Inscrição na Newsletter
+### 4.5. Cliente Potencial: Inscrição na Newsletter
 
 1.  **Acesso à Homepage:** Um visitante (cliente potencial) acessa a página inicial.
 2.  **Visualização da Seção:** O visitante rola a página e encontra a seção "Fique por Dentro das Novidades".
@@ -104,35 +104,36 @@ Baseado na estrutura de `src/app`:
 
 ## 5. Regras de Negócio Críticas
 
-### 5.1. **[NOVO]** Isolamento de Dados (Multi-Tenancy)
+### 5.1. Isolamento de Dados (Multi-Tenancy)
 
 (Regra existente, sem alterações)
 
-### 5.2. Componentes de Exibição Unificados
+### 5.2. **[NOVO]** Componentes de Exibição Unificados
 
-(Regra existente, sem alterações)
+*   **Regra:** A renderização de cards e itens de lista em toda a aplicação deve ser centralizada nos componentes `BidExpertCard.tsx` e `BidExpertListItem.tsx`.
+*   **Justificativa:** Esta abordagem DRY (Don't Repeat Yourself) reduz a duplicação de código, simplifica a manutenção e garante uma experiência visual consistente. Os componentes atuam como "dispatchers", recebendo um tipo de entidade (ex: `type="auction"`) e um objeto de dados, e renderizando o template de layout apropriado.
 
 ### 5.3. Fontes de Dados para Relatórios
 
 (Regra existente, sem alterações)
 
-### 5.4. **[NOVO]** Exibição Condicional de Cronômetro Regressivo
+### 5.4. Exibição Condicional de Cronômetro Regressivo
 
 (Regra existente, sem alterações)
 
-### 5.5. **[NOVO]** Criação de Ativos (Bens) em Contexto
+### 5.5. Criação de Ativos (Bens) em Contexto
 
 (Regra existente, sem alterações)
 
-### 5.6. **[NOVO]** Validação de Formulários e Feedback ao Usuário
+### 5.6. Validação de Formulários e Feedback ao Usuário
 
 (Regra existente, sem alterações)
 
-### 5.7. **[NOVO]** Fluxo de Configuração Inicial (Setup)
+### 5.7. Fluxo de Configuração Inicial (Setup)
 
 (Regra existente, sem alterações)
 
-### 5.8. **[NOVO]** Configuração da Homepage
+### 5.8. Configuração da Homepage
 
 *   **Responsividade:** A exibição dos cards de serviços (leilões/lotes) deve ser responsiva. Em telas de desktop, devem ser exibidos em grid. Em telas menores (mobile/tablet), o layout deve se transformar em um carrossel horizontal com navegação por gestos (drag).
 *   **Carrossel de Categorias:** A seção de categorias na homepage deve ser um carrossel horizontal, permitindo que o usuário deslize para ver todas as opções disponíveis.

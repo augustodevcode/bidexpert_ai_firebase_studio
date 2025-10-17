@@ -5,15 +5,15 @@ import { Suspense, useState, useEffect } from 'react';
 import HeroSection from '@/components/hero-section';
 import ClosingSoonCarousel from '@/components/closing-soon-carousel';
 import TopCategories from '@/components/top-categories';
-import FilterLinkCard from '@/components/filter-link-card';
-import PromoCard from '@/components/promo-card';
+import FilterLinkCard from '@/app/filter-link-card';
+import PromoCard from '@/app/promo-card';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Loader2, List, CalendarX, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import type { Auction, Lot, LotCategory, SellerProfileInfo, PlatformSettings } from '@/types';
 import { getCategoryAssets, slugify } from '@/lib/ui-helpers';
 import FeaturedSellers from '@/components/featured-sellers';
-import BidExpertCard from '@/components/universal-card';
+import BidExpertCard from '@/components/BidExpertCard';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePageClient({ 

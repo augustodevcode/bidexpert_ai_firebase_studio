@@ -12,7 +12,7 @@ import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks } from 'lu
 import { isPast, differenceInDays } from 'date-fns';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertStagesTimeline from '@/components/auction/BidExpertStagesTimeline';
+import BidExpertStagesTimeline from '@/components/auction/auction-stages-timeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
 
@@ -135,8 +135,8 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
               {IconComponent && (
                 <div className="flex items-center">
-                  <IconComponent className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
-                  <span>{auctionTypeDisplay?.label}</span>
+                    <IconComponent className="h-3.5 w-3.5 mr-1.5 text-primary/80" />
+                    <span>{auctionTypeDisplay?.label}</span>
                 </div>
               )}
               <div className="flex items-center">

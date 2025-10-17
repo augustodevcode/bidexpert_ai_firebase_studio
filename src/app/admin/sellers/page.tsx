@@ -16,8 +16,8 @@ import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
 
@@ -82,8 +82,8 @@ export default function AdminSellersPage() {
       onUpdate();
   }, [onUpdate, toast]);
 
-  const renderGridItem = (item: SellerProfileInfo) => <UniversalCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const renderListItem = (item: SellerProfileInfo) => <UniversalListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderGridItem = (item: SellerProfileInfo) => <BidExpertCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: SellerProfileInfo) => <BidExpertListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
@@ -145,7 +145,7 @@ export default function AdminSellersPage() {
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
         searchPlaceholder='Buscar por nome ou email...'
-        onDeleteSelected={handleDeleteSelected}
+        onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
   );
