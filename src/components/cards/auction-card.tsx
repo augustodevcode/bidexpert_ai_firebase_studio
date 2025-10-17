@@ -1,3 +1,4 @@
+
 // src/components/cards/auction-card.tsx
 'use client';
 
@@ -260,3 +261,5 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
     </TooltipProvider>
   );
 }
+
+    

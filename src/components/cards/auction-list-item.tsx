@@ -1,3 +1,4 @@
+
 // src/components/cards/auction-list-item.tsx
 'use client';
 
@@ -188,3 +189,5 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     </TooltipProvider>
   );
 }
+
+    
