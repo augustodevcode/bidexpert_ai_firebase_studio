@@ -52,7 +52,7 @@ export default function BidExpertStagesTimeline({
     return <div className="h-10 w-full animate-pulse rounded-md bg-muted" />;
   }
 
-
+  // Lógica corrigida para determinar o status de cada etapa
   let activeStep = -1;
 
   const steps = stages.map((stage, index) => {
@@ -60,7 +60,7 @@ export default function BidExpertStagesTimeline({
     const endDate = stage.endDate ? new Date(stage.endDate) : null;
     let status: 'completed' | 'active' | 'upcoming' = 'upcoming';
     
-    if (startDate && endDate) {
+    if (startDate && endDate && isValid(startDate) && isValid(endDate)) {
       if (isPast(endDate)) {
         status = 'completed';
       } else if (isPast(startDate) && !isPast(endDate)) {
@@ -77,17 +77,16 @@ export default function BidExpertStagesTimeline({
     };
   });
   
-  // Se nenhuma etapa está ativa (porque todas são futuras), a "etapa ativa" é a primeira
-   if (activeStep === -1 && steps.length > 0) {
+  // Define a primeira etapa futura como "ativa" visualmente se nenhuma estiver em andamento.
+   if (activeStep === -1) {
       const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
       if (firstUpcomingIndex !== -1) {
         activeStep = firstUpcomingIndex;
       } else {
-        // If all are completed, show the last one as the "active" (final) step
+        // Se todas as etapas já passaram, marca a última como "concluída" ativamente.
         activeStep = steps.length;
       }
     }
-  
   
   if (variant === 'compact') {
       return (
