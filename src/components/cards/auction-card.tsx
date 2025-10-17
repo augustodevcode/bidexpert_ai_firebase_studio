@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import EntityEditMenu from '../entity-edit-menu';
-import BidExpertStagesTimeline from '@/components/auction/auction-stages-timeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 interface AuctionCardProps {
@@ -227,7 +227,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             
             {auction.auctionStages && auction.auctionStages.length > 0 ? (
                 <div className="container-auction-timeline" data-ai-id="auction-card-timeline">
-                    <BidExpertStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
+                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
                 </div>
             ) : null}
 

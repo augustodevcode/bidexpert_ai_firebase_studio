@@ -1,4 +1,4 @@
-// src/components/auction/auction-stages-timeline.tsx
+// src/components/auction/BidExpertAuctionStagesTimeline.tsx
 'use client';
 
 import * as React from 'react';
@@ -10,7 +10,7 @@ import { isPast, format, isValid, isFuture } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import type { AuctionStage } from '@/types';
 
-interface BidExpertStagesTimelineProps {
+interface BidExpertAuctionStagesTimelineProps {
   stages: Partial<AuctionStage>[];
   variant?: 'compact' | 'extended';
   className?: string;
@@ -33,18 +33,18 @@ const CustomStepIcon = (props: StepIconProps & { status: 'completed' | 'active' 
 };
 
 
-export default function BidExpertStagesTimeline({
+export default function BidExpertAuctionStagesTimeline({
   stages,
   variant = 'compact',
   className,
   auctionOverallStartDate
-}: BidExpertStagesTimelineProps) {
+}: BidExpertAuctionStagesTimelineProps) {
   const [isClient, setIsClient] = React.useState(false);
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-  
+
   const now = new Date();
 
   // Se não for cliente ainda, ou não houver stages, não renderize nada ou um placeholder
@@ -59,16 +59,14 @@ export default function BidExpertStagesTimeline({
     const startDate = stage.startDate ? new Date(stage.startDate) : null;
     const endDate = stage.endDate ? new Date(stage.endDate) : null;
     let status: 'completed' | 'active' | 'upcoming' = 'upcoming';
-    
+
     if (startDate && endDate && isValid(startDate) && isValid(endDate)) {
       if (isPast(endDate)) {
         status = 'completed';
       } else if (isPast(startDate) && !isPast(endDate)) {
         status = 'active';
-        if (activeStep === -1) activeStep = index;
       }
     }
-    
     return {
       label: stage.name || `Etapa ${index + 1}`,
       startDate,
@@ -76,21 +74,22 @@ export default function BidExpertStagesTimeline({
       status,
     };
   });
-  
-  // Define a primeira etapa futura como "ativa" visualmente se nenhuma estiver em andamento.
-   if (activeStep === -1) {
-      const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
-      if (firstUpcomingIndex !== -1) {
-        activeStep = firstUpcomingIndex;
-      } else {
-        // Se todas as etapas já passaram, marca a última como "concluída" ativamente.
-        activeStep = steps.length;
-      }
-    }
+
+  const activeStageIndex = steps.findIndex(s => s.status === 'active');
+  const firstUpcomingIndex = steps.findIndex(s => s.status === 'upcoming');
+
+  if (activeStageIndex !== -1) {
+    activeStep = activeStageIndex;
+  } else if (firstUpcomingIndex !== -1) {
+    activeStep = firstUpcomingIndex;
+  } else {
+    // If all stages are completed, set the last one as active for display purposes
+    activeStep = steps.length - 1;
+  }
   
   if (variant === 'compact') {
       return (
-        <div className={cn("w-full", className)}>
+        <div className={cn("container-auction-timeline w-full", className)} data-ai-id="auction-card-timeline">
              <Stepper activeStep={activeStep}>
                 {steps.map((step, index) => (
                      <TooltipProvider key={index}>

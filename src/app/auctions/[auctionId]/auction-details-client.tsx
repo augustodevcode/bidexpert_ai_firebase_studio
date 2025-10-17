@@ -15,8 +15,6 @@ import Link from 'next/link';
 import type { Auction, Lot, PlatformSettings, LotCategory, SellerProfileInfo, AuctioneerProfileInfo } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import BidExpertCard from '@/components/BidExpertCard';
-import BidExpertListItem from '@/components/BidExpertListItem';
 import {
   FileText, Heart, Eye, ListChecks, MapPin, Gavel, Tag, CalendarDays, SlidersHorizontal, UserCircle, Briefcase, ExternalLink, Pencil
 } from 'lucide-react';
@@ -25,7 +23,7 @@ import { getAuctionStatusText, slugify, getUniqueLotLocations, getAuctionStatusC
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import BidExpertStagesTimeline from '@/components/auction/auction-stages-timeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import type { ActiveFilters } from '@/components/BidExpertFilter';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -34,6 +32,8 @@ import SidebarFiltersSkeleton from '@/components/BidExpertFilterSkeleton';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 
 const BidExpertFilter = dynamic(() => import('@/components/BidExpertFilter'), {
@@ -152,9 +152,9 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
     return lotsToProcess.sort((a, b) => {
         switch (sortBy) {
             case 'lotNumber_asc':
-              return (parseInt(String(a.number || a.id).replace(/\\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\\D/g,'')) || 0);
+              return (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0) - (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0);
             case 'lotNumber_desc':
-              return (parseInt(String(b.number || b.id).replace(/\\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\\D/g,'')) || 0);
+              return (parseInt(String(b.number || b.id).replace(/\D/g,'')) || 0) - (parseInt(String(a.number || a.id).replace(/\D/g,'')) || 0);
             case 'endDate_asc':
                 return new Date(a.endDate as string).getTime() - new Date(b.endDate as string).getTime();
             case 'endDate_desc':
@@ -284,7 +284,7 @@ export default function AuctionDetailsClient({ auction, auctioneer, platformSett
 
             <Card className="shadow-md">
               <CardContent className="p-4 md:p-6">
-                <BidExpertStagesTimeline
+                <BidExpertAuctionStagesTimeline
                     auctionOverallStartDate={new Date(auction.auctionDate as string)}
                     stages={auction.auctionStages || []}
                     variant="extended"

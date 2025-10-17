@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import Image from 'next/image';
 import { CalendarDays, MapPin, Eye, ChevronLeft, ChevronRight, ImageOff, FileText, SlidersHorizontal, Info, ListChecks, Landmark, Calendar } from 'lucide-react';
 import Link from 'next/link';
-import AuctionStagesTimeline from './auction/auction-stages-timeline';
+import BidExpertAuctionStagesTimeline from './auction/BidExpertAuctionStagesTimeline';
 import { useMemo, useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
