@@ -7,7 +7,7 @@ import { ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useEmblaCarousel from 'embla-carousel-react';
 import type { Lot, Auction, PlatformSettings } from '@/types';
-import UniversalCard from './universal-card';
+import BidExpertCard from './universal-card';
 import LotCountdown from './lot-countdown';
 
 interface ClosingSoonCarouselProps {
@@ -61,7 +61,7 @@ export default function ClosingSoonCarousel({ lots, auctions, platformSettings }
             <div className="flex -ml-4">
               {lots.map((lot) => (
                 <div key={lot.id} className="flex-[0_0_100%] sm:flex-[0_0_50%] md:flex-[0_0_33.33%] lg:flex-[0_0_25%] min-w-0 pl-4">
-                    <UniversalCard
+                    <BidExpertCard
                       item={lot}
                       type="lot"
                       platformSettings={platformSettings}
@@ -96,10 +96,4 @@ export default function ClosingSoonCarousel({ lots, auctions, platformSettings }
         <div className="mt-6 bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-primary p-4 rounded-lg">
           <p className="text-sm text-blue-900">
             💡 <strong>2ª Praça:</strong> Lotes que não foram arrematados na primeira etapa retornam com descontos de até 50%!
-            Aproveite esta oportunidade única para arrematar com preços ainda mais vantajosos.
-          </p>
-        </div>
-      </div>
-    </section>
-  );
-}
+            Aproveite esta oportunidade única para

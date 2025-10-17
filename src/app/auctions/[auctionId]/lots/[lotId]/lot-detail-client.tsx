@@ -16,7 +16,6 @@ import Link from 'next/link';
 import type { Lot, Auction, BidInfo, Review, LotQuestion, SellerProfileInfo, PlatformSettings, AuctionStage, LotCategory, UserLotMaxBid } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import LotCard from '@/components/lot-card';
 import {
     Printer, Share2, ArrowLeft, ChevronLeft, ChevronRight, Key, Info,
     Tag, CalendarDays, Clock, Users, DollarSign, MapPin, Car, ThumbsUp,
@@ -59,8 +58,9 @@ import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from '@/comp
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import BidExpertStagesTimeline from '@/components/auction/auction-stages-timeline';
 
-// Dynamic import of the map component to ensure it only renders on the client
+
 const LotMapDisplay = dynamic(() => import('@/components/auction/lot-map-display'), {
   ssr: false,
   loading: () => <Skeleton className="w-full aspect-square bg-muted rounded-md" />,
@@ -498,7 +498,7 @@ export default function LotDetailClientContent({
               <h2 className="text-2xl font-bold mb-6 font-headline text-center">Outros Lotes Deste Leilão</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {relatedLots.map(relatedLot => (
-                    <LotCard key={relatedLot.id} lot={relatedLot} auction={auction} platformSettings={platformSettings} badgeVisibilityConfig={platformSettings.sectionBadgeVisibility?.searchGrid} />
+                    <UniversalCard key={relatedLot.id} item={relatedLot} type="lot" platformSettings={platformSettings} />
                 ))}
               </div>
             </section>

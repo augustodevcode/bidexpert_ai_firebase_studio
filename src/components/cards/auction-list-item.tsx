@@ -12,7 +12,7 @@ import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks } from 'lu
 import { isPast, differenceInDays } from 'date-fns';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertStagesTimeline from '../auction/auction-stages-timeline';
+import BidExpertStagesTimeline from '@/components/auction/BidExpertStagesTimeline';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
 

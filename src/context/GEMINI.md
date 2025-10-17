@@ -141,3 +141,15 @@ A estratégia de testes está documentada no arquivo `README.md` e deve ser segu
         2.  **Imagem Customizada:** Ignorar as imagens dos lotes e selecionar uma nova imagem principal diretamente da `MediaLibrary` (`MediaItem`).
 
 **Justificativa:** Este sistema de herança com opção de substituição oferece máxima flexibilidade e consistência. Ele permite o reaproveitamento rápido de mídias (um `Asset` pode ser loteado várias vezes, sempre usando suas imagens padrão), ao mesmo tempo que dá ao usuário o controle para customizar a apresentação de lotes e leilões específicos quando necessário, sem duplicar arquivos e mantendo `MediaItem` como a fonte única da verdade.
+
+## 15. Componentização Universal (Nova Regra)
+
+**Regra:** Para maximizar a reutilização de código e reduzir a complexidade da base de código, a exibição de itens de listagem e cards **deve** ser centralizada em dois componentes universais: `BidExpertCard.tsx` e `BidExpertListItem.tsx`.
+
+-   **Proibição de Componentes Específicos:** Fica proibida a criação de novos componentes de card/list-item específicos para cada entidade (ex: `AuctionCard`, `LotCard`, etc.). Todos os componentes existentes devem ser refatorados para usar os componentes universais.
+-   **Arquitetura do Componente Universal:**
+    1.  **Componente "Dispatcher" (`BidExpertCard.tsx`):** Este é o componente público. Ele recebe uma `prop` `type` (ex: `'auction'`, `'lot'`, `'seller'`) e um objeto `item` genérico. Ele atua como um "despachante", renderizando o componente de template interno apropriado com base no tipo.
+    2.  **Componentes de Template (Internos):** Os componentes de card específicos (ex: `cards/auction-card.tsx`, `cards/lot-card.tsx`) são mantidos como componentes *internos* e não-exportados, servindo apenas como templates de layout para cada tipo de entidade. Eles são chamados exclusivamente pelo `BidExpertCard.tsx`.
+-   **Parametrização:** A lógica para extrair e exibir os dados corretos (título, imagem, preço, etc.) deve ser feita dentro de cada template interno, recebendo o objeto `item` já tipado do componente `BidExpertCard`.
+
+**Justificativa:** Esta abordagem combina a flexibilidade de ter layouts customizados para cada tipo de entidade com a simplicidade de ter um único ponto de entrada (`BidExpertCard`) para renderizar qualquer card. Isso reduz drasticamente o código duplicado, simplifica a manutenção e garante uma API consistente para a exibição de itens em toda a plataforma.

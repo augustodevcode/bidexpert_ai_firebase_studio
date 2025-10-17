@@ -457,7 +457,7 @@ export default function SearchPage() {
       
       <Card className="shadow-lg p-6 bg-secondary/30">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold font-headline">Resultados da Busca</h1>
+          <h1 className="text-3xl font-bold font-headline">Busca Avançada</h1>
           <p className="text-muted-foreground mt-2">
             Encontre leilões, lotes e ofertas de venda direta.
           </p>
@@ -504,14 +504,16 @@ export default function SearchPage() {
         <main className="min-w-0 space-y-6 md:ml-4">
             <BidExpertSearchResultsFrame
               items={filteredAndSortedItems}
+              totalItemsCount={filteredAndSortedItems.length}
+              renderGridItem={renderGridItem}
+              renderListItem={renderListItem}
               sortOptions={currentSortOptions}
               initialSortBy={sortBy}
               onSortChange={setSortByState}
               platformSettings={platformSettings}
               isLoading={isLoading}
-              renderGridItem={renderGridItem}
-              renderListItem={renderListItem}
               searchTypeLabel={getSearchTypeLabel()}
+              emptyStateMessage="Nenhum item encontrado com os filtros aplicados."
             />
         </main>
       </div>
