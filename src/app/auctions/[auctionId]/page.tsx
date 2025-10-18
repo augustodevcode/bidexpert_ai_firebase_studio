@@ -107,9 +107,3 @@ export default async function AuctionDetailPage({ params }: { params: { auctionI
     </div>
   );
 }
-
-export async function generateStaticParams() {
-  // For now, return empty array to disable static generation
-  // This avoids the cookies context issue during build time
-  return [];
-}

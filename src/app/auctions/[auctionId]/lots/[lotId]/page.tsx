@@ -153,17 +153,3 @@ export default async function LotDetailPage({ params }: { params: { auctionId: s
     </div>
   );
 }
-
-export async function generateStaticParams() {
-  try {
-    const lots = await getLots(undefined, true); // Public call
-    // Limit to a reasonable number for build time, e.g., the first 50 lots
-    return lots.slice(0, 50).map((lot) => ({
-      auctionId: lot.auctionId,
-      lotId: lot.publicId || lot.id,
-    }));
-  } catch (error) {
-    console.error("Failed to generate static params for lots:", error);
-    return [];
-  }
-}

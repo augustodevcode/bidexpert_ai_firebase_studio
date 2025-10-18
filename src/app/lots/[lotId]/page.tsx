@@ -40,18 +40,3 @@ export default async function LotRedirectPage({ params }: { params: { lotId: str
     </div>
   );
 }
-
-// Optional: Pre-build some of these redirect pages at build time for performance
-// This helps with SEO and faster loads for known lots.
-export async function generateStaticParams() {
-  try {
-    const lots = await getLots(undefined, true); // Public call
-    // Limit to a reasonable number for build time, e.g., the first 50 lots
-    return lots.slice(0, 50).map((lot) => ({ 
-      lotId: lot.publicId || lot.id,
-    }));
-  } catch (error) {
-    console.error("Failed to generate static params for lot redirects:", error);
-    return [];
-  }
-}
