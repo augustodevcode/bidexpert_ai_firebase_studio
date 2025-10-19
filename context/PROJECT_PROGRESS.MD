@@ -61,4 +61,11 @@
     - **44.3:** Substituir o formulário único de configurações por uma página de "hub" em `/admin/settings` que linka para novas páginas de CRUD dedicadas para cada grupo de configuração (ex: `/admin/settings/themes`, `/admin/settings/maps`).
     - **44.4:** Criar os novos formulários de CRUD para cada nova entidade de configuração.
     - **44.5:** Atualizar todas as partes da aplicação que consomem as configurações para buscar os dados das novas tabelas.
+- **Item 45: Implementar Sistema de Geração Automática de Código de Negócio:**
+    - **45.1:** Modificar o schema do Prisma para adicionar um campo `codigo` único e obrigatório às entidades: `Leilao`, `Lote`, `Comitente`, `Usuario`, `Leiloeiro`, `Ativo`, `Categoria` e `Subcategoria`.
+    - **45.2:** Expandir a tabela `PlatformSettings` para incluir uma configuração de máscara de código para cada uma das entidades acima (ex: `auctionCodeMask: 'LEIL-YYYYMM-NNNNN'`).
+    - **45.3:** Criar um `BusinessCodeService` reutilizável com uma função `generateNextCode(entityType)` que leia a máscara, consulte o último código gerado para o dia atual e retorne o próximo código sequencial. A lógica deve ser atômica para evitar race conditions.
+    - **45.4:** Implementar um middleware do Prisma que intercepte as operações `create` para as entidades especificadas.
+    - **45.5:** No middleware, antes de salvar, chamar o `BusinessCodeService` para gerar e injetar o `codigo` no registro a ser criado.
+    - **45.6:** Criar um teste de integração para validar a geração correta, a unicidade e o reinício diário do contador para pelo menos uma das entidades.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.
