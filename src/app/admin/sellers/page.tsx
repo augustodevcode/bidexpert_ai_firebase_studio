@@ -7,11 +7,10 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getSellers as getSellersAction, deleteSeller } from './actions';
-import type { SellerProfileInfo, PlatformSettings } from '@/types';
+import { getSellers as getSellersAction, deleteSeller, createSeller, updateSeller } from './actions';
+import type { SellerProfileInfo, PlatformSettings, SellerFormData, JudicialBranch, StateInfo, CityInfo } from '@/types';
 import { PlusCircle, Users } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
@@ -20,6 +19,11 @@ import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import SellerForm from './seller-form';
+import { getJudicialBranches } from '../judicial-branches/actions';
+import { getStates } from '../states/actions';
+import { getCities } from '../cities/actions';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
@@ -34,17 +38,31 @@ export default function AdminSellersPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
+  
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingSeller, setEditingSeller] = useState<SellerProfileInfo | null>(null);
+  
+  const [dependencies, setDependencies] = useState<{
+    judicialBranches: JudicialBranch[],
+    allStates: StateInfo[],
+    allCities: CityInfo[],
+  } | null>(null);
+
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedSellers, settings] = await Promise.all([
+      const [fetchedSellers, settings, branches, states, cities] = await Promise.all([
         getSellersAction(),
         getPlatformSettings(),
+        getJudicialBranches(),
+        getStates(),
+        getCities(),
       ]);
       setAllSellers(fetchedSellers);
       setPlatformSettings(settings as PlatformSettings);
+      setDependencies({ judicialBranches: branches, allStates: states, allCities: cities });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar comitentes.";
       console.error("Error fetching sellers:", e);
@@ -62,6 +80,22 @@ export default function AdminSellersPage() {
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
+
+  const handleNewClick = () => {
+    setEditingSeller(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditClick = (seller: SellerProfileInfo) => {
+    setEditingSeller(seller);
+    setIsFormOpen(true);
+  };
+  
+  const handleFormSuccess = () => {
+      setIsFormOpen(false);
+      setEditingSeller(null);
+      onUpdate();
+  };
   
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteSeller(id);
@@ -74,17 +108,23 @@ export default function AdminSellersPage() {
   }, [toast, onUpdate]);
   
   const handleDeleteSelected = useCallback(async (selectedItems: SellerProfileInfo[]) => {
-      // Logic for batch deletion
       for (const item of selectedItems) {
         await deleteSeller(item.id);
       }
       toast({ title: "Sucesso!", description: `${selectedItems.length} comitente(s) excluído(s).` });
       onUpdate();
   }, [onUpdate, toast]);
+  
+  const formAction = async (data: SellerFormData) => {
+    if (editingSeller) {
+      return updateSeller(editingSeller.id, data);
+    }
+    return createSeller(data);
+  };
 
   const renderGridItem = (item: SellerProfileInfo) => <BidExpertCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: SellerProfileInfo) => <BidExpertListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
 
   const facetedFilterOptions = useMemo(() => {
       const stateOptions = [...new Set(allSellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
@@ -94,7 +134,7 @@ export default function AdminSellersPage() {
       ];
   }, [allSellers]);
   
-  if (isLoading || !platformSettings) {
+  if (isLoading || !platformSettings || !dependencies) {
     return (
         <div className="space-y-6">
             <Card className="shadow-lg">
@@ -109,6 +149,7 @@ export default function AdminSellersPage() {
   }
 
   return (
+    <>
     <div className="space-y-6" data-ai-id="admin-sellers-page-container">
       <Card className="shadow-lg" data-ai-id="admin-sellers-card">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -121,10 +162,8 @@ export default function AdminSellersPage() {
               Adicione, edite ou remova comitentes/vendedores da plataforma.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/sellers/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Comitente
-            </Link>
+          <Button onClick={handleNewClick}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Novo Comitente
           </Button>
         </CardHeader>
       </Card>
@@ -148,5 +187,23 @@ export default function AdminSellersPage() {
         onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
+    <CrudFormContainer
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        mode="modal"
+        title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
+        description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
+    >
+        <SellerForm
+          initialData={editingSeller}
+          judicialBranches={dependencies.judicialBranches}
+          allStates={dependencies.allStates}
+          allCities={dependencies.allCities}
+          onSubmitAction={formAction}
+          onSuccess={handleFormSuccess}
+          onCancel={() => setIsFormOpen(false)}
+        />
+    </CrudFormContainer>
+    </>
   );
 }

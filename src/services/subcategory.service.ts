@@ -58,8 +58,8 @@ export class SubcategoryService {
         parentCategory: { connect: { id: data.parentCategoryId } },
       };
 
-      const newSubcategory = await prisma.subCategory.upsert({
-        where: { slug_parentCategoryId: { slug: dataToUpsert.slug, parentCategoryId: data.parentCategoryId } },
+      const newSubcategory = await this.prisma.subcategory.upsert({
+        where: { name_parentCategoryId: { name: dataToUpsert.name, parentCategoryId: data.parentCategoryId } },
         update: dataToUpsert,
         create: dataToUpsert,
       });

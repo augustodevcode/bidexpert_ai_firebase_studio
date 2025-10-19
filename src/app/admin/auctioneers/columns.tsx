@@ -23,7 +23,7 @@ import type { AuctioneerProfileInfo } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<AuctioneerProfileInfo>[] => [
+export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (auctioneer: AuctioneerProfileInfo) => void }): ColumnDef<AuctioneerProfileInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -48,9 +48,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
       <div className="font-medium">
-        <Link href={`/admin/auctioneers/${row.original.id}/edit`} className="hover:text-primary">
+        <button onClick={() => onEdit(row.original)} className="hover:text-primary text-left">
           {row.getValue("name")}
-        </Link>
+        </button>
         <p className="text-xs text-muted-foreground">ID: {row.original.publicId || row.original.id}</p>
       </div>
     ),
@@ -78,17 +78,15 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
       return (
         <div className="flex items-center justify-end gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/auctioneers/${auctioneer.id}/edit`}>
+            <Link href={`/auctioneers/${auctioneer.slug || auctioneer.publicId || auctioneer.id}`} target="_blank">
               <Eye className="h-4 w-4" />
-              <span className="sr-only">Visualizar</span>
+              <span className="sr-only">Visualizar Perfil Público</span>
             </Link>
           </Button>
-           <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/auctioneers/${auctioneer.id}/edit?mode=edit`}>
+           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(auctioneer)}>
               <Pencil className="h-4 w-4" />
                <span className="sr-only">Editar</span>
-            </Link>
-          </Button>
+            </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(auctioneer.id)}>
             <Trash2 className="h-4 w-4 text-destructive" />
             <span className="sr-only">Excluir</span>

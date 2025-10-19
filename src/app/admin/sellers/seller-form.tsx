@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { Loader2, Image as ImageIcon, Scale } from 'lucide-react';
+import { Loader2, Image as ImageIcon, Scale, Save } from 'lucide-react';
 import Image from 'next/image';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import EntitySelector from '@/components/ui/entity-selector';
@@ -28,6 +28,8 @@ interface SellerFormProps {
   allStates: StateInfo[];
   allCities: CityInfo[];
   onSubmitAction: (data: SellerFormValues) => Promise<any>;
+  onSuccess?: (sellerId?: string) => void;
+  onCancel?: () => void;
 }
 
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
@@ -36,71 +38,28 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   allStates,
   allCities,
   onSubmitAction,
+  onSuccess,
+  onCancel,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
   const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
   const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<SellerFormValues>({
     resolver: zodResolver(sellerFormSchema),
     mode: 'onChange',
-    defaultValues: {
-      ...initialData,
-      name: initialData?.name || '',
-      publicId: initialData?.publicId || '',
-      contactName: initialData?.contactName || '',
-      email: initialData?.email || '',
-      phone: initialData?.phone || '',
-      website: initialData?.website || '',
-      logoUrl: initialData?.logoUrl || '',
-      logoMediaId: initialData?.logoMediaId || null,
-      dataAiHintLogo: initialData?.dataAiHintLogo || '',
-      description: initialData?.description || '',
-      judicialBranchId: initialData?.judicialBranchId || null,
-      isJudicial: initialData?.isJudicial || false,
-      street: initialData?.street || '',
-      number: initialData?.number || '',
-      complement: initialData?.complement || '',
-      neighborhood: initialData?.neighborhood || '',
-      zipCode: initialData?.zipCode || '',
-      cityId: initialData?.cityId || null,
-      stateId: initialData?.stateId || null,
-      latitude: initialData?.latitude || null,
-      longitude: initialData?.longitude || null,
-    },
+    defaultValues: initialData || {},
   });
 
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
+    requestSubmit: form.handleSubmit(onSubmit),
     formState: form.formState,
   }));
   
   React.useEffect(() => {
-    form.reset({
-      ...initialData,
-        name: initialData?.name || '',
-        publicId: initialData?.publicId || '',
-        contactName: initialData?.contactName || '',
-        email: initialData?.email || '',
-        phone: initialData?.phone || '',
-        website: initialData?.website || '',
-        logoUrl: initialData?.logoUrl || '',
-        logoMediaId: initialData?.logoMediaId || null,
-        dataAiHintLogo: initialData?.dataAiHintLogo || '',
-        description: initialData?.description || '',
-        judicialBranchId: initialData?.judicialBranchId || null,
-        isJudicial: initialData?.isJudicial || false,
-        street: initialData?.street || '',
-        number: initialData?.number || '',
-        complement: initialData?.complement || '',
-        neighborhood: initialData?.neighborhood || '',
-        zipCode: initialData?.zipCode || '',
-        cityId: initialData?.cityId || null,
-        stateId: initialData?.stateId || null,
-        latitude: initialData?.latitude || null,
-        longitude: initialData?.longitude || null,
-    })
+    form.reset(initialData || {});
   }, [initialData, form]);
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
@@ -126,12 +85,29 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsMediaDialogOpen(false);
   };
   
+   async function onSubmit(values: SellerFormValues) {
+    setIsSubmitting(true);
+    try {
+        const result = await onSubmitAction(values);
+        if(result.success) {
+            toast({ title: "Sucesso!", description: result.message });
+            if(onSuccess) onSuccess(result.sellerId);
+        } else {
+            toast({ title: "Erro ao Salvar", description: result.message, variant: "destructive"});
+        }
+    } catch (e: any) {
+        toast({ title: "Erro Inesperado", description: e.message, variant: "destructive"});
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
   const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6" data-ai-id="seller-form">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-ai-id="seller-form">
            <Accordion type="multiple" defaultValue={['general', 'contact', 'address']} className="w-full">
             <AccordionItem value="general">
               <AccordionTrigger className="text-md font-semibold">Informações Gerais</AccordionTrigger>
@@ -205,6 +181,13 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                </AccordionContent>
             </AccordionItem>
            </Accordion>
+           <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+                    {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                    Salvar
+                </Button>
+            </div>
         </form>
       </Form>
      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />

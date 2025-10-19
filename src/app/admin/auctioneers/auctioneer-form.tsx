@@ -23,7 +23,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { auctioneerFormSchema, type AuctioneerFormValues } from './auctioneer-form-schema';
 import type { AuctioneerProfileInfo, MediaItem, StateInfo, CityInfo } from '@/types';
 import { Loader2, Save, Landmark, Image as ImageIcon, XCircle } from 'lucide-react';
@@ -38,6 +37,8 @@ interface AuctioneerFormProps {
   allStates: StateInfo[];
   allCities: CityInfo[];
   onSubmitAction: (data: AuctioneerFormValues) => Promise<any>;
+  onSuccess?: (auctioneerId?: string) => void;
+  onCancel?: () => void;
 }
 
 const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
@@ -45,68 +46,45 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   allStates,
   allCities,
   onSubmitAction,
+  onSuccess,
+  onCancel,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<AuctioneerFormValues>({
     resolver: zodResolver(auctioneerFormSchema),
     mode: 'onChange',
-    defaultValues: {
-      name: initialData?.name || '',
-      registrationNumber: initialData?.registrationNumber || '',
-      contactName: initialData?.contactName || '',
-      email: initialData?.email || '',
-      phone: initialData?.phone || '',
-      website: initialData?.website || '',
-      logoUrl: initialData?.logoUrl || '',
-      logoMediaId: initialData?.logoMediaId || null,
-      dataAiHintLogo: initialData?.dataAiHintLogo || '',
-      description: initialData?.description || '',
-      userId: initialData?.userId || '',
-      street: initialData?.street || '',
-      number: initialData?.number || '',
-      complement: initialData?.complement || '',
-      neighborhood: initialData?.neighborhood || '',
-      zipCode: initialData?.zipCode || '',
-      cityId: initialData?.cityId || null,
-      stateId: initialData?.stateId || null,
-      latitude: initialData?.latitude || null,
-      longitude: initialData?.longitude || null,
-    },
+    defaultValues: initialData || {},
   });
 
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmitAction),
+    requestSubmit: form.handleSubmit(onSubmit),
     formState: form.formState,
   }));
   
   React.useEffect(() => {
-    if (initialData) {
-      form.reset({
-        name: initialData?.name || '',
-        registrationNumber: initialData?.registrationNumber || '',
-        contactName: initialData?.contactName || '',
-        email: initialData?.email || '',
-        phone: initialData?.phone || '',
-        website: initialData?.website || '',
-        logoUrl: initialData?.logoUrl || '',
-        logoMediaId: initialData?.logoMediaId || null,
-        dataAiHintLogo: initialData?.dataAiHintLogo || '',
-        description: initialData?.description || '',
-        userId: initialData?.userId || '',
-        street: initialData?.street || '',
-        number: initialData?.number || '',
-        complement: initialData?.complement || '',
-        neighborhood: initialData?.neighborhood || '',
-        zipCode: initialData?.zipCode || '',
-        cityId: initialData?.cityId || null,
-        stateId: initialData?.stateId || null,
-        latitude: initialData?.latitude || null,
-        longitude: initialData?.longitude || null,
-      });
-    }
+    form.reset(initialData || {});
   }, [initialData, form]);
+  
+  async function onSubmit(values: AuctioneerFormValues) {
+    setIsSubmitting(true);
+    try {
+        const result = await onSubmitAction(values);
+        if (result.success) {
+            toast({ title: 'Sucesso!', description: result.message });
+            if(onSuccess) onSuccess(result.auctioneerId);
+        } else {
+            toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive'});
+        }
+    } catch (e: any) {
+        toast({ title: 'Erro Inesperado', description: e.message, variant: 'destructive' });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
 
   const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
 
@@ -128,7 +106,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   return (
     <>
       <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmitAction)} className="space-y-6" data-ai-id="auctioneer-form">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-ai-id="auctioneer-form">
             <Accordion type="multiple" defaultValue={['general', 'contact', 'address']} className="w-full">
               <AccordionItem value="general">
                 <AccordionTrigger className="text-md font-semibold">Informações Gerais</AccordionTrigger>
@@ -159,6 +137,13 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
+             <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
+                    {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                    Salvar
+                </Button>
+            </div>
           </form>
       </Form>
       <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />

@@ -7,12 +7,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctioneers as getAuctioneersAction, deleteAuctioneer } from './actions';
-import type { AuctioneerProfileInfo, PlatformSettings } from '@/types';
-import { PlusCircle, Landmark, Loader2 } from 'lucide-react';
+import { getAuctioneers as getAuctioneersAction, deleteAuctioneer, createAuctioneer, updateAuctioneer } from './actions';
+import type { AuctioneerProfileInfo, PlatformSettings, AuctioneerFormData, StateInfo, CityInfo } from '@/types';
+import { PlusCircle, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
@@ -20,6 +19,10 @@ import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import AuctioneerForm from './auctioneer-form';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
@@ -35,16 +38,26 @@ export default function AdminAuctioneersPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
+  // Form Modal State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingAuctioneer, setEditingAuctioneer] = useState<AuctioneerProfileInfo | null>(null);
+
+  // Dependencies for the form
+  const [dependencies, setDependencies] = useState<{ allStates: StateInfo[], allCities: CityInfo[] } | null>(null);
+
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedAuctioneers, settings] = await Promise.all([
+      const [fetchedAuctioneers, settings, states, cities] = await Promise.all([
         getAuctioneersAction(),
         getPlatformSettings(),
+        getStates(),
+        getCities(),
       ]);
       setAllAuctioneers(fetchedAuctioneers);
       setPlatformSettings(settings as PlatformSettings);
+      setDependencies({ allStates: states, allCities: cities });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
       console.error("Error fetching auctioneers:", e);
@@ -62,6 +75,22 @@ export default function AdminAuctioneersPage() {
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
+
+  const handleNewClick = () => {
+    setEditingAuctioneer(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditClick = (auctioneer: AuctioneerProfileInfo) => {
+    setEditingAuctioneer(auctioneer);
+    setIsFormOpen(true);
+  };
+  
+  const handleFormSuccess = () => {
+      setIsFormOpen(false);
+      setEditingAuctioneer(null);
+      onUpdate();
+  };
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteAuctioneer(id);
@@ -81,9 +110,16 @@ export default function AdminAuctioneersPage() {
       onUpdate();
   }, [onUpdate, toast]);
 
+  const formAction = async (data: AuctioneerFormData) => {
+    if (editingAuctioneer) {
+      return updateAuctioneer(editingAuctioneer.id, data);
+    }
+    return createAuctioneer(data);
+  };
+
   const renderGridItem = (item: AuctioneerProfileInfo) => <BidExpertCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: AuctioneerProfileInfo) => <BidExpertListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
   
   const facetedFilterOptions = useMemo(() => {
       const stateOptions = [...new Set(allAuctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
@@ -92,7 +128,7 @@ export default function AdminAuctioneersPage() {
       ];
   }, [allAuctioneers]);
   
-  if (isLoading || !platformSettings) {
+  if (isLoading || !platformSettings || !dependencies) {
     return (
         <div className="space-y-6">
             <Card className="shadow-lg">
@@ -107,6 +143,7 @@ export default function AdminAuctioneersPage() {
   }
 
   return (
+    <>
     <div className="space-y-6" data-ai-id="admin-auctioneers-page-container">
       <Card className="shadow-lg" data-ai-id="admin-auctioneers-card">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -119,10 +156,8 @@ export default function AdminAuctioneersPage() {
               Adicione, edite ou remova leiloeiros da plataforma.
             </CardDescription>
           </div>
-          <Button asChild>
-            <Link href="/admin/auctioneers/new">
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
-            </Link>
+          <Button onClick={handleNewClick}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
           </Button>
         </CardHeader>
       </Card>
@@ -146,5 +181,22 @@ export default function AdminAuctioneersPage() {
         onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
+    <CrudFormContainer
+      isOpen={isFormOpen}
+      onClose={() => setIsFormOpen(false)}
+      mode="modal"
+      title={editingAuctioneer ? 'Editar Leiloeiro' : 'Novo Leiloeiro'}
+      description={editingAuctioneer ? 'Modifique os detalhes do leiloeiro.' : 'Cadastre um novo leiloeiro.'}
+    >
+      <AuctioneerForm
+        initialData={editingAuctioneer}
+        allStates={dependencies.allStates}
+        allCities={dependencies.allCities}
+        onSubmitAction={formAction}
+        onSuccess={handleFormSuccess}
+        onCancel={() => setIsFormOpen(false)}
+      />
+    </CrudFormContainer>
+    </>
   );
 }

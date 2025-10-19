@@ -570,13 +570,13 @@ async function seedAuctionsAndLots() {
       // Link M2M relationships using Prisma Update instead of Raw SQL
       const categoryId = faker.helpers.arrayElement(Object.values(entityStore.categories)).id;
       const updateData: any = {
-        LotCategory: { connect: { id: categoryId } },
+        category: { connect: { id: categoryId } },
       };
 
       if (isJudicial) {
-        updateData.Court = { connect: { id: entityStore.courts.TJSP } };
-        updateData.JudicialDistrict = { connect: { id: entityStore.judicialDistricts.Capital } };
-        updateData.JudicialBranch = { connect: { id: entityStore.judicialBranches.Vara1 } };
+        updateData.court = { connect: { id: entityStore.courts.TJSP } };
+        updateData.judicialDistrict = { connect: { id: entityStore.judicialDistricts.Capital } };
+        updateData.judicialBranch = { connect: { id: entityStore.judicialBranches.Vara1 } };
       }
 
       await prisma.auction.update({

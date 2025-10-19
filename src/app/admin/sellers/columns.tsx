@@ -16,7 +16,7 @@ import { DataTableColumnHeader } from '@/components/ui/data-table-column-header'
 import { Badge } from '@/components/ui/badge';
 
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<SellerProfileInfo>[] => [
+export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (seller: SellerProfileInfo) => void }): ColumnDef<SellerProfileInfo>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -41,9 +41,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome" />,
     cell: ({ row }) => (
       <div className="font-medium">
-        <Link href={`/admin/sellers/${row.original.id}/edit`} className="hover:text-primary">
+        <button onClick={() => onEdit(row.original)} className="hover:text-primary text-left">
           {row.getValue("name")}
-        </Link>
+        </button>
          <p className="text-xs text-muted-foreground">ID: {row.original.publicId || row.original.id}</p>
       </div>
     ),
@@ -60,7 +60,7 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
         </Badge>
       );
     },
-    filterFn: (row, id, value) => value.includes(String(row.getValue(id))),
+    filterFn: (row, id, value) => (value as string[]).includes(String(row.getValue(id))),
   },
   {
     accessorKey: "email",
@@ -88,11 +88,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
                     <span className="sr-only">Ver Perfil Público</span>
                 </Link>
             </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                <Link href={`/admin/sellers/${seller.id}/edit?mode=edit`}>
-                    <Pencil className="h-4 w-4" />
-                    <span className="sr-only">Editar</span>
-                </Link>
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(seller)}>
+                <Pencil className="h-4 w-4" />
+                <span className="sr-only">Editar</span>
             </Button>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(seller.id)}>
                 <Trash2 className="h-4 w-4 text-destructive" />
