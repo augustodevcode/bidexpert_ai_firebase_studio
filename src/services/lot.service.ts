@@ -284,9 +284,14 @@ export class LotService {
           return { success: false, message: "A categoria é obrigatória para o lote."}
       }
 
+      const category = await this.prisma.lotCategory.findUnique({ where: { id: finalCategoryId } });
+      if (!category) {
+        return { success: false, message: "Categoria do lote não encontrada." };
+      }
+
       const dataToCreate: Prisma.LotCreateInput = {
         ...(lotData as any),
-        type: type as string,
+        type: category.name, // Usar o nome da categoria como string para o campo 'type'
         price: Number(lotData.price) || Number(lotData.initialPrice) || 0,
         publicId: `LOTE-PUB-${uuidv4().substring(0,8)}`,
         slug: slugify(lotData.title || ''),

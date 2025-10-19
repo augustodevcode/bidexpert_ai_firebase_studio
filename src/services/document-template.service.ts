@@ -26,8 +26,12 @@ export class DocumentTemplateService {
 
   async createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
     try {
-      const newTemplate = await this.repository.create(data);
-      return { success: true, message: "Template criado com sucesso.", templateId: newTemplate.id };
+      const newTemplate = await prisma.documentTemplate.upsert({
+        where: { name: data.name },
+        update: data,
+        create: data,
+      });
+      return { success: true, message: "Template criado/atualizado com sucesso.", templateId: newTemplate.id };
     } catch (error: any) {
       console.error("Error in DocumentTemplateService.create:", error);
       return { success: false, message: `Falha ao criar template: ${error.message}` };
