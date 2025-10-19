@@ -1,17 +1,57 @@
-model JudicialBranch {
-  id          BigInt   @id @default(autoincrement())
-  name        String
-  slug        String   @unique
-  contactName String?
-  phone       String?
-  email       String?
+model User {
+  id                  BigInt       @id @default(autoincrement())
+  publicId            String     @unique @default(cuid())
+  email               String     @unique
+  password            String
+  fullName            String?
+  cpf                 String?    @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  avatarUrl           String?
+  dataAiHint          String?
+  accountType         AccountType @default(PHYSICAL)
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  razaoSocial         String?
+  cnpj                String?    @unique
+  inscricaoEstadual   String?
+  website             String?
+  responsibleName     String?
+  responsibleCpf      String?
+  optInMarketing      Boolean    @default(false)
+  lastLogin           DateTime?
+  bids                Bid[]
+  lotsWon             UserWin[]  @relation("WonLots")
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  documents           UserDocument[]
+  notifications       Notification[]
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  uploadedMedia       MediaItem[]
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  districtId BigInt
-  district   JudicialDistrict @relation(fields: [districtId], references: [id])
-
-  judicialProcesses JudicialProcess[]
-  auctions          Auction[]
-  sellers           Seller[]
-
-  @@unique([districtId, name])
+  @@index([email])
 }

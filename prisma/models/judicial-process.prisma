@@ -1,26 +1,57 @@
-model JudicialProcess {
-  id              BigInt     @id @default(autoincrement())
-  publicId        String     @unique @default(cuid())
-  processNumber   String     @unique
-  isElectronic    Boolean    @default(true)
-  publicUrl       String?
+model User {
+  id                  BigInt       @id @default(autoincrement())
+  publicId            String     @unique @default(cuid())
+  email               String     @unique
+  password            String
+  fullName            String?
+  cpf                 String?    @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  avatarUrl           String?
+  dataAiHint          String?
+  accountType         AccountType @default(PHYSICAL)
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  razaoSocial         String?
+  cnpj                String?    @unique
+  inscricaoEstadual   String?
+  website             String?
+  responsibleName     String?
+  responsibleCpf      String?
+  optInMarketing      Boolean    @default(false)
+  lastLogin           DateTime?
+  bids                Bid[]
+  lotsWon             UserWin[]  @relation("WonLots")
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  documents           UserDocument[]
+  notifications       Notification[]
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  uploadedMedia       MediaItem[]
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-
-  tenantId        BigInt
-  tenant          Tenant     @relation(fields: [tenantId], references: [id])
-  courtId         BigInt
-  court           Court      @relation(fields: [courtId], references: [id])
-  districtId      BigInt
-  district        JudicialDistrict @relation(fields: [districtId], references: [id])
-  branchId        BigInt
-  branch          JudicialBranch   @relation(fields: [branchId], references: [id])
-  
-  sellerId BigInt?
-  seller   Seller? @relation(fields: [sellerId], references: [id])
-
-  parties         JudicialParty[]
-  assets          Asset[]
-  auctions        Auction[]
+  @@index([email])
 }

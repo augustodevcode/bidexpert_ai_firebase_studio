@@ -1,38 +1,57 @@
-model Seller {
-  id                    BigInt    @id @default(autoincrement())
-  publicId              String    @unique @default(cuid())
-  slug                  String    @unique
-  name                  String
-  contactName           String?
-  email                 String?   @unique
-  phone                 String?
-  address               String?
-  city                  String?
-  state                 String?
-  zipCode               String?
-  website               String?
-  logoUrl               String?
-  logoMediaId           String?
-  dataAiHintLogo        String?
-  description           String?   @db.Text
-  isJudicial            Boolean   @default(false)
+model User {
+  id                  BigInt       @id @default(autoincrement())
+  publicId            String     @unique @default(cuid())
+  email               String     @unique
+  password            String
+  fullName            String?
+  cpf                 String?    @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  avatarUrl           String?
+  dataAiHint          String?
+  accountType         AccountType @default(PHYSICAL)
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  razaoSocial         String?
+  cnpj                String?    @unique
+  inscricaoEstadual   String?
+  website             String?
+  responsibleName     String?
+  responsibleCpf      String?
+  optInMarketing      Boolean    @default(false)
+  lastLogin           DateTime?
+  bids                Bid[]
+  lotsWon             UserWin[]  @relation("WonLots")
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  documents           UserDocument[]
+  notifications       Notification[]
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  uploadedMedia       MediaItem[]
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  auctions              Auction[]
-  lots                  Lot[]
-  assets                Asset[]
-  directSaleOffers      DirectSaleOffer[]
-  judicialProcesses     JudicialProcess[]
-
-  // Se for um comitente judicial, pode estar ligado a uma vara
-  judicialBranchId      BigInt?   @unique
-  judicialBranch        JudicialBranch? @relation(fields: [judicialBranchId], references: [id])
-
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-  
-  tenantId              String
-  tenant                Tenant    @relation(fields: [tenantId], references: [id])
-
-  @@index([name])
-  @@index([tenantId])
+  @@index([email])
 }

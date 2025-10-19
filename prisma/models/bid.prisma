@@ -1,18 +1,57 @@
-model Bid {
-  id            BigInt   @id @default(autoincrement())
-  amount        Decimal  @db.Decimal(12, 2)
-  timestamp     DateTime @default(now())
-  isAutoBid     Boolean  @default(false)
-  bidderDisplay String
+model User {
+  id                  BigInt       @id @default(autoincrement())
+  publicId            String     @unique @default(cuid())
+  email               String     @unique
+  password            String
+  fullName            String?
+  cpf                 String?    @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  cellPhone           String?
+  homePhone           String?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+  avatarUrl           String?
+  dataAiHint          String?
+  accountType         AccountType @default(PHYSICAL)
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  razaoSocial         String?
+  cnpj                String?    @unique
+  inscricaoEstadual   String?
+  website             String?
+  responsibleName     String?
+  responsibleCpf      String?
+  optInMarketing      Boolean    @default(false)
+  lastLogin           DateTime?
+  bids                Bid[]
+  lotsWon             UserWin[]  @relation("WonLots")
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  documents           UserDocument[]
+  notifications       Notification[]
+  sellerProfile       Seller?
+  auctioneerProfile   Auctioneer?
+  uploadedMedia       MediaItem[]
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  createdAt           DateTime   @default(now())
+  updatedAt           DateTime   @updatedAt
 
-  bidderId BigInt
-  bidder   User     @relation(fields: [bidderId], references: [id])
-  lotId    BigInt
-  lot      Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId BigInt
-  auction  Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  tenantId BigInt
-  tenant   Tenant   @relation(fields: [tenantId], references: [id])
-
-  @@index([lotId, timestamp])
+  @@index([email])
 }

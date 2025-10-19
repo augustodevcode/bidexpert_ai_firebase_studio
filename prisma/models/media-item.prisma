@@ -1,36 +1,37 @@
+
 model MediaItem {
-  id        BigInt   @id @default(autoincrement())
-  fileName  String
-  mimeType  String
-  sizeBytes BigInt
+  id              BigInt   @id @default(autoincrement())
+  fileName        String
+  urlOriginal     String   @db.VarChar(1024)
+  urlThumbnail    String?  @db.VarChar(1024)
+  storagePath     String   @db.VarChar(1024)
+  mimeType        String
+  sizeBytes       Int
+  title           String?
+  altText         String?
+  caption         String?
+  description     String?
+  uploadedBy      User     @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId BigInt
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  dataAiHint      String?
   
-  title       String?
-  altText     String?
-  caption     String?
-  description String? @db.Text
+  // Relacionamento com Bem (Asset)
+  BemMedia AssetMedia[]
   
-  storagePath String
-  urlOriginal String
-  urlThumbnail String?
-
-  uploadedAt        DateTime @default(now())
-  uploadedByUserId  BigInt
-  uploadedBy        User     @relation(fields: [uploadedByUserId], references: [id])
-
-  judicialProcessId BigInt?
   judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  
-  assets AssetMedia[]
+  judicialProcessId BigInt?
 }
 
 model AssetMedia {
-  assetId BigInt
+  id          BigInt    @id @default(autoincrement())
+  asset       Asset     @relation(fields: [assetId], references: [id])
+  assetId     BigInt
+  mediaItem   MediaItem @relation(fields: [mediaItemId], references: [id])
   mediaItemId BigInt
-  displayOrder Int @default(0)
-  isPrimary Boolean @default(false)
-  
-  asset Asset @relation(fields: [assetId], references: [id])
-  mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+  isPrimary   Boolean   @default(false)
+  order       Int       @default(0)
 
-  @@id([assetId, mediaItemId])
+  @@unique([assetId, mediaItemId])
 }
