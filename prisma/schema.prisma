@@ -1116,3 +1116,971 @@ model VehicleModel {
   @@unique([makeId, name])
   @@index([slug])
 }
+
+// prisma/models/asset.prisma
+import { AssetStatus, Tenant, User, LotCategory, Subcategory, JudicialProcess, Seller, City, State, MediaItem, AssetsOnLots } from "./";
+
+model Asset {
+  id             BigInt   @id @default(autoincrement())
+  publicId       String   @unique @default(cuid())
+  tenantId       String
+  title          String
+  description    String?  @db.Text
+  properties     Json?
+  status         AssetStatus @default(CADASTRO)
+  evaluationValue Decimal? @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  imageUrl      String?
+  imageMediaId  String?
+  mediaItemIds  String[]
+  dataAiHint    String?
+
+  street          String?
+  number          String?
+  complement      String?
+  neighborhood    String?
+  zipCode         String?
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  createdBy       User     @relation("CreatedAssets", fields: [createdById], references: [id])
+  createdById     String
+  category        LotCategory @relation(fields: [categoryId], references: [id])
+  categoryId      BigInt
+  subcategory     Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId   BigInt?
+  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId BigInt?
+  seller          Seller   @relation(fields: [sellerId], references: [id])
+  sellerId        BigInt
+  city            City?     @relation(fields: [cityId], references: [id])
+  cityId          BigInt?
+  state           State?    @relation(fields: [stateId], references: [id])
+  stateId         BigInt?
+
+  lots            AssetsOnLots[]
+}
+
+// prisma/models/assets-on-lots.prisma
+import { Lot, Asset } from "./";
+
+model AssetsOnLots {
+  lot      Lot      @relation(fields: [lotId], references: [id])
+  lotId    BigInt
+  asset    Asset    @relation(fields: [assetId], references: [id])
+  assetId  BigInt
+  assignedAt DateTime @default(now())
+
+  @@id([lotId, assetId])
+}
+
+// prisma/models/auction-habilitation.prisma
+import { User, Auction } from "./";
+
+model AuctionHabilitation {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  auctionId BigInt
+  habilitatedAt DateTime @default(now())
+
+  @@id([userId, auctionId])
+}
+
+// prisma/models/auction-stage.prisma
+import { Auction, LotStagePrice } from "./";
+
+model AuctionStage {
+  id             BigInt   @id @default(autoincrement())
+  auction        Auction  @relation(fields: [auctionId], references: [id])
+  auctionId      BigInt
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  
+  lotStagePrices LotStagePrice[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([auctionId])
+}
+
+// prisma/models/auction.prisma
+import { AuctionStatus, AuctionType, AuctionParticipation, AuctionMethod, Lot, Bid, AuctionHabilitation, User, AuctionStage, Tenant, Seller, Auctioneer, LotCategory, JudicialProcess, Court, JudicialDistrict, JudicialBranch } from "./";
+
+model Auction {
+  id             BigInt   @id @default(autoincrement())
+  publicId       String   @unique @default(cuid())
+  tenantId       String
+  title          String
+  slug           String   @unique
+  description    String?  @db.Text
+  status         AuctionStatus @default(EM_PREPARACAO)
+  auctionType    AuctionType
+  auctionMethod  AuctionMethod @default(STANDARD)
+  participation  AuctionParticipation @default(ONLINE)
+  
+  auctionDate    DateTime
+  endDate        DateTime?
+
+  onlineUrl      String?
+  street         String?
+  number         String?
+  complement     String?
+  neighborhood   String?
+  zipCode        String?
+  latitude       Decimal? @db.Decimal(10, 8)
+  longitude      Decimal? @db.Decimal(11, 8)
+  
+  imageMediaId   String?
+  documentsUrl   String?
+  evaluationReportUrl    String?
+  auctionCertificateUrl  String?
+
+  visits         Int      @default(0)
+  totalHabilitatedUsers Int @default(0)
+  isFeaturedOnMarketplace Boolean @default(false)
+  marketplaceAnnouncementTitle String?
+  
+  softCloseEnabled Boolean @default(true)
+  softCloseMinutes Int     @default(2)
+
+  decrementAmount           Decimal?  @db.Decimal(12, 2)
+  decrementIntervalSeconds  Int?
+  floorPrice                Decimal?  @db.Decimal(12, 2)
+  
+  initialOffer   Decimal? @db.Decimal(12, 2)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  lots           Lot[]
+  bids           Bid[]
+  habilitations  AuctionHabilitation[]
+  createdBy      User     @relation("CreatedAuctions", fields: [createdById], references: [id])
+  createdById    String
+  stages         AuctionStage[]
+  
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  seller          Seller?         @relation(fields: [sellerId], references: [id])
+  sellerId        BigInt?
+  auctioneer      Auctioneer      @relation(fields: [auctioneerId], references: [id])
+  auctioneerId    BigInt
+  category        LotCategory?    @relation(fields: [categoryId], references: [id])
+  categoryId      BigInt?
+  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId BigInt?
+
+  cityId          BigInt?
+  stateId         BigInt?
+  
+  @@index([sellerId])
+  @@index([auctioneerId])
+  @@index([status])
+}
+
+// prisma/models/auctioneer.prisma
+import { User, Auction, Lot, Tenant } from "./";
+
+model Auctioneer {
+  id                 BigInt     @id @default(autoincrement())
+  publicId           String   @unique @default(cuid())
+  tenantId           String
+  name               String
+  slug               String   @unique
+  registrationNumber String?
+  
+  email              String?  @unique
+  phone              String?
+  website            String?
+  
+  address            String?
+  city               String?
+  state              String?
+  zipCode            String?
+  
+  description        String?  @db.Text
+  logoUrl            String?
+  logoMediaId        String?
+  dataAiHintLogo     String?
+  
+  auctions           Auction[]
+  lots               Lot[]
+
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  
+  tenant             Tenant   @relation(fields: [tenantId], references: [id])
+  user               User?    @relation(fields: [userId], references: [id])
+  userId             String?  @unique
+
+  @@index([tenantId])
+}
+
+// prisma/models/bid.prisma
+import { User, Lot, Auction, Tenant, BidOrigin } from "./";
+
+model Bid {
+  id          BigInt      @id @default(autoincrement())
+  tenantId    String
+  lotId       BigInt
+  auctionId   BigInt
+  bidderId    String
+  amount      Decimal   @db.Decimal(12, 2)
+  timestamp   DateTime  @default(now())
+  origin      BidOrigin @default(MANUAL)
+
+  bidder      User      @relation(fields: [bidderId], references: [id])
+  lot         Lot       @relation(fields: [lotId], references: [id])
+  auction     Auction   @relation(fields: [auctionId], references: [id])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@index([lotId, timestamp])
+  @@index([bidderId])
+}
+
+// prisma/models/category.prisma
+import { Subcategory, Lot, Asset, DirectSaleOffer } from "./";
+
+model LotCategory {
+  id                BigInt   @id @default(autoincrement())
+  name              String   @unique
+  slug              String   @unique
+  description       String?  @db.Text
+  hasSubcategories  Boolean  @default(false)
+  displayOrder      Int      @default(0)
+  iconName          String?
+  logoUrl           String?
+  logoMediaId       String?
+  dataAiHintIcon    String?
+  coverImageUrl     String?
+  coverImageMediaId String?
+  dataAiHintCover   String?
+  megaMenuImageUrl  String?
+  megaMenuImageMediaId String?
+  dataAiHintMegaMenu String?
+
+  subcategories   Subcategory[]
+  lots            Lot[]
+  assets          Asset[]
+  directSaleOffers DirectSaleOffer[]
+}
+
+// prisma/models/city.prisma
+import { State, Asset } from "./";
+
+model City {
+  id      BigInt    @id @default(autoincrement())
+  name    String
+  slug    String    @unique
+  state   State     @relation(fields: [stateId], references: [id])
+  stateId BigInt
+  stateUf String?
+  ibgeCode String?   @unique
+
+  assets   Asset[]
+
+  @@unique([name, stateId])
+}
+
+// prisma/models/contact-message.prisma
+import { Tenant } from "./";
+
+model ContactMessage {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+// prisma/models/court.prisma
+import { JudicialDistrict, JudicialProcess } from "./";
+
+model Court {
+  id         BigInt     @id @default(autoincrement())
+  name       String   @unique
+  slug       String   @unique
+  stateUf    String
+  website    String?
+
+  districts  JudicialDistrict[]
+  processes  JudicialProcess[]
+}
+
+// prisma/models/data-source.prisma
+
+model DataSource {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  modelName String   @unique
+  fields    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// prisma/models/direct-sale-offer.prisma
+import { DirectSaleOfferStatus, DirectSaleOfferType, LotCategory, Seller, Tenant } from "./";
+
+model DirectSaleOffer {
+  id              BigInt     @id @default(autoincrement())
+  publicId        String     @unique @default(cuid())
+  tenantId        String
+  title           String
+  description     String?    @db.Text
+  offerType       DirectSaleOfferType @default(BUY_NOW)
+  status          DirectSaleOfferStatus @default(PENDING_APPROVAL)
+  
+  price             Decimal?    @db.Decimal(12, 2)
+  minimumOfferPrice Decimal?    @db.Decimal(12, 2)
+
+  categoryId        BigInt
+  sellerId          BigInt
+
+  locationCity      String?
+  locationState     String?
+  
+  imageUrl        String?
+  imageMediaId    String?
+  dataAiHint      String?
+  galleryImageUrls  String[]
+  mediaItemIds      String[]
+
+  views           Int         @default(0)
+  proposalsCount  Int         @default(0)
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  expiresAt       DateTime?
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  category        LotCategory  @relation(fields: [categoryId], references: [id])
+  seller          Seller       @relation(fields: [sellerId], references: [id])
+}
+
+// prisma/models/document-template.prisma
+import { DocumentTemplateType } from "./";
+
+model DocumentTemplate {
+  id        BigInt     @id @default(autoincrement())
+  name      String   @unique
+  type      DocumentTemplateType
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// prisma/models/document-type.prisma
+import { UserDocument } from "./";
+
+model DocumentType {
+  id          BigInt     @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isRequired  Boolean  @default(false)
+  appliesTo   String   @default("BOTH") // PHYSICAL, LEGAL, BOTH
+  
+  userDocuments UserDocument[]
+}
+
+// prisma/models/installment-payment.prisma
+import { UserWin, Lot, PaymentStatus } from "./";
+
+model InstallmentPayment {
+  id                 BigInt     @id @default(autoincrement())
+  userWinId          String
+  lotId              BigInt
+  installmentNumber  Int
+  totalInstallments  Int
+  amount             Decimal  @db.Decimal(12, 2)
+  dueDate            DateTime
+  paymentDate        DateTime?
+  status             PaymentStatus @default(PENDENTE)
+
+  userWin            UserWin  @relation(fields: [userWinId], references: [id])
+  lot                Lot      @relation(fields: [lotId], references: [id])
+}
+
+// prisma/models/judicial-branch.prisma
+import { JudicialDistrict, JudicialProcess, Seller } from "./";
+
+model JudicialBranch {
+  id         BigInt     @id @default(autoincrement())
+  name       String
+  slug       String   @unique
+  district   JudicialDistrict @relation(fields: [districtId], references: [id])
+  districtId BigInt
+  
+  contactName String?
+  phone       String?
+  email       String?
+
+  processes  JudicialProcess[]
+  sellers    Seller[] // Uma vara pode atuar como um comitente vendedor
+
+  @@unique([name, districtId])
+}
+
+// prisma/models/judicial-district.prisma
+import { Court, State, JudicialBranch, JudicialProcess } from "./";
+
+model JudicialDistrict {
+  id        BigInt     @id @default(autoincrement())
+  name      String
+  slug      String   @unique
+  court     Court    @relation(fields: [courtId], references: [id])
+  courtId   BigInt
+  state     State    @relation(fields: [stateId], references: [id])
+  stateId   BigInt
+  zipCode   String?
+
+  branches  JudicialBranch[]
+  processes JudicialProcess[]
+
+  @@unique([name, courtId])
+}
+
+// prisma/models/judicial-party.prisma
+import { JudicialProcess, ProcessPartyType } from "./";
+
+model JudicialParty {
+  id             BigInt   @id @default(autoincrement())
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType @default(OUTRO)
+  process        JudicialProcess @relation(fields: [processId], references: [id])
+  processId      BigInt
+}
+
+// prisma/models/judicial-process.prisma
+import { Asset, JudicialParty, Court, JudicialDistrict, JudicialBranch, Tenant, Seller } from "./";
+
+model JudicialProcess {
+  id             BigInt   @id @default(autoincrement())
+  publicId       String   @unique @default(cuid())
+  tenantId       String
+  processNumber  String   @unique
+  isElectronic   Boolean  @default(true)
+  
+  court          Court    @relation(fields: [courtId], references: [id])
+  courtId        BigInt
+  district       JudicialDistrict @relation(fields: [districtId], references: [id])
+  districtId     BigInt
+  branch         JudicialBranch   @relation(fields: [branchId], references: [id])
+  branchId       BigInt
+  
+  seller         Seller?   @relation(fields: [sellerId], references: [id])
+  sellerId       BigInt?
+
+  assets         Asset[]
+  parties        JudicialParty[]
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// prisma/models/lot-stage-details.prisma
+model LotStageDetails {
+  id            Int     @id @default(autoincrement())
+  lot           Lot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId         Int
+  stage         AuctionStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  stageId       Int
+  initialBid    Decimal? @db.Decimal(12, 2)
+  bidIncrement  Decimal? @db.Decimal(12, 2)
+
+  @@unique([lotId, stageId])
+}
+
+// prisma/models/lot-stage-price.prisma
+import { Lot, AuctionStage } from "./";
+
+model LotStagePrice {
+  lot           Lot     @relation(fields: [lotId], references: [id])
+  lotId         BigInt
+  stage         AuctionStage @relation(fields: [stageId], references: [id])
+  stageId       BigInt
+
+  initialBid    Decimal? @db.Decimal(12, 2)
+  bidIncrement  Decimal? @db.Decimal(12, 2)
+
+  @@id([lotId, stageId])
+}
+
+// prisma/models/lot.prisma
+import { LotStatus, Asset, Auction, User, Bid, UserLotMaxBid, Review, LotQuestion, Tenant, Seller, Auctioneer, LotCategory, Subcategory, LotStagePrice, InstallmentPayment, AssetsOnLots } from "./";
+
+model Lot {
+  id                  BigInt   @id @default(autoincrement())
+  publicId            String   @unique @default(cuid())
+  tenantId            String
+  auctionId           BigInt
+  number              String?
+  title               String
+  description         String?  @db.Text
+  properties          Json?
+  
+  status              LotStatus @default(EM_BREVE)
+  
+  price               Decimal   @db.Decimal(12, 2)
+  initialPrice        Decimal?  @db.Decimal(12, 2)
+  secondInitialPrice  Decimal?  @db.Decimal(12, 2)
+  bidIncrementStep    Decimal?  @db.Decimal(12, 2)
+  evaluationValue     Decimal?  @db.Decimal(12, 2)
+
+  views               Int       @default(0)
+  bidsCount           Int       @default(0)
+  
+  hasKey              Boolean   @default(true)
+  canBeVisited        Boolean   @default(true)
+  
+  street              String?
+  numberAddress       String?
+  complement          String?
+  neighborhood        String?
+  zipCode             String?
+  latitude            Decimal?  @db.Decimal(10, 8)
+  longitude           Decimal?  @db.Decimal(11, 8)
+  
+  imageUrl            String?
+  imageMediaId        String?
+  inheritedMediaFromAssetId String? // ID do Asset de onde a mídia foi herdada
+  
+  isFeatured          Boolean   @default(false)
+  isExclusive         Boolean   @default(false)
+  
+  winnerId            String?
+  winningBidTermUrl   String?
+
+  additionalTriggers  String[]
+  dataAiHint          String?
+
+  isRelisted          Boolean?  @default(false)
+  relistCount         Int?      @default(0)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  auction             Auction   @relation(fields: [auctionId], references: [id])
+  winner              User?     @relation("WonLots", fields: [winnerId], references: [id])
+  bids                Bid[]
+  userMaxBids         UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  tenant              Tenant    @relation(fields: [tenantId], references: [id])
+  
+  seller              Seller?   @relation(fields: [sellerId], references: [id])
+  sellerId            BigInt?
+  auctioneer          Auctioneer? @relation(fields: [auctioneerId], references: [id])
+  auctioneerId        BigInt?
+  
+  category            LotCategory @relation(fields: [categoryId], references: [id])
+  categoryId          BigInt
+  subcategory         Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId       BigInt?
+
+  cityId              BigInt?
+  stateId             BigInt?
+  
+  assets              AssetsOnLots[]
+  stageDetails        LotStagePrice[]
+  wins                UserWin[]
+  installmentPayments InstallmentPayment[]
+  originalLot         Lot?      @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  originalLotId       BigInt?   @unique
+  relistedLot         Lot?      @relation("RelistedLot")
+
+  @@index([auctionId])
+  @@index([status])
+  @@index([winnerId])
+}
+
+// prisma/models/media-item.prisma
+model MediaItem {
+  id                  Int       @id @default(autoincrement())
+  fileName            String
+  mimeType            String
+  sizeBytes           Int
+  urlOriginal         String    @unique
+  urlThumbnail        String?
+  storagePath         String
+  altText             String?
+  title               String?
+  caption             String?
+  description         String?   @db.Text
+  dataAiHint          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  uploadedBy          User      @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId    Int
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId   Int?
+  assets              AssetMedia[]
+}
+
+// prisma/models/media.prisma
+import { Asset, JudicialProcess, User } from "./";
+
+model MediaItem {
+  id                  String   @id @default(cuid())
+  fileName            String
+  mimeType            String
+  sizeBytes           Int
+  urlOriginal         String
+  urlThumbnail        String?
+  storagePath         String
+  title               String?
+  altText             String?
+  caption             String?
+  description         String?
+  dataAiHint          String?
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  
+  uploadedBy          User     @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId    String
+  
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId   BigInt?
+}
+
+// prisma/models/report.prisma
+import { User, Tenant } from "./";
+
+model Report {
+  id             BigInt   @id @default(autoincrement())
+  tenantId       String
+  name           String
+  description    String?
+  definition     Json
+  
+  createdBy      User     @relation("CreatedReports", fields: [createdById], references: [id])
+  createdById    String
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+}
+
+// prisma/models/review.prisma
+import { User, Lot, Auction } from "./";
+
+model Review {
+  id             BigInt   @id @default(autoincrement())
+  lotId          BigInt
+  auctionId      BigInt
+  userId         String
+  userDisplayName String
+  rating         Int
+  comment        String?  @db.Text
+  isVerified     Boolean  @default(false)
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  user           User     @relation(fields: [userId], references: [id])
+  lot            Lot      @relation(fields: [lotId], references: [id])
+  auction        Auction  @relation(fields: [auctionId], references: [id])
+
+  @@index([lotId])
+}
+
+// prisma/models/role.prisma
+import { User, UsersOnRoles } from "./";
+
+model Role {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  nameNormalized String   @unique
+  description    String?
+  permissions    String[]
+  
+  users          UsersOnRoles[]
+}
+
+// prisma/models/seller.prisma
+import { User, Auction, Lot, Asset, Tenant, JudicialBranch, JudicialProcess } from "./";
+
+model Seller {
+  id                BigInt      @id @default(autoincrement())
+  publicId          String    @unique @default(cuid())
+  tenantId          String
+  name              String
+  slug              String    @unique
+  isJudicial        Boolean   @default(false)
+  
+  contactName       String?
+  email             String?
+  phone             String?
+  website           String?
+  
+  address           String?
+  city              String?
+  state             String?
+  zipCode           String?
+  
+  description       String?   @db.Text
+  logoUrl           String?
+  logoMediaId       String?
+  dataAiHintLogo    String?
+
+  auctions          Auction[]
+  lots              Lot[]
+  assets            Asset[]
+  judicialProcess   JudicialProcess[]
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  tenant            Tenant    @relation(fields: [tenantId], references: [id])
+  judicialBranch    JudicialBranch? @relation(fields: [judicialBranchId], references: [id])
+  judicialBranchId  BigInt?   @unique
+
+  @@index([tenantId])
+}
+
+// prisma/models/state.prisma
+import { City, JudicialDistrict, Asset } from "./";
+
+model State {
+  id        BigInt     @id @default(autoincrement())
+  name      String   @unique
+  uf        String   @unique
+  slug      String   @unique
+
+  cities    City[]
+  districts JudicialDistrict[]
+  assets    Asset[]
+}
+
+// prisma/models/subcategory.prisma
+import { LotCategory, Lot, Asset } from "./";
+
+model Subcategory {
+  id               BigInt       @id @default(autoincrement())
+  name             String
+  slug             String     @unique
+  parentCategory   LotCategory  @relation(fields: [parentCategoryId], references: [id])
+  parentCategoryId BigInt
+  description      String?
+  displayOrder     Int        @default(0)
+  iconUrl          String?
+  iconMediaId      String?
+  dataAiHintIcon   String?
+  
+  lots             Lot[]
+  assets           Asset[]
+
+  @@unique([name, parentCategoryId])
+}
+
+// prisma/models/tenant.prisma
+import { User, UsersOnTenants, Seller, Auctioneer, Auction, Lot, JudicialProcess, Report, DirectSaleOffer, Bid, Subscription } from "./";
+
+model Tenant {
+  id          String   @id @default(cuid())
+  name        String
+  subdomain   String   @unique
+  domain      String?  @unique
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  users       UsersOnTenants[]
+  sellers     Seller[]
+  auctioneers Auctioneer[]
+  auctions    Auction[]
+  lots        Lot[]
+  judicialProcesses JudicialProcess[]
+  reports     Report[]
+  directSaleOffers DirectSaleOffer[]
+  bids        Bid[]
+  subscribers Subscription[]
+}
+
+// prisma/models/user-document.prisma
+import { User, DocumentType, UserDocumentStatus } from "./";
+
+model UserDocument {
+  id             String   @id @default(cuid())
+  userId         String
+  documentTypeId BigInt
+  fileUrl        String
+  fileName       String
+  status         UserDocumentStatus @default(PENDING_ANALYSIS)
+  rejectionReason String?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  user           User          @relation(fields: [userId], references: [id])
+  documentType   DocumentType  @relation(fields: [documentTypeId], references: [id])
+
+  @@unique([userId, documentTypeId])
+}
+
+// prisma/models/user-lot-max-bid.prisma
+import { User, Lot } from "./";
+
+model UserLotMaxBid {
+  user       User    @relation(fields: [userId], references: [id])
+  userId     String
+  lot        Lot     @relation(fields: [lotId], references: [id])
+  lotId      BigInt
+  maxAmount  Decimal @db.Decimal(12, 2)
+  isActive   Boolean @default(true)
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@id([userId, lotId])
+}
+
+// prisma/models/user-win.prisma
+import { User, Lot, PaymentStatus, InstallmentPayment } from "./";
+
+model UserWin {
+  id               String  @id @default(cuid())
+  userId           String
+  lotId            BigInt  @unique
+  winningBidAmount Decimal @db.Decimal(12, 2)
+  winDate          DateTime
+  paymentStatus    PaymentStatus @default(PENDENTE)
+  
+  user             User    @relation(fields: [userId], references: [id])
+  lot              Lot     @relation(fields: [lotId], references: [id])
+  
+  installments     InstallmentPayment[]
+
+  @@index([userId])
+}
+
+// prisma/models/user.prisma
+import { Role, UserHabilitationStatus, AccountType, UsersOnRoles, UsersOnTenants, Bid, UserWin, UserDocument, UserLotMaxBid, Review, LotQuestion, Auctioneer, Seller, Asset, Report } from "./";
+
+model User {
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  password            String
+  fullName            String?
+  
+  cpf                 String?  @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+
+  avatarUrl           String?
+  dataAiHint          String?
+  
+  cellPhone           String?  @unique
+  homePhone           String?
+
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType         AccountType @default(PHYSICAL)
+  
+  razaoSocial         String?
+  cnpj                String?  @unique
+  inscricaoEstadual   String?
+  website             String?
+  
+  responsibleName     String?
+  responsibleCpf      String?
+
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+
+  optInMarketing      Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  lastLogin           DateTime?
+  
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  bids                Bid[]
+  wins                UserWin[]
+  documents           UserDocument[]
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  auctioneerProfile   Auctioneer?
+  sellerProfile       Seller?
+  createdAssets       Asset[] @relation("CreatedAssets")
+  createdReports      Report[] @relation("CreatedReports")
+  createdAuctions     Auction[] @relation("CreatedAuctions")
+}
+
+// prisma/models/users-on-roles.prisma
+import { User, Role } from "./";
+
+model UsersOnRoles {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  role       Role     @relation(fields: [roleId], references: [id])
+  roleId     String
+  assignedAt DateTime @default(now())
+  assignedBy String
+  
+  @@id([userId, roleId])
+}
+
+// prisma/models/users-on-tenants.prisma
+import { User, Tenant } from "./";
+
+model UsersOnTenants {
+  user       User     @relation(fields: [userId], references: [id])
+  userId     String
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId   String
+  assignedAt DateTime @default(now())
+  assignedBy String
+
+  @@id([userId, tenantId])
+}
+
+// prisma/models/vehicle-make.prisma
+import { VehicleModel } from "./";
+
+model VehicleMake {
+  id      BigInt     @id @default(autoincrement())
+  name    String   @unique
+  slug    String   @unique
+  models  VehicleModel[]
+}
+
+// prisma/models/vehicle-model.prisma
+import { VehicleMake } from "./";
+
+model VehicleModel {
+  id     BigInt     @id @default(autoincrement())
+  name   String
+  slug   String   @unique
+  make   VehicleMake @relation(fields: [makeId], references: [id])
+  makeId BigInt
+
+  @@unique([makeId, name])
+}

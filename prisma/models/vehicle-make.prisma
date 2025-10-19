@@ -1,6 +1,4 @@
 // prisma/models/vehicle-make.prisma
-import { VehicleModel } from "./";
-
 model VehicleMake {
   id      BigInt     @id @default(autoincrement())
   name    String   @unique
