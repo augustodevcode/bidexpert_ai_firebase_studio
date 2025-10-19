@@ -141,9 +141,9 @@ async function seedEssentialData() {
     // 2. Seed Landlord Tenant
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
-        where: { id: 1 },
+        where: { id: "1" },
         update: {},
-        create: { id: 1, name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: {           id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     

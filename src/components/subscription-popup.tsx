@@ -78,6 +78,7 @@ export default function SubscriptionPopup() {
                 src="https://images.unsplash.com/photo-1563986768609-322da13575f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxNEWSLETTERfGVufDB8fHx8MTcxMTcxOTg3Mnww&ixlib=rb-4.1.0&q=80&w=1080"
                 alt="Imagem de newsletter"
                 fill
+                sizes="100vw"
                 className="object-cover"
                 data-ai-hint="newsletter e-mail"
             />
