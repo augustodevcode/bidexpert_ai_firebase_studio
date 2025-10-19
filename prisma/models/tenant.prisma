@@ -1,21 +1,21 @@
 model Tenant {
-  id          BigInt   @id @default(autoincrement())
+  id          String   @id @default(cuid())
   name        String
-  subdomain   String   @unique
-  domain      String?
+  subdomain   String?  @unique
+  domain      String?  @unique
   
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  users       UsersOnTenants[]
   auctions    Auction[]
   lots        Lot[]
   assets      Asset[]
   sellers     Seller[]
   auctioneers Auctioneer[]
-  judicialProcesses JudicialProcess[]
-  directSaleOffers DirectSaleOffer[]
-  subscribers Subscriber[]
+  users       UsersOnTenants[]
   reports     Report[]
+  directSaleOffers DirectSaleOffer[]
+  judicialProcesses JudicialProcess[]
+
   platformSettings PlatformSettings[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

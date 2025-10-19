@@ -1,15 +1,17 @@
 model Report {
-  id          BigInt   @id @default(autoincrement())
+  id          BigInt      @id @default(autoincrement())
   name        String
   description String?
   definition  Json
-  
+  createdBy   User        @relation(fields: [createdById], references: [id])
+  createdById String
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  tenantId    BigInt
-  tenant      Tenant @relation(fields: [tenantId], references: [id])
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
   
-  ownerId     BigInt?
-  owner       User?    @relation(fields: [ownerId], references: [id])
+  @@index([createdById])
+  @@index([tenantId])
 }

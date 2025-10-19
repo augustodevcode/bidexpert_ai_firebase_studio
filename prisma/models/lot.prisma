@@ -1,91 +1,91 @@
 model Lot {
-  id                 BigInt   @id @default(autoincrement())
-  publicId           String   @unique @default(cuid())
-  number             String?
-  title              String
-  slug               String   @unique
-  description        String?  @db.Text
-  properties         Json?
-  
-  status             String   @default("EM_BREVE")
-  
-  price              Decimal  @db.Decimal(12, 2)
-  initialPrice       Decimal? @db.Decimal(12, 2)
+  id              BigInt    @id @default(autoincrement())
+  publicId        String    @unique @default(cuid())
+  slug            String    @unique @default(cuid())
+  auctionId       BigInt
+  number          String?
+  title           String
+  description     String?   @db.Text
+  price           Decimal   @db.Decimal(12, 2)
+  initialPrice    Decimal?  @db.Decimal(12, 2)
   secondInitialPrice Decimal? @db.Decimal(12, 2)
-  reservePrice       Decimal? @db.Decimal(12, 2)
-  bidIncrementStep   Decimal? @db.Decimal(12, 2)
-  
-  // Location
-  cityName        String?
-  stateUf         String?
-  mapAddress      String?
-  latitude        Decimal? @db.Decimal(9, 6)
-  longitude       Decimal? @db.Decimal(9, 6)
-  
-  // Media
-  imageUrl          String?
-  imageMediaId      String?
-  videoUrl          String?
-  inheritedMediaFromBemId BigInt?
-
-  // Stats
-  bidsCount         Int      @default(0)
-  views             Int      @default(0)
-  
-  // Features
-  isFeatured        Boolean  @default(false)
-  isExclusive       Boolean  @default(false)
+  bidIncrementStep Decimal? @db.Decimal(10, 2)
+  status          LotStatus @default(EM_BREVE)
+  dataAiHint      String?
+  views           Int       @default(0)
+  bidsCount       Int       @default(0)
+  isFeatured      Boolean   @default(false)
+  isExclusive     Boolean   @default(false)
   allowInstallmentBids Boolean @default(true)
-  additionalTriggers  String[]
-  discountPercentage  Int?
-  dataAiHint        String?
+  winnerId        String?
+  winningBidTermUrl String?
 
-  // Timestamps and Relations
-  auctionDate       DateTime?
-  endDate           DateTime?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
-  
-  tenantId    BigInt
-  tenant      Tenant     @relation(fields: [tenantId], references: [id])
-  auctionId   BigInt
-  auction     Auction    @relation(fields: [auctionId], references: [id])
-  categoryId  BigInt
-  category    LotCategory @relation(fields: [categoryId], references: [id])
-  subcategoryId BigInt?
-  subcategory Subcategory? @relation(fields: [subcategoryId], references: [id])
-  
-  sellerId BigInt?
-  seller   Seller? @relation(fields: [sellerId], references: [id])
-  
-  auctioneerId BigInt?
-  auctioneer   Auctioneer? @relation(fields: [auctioneerId], references: [id])
-  
-  winnerId BigInt?
-  winner   User?      @relation("WonLots", fields: [winnerId], references: [id])
+  imageUrl        String?
+  imageMediaId    String?
 
-  // Relisting Info
-  isRelisted    Boolean  @default(false)
-  relistCount   Int      @default(0)
-  originalLotId BigInt?
-  originalLot   Lot?     @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  relistedLots  Lot[]    @relation("RelistHistory")
+  // Relacionamento com Ativos/Bens
+  assets AssetsOnLots[]
 
-  assets          AssetsOnLots[]
+  // Relacionamentos com localização
+  street         String?
+  number         String?
+  complement     String?
+  neighborhood   String?
+  zipCode        String?
+  latitude       Decimal?
+  longitude      Decimal?
+  cityId         BigInt?
+  stateId        BigInt?
+  mapAddress     String?
+
+  // Relacionamentos
+  auction         Auction          @relation(fields: [auctionId], references: [id])
   bids            Bid[]
-  userLotMaxBids  UserLotMaxBid[]
+  winner          User?            @relation(name: "LotWinner", fields: [winnerId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  maxBids         UserLotMaxBid[]
   reviews         Review[]
   questions       LotQuestion[]
   installments    InstallmentPayment[]
-  win             UserWin?
-  
-  city   City? @relation(fields: [cityId], references: [id])
-  cityId BigInt?
-  state  State? @relation(fields: [stateId], references: [id])
-  stateId BigInt?
+  stagePrices     LotStagePrice[]
 
-  stagePrices LotStagePrice[]
+  // Relacionamentos Categoriais
+  type            String?
+  categoryId      BigInt?
+  subcategoryId   BigInt?
+  category        LotCategory?    @relation(fields: [categoryId], references: [id])
+  subcategory     Subcategory?    @relation(fields: [subcategoryId], references: [id])
+  
+  // Relacionamentos de Proprietário
+  sellerId        BigInt?
+  auctioneerId    BigInt?
+  seller          Seller?         @relation(fields: [sellerId], references: [id])
+  auctioneer      Auctioneer?     @relation(fields: [auctioneerId], references: [id])
+
+  // Relacionamentos Judiciais
+  judicialProcessNumber String?
+  courtName             String?
+  courtDistrict         String?
+  propertyRegistrationNumber String?
+  propertyLiens         String?   @db.Text
+  knownDebts            String?   @db.Text
+  additionalDocumentsInfo String? @db.Text
+
+  // Relacionamento de Relistagem
+  originalLotId   BigInt?         @unique
+  isRelisted      Boolean         @default(false)
+  relistCount     Int             @default(0)
+  originalLot     Lot?            @relation("RelistedLot", fields: [originalLotId], references: [id])
+  relistedVersion Lot?            @relation("RelistedLot")
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  tenantId        String
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
 
   @@index([auctionId])
   @@index([status])
+  @@index([winnerId])
+  @@index([sellerId])
+  @@index([categoryId])
 }

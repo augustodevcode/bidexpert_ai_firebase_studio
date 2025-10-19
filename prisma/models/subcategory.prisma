@@ -1,18 +1,18 @@
 model Subcategory {
-  id              BigInt       @id @default(autoincrement())
-  name            String
-  slug            String     @unique
-  description     String?
-  displayOrder    Int        @default(0)
-  iconUrl         String?
-  iconMediaId     BigInt?
-  dataAiHintIcon  String?
-  
+  id               BigInt      @id @default(autoincrement())
+  name             String
+  slug             String      @unique
+  description      String?
+  displayOrder     Int         @default(0)
+  iconUrl          String?
+  iconMediaId      String?
+  dataAiHintIcon   String?
+
   parentCategoryId BigInt
   parentCategory   LotCategory @relation(fields: [parentCategoryId], references: [id])
 
-  lots     Lot[]
-  assets   Asset[]
+  lots             Lot[]
+  assets           Asset[]
 
   @@unique([parentCategoryId, name])
 }

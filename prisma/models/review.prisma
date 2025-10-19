@@ -1,16 +1,19 @@
 model Review {
-  id        BigInt   @id @default(autoincrement())
-  rating    Int
-  comment   String?
-  
-  lotId     BigInt
-  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId BigInt?
-  
-  userId          BigInt
-  user            User     @relation(fields: [userId], references: [id])
-  userDisplayName String
+  id          BigInt   @id @default(autoincrement())
+  lotId       BigInt
+  userId      String
+  authorName  String
+  rating      Int
+  comment     String?  @db.Text
+  isVerified  Boolean  @default(false)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lot         Lot      @relation(fields: [lotId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+
+  @@unique([lotId, userId])
+  @@index([lotId])
+  @@index([userId])
 }
