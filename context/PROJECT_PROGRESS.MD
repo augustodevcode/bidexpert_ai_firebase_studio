@@ -29,29 +29,18 @@
 - **Item 26: Implementar Painel de Análise de Usuários:** Criado o dashboard para análise de comportamento, gastos e atividade dos usuários na plataforma.
 - **Item 27: Refatorar Testes de Integração e E2E:** Todos os testes de unidade e E2E foram refatorados com sucesso para usar a camada de `Server Actions` e o helper `callActionAsUser`, garantindo a validação da segurança, permissões e isolamento de tenants.
 - **Item 28: Documentar Arquivos de Código-Fonte:** Adicionado um bloco de comentário explicativo (docblock) no topo de cada arquivo de código-fonte (`.ts`, `.tsx`, etc.) descrevendo seu propósito e responsabilidades.
-- **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `SearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
-- **Item 31: Refatorar Testes de UI (1ª Rodada):** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id` em vez de seletores de texto ou CSS, aumentando a robustez da suíte de testes.
-- **Item 33: Refatoração e Verificação dos Testes de UI:** Revisados todos os testes de Playwright (`tests/ui/`) para garantir que os seletores (`data-ai-id` ou `className`) correspondem ao código-fonte atual dos componentes `.tsx`, corrigindo todas as inconsistências.
+- **Item 29: Padronização da Interface do Admin:** Refatoradas as páginas de listagem do painel de admin para usar o componente `BidExpertSearchResultsFrame`, unificando a experiência de busca, filtro, ordenação e visualização (grade/lista/tabela).
 - **Item 30: Implementar Herança de Mídia:** Implementada a lógica completa de herança e substituição de imagens e outros atributos (endereço, valores) para Lotes e Leilões, conforme definido nas regras de negócio.
-- **Item 35: Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos, como o loteamento de múltiplos bens, herança de mídia e criação de leilões com múltiplas praças.
-- **Item 34: Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação (Leilão, Lote, Ativo, Comitente, Leiloeiro, Usuário, etc.) possam ser preenchidos e salvos corretamente.
+- **Item 31 & 33:** **Refatoração dos Testes de UI:** Todos os testes de Playwright foram atualizados para utilizar seletores `data-ai-id`, aumentando a robustez da suíte de testes.
 - **Item 32: Dashboard Facelift (Fase 1):** Aplicado o novo tema de cores (dark sidebar, blue primary) no `globals.css` e redesenhado o `Admin Dashboard` com os novos KPIs.
-- **Item 32.1: Implementar Cabeçalho do Painel de Administração:** Criado o componente `AdminHeader.tsx` e integrado ao `AdminLayout.tsx`. Adicionados ícones de ação e `UserNav`.
-- **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):**
-    - **36.1:** Criado o componente `CommandPalette.tsx` usando `cmdk`.
-    - **36.2:** Mapeado e populado a paleta com comandos de navegação e ações.
-    - **36.3:** Integrado a paleta ao `AdminHeader` para ser acionada pelo botão de busca e atalho `Ctrl+K`.
-    - **36.4:** Implementado a lógica de filtro para os comandos.
-- **Item 37: Implementar Dashboard Customizável:**
-    - **37.1:** Adicionado um botão de engrenagem ao `AdminHeader` para abrir o modal de configuração.
-    - **37.2:** Criado o componente de modal `WidgetConfigurationModal.tsx`.
-    - **37.3:** Listados os widgets disponíveis com checkboxes no modal de configuração.
-    - **37.4:** Implementada a lógica para salvar e carregar as preferências de widgets do usuário usando React Context e `localStorage`.
-    - **37.5:** A página `/admin/dashboard` agora renderiza os widgets dinamicamente com base nas preferências.
-- **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas (38.1 a 38.7) foram concluídas, incluindo a criação do modelo, serviços, componentes de UI e a lógica de configuração.
-- **Melhoria Contínua:** Revisão e otimização do desempenho de consultas e a qualidade do código foi concluída. Arquivos obsoletos foram removidos.
-- **Item 39: Validação de Formulários e Feedback de UI (100%):** Mapeados todos os formulários, adicionados indicadores de campos obrigatórios (`*`), desabilitados botões de submissão em formulários inválidos e garantido feedback de `toast` para todas as ações.
-- **Item 41: Refatoração da Timeline e Nomenclatura de Cards:** Substituído o componente de timeline legado pelo novo `BidExpertStagesTimeline` em toda a aplicação. Renomeados os componentes `UniversalCard` e `UniversalListItem` para `BidExpertCard` e `BidExpertListItem`, respectivamente, e atualizadas todas as referências.
+- **Item 34:** **Criar Testes de UI Exaustivos (Form-Filling):** Implementada uma nova suíte de testes (`tests/ui-plus/`) garantindo que todos os campos de todos os formulários de criação possam ser preenchidos e salvos corretamente.
+- **Item 35:** **Criar Testes de UI por Cenários Específicos:** Criado o teste E2E na pasta `tests/ui-e2e` para validar fluxos de usuário complexos.
+- **Item 36: Implementar Paleta de Comandos (Busca Global Rápida):** Paleta de comandos totalmente implementada e integrada.
+- **Item 37: Implementar Dashboard Customizável:** Funcionalidade de configuração de widgets concluída.
+- **Item 38: Implementar Sistema de Inscrição e Notificações (Newsletter):** Todas as subtarefas concluídas.
+- **Item 39: Validação de Formulários e Feedback de UI (100%):** Todos os formulários mapeados e atualizados com indicadores de obrigatoriedade, desabilitação de botão e feedback de `toast`.
+- **Item 41: Refatoração da Timeline e Nomenclatura de Cards:** Substituído o componente legado pelo novo `BidExpertStagesTimeline` e renomeados os cards universais.
+- **Item 42: Simplificação dos Formulários de Ativos e Lotes:** Removidos campos específicos de categoria e substituídos por um único campo "Propriedades".
 
 ## DOING
 
@@ -59,5 +48,11 @@
 - **Item 16:** Implementar a lógica para relistar um lote que não foi vendido, incluindo a UI para o administrador.
 - **Item 17:** Implementar a lógica para "relotear" um bem, desvinculando-o de um lote não vendido.
 - **Item 18:** Implementar pagamento parcelado para arremates.
-- **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores, explicando as principais seções do painel.
+- **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores.
+- **Item 43:** **Implementar Modos de Edição de CRUD (Modal e Sheet) e Padronizar Formulários:**
+    - **43.1:** Adicionar uma opção nas Configurações da Plataforma (`PlatformSettings`) para o administrador escolher o modo de edição padrão: 'modal' (usando `<Dialog>`) ou 'sheet' (usando `<Sheet>`).
+    - **43.2:** Criar um componente de invólucro (wrapper) chamado `CrudFormContainer.tsx` que recebe `isOpen`, `onClose`, e o `children` (o formulário em si). Internamente, este componente lerá a preferência do usuário e renderizará o `Dialog` ou o `Sheet` apropriado.
+    - **43.3:** Refatorar as páginas de listagem do admin (ex: `/admin/auctions/page.tsx`, `/admin/assets/page.tsx`) para que, em vez de navegarem para uma página `/new` ou `/[id]/edit`, elas controlem o estado de um `CrudFormContainer`, passando o formulário apropriado (ex: `AuctionForm`) como filho. O botão "Novo" abrirá o container sem dados, e o botão "Editar" abrirá o container com os dados da entidade selecionada.
+    - **43.4:** Padronizar todos os formulários CRUD da plataforma para usar a biblioteca `react-hook-form` com `zodResolver` para validação, seguindo o padrão já estabelecido em `ProfileForm`.
+    - **43.5:** Criar um arquivo de teste `tests/ui-e2e/crud-modes.spec.ts` para validar o novo fluxo: verificar se a configuração no admin funciona, se clicar em "Novo" abre um formulário em branco no modo correto (modal/sheet), e se clicar em "Editar" abre um formulário preenchido no modo correto.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.
