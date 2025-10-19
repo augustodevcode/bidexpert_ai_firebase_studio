@@ -1,18 +1,15 @@
-// prisma/models/report.prisma
-import { User, Tenant } from "./";
-
 model Report {
-  id             BigInt   @id @default(autoincrement())
-  tenantId       String
-  name           String
-  description    String?
-  definition     Json
+  id          BigInt   @id @default(autoincrement())
+  name        String
+  description String?
+  definition  Json
   
-  createdBy      User     @relation("CreatedReports", fields: [createdById], references: [id])
-  createdById    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  tenantId    BigInt
+  tenant      Tenant @relation(fields: [tenantId], references: [id])
   
-  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  ownerId     BigInt?
+  owner       User?    @relation(fields: [ownerId], references: [id])
 }

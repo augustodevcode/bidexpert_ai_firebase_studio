@@ -1,13 +1,14 @@
-// prisma/models/state.prisma
-import { City, JudicialDistrict, Asset } from "./";
-
 model State {
-  id        BigInt     @id @default(autoincrement())
-  name      String   @unique
-  uf        String   @unique
-  slug      String   @unique
+  id     BigInt   @id @default(autoincrement())
+  name   String
+  uf     String @unique
+  slug   String @unique
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   cities    City[]
-  districts JudicialDistrict[]
-  assets    Asset[]
+  auctions  Auction[]
+  lots      Lot[]
+  judicialDistricts JudicialDistrict[]
 }

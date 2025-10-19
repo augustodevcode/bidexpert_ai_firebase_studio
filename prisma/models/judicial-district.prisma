@@ -1,18 +1,16 @@
-// prisma/models/judicial-district.prisma
-import { Court, State, JudicialBranch, JudicialProcess } from "./";
-
 model JudicialDistrict {
-  id        BigInt     @id @default(autoincrement())
+  id        BigInt   @id @default(autoincrement())
   name      String
   slug      String   @unique
-  court     Court    @relation(fields: [courtId], references: [id])
-  courtId   BigInt
-  state     State    @relation(fields: [stateId], references: [id])
-  stateId   BigInt
   zipCode   String?
 
-  branches  JudicialBranch[]
-  processes JudicialProcess[]
+  courtId BigInt
+  court   Court @relation(fields: [courtId], references: [id])
+  
+  stateId BigInt
+  state   State @relation(fields: [stateId], references: [id])
 
-  @@unique([name, courtId])
+  branches          JudicialBranch[]
+  judicialProcesses JudicialProcess[]
+  auctions          Auction[]
 }

@@ -1371,17 +1371,17 @@ model LotCategory {
 }
 
 // prisma/models/city.prisma
-import { State, Asset } from "./";
-
 model City {
-  id      BigInt    @id @default(autoincrement())
-  name    String
-  slug    String    @unique
-  state   State     @relation(fields: [stateId], references: [id])
-  stateId BigInt
-  stateUf String?
+  id       BigInt    @id @default(autoincrement())
+  name     String
+  slug     String    @unique
+  state    State     @relation(fields: [stateId], references: [id])
+  stateId  BigInt
+  stateUf  String?
   ibgeCode String?   @unique
 
+  auctions Auction[]
+  lots     Lot[]
   assets   Asset[]
 
   @@unique([name, stateId])
@@ -2063,8 +2063,6 @@ model UsersOnTenants {
 }
 
 // prisma/models/vehicle-make.prisma
-import { VehicleModel } from "./";
-
 model VehicleMake {
   id      BigInt     @id @default(autoincrement())
   name    String   @unique
@@ -2073,8 +2071,6 @@ model VehicleMake {
 }
 
 // prisma/models/vehicle-model.prisma
-import { VehicleMake } from "./";
-
 model VehicleModel {
   id     BigInt     @id @default(autoincrement())
   name   String

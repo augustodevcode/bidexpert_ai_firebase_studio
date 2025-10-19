@@ -1,12 +1,10 @@
-// prisma/models/auction-habilitation.prisma
-import { User, Auction } from "./";
-
 model AuctionHabilitation {
+  id        BigInt   @id @default(autoincrement())
   user      User     @relation(fields: [userId], references: [id])
-  userId    String
+  userId    BigInt
   auction   Auction  @relation(fields: [auctionId], references: [id])
   auctionId BigInt
-  habilitatedAt DateTime @default(now())
+  createdAt DateTime @default(now())
 
-  @@id([userId, auctionId])
+  @@unique([userId, auctionId])
 }

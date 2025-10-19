@@ -1,87 +1,91 @@
-// prisma/models/lot.prisma
-import { LotStatus, Asset, Auction, User, Bid, UserLotMaxBid, Review, LotQuestion, Tenant, Seller, Auctioneer, LotCategory, Subcategory, LotStagePrice, InstallmentPayment, AssetsOnLots } from "./";
-
 model Lot {
-  id                  BigInt   @id @default(autoincrement())
-  publicId            String   @unique @default(cuid())
-  tenantId            String
-  auctionId           BigInt
-  number              String?
-  title               String
-  description         String?  @db.Text
-  properties          Json?
+  id                 BigInt   @id @default(autoincrement())
+  publicId           String   @unique @default(cuid())
+  number             String?
+  title              String
+  slug               String   @unique
+  description        String?  @db.Text
+  properties         Json?
   
-  status              LotStatus @default(EM_BREVE)
+  status             String   @default("EM_BREVE")
   
-  price               Decimal   @db.Decimal(12, 2)
-  initialPrice        Decimal?  @db.Decimal(12, 2)
-  secondInitialPrice  Decimal?  @db.Decimal(12, 2)
-  bidIncrementStep    Decimal?  @db.Decimal(12, 2)
-  evaluationValue     Decimal?  @db.Decimal(12, 2)
+  price              Decimal  @db.Decimal(12, 2)
+  initialPrice       Decimal? @db.Decimal(12, 2)
+  secondInitialPrice Decimal? @db.Decimal(12, 2)
+  reservePrice       Decimal? @db.Decimal(12, 2)
+  bidIncrementStep   Decimal? @db.Decimal(12, 2)
+  
+  // Location
+  cityName        String?
+  stateUf         String?
+  mapAddress      String?
+  latitude        Decimal? @db.Decimal(9, 6)
+  longitude       Decimal? @db.Decimal(9, 6)
+  
+  // Media
+  imageUrl          String?
+  imageMediaId      String?
+  videoUrl          String?
+  inheritedMediaFromBemId BigInt?
 
-  views               Int       @default(0)
-  bidsCount           Int       @default(0)
+  // Stats
+  bidsCount         Int      @default(0)
+  views             Int      @default(0)
   
-  hasKey              Boolean   @default(true)
-  canBeVisited        Boolean   @default(true)
-  
-  street              String?
-  numberAddress       String?
-  complement          String?
-  neighborhood        String?
-  zipCode             String?
-  latitude            Decimal?  @db.Decimal(10, 8)
-  longitude           Decimal?  @db.Decimal(11, 8)
-  
-  imageUrl            String?
-  imageMediaId        String?
-  inheritedMediaFromAssetId String? // ID do Asset de onde a mídia foi herdada
-  
-  isFeatured          Boolean   @default(false)
-  isExclusive         Boolean   @default(false)
-  
-  winnerId            String?
-  winningBidTermUrl   String?
-
+  // Features
+  isFeatured        Boolean  @default(false)
+  isExclusive       Boolean  @default(false)
+  allowInstallmentBids Boolean @default(true)
   additionalTriggers  String[]
-  dataAiHint          String?
+  discountPercentage  Int?
+  dataAiHint        String?
 
-  isRelisted          Boolean?  @default(false)
-  relistCount         Int?      @default(0)
+  // Timestamps and Relations
+  auctionDate       DateTime?
+  endDate           DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  
+  tenantId    BigInt
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+  auctionId   BigInt
+  auction     Auction    @relation(fields: [auctionId], references: [id])
+  categoryId  BigInt
+  category    LotCategory @relation(fields: [categoryId], references: [id])
+  subcategoryId BigInt?
+  subcategory Subcategory? @relation(fields: [subcategoryId], references: [id])
+  
+  sellerId BigInt?
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+  
+  auctioneerId BigInt?
+  auctioneer   Auctioneer? @relation(fields: [auctioneerId], references: [id])
+  
+  winnerId BigInt?
+  winner   User?      @relation("WonLots", fields: [winnerId], references: [id])
 
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  
-  auction             Auction   @relation(fields: [auctionId], references: [id])
-  winner              User?     @relation("WonLots", fields: [winnerId], references: [id])
-  bids                Bid[]
-  userMaxBids         UserLotMaxBid[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  tenant              Tenant    @relation(fields: [tenantId], references: [id])
-  
-  seller              Seller?   @relation(fields: [sellerId], references: [id])
-  sellerId            BigInt?
-  auctioneer          Auctioneer? @relation(fields: [auctioneerId], references: [id])
-  auctioneerId        BigInt?
-  
-  category            LotCategory @relation(fields: [categoryId], references: [id])
-  categoryId          BigInt
-  subcategory         Subcategory? @relation(fields: [subcategoryId], references: [id])
-  subcategoryId       BigInt?
+  // Relisting Info
+  isRelisted    Boolean  @default(false)
+  relistCount   Int      @default(0)
+  originalLotId BigInt?
+  originalLot   Lot?     @relation("RelistHistory", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLots  Lot[]    @relation("RelistHistory")
 
-  cityId              BigInt?
-  stateId             BigInt?
+  assets          AssetsOnLots[]
+  bids            Bid[]
+  userLotMaxBids  UserLotMaxBid[]
+  reviews         Review[]
+  questions       LotQuestion[]
+  installments    InstallmentPayment[]
+  win             UserWin?
   
-  assets              AssetsOnLots[]
-  stageDetails        LotStagePrice[]
-  wins                UserWin[]
-  installmentPayments InstallmentPayment[]
-  originalLot         Lot?      @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  originalLotId       BigInt?   @unique
-  relistedLot         Lot?      @relation("RelistedLot")
+  city   City? @relation(fields: [cityId], references: [id])
+  cityId BigInt?
+  state  State? @relation(fields: [stateId], references: [id])
+  stateId BigInt?
+
+  stagePrices LotStagePrice[]
 
   @@index([auctionId])
   @@index([status])
-  @@index([winnerId])
 }

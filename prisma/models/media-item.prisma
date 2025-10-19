@@ -1,22 +1,36 @@
-// prisma/models/media-item.prisma
 model MediaItem {
-  id                  Int       @id @default(autoincrement())
-  fileName            String
-  mimeType            String
-  sizeBytes           Int
-  urlOriginal         String    @unique
-  urlThumbnail        String?
-  storagePath         String
-  altText             String?
-  title               String?
-  caption             String?
-  description         String?   @db.Text
-  dataAiHint          String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  uploadedBy          User      @relation(fields: [uploadedByUserId], references: [id])
-  uploadedByUserId    Int
-  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  judicialProcessId   Int?
-  assets              AssetMedia[]
+  id        BigInt   @id @default(autoincrement())
+  fileName  String
+  mimeType  String
+  sizeBytes BigInt
+  
+  title       String?
+  altText     String?
+  caption     String?
+  description String? @db.Text
+  
+  storagePath String
+  urlOriginal String
+  urlThumbnail String?
+
+  uploadedAt        DateTime @default(now())
+  uploadedByUserId  BigInt
+  uploadedBy        User     @relation(fields: [uploadedByUserId], references: [id])
+
+  judicialProcessId BigInt?
+  judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  
+  assets AssetMedia[]
+}
+
+model AssetMedia {
+  assetId BigInt
+  mediaItemId BigInt
+  displayOrder Int @default(0)
+  isPrimary Boolean @default(false)
+  
+  asset Asset @relation(fields: [assetId], references: [id])
+  mediaItem MediaItem @relation(fields: [mediaItemId], references: [id])
+
+  @@id([assetId, mediaItemId])
 }

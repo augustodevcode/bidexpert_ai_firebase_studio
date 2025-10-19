@@ -1,12 +1,12 @@
-// prisma/models/role.prisma
-import { User, UsersOnRoles } from "./";
-
 model Role {
-  id             String   @id @default(cuid())
+  id             BigInt   @id @default(autoincrement())
   name           String   @unique
   nameNormalized String   @unique
   description    String?
-  permissions    String[]
+  permissions    Json     @default("[]")
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
   
   users          UsersOnRoles[]
 }

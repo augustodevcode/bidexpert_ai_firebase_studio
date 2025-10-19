@@ -1,68 +1,69 @@
-// prisma/models/user.prisma
-import { Role, UserHabilitationStatus, AccountType, UsersOnRoles, UsersOnTenants, Bid, UserWin, UserDocument, UserLotMaxBid, Review, LotQuestion, Auctioneer, Seller, Asset, Report } from "./";
-
 model User {
-  id                  String   @id @default(cuid())
-  email               String   @unique
-  password            String
-  fullName            String?
+  id                BigInt      @id @default(autoincrement())
+  email             String    @unique
+  password          String
+  fullName          String?
+  avatarUrl         String?
+  dataAiHint        String?
   
-  cpf                 String?  @unique
-  rgNumber            String?
-  rgIssuer            String?
-  rgIssueDate         DateTime?
-  rgState             String?
-  dateOfBirth         DateTime?
-  gender              String?
-  profession          String?
-  nationality         String?
-  maritalStatus       String?
-  propertyRegime      String?
-  spouseName          String?
-  spouseCpf           String?
+  // Personal Info (PF)
+  cpf               String?   @unique
+  rgNumber          String?
+  rgIssuer          String?
+  rgIssueDate       DateTime?
+  rgState           String?
+  dateOfBirth       DateTime?
+  gender            String?
+  profession        String?
+  nationality       String?
+  maritalStatus     String?
+  propertyRegime    String?
 
-  avatarUrl           String?
-  dataAiHint          String?
+  // Spouse Info
+  spouseName        String?
+  spouseCpf         String?
   
-  cellPhone           String?  @unique
-  homePhone           String?
-
-  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
-  accountType         AccountType @default(PHYSICAL)
+  // PJ Info
+  razaoSocial       String?
+  cnpj              String?   @unique
+  inscricaoEstadual String?
   
-  razaoSocial         String?
-  cnpj                String?  @unique
-  inscricaoEstadual   String?
-  website             String?
+  // Contact
+  cellPhone         String?
+  homePhone         String?
+  website           String?
   
-  responsibleName     String?
-  responsibleCpf      String?
-
-  zipCode             String?
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  city                String?
-  state               String?
-
-  optInMarketing      Boolean  @default(false)
-
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  lastLogin           DateTime?
+  // Address
+  zipCode           String?
+  street            String?
+  number            String?
+  complement        String?
+  neighborhood      String?
+  city              String?
+  state             String?
   
-  roles               UsersOnRoles[]
-  tenants             UsersOnTenants[]
-  bids                Bid[]
-  wins                UserWin[]
-  documents           UserDocument[]
-  maxBids             UserLotMaxBid[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  auctioneerProfile   Auctioneer?
-  sellerProfile       Seller?
-  createdAssets       Asset[] @relation("CreatedAssets")
-  createdReports      Report[] @relation("CreatedReports")
-  createdAuctions     Auction[] @relation("CreatedAuctions")
+  // Status & Preferences
+  habilitationStatus String    @default("PENDING_DOCUMENTS")
+  accountType        String    @default("PHYSICAL")
+  optInMarketing     Boolean   @default(false)
+  
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLogin         DateTime?
+
+  // Relations
+  roles          UsersOnRoles[]
+  tenants        UsersOnTenants[]
+  bids           Bid[]
+  wins           UserWin[]         @relation("WonLots")
+  maxBids        UserLotMaxBid[]
+  reviews        Review[]
+  questions      LotQuestion[]
+  documents      UserDocument[]
+  habilitations  AuctionHabilitation[]
+  sellerProfile  Seller?
+  auctioneerProfile Auctioneer?
+  uploadedMedia     MediaItem[]
+  reports           Report[]
 }

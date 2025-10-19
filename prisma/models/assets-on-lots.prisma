@@ -1,12 +1,10 @@
-// prisma/models/assets-on-lots.prisma
-import { Lot, Asset } from "./";
-
 model AssetsOnLots {
-  lot      Lot      @relation(fields: [lotId], references: [id])
-  lotId    BigInt
-  asset    Asset    @relation(fields: [assetId], references: [id])
-  assetId  BigInt
+  asset     Asset    @relation(fields: [assetId], references: [id])
+  assetId   BigInt
+  lot       Lot      @relation(fields: [lotId], references: [id])
+  lotId     BigInt
   assignedAt DateTime @default(now())
+  assignedBy String
 
-  @@id([lotId, assetId])
+  @@id([assetId, lotId])
 }

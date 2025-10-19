@@ -1,37 +1,33 @@
-// prisma/models/auctioneer.prisma
-import { User, Auction, Lot, Tenant } from "./";
-
 model Auctioneer {
-  id                 BigInt     @id @default(autoincrement())
+  id                 BigInt   @id @default(autoincrement())
   publicId           String   @unique @default(cuid())
-  tenantId           String
-  name               String
   slug               String   @unique
+  name               String
   registrationNumber String?
-  
-  email              String?  @unique
+  email              String?
   phone              String?
   website            String?
-  
+  logoUrl            String?
+  logoMediaId        BigInt?
+  dataAiHintLogo     String?
+  description        String?  @db.Text
   address            String?
   city               String?
   state              String?
   zipCode            String?
   
-  description        String?  @db.Text
-  logoUrl            String?
-  logoMediaId        String?
-  dataAiHintLogo     String?
-  
-  auctions           Auction[]
-  lots               Lot[]
+  rating Decimal? @db.Decimal(3, 2)
+  auctionsConductedCount Int @default(0)
 
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
-  
-  tenant             Tenant   @relation(fields: [tenantId], references: [id])
-  user               User?    @relation(fields: [userId], references: [id])
-  userId             String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([tenantId])
+  tenantId BigInt
+  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  
+  userId BigInt?      @unique
+  user   User?        @relation(fields: [userId], references: [id])
+  
+  auctions Auction[]
+  lots     Lot[]
 }

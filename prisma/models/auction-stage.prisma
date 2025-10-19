@@ -1,18 +1,16 @@
-// prisma/models/auction-stage.prisma
-import { Auction, LotStagePrice } from "./";
-
 model AuctionStage {
-  id             BigInt   @id @default(autoincrement())
-  auction        Auction  @relation(fields: [auctionId], references: [id])
-  auctionId      BigInt
-  name           String
-  startDate      DateTime
-  endDate        DateTime
-  
+  id           BigInt    @id @default(autoincrement())
+  name         String
+  startDate    DateTime
+  endDate      DateTime
+  initialPrice Decimal?  @db.Decimal(12, 2)
+  statusText   String?
+
+  auctionId BigInt
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+
   lotStagePrices LotStagePrice[]
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  
-  @@index([auctionId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

@@ -1,26 +1,27 @@
-// prisma/models/category.prisma
-import { Subcategory, Lot, Asset, DirectSaleOffer } from "./";
-
 model LotCategory {
-  id                BigInt   @id @default(autoincrement())
-  name              String   @unique
-  slug              String   @unique
-  description       String?  @db.Text
-  hasSubcategories  Boolean  @default(false)
-  displayOrder      Int      @default(0)
-  iconName          String?
-  logoUrl           String?
-  logoMediaId       String?
-  dataAiHintIcon    String?
-  coverImageUrl     String?
-  coverImageMediaId String?
-  dataAiHintCover   String?
-  megaMenuImageUrl  String?
-  megaMenuImageMediaId String?
-  dataAiHintMegaMenu String?
+  id                  BigInt        @id @default(autoincrement())
+  name                String      @unique
+  slug                String      @unique
+  description         String?
+  itemCount           Int         @default(0)
+  hasSubcategories    Boolean     @default(false)
+  displayOrder        Int         @default(0)
 
-  subcategories   Subcategory[]
-  lots            Lot[]
-  assets          Asset[]
+  // Media
+  iconName            String?
+  logoUrl             String?
+  logoMediaId         BigInt?
+  dataAiHintIcon      String?
+  coverImageUrl       String?
+  coverImageMediaId   BigInt?
+  dataAiHintCover     String?
+  megaMenuImageUrl    String?
+  megaMenuImageMediaId BigInt?
+  dataAiHintMegaMenu  String?
+  
+  auctions      Auction[]
+  lots          Lot[]
+  assets        Asset[]
+  subcategories Subcategory[]
   directSaleOffers DirectSaleOffer[]
 }

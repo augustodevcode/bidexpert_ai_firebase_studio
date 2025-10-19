@@ -1,28 +1,26 @@
-// prisma/models/judicial-process.prisma
-import { Asset, JudicialParty, Court, JudicialDistrict, JudicialBranch, Tenant, Seller } from "./";
-
 model JudicialProcess {
-  id             BigInt   @id @default(autoincrement())
-  publicId       String   @unique @default(cuid())
-  tenantId       String
-  processNumber  String   @unique
-  isElectronic   Boolean  @default(true)
-  
-  court          Court    @relation(fields: [courtId], references: [id])
-  courtId        BigInt
-  district       JudicialDistrict @relation(fields: [districtId], references: [id])
-  districtId     BigInt
-  branch         JudicialBranch   @relation(fields: [branchId], references: [id])
-  branchId       BigInt
-  
-  seller         Seller?   @relation(fields: [sellerId], references: [id])
-  sellerId       BigInt?
+  id              BigInt     @id @default(autoincrement())
+  publicId        String     @unique @default(cuid())
+  processNumber   String     @unique
+  isElectronic    Boolean    @default(true)
+  publicUrl       String?
 
-  assets         Asset[]
-  parties        JudicialParty[]
-  
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
 
-  tenant         Tenant   @relation(fields: [tenantId], references: [id])
+  tenantId        BigInt
+  tenant          Tenant     @relation(fields: [tenantId], references: [id])
+  courtId         BigInt
+  court           Court      @relation(fields: [courtId], references: [id])
+  districtId      BigInt
+  district        JudicialDistrict @relation(fields: [districtId], references: [id])
+  branchId        BigInt
+  branch          JudicialBranch   @relation(fields: [branchId], references: [id])
+  
+  sellerId BigInt?
+  seller   Seller? @relation(fields: [sellerId], references: [id])
+
+  parties         JudicialParty[]
+  assets          Asset[]
+  auctions        Auction[]
 }

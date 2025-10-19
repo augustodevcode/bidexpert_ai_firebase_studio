@@ -1,14 +1,11 @@
-// prisma/models/lot-stage-price.prisma
-import { Lot, AuctionStage } from "./";
-
 model LotStagePrice {
-  lot           Lot     @relation(fields: [lotId], references: [id])
-  lotId         BigInt
-  stage         AuctionStage @relation(fields: [stageId], references: [id])
-  stageId       BigInt
+  lotId        BigInt
+  stageId      BigInt
+  initialBid   Decimal?
+  bidIncrement Decimal?
 
-  initialBid    Decimal? @db.Decimal(12, 2)
-  bidIncrement  Decimal? @db.Decimal(12, 2)
+  lot   Lot          @relation(fields: [lotId], references: [id])
+  stage AuctionStage @relation(fields: [stageId], references: [id])
 
   @@id([lotId, stageId])
 }
