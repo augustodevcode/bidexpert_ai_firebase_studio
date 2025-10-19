@@ -3,12 +3,13 @@ model AuctionStage {
   name         String
   startDate    DateTime
   endDate      DateTime
-  auctionId    String
+  auctionId    BigInt
   createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  updatedAt    DateTime  @default(now()) @updatedAt
 
   auction      Auction          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   lotPrices    LotStagePrice[]
+  lotStageDetails LotStageDetails[]
 
   @@index([auctionId])
 }

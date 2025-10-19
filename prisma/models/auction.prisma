@@ -1,68 +1,71 @@
 model Auction {
-  id                          BigInt                @id @default(autoincrement())
-  publicId                    String                @unique @default(cuid())
-  title                       String
-  slug                        String                @unique
-  description                 String?               @db.Text
-  status                      AuctionStatus         @default(RASCUNHO)
-  auctionDate                 DateTime
-  endDate                     DateTime?
-  location                    String?
-  street                      String?
-  number                      String?
-  complement                  String?
-  neighborhood                String?
-  cityId                      BigInt?
-  stateId                     BigInt?
-  zipCode                     String?
-  latitude                    Float?
-  longitude                   Float?
-  visits                      Int?                  @default(0)
-  auctionType                 AuctionType           @default(EXTRAJUDICIAL)
-  auctionMethod               AuctionMethod         @default(STANDARD)
-  participation               AuctionParticipation  @default(ONLINE)
-  onlineUrl                   String?
-  biddingSettings             Json?
-  documentsUrl                String?
-  initialOffer                Decimal?              @db.Decimal(12, 2)
-  estimatedRevenue            Decimal?              @db.Decimal(12, 2)
-  achievedRevenue             Decimal?              @db.Decimal(12, 2)
-  decrementAmount             Decimal?              @db.Decimal(10, 2)
-  decrementIntervalSeconds    Int?
-  floorPrice                  Decimal?              @db.Decimal(12, 2)
-  isFeaturedOnMarketplace     Boolean?              @default(false)
-  marketplaceAnnouncementTitle String?
-  autoRelistSettings          Json?
-  imageUrl                    String?
-  imageMediaId                String?
-  dataAiHint                  String?
-  createdAt                   DateTime              @default(now())
-  updatedAt                   DateTime              @updatedAt
-  
-  tenantId                    String?
-  auctioneerId                BigInt?
-  sellerId                    BigInt?
-  categoryId                  BigInt?
-  judicialProcessId           BigInt?
-  courtId                     BigInt?
-  districtId                  BigInt?
-  branchId                    BigInt?
-
-  tenant                      Tenant?               @relation(fields: [tenantId], references: [id])
-  auctioneer                  Auctioneer?           @relation(fields: [auctioneerId], references: [id], onDelete: SetNull)
-  seller                      Seller?               @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  category                    LotCategory?          @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  judicialProcess             JudicialProcess?      @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
-  city                        City?                 @relation(fields: [cityId], references: [id], onDelete: SetNull)
-  state                       State?                @relation(fields: [stateId], references: [id], onDelete: SetNull)
-  court                       Court?                @relation(fields: [courtId], references: [id], onDelete: SetNull)
-  district                    JudicialDistrict?     @relation(fields: [districtId], references: [id], onDelete: SetNull)
-  branch                      JudicialBranch?       @relation(fields: [branchId], references: [id], onDelete: SetNull)
-  
-  lots                        Lot[]
-  bids                        Bid[]
-  reviews                     Review[]
-  questions                   LotQuestion[]
-  stages                      AuctionStage[]
-  habilitations               AuctionHabilitation[]
+  id                        BigInt                  @id @default(autoincrement())
+  publicId                  String                  @unique @default(cuid())
+  title                     String
+  description               String?                 @db.Text
+  slug                      String                  @unique
+  status                    AuctionStatus           @default(RASCUNHO)
+  auctionDate               DateTime                @default(now())
+  endDate                   DateTime?
+  visits                    Int                     @default(0)
+  totalHabilitatedUsers     Int                     @default(0)
+  isFeaturedOnMarketplace   Boolean                 @default(false)
+  additionalTriggers        Json?
+  dataAiHint                String?
+  imageUrl                  String?                 @db.VarChar(1024)
+  imageMediaId              String?
+  documentsUrl              String?                 @db.VarChar(1024)
+  evaluationReportUrl       String?                 @db.VarChar(1024)
+  auctionCertificateUrl     String?                 @db.VarChar(1024)
+  auctionType               AuctionType             @default(EXTRAJUDICIAL)
+  auctionMethod             AuctionMethod           @default(STANDARD)
+  participation             AuctionParticipation    @default(ONLINE)
+  onlineUrl                 String?                 @db.VarChar(1024)
+  address                   String?
+  city                      String?
+  state                     String?
+  zipCode                   String?                 @db.VarChar(20)
+  latitude                  Decimal?                @db.Decimal(10, 8)
+  longitude                 Decimal?                @db.Decimal(11, 8)
+  initialOffer              Decimal?                @db.Decimal(12, 2)
+  estimatedRevenue          Decimal?                @db.Decimal(12, 2)
+  achievedRevenue           Decimal?                @db.Decimal(12, 2)
+  softCloseEnabled          Boolean                 @default(false)
+  softCloseMinutes          Int?
+  automaticBiddingEnabled   Boolean                 @default(true)
+  allowInstallmentBids      Boolean                 @default(false)
+  silentBiddingEnabled      Boolean                 @default(false)
+  allowMultipleBidsPerUser  Boolean                 @default(true)
+  decrementAmount           Decimal?                @db.Decimal(12, 2)
+  decrementIntervalSeconds  Int?
+  floorPrice                Decimal?                @db.Decimal(12, 2)
+  tenantId                  String
+  tenant                    Tenant                  @relation(fields: [tenantId], references: [id])
+  auctioneerId              BigInt?
+  auctioneer                Auctioneer?             @relation(fields: [auctioneerId], references: [id])
+  sellerId                  String?
+  seller                    Seller?                 @relation(fields: [sellerId], references: [id])
+  categoryId                BigInt?
+  category                  LotCategory?            @relation(fields: [categoryId], references: [id])
+  cityId                    BigInt?
+  cityObject                City?                   @relation(fields: [cityId], references: [id])
+  stateId                   String?
+  stateObject               State?                  @relation(fields: [stateId], references: [id])
+  judicialProcessId         String?
+  judicialProcess           JudicialProcess?        @relation(fields: [judicialProcessId], references: [id])
+  districtId                String?
+  judicialDistrict          JudicialDistrict?       @relation(fields: [districtId], references: [id])
+  branchId                  String?
+  judicialBranch            JudicialBranch?         @relation(fields: [branchId], references: [id])
+  courtId                   String?
+  court                     Court?                  @relation(fields: [courtId], references: [id])
+  lots                      Lot[]
+  bids                      Bid[]
+  auctionHabilitations      AuctionHabilitation[]
+  stages                    AuctionStage[]
+  questions                 LotQuestion[]
+  reviews                   Review[]
+  createdAt                 DateTime                @default(now())
+  updatedAt                 DateTime                @updatedAt
+  autoRelistSettings        Json?
 }

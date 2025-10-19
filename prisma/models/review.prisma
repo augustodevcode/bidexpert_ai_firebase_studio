@@ -1,0 +1,15 @@
+model Review {
+  id              String   @id @default(cuid())
+  lotId           BigInt
+  auctionId       BigInt
+  userId          BigInt
+  userDisplayName String?
+  rating          Int
+  comment         String?  @db.Text
+  createdAt       DateTime @default(now())
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+}

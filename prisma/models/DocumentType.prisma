@@ -1,8 +1,0 @@
-model DocumentType {
-  id              String         @id @default(cuid())
-  name            String   @unique
-  description     String?
-  isRequired      Boolean        @default(true)
-  appliesTo       String // e.g., 'PHYSICAL,LEGAL'
-  userDocuments   UserDocument[]
-}

@@ -4,6 +4,6 @@ model JudicialParty {
   documentNumber String?
   partyType      String
   
-  processId BigInt
+  processId String
   process   JudicialProcess @relation(fields: [processId], references: [id])
 }

@@ -2,11 +2,11 @@
 model LotQuestion {
   id                      String    @id @default(cuid())
   lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  lotId                   String
+  lotId                   BigInt
   auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId               String
+  auctionId               BigInt
   user                    User      @relation(fields: [userId], references: [id])
-  userId                  String
+  userId                  BigInt
   userDisplayName         String
   questionText            String    @db.Text
   answerText              String?   @db.Text

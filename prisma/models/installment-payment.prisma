@@ -10,4 +10,5 @@ model InstallmentPayment {
   status            String   @default("PENDENTE") // PENDING, PAID, OVERDUE
 
   userWin UserWin @relation(fields: [userWinId], references: [id])
+  lot     Lot     @relation(fields: [lotId], references: [id])
 }

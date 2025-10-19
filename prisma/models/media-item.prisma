@@ -1,0 +1,33 @@
+model MediaItem {
+  id           BigInt   @id @default(autoincrement())
+  fileName     String
+  mimeType     String
+  sizeBytes    Int
+  storagePath  String   @unique
+  url          String   @db.VarChar(1024)
+  urlThumbnail String?  @db.VarChar(1024)
+  title        String?
+  altText      String?
+  caption      String?
+  description  String?
+  dataAiHint   String?
+  
+  uploadedById BigInt?
+  uploadedBy   User?    @relation("UploadedBy", fields: [uploadedById], references: [id])
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  assetGallery AssetMedia[]
+}
+
+model AssetMedia {
+  assetId   BigInt
+  mediaId   BigInt
+  displayOrder Int
+  
+  asset   Asset     @relation(fields: [assetId], references: [id])
+  media   MediaItem @relation(fields: [mediaId], references: [id])
+  
+  @@id([assetId, mediaId])
+}

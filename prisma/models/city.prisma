@@ -1,17 +1,14 @@
-
 model City {
-  id        BigInt    @id @default(autoincrement())
-  slug      String    @unique
+  id        BigInt   @id @default(autoincrement())
   name      String
-  stateId   BigInt
-  state     State     @relation(fields: [stateId], references: [id])
-  ibgeCode  String?
-  latitude  Decimal?
-  longitude Decimal?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  slug      String?  @unique
+  stateId   String
+  state     State    @relation(fields: [stateId], references: [id])
+  ibgeCode  String?  @unique
   auctions  Auction[]
   lots      Lot[]
+  sellers   Seller[]
+  assets    Asset[]
 
   @@unique([name, stateId])
 }

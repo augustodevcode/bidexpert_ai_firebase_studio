@@ -1,6 +1,6 @@
 model Notification {
   id        String   @id @default(cuid())
-  userId    String
+  userId    BigInt
   message   String
   link      String?
   isRead    Boolean  @default(false)

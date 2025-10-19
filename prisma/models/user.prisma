@@ -1,60 +1,57 @@
 model User {
-  id                  String      @id @default(uuid())
-  fullName            String?
-  email               String      @unique
-  emailVerified       DateTime?
-  password            String?
-  avatarUrl           String?
-  dataAiHint          String?
-  habilitationStatus  String      @default("PENDING_DOCUMENTS")
-  accountType         String      @default("PHYSICAL")
-  cpf                 String?
-  rgNumber            String?
-  rgIssuer            String?
-  rgIssueDate         DateTime?
-  rgState             String?
-  dateOfBirth         DateTime?
-  cellPhone           String?
-  homePhone           String?
-  gender              String?
-  profession          String?
-  nationality         String?
-  maritalStatus       String?
-  propertyRegime      String?
-  spouseName          String?
-  spouseCpf           String?
-  zipCode             String?
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  city                String?
-  state               String?
-  optInMarketing      Boolean     @default(false)
-  lastLogin           DateTime?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  razaoSocial         String?
-  cnpj                String?
-  inscricaoEstadual   String?
-  website             String?
-  responsibleName     String?
-  responsibleCpf      String?
-  badges              String[]
-
-  bids                    Bid[]
-  wins                    UserWin[]           @relation("WinningUser")
-  maxBids                 UserLotMaxBid[]
-  roles                   UsersOnRoles[]
-  tenants                 UsersOnTenants[]
-  documents               UserDocument[]
-  uploadedMedia           MediaItem[]
-  auctioneerProfile       Auctioneer?         @relation("AuctioneerUser")
-  sellerProfile           Seller?             @relation("SellerUser")
-  answeredQuestions       LotQuestion[]
-  askedQuestions          LotQuestion[]       @relation("Asker")
-  reviews                 Review[]
-  auctionHabilitations    AuctionHabilitation[]
-
-  @@index([email])
+  id                    BigInt                 @id @default(autoincrement())
+  email                 String                 @unique
+  password              String
+  fullName              String?
+  cpf                   String?                @unique
+  rgNumber              String?
+  rgIssuer              String?
+  rgIssueDate           DateTime?
+  rgState               String?
+  dateOfBirth           DateTime?
+  gender                String?
+  profession            String?
+  nationality           String?
+  maritalStatus         String?
+  propertyRegime        String?
+  spouseName            String?
+  spouseCpf             String?
+  cellPhone             String?
+  homePhone             String?
+  zipCode               String?
+  street                String?
+  number                String?
+  complement            String?
+  neighborhood          String?
+  city                  String?
+  state                 String?
+  avatarUrl             String?                @db.VarChar(1024)
+  dataAiHint            String?
+  lastLogin             DateTime?
+  bids                  Bid[]
+  wins                  UserWin[]
+  lotsWon               Lot[]                   @relation("LotsWon")
+  maxBids               UserLotMaxBid[]
+  questions             LotQuestion[]
+  reviews               Review[]
+  documents             UserDocument[]
+  notifications         Notification[]
+  auctionHabilitations  AuctionHabilitation[]
+  uploadedMedia         MediaItem[]            @relation("UploadedBy")
+  roles                 UsersOnRoles[]
+  tenants               UsersOnTenants[]
+  sellersAsUser         Seller[]                @relation("UserSeller")
+  auctioneersAsUser     Auctioneer[]
+  habilitationStatus    UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType           AccountType            @default(PHYSICAL)
+  razaoSocial           String?
+  cnpj                  String?                @unique
+  inscricaoEstadual     String?
+  website               String?
+  responsibleName       String?
+  responsibleCpf        String?
+  badges                Json?
+  optInMarketing        Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 }
