@@ -38,7 +38,7 @@ export class JudicialDistrictService {
 
   async createJudicialDistrict(data: JudicialDistrictFormData): Promise<{ success: boolean; message: string; districtId?: string; }> {
     try {
-      const dataToCreate: Prisma.JudicialDistrictCreateInput = {
+      const dataToUpsert: Prisma.JudicialDistrictCreateInput = {
         name: data.name,
         slug: slugify(data.name),
         zipCode: data.zipCode,
@@ -46,8 +46,12 @@ export class JudicialDistrictService {
         state: { connect: { id: data.stateId } }
       };
       
-      const newDistrict = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Comarca criada com sucesso.', districtId: newDistrict.id };
+      const newDistrict = await prisma.judicialDistrict.upsert({
+        where: { name: data.name },
+        update: dataToUpsert,
+        create: dataToUpsert,
+      });
+      return { success: true, message: 'Comarca criada/atualizada com sucesso.', districtId: newDistrict.id };
     } catch (error: any) {
       console.error("Error in JudicialDistrictService.create:", error);
       return { success: false, message: `Falha ao criar comarca: ${error.message}` };

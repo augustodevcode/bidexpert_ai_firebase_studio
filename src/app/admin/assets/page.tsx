@@ -3,6 +3,7 @@
  * @fileoverview Página principal para listagem e gerenciamento de Ativos.
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os ativos de forma interativa,
  * permitindo busca, ordenação, exclusão em massa e visualização de detalhes.
+ * A criação e edição são feitas através de um modal (`CrudFormContainer`).
  */
 'use client';
 
@@ -10,8 +11,8 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAssets, deleteAsset } from './actions';
-import type { Asset, PlatformSettings } from '@/types';
+import { getAssets, createAsset, updateAsset, deleteAsset } from './actions';
+import type { Asset, PlatformSettings, LotCategory, JudicialProcess, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 import { PlusCircle, Package, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createColumns } from './columns';
@@ -21,6 +22,15 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import AssetForm from './asset-form';
+import type { AssetFormData } from './asset-form-schema';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
+
 
 const sortOptions = [
   { value: 'createdAt_desc', label: 'Mais Recentes' },
@@ -36,19 +46,36 @@ export default function AdminAssetsPage() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+
+  // Form Modal State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
+  
+  // Dependencies for the form
+  const [dependencies, setDependencies] = useState<{
+    processes: JudicialProcess[],
+    categories: LotCategory[],
+    sellers: SellerProfileInfo[],
+    allStates: StateInfo[],
+    allCities: CityInfo[],
+  } | null>(null);
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedAssets, settings] = await Promise.all([
+      const [fetchedAssets, settings, procs, cats, sells, states, cities] = await Promise.all([
         getAssets(),
-        getPlatformSettings()
+        getPlatformSettings(),
+        getJudicialProcesses(),
+        getLotCategories(),
+        getSellers(),
+        getStates(),
+        getCities(),
       ]);
       setAssets(fetchedAssets);
       setPlatformSettings(settings as PlatformSettings);
+      setDependencies({ processes: procs, categories: cats, sellers: sells, allStates: states, allCities: cities });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar ativos.";
       console.error("Error fetching assets:", e);
@@ -66,6 +93,22 @@ export default function AdminAssetsPage() {
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
+
+  const handleNewClick = () => {
+    setEditingAsset(null);
+    setIsFormOpen(true);
+  };
+
+  const handleEditClick = (asset: Asset) => {
+    setEditingAsset(asset);
+    setIsFormOpen(true);
+  };
+  
+  const handleFormSuccess = () => {
+      setIsFormOpen(false);
+      setEditingAsset(null);
+      onUpdate();
+  };
 
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteAsset(id);
@@ -86,13 +129,8 @@ export default function AdminAssetsPage() {
     toast({ title: "Exclusão em Massa Concluída", description: `${selectedItems.length} ativo(s) excluído(s) com sucesso.` });
     onUpdate();
   }, [onUpdate, toast]);
-
-  const handleOpenDetails = useCallback((asset: Asset) => {
-    setSelectedAsset(asset);
-    setIsModalOpen(true);
-  }, []);
   
-  const columns = useMemo(() => createColumns({ handleDelete, onOpenDetails: handleOpenDetails }), [handleDelete, handleOpenDetails]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
   const renderGridItem = (item: Asset) => <BidExpertCard item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Asset) => <BidExpertListItem item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 
@@ -105,7 +143,14 @@ export default function AdminAssetsPage() {
     { id: 'status', title: 'Status', options: assetStatusOptions },
   ], [assetStatusOptions]);
 
-  if (isLoading || !platformSettings) {
+  const formAction = async (data: AssetFormData) => {
+    if (editingAsset) {
+      return updateAsset(editingAsset.id, data);
+    }
+    return createAsset(data);
+  };
+
+  if (isLoading || !platformSettings || !dependencies) {
      return (
         <div className="space-y-6">
             <Card className="shadow-lg">
@@ -133,10 +178,8 @@ export default function AdminAssetsPage() {
                 Cadastre e gerencie os ativos individuais que poderão ser posteriormente loteados.
               </CardDescription>
             </div>
-            <Button asChild>
-              <Link href="/admin/assets/new">
-                <PlusCircle className="mr-2 h-4 w-4" /> Novo Ativo
-              </Link>
+            <Button onClick={handleNewClick}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Novo Ativo
             </Button>
           </CardHeader>
         </Card>
@@ -159,11 +202,25 @@ export default function AdminAssetsPage() {
             onDeleteSelected={handleDeleteSelected as any}
           />
       </div>
-       <AssetDetailsModal 
-        asset={selectedAsset}
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-      />
+       <CrudFormContainer
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        mode="modal" 
+        title={editingAsset ? 'Editar Ativo' : 'Novo Ativo'}
+        description={editingAsset ? 'Modifique os detalhes do ativo existente.' : 'Cadastre um novo ativo para ser loteado.'}
+       >
+           <AssetForm
+              initialData={editingAsset}
+              processes={dependencies.processes}
+              categories={dependencies.categories}
+              sellers={dependencies.sellers}
+              allStates={dependencies.allStates}
+              allCities={dependencies.allCities}
+              onSubmitAction={formAction}
+              onSuccess={handleFormSuccess}
+              onCancel={() => setIsFormOpen(false)}
+           />
+       </CrudFormContainer>
     </>
   );
 }

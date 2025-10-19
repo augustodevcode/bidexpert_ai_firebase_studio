@@ -11,14 +11,18 @@ import type { Subcategory, SubcategoryFormData } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import type { Prisma } from '@prisma/client';
 import { CategoryRepository } from '@/repositories/category.repository';
+import { prisma } from '@/lib/prisma';
+import { PrismaClient } from '@prisma/client';
 
 export class SubcategoryService {
   private repository: SubcategoryRepository;
   private categoryRepository: CategoryRepository;
+  private prisma: PrismaClient;
 
   constructor() {
     this.repository = new SubcategoryRepository();
     this.categoryRepository = new CategoryRepository();
+    this.prisma = prisma;
   }
 
   async getSubcategoriesByParentId(parentCategoryId: BigInt): Promise<Subcategory[]> {
@@ -43,7 +47,7 @@ export class SubcategoryService {
         await this.categoryRepository.update(parentCategory.id, { hasSubcategories: true });
       }
       
-      const dataToCreate: Prisma.SubcategoryCreateInput = {
+      const dataToUpsert: Prisma.SubcategoryCreateInput = {
         name: data.name,
         slug: slugify(data.name),
         description: data.description,
@@ -54,8 +58,12 @@ export class SubcategoryService {
         parentCategory: { connect: { id: data.parentCategoryId } },
       };
 
-      const newSubcategory = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Subcategoria criada com sucesso.', subcategoryId: newSubcategory.id };
+      const newSubcategory = await prisma.subCategory.upsert({
+        where: { slug_parentCategoryId: { slug: dataToUpsert.slug, parentCategoryId: data.parentCategoryId } },
+        update: dataToUpsert,
+        create: dataToUpsert,
+      });
+      return { success: true, message: 'Subcategoria criada/atualizada com sucesso.', subcategoryId: newSubcategory.id };
     } catch (error: any) {
       console.error("Error in SubcategoryService.create:", error);
       return { success: false, message: `Falha ao criar subcategoria: ${error.message}` };

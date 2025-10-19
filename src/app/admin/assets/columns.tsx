@@ -26,7 +26,7 @@ const getStatusVariant = (status: Asset['status']) => {
     }
 }
 
-export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (id: string) => void, onOpenDetails?: (asset: Asset) => void }): ColumnDef<Asset>[] => [
+export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (asset: Asset) => void }): ColumnDef<Asset>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -110,17 +110,9 @@ export const createColumns = ({ handleDelete, onOpenDetails }: { handleDelete: (
       const asset = row.original;
       return (
         <div className="flex items-center justify-end gap-1">
-          {onOpenDetails && (
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onOpenDetails(asset)}>
-              <Eye className="h-4 w-4" />
-              <span className="sr-only">Visualizar Detalhes</span>
-            </Button>
-          )}
-          <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-            <Link href={`/admin/assets/${asset.id}/edit`}>
-              <Pencil className="h-4 w-4" />
-              <span className="sr-only">Editar</span>
-            </Link>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(asset)}>
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Editar</span>
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(asset.id)}>
             <Trash2 className="h-4 w-4 text-destructive" />

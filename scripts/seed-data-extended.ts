@@ -64,6 +64,18 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
   return values[Math.floor(Math.random() * values.length)];
 };
 
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]+/g, '')
+    .replace(/--+/g, '-');
+};
+
 const entityStore: {
   tenantId: BigInt;
   roles: Record<string, BigInt>;
@@ -384,7 +396,6 @@ async function seedParticipants() {
   log('5 subscribers created.', 2);
 }
 
-/*
 async function seedJudicialData() {
   log('Phase 4: Seeding Judicial Data...', 0);
 
@@ -461,7 +472,7 @@ async function seedJudicialData() {
     }
   }
 }
-*/
+
 
 async function seedMediaLibrary() {
   log('Phase 5: Seeding Media Library...', 0);
@@ -505,8 +516,8 @@ async function seedAssets() {
       make: faker.vehicle.manufacturer(),
       model: faker.vehicle.model(),
       year: faker.number.int({ min: 2010, max: 2023 }),
-      cityId: faker.helpers.arrayElement(Object.values(entityStore.cities)),
-      stateId: faker.helpers.arrayElement(Object.values(entityStore.states)),
+      cityId: BigInt(faker.helpers.arrayElement(Object.values(entityStore.cities).map(id => id.toString()))),
+      stateId: BigInt(faker.helpers.arrayElement(Object.values(entityStore.states).map(id => id.toString()))),
     };
     const result = await assetService.createAsset(entityStore.tenantId, data);
     if (result.success && result.assetId) {

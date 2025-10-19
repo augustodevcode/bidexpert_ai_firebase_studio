@@ -90,8 +90,12 @@ export class JudicialProcessService {
         dataToCreate.seller = { connect: { id: finalSellerId } };
       }
 
-      const newProcess = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Processo judicial criado com sucesso.', processId: newProcess.id };
+      const newProcess = await prisma.judicialProcess.upsert({
+        where: { processNumber_tenantId: { processNumber: processData.processNumber, tenantId } },
+        update: dataToCreate,
+        create: dataToCreate,
+      });
+      return { success: true, message: 'Processo judicial criado/atualizado com sucesso.', processId: newProcess.id };
     } catch (error: any) {
       console.error("Error in JudicialProcessService.create:", error);
       return { success: false, message: `Falha ao criar processo: ${error.message}` };

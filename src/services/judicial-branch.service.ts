@@ -49,8 +49,12 @@ export class JudicialBranchService {
         email: data.email,
         district: { connect: { id: data.districtId } },
       };
-      const newBranch = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Vara criada com sucesso.', branchId: newBranch.id };
+      const newBranch = await prisma.judicialBranch.upsert({
+        where: { name: data.name },
+        update: dataToCreate,
+        create: dataToCreate,
+      });
+      return { success: true, message: 'Vara criada/atualizada com sucesso.', branchId: newBranch.id };
     } catch (error: any) {
       console.error("Error in JudicialBranchService.create:", error);
       return { success: false, message: `Falha ao criar vara: ${error.message}` };
