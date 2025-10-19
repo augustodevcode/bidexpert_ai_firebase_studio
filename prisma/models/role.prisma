@@ -1,8 +1,8 @@
 model Role {
-  id             String         @id @default(cuid())
-  name           String         @unique
-  nameNormalized String         @unique
-  description    String?
-  permissions    Json
-  users          UsersOnRoles[]
+  id              String         @id @default(cuid())
+  name            String
+  nameNormalized  String         @unique
+  description     String?
+  permissions     String[]
+  users           UsersOnRoles[]
 }
