@@ -75,6 +75,10 @@ export class UserService {
     return this.formatUser(user);
   }
 
+  async findFirst(args: Prisma.UserFindFirstArgs): Promise<UserProfileWithPermissions | null> {
+    const user = await this.prisma.user.findFirst(args);
+    return this.formatUser(user);
+  }
 
   async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {

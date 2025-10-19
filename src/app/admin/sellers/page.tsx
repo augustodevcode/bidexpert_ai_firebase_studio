@@ -190,7 +190,7 @@ export default function AdminSellersPage() {
     <CrudFormContainer
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        mode="modal"
+        mode={platformSettings?.crudFormMode || 'modal'}
         title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
         description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
     >

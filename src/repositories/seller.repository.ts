@@ -35,6 +35,10 @@ export class SellerRepository {
     });
   }
 
+  async findFirst(where: Prisma.SellerWhereInput): Promise<SellerProfileInfo | null> {
+    return this.prisma.seller.findFirst({ where });
+  }
+
   async findLotsBySellerId(tenantId: string, sellerId: string): Promise<Lot[]> {
       // @ts-ignore
       return this.prisma.lot.findMany({

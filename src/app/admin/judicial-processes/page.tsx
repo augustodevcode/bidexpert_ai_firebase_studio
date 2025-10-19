@@ -97,7 +97,7 @@ export default function AdminJudicialProcessesPage() {
   const handleDelete = useCallback(async (id: string) => {
     const result = await deleteJudicialProcess(id);
     if (result.success) {
-      toast({ title: "Sucesso", description: result.message });
+      toast({ title: "Sucesso!", description: result.message });
       onUpdate();
     } else {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
@@ -192,7 +192,7 @@ export default function AdminJudicialProcessesPage() {
     <CrudFormContainer
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        mode="modal"
+        mode={platformSettings?.crudFormMode || 'modal'}
         title={editingProcess ? 'Editar Processo Judicial' : 'Novo Processo Judicial'}
         description={editingProcess ? 'Modifique os detalhes do processo.' : 'Cadastre um novo processo e suas partes.'}
     >

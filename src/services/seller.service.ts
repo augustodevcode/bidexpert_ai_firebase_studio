@@ -78,6 +78,10 @@ export class SellerService {
     return this.mapAuctionsWithDetails(publicAuctions);
   }
 
+  async findJudicialSeller(): Promise<SellerProfileInfo | null> {
+    return this.sellerRepository.findFirst({ isJudicial: true });
+  }
+
   async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
     try {
       const existingSeller = await this.sellerRepository.findByName(tenantId, data.name);

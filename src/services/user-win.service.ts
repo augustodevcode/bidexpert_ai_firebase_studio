@@ -9,6 +9,7 @@
 import { UserWinRepository } from '@/repositories/user-win.repository';
 import type { UserWin } from '@/types';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 export class UserWinService {
   private repository: UserWinRepository;
@@ -17,6 +18,14 @@ export class UserWinService {
   constructor() {
     this.repository = new UserWinRepository();
     this.prisma = prisma;
+  }
+
+  async create(data: Prisma.UserWinCreateInput): Promise<UserWin> {
+    return this.prisma.userWin.create({ data });
+  }
+
+  async findFirst(args: Prisma.UserWinFindFirstArgs): Promise<UserWin | null> {
+    return this.prisma.userWin.findFirst(args);
   }
 
   async getWinDetailsById(winId: string): Promise<UserWin | null> {

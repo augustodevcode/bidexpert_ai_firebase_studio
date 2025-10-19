@@ -111,6 +111,7 @@ export default function AdminAssetsPage() {
   };
 
   const handleDelete = useCallback(async (id: string) => {
+    // Adicionar um confirm dialog aqui seria ideal em um app real
     const result = await deleteAsset(id);
     if (result.success) {
       toast({ title: "Sucesso", description: result.message });
@@ -205,7 +206,7 @@ export default function AdminAssetsPage() {
        <CrudFormContainer
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        mode="modal" 
+        mode={platformSettings?.crudFormMode || 'modal'}
         title={editingAsset ? 'Editar Ativo' : 'Novo Ativo'}
         description={editingAsset ? 'Modifique os detalhes do ativo existente.' : 'Cadastre um novo ativo para ser loteado.'}
        >

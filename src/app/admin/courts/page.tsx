@@ -143,7 +143,7 @@ export default function AdminCourtsPage() {
       <CrudFormContainer
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
-          mode="modal"
+          mode={platformSettings?.crudFormMode || 'modal'}
           title={editingCourt ? 'Editar Tribunal' : 'Novo Tribunal'}
           description={editingCourt ? 'Modifique os detalhes do tribunal.' : 'Cadastre um novo tribunal de justiça.'}
       >

@@ -166,7 +166,7 @@ export default function AdminJudicialDistrictsPage() {
      <CrudFormContainer
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        mode="modal"
+        mode={platformSettings?.crudFormMode || 'modal'}
         title={editingDistrict ? 'Editar Comarca' : 'Nova Comarca'}
         description={editingDistrict ? 'Modifique os detalhes da comarca.' : 'Cadastre uma nova comarca judicial.'}
     >

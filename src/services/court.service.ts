@@ -27,13 +27,14 @@ export class CourtService {
 
   async createCourt(data: CourtFormData): Promise<{ success: boolean; message: string; courtId?: string; }> {
     try {
-      const dataToCreate: Prisma.CourtCreateInput = {
-        ...data,
-        slug: slugify(data.name),
-      };
+      const slug = slugify(data.name);
       
-      const newCourt = await this.courtRepository.create(dataToCreate);
-      return { success: true, message: 'Tribunal criado com sucesso.', courtId: newCourt.id };
+      const newCourt = await prisma.court.upsert({
+        where: { slug },
+        update: { ...data, slug },
+        create: { ...data, slug },
+      });
+      return { success: true, message: 'Tribunal criado/atualizado com sucesso.', courtId: newCourt.id };
     } catch (error: any) {
       console.error("Error in CourtService.createCourt:", error);
       return { success: false, message: `Falha ao criar tribunal: ${error.message}` };

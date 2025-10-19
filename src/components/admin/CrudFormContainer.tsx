@@ -23,6 +23,8 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet';
+import { useIsMobile } from '@/hooks/use-mobile';
+
 
 interface CrudFormContainerProps {
   isOpen: boolean;
@@ -41,6 +43,9 @@ export default function CrudFormContainer({
   description,
   children,
 }: CrudFormContainerProps) {
+  const isMobile = useIsMobile();
+  const effectiveMode = isMobile ? 'sheet' : mode;
+
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -48,23 +53,23 @@ export default function CrudFormContainer({
     }
   };
 
-  const formContent = (
-    <>
-      <DialogHeader>
+  const headerContent = (
+      <>
         <DialogTitle>{title}</DialogTitle>
         <DialogDescription>{description}</DialogDescription>
-      </DialogHeader>
-      <div className="py-4">
-        {children}
-      </div>
-    </>
+      </>
   );
 
-  if (mode === 'sheet') {
+  if (effectiveMode === 'sheet') {
     return (
       <Sheet open={isOpen} onOpenChange={handleOpenChange}>
-        <SheetContent className="sm:max-w-xl overflow-y-auto">
-          {formContent}
+        <SheetContent className="sm:max-w-xl w-[90vw] overflow-y-auto p-0 flex flex-col">
+            <SheetHeader className="p-6">
+               {headerContent}
+            </SheetHeader>
+            <div className="flex-grow overflow-y-auto px-6">
+                {children}
+            </div>
         </SheetContent>
       </Sheet>
     );
@@ -72,8 +77,13 @@ export default function CrudFormContainer({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
-        {formContent}
+      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
+         <DialogHeader>
+            {headerContent}
+         </DialogHeader>
+        <div className="flex-grow overflow-y-auto pr-6 pl-2">
+            {children}
+        </div>
       </DialogContent>
     </Dialog>
   );

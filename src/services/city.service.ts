@@ -65,7 +65,6 @@ export class CityService {
         name: data.name,
         slug: slugify(data.name),
         state: { connect: { id: data.stateId } },
-        stateUf: parentState.uf,
         ibgeCode: data.ibgeCode || null,
       };
 

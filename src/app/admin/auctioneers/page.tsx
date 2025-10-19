@@ -184,7 +184,7 @@ export default function AdminAuctioneersPage() {
     <CrudFormContainer
       isOpen={isFormOpen}
       onClose={() => setIsFormOpen(false)}
-      mode="modal"
+      mode={platformSettings?.crudFormMode || 'modal'}
       title={editingAuctioneer ? 'Editar Leiloeiro' : 'Novo Leiloeiro'}
       description={editingAuctioneer ? 'Modifique os detalhes do leiloeiro.' : 'Cadastre um novo leiloeiro.'}
     >

@@ -28,14 +28,13 @@ export class VehicleMakeService {
   async createVehicleMake(data: VehicleMakeFormData): Promise<{ success: boolean; message: string; makeId?: string; }> {
     try {
       const slug = slugify(data.name);
-      const existing = await this.repository.findByName(data.name);
-      if (existing) {
-        return { success: false, message: 'Já existe uma marca com este nome.' };
-      }
       
-      const dataToCreate: Prisma.VehicleMakeCreateInput = { ...data, slug };
-      const newMake = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Marca criada com sucesso.', makeId: newMake.id };
+      const newMake = await prisma.vehicleMake.upsert({
+        where: { slug },
+        update: { ...data, slug },
+        create: { ...data, slug },
+      });
+      return { success: true, message: 'Marca criada/atualizada com sucesso.', makeId: newMake.id };
     } catch (error: any) {
       console.error("Error in VehicleMakeService.create:", error);
       return { success: false, message: `Falha ao criar marca: ${error.message}` };

@@ -37,10 +37,13 @@ import { DocumentService } from '../src/services/document.service';
 import { RoleService } from '../src/services/role.service';
 import { DocumentTypeService } from '../src/services/document-type.service';
 import { TenantService } from '../src/services/tenant.service';
+import { AuctionHabilitationService } from '../src/services/auction-habilitation.service';
+import { BidService } from '../src/services/bid.service';
+import { UserLotMaxBidService } from '../src/services/user-lot-max-bid.service';
+import { PlatformSettingsService } from '../src/services/platform-settings.service';
+import { VehicleMakeService } from '../src/services/vehicle-make.service';
+import { VehicleModelService } from '../src/services/vehicle-model.service';
 
-// ... (other service instantiations)
-
-const documentTypeService = new DocumentTypeService();
 import {
   AuctionStatus,
   AuctionType,
@@ -52,7 +55,7 @@ import {
   DocumentTemplateType,
 } from '@prisma/client';
 
-enum AssetStatus { 
+enum AssetStatus {
   DISPONIVEL = 'DISPONIVEL',
   LOTEADO = 'LOTEADO',
   VENDIDO = 'VENDIDO',
@@ -78,8 +81,8 @@ const slugify = (text: string) => {
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
-    .replace(/[^\w-]+/g, '')
-    .replace(/--+/g, '-');
+    .replace(/[^\\w-]+/g, '')
+    .replace(/--+/g, '-')
 };
 
 const entityStore: {
@@ -154,6 +157,12 @@ const lotQuestionService = new LotQuestionService();
 const reviewService = new ReviewService();
 const installmentPaymentService = new InstallmentPaymentService();
 const tenantService = new TenantService();
+const auctionHabilitationService = new AuctionHabilitationService();
+const bidService = new BidService();
+const userLotMaxBidService = new UserLotMaxBidService();
+const platformSettingsService = new PlatformSettingsService();
+const vehicleMakeService = new VehicleMakeService();
+const vehicleModelService = new VehicleModelService();
 
 // --- Seeding Phases ---
 
@@ -162,7 +171,6 @@ async function seedCoreInfra() {
 
   // 1.1. Tenant (garantir que existe)
   log('Ensuring Tenant exists...', 1);
-  const tenantService = new TenantService();
   let tenant = await prisma.tenant.findUnique({ where: { id: entityStore.tenantId } });
 
   if (!tenant) {
@@ -284,25 +292,22 @@ async function seedBaseData() {
   log('Seeding Location Data (States and Cities)...', 1);
   const locationData = { SP: 'São Paulo', RJ: 'Rio de Janeiro', MG: 'Belo Horizonte' };
   for (const [uf, cityName] of Object.entries(locationData)) {
-    const state = await prisma.state.upsert({
-      where: { uf },
-      update: {},
-      create: { name: uf, uf },
-    });
-    entityStore.states[uf] = state.id;
-    log(`State "${uf}" created.`, 2);
-    
-    const city = await prisma.city.upsert({
-      where: { name_stateId: { name: cityName, stateId: state.id } },
-      update: {},
-      create: {
+    const stateResult = await stateService.createState({ name: uf, uf });
+    if (stateResult.success && stateResult.stateId) {
+      const stateId = stateResult.stateId;
+      entityStore.states[uf] = stateId;
+      log(`State "${uf}" created.`, 2);
+      
+      const cityResult = await cityService.createCity({
         name: cityName,
-        stateId: state.id,
+        stateId: stateId,
         ibgeCode: `${Math.floor(Math.random() * 9000000) + 1000000}`,
-      },
-    });
-    entityStore.cities[cityName] = city.id;
-    log(`City "${cityName}" created.`, 3);
+      });
+      if (cityResult.success && cityResult.cityId) {
+        entityStore.cities[cityName] = cityResult.cityId;
+        log(`City "${cityName}" created.`, 3);
+      }
+    }
   }
 
   // 2.3. Vehicle Makes and Models
@@ -314,24 +319,19 @@ async function seedBaseData() {
   };
 
   for (const [makeName, models] of Object.entries(vehicleData)) {
-    const makeSlug = makeName.toLowerCase().replace(/\s+/g, '-');
-    const make = await prisma.vehicleMake.upsert({
-      where: { slug: makeSlug },
-      update: {},
-      create: { name: makeName, slug: makeSlug },
-    });
-    entityStore.vehicleMakes[makeName] = make.id;
-    log(`Vehicle Make "${makeName}" created.`, 2);
+    const makeResult = await vehicleMakeService.createVehicleMake({ name: makeName });
+    if (makeResult.success && makeResult.makeId) {
+      const makeId = makeResult.makeId;
+      entityStore.vehicleMakes[makeName] = makeId;
+      log(`Vehicle Make "${makeName}" created.`, 2);
 
-    for (const modelName of models) {
-      const modelSlug = `${makeSlug}-${modelName.toLowerCase().replace(/\s+/g, '-')}`;
-      const model = await prisma.vehicleModel.upsert({
-        where: { makeId_name: { makeId: make.id, name: modelName } },
-        update: {},
-        create: { name: modelName, slug: modelSlug, makeId: make.id },
-      });
-      entityStore.vehicleModels.push(model.id);
-      log(`Vehicle Model "${modelName}" created under "${makeName}".`, 3);
+      for (const modelName of models) {
+        const modelResult = await vehicleModelService.createVehicleModel({ name: modelName, makeId: makeId });
+        if (modelResult.success && modelResult.modelId) {
+          entityStore.vehicleModels.push(modelResult.modelId);
+          log(`Vehicle Model "${modelName}" created under "${makeName}".`, 3);
+        }
+      }
     }
   }
 }
@@ -417,18 +417,12 @@ async function seedJudicialData() {
   // 4.1. Courts, Districts, Branches
   log('Seeding Courts, Districts, and Branches...', 1);
   const courtName = 'Tribunal de Justiça de São Paulo';
-  const courtSlug = slugify(courtName);
-  const court = await prisma.court.upsert({
-    where: { slug: courtSlug },
-    update: {},
-    create: {
-      name: courtName,
-      slug: courtSlug,
-      stateUf: 'SP',
-    },
-  });
-  entityStore.courts.TJSP = court.id;
-  log(`Court "${courtName}" created.`, 2);
+  const courtResult = await courtService.createCourt({ name: courtName, stateUf: 'SP' });
+  if (courtResult.success && courtResult.courtId) {
+    const courtId = courtResult.courtId;
+    entityStore.courts.TJSP = courtId;
+    log(`Court "${courtName}" created.`, 2);
+  }
 
   const districtResult = await judicialDistrictService.createJudicialDistrict({
     name: 'Comarca da Capital',
@@ -465,7 +459,7 @@ async function seedJudicialData() {
 
   // 4.2. Judicial Processes
   log('Seeding Judicial Processes...', 1);
-  const judicialSeller = await prisma.seller.findFirst({ where: { isJudicial: true } });
+  const judicialSeller = await sellerService.findJudicialSeller();
   if (judicialSeller) {
     for (let i = 0; i < 3; i++) {
       const data = {
@@ -584,20 +578,17 @@ async function seedAuctionsAndLots() {
 
       // Link M2M relationships using Prisma Update instead of Raw SQL
       const categoryId = faker.helpers.arrayElement(Object.values(entityStore.categories)).id;
-      const updateData: any = {
-        category: { connect: { id: categoryId } },
+      const updateData: Partial<AuctionFormData> = {
+        categoryId: categoryId,
       };
 
       if (isJudicial) {
-        updateData.court = { connect: { id: entityStore.courts.TJSP } };
-        updateData.judicialDistrict = { connect: { id: entityStore.judicialDistricts.Capital } };
-        updateData.judicialBranch = { connect: { id: entityStore.judicialBranches.Vara1 } };
+        updateData.courtId = entityStore.courts.TJSP;
+        updateData.districtId = entityStore.judicialDistricts.Capital;
+        updateData.branchId = entityStore.judicialBranches.Vara1;
       }
 
-      await prisma.auction.update({
-        where: { id: auctionId },
-        data: updateData,
-      });
+      await auctionService.updateAuction(entityStore.tenantId.toString(), auctionId.toString(), updateData);
       log(`Linked M2M relationships for auction ${auctionId}.`, 2);
 
       const availableAssets = entityStore.assets.filter((a) => a.status === 'DISPONIVEL');
@@ -653,15 +644,9 @@ async function seedInteractions() {
     
     for (let i = 0; i < 3; i++) {
       const bidder = faker.helpers.arrayElement(bidderUsers);
-      await prisma.auctionHabilitation.upsert({
-        where: {
-          userId_auctionId: { userId: bidder.id, auctionId: auction.id },
-        },
-        update: {},
-        create: {
-          userId: bidder.id,
-          auctionId: auction.id,
-        },
+      await auctionHabilitationService.upsertAuctionHabilitation({
+        userId: bidder.id,
+        auctionId: auction.id,
       });
     }
     log(`Habilitations created for auction ${auction.id}`, 2);
@@ -675,7 +660,7 @@ async function seedInteractions() {
       const bidder = faker.helpers.arrayElement(bidderUsers);
       currentPrice += faker.number.int({ min: 100, max: 500 });
       // Assuming a bid service might exist, but lotService.placeBid is confirmed
-      await lotService.placeBid(lot.id, bidder.id, currentPrice, bidder.fullName || 'Bidder');
+      await lotService.placeBid(lot.id.toString(), bidder.id.toString(), currentPrice, bidder.fullName || 'Bidder');
       log(`Bid placed on lot "${lot.title}" by "${bidder.fullName}" for ${currentPrice}.`, 2);
     }
   }
@@ -684,13 +669,11 @@ async function seedInteractions() {
   log('Seeding Automatic Bids...', 1);
   for (const lot of openLots.slice(0, 2)) {
     const bidder = faker.helpers.arrayElement(bidderUsers);
-    await prisma.userLotMaxBid.create({
-      data: {
-        userId: bidder.id,
-        lotId: lot.id,
-        maxAmount: faker.number.int({ min: 10000, max: 50000 }),
-        isActive: true,
-      },
+    await userLotMaxBidService.createOrUpdateUserLotMaxBid({
+      userId: bidder.id,
+      lotId: lot.id,
+      maxAmount: faker.number.int({ min: 10000, max: 50000 }),
+      isActive: true,
     });
     log(`Automatic bid set for lot "${lot.title}".`, 2);
   }
@@ -701,7 +684,7 @@ async function seedInteractions() {
   const finalizationResult = await lotService.finalizeLot(lotToWin.id);
   if (finalizationResult.success) {
     log(`Lot "${lotToWin.title}" finalized. ${finalizationResult.message}`, 2);
-    const win = await prisma.userWin.findFirst({ where: { lotId: lotToWin.id } });
+    const win = await userWinService.findFirst({ where: { lotId: lotToWin.id } });
     if (win) {
       // 8.5. Create Installment Payments for the win
       log('Seeding Installment Payments...', 1);
@@ -823,42 +806,24 @@ async function seedMiscData() {
         softCloseMinutes: 5,
       };
 
-      await prisma.platformSettings.upsert({
-        where: { tenantId: entityStore.tenantId },
-        update: {
-          siteTitle: 'BidExpert - Plataforma de Leilões',
-          siteTagline: 'Os melhores leilões em um só lugar',
-          searchPaginationType: 'loadMore',
-          searchItemsPerPage: 12,
-          searchLoadMoreCount: 12,
-          showCountdownOnLotDetail: true,
-          showCountdownOnCards: true,
-          showRelatedLotsOnLotDetail: true,
-          relatedLotsCount: 5,
-          defaultListItemsPerPage: 10,
-          isSetupComplete: true,
-          homepageSections: homepageSections,
-          mentalTriggerSettings: mentalTriggerSettings,
-          biddingSettings: biddingSettings
-        },
-        create: {
-            id: BigInt(1),
-            tenantId: entityStore.tenantId,
-            siteTitle: 'BidExpert - Plataforma de Leilões',
-            siteTagline: 'Os melhores leilões em um só lugar',
-            searchPaginationType: 'loadMore',
-            searchItemsPerPage: 12,
-            searchLoadMoreCount: 12,
-            showCountdownOnLotDetail: true,
-            showCountdownOnCards: true,
-            showRelatedLotsOnLotDetail: true,
-            relatedLotsCount: 5,
-            defaultListItemsPerPage: 10,
-            isSetupComplete: true,
-            homepageSections: homepageSections,
-            mentalTriggerSettings: mentalTriggerSettings,
-            biddingSettings: biddingSettings
-        }
+      // Ensure default settings exist
+      await platformSettingsService.getSettings();
+
+      await platformSettingsService.updateSettings({
+        siteTitle: 'BidExpert - Plataforma de Leilões',
+        siteTagline: 'Os melhores leilões em um só lugar',
+        searchPaginationType: 'loadMore',
+        searchItemsPerPage: 12,
+        searchLoadMoreCount: 12,
+        showCountdownOnLotDetail: true,
+        showCountdownOnCards: true,
+        showRelatedLotsOnLotDetail: true,
+        relatedLotsCount: 5,
+        defaultListItemsPerPage: 10,
+        isSetupComplete: true,
+        homepageSections: homepageSections,
+        mentalTriggerSettings: mentalTriggerSettings,
+        biddingSettings: biddingSettings
       });
   log('Platform settings configured.', 2);
 
@@ -889,12 +854,10 @@ async function seedMiscData() {
 
   // 9.6. User Documents
   log('Seeding User Documents...', 1);
-  const bidder = await prisma.user.findFirst({
-    where: { id: entityStore.users.bidder0 },
-  });
+  const bidder = await userService.findFirst({ where: { id: entityStore.users.bidder0 } });
   if (bidder && entityStore.documentTypes.length > 0) {
     for (let i = 0; i < 2; i++) {
-      const docType = await prisma.documentType.findUnique({ where: { id: entityStore.documentTypes[i] }});
+      const docType = await documentTypeService.findById(entityStore.documentTypes[i]);
       if (docType) {
         await documentService.saveUserDocument(bidder.id, docType.id, `https://storage.example.com/docs/documento-${i + 1}.pdf`, `documento-${i + 1}.pdf`);
       }

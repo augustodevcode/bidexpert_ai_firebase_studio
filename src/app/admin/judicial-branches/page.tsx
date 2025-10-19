@@ -170,7 +170,7 @@ export default function AdminJudicialBranchesPage() {
     <CrudFormContainer
         isOpen={isFormOpen}
         onClose={() => setIsFormOpen(false)}
-        mode="modal"
+        mode={platformSettings?.crudFormMode || 'modal'}
         title={editingBranch ? 'Editar Vara Judicial' : 'Nova Vara Judicial'}
         description={editingBranch ? 'Modifique os detalhes da vara.' : 'Cadastre uma nova vara judicial.'}
     >

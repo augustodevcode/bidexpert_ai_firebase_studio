@@ -215,7 +215,7 @@ export default function AdminAuctionsPage() {
       <CrudFormContainer
           isOpen={isFormOpen}
           onClose={() => setIsFormOpen(false)}
-          mode="modal"
+          mode={platformSettings?.crudFormMode || 'modal'}
           title={editingAuction ? 'Editar Leilão' : 'Novo Leilão'}
           description={editingAuction ? 'Modifique os detalhes do leilão existente.' : 'Preencha os detalhes para criar um novo leilão.'}
       >
