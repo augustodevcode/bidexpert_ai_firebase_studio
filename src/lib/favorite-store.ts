@@ -8,7 +8,18 @@ export function getFavoriteLotIdsFromStorage(): string[] {
   const stored = localStorage.getItem(FAVORITE_LOTS_KEY);
   try {
     const parsed = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    if (!Array.isArray(parsed)) return [];
+
+    // **FIX**: Filter out old non-numeric CUIDs to prevent errors after BigInt migration.
+    const validIds = parsed.filter(id => typeof id === 'string' && /^\d+$/.test(id));
+
+    if(validIds.length < parsed.length) {
+        // If we filtered out some old IDs, let's clean up localStorage.
+        localStorage.setItem(FAVORITE_LOTS_KEY, JSON.stringify(validIds));
+    }
+
+    return validIds;
+    
   } catch (e) {
     console.error("Error parsing favorite lots from localStorage", e);
     return [];

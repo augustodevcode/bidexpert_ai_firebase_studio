@@ -1,4 +1,4 @@
-
+// src/lib/recently-viewed-store.ts
 'use client';
 
 const RECENTLY_VIEWED_KEY = 'recentlyViewedLots';
@@ -25,10 +25,12 @@ export function getRecentlyViewedIds(): string[] {
     const validItems = parsed.filter(item => {
       // Ensure item has a timestamp, default to 0 if not for safety.
       const itemTimestamp = item.timestamp || 0;
-      return (now - itemTimestamp) < expirationTime;
+      // **FIX**: Also ensure the ID is a numeric string to filter out old CUIDs.
+      const isNumericId = typeof item.id === 'string' && /^\d+$/.test(item.id);
+      return (now - itemTimestamp) < expirationTime && isNumericId;
     });
 
-    // Optional: clean up localStorage if it has expired items
+    // Optional: clean up localStorage if it has expired or invalid items
     if (validItems.length < parsed.length) {
         localStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(validItems));
     }
