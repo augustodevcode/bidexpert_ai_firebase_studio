@@ -1,5 +1,5 @@
 model Role {
-  id              String         @id @default(cuid())
+  id              BigInt         @id @default(autoincrement())
   name            String         @unique
   nameNormalized  String         @unique
   description     String?

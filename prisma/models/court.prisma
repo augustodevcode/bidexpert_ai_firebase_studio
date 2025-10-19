@@ -1,5 +1,5 @@
 model Court {
-  id                String              @id @default(cuid())
+  id                BigInt              @id @default(autoincrement())
   name              String
   slug              String?             @unique
   stateUf           String?

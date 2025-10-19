@@ -1,5 +1,5 @@
 model DocumentTemplate {
-  id      String   @id @default(cuid())
+  id      BigInt   @id @default(autoincrement())
   name    String   @unique
   type    DocumentTemplateType
   content String?  @db.Text

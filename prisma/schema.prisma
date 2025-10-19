@@ -87,7 +87,7 @@ enum DocumentTemplateType {
 
 
 model LotQuestion {
-  id                      String    @id @default(cuid())
+  id                      BigInt    @id @default(autoincrement())
   lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
   lotId                   BigInt
   auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
@@ -120,7 +120,7 @@ enum LotStatus {
 }
 
 model Notification {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   userId    BigInt
   message   String
   link      String?
@@ -137,7 +137,7 @@ model Notification {
 /// @model
 /// @description Armazena tokens temporários para redefinição de senha.
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   email     String
   token     String   @unique
   expires   DateTime
@@ -159,7 +159,7 @@ enum PaymentStatus {
 // prisma/models/PlatformSettings.prisma
 
 model PlatformSettings {
-  id                        String    @id @default(cuid())
+  id                        BigInt    @id @default(autoincrement())
   isSetupComplete           Boolean   @default(false) @map("is_setup_complete")
   siteTitle                 String?   @map("site_title")
   siteTagline               String?   @map("site_tagline")
@@ -214,7 +214,7 @@ enum SearchPaginationType {
 }
 
 model State {
-  id                String             @id @default(cuid())
+  id                BigInt             @id @default(autoincrement())
   name              String
   uf                String             @unique
   slug              String?            @unique
@@ -234,7 +234,7 @@ model State {
 /// @description Armazena informações de usuários que se inscreveram na newsletter ou para receber notificações.
 
 model Subscriber {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   email     String   @unique
   name      String?
   phone     String?
@@ -336,7 +336,7 @@ model AuctionHabilitation {
 }
 
 model AuctionStage {
-  id           String    @id @default(uuid())
+  id           BigInt    @id @default(autoincrement())
   name         String
   startDate    DateTime
   endDate      DateTime
@@ -521,7 +521,7 @@ model City {
 }
 
 model ContactMessage {
-  id      String   @id @default(cuid())
+  id      BigInt   @id @default(autoincrement())
   name    String
   email   String
   subject String?
@@ -531,7 +531,7 @@ model ContactMessage {
 }
 
 model Court {
-  id                String              @id @default(cuid())
+  id                BigInt              @id @default(autoincrement())
   name              String
   slug              String?             @unique
   stateUf           String?
@@ -545,7 +545,7 @@ model Court {
 
 /// @Model {label: "Fonte de Dados de Relatório", icon: "database"}
 model DataSource {
-  id        String @id @default(cuid())
+  id        BigInt @id @default(autoincrement())
   name      String
   modelName String @unique
   fields    Json
@@ -590,7 +590,7 @@ model DirectSaleOffer {
 }
 
 model DocumentTemplate {
-  id      String   @id @default(cuid())
+  id      BigInt   @id @default(autoincrement())
   name    String   @unique
   type    DocumentTemplateType
   content String?  @db.Text
@@ -599,7 +599,7 @@ model DocumentTemplate {
 }
 
 model DocumentType {
-  id              String         @id @default(cuid())
+  id              BigInt         @id @default(autoincrement())
   name            String   @unique
   description     String?
   isRequired      Boolean        @default(true)
@@ -623,7 +623,7 @@ model InstallmentPayment {
 }
 
 model JudicialBranch {
-  id                String              @id @default(cuid())
+  id                BigInt              @id @default(autoincrement())
   name              String            @unique
   slug              String?             @unique
   districtId        String?
@@ -639,7 +639,7 @@ model JudicialBranch {
 }
 
 model JudicialDistrict {
-  id                String            @id @default(cuid())
+  id                BigInt            @id @default(autoincrement())
   name              String            @unique
   slug              String?           @unique
   courtId           String?
@@ -665,7 +665,7 @@ model JudicialParty {
 }
 
 model JudicialProcess {
-  id                String  @id @default(cuid())
+  id                BigInt  @id @default(autoincrement())
   publicId          String  @unique
   processNumber     String
   isElectronic      Boolean @default(true)
@@ -693,11 +693,11 @@ model JudicialProcess {
 
 // prisma/models/lot-stage-details.prisma
 model LotStageDetails {
-  id            Int     @id @default(autoincrement())
+  id            BigInt     @id @default(autoincrement())
   lot           Lot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
   lotId         BigInt
   stage         AuctionStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
-  stageId       String
+  stageId       BigInt
   initialBid    Decimal? @db.Decimal(12, 2)
   bidIncrement  Decimal? @db.Decimal(12, 2)
 
@@ -709,7 +709,7 @@ model LotStagePrice {
   lot          Lot      @relation(fields: [lotId], references: [id])
   lotId        BigInt
   auctionStage AuctionStage @relation(fields: [stageId], references: [id])
-  stageId      String
+  stageId      BigInt
   initialBid   Decimal? @db.Decimal(12, 2)
   bidIncrement Decimal? @db.Decimal(12, 2)
 
@@ -822,7 +822,7 @@ model AssetMedia {
 }
 
 model Report {
-  id          String   @id @default(uuid())
+  id          BigInt   @id @default(autoincrement())
   name        String
   description String?
   definition  Json
@@ -835,7 +835,7 @@ model Report {
 }
 
 model Review {
-  id              String   @id @default(cuid())
+  id              BigInt   @id @default(autoincrement())
   lotId           BigInt
   auctionId       BigInt
   userId          BigInt
@@ -851,7 +851,7 @@ model Review {
 }
 
 model Role {
-  id              String         @id @default(cuid())
+  id              BigInt         @id @default(autoincrement())
   name            String         @unique
   nameNormalized  String         @unique
   description     String?
@@ -859,7 +859,7 @@ model Role {
   users           UsersOnRoles[]
 }
 model Seller {
-  id                   String              @id @default(cuid())
+  id                   BigInt              @id @default(autoincrement())
   publicId             String              @unique
   slug                 String              @unique
   name                 String              @unique
@@ -874,7 +874,7 @@ model Seller {
   zipCode              String?             @db.Text
   website              String?             @db.Text
   logoUrl              String?             @db.Text
-  logoMediaId          String?
+  logoMediaId          BigInt?
   dataAiHintLogo       String?             @db.Text
   description          String?             @db.Text
   userId               BigInt?             @unique
@@ -882,7 +882,7 @@ model Seller {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   isJudicial           Boolean             @default(false)
-  judicialBranchId     String?             @unique
+  judicialBranchId     BigInt?             @unique
   judicialBranch       JudicialBranch?     @relation(fields: [judicialBranchId], references: [id])
   // Relacionamentos
   auctions             Auction[]
@@ -896,14 +896,14 @@ model Seller {
 }
 
 model Subcategory {
-  id                 String      @id @default(cuid())
+  id                 BigInt      @id @default(autoincrement())
   name               String
   slug               String
   parentCategoryId   BigInt
   description        String?
   displayOrder       Int         @default(0)
   iconUrl            String?
-  iconMediaId        String?
+  iconMediaId        BigInt?
   dataAiHintIcon     String?
   parentCategory     LotCategory @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
   lots               Lot[]
@@ -914,7 +914,7 @@ model Subcategory {
 
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
-  id        String   @id @default(uuid())
+  id        BigInt   @id @default(autoincrement())
   name      String
   subdomain String   @unique
   domain    String?  @unique
@@ -941,7 +941,7 @@ model Tenant {
 model UserDocument {
   id               BigInt      @id @default(autoincrement())
   userId           BigInt
-  documentTypeId   String
+  documentTypeId   BigInt
   fileUrl          String
   fileName         String
   status           UserDocumentStatus @default(SUBMITTED)
@@ -958,7 +958,7 @@ model UserDocument {
 }
 
 model UserLotMaxBid {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   userId    BigInt
   lotId     BigInt
   maxAmount Decimal  @db.Decimal(15, 2)
@@ -1047,7 +1047,7 @@ model User {
 
 model UsersOnRoles {
   userId     BigInt
-  roleId     String
+  roleId     BigInt
   assignedAt DateTime @default(now())
   assignedBy String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -1058,7 +1058,7 @@ model UsersOnRoles {
 }
 model UsersOnTenants {
   userId     BigInt
-  tenantId   String
+  tenantId   BigInt
   assignedAt DateTime @default(now())
   assignedBy String?
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)

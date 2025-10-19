@@ -14,8 +14,10 @@ interface LotCountdownProps {
 
 const TimeSegment = ({ value, label }: { value: string; label: string }) => (
   <div className="flex flex-col items-center">
-    <span className="text-2xl font-bold leading-none">{value}</span>
-    <span className="text-[10px] uppercase text-muted-foreground">{label}</span>
+    <div className="bg-background-light dark:bg-slate-700 rounded-lg p-3 w-16">
+        <span className="text-3xl font-bold">{value}</span>
+    </div>
+    <span className="text-xs mt-1 text-text-light dark:text-text-dark">{label}</span>
   </div>
 );
 
@@ -60,20 +62,17 @@ export default function LotCountdown({ endDate, status, className }: LotCountdow
   if (!isClient || !timeRemaining) {
     return (
       <div className={cn("text-center py-2", className)}>
-        <p className="text-sm font-semibold text-muted-foreground">{getAuctionStatusText(status)}</p>
+        <p className="text-lg font-semibold">{getAuctionStatusText(status)}</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("flex justify-center items-center gap-2 py-1", className)}>
-      <TimeSegment value={String(timeRemaining.days).padStart(2, '0')} label="Dias" />
-      <span className="text-2xl font-light text-muted-foreground/50">:</span>
-      <TimeSegment value={String(timeRemaining.hours).padStart(2, '0')} label="Horas" />
-      <span className="text-2xl font-light text-muted-foreground/50">:</span>
-      <TimeSegment value={String(timeRemaining.minutes).padStart(2, '0')} label="Min" />
-      <span className="text-2xl font-light text-muted-foreground/50">:</span>
-      <TimeSegment value={String(timeRemaining.seconds).padStart(2, '0')} label="Seg" />
+    <div className={cn("grid grid-cols-4 gap-2 text-center", className)}>
+        <TimeSegment value={String(timeRemaining.days).padStart(2, '0')} label="Dias" />
+        <TimeSegment value={String(timeRemaining.hours).padStart(2, '0')} label="Horas" />
+        <TimeSegment value={String(timeRemaining.minutes).padStart(2, '0')} label="Mins" />
+        <TimeSegment value={String(timeRemaining.seconds).padStart(2, '0')} label="Segs" />
     </div>
   );
 }

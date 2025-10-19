@@ -25,16 +25,16 @@ model Asset {
   category            LotCategory? @relation(fields: [categoryId], references: [id])
   categoryId          BigInt?
   subcategory         Subcategory? @relation(fields: [subcategoryId], references: [id])
-  subcategoryId       String?
+  subcategoryId       BigInt?
   judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  judicialProcessId   String?
+  judicialProcessId   BigInt?
   seller              Seller?      @relation(fields: [sellerId], references: [id])
-  sellerId            String?
+  sellerId            BigInt?
 
   tenant   Tenant @relation(fields: [tenantId], references: [id])
-  tenantId String
+  tenantId BigInt
 
-  stateId             String?
+  stateId             BigInt?
   state               State?   @relation(fields: [stateId], references: [id])
 
   @@index([tenantId])

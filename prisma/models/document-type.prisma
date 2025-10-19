@@ -1,5 +1,5 @@
 model DocumentType {
-  id              String         @id @default(cuid())
+  id              BigInt         @id @default(autoincrement())
   name            String   @unique
   description     String?
   isRequired      Boolean        @default(true)

@@ -3,7 +3,7 @@
 /// @description Armazena informações de usuários que se inscreveram na newsletter ou para receber notificações.
 
 model Subscriber {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   email     String   @unique
   name      String?
   phone     String?

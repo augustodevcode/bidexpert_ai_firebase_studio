@@ -1,6 +1,6 @@
 model UsersOnRoles {
   userId     BigInt
-  roleId     String
+  roleId     BigInt
   assignedAt DateTime @default(now())
   assignedBy String
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)

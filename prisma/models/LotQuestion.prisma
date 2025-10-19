@@ -1,6 +1,6 @@
 
 model LotQuestion {
-  id                      String    @id @default(cuid())
+  id                      BigInt    @id @default(autoincrement())
   lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
   lotId                   BigInt
   auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)

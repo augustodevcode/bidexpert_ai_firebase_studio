@@ -3,7 +3,7 @@ model LotStagePrice {
   lot          Lot      @relation(fields: [lotId], references: [id])
   lotId        BigInt
   auctionStage AuctionStage @relation(fields: [stageId], references: [id])
-  stageId      String
+  stageId      BigInt
   initialBid   Decimal? @db.Decimal(12, 2)
   bidIncrement Decimal? @db.Decimal(12, 2)
 

@@ -1,7 +1,7 @@
 // prisma/models/PlatformSettings.prisma
 
 model PlatformSettings {
-  id                        String    @id @default(cuid())
+  id                        BigInt    @id @default(autoincrement())
   isSetupComplete           Boolean   @default(false) @map("is_setup_complete")
   siteTitle                 String?   @map("site_title")
   siteTagline               String?   @map("site_tagline")

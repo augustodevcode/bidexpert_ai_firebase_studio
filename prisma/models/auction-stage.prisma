@@ -1,5 +1,5 @@
 model AuctionStage {
-  id           String    @id @default(uuid())
+  id           BigInt    @id @default(autoincrement())
   name         String
   startDate    DateTime
   endDate      DateTime

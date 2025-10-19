@@ -1,5 +1,5 @@
 model JudicialProcess {
-  id                String  @id @default(cuid())
+  id                BigInt  @id @default(autoincrement())
   publicId          String  @unique
   processNumber     String
   isElectronic      Boolean @default(true)

@@ -1,5 +1,5 @@
 model Seller {
-  id                   String              @id @default(cuid())
+  id                   BigInt              @id @default(autoincrement())
   publicId             String              @unique
   slug                 String              @unique
   name                 String              @unique
@@ -14,7 +14,7 @@ model Seller {
   zipCode              String?             @db.Text
   website              String?             @db.Text
   logoUrl              String?             @db.Text
-  logoMediaId          String?
+  logoMediaId          BigInt?
   dataAiHintLogo       String?             @db.Text
   description          String?             @db.Text
   userId               BigInt?             @unique
@@ -22,7 +22,7 @@ model Seller {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   isJudicial           Boolean             @default(false)
-  judicialBranchId     String?             @unique
+  judicialBranchId     BigInt?             @unique
   judicialBranch       JudicialBranch?     @relation(fields: [judicialBranchId], references: [id])
   // Relacionamentos
   auctions             Auction[]

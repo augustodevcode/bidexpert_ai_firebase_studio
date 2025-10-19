@@ -1,6 +1,6 @@
 model UsersOnTenants {
   userId     BigInt
-  tenantId   String
+  tenantId   BigInt
   assignedAt DateTime @default(now())
   assignedBy String?
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)

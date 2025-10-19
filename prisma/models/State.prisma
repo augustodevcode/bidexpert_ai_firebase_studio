@@ -1,5 +1,5 @@
 model State {
-  id                String             @id @default(cuid())
+  id                BigInt             @id @default(autoincrement())
   name              String
   uf                String             @unique
   slug              String?            @unique
