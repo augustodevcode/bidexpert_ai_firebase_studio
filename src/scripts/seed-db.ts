@@ -1,4 +1,3 @@
-
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
@@ -141,9 +140,9 @@ async function seedEssentialData() {
     // 2. Seed Landlord Tenant
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
-        where: { name: 'Landlord' },
+        where: { id: 1 },
         update: {},
-        create: { name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { id: 1, name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
