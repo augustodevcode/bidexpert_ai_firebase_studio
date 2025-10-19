@@ -1,15 +1,13 @@
 model AuctionStage {
-  id           BigInt    @id @default(autoincrement())
-  auctionId    BigInt
+  id           String    @id @default(uuid())
   name         String
   startDate    DateTime
   endDate      DateTime
-  initialPrice Decimal?  @db.Decimal(12, 2)
+  auctionId    String
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
-  statusText   String?
 
-  auction      Auction          @relation(fields: [auctionId], references: [id])
+  auction      Auction          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   lotPrices    LotStagePrice[]
 
   @@index([auctionId])

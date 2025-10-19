@@ -1,10 +1,14 @@
 model User {
-  id                  BigInt       @id @default(autoincrement())
-  publicId            String     @unique @default(cuid())
-  email               String     @unique
-  password            String
+  id                  String      @id @default(uuid())
   fullName            String?
-  cpf                 String?    @unique
+  email               String      @unique
+  emailVerified       DateTime?
+  password            String?
+  avatarUrl           String?
+  dataAiHint          String?
+  habilitationStatus  String      @default("PENDING_DOCUMENTS")
+  accountType         String      @default("PHYSICAL")
+  cpf                 String?
   rgNumber            String?
   rgIssuer            String?
   rgIssueDate         DateTime?
@@ -26,32 +30,31 @@ model User {
   neighborhood        String?
   city                String?
   state               String?
-  avatarUrl           String?
-  dataAiHint          String?
-  accountType         AccountType @default(PHYSICAL)
-  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  optInMarketing      Boolean     @default(false)
+  lastLogin           DateTime?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
   razaoSocial         String?
-  cnpj                String?    @unique
+  cnpj                String?
   inscricaoEstadual   String?
   website             String?
   responsibleName     String?
   responsibleCpf      String?
-  optInMarketing      Boolean    @default(false)
-  lastLogin           DateTime?
-  bids                Bid[]
-  lotsWon             UserWin[]  @relation("WonLots")
-  maxBids             UserLotMaxBid[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  documents           UserDocument[]
-  notifications       Notification[]
-  sellerProfile       Seller?
-  auctioneerProfile   Auctioneer?
-  uploadedMedia       MediaItem[]
-  roles               UsersOnRoles[]
-  tenants             UsersOnTenants[]
-  createdAt           DateTime   @default(now())
-  updatedAt           DateTime   @updatedAt
+  badges              String[]
+
+  bids                    Bid[]
+  wins                    UserWin[]           @relation("WinningUser")
+  maxBids                 UserLotMaxBid[]
+  roles                   UsersOnRoles[]
+  tenants                 UsersOnTenants[]
+  documents               UserDocument[]
+  uploadedMedia           MediaItem[]
+  auctioneerProfile       Auctioneer?         @relation("AuctioneerUser")
+  sellerProfile           Seller?             @relation("SellerUser")
+  answeredQuestions       LotQuestion[]
+  askedQuestions          LotQuestion[]       @relation("Asker")
+  reviews                 Review[]
+  auctionHabilitations    AuctionHabilitation[]
 
   @@index([email])
 }

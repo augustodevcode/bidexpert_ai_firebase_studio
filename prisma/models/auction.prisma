@@ -1,73 +1,64 @@
 model Auction {
-  id                           BigInt         @id @default(autoincrement())
-  publicId                     String         @unique @default(uuid())
-  title                        String
-  slug                         String         @unique
-  description                  String?        @db.Text
-  status                       String         @default("RASCUNHO")
-  auctionDate                  DateTime       @default(now())
-  endDate                      DateTime?
-  visits                       Int            @default(0)
-  totalHabilitatedUsers        Int            @default(0)
-  initialOffer                 Decimal?       @db.Decimal(12, 2)
-  isFeaturedOnMarketplace      Boolean        @default(false)
-  additionalTriggers           Json?
-  dataAiHint                   String?
-  imageUrl                     String?
-  imageMediaId                 String?
-  documentsUrl                 String?
-  evaluationReportUrl          String?
-  auctionCertificateUrl        String?
-  onlineUrl                    String?
-  street                       String?
-  number                       String?
-  complement                   String?
-  neighborhood                 String?
-  zipCode                      String?
-  latitude                     Decimal?
-  longitude                    Decimal?
-  auctioneerId                 BigInt?
-  sellerId                     BigInt?
-  categoryId                   BigInt?
-  judicialProcessId            BigInt?
-  cityId                       BigInt?
-  stateId                      BigInt?
-  tenantId                     String
-  auctionType                  String?
-  auctionMethod                String?        @default("STANDARD")
-  participation                String?        @default("ONLINE")
-  sellingBranch                String?
-  automaticBiddingEnabled      Boolean        @default(false)
-  allowInstallmentBids         Boolean        @default(true)
-  silentBiddingEnabled         Boolean        @default(false)
-  allowMultipleBidsPerUser     Boolean        @default(true)
-  softCloseEnabled             Boolean        @default(false)
-  softCloseMinutes             Int?           @default(2)
-  estimatedRevenue             Decimal?       @db.Decimal(12, 2)
-  achievedRevenue              Decimal?       @db.Decimal(12, 2)
+  id                          String    @id @default(uuid())
+  publicId                    String    @unique @default(uuid())
+  title                       String
+  description                 String?   @db.Text
+  slug                        String    @unique
+  status                      String    @default("RASCUNHO")
+  auctionType                 String?
+  auctionMethod               String    @default("STANDARD")
+  participation               String    @default("ONLINE")
+  auctionDate                 DateTime?
+  endDate                     DateTime?
+  onlineUrl                   String?
+  address                     String?
+  cityId                      String?
+  stateId                     String?
+  zipCode                     String?
+  latitude                    Decimal?  @db.Decimal(10, 8)
+  longitude                   Decimal?  @db.Decimal(11, 8)
+  visits                      Int       @default(0)
+  totalHabilitatedUsers       Int       @default(0)
+  initialOffer                Decimal?  @db.Decimal(12, 2)
+  estimatedRevenue            Decimal?  @db.Decimal(12, 2)
+  achievedRevenue             Decimal?  @db.Decimal(12, 2)
+  isFeaturedOnMarketplace     Boolean   @default(false)
   marketplaceAnnouncementTitle String?
-  decrementAmount              Decimal?       @db.Decimal(12, 2)
-  decrementIntervalSeconds     Int?
-  floorPrice                   Decimal?       @db.Decimal(12, 2)
-  autoRelistSettings           Json?
-  createdAt                    DateTime       @default(now())
-  updatedAt                    DateTime       @updatedAt
+  documentsUrl                String?
+  evaluationReportUrl         String?
+  auctionCertificateUrl       String?
+  autoRelistSettings          Json?
+  biddingSettings             Json?
+  softCloseEnabled            Boolean   @default(false)
+  softCloseMinutes            Int?
+  decrementAmount             Decimal?  @db.Decimal(12, 2)
+  decrementIntervalSeconds    Int?
+  floorPrice                  Decimal?  @db.Decimal(12, 2)
+  createdAt                   DateTime  @default(now())
+  updatedAt                   DateTime  @updatedAt
+  tenantId                    String
+  auctioneerId                String?
+  sellerId                    String?
+  categoryId                  String?
+  judicialProcessId           String?
+  imageMediaId                String?
+  dataAiHint                  String?
 
-  lots          Lot[]
-  bids          Bid[]
-  auctioneer    Auctioneer?      @relation(fields: [auctioneerId], references: [id])
-  seller        Seller?          @relation(fields: [sellerId], references: [id])
-  category      LotCategory?     @relation(fields: [categoryId], references: [id])
-  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  city          City?            @relation(fields: [cityId], references: [id])
-  state         State?           @relation(fields: [stateId], references: [id])
-  tenant        Tenant           @relation(fields: [tenantId], references: [id])
-  stages        AuctionStage[]
-  habilitations AuctionHabilitation[]
-
-  @@index([sellerId])
-  @@index([auctioneerId])
-  @@index([categoryId])
-  @@index([judicialProcessId])
+  bids                        Bid[]
+  lots                        Lot[]
+  stages                      AuctionStage[]
+  habilitations               AuctionHabilitation[]
+  tenant                      Tenant             @relation(fields: [tenantId], references: [id])
+  auctioneer                  Auctioneer?        @relation(fields: [auctioneerId], references: [id])
+  seller                      Seller?            @relation(fields: [sellerId], references: [id])
+  category                    LotCategory?       @relation(fields: [categoryId], references: [id])
+  judicialProcess             JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
+  city                        City?              @relation(fields: [cityId], references: [id])
+  state                       State?             @relation(fields: [stateId], references: [id])
+  image                       MediaItem?         @relation("AuctionImage", fields: [imageMediaId], references: [id], onDelete: SetNull)
+  
   @@index([tenantId])
+  @@index([status])
+  @@index([auctioneerId])
+  @@index([sellerId])
 }
