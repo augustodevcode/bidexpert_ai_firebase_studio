@@ -595,7 +595,7 @@ async function seedAuctionsAndLots() {
           select: { categoryId: true },
         });
         const lotData = {
-          title: `Lote para ${asset.id.substring(0, 4)}`,
+          title: `Lote para ${asset.id.toString().substring(0, 4)}`,
           description: faker.lorem.sentence(),
           auctionId: auctionId,
           assetIds: [asset.id],

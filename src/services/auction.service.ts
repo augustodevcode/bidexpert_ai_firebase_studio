@@ -180,8 +180,23 @@ export class AuctionService {
       }
       
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
-        const createdAuction = await tx.auction.create({
-          data: {
+        const createdAuction = await tx.auction.upsert({
+          where: { slug: slugify(data.title!) },
+          update: {
+            ...(restOfData as any),
+            imageUrl: finalImageUrl,
+            publicId: `AUC-${uuidv4()}`,
+            auctionDate: derivedAuctionDate,
+            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
+            auctioneer: { connect: { id: auctioneerId } },
+            seller: { connect: { id: sellerId } },
+            category: categoryId ? { connect: { id: categoryId } } : undefined,
+            tenant: { connect: { id: tenantId } },
+            city: cityId ? { connect: { id: cityId } } : undefined,
+            state: stateId ? { connect: { id: stateId } } : undefined,
+            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
+          },
+          create: {
             ...(restOfData as any),
             imageUrl: finalImageUrl,
             publicId: `AUC-${uuidv4()}`,

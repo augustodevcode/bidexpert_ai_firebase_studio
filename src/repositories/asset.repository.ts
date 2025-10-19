@@ -57,7 +57,7 @@ export class AssetRepository {
 
   async findById(id: string): Promise<any | null> {
     return this.prisma.asset.findFirst({ 
-        where: { OR: [{ id }, { publicId: id }] },
+        where: { OR: [{ id: BigInt(id) }, { publicId: id }] },
         include: {
             category: { select: { name: true } },
             subcategory: { select: { name: true } },

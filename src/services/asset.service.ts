@@ -63,8 +63,8 @@ export class AssetService {
    * @param {string} id - O ID do ativo.
    * @returns {Promise<Asset | null>} O ativo encontrado ou null.
    */
-  async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
-    const asset = await this.repository.findById(id);
+  async getAssetById(tenantId: string, id: string | BigInt): Promise<Asset | null> {
+    const asset = await this.repository.findById(id.toString());
     // Embora o repositório possa ser chamado de múltiplos tenants, o serviço impõe a regra de negócio
     // de que a busca por ID deve respeitar o tenant atual.
     if (!asset || asset.tenantId !== tenantId) return null;

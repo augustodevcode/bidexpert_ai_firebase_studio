@@ -22,7 +22,7 @@ import type { JudicialBranch } from '@/types';
 import { DataTableColumnHeader } from '@/components/ui/data-table-column-header';
 import { Checkbox } from '@/components/ui/checkbox';
 
-export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => void }): ColumnDef<JudicialBranch>[] => [
+export const createColumns = ({ handleDelete, onEdit }: { handleDelete: (id: string) => void, onEdit: (branch: JudicialBranch) => void }): ColumnDef<JudicialBranch>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -46,9 +46,9 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     accessorKey: "name",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Nome da Vara" />,
     cell: ({ row }) => (
-      <Link href={`/admin/judicial-branches/${row.original.id}/edit`} className="hover:text-primary font-medium">
+      <button onClick={() => onEdit(row.original)} className="hover:text-primary font-medium text-left">
         {row.getValue("name")}
-      </Link>
+      </button>
     ),
   },
   {
@@ -73,24 +73,16 @@ export const createColumns = ({ handleDelete }: { handleDelete: (id: string) => 
     cell: ({ row }) => {
       const branch = row.original;
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Abrir menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Ações</DropdownMenuLabel>
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/judicial-branches/${branch.id}/edit`}><Pencil className="mr-2 h-4 w-4"/>Editar</Link>
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => handleDelete(branch.id)} className="text-destructive">
-              <Trash2 className="mr-2 h-4 w-4" />Excluir
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center justify-end gap-1">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(branch)}>
+            <Pencil className="h-4 w-4" />
+            <span className="sr-only">Editar</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleDelete(branch.id)}>
+            <Trash2 className="h-4 w-4 text-destructive" />
+            <span className="sr-only">Excluir</span>
+          </Button>
+        </div>
       );
     },
   },
