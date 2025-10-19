@@ -1,0 +1,12 @@
+// prisma/models/lot-stage-details.prisma
+model LotStageDetails {
+  id            Int     @id @default(autoincrement())
+  lot           Lot     @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  lotId         Int
+  stage         AuctionStage @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  stageId       Int
+  initialBid    Decimal? @db.Decimal(12, 2)
+  bidIncrement  Decimal? @db.Decimal(12, 2)
+
+  @@unique([lotId, stageId])
+}

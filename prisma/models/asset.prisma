@@ -1,0 +1,39 @@
+// prisma/models/asset.prisma
+model Asset {
+  id                  Int       @id @default(autoincrement())
+  publicId            String    @unique @default(uuid())
+  title               String
+  description         String?   @db.Text
+  properties          String?   @db.Text
+  status              String    @default("CADASTRO")
+  evaluationValue     Decimal?  @db.Decimal(12, 2)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  imageUrl            String?
+  imageMediaId        String?
+  galleryImageUrls    String[]
+  mediaItemIds        String[]
+  dataAiHint          String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  zipCode             String?
+  latitude            Float?
+  longitude           Float?
+  lots                AssetsOnLots[]
+  category            LotCategory? @relation(fields: [categoryId], references: [id])
+  categoryId          Int?
+  subcategory         Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId       Int?
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId   Int?
+  seller              Seller?    @relation(fields: [sellerId], references: [id])
+  sellerId            Int?
+  city                City?      @relation(fields: [cityId], references: [id])
+  cityId              Int?
+  state               State?     @relation(fields: [stateId], references: [id])
+  stateId             Int?
+  tenant              Tenant     @relation(fields: [tenantId], references: [id])
+  tenantId            Int
+}

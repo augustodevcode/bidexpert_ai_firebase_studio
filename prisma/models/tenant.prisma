@@ -1,0 +1,19 @@
+// prisma/models/tenant.prisma
+model Tenant {
+  id          Int       @id @default(autoincrement())
+  name        String
+  subdomain   String?   @unique
+  domain      String?   @unique
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  users       UsersOnTenants[]
+  auctions    Auction[]
+  lots        Lot[]
+  assets      Asset[]
+  sellers     Seller[]
+  auctioneers Auctioneer[]
+  judicialProcesses JudicialProcess[]
+  platformSettings  PlatformSettings[]
+  subscribers Subscriber[]
+  reports     Report[]
+}

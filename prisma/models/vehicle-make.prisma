@@ -1,0 +1,7 @@
+// prisma/models/vehicle-make.prisma
+model VehicleMake {
+  id      Int      @id @default(autoincrement())
+  name    String   @unique
+  slug    String   @unique
+  models  VehicleModel[]
+}

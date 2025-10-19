@@ -1,0 +1,22 @@
+// prisma/models/judicial-process.prisma
+model JudicialProcess {
+  id              Int       @id @default(autoincrement())
+  publicId        String    @unique @default(uuid())
+  processNumber   String    @unique
+  isElectronic    Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  auctions        Auction[]
+  assets          Asset[]
+  parties         JudicialParty[]
+  court           Court?    @relation(fields: [courtId], references: [id])
+  courtId         Int?
+  district        JudicialDistrict? @relation(fields: [districtId], references: [id])
+  districtId      Int?
+  branch          JudicialBranch? @relation(fields: [branchId], references: [id])
+  branchId        Int?
+  seller          Seller?         @relation(fields: [sellerId], references: [id])
+  sellerId        Int?
+  tenant          Tenant          @relation(fields: [tenantId], references: [id])
+  tenantId        Int
+}

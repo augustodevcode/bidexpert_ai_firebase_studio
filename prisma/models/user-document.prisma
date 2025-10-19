@@ -1,0 +1,26 @@
+// prisma/models/user-document.prisma
+model UserDocument {
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentTypeId  Int
+  documentType    DocumentType @relation(fields: [documentTypeId], references: [id])
+  fileUrl         String
+  fileName        String
+  status          String   @default("SUBMITTED") // SUBMITTED, APPROVED, REJECTED, PENDING_ANALYSIS
+  rejectionReason String?
+  uploadedAt      DateTime @default(now())
+  verifiedAt      DateTime?
+  verifiedBy      String? // Admin user ID
+
+  @@unique([userId, documentTypeId])
+}
+
+model DocumentType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isRequired  Boolean  @default(true)
+  appliesTo   String   @default("ALL") // ALL, PHYSICAL, LEGAL
+  userDocs    UserDocument[]
+}

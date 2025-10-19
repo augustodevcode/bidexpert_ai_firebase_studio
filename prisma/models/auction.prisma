@@ -1,0 +1,63 @@
+// prisma/models/auction.prisma
+model Auction {
+  id                   Int       @id @default(autoincrement())
+  publicId             String    @unique @default(uuid())
+  slug                 String    @unique
+  title                String
+  description          String?   @db.Text
+  status               String    @default("RASCUNHO")
+  auctionType          String    @default("EXTRAJUDICIAL")
+  auctionMethod        String    @default("STANDARD")
+  participation        String    @default("ONLINE")
+  auctionDate          DateTime  @default(now())
+  endDate              DateTime?
+  visits               Int       @default(0)
+  totalHabilitatedUsers Int      @default(0)
+  isFeaturedOnMarketplace Boolean @default(false)
+  additionalTriggers   String[]
+  initialOffer         Decimal?  @db.Decimal(12, 2)
+  estimatedRevenue     Decimal?  @db.Decimal(12, 2)
+  achievedRevenue      Decimal?  @db.Decimal(12, 2)
+  onlineUrl            String?
+  address              String?
+  city                 City?     @relation(fields: [cityId], references: [id])
+  cityId               Int?
+  state                State?    @relation(fields: [stateId], references: [id])
+  stateId              Int?
+  zipCode              String?
+  latitude             Float?
+  longitude            Float?
+  documentsUrl         String?
+  evaluationReportUrl  String?
+  auctionCertificateUrl String?
+  sellingBranch        String?
+  automaticBiddingEnabled Boolean @default(false)
+  allowInstallmentBids  Boolean  @default(true)
+  silentBiddingEnabled   Boolean  @default(false)
+  allowMultipleBidsPerUser Boolean @default(true)
+  softCloseEnabled     Boolean  @default(false)
+  softCloseMinutes     Int?
+  decrementAmount      Decimal? @db.Decimal(12, 2)
+  decrementIntervalSeconds Int?
+  floorPrice           Decimal? @db.Decimal(12, 2)
+  autoRelistSettings   Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  lots                 Lot[]
+  auctioneer           Auctioneer? @relation(fields: [auctioneerId], references: [id])
+  auctioneerId         Int?
+  seller               Seller?     @relation(fields: [sellerId], references: [id])
+  sellerId             Int?
+  category             LotCategory? @relation(fields: [categoryId], references: [id])
+  categoryId           Int?
+  judicialProcess      JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId    Int?
+  habilitations        AuctionHabilitation[]
+  stages               AuctionStage[]
+  bids                 Bid[]
+  tenant               Tenant      @relation(fields: [tenantId], references: [id])
+  tenantId             Int
+  imageUrl             String?
+  imageMediaId         String?
+  dataAiHint           String?
+}

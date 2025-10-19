@@ -1,0 +1,17 @@
+// prisma/models/subcategory.prisma
+model Subcategory {
+  id                  Int          @id @default(autoincrement())
+  name                String
+  slug                String       @unique
+  description         String?
+  displayOrder        Int          @default(0)
+  iconUrl             String?
+  iconMediaId         String?
+  dataAiHintIcon      String?
+  parentCategory      LotCategory? @relation(fields: [parentCategoryId], references: [id])
+  parentCategoryId    Int?
+  lots                Lot[]
+  assets              Asset[]
+
+  @@unique([name, parentCategoryId])
+}

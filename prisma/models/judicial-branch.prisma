@@ -1,0 +1,16 @@
+// prisma/models/judicial-branch.prisma
+model JudicialBranch {
+  id                Int       @id @default(autoincrement())
+  name              String
+  slug              String    @unique
+  contactName       String?
+  phone             String?
+  email             String?
+  district          JudicialDistrict @relation(fields: [districtId], references: [id])
+  districtId        Int
+  judicialProcesses JudicialProcess[]
+  auctions          Auction[]
+  sellers           Seller[]
+
+  @@unique([name, districtId])
+}

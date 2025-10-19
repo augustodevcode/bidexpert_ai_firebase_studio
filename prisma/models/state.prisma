@@ -1,0 +1,13 @@
+// prisma/models/state.prisma
+model State {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+  uf   String @unique
+  slug String @unique
+
+  cities    City[]
+  auctions  Auction[]
+  lots      Lot[]
+  assets    Asset[]
+  districts JudicialDistrict[]
+}

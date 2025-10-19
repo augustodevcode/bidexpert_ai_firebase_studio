@@ -1,0 +1,10 @@
+// prisma/models/vehicle-model.prisma
+model VehicleModel {
+  id     Int    @id @default(autoincrement())
+  name   String
+  slug   String @unique
+  make   VehicleMake @relation(fields: [makeId], references: [id])
+  makeId Int
+
+  @@unique([makeId, name])
+}

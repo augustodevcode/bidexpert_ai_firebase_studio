@@ -1,0 +1,22 @@
+// prisma/models/media-item.prisma
+model MediaItem {
+  id                  Int       @id @default(autoincrement())
+  fileName            String
+  mimeType            String
+  sizeBytes           Int
+  urlOriginal         String    @unique
+  urlThumbnail        String?
+  storagePath         String
+  altText             String?
+  title               String?
+  caption             String?
+  description         String?   @db.Text
+  dataAiHint          String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  uploadedBy          User      @relation(fields: [uploadedByUserId], references: [id])
+  uploadedByUserId    Int
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId   Int?
+  assets              AssetMedia[]
+}
