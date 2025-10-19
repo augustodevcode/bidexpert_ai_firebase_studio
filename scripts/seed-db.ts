@@ -9,13 +9,13 @@ const prisma = new PrismaClient();
  * Dados essenciais para o funcionamento da plataforma.
  */
 const essentialRoles = [
-  { id: 'role-admin', name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: 'manage_all' },
-  { id: 'role-consignor', name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: 'consignor_dashboard:view,auctions:manage_own,lots:manage_own' },
-  { id: 'role-analyst', name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', description: 'Analisa e aprova habilitações de usuários.', permissions: 'users:manage_habilitation,reports:view' },
-  { id: 'role-bidder', name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: 'place_bids' },
-  { id: 'role-user', name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: 'view_auctions,view_lots' },
-  { id: 'role-tenant-admin', name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
-  { id: 'role-financial', name: 'Financeiro', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
+  { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: 'manage_all' },
+  { name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: 'consignor_dashboard:view,auctions:manage_own,lots:manage_own' },
+  { name: 'Auction Analyst', nameNormalized: 'AUCTION_ANALYST', description: 'Analisa e aprova habilitações de usuários.', permissions: 'users:manage_habilitation,reports:view' },
+  { name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: 'place_bids' },
+  { name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: 'view_auctions,view_lots' },
+  { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
+  { name: 'Financeiro', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
 ];
 
 const brazilianStates = [
@@ -123,9 +123,11 @@ async function seedEssentialData() {
     for (const role of essentialRoles) {
       await prisma.role.upsert({
         where: { nameNormalized: role.nameNormalized },
-        update: {},
+        update: {
+          description: role.description,
+          permissions: role.permissions.split(','),
+        },
         create: {
-          id: role.id,
           name: role.name,
           nameNormalized: role.nameNormalized,
           description: role.description,
@@ -138,19 +140,19 @@ async function seedEssentialData() {
     // 2. Seed Landlord Tenant
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
-        where: { id: '1' },
+        where: { name: 'Landlord' },
         update: {},
-        create: { id: '1', name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
     // 3. Seed Platform Settings for Landlord
     console.log('[DB SEED] Seeding Platform Settings for Landlord...');
     await prisma.platformSettings.upsert({
-        where: { tenantId: '1' },
+        where: { tenantId: landlordTenant.id },
         update: {},
         create: {
-            tenantId: '1',
+            tenantId: landlordTenant.id,
             siteTitle: 'BidExpert',
             siteTagline: 'Sua plataforma de leilões online.',
             galleryImageBasePath: '/uploads/media/',
@@ -204,7 +206,6 @@ async function seedEssentialData() {
         });
         console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
     } else {
-        // Ensure admin user is linked to landlord tenant if they exist
         const adminTenantLink = await prisma.usersOnTenants.findUnique({
             where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } }
         });
@@ -258,5 +259,3 @@ async function main() {
 }
 
 main();
-
-    
