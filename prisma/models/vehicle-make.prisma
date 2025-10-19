@@ -1,6 +1,0 @@
-model VehicleMake {
-  id      BigInt     @id @default(autoincrement())
-  name    String   @unique
-  slug    String   @unique
-  models  VehicleModel[]
-}
