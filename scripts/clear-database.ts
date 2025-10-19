@@ -12,7 +12,6 @@ import { AuctioneerService } from '../src/services/auctioneer.service';
 import { JudicialProcessService } from '../src/services/judicial-process.service';
 import { DirectSaleOfferService } from '../src/services/direct-sale-offer.service';
 import { UserWinService } from '../src/services/user-win.service';
-import { NotificationService } from '../src/services/notification.service';
 import { ContactMessageService } from '../src/services/contact-message.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
 import { SubcategoryService } from '../src/services/subcategory.service';
