@@ -2,7 +2,7 @@ model JudicialBranch {
   id                BigInt              @id @default(autoincrement())
   name              String            @unique
   slug              String?             @unique
-  districtId        String?
+  districtId        BigInt?
   contactName       String?
   phone             String?
   email             String?

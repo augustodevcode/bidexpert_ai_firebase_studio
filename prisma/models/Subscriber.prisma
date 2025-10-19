@@ -15,7 +15,7 @@ model Subscriber {
   preferences Json?
   
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId  String
+  tenantId  BigInt
   
   @@index([tenantId])
 }

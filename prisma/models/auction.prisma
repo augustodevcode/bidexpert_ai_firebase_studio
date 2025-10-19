@@ -53,11 +53,11 @@ model Auction {
   stateObject               State?                  @relation(fields: [stateId], references: [id])
   judicialProcessId         BigInt?
   judicialProcess           JudicialProcess?        @relation(fields: [judicialProcessId], references: [id])
-  districtId                String?
+  districtId                BigInt?
   judicialDistrict          JudicialDistrict?       @relation(fields: [districtId], references: [id])
-  branchId                  String?
+  branchId                  BigInt?
   judicialBranch            JudicialBranch?         @relation(fields: [branchId], references: [id])
-  courtId                   String?
+  courtId                   BigInt?
   court                     Court?                  @relation(fields: [courtId], references: [id])
   lots                      Lot[]
   bids                      Bid[]

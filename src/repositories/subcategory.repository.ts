@@ -4,7 +4,7 @@ import type { Subcategory } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 export class SubcategoryRepository {
-  async findAllByParentId(parentCategoryId: string): Promise<any[]> {
+  async findAllByParentId(parentCategoryId: BigInt): Promise<any[]> {
     return prisma.subcategory.findMany({
       where: { parentCategoryId },
       orderBy: { displayOrder: 'asc' },
@@ -14,7 +14,7 @@ export class SubcategoryRepository {
     });
   }
 
-  async findById(id: string): Promise<Subcategory | null> {
+  async findById(id: BigInt): Promise<Subcategory | null> {
     return prisma.subcategory.findUnique({ where: { id } });
   }
 
@@ -22,11 +22,11 @@ export class SubcategoryRepository {
     return prisma.subcategory.create({ data });
   }
 
-  async update(id: string, data: Prisma.SubcategoryUpdateInput): Promise<Subcategory> {
+  async update(id: BigInt, data: Prisma.SubcategoryUpdateInput): Promise<Subcategory> {
     return prisma.subcategory.update({ where: { id }, data });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: BigInt): Promise<void> {
     await prisma.subcategory.delete({ where: { id } });
   }
 

@@ -34,5 +34,5 @@ model PlatformSettings {
 
   // Relation to Tenant
   tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId String @unique @map("tenant_id")
+  tenantId BigInt @unique @map("tenant_id")
 }

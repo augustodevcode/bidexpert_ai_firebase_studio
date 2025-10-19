@@ -3,13 +3,13 @@ model JudicialProcess {
   publicId          String  @unique
   processNumber     String
   isElectronic      Boolean @default(true)
-  courtId           String?
-  districtId        String?
-  branchId          String?
-  sellerId          String?
+  courtId           BigInt?
+  districtId        BigInt?
+  branchId          BigInt?
+  sellerId          BigInt?
   createdAt         DateTime? @default(now())
   updatedAt         DateTime? @updatedAt
-  tenantId          String
+  tenantId          BigInt
   assets            Asset[]
   auctions          Auction[] @relation(map: "AuctionToJudicialProcess")
 

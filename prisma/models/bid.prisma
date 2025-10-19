@@ -11,7 +11,7 @@ model Bid {
   lot             Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auction         Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   bidder          User      @relation(fields: [bidderId], references: [id], onDelete: Cascade)
-  tenantId        String
+  tenantId        BigInt
   tenant          Tenant    @relation(fields: [tenantId], references: [id])
   @@index([lotId])
   @@index([auctionId])

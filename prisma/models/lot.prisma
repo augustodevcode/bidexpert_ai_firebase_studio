@@ -28,16 +28,16 @@ model Lot {
   longitude                    Decimal?                @db.Decimal(11, 8)
   relistCount                  Int                     @default(0)
   isRelisted                   Boolean                 @default(false)
-  tenantId                     String
+  tenantId                     BigInt
   tenant                       Tenant                  @relation(fields: [tenantId], references: [id])
   auctionId                    BigInt
   auction                      Auction                 @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   type                         String // Substituído de LotCategory para String
   categoryId                   BigInt?
   category                     LotCategory?            @relation(fields: [categoryId], references: [id])
-  subcategoryId                String?
+  subcategoryId                BigInt?
   subcategory                  Subcategory?            @relation(fields: [subcategoryId], references: [id])
-  sellerId                     String?
+  sellerId                     BigInt?
   seller                       Seller?                 @relation(fields: [sellerId], references: [id])
   auctioneerId                 BigInt?
   auctioneer                   Auctioneer?             @relation(fields: [auctioneerId], references: [id])
@@ -45,7 +45,7 @@ model Lot {
   winner                       User?                   @relation("LotsWon", fields: [winnerId], references: [id])
   cityId                       BigInt?
   city                         City?                   @relation(fields: [cityId], references: [id])
-  stateId                      String?
+  stateId                      BigInt?
   state                        State?                  @relation(fields: [stateId], references: [id])
   originalLotId                BigInt?
   originalLot                  Lot?                    @relation("RelistedFrom", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)

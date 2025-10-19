@@ -40,13 +40,15 @@ export async function createSession(user: UserProfileWithPermissions, tenantId: 
     console.log(`[Create Session] Criando sessão para usuário ${user.email} no tenant ${tenantId}`);
     
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    // Simplificando o payload para ser mais leve
+    // Simplificando o payload para ser mais leve e garantindo que tudo seja serializável
     const sessionPayload = {
-        userId: user.id,
+        userId: user.id.toString(), // Garantir que é string
         email: user.email,
-        tenantId: tenantId,
+        tenantId: tenantId.toString(), // Garantir que é string
         roleNames: user.roleNames,
         permissions: user.permissions,
+        sellerId: user.sellerId?.toString() || null,
+        auctioneerId: user.auctioneerId?.toString() || null,
     };
     
     const session = await encrypt(sessionPayload);

@@ -27,7 +27,11 @@ import { UserService } from '@/services/user.service';
 function formatUserWithPermissions(user: any): UserProfileWithPermissions | null {
     if (!user) return null;
 
-    const roles: Role[] = user.roles?.map((ur: any) => ur.role) || [];
+    const roles: Role[] = user.roles?.map((ur: any) => ({
+      ...ur.role,
+      id: ur.role.id.toString(), // Convert BigInt to string
+    })) || [];
+
     const permissions = Array.from(new Set(roles.flatMap((r: any) => {
         if (typeof r.permissions === 'string') {
             return r.permissions.split(',');
@@ -37,15 +41,19 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
         }
         return [];
     })));
-    const tenants: Tenant[] = user.tenants?.map((ut: any) => ut.tenant) || [];
+    
+    const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
+        ...ut.tenant,
+        id: ut.tenant.id.toString(), // Convert BigInt to string
+    })) || [];
 
     return {
         ...user,
-        id: user.id,
-        uid: user.id,
+        id: user.id.toString(), // Convert BigInt to string
+        uid: user.id.toString(), // Convert BigInt to string
         roles,
         tenants,
-        roleIds: roles.map((r: any) => r.id),
+        roleIds: roles.map((r: any) => r.id), // Now already strings
         roleNames: roles.map((r: any) => r.name),
         permissions,
         roleName: roles[0]?.name,
@@ -86,7 +94,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     
     // Se o tenant não foi especificado e o usuário só tem um, loga nele
     if (!tenantId && user.tenants?.length === 1) {
-        tenantId = user.tenants[0].tenantId;
+        tenantId = user.tenants[0].tenantId.toString();
     } else if (!tenantId && user.tenants && user.tenants.length > 1) {
         // Se tem múltiplos tenants e nenhum foi escolhido, retorna os dados para o seletor da UI
         const userProfile = formatUserWithPermissions(user);
@@ -94,7 +102,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     }
     
     // Se um tenantId foi especificado, verifica se o usuário pertence a ele
-    const userBelongsToTenant = user.tenants?.some(t => t.tenantId === tenantId);
+    const userBelongsToTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
     if (tenantId && !userBelongsToTenant) {
         console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
         return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };

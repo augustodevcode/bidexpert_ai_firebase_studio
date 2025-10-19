@@ -65,27 +65,27 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 };
 
 const entityStore: {
-  tenantId: string;
-  roles: Record<string, string>;
-  users: Record<string, string>;
-  categories: Record<string, { id: string; subcategoryIds: string[] }>;
-  states: Record<string, string>;
-  cities: Record<string, string>;
-  courts: Record<string, string>;
-  judicialDistricts: Record<string, string>;
-  judicialBranches: Record<string, string>;
-  sellers: string[];
-  auctioneers: string[];
-  judicialProcesses: string[];
-  assets: { id: string; status: AssetStatus }[];
-  auctions: string[];
-  lots: string[];
-  vehicleMakes: Record<string, string>;
-  vehicleModels: string[];
-  mediaItems: string[];
-  documentTypes: string[];
+  tenantId: BigInt;
+  roles: Record<string, BigInt>;
+  users: Record<string, BigInt>;
+  categories: Record<string, { id: BigInt; subcategoryIds: BigInt[] }>;
+  states: Record<string, BigInt>;
+  cities: Record<string, BigInt>;
+  courts: Record<string, BigInt>;
+  judicialDistricts: Record<string, BigInt>;
+  judicialBranches: Record<string, BigInt>;
+  sellers: BigInt[];
+  auctioneers: BigInt[];
+  judicialProcesses: BigInt[];
+  assets: { id: BigInt; status: AssetStatus }[];
+  auctions: BigInt[];
+  lots: BigInt[];
+  vehicleMakes: Record<string, BigInt>;
+  vehicleModels: BigInt[];
+  mediaItems: BigInt[];
+  documentTypes: BigInt[];
 } = {
-  tenantId: '1',
+  tenantId: BigInt(1),
   roles: {},
   users: {},
   categories: {},
@@ -315,7 +315,7 @@ async function seedParticipants() {
   // 3.1. Auctioneers
   log('Seeding Auctioneers...', 1);
   for (let i = 0; i < 3; i++) {
-    const name = `Leiloeiro Oficial ${i + 1}`;
+    const name = `Leiloeiro Oficial ${i + 1} - ${faker.string.uuid().substring(0, 4)}`;
     const result = await auctioneerService.createAuctioneer(entityStore.tenantId, {
       name,
       email: faker.internet.email(),
@@ -378,54 +378,61 @@ async function seedParticipants() {
       name: faker.person.fullName(),
       phone: faker.phone.number(),
       preferences: { categories: ['Veículos', 'Imóveis'] },
+      tenantId: entityStore.tenantId,
     });
   }
   log('5 subscribers created.', 2);
 }
 
+/*
 async function seedJudicialData() {
   log('Phase 4: Seeding Judicial Data...', 0);
 
   // 4.1. Courts, Districts, Branches
   log('Seeding Courts, Districts, and Branches...', 1);
-  const courtResult = await courtService.createCourt({
-    name: 'Tribunal de Justiça de São Paulo',
-    stateUf: 'SP',
+  const courtName = 'Tribunal de Justiça de São Paulo';
+  const courtSlug = slugify(courtName);
+  const court = await prisma.court.upsert({
+    where: { slug: courtSlug },
+    update: {},
+    create: {
+      name: courtName,
+      slug: courtSlug,
+      stateUf: 'SP',
+    },
   });
-  if (courtResult.success && courtResult.courtId) {
-    entityStore.courts.TJSP = courtResult.courtId;
-    log('Court "TJSP" created.', 2);
+  entityStore.courts.TJSP = court.id;
+  log(`Court "${courtName}" created.`, 2);
 
-    const districtResult = await judicialDistrictService.createJudicialDistrict({
-      name: 'Comarca da Capital',
-      courtId: courtResult.courtId,
-      stateId: entityStore.states.SP,
+  const districtResult = await judicialDistrictService.createJudicialDistrict({
+    name: 'Comarca da Capital',
+    courtId: court.id,
+    stateId: entityStore.states.SP,
+  });
+  if (districtResult.success && districtResult.districtId) {
+    entityStore.judicialDistricts.Capital = districtResult.districtId;
+    log('District "Capital" created.', 3);
+
+    const branchResult = await judicialBranchService.createJudicialBranch({
+      name: '1ª Vara Cível',
+      districtId: districtResult.districtId,
     });
-    if (districtResult.success && districtResult.districtId) {
-      entityStore.judicialDistricts.Capital = districtResult.districtId;
-      log('District "Capital" created.', 3);
+    if (branchResult.success && branchResult.branchId) {
+      entityStore.judicialBranches.Vara1 = branchResult.branchId;
+      log('Branch "1ª Vara Cível" created.', 4);
 
-      const branchResult = await judicialBranchService.createJudicialBranch({
-        name: '1ª Vara Cível',
-        districtId: districtResult.districtId,
-      });
-      if (branchResult.success && branchResult.branchId) {
-        entityStore.judicialBranches.Vara1 = branchResult.branchId;
-        log('Branch "1ª Vara Cível" created.', 4);
-
-        // Judicial seller linked to branch
-        const sellerName = `Vendedor Judicial - 1ª Vara Cível`;
-        const sellerData = {
-          name: sellerName,
-          email: faker.internet.email(),
-          isJudicial: true,
-          judicialBranchId: branchResult.branchId,
-        };
-        const sellerResult = await sellerService.createSeller(entityStore.tenantId, sellerData);
-        if (sellerResult.success && sellerResult.sellerId) {
-          entityStore.sellers.push(sellerResult.sellerId);
-          log(`Judicial Seller "${sellerName}" created.`, 5);
-        }
+      // Judicial seller linked to branch
+      const sellerName = `Vendedor Judicial - 1ª Vara Cível`;
+      const sellerData = {
+        name: sellerName,
+        email: faker.internet.email(),
+        isJudicial: true,
+        judicialBranchId: branchResult.branchId,
+      };
+      const sellerResult = await sellerService.createSeller(entityStore.tenantId, sellerData);
+      if (sellerResult.success && sellerResult.sellerId) {
+        entityStore.sellers.push(sellerResult.sellerId);
+        log(`Judicial Seller "${sellerName}" created.`, 5);
       }
     }
   }
@@ -442,8 +449,8 @@ async function seedJudicialData() {
         branchId: entityStore.judicialBranches.Vara1,
         sellerId: judicialSeller.id,
         parties: [
-          { name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR },
-          { name: faker.person.fullName(), partyType: ProcessPartyType.REU },
+          { name: faker.person.fullName(), partyType: 'AUTOR' },
+          { name: faker.person.fullName(), partyType: 'REU' },
         ],
       };
       const result = await judicialProcessService.createJudicialProcess(entityStore.tenantId, data);
@@ -454,6 +461,7 @@ async function seedJudicialData() {
     }
   }
 }
+*/
 
 async function seedMediaLibrary() {
   log('Phase 5: Seeding Media Library...', 0);
@@ -808,7 +816,7 @@ async function seedMiscData() {
           biddingSettings: biddingSettings
         },
         create: {
-            id: 'global',
+            id: BigInt(1),
             tenantId: entityStore.tenantId,
             siteTitle: 'BidExpert - Plataforma de Leilões',
             siteTagline: 'Os melhores leilões em um só lugar',
@@ -910,7 +918,7 @@ import { execSync } from 'child_process';
 async function main() {
   console.log('Cleaning database before seeding...');
   try {
-    execSync('npx tsx scripts/clear-database.ts', { stdio: 'inherit' });
+  // execSync('npx tsx scripts/clear-database.ts', { stdio: 'inherit' });
     console.log('Database cleaned.');
   } catch (error) {
       console.warn('Could not clean database. This might be the first run.');

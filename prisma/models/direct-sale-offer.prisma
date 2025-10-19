@@ -24,12 +24,12 @@ model DirectSaleOffer {
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  tenantId String
+  tenantId BigInt
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   
   categoryId BigInt
   category   LotCategory @relation(fields: [categoryId], references: [id])
   
-  sellerId String
+  sellerId BigInt
   seller   Seller @relation(fields: [sellerId], references: [id])
 }

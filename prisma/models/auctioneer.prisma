@@ -22,7 +22,7 @@ model Auctioneer {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tenantId String
+  tenantId BigInt
   tenant   Tenant @relation(fields: [tenantId], references: [id])
   
   userId BigInt?      @unique

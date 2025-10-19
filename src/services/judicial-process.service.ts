@@ -79,11 +79,12 @@ export class JudicialProcessService {
         parties: {
           create: parties,
         },
-        court: { connect: { id: courtId } },
-        district: { connect: { id: districtId } },
-        branch: { connect: { id: branchId } },
         tenant: { connect: { id: tenantId } },
       };
+
+      if (courtId) dataToCreate.court = { connect: { id: courtId } };
+      if (districtId) dataToCreate.district = { connect: { id: districtId } };
+      if (branchId) dataToCreate.branch = { connect: { id: branchId } };
 
       if (finalSellerId) {
         dataToCreate.seller = { connect: { id: finalSellerId } };

@@ -21,11 +21,11 @@ export class CategoryService {
     return this.categoryRepository.findAll();
   }
 
-  async getCategoryById(id: string): Promise<LotCategory | null> {
+  async getCategoryById(id: BigInt): Promise<LotCategory | null> {
     return this.categoryRepository.findById(id);
   }
 
-  async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; categoryId?: string; }> {
+  async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; categoryId?: BigInt; }> {
     try {
       const slug = slugify(data.name);
       const existing = await this.categoryRepository.findBySlug(slug);
@@ -40,7 +40,7 @@ export class CategoryService {
     }
   }
 
-  async updateCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string; }> {
+  async updateCategory(id: BigInt, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
     try {
       const dataToUpdate: Partial<LotCategory> = { ...data };
       if (data.name) {
@@ -54,9 +54,9 @@ export class CategoryService {
     }
   }
 
-  async deleteCategory(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteCategory(id: BigInt): Promise<{ success: boolean; message: string; }> {
     try {
-      // In a real app, check for subcategories or lots before deleting.
+      // In a real app, you might want to check for subcategories or lots before deleting.
       await this.categoryRepository.delete(id);
       return { success: true, message: 'Categoria excluída com sucesso.' };
     } catch (error: any) {
