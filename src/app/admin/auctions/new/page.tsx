@@ -18,7 +18,7 @@ import { Gavel, Loader2 } from 'lucide-react';
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo, LotCategory } from '@/types';
+import type { AuctioneerProfileInfo, SellerProfileInfo, StateInfo, CityInfo, LotCategory, JudicialProcess } from '@/types';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 
@@ -55,7 +55,6 @@ function NewAuctionPageContent() {
 
   const handleSave = async () => {
     if (formRef.current) {
-        // Trigger validation and submission
         await formRef.current.requestSubmit();
     }
   };
@@ -64,7 +63,7 @@ function NewAuctionPageContent() {
     setIsSubmitting(true);
     const result = await createAuction(data);
     if (result.success && result.auctionId) {
-      toast({ title: 'Sucesso!', description: 'Leilão criado com sucesso.' });
+      toast({ title: 'Sucesso!', description: 'Leilão criado com sucesso. Você será redirecionado para a edição.' });
       router.push(`/admin/auctions/${result.auctionId}/edit`);
     } else {
       toast({ title: 'Erro ao Criar', description: result.message, variant: 'destructive'});
@@ -90,7 +89,7 @@ function NewAuctionPageContent() {
             onCancel={() => router.push('/admin/auctions')}
         >
             <AuctionForm
-                formRef={formRef}
+                ref={formRef}
                 auctioneers={initialData.auctioneers}
                 sellers={initialData.sellers}
                 states={initialData.states}
@@ -98,9 +97,6 @@ function NewAuctionPageContent() {
                 categories={initialData.categories}
                 judicialProcesses={initialData.judicialProcesses}
                 onSubmitAction={handleCreateAuction}
-                formTitle=""
-                formDescription=""
-                submitButtonText="Criar Leilão"
             />
         </FormPageLayout>
     </div>

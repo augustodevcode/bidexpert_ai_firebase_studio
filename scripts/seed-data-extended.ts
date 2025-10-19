@@ -35,6 +35,12 @@ import { ReportService } from '../src/services/report.service';
 import { DataSourceService } from '../src/services/data-source.service';
 import { DocumentService } from '../src/services/document.service';
 import { RoleService } from '../src/services/role.service';
+import { DocumentTypeService } from '../src/services/document-type.service';
+import { TenantService } from '../src/services/tenant.service';
+
+// ... (other service instantiations)
+
+const documentTypeService = new DocumentTypeService();
 import {
   AuctionStatus,
   AuctionType,
@@ -147,6 +153,7 @@ const documentService = new DocumentService();
 const lotQuestionService = new LotQuestionService();
 const reviewService = new ReviewService();
 const installmentPaymentService = new InstallmentPaymentService();
+const tenantService = new TenantService();
 
 // --- Seeding Phases ---
 
@@ -155,17 +162,29 @@ async function seedCoreInfra() {
 
   // 1.1. Tenant (garantir que existe)
   log('Ensuring Tenant exists...', 1);
-  const tenant = await prisma.tenant.upsert({
-    where: { id: entityStore.tenantId },
-    update: {},
-    create: {
-      id: entityStore.tenantId,
+  const tenantService = new TenantService();
+  let tenant = await prisma.tenant.findUnique({ where: { id: entityStore.tenantId } });
+
+  if (!tenant) {
+    const tenantResult = await tenantService.createTenant({
       name: 'BidExpert Platform',
       subdomain: 'bidexpert',
-      domain: 'bidexpert.com',
-    },
-  });
-  log(`Tenant "${tenant.name}" ready.`, 2);
+      adminUser: {
+        email: 'admin@bidexpert.com',
+        fullName: 'Admin BidExpert',
+        password: 'admin123',
+      },
+    });
+    if (tenantResult.success && tenantResult.tenant) {
+      tenant = tenantResult.tenant;
+      log(`Tenant "${tenant.name}" created.`, 2);
+    } else {
+      throw new Error(`Failed to create tenant: ${tenantResult.message}`);
+    }
+  } else {
+    log(`Tenant "${tenant.name}" ready.`, 2);
+  }
+  entityStore.tenantId = tenant.id;
 
   // 1.2. Roles
   log('Seeding Roles...', 1);
@@ -222,11 +241,7 @@ async function seedCoreInfra() {
   ];
   
   for (const docType of docTypes) {
-    const created = await prisma.documentType.upsert({
-      where: { name: docType.name },
-      update: {},
-      create: docType,
-    });
+    const created = await documentTypeService.upsertDocumentType(docType);
     entityStore.documentTypes.push(created.id);
     log(`Document Type "${docType.name}" created.`, 2);
   }
