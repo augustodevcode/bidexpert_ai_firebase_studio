@@ -55,4 +55,10 @@
     - **43.3:** Refatorar as páginas de listagem do admin (ex: `/admin/auctions/page.tsx`, `/admin/assets/page.tsx`) para que, em vez de navegarem para uma página `/new` ou `/[id]/edit`, elas controlem o estado de um `CrudFormContainer`, passando o formulário apropriado (ex: `AuctionForm`) como filho. O botão "Novo" abrirá o container sem dados, e o botão "Editar" abrirá o container com os dados da entidade selecionada.
     - **43.4:** Padronizar todos os formulários CRUD da plataforma para usar a biblioteca `react-hook-form` com `zodResolver` para validação, seguindo o padrão já estabelecido em `ProfileForm`.
     - **43.5:** Criar um arquivo de teste `tests/ui-e2e/crud-modes.spec.ts` para validar o novo fluxo: verificar se a configuração no admin funciona, se clicar em "Novo" abre um formulário em branco no modo correto (modal/sheet), e se clicar em "Editar" abre um formulário preenchido no modo correto.
+- **Item 44: Refatorar Entidade `PlatformSettings` em Módulos Separados:**
+    - **44.1:** Analisar o modelo `PlatformSettings` atual e dividi-lo em novas entidades lógicas no `schema.prisma` (ex: `ThemeSettings`, `MapSettings`, `BiddingRules`, `IdMasks`, `NotificationPreferences`).
+    - **44.2:** Refatorar o `PlatformSettingsService` para interagir com as novas tabelas de configuração individuais.
+    - **44.3:** Substituir o formulário único de configurações por uma página de "hub" em `/admin/settings` que linka para novas páginas de CRUD dedicadas para cada grupo de configuração (ex: `/admin/settings/themes`, `/admin/settings/maps`).
+    - **44.4:** Criar os novos formulários de CRUD para cada nova entidade de configuração.
+    - **44.5:** Atualizar todas as partes da aplicação que consomem as configurações para buscar os dados das novas tabelas.
 - **Documentação Final:** Gerar a documentação final do projeto e da API para entrega.
