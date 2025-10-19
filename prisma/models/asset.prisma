@@ -1,39 +1,46 @@
 // prisma/models/asset.prisma
+import { AssetStatus, Tenant, User, LotCategory, Subcategory, JudicialProcess, Seller, City, State, MediaItem, AssetsOnLots } from "./";
+
 model Asset {
-  id                  Int       @id @default(autoincrement())
-  publicId            String    @unique @default(uuid())
-  title               String
-  description         String?   @db.Text
-  properties          String?   @db.Text
-  status              String    @default("CADASTRO")
-  evaluationValue     Decimal?  @db.Decimal(12, 2)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  imageUrl            String?
-  imageMediaId        String?
-  galleryImageUrls    String[]
-  mediaItemIds        String[]
-  dataAiHint          String?
-  street              String?
-  number              String?
-  complement          String?
-  neighborhood        String?
-  zipCode             String?
-  latitude            Float?
-  longitude           Float?
-  lots                AssetsOnLots[]
-  category            LotCategory? @relation(fields: [categoryId], references: [id])
-  categoryId          Int?
-  subcategory         Subcategory? @relation(fields: [subcategoryId], references: [id])
-  subcategoryId       Int?
-  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  judicialProcessId   Int?
-  seller              Seller?    @relation(fields: [sellerId], references: [id])
-  sellerId            Int?
-  city                City?      @relation(fields: [cityId], references: [id])
-  cityId              Int?
-  state               State?     @relation(fields: [stateId], references: [id])
-  stateId             Int?
-  tenant              Tenant     @relation(fields: [tenantId], references: [id])
-  tenantId            Int
+  id             BigInt   @id @default(autoincrement())
+  publicId       String   @unique @default(cuid())
+  tenantId       String
+  title          String
+  description    String?  @db.Text
+  properties     Json?
+  status         AssetStatus @default(CADASTRO)
+  evaluationValue Decimal? @db.Decimal(12, 2)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  imageUrl      String?
+  imageMediaId  String?
+  mediaItemIds  String[]
+  dataAiHint    String?
+
+  street          String?
+  number          String?
+  complement      String?
+  neighborhood    String?
+  zipCode         String?
+  latitude        Decimal? @db.Decimal(10, 8)
+  longitude       Decimal? @db.Decimal(11, 8)
+
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  createdBy       User     @relation("CreatedAssets", fields: [createdById], references: [id])
+  createdById     String
+  category        LotCategory @relation(fields: [categoryId], references: [id])
+  categoryId      BigInt
+  subcategory     Subcategory? @relation(fields: [subcategoryId], references: [id])
+  subcategoryId   BigInt?
+  judicialProcess JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
+  judicialProcessId BigInt?
+  seller          Seller   @relation(fields: [sellerId], references: [id])
+  sellerId        BigInt
+  city            City?     @relation(fields: [cityId], references: [id])
+  cityId          BigInt?
+  state           State?    @relation(fields: [stateId], references: [id])
+  stateId         BigInt?
+
+  lots            AssetsOnLots[]
 }

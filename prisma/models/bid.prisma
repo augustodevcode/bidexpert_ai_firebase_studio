@@ -1,0 +1,21 @@
+// prisma/models/bid.prisma
+import { User, Lot, Auction, Tenant, BidOrigin } from "./";
+
+model Bid {
+  id          BigInt      @id @default(autoincrement())
+  tenantId    String
+  lotId       BigInt
+  auctionId   BigInt
+  bidderId    String
+  amount      Decimal   @db.Decimal(12, 2)
+  timestamp   DateTime  @default(now())
+  origin      BidOrigin @default(MANUAL)
+
+  bidder      User      @relation(fields: [bidderId], references: [id])
+  lot         Lot       @relation(fields: [lotId], references: [id])
+  auction     Auction   @relation(fields: [auctionId], references: [id])
+  tenant      Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@index([lotId, timestamp])
+  @@index([bidderId])
+}

@@ -1,0 +1,10 @@
+// prisma/models/data-source.prisma
+
+model DataSource {
+  id        BigInt   @id @default(autoincrement())
+  name      String
+  modelName String   @unique
+  fields    Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

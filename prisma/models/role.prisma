@@ -1,0 +1,12 @@
+// prisma/models/role.prisma
+import { User, UsersOnRoles } from "./";
+
+model Role {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  nameNormalized String   @unique
+  description    String?
+  permissions    String[]
+  
+  users          UsersOnRoles[]
+}

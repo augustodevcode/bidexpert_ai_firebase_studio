@@ -1,13 +1,13 @@
 // prisma/models/court.prisma
+import { JudicialDistrict, JudicialProcess } from "./";
+
 model Court {
-  id                Int       @id @default(autoincrement())
-  name              String    @unique
-  slug              String    @unique
-  stateUf           String
-  website           String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  judicialDistricts JudicialDistrict[]
-  judicialProcesses JudicialProcess[]
-  auctions          Auction[]
+  id         BigInt     @id @default(autoincrement())
+  name       String   @unique
+  slug       String   @unique
+  stateUf    String
+  website    String?
+
+  districts  JudicialDistrict[]
+  processes  JudicialProcess[]
 }

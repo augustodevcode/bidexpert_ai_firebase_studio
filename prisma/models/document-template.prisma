@@ -1,0 +1,11 @@
+// prisma/models/document-template.prisma
+import { DocumentTemplateType } from "./";
+
+model DocumentTemplate {
+  id        BigInt     @id @default(autoincrement())
+  name      String   @unique
+  type      DocumentTemplateType
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

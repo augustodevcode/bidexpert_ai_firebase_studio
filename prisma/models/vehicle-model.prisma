@@ -1,10 +1,12 @@
 // prisma/models/vehicle-model.prisma
+import { VehicleMake } from "./";
+
 model VehicleModel {
-  id     Int    @id @default(autoincrement())
+  id     BigInt     @id @default(autoincrement())
   name   String
-  slug   String @unique
+  slug   String   @unique
   make   VehicleMake @relation(fields: [makeId], references: [id])
-  makeId Int
+  makeId BigInt
 
   @@unique([makeId, name])
 }

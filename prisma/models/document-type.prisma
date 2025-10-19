@@ -1,0 +1,12 @@
+// prisma/models/document-type.prisma
+import { UserDocument } from "./";
+
+model DocumentType {
+  id          BigInt     @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  isRequired  Boolean  @default(false)
+  appliesTo   String   @default("BOTH") // PHYSICAL, LEGAL, BOTH
+  
+  userDocuments UserDocument[]
+}

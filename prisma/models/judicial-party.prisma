@@ -1,0 +1,11 @@
+// prisma/models/judicial-party.prisma
+import { JudicialProcess, ProcessPartyType } from "./";
+
+model JudicialParty {
+  id             BigInt   @id @default(autoincrement())
+  name           String
+  documentNumber String?
+  partyType      ProcessPartyType @default(OUTRO)
+  process        JudicialProcess @relation(fields: [processId], references: [id])
+  processId      BigInt
+}

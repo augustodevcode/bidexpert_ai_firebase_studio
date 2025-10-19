@@ -1,0 +1,18 @@
+// prisma/models/auction-stage.prisma
+import { Auction, LotStagePrice } from "./";
+
+model AuctionStage {
+  id             BigInt   @id @default(autoincrement())
+  auction        Auction  @relation(fields: [auctionId], references: [id])
+  auctionId      BigInt
+  name           String
+  startDate      DateTime
+  endDate        DateTime
+  
+  lotStagePrices LotStagePrice[]
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@index([auctionId])
+}

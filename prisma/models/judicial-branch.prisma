@@ -1,16 +1,19 @@
 // prisma/models/judicial-branch.prisma
+import { JudicialDistrict, JudicialProcess, Seller } from "./";
+
 model JudicialBranch {
-  id                Int       @id @default(autoincrement())
-  name              String
-  slug              String    @unique
-  contactName       String?
-  phone             String?
-  email             String?
-  district          JudicialDistrict @relation(fields: [districtId], references: [id])
-  districtId        Int
-  judicialProcesses JudicialProcess[]
-  auctions          Auction[]
-  sellers           Seller[]
+  id         BigInt     @id @default(autoincrement())
+  name       String
+  slug       String   @unique
+  district   JudicialDistrict @relation(fields: [districtId], references: [id])
+  districtId BigInt
+  
+  contactName String?
+  phone       String?
+  email       String?
+
+  processes  JudicialProcess[]
+  sellers    Seller[] // Uma vara pode atuar como um comitente vendedor
 
   @@unique([name, districtId])
 }

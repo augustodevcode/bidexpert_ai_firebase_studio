@@ -1,11 +1,12 @@
 // prisma/models/assets-on-lots.prisma
-model AssetsOnLots {
-  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  assetId    Int
-  lot        Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  lotId      Int
-  assignedAt DateTime @default(now())
-  assignedBy String // Can be a user ID or system identifier
+import { Lot, Asset } from "./";
 
-  @@id([assetId, lotId])
+model AssetsOnLots {
+  lot      Lot      @relation(fields: [lotId], references: [id])
+  lotId    BigInt
+  asset    Asset    @relation(fields: [assetId], references: [id])
+  assetId  BigInt
+  assignedAt DateTime @default(now())
+
+  @@id([lotId, assetId])
 }

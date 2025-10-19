@@ -1,53 +1,68 @@
 // prisma/models/user.prisma
+import { Role, UserHabilitationStatus, AccountType, UsersOnRoles, UsersOnTenants, Bid, UserWin, UserDocument, UserLotMaxBid, Review, LotQuestion, Auctioneer, Seller, Asset, Report } from "./";
+
 model User {
-  id                Int       @id @default(autoinrcrement())
-  email             String    @unique
-  password          String
-  fullName          String?
-  cpf               String?   @unique
-  rgNumber          String?
-  rgIssuer          String?
-  rgIssueDate       DateTime?
-  rgState           String?
-  dateOfBirth       DateTime?
-  cellPhone         String?
-  homePhone         String?
-  gender            String?
-  profession        String?
-  nationality       String?
-  maritalStatus     String?
-  propertyRegime    String?
-  spouseName        String?
-  spouseCpf         String?
-  zipCode           String?
-  street            String?
-  number            String?
-  complement        String?
-  neighborhood      String?
-  city              String?
-  state             String?
-  avatarUrl         String?
-  dataAiHint        String?
-  habilitationStatus String   @default("PENDING_DOCUMENTS")
-  accountType       String   @default("PHYSICAL")
-  razaoSocial       String?
-  cnpj              String?   @unique
-  inscricaoEstadual String?
-  website           String?
-  optInMarketing    Boolean   @default(false)
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  roles             UsersOnRoles[]
-  tenants           UsersOnTenants[]
-  seller            Seller?
-  auctioneer        Auctioneer?
-  bids              Bid[]
-  wins              UserWin[]      @relation("LotsWon")
-  documents         UserDocument[]
-  notifications     Notification[]
-  userLotMaxBids    UserLotMaxBid[]
-  reviews           Review[]
-  questions         LotQuestion[]
-  uploadedMedia     MediaItem[]
-  auctionHabilitations AuctionHabilitation[]
+  id                  String   @id @default(cuid())
+  email               String   @unique
+  password            String
+  fullName            String?
+  
+  cpf                 String?  @unique
+  rgNumber            String?
+  rgIssuer            String?
+  rgIssueDate         DateTime?
+  rgState             String?
+  dateOfBirth         DateTime?
+  gender              String?
+  profession          String?
+  nationality         String?
+  maritalStatus       String?
+  propertyRegime      String?
+  spouseName          String?
+  spouseCpf           String?
+
+  avatarUrl           String?
+  dataAiHint          String?
+  
+  cellPhone           String?  @unique
+  homePhone           String?
+
+  habilitationStatus  UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType         AccountType @default(PHYSICAL)
+  
+  razaoSocial         String?
+  cnpj                String?  @unique
+  inscricaoEstadual   String?
+  website             String?
+  
+  responsibleName     String?
+  responsibleCpf      String?
+
+  zipCode             String?
+  street              String?
+  number              String?
+  complement          String?
+  neighborhood        String?
+  city                String?
+  state               String?
+
+  optInMarketing      Boolean  @default(false)
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  lastLogin           DateTime?
+  
+  roles               UsersOnRoles[]
+  tenants             UsersOnTenants[]
+  bids                Bid[]
+  wins                UserWin[]
+  documents           UserDocument[]
+  maxBids             UserLotMaxBid[]
+  reviews             Review[]
+  questions           LotQuestion[]
+  auctioneerProfile   Auctioneer?
+  sellerProfile       Seller?
+  createdAssets       Asset[] @relation("CreatedAssets")
+  createdReports      Report[] @relation("CreatedReports")
+  createdAuctions     Auction[] @relation("CreatedAuctions")
 }

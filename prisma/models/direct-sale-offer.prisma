@@ -1,0 +1,38 @@
+// prisma/models/direct-sale-offer.prisma
+import { DirectSaleOfferStatus, DirectSaleOfferType, LotCategory, Seller, Tenant } from "./";
+
+model DirectSaleOffer {
+  id              BigInt     @id @default(autoincrement())
+  publicId        String     @unique @default(cuid())
+  tenantId        String
+  title           String
+  description     String?    @db.Text
+  offerType       DirectSaleOfferType @default(BUY_NOW)
+  status          DirectSaleOfferStatus @default(PENDING_APPROVAL)
+  
+  price             Decimal?    @db.Decimal(12, 2)
+  minimumOfferPrice Decimal?    @db.Decimal(12, 2)
+
+  categoryId        BigInt
+  sellerId          BigInt
+
+  locationCity      String?
+  locationState     String?
+  
+  imageUrl        String?
+  imageMediaId    String?
+  dataAiHint      String?
+  galleryImageUrls  String[]
+  mediaItemIds      String[]
+
+  views           Int         @default(0)
+  proposalsCount  Int         @default(0)
+
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  expiresAt       DateTime?
+
+  tenant          Tenant       @relation(fields: [tenantId], references: [id])
+  category        LotCategory  @relation(fields: [categoryId], references: [id])
+  seller          Seller       @relation(fields: [sellerId], references: [id])
+}

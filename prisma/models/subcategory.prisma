@@ -1,17 +1,20 @@
 // prisma/models/subcategory.prisma
+import { LotCategory, Lot, Asset } from "./";
+
 model Subcategory {
-  id                  Int          @id @default(autoincrement())
-  name                String
-  slug                String       @unique
-  description         String?
-  displayOrder        Int          @default(0)
-  iconUrl             String?
-  iconMediaId         String?
-  dataAiHintIcon      String?
-  parentCategory      LotCategory? @relation(fields: [parentCategoryId], references: [id])
-  parentCategoryId    Int?
-  lots                Lot[]
-  assets              Asset[]
+  id               BigInt       @id @default(autoincrement())
+  name             String
+  slug             String     @unique
+  parentCategory   LotCategory  @relation(fields: [parentCategoryId], references: [id])
+  parentCategoryId BigInt
+  description      String?
+  displayOrder     Int        @default(0)
+  iconUrl          String?
+  iconMediaId      String?
+  dataAiHintIcon   String?
+  
+  lots             Lot[]
+  assets           Asset[]
 
   @@unique([name, parentCategoryId])
 }

@@ -1,15 +1,18 @@
 // prisma/models/user-win.prisma
-model UserWin {
-  id                Int       @id @default(autoincrement())
-  userId            Int
-  lotId             Int       @unique
-  winningBidAmount  Decimal   @db.Decimal(12, 2)
-  winDate           DateTime  @default(now())
-  paymentStatus     String    @default("PENDENTE")
-  retrievalStatus   String    @default("AGUARDANDO_PAGAMENTO")
-  lot               Lot       @relation(fields: [lotId], references: [id])
-  user              User      @relation(fields: [userId], references: [id])
-  installments      InstallmentPayment[]
+import { User, Lot, PaymentStatus, InstallmentPayment } from "./";
 
-  @@index([userId, lotId])
+model UserWin {
+  id               String  @id @default(cuid())
+  userId           String
+  lotId            BigInt  @unique
+  winningBidAmount Decimal @db.Decimal(12, 2)
+  winDate          DateTime
+  paymentStatus    PaymentStatus @default(PENDENTE)
+  
+  user             User    @relation(fields: [userId], references: [id])
+  lot              Lot     @relation(fields: [lotId], references: [id])
+  
+  installments     InstallmentPayment[]
+
+  @@index([userId])
 }

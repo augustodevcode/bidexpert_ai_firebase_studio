@@ -1,19 +1,23 @@
 // prisma/models/tenant.prisma
+import { User, UsersOnTenants, Seller, Auctioneer, Auction, Lot, JudicialProcess, Report, DirectSaleOffer, Bid, Subscription } from "./";
+
 model Tenant {
-  id          Int       @id @default(autoincrement())
+  id          String   @id @default(cuid())
   name        String
-  subdomain   String?   @unique
-  domain      String?   @unique
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  subdomain   String   @unique
+  domain      String?  @unique
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
   users       UsersOnTenants[]
-  auctions    Auction[]
-  lots        Lot[]
-  assets      Asset[]
   sellers     Seller[]
   auctioneers Auctioneer[]
+  auctions    Auction[]
+  lots        Lot[]
   judicialProcesses JudicialProcess[]
-  platformSettings  PlatformSettings[]
-  subscribers Subscriber[]
   reports     Report[]
+  directSaleOffers DirectSaleOffer[]
+  bids        Bid[]
+  subscribers Subscription[]
 }

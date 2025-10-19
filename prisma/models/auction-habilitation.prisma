@@ -1,0 +1,12 @@
+// prisma/models/auction-habilitation.prisma
+import { User, Auction } from "./";
+
+model AuctionHabilitation {
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String
+  auction   Auction  @relation(fields: [auctionId], references: [id])
+  auctionId BigInt
+  habilitatedAt DateTime @default(now())
+
+  @@id([userId, auctionId])
+}
