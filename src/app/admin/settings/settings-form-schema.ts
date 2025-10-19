@@ -66,6 +66,7 @@ export const platformSettingsFormSchema = z.object({
     auctioneers: z.string().optional(),
     sellers: z.string().optional(),
   }).optional().nullable(),
+  crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
   mapSettingsJson: z.object({
     defaultProvider: z.enum(['google', 'openstreetmap', 'staticImage'], {
         errorMap: () => ({ message: "Selecione um provedor de mapa válido."})

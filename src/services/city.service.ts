@@ -61,14 +61,7 @@ export class CityService {
         return { success: false, message: 'Estado pai não encontrado.' };
       }
       
-      if (data.ibgeCode) {
-        const existingCity = await this.cityRepository.findByIbgeCode(data.ibgeCode);
-        if (existingCity) {
-             return { success: false, message: `Uma cidade com o código IBGE '${data.ibgeCode}' já existe.` };
-        }
-      }
-
-      const dataToCreate: Prisma.CityCreateInput = {
+      const dataToUpsert: Prisma.CityCreateInput = {
         name: data.name,
         slug: slugify(data.name),
         state: { connect: { id: data.stateId } },
@@ -76,8 +69,12 @@ export class CityService {
         ibgeCode: data.ibgeCode || null,
       };
 
-      const newCity = await this.cityRepository.create(dataToCreate);
-      return { success: true, message: 'Cidade criada com sucesso.', cityId: newCity.id };
+      const newCity = await prisma.city.upsert({
+        where: { name_stateId: { name: data.name, stateId: data.stateId } },
+        update: dataToUpsert,
+        create: dataToUpsert,
+      });
+      return { success: true, message: 'Cidade criada/atualizada com sucesso.', cityId: newCity.id };
     } catch (error: any) {
       console.error("Error in CityService.createCity:", error);
       return { success: false, message: `Falha ao criar cidade: ${error.message}` };

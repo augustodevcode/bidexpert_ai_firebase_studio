@@ -28,6 +28,7 @@ import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { updatePlatformSettings } from './actions';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface SettingsFormProps {
   initialData: PlatformSettings;
@@ -77,6 +78,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
       activeThemeName: initialData?.activeThemeName || null,
       themesJson: initialData?.themes || [],
       platformPublicIdMasksJson: initialData?.platformPublicIdMasks || { auctions: '', lots: '', auctioneers: '', sellers: ''},
+      crudFormMode: initialData?.crudFormMode || 'modal',
       mapSettingsJson: initialData?.mapSettings || defaultMapSettings,
       biddingSettingsJson: initialData?.biddingSettings || defaultBiddingSettings,
       paymentGatewaySettingsJson: initialData?.paymentGatewaySettings || defaultPaymentGatewaySettings,
@@ -104,6 +106,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
   React.useEffect(() => {
     form.reset({
         ...initialData,
+        crudFormMode: initialData?.crudFormMode || 'modal',
         mapSettingsJson: initialData?.mapSettings || defaultMapSettings,
         biddingSettingsJson: initialData?.biddingSettings || defaultBiddingSettings,
         paymentGatewaySettingsJson: initialData?.paymentGatewaySettings || defaultPaymentGatewaySettings,
@@ -112,7 +115,7 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         variableIncrementTableJson: initialData?.variableIncrementTable || [],
         defaultUrgencyTimerHours: initialData?.defaultUrgencyTimerHours || 24,
     });
-  }, [initialData]);
+  }, [initialData, form]);
   
   async function onSubmit(values: PlatformSettingsFormValues) {
     setIsSubmitting(true);
@@ -169,6 +172,40 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
 
         <section className="space-y-6" data-ai-id="settings-section-display">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><Palette />Aparência e Exibição</h3>
+             <FormField
+                control={form.control}
+                name="crudFormMode"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>Modo de Edição (Admin)</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        className="flex flex-col sm:flex-row gap-4"
+                        disabled={isSubmitting}
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="modal" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Modal (Janela)</FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="sheet" />
+                          </FormControl>
+                          <FormLabel className="font-normal">Painel Lateral (Sheet)</FormLabel>
+                        </FormItem>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormDescription>
+                      Escolha como os formulários de criação/edição serão abertos no painel de administração.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             <FormField control={form.control} name="showCountdownOnCards" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Contagem Regressiva nos Cards</FormLabel><FormDescription>Exibir o cronômetro de contagem regressiva nos cards de leilão/lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl></FormItem>)}/>
             <FormField control={form.control} name="showRelatedLotsOnLotDetail" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-4"><div className="space-y-0.5"><FormLabel>Exibir Lotes Relacionados</FormLabel><FormDescription>Mostrar uma seção de &quot;Outros Lotes do Leilão&quot; na página de detalhes do lote.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} disabled={isSubmitting} /></FormControl></FormItem>)}/>
             {form.watch('showRelatedLotsOnLotDetail') && (
@@ -230,12 +267,12 @@ export default function SettingsForm({ initialData, onUpdateSuccess }: SettingsF
         
         <section className="space-y-6" data-ai-id="settings-section-maps">
              <h3 className="text-lg font-semibold text-primary border-b pb-2 flex items-center gap-2"><MapIcon />Configurações de Mapa</h3>
-            <FormField control={form.control} name="mapSettingsJson.defaultProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Mapa Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem><SelectItem value="google">Google Maps</SelectItem><SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem></SelectContent></Select></FormItem>)} />
+            <FormField control={form.control} name="mapSettingsJson.defaultProvider" render={({ field }) => (<FormItem><FormLabel>Provedor de Mapa Padrão</FormLabel><Select onValueChange={field.onChange} value={field.value} disabled={isSubmitting}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="openstreetmap">OpenStreetMap (Gratuito)</SelectItem><SelectItem value="google">Google Maps</SelectItem><SelectItem value="staticImage">Imagem Estática (Fallback)</SelectItem></SelectContent></FormItem>)} />
             <FormField control={form.control} name="mapSettingsJson.googleMapsApiKey" render={({ field }) => (<FormItem><FormLabel>Chave de API - Google Maps</FormLabel><FormControl><Input {...field} value={field.value ?? ''} disabled={isSubmitting} /></FormControl><FormDescription>Necessário se &quot;Google Maps&quot; for o provedor selecionado.</FormDescription><FormMessage /></FormItem>)} />
         </section>
 
         <div className="flex justify-end pt-4">
-          <Button type="submit" disabled={isSubmitting || !formState.isDirty || !formState.isValid}>
+          <Button type="submit" disabled={isSubmitting || !form.formState.isDirty || !formState.isValid}>
             {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar Todas as Configurações
           </Button>

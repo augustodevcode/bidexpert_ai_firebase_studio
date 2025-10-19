@@ -12,6 +12,10 @@ export class DocumentTemplateRepository {
     return prisma.documentTemplate.findUnique({ where: { id } });
   }
 
+  async findByName(name: string): Promise<DocumentTemplate | null> {
+    return prisma.documentTemplate.findUnique({ where: { name } });
+  }
+
   async create(data: Prisma.DocumentTemplateCreateInput): Promise<DocumentTemplate> {
     return prisma.documentTemplate.create({ data });
   }

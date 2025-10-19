@@ -171,6 +171,7 @@ export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
 export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'notificationSettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
   isSetupComplete: boolean;
+  crudFormMode?: 'modal' | 'sheet';
   themes?: Theme[] | null;
   platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
   mapSettings?: PmMapSettings | null;

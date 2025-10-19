@@ -26,11 +26,13 @@ export class DocumentTemplateService {
 
   async createDocumentTemplate(data: DocumentTemplateFormData): Promise<{ success: boolean; message: string; templateId?: string; }> {
     try {
-      const newTemplate = await prisma.documentTemplate.upsert({
-        where: { name: data.name },
-        update: data,
-        create: data,
-      });
+      const existingTemplate = await this.repository.findByName(data.name);
+      let newTemplate;
+      if (existingTemplate) {
+        newTemplate = await this.repository.update(existingTemplate.id, data);
+      } else {
+        newTemplate = await this.repository.create(data);
+      }
       return { success: true, message: "Template criado/atualizado com sucesso.", templateId: newTemplate.id };
     } catch (error: any) {
       console.error("Error in DocumentTemplateService.create:", error);

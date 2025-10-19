@@ -31,19 +31,18 @@ export class StateService {
 
   async createState(data: StateFormData): Promise<{ success: boolean; message: string; stateId?: string }> {
     try {
-      const existingByUf = await this.repository.findByUf(data.uf);
-      if (existingByUf) {
-        return { success: false, message: `Já existe um estado com a UF '${data.uf}'.` };
-      }
-      
-      const dataToCreate: Prisma.StateCreateInput = {
+      const dataToUpsert: Prisma.StateCreateInput = {
         name: data.name,
         uf: data.uf.toUpperCase(),
         slug: slugify(data.name),
       };
 
-      const newState = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Estado criado com sucesso.', stateId: newState.id };
+      const newState = await prisma.state.upsert({
+        where: { uf: data.uf.toUpperCase() },
+        update: dataToUpsert,
+        create: dataToUpsert,
+      });
+      return { success: true, message: 'Estado criado/atualizado com sucesso.', stateId: newState.id };
     } catch (error: any) {
       console.error("Error in StateService.create:", error);
       return { success: false, message: `Falha ao criar estado: ${error.message}` };

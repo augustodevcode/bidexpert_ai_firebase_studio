@@ -618,7 +618,7 @@ async function seedAuctionsAndLots() {
           initialPrice: faker.number.int({ min: 4000, max: 100000 }),
           status: LotStatus.EM_BREVE,
         };
-        const lotResult = await lotService.createLot(lotData, entityStore.tenantId, entityStore.users.admin);
+        const lotResult = await lotService.createLot(lotData, entityStore.tenantId, entityStore.users.admin.toString());
         if (lotResult.success && lotResult.lotId) {
           entityStore.lots.push(lotResult.lotId);
           log(`Lot "${lotData.title}" created for auction ${auctionId}.`, 2);
