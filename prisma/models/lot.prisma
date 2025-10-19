@@ -1,76 +1,67 @@
-
 model Lot {
-  id                  BigInt   @id @default(autoincrement())
-  publicId            String   @unique @default(cuid())
-  slug                String   @unique
-  number              String?
-  title               String
-  description         String?  @db.Text
-  properties          String?  @db.Text
-  status              String   @default("EM_BREVE")
-  price               Decimal  @default(0.00) @db.Decimal(12, 2)
-  initialPrice        Decimal? @db.Decimal(12, 2)
-  secondInitialPrice  Decimal? @db.Decimal(12, 2)
-  bidIncrementStep    Decimal? @db.Decimal(12, 2)
-  evaluationValue     Decimal? @db.Decimal(12, 2)
-  isFeatured          Boolean  @default(false)
-  isExclusive         Boolean  @default(false)
-  views               Int      @default(0)
-  bidsCount           Int      @default(0)
-  endDate             DateTime?
-  winningBidTermUrl   String?
-  dataAiHint          String?
-  bids                Bid[]
-  userWins            UserWin[]
-  reviews             Review[]
-  questions           LotQuestion[]
-  maxBids             UserLotMaxBid[]
-  originalLotId       BigInt?
-  originalLot         Lot?     @relation("RelistedLot", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  relistedLots        Lot[]    @relation("RelistedLot")
-  isRelisted          Boolean  @default(false)
-  relistCount         Int      @default(0)
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  
-  // Imagens
-  imageUrl              String?
-  imageMediaId          BigInt?
-  inheritedMediaFromBemId BigInt?
+  id                        BigInt           @id @default(autoincrement())
+  publicId                  String           @unique
+  slug                      String           @unique
+  number                    String?
+  title                     String
+  description               String?          @db.Text
+  properties                Json?
+  status                    String
+  price                     Decimal          @db.Decimal(12, 2)
+  initialPrice              Decimal?         @db.Decimal(12, 2)
+  bidIncrementStep          Decimal?         @db.Decimal(12, 2)
+  evaluationValue           Decimal?         @db.Decimal(12, 2)
+  discountPercentage        Float?
+  views                     Int              @default(0)
+  bidsCount                 Int              @default(0)
+  isFeatured                Boolean          @default(false)
+  isExclusive               Boolean          @default(false)
+  hasKey                    Boolean          @default(false)
+  imageUrl                  String?
+  imageMediaId              String?
+  inheritedMediaFromBemId   BigInt?
+  dataAiHint                String?
+  mapAddress                String?
+  latitude                  Decimal?
+  longitude                 Decimal?
+  createdAt                 DateTime         @default(now())
+  updatedAt                 DateTime         @updatedAt
+  endDate                   DateTime?
+  winnerId                  String?
+  auctionId                 BigInt
+  categoryId                BigInt?
+  subcategoryId             BigInt?
+  sellerId                  BigInt?
+  auctioneerId              BigInt?
+  stateId                   BigInt?
+  cityId                    BigInt?
+  tenantId                  String
+  originalLotId             BigInt?
+  isRelisted                Boolean          @default(false)
+  relistCount               Int              @default(0)
+  winningBidTermUrl         String?
 
-  // Localização
-  mapAddress String?
-  latitude   Decimal?
-  longitude  Decimal?
-  cityId     BigInt?
-  stateId    BigInt?
-  city       City?   @relation(fields: [cityId], references: [id])
-  state      State?  @relation(fields: [stateId], references: [id])
-  cityName   String?
-  stateUf    String?
-
-  // Relacionamentos
-  auction             Auction          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  auctionId           BigInt
-  bens                AssetsOnLots[]
-  category            LotCategory?     @relation(fields: [categoryId], references: [id])
-  categoryId          BigInt?
-  subcategory         Subcategory?     @relation(fields: [subcategoryId], references: [id])
-  subcategoryId       BigInt?
-  seller              Seller?          @relation(fields: [sellerId], references: [id])
-  sellerId            BigInt?
-  auctioneer          Auctioneer?      @relation(fields: [auctioneerId], references: [id])
-  auctioneerId        BigInt?
-  winner              User?            @relation("WonLots", fields: [winnerId], references: [id])
-  winnerId            BigInt?
-  stagePrices         LotStagePrice[]
-  installmentPayments InstallmentPayment[]
-
-  // Tenant
-  tenantId BigInt
-  tenant   Tenant @relation(fields: [tenantId], references: [id])
+  bids          Bid[]
+  auction       Auction          @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  category      LotCategory?     @relation(fields: [categoryId], references: [id])
+  subcategory   Subcategory?     @relation(fields: [subcategoryId], references: [id])
+  seller        Seller?          @relation(fields: [sellerId], references: [id])
+  auctioneer    Auctioneer?      @relation(fields: [auctioneerId], references: [id])
+  winner        User?            @relation("Winner", fields: [winnerId], references: [id])
+  assets        AssetsOnLots[]
+  state         State?           @relation(fields: [stateId], references: [id])
+  city          City?            @relation(fields: [cityId], references: [id])
+  tenant        Tenant           @relation(fields: [tenantId], references: [id])
+  originalLot   Lot?             @relation("RelistedLots", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  relistedLots  Lot[]            @relation("RelistedLots")
+  wins          UserWin[]
+  reviews       Review[]
+  questions     LotQuestion[]
+  stagePrices   LotStagePrice[]
+  maxBids       UserLotMaxBid[]
 
   @@index([auctionId])
-  @@index([status])
   @@index([sellerId])
+  @@index([winnerId])
+  @@index([tenantId])
 }

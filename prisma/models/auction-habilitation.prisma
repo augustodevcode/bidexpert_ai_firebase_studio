@@ -1,10 +1,13 @@
 model AuctionHabilitation {
   id        BigInt   @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id])
-  userId    BigInt
-  auction   Auction  @relation(fields: [auctionId], references: [id])
+  userId    String
   auctionId BigInt
+  status    String   @default("APPROVED") // APPROVED, PENDING, REJECTED
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id])
+  auction Auction @relation(fields: [auctionId], references: [id])
 
   @@unique([userId, auctionId])
 }
