@@ -1,3 +1,4 @@
+
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
@@ -7,7 +8,6 @@ const prisma = new PrismaClient();
 
 /**
  * Dados essenciais para o funcionamento da plataforma.
- * IDs foram removidos para permitir que o autoincrement do banco de dados funcione.
  */
 const essentialRoles = [
   { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: 'manage_all' },
@@ -141,19 +141,19 @@ async function seedEssentialData() {
     // 2. Seed Landlord Tenant
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
-        where: { id: 1 },
+        where: { name: 'Landlord' },
         update: {},
-        create: { id: 1, name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
     // 3. Seed Platform Settings for Landlord
     console.log('[DB SEED] Seeding Platform Settings for Landlord...');
     await prisma.platformSettings.upsert({
-        where: { tenantId: 1 },
+        where: { tenantId: landlordTenant.id },
         update: {},
         create: {
-            tenantId: 1,
+            tenantId: landlordTenant.id,
             siteTitle: 'BidExpert',
             siteTagline: 'Sua plataforma de leilões online.',
             galleryImageBasePath: '/uploads/media/',
@@ -240,7 +240,7 @@ async function seedEssentialData() {
 
   } catch (error: any) {
     console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
-    throw error;
+    throw error; // Throw error to stop the process if essential data fails
   }
 }
 
@@ -249,6 +249,8 @@ async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
     try {
         await seedEssentialData();
+        // The seedDataSources function is now called from within seedEssentialData
+        // console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
     } catch (error) {
         console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
         process.exit(1);
