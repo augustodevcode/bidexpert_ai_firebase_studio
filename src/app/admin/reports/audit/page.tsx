@@ -33,7 +33,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon }) => (
 );
 
 const InconsistentAccordion = ({ title, data, entityPath, message, idField = 'id', publicIdField = 'publicId' }: { title: string, data: any[], entityPath: string, message: string, idField?: string, publicIdField?: string }) => {
-    if (data.length === 0) return null;
+    if (!data || data.length === 0) return null;
     return (
         <Card>
             <CardHeader>
@@ -68,7 +68,7 @@ const InconsistentAccordion = ({ title, data, entityPath, message, idField = 'id
 }
 
 const InconsistentAuctionAccordion = ({ title, data }: { title: string, data: { auction: { id: string; title: string; publicId?: string | null; status: string }; lots: { id: string; title: string; status: string }[] }[] }) => {
-    if (data.length === 0) return null;
+    if (!data || data.length === 0) return null;
     return (
         <Card>
             <CardHeader>
@@ -100,7 +100,7 @@ const InconsistentAuctionAccordion = ({ title, data }: { title: string, data: { 
                                      <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
                                         {lots.map(lot => (
                                             <li key={lot.id}>
-                                                <Link href={`/admin/lots/${lot.id}/edit`} className="hover:underline hover:text-primary">
+                                                <Link href={`/admin/lots/${lot.publicId || lot.id}/edit`} className="hover:underline hover:text-primary">
                                                     {lot.title}
                                                 </Link>
                                                 <Badge variant="secondary" className="ml-2">{lot.status}</Badge>
