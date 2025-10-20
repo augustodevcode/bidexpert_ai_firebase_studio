@@ -107,4 +107,13 @@ export class TenantService {
       return { success: false, message: `Falha ao criar tenant: ${error.message}` };
     }
   }
+
+  async findTenantById(id: bigint): Promise<Tenant | null> {
+    return this.tenantRepository.findById(id);
+  }
+
+  async findTenantBySubdomain(subdomain: string): Promise<Tenant | null> {
+    return this.tenantRepository.findBySubdomain(subdomain);
+  }
+
 }

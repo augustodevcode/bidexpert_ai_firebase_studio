@@ -47,6 +47,8 @@ import type {
     AuctionHabilitation,
     InstallmentPayment,
     AssetMedia, // Adicionado
+    ThemeSettings,
+    IdMasks,
 } from '@prisma/client';
 
 export type Role = PmRole;
@@ -169,20 +171,16 @@ export type UserProfileWithPermissions = User & {
 export type Theme = PmTheme;
 export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
-export type PlatformSettings = Omit<PmPlatformSettings, 'themes' | 'platformPublicIdMasks' | 'mapSettings' | 'variableIncrementTable' | 'biddingSettings' | 'paymentGatewaySettings' | 'notificationSettings' | 'homepageSections' | 'mentalTriggerSettings' | 'sectionBadgeVisibility'> & {
-  isSetupComplete: boolean;
-  crudFormMode?: 'modal' | 'sheet';
-  themes?: Theme[] | null;
-  platformPublicIdMasks?: { auctions?: string, lots?: string, auctioneers?: string, sellers?: string } | null;
+export type PlatformSettings = Omit<PmPlatformSettings, 'themesJson' | 'homepageSections'> & {
+  themeSettings?: ThemeSettings | null;
   mapSettings?: PmMapSettings | null;
-  notificationSettings?: NotificationSettings | null;
-  variableIncrementTable?: PmVariableIncrementRule[] | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
-  homepageSections?: any[] | null;
+  notificationSettings?: NotificationSettings | null;
   mentalTriggerSettings?: PmMentalTriggerSettings | null;
   sectionBadgeVisibility?: PmSectionBadgeVisibility | null;
-  logoUrl?: string | null;
+  platformPublicIdMasks?: IdMasks | null;
+  variableIncrementTable?: PmVariableIncrementTable | null;
 };
 export type VariableIncrementRule = PmVariableIncrementRule;
 export type MapSettings = PmMapSettings;
@@ -307,7 +305,7 @@ export interface ConsignorDashboardStats {
 export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: string | null };
 export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
 export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
-export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls'> & { type: string, assetIds?: string[], inheritedMediaFromBemId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
+export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
@@ -315,7 +313,7 @@ export type CourtFormData = Omit<Court, 'id' | 'slug'>;
 export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName'>;
-export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery'> & { cityId?: string; stateId?: string; make?: string; model?: string; year?: number; };
+export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery'> & { cityId?: string; stateId?: string; };
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;

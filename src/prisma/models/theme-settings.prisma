@@ -1,0 +1,32 @@
+// prisma/models/theme-settings.prisma
+
+model ThemeSettings {
+  id               BigInt           @id @default(autoincrement())
+  settings         PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId       BigInt           @unique
+
+  activeThemeName  String?
+  themes           Theme[]
+
+  @@map("theme_settings")
+}
+
+model Theme {
+  id          BigInt         @id @default(autoincrement())
+  name        String         @unique
+  settings    ThemeSettings? @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId  BigInt?
+  colors      ThemeColors[]
+
+  @@map("themes")
+}
+
+model ThemeColors {
+  id      BigInt  @id @default(autoincrement())
+  theme   Theme   @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  themeId BigInt
+  name    String // e.g., 'primary', 'background', 'accent'
+  value   String // e.g., 'hsl(24.6 95% 53.1%)'
+
+  @@map("theme_colors")
+}

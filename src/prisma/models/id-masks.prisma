@@ -1,0 +1,14 @@
+// prisma/models/id-masks.prisma
+
+model IdMasks {
+  id            BigInt           @id @default(autoincrement())
+  settings      PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId    BigInt           @unique
+
+  auctions      String?
+  lots          String?
+  auctioneers   String?
+  sellers       String?
+
+  @@map("id_masks")
+}

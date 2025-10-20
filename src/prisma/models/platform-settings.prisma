@@ -1,0 +1,47 @@
+// prisma/models/platform-settings.prisma
+/// @Prisma-docs-seed-ignore
+model PlatformSettings {
+  id                      BigInt  @id @default(autoincrement())
+  tenantId                BigInt  @unique
+  tenant                  Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  siteTitle               String   @default("BidExpert")
+  siteTagline             String?
+  logoUrl                 String?
+  faviconUrl              String?
+
+  // Flags e Modos
+  isSetupComplete         Boolean  @default(false)
+  crudFormMode            String   @default("modal") // 'modal' or 'sheet'
+
+  // Configurações de UI e Exibição
+  searchPaginationType    String   @default("loadMore") // 'loadMore' or 'numberedPages'
+  searchItemsPerPage      Int      @default(12)
+  searchLoadMoreCount     Int      @default(12)
+  defaultListItemsPerPage Int      @default(10)
+  showCountdownOnLotDetail Boolean  @default(true)
+  showCountdownOnCards    Boolean  @default(true)
+  showRelatedLotsOnLotDetail Boolean @default(true)
+  relatedLotsCount        Int      @default(4)
+  defaultUrgencyTimerHours Int?
+
+  // Relações com as novas tabelas de configuração
+  themeSettings           ThemeSettings?
+  mapSettings             MapSettings?
+  biddingSettings         BiddingSettings?
+  paymentGatewaySettings  PaymentGatewaySettings?
+  notificationSettings    NotificationSettings?
+  mentalTriggerSettings   MentalTriggerSettings?
+  sectionBadgeVisibility  SectionBadgeVisibility?
+  platformPublicIdMasks   IdMasks?
+  variableIncrementTable  VariableIncrementTable?
+
+  // Campos obsoletos (serão removidos em uma próxima migração)
+  themesJson              Json?    @map("themes") @db.Json
+  homepageSections        Json? @db.Json
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@map("platform_settings")
+}

@@ -1,0 +1,14 @@
+// prisma/models/payment-gateway-settings.prisma
+
+model PaymentGatewaySettings {
+  id                           BigInt           @id @default(autoincrement())
+  settings                       PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
+  settingsId                     BigInt           @unique
+
+  defaultGateway                 String  @default("Manual") // 'Pagarme', 'Stripe', 'Manual'
+  platformCommissionPercentage   Decimal @default(5.0) @db.Decimal(5, 2)
+  gatewayApiKey                  String?
+  gatewayEncryptionKey           String?
+
+  @@map("payment_gateway_settings")
+}
