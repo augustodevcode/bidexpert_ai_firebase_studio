@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
-import type { Auction, Lot, Asset, DirectSaleOffer, UserProfileData } from '@/types';
+import type { Auction, Lot, Asset, DirectSaleOffer, UserProfileWithPermissions } from '@/types';
 
 export interface AuditData {
   auctionsWithoutLots: Partial<Auction>[];
@@ -24,7 +24,11 @@ export interface AuditData {
   directSalesWithMissingData: Partial<DirectSaleOffer>[];
   lotsWithoutQuestions: Partial<Lot>[];
   lotsWithoutReviews: Partial<Lot>[];
-  habilitatedUsersWithoutDocs: Partial<UserProfileData>[];
+  habilitatedUsersWithoutDocs: Partial<UserProfileWithPermissions>[];
+  lotsWithoutImages: Partial<Lot>[];
+  assetsWithoutImages: Partial<Asset>[];
+  judicialAuctionsWithoutProcess: Partial<Auction>[];
+  judicialSellersWithoutBranch: Partial<SellerProfileInfo>[];
 }
 
 /**
@@ -75,6 +79,11 @@ export async function getAuditDataAction(): Promise<AuditData> {
             }
         }
     });
+
+    const allSellers = await prisma.seller.findMany({
+        where: { tenantId },
+    });
+
 
     const auctionsWithoutLots = allAuctions
       .filter(a => a._count.lots === 0 && !['RASCUNHO', 'EM_PREPARACAO'].includes(a.status))
@@ -131,6 +140,23 @@ export async function getAuditDataAction(): Promise<AuditData> {
     const habilitatedUsersWithoutDocs = allUsers
         .filter(u => u.habilitationStatus === 'HABILITADO' && u._count.documents === 0)
         .map(u => ({ id: u.id, fullName: u.fullName, email: u.email }));
+        
+    const lotsWithoutImages = allLots
+      .filter(l => !l.imageUrl)
+      .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
+
+    const assetsWithoutImages = allAssets
+      .filter(a => !a.imageUrl)
+      .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
+      
+    const judicialAuctionsWithoutProcess = allAuctions
+        .filter(a => a.auctionType === 'JUDICIAL' && !a.judicialProcessId)
+        .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
+
+    const judicialSellersWithoutBranch = allSellers
+        .filter(s => s.isJudicial && !s.judicialBranchId)
+        .map(s => ({ id: s.id, name: s.name, publicId: s.publicId }));
+
 
     return {
       auctionsWithoutLots,
@@ -147,6 +173,10 @@ export async function getAuditDataAction(): Promise<AuditData> {
       lotsWithoutQuestions,
       lotsWithoutReviews,
       habilitatedUsersWithoutDocs,
+      lotsWithoutImages,
+      assetsWithoutImages,
+      judicialAuctionsWithoutProcess,
+      judicialSellersWithoutBranch,
     };
   } catch (error: any) {
     console.error("[Action - getAuditDataAction] Error fetching audit data:", error);
