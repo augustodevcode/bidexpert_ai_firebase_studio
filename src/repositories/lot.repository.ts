@@ -35,11 +35,14 @@ export class LotRepository {
 
   async findById(id: string, tenantId?: string): Promise<any | null> {
     const whereClause: Prisma.LotWhereInput = {
-        OR: [{ id }, { publicId: id }],
+        ...(tenantId && { tenantId }),
     };
-    if (tenantId) {
-        whereClause.tenantId = tenantId;
+    if (id.includes('-')) {
+        whereClause.publicId = id;
+    } else {
+        whereClause.id = id;
     }
+
     return prisma.lot.findFirst({
       where: whereClause,
       include: {

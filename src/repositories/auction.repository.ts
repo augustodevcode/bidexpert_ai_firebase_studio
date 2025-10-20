@@ -25,16 +25,24 @@ export class AuctionRepository {
   }
 
   async findById(tenantId: string | undefined, id: string): Promise<any | null> {
+    const whereClause: Prisma.AuctionWhereInput = {
+        ...(tenantId && { tenantId }),
+    };
+
+    // Tenta primeiro buscar por publicId se for um CUID
+    if (id.includes('-')) {
+        whereClause.publicId = id;
+    } else {
+        // Se não for um CUID, assume que é o ID numérico
+        whereClause.id = id;
+    }
+    
     return this.prisma.auction.findFirst({
-      where: {
-        OR: [{ id }, { publicId: id }],
-        ...(tenantId && { tenantId }), // Only apply tenantId if it exists
-      },
+      where: whereClause,
       include: {
         lots: { include: { assets: { include: { asset: true } } } }, 
         auctioneer: true,
         seller: true,
-        // category is no longer a direct relation, it will be fetched separately in the service
         stages: true,
       },
     });

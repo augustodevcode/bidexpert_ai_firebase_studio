@@ -93,8 +93,7 @@ export class AuctionService {
   }
 
   /**
-   * Busca um leilão específico por ID ou publicId. Para chamadas públicas,
-   * verifica se o status do leilão permite sua visualização.
+   * Busca um leilão específico por ID ou publicId, respeitando o tenantId se fornecido.
    * @param {string | undefined} tenantId - O ID do tenant (opcional para chamadas públicas).
    * @param {string} id - O ID ou publicId do leilão.
    * @param {boolean} isPublicCall - Se a chamada é pública.

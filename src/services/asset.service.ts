@@ -63,7 +63,7 @@ export class AssetService {
    * @param {string} id - O ID do ativo.
    * @returns {Promise<Asset | null>} O ativo encontrado ou null.
    */
-  async getAssetById(tenantId: string, id: string | BigInt): Promise<Asset | null> {
+  async getAssetById(tenantId: string, id: string): Promise<Asset | null> {
     const asset = await this.repository.findById(id.toString());
     // Embora o repositório possa ser chamado de múltiplos tenants, o serviço impõe a regra de negócio
     // de que a busca por ID deve respeitar o tenant atual.
@@ -89,25 +89,26 @@ export class AssetService {
    */
   async createAsset(tenantId: string, data: AssetFormData): Promise<{ success: boolean; message: string; assetId?: string; }> {
     try {
-      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, make, model, year, ...assetData } = data;
+      const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
 
       const dataToCreate: Prisma.AssetCreateInput = {
         ...(assetData as any),
         publicId: `ASSET-${uuidv4()}`,
         tenant: { connect: { id: tenantId } },
-        properties: {
-          make,
-          model,
-          year,
-        },
       };
       
       if (categoryId) dataToCreate.category = { connect: { id: categoryId } };
       if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
       if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: judicialProcessId } };
       if (sellerId) dataToCreate.seller = { connect: { id: sellerId } };
-      if (cityId) dataToCreate.city = { connect: { id: cityId } };
-      if (stateId) dataToCreate.state = { connect: { id: stateId } };
+      if (cityId) {
+          const city = await this.prisma.city.findUnique({where: {id: cityId}});
+          if(city) dataToCreate.locationCity = city.name;
+      }
+      if (stateId) {
+          const state = await this.prisma.state.findUnique({where: {id: stateId}});
+          if(state) dataToCreate.locationState = state.uf;
+      }
       
       const newAsset = await this.repository.create(dataToCreate);
       return { success: true, message: 'Ativo criado com sucesso.', assetId: newAsset.id };
@@ -132,8 +133,14 @@ export class AssetService {
       if (subcategoryId) dataToUpdate.subcategory = { connect: { id: subcategoryId } };
       if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
       if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
-      if (cityId) dataToUpdate.city = { connect: { id: cityId } };
-      if (stateId) dataToUpdate.state = { connect: { id: stateId } };
+      if (cityId) {
+          const city = await this.prisma.city.findUnique({where: {id: cityId}});
+          if(city) dataToUpdate.locationCity = city.name;
+      }
+      if (stateId) {
+          const state = await this.prisma.state.findUnique({where: {id: stateId}});
+          if(state) dataToUpdate.locationState = state.uf;
+      }
 
 
       await this.repository.update(id, dataToUpdate);
