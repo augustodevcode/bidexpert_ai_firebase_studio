@@ -22,8 +22,9 @@ import type {
     DocumentType as PmDocumentType,
     DirectSaleOffer as PmDirectSaleOffer,
     PlatformSettings as PmPlatformSettings,
-    Theme as PmTheme,
+    ThemeSettings as PmThemeSettings,
     ThemeColors as PmThemeColors,
+    IdMasks as PmIdMasks,
     VariableIncrementRule as PmVariableIncrementRule,
     MapSettings as PmMapSettings,
     BiddingSettings as PmBiddingSettings,
@@ -47,8 +48,6 @@ import type {
     AuctionHabilitation,
     InstallmentPayment,
     AssetMedia, // Adicionado
-    ThemeSettings,
-    IdMasks,
 } from '@prisma/client';
 
 export type Role = PmRole;
@@ -168,19 +167,23 @@ export type UserProfileWithPermissions = User & {
     roleName?: string;
 };
 
-export type Theme = PmTheme;
+export type ThemeSettings = PmThemeSettings & {
+    colors?: { light?: PmThemeColors | null, dark?: PmThemeColors | null } | null
+};
+export type IdMasks = PmIdMasks;
 export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
-export type PlatformSettings = Omit<PmPlatformSettings, 'themesJson' | 'homepageSections'> & {
-  themes?: ThemeSettings | null;
-  platformPublicIdMasks?: IdMasks | null;
+export type PlatformSettings = Omit<PmPlatformSettings, 'crudFormMode'> & {
+  crudFormMode?: 'modal' | 'sheet';
+  themeSettings?: ThemeSettings | null;
+  idMasks?: IdMasks | null;
   mapSettings?: PmMapSettings | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
   notificationSettings?: NotificationSettings | null;
   mentalTriggerSettings?: PmMentalTriggerSettings | null;
   sectionBadgeVisibility?: PmSectionBadgeVisibility | null;
-  variableIncrementTable?: PmVariableIncrementRule | null;
+  variableIncrementTable?: PmVariableIncrementRule[];
 };
 export type VariableIncrementRule = PmVariableIncrementRule;
 export type MapSettings = PmMapSettings;

@@ -1,7 +1,7 @@
 // src/app/admin/settings/themes/page.tsx
 /**
  * @fileoverview Página de administração para as configurações de Identidade Visual e Tema.
- * Permite que o administrador altere o título do site, slogan, logo e o tema de cores.
+ * Permite ao administrador alterar o título do site, slogan, logo e o tema de cores.
  */
 'use client';
 
@@ -33,8 +33,8 @@ export default function ThemeSettingsPage() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-3 p-4 border rounded-md">
                   <h4 className="font-medium">Tema Claro</h4>
-                  <FormField control={form.control} name="themes.colors.light.primary" render={({ field }) => (<FormItem><FormLabel>Primária</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
-                  <FormField control={form.control} name="themes.colors.light.background" render={({ field }) => (<FormItem><FormLabel>Fundo</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="themes.colors.light.primary" render={({ field }) => (<FormItem><FormLabel>Primária</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Ex: 217 91% 60%</FormDescription><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="themes.colors.light.background" render={({ field }) => (<FormItem><FormLabel>Fundo</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormDescription>Ex: 0 0% 100%</FormDescription><FormMessage /></FormItem>)} />
                   <FormField control={form.control} name="themes.colors.light.accent" render={({ field }) => (<FormItem><FormLabel>Destaque</FormLabel><FormControl><Input {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
               </div>
                <div className="space-y-3 p-4 border rounded-md">

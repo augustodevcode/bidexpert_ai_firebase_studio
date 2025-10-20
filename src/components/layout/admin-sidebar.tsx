@@ -14,7 +14,7 @@ import {
   ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
   Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
   Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files, 
-  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash
+  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -84,14 +84,15 @@ const platformNavItems = [
     { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
     { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
     { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
-    { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
 const settingsSubNavItems = [
-  { title: "Identidade Visual", href: "/admin/settings/themes" },
-  { title: "Geral", href: "/admin/settings/general" },
-  { title: "Mapas", href: "/admin/settings/maps" },
-  { title: "Lances", href: "/admin/settings/bidding" },
+  { title: "Identidade Visual", href: "/admin/settings/themes", icon: Palette },
+  { title: "Geral", href: "/admin/settings/general", icon: Wrench },
+  { title: "Mapas", href: "/admin/settings/maps", icon: MapPin },
+  { title: "Lances", href: "/admin/settings/bidding", icon: Zap },
+  { title: "Incremento Variável", href: "/admin/settings/increments", icon: ArrowUpDown },
+  { title: "Dados de Exemplo", href: "/admin/settings/seeding", icon: Database },
 ];
 
 
@@ -126,7 +127,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
         if (reportsNavItems.some(i => pathname.startsWith(i.href))) {
             openItems.push('reports');
         }
-        if (platformNavItems.some(i => pathname.startsWith(i.href)) || settingsSubNavItems.some(i => pathname.startsWith(i.href))) {
+        if (platformNavItems.some(i => pathname.startsWith(i.href)) || settingsSubNavItems.some(i => pathname.startsWith(i.href)) || pathname.startsWith('/admin/settings')) {
             openItems.push('platform');
         }
         return openItems;
@@ -179,21 +180,17 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                                 Plataforma
                             </AccordionTrigger>
                             <AccordionContent className="pt-1 space-y-1">
-                                {platformNavItems.filter(item => item.href !== '/admin/settings').map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                                {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                                 
                                 {/* Settings Sub-menu */}
                                 <Accordion type="single" collapsible defaultValue={pathname.startsWith('/admin/settings') ? 'settings' : undefined}>
                                   <AccordionItem value="settings" className="border-b-0">
-                                    <AccordionTrigger className="text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent">
+                                    <AccordionTrigger className={cn("text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent", pathname.startsWith('/admin/settings') && 'text-sidebar-accent-foreground bg-sidebar-accent')}>
                                       <Settings className="mr-2 h-4 w-4" /> Configurações
                                     </AccordionTrigger>
                                     <AccordionContent className="pt-1 space-y-1 pl-4 border-l border-sidebar-border ml-3">
-                                       <Button asChild variant={pathname === '/admin/settings' ? 'secondary' : 'ghost'} className="w-full justify-start h-9 text-sm"><Link href="/admin/settings">Visão Geral</Link></Button>
-                                       {settingsSubNavItems.map(item => (
-                                         <Button key={item.href} asChild variant={pathname === item.href ? 'secondary' : 'ghost'} className="w-full justify-start h-9 text-sm">
-                                           <Link href={item.href}>{item.title}</Link>
-                                         </Button>
-                                       ))}
+                                       <NavButton item={{href: '/admin/settings', title: 'Visão Geral', icon: Settings}} pathname={pathname} onLinkClick={onLinkClick} />
+                                       {settingsSubNavItems.map(item => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                                     </AccordionContent>
                                   </AccordionItem>
                                 </Accordion>

@@ -11,36 +11,13 @@ export class PlatformSettingsRepository {
   }
   
   async findFirst(): Promise<any | null> {
-    const settings = await this.prisma.platformSettings.findFirst({
-        include: {
-            themeSettings: true,
-            idMasks: true,
-            mapSettings: true,
-            biddingSettings: true,
-            paymentGatewaySettings: true,
-            notificationSettings: true,
-            mentalTriggerSettings: true,
-            sectionBadgeVisibility: true,
-            variableIncrementTable: true,
-        }
-    });
+    const settings = await this.prisma.platformSettings.findFirst({});
     return settings;
   }
 
   async create(data: Prisma.PlatformSettingsCreateInput): Promise<PlatformSettings> {
     const settings = await this.prisma.platformSettings.create({ 
         data,
-        include: {
-            themeSettings: true,
-            mapSettings: true,
-            biddingSettings: true,
-            idMasks: true,
-            paymentGatewaySettings: true,
-            notificationSettings: true,
-            mentalTriggerSettings: true,
-            sectionBadgeVisibility: true,
-            variableIncrementTable: true,
-        }
     });
     return settings as unknown as PlatformSettings;
   }

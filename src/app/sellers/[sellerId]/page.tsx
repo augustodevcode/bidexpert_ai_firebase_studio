@@ -1,3 +1,4 @@
+
 // src/app/sellers/[sellerId]/page.tsx
 /**
  * @fileoverview Página de perfil público de um Comitente (Vendedor).
@@ -26,8 +27,8 @@ import { getAuctionsBySellerSlug } from '@/app/admin/auctions/actions';
 import { useAuth } from '@/contexts/auth-context';
 import { hasAnyPermission } from '@/lib/permissions';
 import { isValidImageUrl } from '@/lib/ui-helpers';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
 
 const sortOptionsLots = [
   { value: 'relevance', label: 'Relevância' },
@@ -150,8 +151,8 @@ export default function SellerDetailsPage() {
       setCurrentLotPage(1);
   }
   
-  const renderLotGridItemForSellerPage = (lot: Lot) => <UniversalCard item={lot} type="lot" platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
-  const renderLotListItemForSellerPage = (lot: Lot) => <UniversalListItem item={lot} type="lot" platformSettings={platformSettings!} auction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotGridItemForSellerPage = (lot: Lot) => <BidExpertCard item={lot} type="lot" platformSettings={platformSettings!} parentAuction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
+  const renderLotListItemForSellerPage = (lot: Lot) => <BidExpertListItem item={lot} type="lot" platformSettings={platformSettings!} parentAuction={relatedAuctions.find(a => a.id === lot.auctionId)} />;
 
 
   if (isLoading || !platformSettings) {

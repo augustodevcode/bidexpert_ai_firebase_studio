@@ -349,7 +349,7 @@ export class LotService {
         dataToCreate.subcategory = { connect: { id: subcategoryId } };
       }
       
-      const newLot = await this.repository.create(dataToCreate, assetIds || [], creatorId);
+      const newLot = await this.repository.create(dataToCreate, assetIds || [], creatorId.toString());
       
       if (assetIds && assetIds.length > 0) {
         await this.prisma.asset.updateMany({
