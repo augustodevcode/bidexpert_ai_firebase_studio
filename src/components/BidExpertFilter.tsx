@@ -45,7 +45,7 @@ interface BidExpertFilterProps {
   onFilterSubmit: (filters: ActiveFilters) => void;
   onFilterReset: () => void;
   initialFilters?: ActiveFilters;
-  filterContext?: 'auctions' | 'directSales' | 'lots';
+  filterContext?: 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos';
   disableCategoryFilter?: boolean; // New prop to disable category selection
 }
 
@@ -283,19 +283,21 @@ export default function BidExpertFilter({
             </AccordionItem>
         )}
 
-        <AccordionItem value="praça">
-          <AccordionTrigger className="text-md font-medium">Praças</AccordionTrigger>
-          <AccordionContent>
-            <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="space-y-1">
-              {praçaOptions.map(option => (
-                <div key={option.value} className="flex items-center space-x-2">
-                  <RadioGroupItem value={option.value} id={`praça-${option.value}`} />
-                  <Label htmlFor={`praça-${option.value}`} className="text-sm font-normal cursor-pointer">{option.label}</Label>
-                </div>
-              ))}
-            </RadioGroup>
-          </AccordionContent>
-        </AccordionItem>
+        {filterContext === 'auctions' || filterContext === 'tomada_de_precos' ? (
+          <AccordionItem value="praça">
+            <AccordionTrigger className="text-md font-medium">Praças</AccordionTrigger>
+            <AccordionContent>
+              <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="space-y-1">
+                {praçaOptions.map(option => (
+                  <div key={option.value} className="flex items-center space-x-2">
+                    <RadioGroupItem value={option.value} id={`praça-${option.value}`} />
+                    <Label htmlFor={`praça-${option.value}`} className="text-sm font-normal cursor-pointer">{option.label}</Label>
+                  </div>
+                ))}
+              </RadioGroup>
+            </AccordionContent>
+          </AccordionItem>
+        ) : null}
 
         <AccordionItem value="price">
           <AccordionTrigger className="text-md font-medium">Faixa de Preço</AccordionTrigger>
@@ -379,7 +381,7 @@ export default function BidExpertFilter({
             </AccordionItem>
         )}
 
-        {filterContext === 'auctions' && (
+        {(filterContext === 'auctions' || filterContext === 'tomada_de_precos') && (
             <AccordionItem value="dates">
             <AccordionTrigger className="text-md font-medium">Período do Leilão</AccordionTrigger>
             <AccordionContent className="space-y-3 pt-1">

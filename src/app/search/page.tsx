@@ -48,7 +48,7 @@ const sortOptionsLots = [
   { value: 'endDate_asc', label: 'Data Encerramento: Próximos' },
   { value: 'endDate_desc', label: 'Data Encerramento: Distantes' },
   { value: 'price_asc', label: 'Preço: Menor para Maior' },
-  { value: 'price_desc', label: 'Preço: Maior para Menor' },
+  { value: 'price_desc', label: 'Preço: Maior para Maior' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
@@ -57,7 +57,7 @@ const sortOptionsDirectSales = [
   { value: 'createdAt_desc', label: 'Mais Recentes' },
   { value: 'createdAt_asc', label: 'Mais Antigos' },
   { value: 'price_asc', label: 'Preço: Menor para Maior (Compra Já)' },
-  { value: 'price_desc', label: 'Preço: Maior para Menor (Compra Já)' },
+  { value: 'price_desc', label: 'Preço: Maior para Maior (Compra Já)' },
   { value: 'views_desc', label: 'Mais Visitados' },
 ];
 
@@ -350,7 +350,7 @@ export default function SearchPage() {
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
       
       // Filtro de praças para leilões
-      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
+      if ((itemTypeContext === 'auction' || itemTypeContext === 'tomada_de_precos') && activeFilters.praça && activeFilters.praça !== 'todas') {
         const stagesCount = (item as Auction).auctionStages?.length || 0;
         if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
         if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
@@ -507,7 +507,7 @@ export default function SearchPage() {
                 onFilterSubmit={handleFilterSubmit as any}
                 onFilterReset={handleFilterReset}
                 initialFilters={activeFilters as ActiveFilters}
-                filterContext={currentSearchType === 'tomada_de_precos' ? 'auctions' : (currentSearchType  as 'auctions' | 'directSales' | 'lots')}
+                filterContext={currentSearchType as 'auctions' | 'directSales' | 'lots' | 'tomada_de_precos'}
             />
         </aside>
         
