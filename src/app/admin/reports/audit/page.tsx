@@ -48,7 +48,7 @@ const InconsistentAccordion = ({ title, data, entityPath, message, idField = 'id
                         <AccordionItem value={item[idField]} key={item[idField]}>
                             <AccordionTrigger>
                                 <div className="flex justify-between items-center w-full pr-4">
-                                    <span className="truncate" title={item.title || item.fullName || item.email}>{item.title || item.fullName || item.email || item.name || `ID: ${item[idField]}`}</span>
+                                    <span className="truncate" title={item.title || item.fullName || item.email || item.name || `ID: ${item[idField]}`}>{item.title || item.fullName || item.email || item.name || `ID: ${item[idField]}`}</span>
                                     <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                                         <Link href={`/admin/${entityPath}/${item[publicIdField] || item[idField]}/edit`}>
                                           <Edit className="mr-2 h-3.5 w-3.5"/> Corrigir
