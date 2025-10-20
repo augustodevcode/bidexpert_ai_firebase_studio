@@ -1,0 +1,6 @@
+{
+  "Toyota": ["Corolla", "Camry", "RAV4"],
+  "Honda": ["Civic", "CR-V", "HR-V"],
+  "Ford": ["Focus", "Fiesta", "Fusion"],
+  "Chevrolet": ["Onix", "Tracker", "S10"]
+}

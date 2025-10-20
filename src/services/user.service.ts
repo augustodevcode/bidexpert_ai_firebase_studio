@@ -82,7 +82,7 @@ export class UserService {
 
   async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {
-        const { roleIds: providedRoleIds, tenantId, ...userData } = data;
+        const { roleIds: providedRoleIds, tenantIds: providedTenantIds, ...userData } = data;
         if (!userData.email || !userData.password) {
             return { success: false, message: "Email e senha são obrigatórios." };
         }
@@ -103,15 +103,25 @@ export class UserService {
           finalRoleIds.push(userRole.id);
         }
 
+        // Construct Prisma.UserCreateInput correctly
         const dataToCreate: Prisma.UserCreateInput = {
             ...(userData as any),
             password: hashedPassword,
+            roles: {
+                create: finalRoleIds.map(roleId => ({
+                    role: { connect: { id: roleId } },
+                    assignedBy: 'system-signup'
+                }))
+            },
+            tenants: {
+                create: providedTenantIds.map(tenantId => ({
+                    tenant: { connect: { id: tenantId } },
+                    assignedBy: 'system-signup'
+                }))
+            }
         };
         
-        // Garante que a criação sempre acontece no tenant '1' (Landlord) se não for especificado
-        const finalTenantId = tenantId || '1';
-        
-        const newUser = await this.userRepository.create(dataToCreate, finalRoleIds, finalTenantId);
+        const newUser = await this.userRepository.create(dataToCreate);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
         console.error("Error in UserService.createUser:", error);

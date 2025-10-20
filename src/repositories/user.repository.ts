@@ -66,23 +66,8 @@ export class UserRepository {
     });
   }
 
-  async create(userData: Prisma.UserCreateInput, roleIds: string[], tenantId: string): Promise<User> {
-    const dataWithRolesAndTenant: Prisma.UserCreateInput = {
-      ...userData,
-      roles: {
-        create: roleIds.map(roleId => ({
-          role: { connect: { id: roleId } },
-          assignedBy: 'system-signup'
-        }))
-      },
-      tenants: { // Associação do usuário ao tenant atual
-        create: {
-          tenant: { connect: { id: tenantId } },
-          assignedBy: 'system-signup',
-        },
-      },
-    };
-    return basePrisma.user.create({ data: dataWithRolesAndTenant });
+  async create(data: Prisma.UserCreateInput): Promise<User> {
+    return basePrisma.user.create({ data });
   }
 
   async update(userId: string, data: Partial<EditableUserProfileData>): Promise<User> {

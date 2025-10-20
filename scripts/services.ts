@@ -38,3 +38,4 @@ export * from '../src/services/user-win.service';
 export * from '../src/services/user.service';
 export * from '../src/services/vehicle-make.service';
 export * from '../src/services/vehicle-model.service';
+export * from '../src/services/auction-stage.service';

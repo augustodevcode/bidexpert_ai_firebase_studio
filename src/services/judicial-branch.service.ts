@@ -47,7 +47,7 @@ export class JudicialBranchService {
         contactName: data.contactName,
         phone: data.phone,
         email: data.email,
-        district: { connect: { id: data.districtId } },
+        ...(data.districtId && { district: { connect: { id: data.districtId } } }),
       };
       const newBranch = await prisma.judicialBranch.upsert({
         where: { name: data.name },
