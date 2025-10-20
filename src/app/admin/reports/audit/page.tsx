@@ -48,7 +48,7 @@ const InconsistencyAccordion = ({ title, data, entityPath, message, idField = 'i
                         <AccordionItem value={item[idField]} key={item[idField]}>
                             <AccordionTrigger>
                                 <div className="flex justify-between items-center w-full pr-4">
-                                    <span className="truncate" title={item.title || item.fullName || item.email}>{item.title || item.fullName || item.email}</span>
+                                    <span className="truncate" title={item.title || item.fullName || item.email}>{item.title || item.fullName || item.email || item.name || `ID: ${item[idField]}`}</span>
                                     <Button asChild variant="outline" size="sm" onClick={(e) => e.stopPropagation()}>
                                         <Link href={`/admin/${entityPath}/${item[publicIdField] || item[idField]}/edit`}>
                                           <Edit className="mr-2 h-3.5 w-3.5"/> Corrigir
@@ -207,7 +207,7 @@ export default function AuditPage() {
       <div className="space-y-4">
         <InconsistencyAccordion title="Leilões Sem Lotes Cadastrados" data={auditData?.auctionsWithoutLots || []} entityPath="auctions" message="Este leilão não possui nenhum lote cadastrado. Adicione lotes para que ele possa ser publicado."/>
         <InconsistencyAccordion title="Leilões Sem Praças/Etapas Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" message="Este leilão precisa de pelo menos uma etapa (praça) com datas de início e fim."/>
-        <InconsistentAccordion title="Leilões Judiciais sem Vínculo com Processo" data={auditData?.judicialAuctionsWithoutProcess || []} entityPath="auctions" message="Este leilão é do tipo JUDICIAL, mas nenhum processo foi vinculado a ele."/>
+        <InconsistencyAccordion title="Leilões Judiciais sem Vínculo com Processo" data={auditData?.judicialAuctionsWithoutProcess || []} entityPath="auctions" message="Este leilão é do tipo JUDICIAL, mas nenhum processo foi vinculado a ele."/>
         <InconsistencyAccordion title="Lotes Sem Ativos Vinculados" data={auditData?.lotsWithoutAssets || []} entityPath="lots" message="Este lote não tem nenhum ativo (bem) vinculado a ele." />
         <InconsistencyAccordion title="Lotes Sem Imagem Principal" data={auditData?.lotsWithoutImages || []} entityPath="lots" message="Este lote não possui uma imagem principal definida, o que prejudica sua exibição." />
         <InconsistencyAccordion title="Ativos (Bens) Sem Imagem Principal" data={auditData?.assetsWithoutImages || []} entityPath="assets" message="Este ativo não possui uma imagem principal, o que pode impedir que lotes o utilizem como imagem herdada." />
