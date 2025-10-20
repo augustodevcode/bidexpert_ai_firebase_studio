@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit, MapPin, Search, HelpCircle, FileSignature, RefreshCw, ImageOff, Link2 as LinkIcon } from 'lucide-react';
+import { ServerCrash, AlertTriangle, CheckCircle, Package, Gavel, FileX, Ban, ListTodo, Boxes, Edit, MapPin, Search, HelpCircle, FileSignature, RefreshCw, ImageOff, Link as LinkIcon } from 'lucide-react';
 import { getAuditDataAction, type AuditData } from './actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
@@ -32,7 +32,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon }) => (
   </Card>
 );
 
-const InconsistencyAccordion = ({ title, data, entityPath, message, idField = 'id', publicIdField = 'publicId' }: { title: string, data: any[], entityPath: string, message: string, idField?: string, publicIdField?: string }) => {
+const InconsistentAccordion = ({ title, data, entityPath, message, idField = 'id', publicIdField = 'publicId' }: { title: string, data: any[], entityPath: string, message: string, idField?: string, publicIdField?: string }) => {
     if (data.length === 0) return null;
     return (
         <Card>
@@ -205,18 +205,18 @@ export default function AuditPage() {
       </div>
       
       <div className="space-y-4">
-        <InconsistencyAccordion title="Leilões Sem Lotes Cadastrados" data={auditData?.auctionsWithoutLots || []} entityPath="auctions" message="Este leilão não possui nenhum lote cadastrado. Adicione lotes para que ele possa ser publicado."/>
-        <InconsistencyAccordion title="Leilões Sem Praças/Etapas Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" message="Este leilão precisa de pelo menos uma etapa (praça) com datas de início e fim."/>
-        <InconsistencyAccordion title="Leilões Judiciais sem Vínculo com Processo" data={auditData?.judicialAuctionsWithoutProcess || []} entityPath="auctions" message="Este leilão é do tipo JUDICIAL, mas nenhum processo foi vinculado a ele."/>
-        <InconsistencyAccordion title="Lotes Sem Ativos Vinculados" data={auditData?.lotsWithoutAssets || []} entityPath="lots" message="Este lote não tem nenhum ativo (bem) vinculado a ele." />
-        <InconsistencyAccordion title="Lotes Sem Imagem Principal" data={auditData?.lotsWithoutImages || []} entityPath="lots" message="Este lote não possui uma imagem principal definida, o que prejudica sua exibição." />
-        <InconsistencyAccordion title="Ativos (Bens) Sem Imagem Principal" data={auditData?.assetsWithoutImages || []} entityPath="assets" message="Este ativo não possui uma imagem principal, o que pode impedir que lotes o utilizem como imagem herdada." />
-        <InconsistencyAccordion title="Comitentes Judiciais sem Vínculo com uma Vara" data={auditData?.judicialSellersWithoutBranch || []} entityPath="sellers" message="Este comitente está marcado como JUDICIAL, mas não está associado a nenhuma vara específica." />
+        <InconsistentAccordion title="Leilões Sem Lotes Cadastrados" data={auditData?.auctionsWithoutLots || []} entityPath="auctions" message="Este leilão não possui nenhum lote cadastrado. Adicione lotes para que ele possa ser publicado."/>
+        <InconsistentAccordion title="Leilões Sem Praças/Etapas Definidas" data={auditData?.auctionsWithoutStages || []} entityPath="auctions" message="Este leilão precisa de pelo menos uma etapa (praça) com datas de início e fim."/>
+        <InconsistentAccordion title="Leilões Judiciais sem Vínculo com Processo" data={auditData?.judicialAuctionsWithoutProcess || []} entityPath="auctions" message="Este leilão é do tipo JUDICIAL, mas nenhum processo foi vinculado a ele."/>
+        <InconsistentAccordion title="Lotes Sem Ativos Vinculados" data={auditData?.lotsWithoutAssets || []} entityPath="lots" message="Este lote não tem nenhum ativo (bem) vinculado a ele." />
+        <InconsistentAccordion title="Lotes Sem Imagem Principal" data={auditData?.lotsWithoutImages || []} entityPath="lots" message="Este lote não possui uma imagem principal definida, o que prejudica sua exibição." />
+        <InconsistentAccordion title="Ativos (Bens) Sem Imagem Principal" data={auditData?.assetsWithoutImages || []} entityPath="assets" message="Este ativo não possui uma imagem principal, o que pode impedir que lotes o utilizem como imagem herdada." />
+        <InconsistentAccordion title="Comitentes Judiciais sem Vínculo com uma Vara" data={auditData?.judicialSellersWithoutBranch || []} entityPath="sellers" message="Este comitente está marcado como JUDICIAL, mas não está associado a nenhuma vara específica." />
         <InconsistentAuctionAccordion title="Leilões Encerrados/Finalizados com Lotes Abertos" data={auditData?.closedAuctionsWithOpenLots || []} />
         <InconsistentAuctionAccordion title="Leilões Cancelados com Lotes Abertos" data={auditData?.canceledAuctionsWithOpenLots || []} />
-        <InconsistencyAccordion title="Ativos com Vínculos Obrigatórios Faltando" data={auditData?.assetsWithoutRequiredLinks || []} entityPath="assets" message="Este ativo não possui uma categoria ou um comitente vinculado, dados essenciais para o seu gerenciamento."/>
-        <InconsistencyAccordion title="Lotes Encerrados sem Nenhum Lance" data={auditData?.endedLotsWithoutBids || []} entityPath="lots" message="Este lote foi encerrado mas não recebeu nenhum lance. Considere relistá-lo ou analisar sua precificação."/>
-        <InconsistencyAccordion title="Usuários Habilitados sem Documentos" data={auditData?.habilitatedUsersWithoutDocs || []} entityPath="users" message="Este usuário possui status de 'Habilitado', mas não tem nenhum documento cadastrado no sistema. Verifique a integridade do processo de habilitação." idField="id" publicIdField="id" />
+        <InconsistentAccordion title="Ativos com Vínculos Obrigatórios Faltando" data={auditData?.assetsWithoutRequiredLinks || []} entityPath="assets" message="Este ativo não possui uma categoria ou um comitente vinculado, dados essenciais para o seu gerenciamento."/>
+        <InconsistentAccordion title="Lotes Encerrados sem Nenhum Lance" data={auditData?.endedLotsWithoutBids || []} entityPath="lots" message="Este lote foi encerrado mas não recebeu nenhum lance. Considere relistá-lo ou analisar sua precificação."/>
+        <InconsistentAccordion title="Usuários Habilitados sem Documentos" data={auditData?.habilitatedUsersWithoutDocs || []} entityPath="users" message="Este usuário possui status de 'Habilitado', mas não tem nenhum documento cadastrado no sistema. Verifique a integridade do processo de habilitação." idField="id" publicIdField="id" />
       </div>
     </div>
   );

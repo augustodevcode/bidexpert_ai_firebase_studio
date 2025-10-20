@@ -8,7 +8,7 @@
 
 import { prisma } from '@/lib/prisma';
 import { getTenantIdFromRequest } from '@/lib/actions/auth';
-import type { Auction, Lot, Asset, DirectSaleOffer, UserProfileWithPermissions } from '@/types';
+import type { Auction, Lot, Asset, DirectSaleOffer, UserProfileWithPermissions, SellerProfileInfo } from '@/types';
 
 export interface AuditData {
   auctionsWithoutLots: Partial<Auction>[];
@@ -114,7 +114,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
       .map(l => ({ id: l.id, title: l.title, status: l.status, publicId: l.publicId, auctionId: l.auctionId }));
 
     const assetsWithoutLocation = allAssets
-        .filter(a => !a.locationCity && !a.locationState)
+        .filter(a => !a.street && !a.cityId && !a.stateId)
         .map(a => ({ id: a.id, title: a.title, status: a.status, publicId: a.publicId }));
 
     const assetsWithoutRequiredLinks = allAssets
@@ -155,7 +155,7 @@ export async function getAuditDataAction(): Promise<AuditData> {
 
     const judicialSellersWithoutBranch = allSellers
         .filter(s => s.isJudicial && !s.judicialBranchId)
-        .map(s => ({ id: s.id, name: s.name, publicId: s.publicId }));
+        .map(s => ({ id: s.id, name: s.name, publicId: s.publicId } as Partial<SellerProfileInfo>));
 
 
     return {
