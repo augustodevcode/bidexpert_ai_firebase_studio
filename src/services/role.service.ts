@@ -95,5 +95,19 @@ export class RoleService {
     } catch (error: any) {
       return { success: false, message: 'Falha ao excluir todos os perfis não-essenciais.' };
     }
+  async findOrCreateRole(data: { name: string; nameNormalized: string; description: string; }): Promise<Role> {
+    const existing = await this.repository.findByNormalizedName(data.nameNormalized);
+    if (existing) {
+      return existing;
+    }
+
+    const dataToCreate: Prisma.RoleCreateInput = {
+      name: data.name,
+      nameNormalized: data.nameNormalized,
+      description: data.description,
+      permissions: [],
+    };
+
+    return this.repository.create(dataToCreate);
   }
 }

@@ -4,7 +4,7 @@
  * Este componente renderiza os links de navegação para todas as seções de
  * gerenciamento da plataforma, como leilões, usuários, configurações, etc.
  * Utiliza um componente Accordion para organizar os links em grupos expansíveis.
- * É projetado para ser usado exclusivamente dentro do `AdminLayout`.
+ * É projetado para ser usado exclusivamente dentro do AdminLayout.
  */
 'use client';
 
@@ -27,91 +27,80 @@ import Image from 'next/image';
 const topLevelNavItems = [
   { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-  { title: 'Wizard de Leilões', href: '/admin/wizard', icon: Rocket },
-  { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
 ];
 
-const auctionManagementItems = [
-  { title: 'Listar Leilões', href: '/admin/auctions', icon: Gavel },
-  { title: 'Novo Leilão', href: '/admin/auctions/new', icon: PlusCircle },
-  { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart3 },
+const creationNavItems = [
+    { title: 'Novo Leilão', href: '/admin/auctions/new', icon: Gavel },
+    { title: 'Novo Lote', href: '/admin/lots/new', icon: ListChecks },
+    { title: 'Novo Ativo', href: '/admin/assets/new', icon: Package },
+    { title: 'Novo Comitente', href: '/admin/sellers/new', icon: Users },
 ];
 
-const lotManagementItems = [
-    { title: 'Listar Lotes', href: '/admin/lots', icon: ListChecks },
-    { title: 'Novo Lote', href: '/admin/lots/new', icon: PlusCircle },
+const managementNavGroups = [
+    { 
+        groupTitle: 'Gestão de Leilões',
+        items: [
+            { title: 'Leilões', href: '/admin/auctions', icon: Gavel },
+            { title: 'Lotes', href: '/admin/lots', icon: ListChecks },
+            { title: 'Ativos (Bens)', href: '/admin/assets', icon: Package },
+            { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
+        ]
+    },
+    { 
+        groupTitle: 'Participantes',
+        items: [
+            { title: 'Comitentes', href: '/admin/sellers', icon: Users },
+            { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
+            { title: 'Usuários', href: '/admin/users', icon: Users },
+            { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
+        ]
+    },
+     { 
+        groupTitle: 'Gestão Judicial',
+        items: [
+            { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
+            { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
+            { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
+            { title: 'Tribunais', href: '/admin/courts', icon: Scale },
+            { title: 'Importação CNJ', href: '/admin/import/cnj', icon: FileUp },
+        ]
+    },
+     { 
+        groupTitle: 'Conteúdo e Mídia',
+        items: [
+            { title: 'Categorias', href: '/admin/categories', icon: ListChecks },
+            { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
+            { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
+        ]
+    },
+];
+
+const reportsNavItems = [
+    { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart3 },
+    { title: 'Análise de Leilões', href: '/admin/auctions/analysis', icon: BarChart3 },
     { title: 'Análise de Lotes', href: '/admin/lots/analysis', icon: BarChart3 },
-    { title: 'Loteamento', href: '/admin/lotting', icon: Boxes },
-];
-
-
-const assetManagementItems = [
-    { title: 'Listar Ativos', href: '/admin/assets', icon: Package },
-    { title: 'Novo Ativo', href: '/admin/assets/new', icon: PlusCircle },
-];
-
-const categoryManagementItems = [
-    { title: 'Listar Categorias', href: '/admin/categories', icon: ListChecks },
-    { title: 'Análise de Categorias', href: '/admin/categories/analysis', icon: BarChart3 },
-    { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
-];
-
-const locationManagementItems = [
-    { title: 'Cidades', href: '/admin/cities', icon: Building2 },
-    { title: 'Análise de Cidades', href: '/admin/cities/analysis', icon: BarChart3 },
-    { title: 'Estados', href: '/admin/states', icon: MapPin },
-    { title: 'Análise de Estados', href: '/admin/states/analysis', icon: BarChart3 },
-];
-
-const contentManagementItems = [
-    { title: 'Biblioteca de Mídia', href: '/admin/media', icon: Library },
-]
-
-const judicialManagementItems = [
-    { title: 'Tribunais', href: '/admin/courts', icon: Scale },
-    { title: 'Comarcas', href: '/admin/judicial-districts', icon: Map },
-    { title: 'Varas', href: '/admin/judicial-branches', icon: Building2 },
-    { title: 'Processos', href: '/admin/judicial-processes', icon: FileText },
-]
-
-const platformManagementItems = [
-  { title: 'Tenants (Leiloeiros)', href: '/admin/tenants', icon: Briefcase },
-  { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-  { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
-  { title: 'Construtor de Relatórios', href: '/admin/report-builder', icon: FileSpreadsheet },
-  { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
-  { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
-  { title: 'Relatórios Gerais', href: '/admin/reports', icon: BarChart3 },
-  { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
-  { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
-  { title: 'Configurações', href: '/admin/settings', icon: Settings },
-];
-
-const userManagementItems = [
-    { title: 'Listar Usuários', href: '/admin/users', icon: Users },
-    { title: 'Novo Usuário', href: '/admin/users/new', icon: PlusCircle },
+    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart3 },
+    { title: 'Análise de Leiloeiros', href: '/admin/auctioneers/analysis', icon: BarChart3 },
     { title: 'Análise de Usuários', href: '/admin/users/analysis', icon: BarChart3 },
 ];
 
-const sellerManagementItems = [
-    { title: 'Listar Comitentes', href: '/admin/sellers', icon: Users },
-    { title: 'Novo Comitente', href: '/admin/sellers/new', icon: PlusCircle },
-    { title: 'Análise de Comitentes', href: '/admin/sellers/analysis', icon: BarChart3 },
+const platformNavItems = [
+    { title: 'Perfis (Roles)', href: '/admin/roles', icon: ShieldCheck },
+    { title: 'Templates de Documentos', href: '/admin/document-templates', icon: Files },
+    { title: 'Mensagens de Contato', href: '/admin/contact-messages', icon: MessageSquare },
+    { title: 'Auditoria de Dados', href: '/admin/reports/audit', icon: ServerCrash },
+    { title: 'Testes (QA)', href: '/admin/qa', icon: ClipboardCheck },
+    { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
-const auctioneerManagementItems = [
-    { title: 'Listar Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
-    { title: 'Novo Leiloeiro', href: '/admin/auctioneers/new', icon: PlusCircle },
-    { title: 'Análise de Leiloeiros', href: '/admin/auctioneers/analysis', icon: BarChart3 },
-];
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
     key={item.href}
-    variant={pathname.startsWith(item.href) ? 'secondary' : 'ghost'}
+    variant={pathname === item.href ? 'secondary' : 'ghost'}
     className={cn(
-      'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-      pathname.startsWith(item.href) && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
+      'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 text-sm',
+      pathname === item.href && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
     )}
     asChild
     disabled={item.disabled}
@@ -135,72 +124,57 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 </Link>
             </div>
             <ScrollArea className="flex-1">
-                <nav className="p-2 space-y-1">
-                {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                
-                <Accordion type="multiple" className="w-full" defaultValue={['auction-management', 'lot-management', 'asset-management', 'judicial-management', 'platform-management', 'content-management', 'sellers-management', 'auctioneers-management', 'location-management', 'user-management']}>
-                    <AccordionItem value="auction-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão de Leilões</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {auctionManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="lot-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Lotes</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {lotManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="asset-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Ativos e Estoque</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {assetManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="category-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Conteúdo e Mídia</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {categoryManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                            {contentManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="location-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão Geográfica</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {locationManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="judicial-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão Judicial</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {judicialManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="sellers-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Comitentes</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {sellerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="auctioneers-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Leiloeiros</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {auctioneerManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="user-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Usuários</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {userManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                    <AccordionItem value="platform-management" className="border-b-0">
-                        <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 hover:bg-sidebar-accent">Gestão da Plataforma</AccordionTrigger>
-                        <AccordionContent className="pt-1 space-y-1">
-                            {platformManagementItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                        </AccordionContent>
-                    </AccordionItem>
-                </Accordion>
+                <nav className="p-2 space-y-2">
+                    {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                    
+                    <Accordion type="multiple" className="w-full" defaultValue={['creation', 'management']}>
+                        <AccordionItem value="creation" className="border-b-0">
+                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo...
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-1 space-y-1">
+                                {creationNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                            </AccordionContent>
+                        </AccordionItem>
+                        
+                        <AccordionItem value="management" className="border-b-0">
+                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
+                                Gerenciamento
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-1 space-y-1">
+                                 {managementNavGroups.map(group => (
+                                     <Accordion type="single" collapsible key={group.groupTitle}>
+                                         <AccordionItem value={group.groupTitle} className="border-b-0">
+                                            <AccordionTrigger className="text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent">
+                                                {group.groupTitle}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pt-1 space-y-1 pl-4 border-l border-sidebar-border ml-3">
+                                                 {group.items.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                                            </AccordionContent>
+                                         </AccordionItem>
+                                     </Accordion>
+                                 ))}
+                            </AccordionContent>
+                        </AccordionItem>
+
+                         <AccordionItem value="reports" className="border-b-0">
+                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
+                                Relatórios
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-1 space-y-1">
+                                {reportsNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                            </AccordionContent>
+                        </AccordionItem>
+
+                        <AccordionItem value="platform" className="border-b-0">
+                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
+                                Plataforma
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-1 space-y-1">
+                                {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
                 </nav>
             </ScrollArea>
         </>
@@ -213,7 +187,6 @@ export default function AdminSidebar() {
   return (
     <>
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        {/* O trigger do menu móvel foi movido para o AdminHeader */}
         <SheetContent side="left" className="w-[300px] p-0 flex flex-col bg-sidebar text-sidebar-foreground md:hidden">
           <SidebarContent onLinkClick={() => setIsMobileMenuOpen(false)} />
         </SheetContent>
