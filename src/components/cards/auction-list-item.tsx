@@ -60,7 +60,7 @@ export default function AuctionListItem({ auction, onUpdate }: AuctionListItemPr
     return Array.from(new Set(triggers));
   }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
   
-  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl : `https://placehold.co/600x400.png?text=Leilao`;
+  const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://placehold.co/600x400.png?text=Leilao`;
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
   const sellerSlug = auction.seller?.slug;
   const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';

@@ -75,6 +75,7 @@ const initialFiltersState: ActiveFilters & { offerType?: DirectSaleOfferType | '
   status: [],
   offerType: 'ALL',
   searchType: 'auctions',
+  praça: 'todas',
 };
 
 
@@ -347,6 +348,14 @@ export default function SearchPage() {
       }
       if (itemTypeContext === 'auction' && activeFilters.modality !== 'TODAS' && (item as Auction).auctionType?.toUpperCase() !== activeFilters.modality) return false;
       if (itemTypeContext === 'direct_sale' && activeFilters.offerType && activeFilters.offerType !== 'ALL' && (item as DirectSaleOffer).offerType !== activeFilters.offerType) return false;
+      
+      // Filtro de praças para leilões
+      if (itemTypeContext === 'auction' && activeFilters.praça && activeFilters.praça !== 'todas') {
+        const stagesCount = (item as Auction).auctionStages?.length || 0;
+        if (activeFilters.praça === 'unica' && stagesCount !== 1) return false;
+        if (activeFilters.praça === 'multiplas' && stagesCount <= 1) return false;
+      }
+
       return true;
     });
 

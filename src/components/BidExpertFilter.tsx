@@ -30,6 +30,7 @@ export interface ActiveFilters {
   endDate?: Date;
   status: string[];
   offerType?: DirectSaleOfferType | 'ALL'; // Specific to Direct Sales
+  praça?: 'todas' | 'unica' | 'multiplas';
 }
 
 interface BidExpertFilterProps {
@@ -74,6 +75,12 @@ const defaultOfferTypes = [
     { value: 'ACCEPTS_PROPOSALS' as 'ACCEPTS_PROPOSALS', label: 'Aceita Propostas'}
 ];
 
+const praçaOptions = [
+  { value: 'todas', label: 'Qualquer número' },
+  { value: 'unica', label: 'Praça Única' },
+  { value: 'multiplas', label: 'Múltiplas Praças' },
+];
+
 
 export default function BidExpertFilter({
   categories = [],
@@ -104,6 +111,7 @@ export default function BidExpertFilter({
   const [endDate, setEndDate] = useState<Date | undefined>(initialFilters?.endDate);
   const [selectedStatus, setSelectedStatus] = useState<string[]>(initialFilters?.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
   const [selectedOfferType, setSelectedOfferType] = useState<DirectSaleOfferType | 'ALL'>(initialFilters?.offerType || 'ALL');
+  const [selectedPraça, setSelectedPraça] = useState<'todas' | 'unica' | 'multiplas'>(initialFilters?.praça || 'todas');
   const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
@@ -123,6 +131,7 @@ export default function BidExpertFilter({
       setEndDate(initialFilters.endDate);
       setSelectedStatus(initialFilters.status || (filterContext === 'directSales' ? ['ACTIVE'] : []));
       setSelectedOfferType(initialFilters.offerType || 'ALL');
+      setSelectedPraça(initialFilters.praça || 'todas');
     }
   }, [initialFilters, filterContext]);
 
@@ -175,6 +184,7 @@ export default function BidExpertFilter({
       endDate,
       status: selectedStatus,
       offerType: filterContext === 'directSales' ? selectedOfferType : undefined,
+      praça: selectedPraça,
     };
     onFilterSubmit(currentFilters);
   };
@@ -193,6 +203,7 @@ export default function BidExpertFilter({
     setEndDate(undefined);
     setSelectedStatus(filterContext === 'directSales' ? ['ACTIVE'] : []);
     setSelectedOfferType('ALL');
+    setSelectedPraça('todas');
   }
 
   const handleResetFilters = () => {
@@ -216,7 +227,7 @@ export default function BidExpertFilter({
         </Button>
       </div>
 
-      <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes']} className="w-full">
+      <Accordion type="multiple" defaultValue={['categories', 'price', 'status', 'makes', 'praça']} className="w-full">
         
         {filterContext === 'auctions' && (
             <AccordionItem value="modality">
@@ -271,6 +282,20 @@ export default function BidExpertFilter({
             </AccordionContent>
             </AccordionItem>
         )}
+
+        <AccordionItem value="praça">
+          <AccordionTrigger className="text-md font-medium">Praças</AccordionTrigger>
+          <AccordionContent>
+            <RadioGroup value={selectedPraça} onValueChange={(value) => setSelectedPraça(value as 'todas' | 'unica' | 'multiplas')} className="space-y-1">
+              {praçaOptions.map(option => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={`praça-${option.value}`} />
+                  <Label htmlFor={`praça-${option.value}`} className="text-sm font-normal cursor-pointer">{option.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
+          </AccordionContent>
+        </AccordionItem>
 
         <AccordionItem value="price">
           <AccordionTrigger className="text-md font-medium">Faixa de Preço</AccordionTrigger>
