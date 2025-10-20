@@ -8,8 +8,9 @@ import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks } from 'lucide-react';
+import { Eye, MapPin, Tag, Users, Clock, Star, TrendingUp, ListChecks, Gavel } from 'lucide-react';
 import { isPast, differenceInDays } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
@@ -27,6 +28,9 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction?.auctionType);
   const displayLocation = lot.cityName && lot.stateUf ? `${lot.cityName} - ${lot.stateUf}` : lot.stateUf || lot.cityName || 'N/A';
   const sellerName = auction?.seller?.name;
+  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
+  const sellerSlug = auction?.seller?.slug;
+  const consignorInitial = sellerName ? sellerName.charAt(0).toUpperCase() : 'C';
 
   const mentalTriggers = React.useMemo(() => {
     const triggers: string[] = [];
@@ -52,8 +56,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
     return Array.from(new Set(triggers));
   }, [lot.endDate, lot.bidsCount, lot.isFeatured]);
   
-  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl : `https://picsum.photos/seed/${lot.id}/600/400`;
-  const sellerLogoUrl = isValidImageUrl(auction?.seller?.logoUrl) ? auction?.seller?.logoUrl : undefined;
+  const mainImageUrl = isValidImageUrl(lot.imageUrl) ? lot.imageUrl! : `https://picsum.photos/seed/${lot.id}/600/400`;
 
   const IconComponent = auctionTypeDisplay?.icon;
 
@@ -64,7 +67,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
           <div className="md:w-1/3 lg:w-1/4 flex-shrink-0 relative aspect-video md:aspect-[4/3] bg-muted">
             <Link href={`/auctions/${lot.auctionId}/lots/${lot.publicId || lot.id}`} className="block h-full w-full">
               <Image
-                src={mainImageUrl!}
+                src={mainImageUrl}
                 alt={lot.title}
                 fill
                 className="object-cover"
@@ -74,10 +77,10 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
              {sellerLogoUrl && (
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Link href={auction?.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
+                        <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-1 right-1 z-10">
                             <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
                                 <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction?.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
-                                <AvatarFallback>{sellerName ? sellerName.charAt(0) : 'C'}</AvatarFallback>
+                                <AvatarFallback>{consignorInitial}</AvatarFallback>
                             </Avatar>
                         </Link>
                     </TooltipTrigger>

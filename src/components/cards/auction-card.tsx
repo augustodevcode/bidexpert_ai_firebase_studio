@@ -167,7 +167,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             </div>
              <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
                 {mentalTriggers.map(trigger => (
-                    <Badge key={trigger} variant="secondary" className="badge-mental-trigger text-xs bg-amber-100 text-amber-700 border-amber-300">
+                    <Badge key={trigger} variant="secondary" className="text-xs bg-amber-100 text-amber-700 border-amber-300">
                         {trigger.startsWith('ENCERRA') && <Clock className="h-3 w-3 mr-1" />}
                         {trigger === 'ALTA DEMANDA' && <Users className="h-3 w-3 mr-1" />}
                         {trigger === 'DESTAQUE' && <Star className="h-3 w-3 mr-1" />}
@@ -197,7 +197,7 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                   {getAuctionTypeIcon()}
                   <span>{auctionTypeDisplay?.label}</span>
               </div>
-              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`}>ID: {auction.publicId || auction.id}</span>
+              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
             </div>
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="flex-grow">
               <h3 data-ai-id="auction-card-title" className="text-base font-bold text-foreground hover:text-primary transition-colors leading-tight line-clamp-2 min-h-[2.5em]">
@@ -206,9 +206,9 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
             </Link>
             
             <div className="grid grid-cols-3 gap-2 text-center text-xs text-muted-foreground">
-                <div title={`${auction.totalLots || 0} Lotes`}><ListChecks className="h-4 w-4 mx-auto mb-0.5"/>{auction.totalLots || 0} Lotes</div>
-                <div title={`${auction.visits || 0} Visitas`}><Eye className="h-4 w-4 mx-auto mb-0.5"/>{auction.visits || 0}</div>
-                <div title={`${auction.totalHabilitatedUsers || 0} Habilitados`}><Users className="h-4 w-4 mx-auto mb-0.5"/>{auction.totalHabilitatedUsers || 0}</div>
+                <div title={`${auction.totalLots || 0} Lotes`}><ListChecks className="h-4 w-4 mx-auto mb-0.5"/><span className="text-counter">{auction.totalLots || 0} Lotes</span></div>
+                <div title={`${auction.visits || 0} Visitas`}><Eye className="h-4 w-4 mx-auto mb-0.5"/><span className="text-counter">{auction.visits || 0}</span></div>
+                <div title={`${auction.totalHabilitatedUsers || 0} Habilitados`}><Users className="h-4 w-4 mx-auto mb-0.5"/><span className="text-counter">{auction.totalHabilitatedUsers || 0}</span></div>
             </div>
             
             {auction.auctionStages && auction.auctionStages.length > 0 && (
@@ -216,8 +216,9 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
                     <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
             )}
-          </CardContent>
 
+
+          </CardContent>
           <CardFooter className="p-3 border-t flex items-end justify-between">
             {auction.initialOffer && (
               <div data-ai-id="auction-card-initial-offer">
