@@ -27,13 +27,7 @@ import Image from 'next/image';
 const topLevelNavItems = [
   { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
   { title: 'Auditório Virtual', href: '/live-dashboard', icon: Tv },
-];
-
-const creationNavItems = [
-    { title: 'Novo Leilão', href: '/admin/auctions/new', icon: Gavel },
-    { title: 'Novo Lote', href: '/admin/lots/new', icon: ListChecks },
-    { title: 'Novo Ativo', href: '/admin/assets/new', icon: Package },
-    { title: 'Novo Comitente', href: '/admin/sellers/new', icon: Users },
+  { title: 'Assistente de Leilão', href: '/admin/wizard', icon: Rocket },
 ];
 
 const managementNavGroups = [
@@ -66,7 +60,7 @@ const managementNavGroups = [
         ]
     },
      { 
-        groupTitle: 'Conteúdo e Mídia',
+        groupTitle: 'Catálogo e Mídia',
         items: [
             { title: 'Categorias', href: '/admin/categories', icon: ListChecks },
             { title: 'Subcategorias', href: '/admin/subcategories', icon: Layers },
@@ -97,10 +91,10 @@ const platformNavItems = [
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
     key={item.href}
-    variant={pathname === item.href ? 'secondary' : 'ghost'}
+    variant={pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) ? 'secondary' : 'ghost'}
     className={cn(
       'w-full justify-start text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-9 text-sm',
-      pathname === item.href && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
+      pathname.startsWith(item.href) && (item.href !== '/admin/dashboard' || pathname === item.href) && 'bg-sidebar-primary text-sidebar-primary-foreground font-semibold hover:bg-sidebar-primary/90 hover:text-sidebar-primary-foreground'
     )}
     asChild
     disabled={item.disabled}
@@ -115,6 +109,22 @@ const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; titl
 
 function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
     const pathname = usePathname();
+    
+    // Determine which accordion items should be open by default
+    const defaultOpenAccordionItems = useMemo(() => {
+        const openItems: string[] = [];
+        if (managementNavGroups.some(g => g.items.some(i => pathname.startsWith(i.href)))) {
+            openItems.push('management');
+        }
+        if (reportsNavItems.some(i => pathname.startsWith(i.href))) {
+            openItems.push('reports');
+        }
+        if (platformNavItems.some(i => pathname.startsWith(i.href))) {
+            openItems.push('platform');
+        }
+        return openItems;
+    }, [pathname]);
+
     return (
         <>
             <div className="p-4 border-b border-sidebar-border">
@@ -127,23 +137,14 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                 <nav className="p-2 space-y-2">
                     {topLevelNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
                     
-                    <Accordion type="multiple" className="w-full" defaultValue={['creation', 'management']}>
-                        <AccordionItem value="creation" className="border-b-0">
-                            <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Novo...
-                            </AccordionTrigger>
-                            <AccordionContent className="pt-1 space-y-1">
-                                {creationNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
-                            </AccordionContent>
-                        </AccordionItem>
-                        
+                    <Accordion type="multiple" className="w-full" defaultValue={defaultOpenAccordionItems}>
                         <AccordionItem value="management" className="border-b-0">
                             <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
                                 Gerenciamento
                             </AccordionTrigger>
                             <AccordionContent className="pt-1 space-y-1">
                                  {managementNavGroups.map(group => (
-                                     <Accordion type="single" collapsible key={group.groupTitle}>
+                                     <Accordion type="single" collapsible key={group.groupTitle} defaultValue={group.items.some(i => pathname.startsWith(i.href)) ? group.groupTitle : undefined}>
                                          <AccordionItem value={group.groupTitle} className="border-b-0">
                                             <AccordionTrigger className="text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent">
                                                 {group.groupTitle}
@@ -159,7 +160,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
 
                          <AccordionItem value="reports" className="border-b-0">
                             <AccordionTrigger className="text-xs font-semibold uppercase text-muted-foreground hover:no-underline rounded-md px-3 py-2 hover:bg-sidebar-accent">
-                                Relatórios
+                                Análise e Relatórios
                             </AccordionTrigger>
                             <AccordionContent className="pt-1 space-y-1">
                                 {reportsNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}

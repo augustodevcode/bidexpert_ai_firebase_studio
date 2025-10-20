@@ -21,10 +21,12 @@ export class UserWinService {
   }
 
   async create(data: Prisma.UserWinCreateInput): Promise<UserWin> {
+    // @ts-ignore
     return this.prisma.userWin.create({ data });
   }
 
   async findFirst(args: Prisma.UserWinFindFirstArgs): Promise<UserWin | null> {
+    // @ts-ignore
     return this.prisma.userWin.findFirst(args);
   }
 

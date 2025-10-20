@@ -4,7 +4,7 @@ import type {
     User as PmUser, 
     Role as PmRole, 
     UsersOnRoles,
-    UsersOnTenants, // Adicionado para multi-tenancy
+    UsersOnTenants,
     Tenant as PmTenant,
     Auction as PmAuction, 
     AuctionStage as PmAuctionStage,
@@ -172,15 +172,15 @@ export type Theme = PmTheme;
 export type ThemeColors = PmThemeColors;
 export type NotificationSettings = PmNotificationSettings;
 export type PlatformSettings = Omit<PmPlatformSettings, 'themesJson' | 'homepageSections'> & {
-  themeSettings?: ThemeSettings | null;
+  themes?: ThemeSettings | null;
+  platformPublicIdMasks?: IdMasks | null;
   mapSettings?: PmMapSettings | null;
   biddingSettings?: PmBiddingSettings | null;
   paymentGatewaySettings?: PmPaymentGatewaySettings | null;
   notificationSettings?: NotificationSettings | null;
   mentalTriggerSettings?: PmMentalTriggerSettings | null;
   sectionBadgeVisibility?: PmSectionBadgeVisibility | null;
-  platformPublicIdMasks?: IdMasks | null;
-  variableIncrementTable?: PmVariableIncrementTable | null;
+  variableIncrementTable?: PmVariableIncrementRule | null;
 };
 export type VariableIncrementRule = PmVariableIncrementRule;
 export type MapSettings = PmMapSettings;

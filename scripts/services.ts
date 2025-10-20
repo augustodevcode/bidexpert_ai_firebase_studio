@@ -1,3 +1,4 @@
+export * from '@prisma/client';
 
 export * from '../src/services/asset.service';
 export * from '../src/services/auction-habilitation.service';

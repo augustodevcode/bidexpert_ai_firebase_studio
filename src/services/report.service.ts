@@ -6,9 +6,8 @@
  * para realizar operações de CRUD nas definições de relatórios.
  */
 import { ReportRepository } from '@/repositories/report.repository';
-import type { Report } from '@/types';
-import { getTenantId } from '@/lib/get-tenant-id';
-import type { Prisma } from '@prisma/client';
+import type { Report, Prisma } from '@prisma/client';
+import { tenantContext } from '@/lib/tenant-context';
 
 export class ReportService {
   private repository: ReportRepository;
@@ -18,26 +17,17 @@ export class ReportService {
   }
 
   async getReports(tenantId?: string): Promise<Report[]> {
-    const finalTenantId = await getTenantId(tenantId);
-    if (!finalTenantId) {
-      return [];
-    }
+    const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
     return this.repository.findAll(finalTenantId);
   }
 
   async getReportById(id: string, tenantId?: string): Promise<Report | null> {
-    const finalTenantId = await getTenantId(tenantId);
-    if (!finalTenantId) {
-      return null;
-    }
+    const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
     return this.repository.findById(finalTenantId, id);
   }
   
   async createReport(data: Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>, tenantId?: string): Promise<{ success: boolean; message: string; report?: Report }> {
-      const finalTenantId = await getTenantId(tenantId);
-      if (!finalTenantId) {
-        return { success: false, message: 'Tenant ID não encontrado.' };
-      }
+      const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
       try {
           const reportData = {
               ...data,
@@ -51,10 +41,7 @@ export class ReportService {
   }
   
   async updateReport(id: string, data: Partial<Omit<Report, 'id' | 'createdAt' | 'updatedAt' | 'tenantId'>>, tenantId?: string): Promise<{ success: boolean; message: string }> {
-      const finalTenantId = await getTenantId(tenantId);
-      if (!finalTenantId) {
-        return { success: false, message: 'Tenant ID não encontrado.' };
-      }
+      const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
       try {
           await this.repository.update(finalTenantId, id, data);
           return { success: true, message: 'Relatório atualizado com sucesso.'};
@@ -64,10 +51,7 @@ export class ReportService {
   }
   
   async deleteReport(id: string, tenantId?: string): Promise<{ success: boolean; message: string }> {
-      const finalTenantId = await getTenantId(tenantId);
-      if (!finalTenantId) {
-        return { success: false, message: 'Tenant ID não encontrado.' };
-      }
+      const finalTenantId = tenantId || tenantContext.getStore()?.tenantId || '1';
       try {
           await this.repository.delete(finalTenantId, id);
           return { success: true, message: 'Relatório excluído com sucesso.'};

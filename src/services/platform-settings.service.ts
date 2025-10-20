@@ -21,7 +21,6 @@ export class PlatformSettingsService {
     const settings = await this.repository.findFirst();
     if (!settings) {
       console.log("[PlatformSettingsService] No settings found, creating default settings for Landlord Tenant...");
-      // Garante que a criação seja feita no contexto do tenant '1'
       return tenantContext.run({ tenantId: '1' }, async () => {
         const defaultSettingsData = {
             isSetupComplete: false,
@@ -38,18 +37,18 @@ export class PlatformSettingsService {
             relatedLotsCount: 4,
             defaultListItemsPerPage: 10,
             homepageSections: [],
+            tenant: { connect: { id: '1' } }
+        };
+        const newSettings = await this.repository.create(defaultSettingsData as any);
+        return {
+            ...newSettings,
             notificationSettings: {
                 notifyOnNewAuction: true,
                 notifyOnFeaturedLot: true,
                 notifyOnAuctionEndingSoon: true,
                 notifyOnPromotions: true,
-            } as Prisma.JsonObject,
-            tenant: {
-                connect: { id: '1' } // Adicionando a relação obrigatória
             }
-        };
-        // O repositório já deve usar o getPrismaInstance() que respeita o contexto
-        return this.repository.create(defaultSettingsData as any);
+        } as unknown as PlatformSettings;
       });
     }
     return settings;
@@ -57,7 +56,6 @@ export class PlatformSettingsService {
   
   async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
     try {
-      // As configurações são globais, mas a busca inicial pode precisar de um contexto.
       const currentSettings = await this.repository.findFirst();
 
       if (!currentSettings) {
@@ -87,7 +85,7 @@ export class PlatformSettingsService {
         }
       }
         
-    const updatedSettings = await this.repository.update(currentSettings.id, dataToUpdate as any);
+    await this.repository.update(currentSettings.id, dataToUpdate as any);
     
     return { success: true, message: 'Configurações atualizadas com sucesso.' };
     } catch (error: any) {

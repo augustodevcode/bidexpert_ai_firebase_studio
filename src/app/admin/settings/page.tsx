@@ -1,184 +1,52 @@
 // src/app/admin/settings/page.tsx
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
-import { getPlatformSettings, runFullSeedAction } from './actions';
-import SettingsForm from './settings-form';
+import { Suspense } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, AlertTriangle, Database, RefreshCw } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import type { PlatformSettings } from '@/types';
-import { useToast } from '@/hooks/use-toast';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Loader2 } from 'lucide-react';
+import { Settings as SettingsIcon, AlertTriangle, Database, RefreshCw, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot, FileText as FileTextIcon } from 'lucide-react';
+import Link from 'next/link';
 
-function DangerZone() {
-    const { toast } = useToast();
-    const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
-    const [confirmationText, setConfirmationText] = useState('');
-    const router = useRouter();
-    
-    const handleResetSetup = async () => {
-        setIsActionLoading('reset_setup');
-        // This action needs to be implemented. Let's assume it updates the DB.
-        const { updatePlatformSettings } = await import('./actions');
-        const result = await updatePlatformSettings({ isSetupComplete: false });
-        if(result.success) {
-            toast({ title: "Assistente Reiniciado", description: "A plataforma irá agora redirecionar para a tela de configuração inicial."});
-            // Give toast time to show before redirecting
-            setTimeout(() => {
-                router.push('/setup');
-                router.refresh();
-            }, 1500);
-        } else {
-            toast({ title: "Erro", description: `Não foi possível reiniciar o assistente: ${result.message}`, variant: "destructive"});
-            setIsActionLoading(null);
-        }
-    };
-    
-    const handleAction = async (action: 'seed') => {
-        setIsActionLoading(action);
-        let result = { success: false, message: 'Ação não reconhecida.' };
-        try {
-            if (action === 'seed') {
-                toast({ title: 'Populando Dados', description: 'Isso pode levar alguns instantes. Por favor, aguarde.'});
-                result = await runFullSeedAction();
-            }
-            
-            if (result.success) {
-                toast({ title: 'Sucesso!', description: result.message });
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                toast({ title: 'Erro na Ação', description: result.message, variant: 'destructive' });
-            }
-        } catch(err: any) {
-            toast({ title: 'Erro Crítico', description: err.message, variant: 'destructive' });
-        } finally {
-            setIsActionLoading(null);
-            setConfirmationText('');
-        }
-    }
-
-    return (
-        <Card className="border-destructive mt-12">
-            <CardHeader>
-                <CardTitle className="text-md text-destructive">Zona de Perigo</CardTitle>
-                <CardDescription>Ações importantes para o ambiente de desenvolvimento.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                 <Alert variant="destructive">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Reiniciar Assistente de Configuração</AlertTitle>
-                    <AlertDescription>
-                        Esta ação forçará o assistente de setup a ser exibido na próxima visita à plataforma, ideal para reconfigurar o ambiente.
-                    </AlertDescription>
-                     <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" className="mt-3">
-                                {isActionLoading === 'reset_setup' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <RefreshCw className="mr-2 h-4 w-4" />}
-                                Reiniciar Setup
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                             <AlertDialogHeader>
-                                <AlertDialogTitle>Tem certeza?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    Isso marcará a configuração como incompleta e forçará o redirecionamento para a tela de setup na próxima vez que alguém visitar o site.
-                                </AlertDialogDescription>
-                             </AlertDialogHeader>
-                             <AlertDialogFooter>
-                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={handleResetSetup}>Confirmar</AlertDialogAction>
-                             </AlertDialogFooter>
-                        </AlertDialogContent>
-                    </AlertDialog>
-                </Alert>
-                <Alert variant="default" className="border-blue-500/50">
-                    <Database className="h-4 w-4" />
-                    <AlertTitle>Popular com Dados de Demonstração</AlertTitle>
-                    <AlertDescription>
-                        Preenche o banco de dados com um conjunto completo de dados para testes, ignorando itens que já existem.
-                    </AlertDescription>
-                     <AlertDialog onOpenChange={() => setConfirmationText('')}>
-                      <AlertDialogTrigger asChild>
-                        <Button variant="outline" size="sm" className="mt-3">
-                            {isActionLoading === 'seed' ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4" />}
-                            Popular Banco de Dados
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Popular com Dados de Demonstração?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Esta ação irá adicionar dados de exemplo ao banco de dados, como leilões, lotes e usuários. Nenhum dado existente será apagado. Para confirmar, digite <strong>popular</strong> abaixo.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <div className="space-y-2">
-                            <Label htmlFor="confirm-seed">Confirmação</Label>
-                            <Input id="confirm-seed" value={confirmationText} onChange={(e) => setConfirmationText(e.target.value)} />
-                        </div>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel disabled={isActionLoading === 'seed'}>Cancelar</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleAction('seed')} disabled={confirmationText !== 'popular' || isActionLoading === 'seed'}>
-                            {isActionLoading === 'seed' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Confirmar e Popular
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </Alert>
-            </CardContent>
-        </Card>
-    );
+interface SettingCardProps {
+  title: string;
+  description: string;
+  icon: React.ElementType;
+  link: string;
+  dataAiId: string;
 }
 
-function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: { 
-    initialSettings: PlatformSettings | null;
-    initialError?: string | null;
-    onRetry?: () => void; 
-}) {
-    if (initialError) {
-        return (
-             <Card className="shadow-lg">
-                <CardHeader>
-                  <CardTitle className="text-2xl font-bold font-headline flex items-center text-destructive">
-                    <SettingsIcon className="h-7 w-7 mr-3" />
-                    Erro ao Carregar Configurações
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-destructive-foreground">{initialError}</p>
-                  {onRetry && <Button onClick={onRetry} className="mt-4">Tentar Novamente</Button>}
-                </CardContent>
-            </Card>
-        );
-    }
-    
-    if (!initialSettings) { 
-        return (
-             <div className="flex items-center justify-center min-h-[calc(100vh-10rem)]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-3 text-muted-foreground">Carregando configurações...</p>
-            </div>
-        );
-    }
+const SettingCard = ({ title, description, icon: Icon, link, dataAiId }: SettingCardProps) => (
+  <Link href={link} className="block group">
+    <Card className="h-full shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all" data-ai-id={dataAiId}>
+      <CardHeader className="flex flex-row items-center gap-4 space-y-0">
+        <div className="bg-primary/10 p-3 rounded-full">
+            <Icon className="h-6 w-6 text-primary" />
+        </div>
+        <div>
+            <CardTitle className="text-lg group-hover:text-primary transition-colors">{title}</CardTitle>
+            <CardDescription className="text-xs">{description}</CardDescription>
+        </div>
+      </CardHeader>
+    </Card>
+  </Link>
+);
+
+
+function AdminSettingsPageContent() {
+    const settingSections: SettingCardProps[] = [
+        { title: "Identidade Visual e Temas", description: "Gerencie o título, logo e o tema de cores.", icon: Palette, link: "/admin/settings/themes", dataAiId: "settings-card-themes" },
+        { title: "Configurações Gerais", description: "Gerencie modos de formulário e máscaras de ID.", icon: Wrench, link: "/admin/settings/general", dataAiId: "settings-card-general" },
+        { title: "Configurações de Mapa", description: "Escolha o provedor de mapa e chaves de API.", icon: MapIcon, link: "/admin/settings/maps", dataAiId: "settings-card-maps" },
+        { title: "Regras de Lances", description: "Defina lances instantâneos e intervalos.", icon: Zap, link: "/admin/settings/bidding", dataAiId: "settings-card-bidding" },
+        { title: "Incremento Variável", description: "Configure a tabela de incrementos por valor.", icon: ArrowUpDown, link: "/admin/settings/increments", dataAiId: "settings-card-increments" },
+        { title: "Gateway de Pagamento", description: "Defina o provedor e comissões.", icon: CreditCard, link: "/admin/settings/payment", dataAiId: "settings-card-payment" },
+        { title: "Notificações", description: "Controle os e-mails de notificação.", icon: Bell, link: "/admin/settings/notifications", dataAiId: "settings-card-notifications" },
+        { title: "Gatilhos Mentais & Badges", description: "Ajuste os gatilhos de marketing e visibilidade.", icon: Bot, link: "/admin/settings/triggers", dataAiId: "settings-card-triggers" },
+        { title: "Dados de Exemplo", description: "Popule o banco de dados para demonstração.", icon: Database, link: "/admin/settings/seeding", dataAiId: "settings-card-seeding" },
+        { title: "Templates de Documento", description: "Gerencie os modelos de PDF e termos.", icon: FileTextIcon, link: "/admin/document-templates", dataAiId: "settings-card-doc-templates" },
+    ];
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-5xl mx-auto space-y-8">
             <Card className="shadow-lg">
               <CardHeader>
                 <CardTitle className="text-2xl font-bold font-headline flex items-center">
@@ -186,56 +54,24 @@ function AdminSettingsPageContent({ initialSettings, initialError, onRetry }: {
                   Configurações da Plataforma
                 </CardTitle>
                 <CardDescription>
-                  Gerencie as configurações globais do BidExpert.
+                  Gerencie as configurações globais, aparência e regras de negócio do BidExpert.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <SettingsForm initialData={initialSettings} onUpdateSuccess={onRetry} />
-              </CardContent>
             </Card>
-            <DangerZone />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {settingSections.map(section => (
+                    <SettingCard key={section.dataAiId} {...section} />
+                ))}
+            </div>
         </div>
     );
 }
 
 export default function AdminSettingsPageWrapper() {
-    const { toast } = useToast(); 
-    const [initialSettings, setInitialSettings] = useState<PlatformSettings | null>(null);
-    const [initialError, setInitialError] = useState<string | null>(null);
-    const [isLoadingInitial, setIsLoadingInitial] = useState(true);
-
-    const fetchInitialSettings = useCallback(async () => {
-        setIsLoadingInitial(true);
-        setInitialError(null);
-        try {
-            const settings = await getPlatformSettings();
-            setInitialSettings(settings);
-        } catch (err: any) {
-            console.error("Failed to fetch initial settings for page:", err);
-            const errorMessage = err.message || "Falha ao carregar configurações iniciais.";
-            setInitialError(errorMessage);
-            toast({ title: "Erro de Carregamento", description: errorMessage, variant: "destructive" });
-        } finally {
-            setIsLoadingInitial(false);
-        }
-    }, [toast]); 
-
-    useEffect(() => {
-        fetchInitialSettings();
-    }, [fetchInitialSettings]);
-
-    if (isLoadingInitial) {
-        return (
-             <div className="flex items-center justify-center min-h-[calc(100vh-20rem)]">
-                <Loader2 className="h-12 w-12 animate-spin text-primary" />
-                <p className="ml-3 text-muted-foreground">Carregando página de configurações...</p>
-            </div>
-        );
-    }
-    
     return (
-        <Suspense fallback={<div className="flex items-center justify-center min-h-[calc(100vh-20rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /></div>}>
-            <AdminSettingsPageContent initialSettings={initialSettings} initialError={initialError} onRetry={fetchInitialSettings} />
+        <Suspense fallback={<div>Carregando...</div>}>
+            <AdminSettingsPageContent />
         </Suspense>
     );
 }
