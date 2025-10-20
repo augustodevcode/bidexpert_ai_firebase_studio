@@ -10,4 +10,7 @@ export class AuctionHabilitationRepository {
       create: data,
     });
   }
-}
+
+  async deleteMany(where: Prisma.AuctionHabilitationWhereInput): Promise<Prisma.BatchPayload> {
+    return prisma.auctionHabilitation.deleteMany({ where });
+  }}

@@ -12,4 +12,7 @@ export class AuctionHabilitationService {
   async upsertAuctionHabilitation(data: Prisma.AuctionHabilitationCreateInput): Promise<AuctionHabilitation> {
     return this.repository.upsert(data);
   }
-}
+
+  async deleteMany(where: Prisma.AuctionHabilitationWhereInput): Promise<Prisma.BatchPayload> {
+    return this.repository.deleteMany(where);
+  }}

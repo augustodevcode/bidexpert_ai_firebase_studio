@@ -1,7 +1,14 @@
-import prisma from '../lib/prisma';
+import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
 export class LotQuestionService {
-  async deleteMany() {
-    await prisma.lotQuestion.deleteMany({});
+  private prisma: PrismaClient;
+
+  constructor() {
+    this.prisma = prisma;
+  }
+
+  async deleteMany(args: any) {
+    await this.prisma.lotQuestion.deleteMany(args);
   }
 }

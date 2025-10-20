@@ -115,4 +115,7 @@ export class AssetRepository {
     await this.prisma.assetsOnLots.deleteMany({ where: { assetId: id } });
     await this.prisma.asset.delete({ where: { id } });
   }
-}
+
+  async deleteManyAssetsOnLots(where: Prisma.AssetsOnLotsWhereInput): Promise<Prisma.BatchPayload> {
+    return this.prisma.assetsOnLots.deleteMany({ where });
+  }}

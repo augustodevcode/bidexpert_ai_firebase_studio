@@ -180,4 +180,7 @@ export class AssetService {
       return { success: false, message: 'Falha ao excluir todos os ativos.' };
     }
   }
-}
+
+  async deleteManyAssetsOnLots(where: Prisma.AssetsOnLotsWhereInput): Promise<Prisma.BatchPayload> {
+    return this.repository.deleteManyAssetsOnLots(where);
+  }}

@@ -4,14 +4,19 @@
  * a lógica de negócio para o gerenciamento de etapas de leilão (AuctionStage).
  * Responsabilidades incluem criar, atualizar e buscar etapas de leilão.
  */
-import { PrismaClient, AuctionStage } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { AuctionStageRepository } from '@/repositories/auction-stage.repository';
+import type { Prisma, AuctionStage } from '@prisma/client';
 
 export class AuctionStageService {
-  async createAuctionStage(data: { auctionId: string; stageNumber: number; startDate: Date; endDate: Date; }) {
+  private repository: AuctionStageRepository;
+
+  constructor() {
+    this.repository = new AuctionStageRepository();
+  }
+
+  async createAuctionStage(data: Prisma.AuctionStageCreateInput): Promise<{ success: boolean; auctionStage?: AuctionStage; message?: string }> {
     try {
-      const auctionStage = await prisma.auctionStage.create({ data });
+      const auctionStage = await this.repository.create(data);
       return { success: true, auctionStage };
     } catch (error: any) {
       return { success: false, message: error.message };
@@ -19,12 +24,14 @@ export class AuctionStageService {
   }
 
   async getAuctionStageById(id: string): Promise<AuctionStage | null> {
-    return prisma.auctionStage.findUnique({ where: { id } });
+    return this.repository.findById(id);
   }
 
   async getAuctionStagesByAuctionId(auctionId: string): Promise<AuctionStage[]> {
-    return prisma.auctionStage.findMany({ where: { auctionId }, orderBy: { stageNumber: 'asc' } });
+    return this.repository.findMany({ auctionId });
   }
 
-  // Add other methods as needed (update, delete, etc.)
+  async deleteMany(where: Prisma.AuctionStageWhereInput): Promise<Prisma.BatchPayload> {
+    return this.repository.deleteMany(where);
+  }
 }

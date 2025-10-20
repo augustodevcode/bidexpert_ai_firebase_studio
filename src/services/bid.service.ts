@@ -12,4 +12,7 @@ export class BidService {
   async createBid(data: Prisma.BidCreateInput): Promise<Bid> {
     return this.repository.create(data);
   }
-}
+
+  async deleteMany(where: Prisma.BidWhereInput): Promise<Prisma.BatchPayload> {
+    return this.repository.deleteMany(where);
+  }}

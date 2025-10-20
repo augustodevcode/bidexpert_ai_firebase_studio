@@ -14,4 +14,7 @@ export class UserLotMaxBidRepository {
       create: data,
     });
   }
-}
+
+  async deleteMany(where: Prisma.UserLotMaxBidWhereInput): Promise<Prisma.BatchPayload> {
+    return prisma.userLotMaxBid.deleteMany({ where });
+  }}

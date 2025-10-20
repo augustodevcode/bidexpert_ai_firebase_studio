@@ -82,46 +82,49 @@ export class SellerService {
     return this.sellerRepository.findFirst({ isJudicial: true });
   }
 
-  async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
-    try {
-      const existingSeller = await this.sellerRepository.findByName(tenantId, data.name);
-      if (existingSeller) {
-        return { success: false, message: 'Já existe um comitente com este nome.' };
+    async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+      try {
+        const existingSeller = await this.sellerRepository.findByName(tenantId, data.name);
+        if (existingSeller) {
+          return { success: false, message: 'Já existe um comitente com este nome.' };
+        }
+  
+        const {
+          userId, street, number, complement, neighborhood,
+          cityId, stateId, latitude, longitude, ...sellerData
+        } = data;
+  
+        const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
+  
+        const dataToCreate: Prisma.SellerCreateInput = {
+          ...(sellerData as any),
+          address: fullAddress,
+          slug: slugify(data.name),
+          publicId: `COM-${uuidv4()}`,
+          tenant: { connect: { id: tenantId } },
+        };
+  
+        if (userId) dataToCreate.user = { connect: { id: userId } };
+        if (cityId) {
+          const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+          if (city) dataToCreate.city = city.name;
+        }
+        if (stateId) {
+          const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+          if (state) dataToCreate.state = state.uf;
+        }
+  
+        const newSeller = await this.sellerRepository.create(dataToCreate);
+        return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
+      } catch (error: any) {
+        console.error("Error in SellerService.createSeller:", error);
+        return { success: false, message: `Falha ao criar comitente: ${error.message}` };
       }
-
-      const { 
-        userId, street, number, complement, neighborhood, 
-        cityId, stateId, latitude, longitude, ...sellerData 
-      } = data;
-
-      const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
-
-      const dataToCreate: Prisma.SellerCreateInput = {
-        ...(sellerData as any),
-        address: fullAddress,
-        slug: slugify(data.name),
-        publicId: `COM-${uuidv4()}`,
-        tenant: { connect: { id: tenantId } },
-      };
-      
-      if (userId) dataToCreate.user = { connect: { id: userId } };
-      if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
-        if (city) dataToCreate.city = city.name;
-      }
-      if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
-        if (state) dataToCreate.state = state.uf;
-      }
-      
-      const newSeller = await this.sellerRepository.create(dataToCreate);
-      return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
-    } catch (error: any) {
-      console.error("Error in SellerService.createSeller:", error);
-      return { success: false, message: `Falha ao criar comitente: ${error.message}` };
     }
-  }
-
+  
+    async deleteMany(where: Prisma.SellerWhereInput): Promise<Prisma.BatchPayload> {
+      return this.sellerRepository.deleteMany(where);
+    }
   async updateSeller(tenantId: string, id: string, data: Partial<SellerFormData>): Promise<{ success: boolean; message: string }> {
     try {
        const { 

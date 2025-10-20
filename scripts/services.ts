@@ -31,7 +31,7 @@ export * from '../src/services/role.service';
 export * from '../src/services/seller.service';
 export * from '../src/services/state.service';
 export * from '../src/services/subcategory.service';
-export * from '../src/services/subscription.service';
+export * from '../src/services/subscriber.service';
 export * from '../src/services/tenant.service';
 export * from '../src/services/user-lot-max-bid.service';
 export * from '../src/services/user-win.service';

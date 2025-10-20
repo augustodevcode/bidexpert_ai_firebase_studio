@@ -1,7 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
-export class NotificationService {
+export class SubscriberService {
   private prisma: PrismaClient;
 
   constructor() {
@@ -9,6 +9,6 @@ export class NotificationService {
   }
 
   async deleteMany(args: any) {
-    await this.prisma.notification.deleteMany(args);
+    await this.prisma.subscriber.deleteMany(args);
   }
 }

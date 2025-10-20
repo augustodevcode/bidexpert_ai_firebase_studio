@@ -52,6 +52,42 @@ export class DocumentService {
     }
   }
 
+  async adminUpdateUserDocumentStatus(
+    userId: string,
+    documentTypeId: string,
+    status: 'APPROVED' | 'REJECTED',
+    rejectionReason?: string
+  ): Promise<{ success: boolean; message: string }> {
+    try {
+      const updatedDoc = await this.repository.updateUserDocumentStatus(
+        userId,
+        documentTypeId,
+        status,
+        rejectionReason
+      );
+
+      if (!updatedDoc) {
+        return { success: false, message: "Documento do usuário não encontrado." };
+      }
+
+      // After updating, trigger the habilitation status check
+      await this.userService.checkAndHabilitateUser(userId);
+
+      return { success: true, message: `Status do documento atualizado para ${status}.` };
+    } catch (error: any) {
+      console.error("Error in DocumentService.adminUpdateUserDocumentStatus:", error);
+      return { success: false, message: `Falha ao atualizar status do documento: ${error.message}` };
+    }
+  }
+
+  /**
+   * @description Método de helper APENAS para o script de seed.
+   * Aprova um documento e dispara a checagem de habilitação.
+   */
+  async approveDocumentForSeed(userId: string, documentTypeId: string): Promise<void> {
+    await this.adminUpdateUserDocumentStatus(userId, documentTypeId, 'APPROVED');
+  }
+
   async deleteAllUserDocuments(): Promise<{ success: boolean; message: string; }> {
     try {
       await this.repository.deleteAllUserDocuments();

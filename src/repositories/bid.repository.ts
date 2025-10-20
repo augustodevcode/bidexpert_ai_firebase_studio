@@ -6,4 +6,8 @@ export class BidRepository {
   async create(data: Prisma.BidCreateInput): Promise<Bid> {
     return prisma.bid.create({ data });
   }
+
+  async deleteMany(where: Prisma.BidWhereInput): Promise<Prisma.BatchPayload> {
+    return prisma.bid.deleteMany({ where });
+  }
 }

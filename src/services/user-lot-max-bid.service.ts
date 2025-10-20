@@ -12,4 +12,7 @@ export class UserLotMaxBidService {
   async createOrUpdateUserLotMaxBid(data: Prisma.UserLotMaxBidCreateInput): Promise<UserLotMaxBid> {
     return this.repository.upsert(data);
   }
-}
+
+  async deleteMany(where: Prisma.UserLotMaxBidWhereInput): Promise<Prisma.BatchPayload> {
+    return this.repository.deleteMany(where);
+  }}

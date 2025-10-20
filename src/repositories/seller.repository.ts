@@ -73,4 +73,7 @@ export class SellerRepository {
   async delete(tenantId: string, id: string): Promise<void> {
     await this.prisma.seller.delete({ where: { id, tenantId } });
   }
-}
+
+  async deleteMany(where: Prisma.SellerWhereInput): Promise<Prisma.BatchPayload> {
+    return this.prisma.seller.deleteMany({ where });
+  }}
