@@ -133,7 +133,7 @@ export default function SearchPage() {
         const [categories, offers, sellers, settings] = await Promise.all([
           getCategories(),
           getDirectSaleOffers(),
-          getSellers(),
+          getSellers(true),
           getPlatformSettings(),
         ]);
         
@@ -170,14 +170,14 @@ export default function SearchPage() {
         switch (currentSearchType) {
           case 'auctions':
           case 'tomada_de_precos':
-            const auctions = await getAuctions();
+            const auctions = await getAuctions(true);
             setAllAuctions(auctions);
             auctions.forEach(item => {
                 if ('city' in item && 'state' in item && item.city && item.state) locations.add(`${item.city} - ${item.state}`);
             });
             break;
           case 'lots':
-            const lots = await getLots();
+            const lots = await getLots(undefined, true);
             setAllLots(lots);
             lots.forEach(item => {
                 if (item.cityName && item.stateUf) locations.add(`${item.cityName} - ${item.stateUf}`);
@@ -316,7 +316,7 @@ export default function SearchPage() {
             if ('auctionName' in item && item.auctionName) searchableText += ` ${item.auctionName.toLowerCase()}`;
             if ('sellerName' in item && item.sellerName) searchableText += ` ${item.sellerName.toLowerCase()}`;
             else if ('seller' in item && (item as Auction).seller) searchableText += ` ${(item as Auction).seller!.name.toLowerCase()}`;
-            if ('id' in item && item.id) searchableText += ` ${item.id.toLowerCase()}`;
+            if ('id' in item && item.id) searchableText += ` ${String(item.id).toLowerCase()}`;
             return searchableText.includes(term);
         });
     }
