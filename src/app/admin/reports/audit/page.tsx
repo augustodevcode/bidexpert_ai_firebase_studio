@@ -197,10 +197,10 @@ export default function AuditPage() {
         <StatCard title="Leilões sem Lotes" value={auditData?.auctionsWithoutLots.length || 0} icon={Gavel} />
         <StatCard title="Lotes sem Ativos" value={auditData?.lotsWithoutAssets.length || 0} icon={Package} />
         <StatCard title="Leilões sem Etapas" value={auditData?.auctionsWithoutStages.length || 0} icon={ListTodo} />
-        <StatCard title="Lotes com Status Incorreto" value={(auditData?.closedAuctionsWithOpenLots.length || 0) + (auditData?.canceledAuctionsWithOpenLots.length || 0)} icon={Boxes} />
+        <StatCard title="Status Inconsistente" value={(auditData?.closedAuctionsWithOpenLots.length || 0) + (auditData?.canceledAuctionsWithOpenLots.length || 0)} icon={Ban} />
         <StatCard title="Itens sem Imagem" value={(auditData?.assetsWithoutImages.length || 0) + (auditData?.lotsWithoutImages.length || 0)} icon={ImageOff} />
-        <StatCard title="Leilões Judiciais sem Processo" value={auditData?.judicialAuctionsWithoutProcess.length || 0} icon={LinkIcon} />
-        <StatCard title="Comitentes Judiciais sem Vara" value={auditData?.judicialSellersWithoutBranch.length || 0} icon={LinkIcon} />
+        <StatCard title="Leilões Judiciais s/ Processo" value={auditData?.judicialAuctionsWithoutProcess.length || 0} icon={LinkIcon} />
+        <StatCard title="Comitentes Judiciais s/ Vara" value={auditData?.judicialSellersWithoutBranch.length || 0} icon={LinkIcon} />
         <StatCard title="Lotes Encerrados sem Lances" value={auditData?.endedLotsWithoutBids.length || 0} icon={Gavel} />
       </div>
       
