@@ -14,7 +14,7 @@ import {
   ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
   Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
   Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files, 
-  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown
+  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
