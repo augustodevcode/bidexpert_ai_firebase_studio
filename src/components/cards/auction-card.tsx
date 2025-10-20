@@ -193,11 +193,11 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
 
           <CardContent className="p-3 flex flex-col flex-grow space-y-3">
             <div className="flex justify-between items-center text-xs text-muted-foreground">
+              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
               <div className="flex items-center gap-1.5" title={auctionTypeDisplay?.label}>
                   {getAuctionTypeIcon()}
                   <span>{auctionTypeDisplay?.label}</span>
               </div>
-              <span className="truncate" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
             </div>
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="flex-grow">
               <h3 data-ai-id="auction-card-title" className="text-base font-bold text-foreground hover:text-primary transition-colors leading-tight line-clamp-2 min-h-[2.5em]">
