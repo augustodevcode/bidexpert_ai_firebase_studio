@@ -31,11 +31,46 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
   const [isPreviewModalOpen, setIsPreviewModalOpen] = React.useState(false);
   const [auctionFullUrl, setAuctionFullUrl] = React.useState<string>(`/auctions/${auction.publicId || auction.id}`);
 
+  const soldLotsCount = React.useMemo(() => {
+    if (!auction.lots || auction.lots.length === 0) return 0;
+    return auction.lots.filter(lot => lot.status === 'VENDIDO').length;
+  }, [auction.lots]);
+
+  const mentalTriggers = React.useMemo(() => {
+    const triggers: string[] = [];
+    const now = new Date();
+
+    if (auction.endDate) {
+        const endDate = new Date(auction.endDate as string);
+        if (!isPast(endDate)) {
+            const daysDiff = differenceInDays(endDate, now);
+            if (daysDiff === 0) triggers.push('ENCERRA HOJE');
+            else if (daysDiff === 1) triggers.push('ENCERRA AMANHÃ');
+        }
+    }
+    
+    if ((auction.totalHabilitatedUsers || 0) > 100) { 
+        triggers.push('ALTA DEMANDA');
+    }
+    
+    if (auction.isFeaturedOnMarketplace) {
+        triggers.push('DESTAQUE');
+    }
+
+    if (auction.additionalTriggers) {
+        triggers.push(...auction.additionalTriggers);
+    }
+    
+    return Array.from(new Set(triggers));
+  }, [auction.endDate, auction.totalHabilitatedUsers, auction.isFeaturedOnMarketplace, auction.additionalTriggers]);
+
+
   React.useEffect(() => {
     if (typeof window !== 'undefined') {
       setAuctionFullUrl(`${window.location.origin}/auctions/${auction.publicId || auction.id}`);
     }
   }, [auction.id, auction.publicId]);
+
 
   const handleFavoriteToggle = (e: React.MouseEvent) => {
     e.preventDefault(); 
@@ -59,35 +94,94 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
       case 'email': return `mailto:?subject=${encodedTitle}&body=${encodedUrl}`;
     }
   }
-
+  
   const mainImageUrl = isValidImageUrl(auction.imageUrl) ? auction.imageUrl! : `https://picsum.photos/seed/${auction.id}/600/400`;
+  const mainImageAlt = auction.title || 'Imagem do Leilão';
+  const mainImageDataAiHint = auction.dataAiHint || 'auction image';
   const sellerLogoUrl = isValidImageUrl(auction.seller?.logoUrl) ? auction.seller?.logoUrl : undefined;
+  const sellerSlug = auction.seller?.slug;
   const sellerName = auction.seller?.name;
+
+
   const auctionTypeDisplay = getAuctionTypeDisplayData(auction.auctionType);
-  const IconComponent = auctionTypeDisplay?.icon;
+  
+  const getStatusDisplay = () => {
+    if (auction.status === 'ENCERRADO' || auction.status === 'FINALIZADO') {
+      if (soldLotsCount > 0) {
+        return { text: `Vendido (${soldLotsCount}/${auction.totalLots})`, className: 'bg-green-600 text-white' };
+      }
+      return { text: 'Finalizado (Sem Venda)', className: 'bg-gray-500 text-white' };
+    }
+    if (auction.status === 'ABERTO_PARA_LANCES' || auction.status === 'ABERTO') {
+      return { text: getAuctionStatusText(auction.status), className: 'bg-green-600 text-white' };
+    }
+    if (auction.status === 'EM_BREVE') {
+      return { text: getAuctionStatusText(auction.status), className: 'bg-blue-500 text-white' };
+    }
+    return { text: getAuctionStatusText(auction.status), className: 'bg-gray-500 text-white' };
+  };
+
+  const statusDisplay = getStatusDisplay();
+  const getAuctionTypeIcon = () => {
+    const IconComponent = getAuctionTypeDisplayData(auction.auctionType)?.icon;
+    return IconComponent ? <IconComponent className="h-3 w-3" /> : null;
+  };
+
+  const getConsignorInitial = () => (sellerName ? sellerName.charAt(0).toUpperCase() : 'C');
+  const consignorInitial = getConsignorInitial();
+
   const { effectiveLotEndDate: auctionEndDate } = getEffectiveLotEndDate(auction.lots?.[0], auction);
-  const getAuctioneerInitial = () => (sellerName ? sellerName.charAt(0).toUpperCase() : 'C');
-  const consignorInitial = getAuctioneerInitial();
+
 
   return (
     <TooltipProvider>
       <>
         <Card data-ai-id={`auction-card-${auction.id}`} className="card-auction">
-          <div className="container-auction-image">
+          <div className="relative">
             <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-image">
-              <div className="wrapper-auction-image">
+              <div className="aspect-video relative bg-muted rounded-t-lg overflow-hidden">
                 <Image
-                  src={mainImageUrl}
-                  alt={auction.title || 'Imagem do Leilão'}
+                  src={mainImageUrl!}
+                  alt={mainImageAlt}
                   fill
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   className="img-auction"
-                  data-ai-hint={auction.dataAiHint || 'imagem leilao'}
+                  data-ai-hint="marina home"
                   data-ai-id="auction-card-main-image"
                 />
               </div>
             </Link>
-            <div className="absolute bottom-2 left-1/2 z-20 flex w-full -translate-x-1/2 transform-gpu flex-row items-center justify-center space-x-1.5 opacity-0 transition-all duration-300 group-hover:-translate-y-0 group-hover:opacity-100 translate-y-4">
+             {sellerLogoUrl && (
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Link href={sellerSlug ? `/sellers/${sellerSlug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
+                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
+                                <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
+                                <AvatarFallback>{consignorInitial}</AvatarFallback>
+                            </Avatar>
+                        </Link>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                       <p>Comitente: {sellerName}</p>
+                    </TooltipContent>
+                </Tooltip>
+            )}
+             <div className="absolute top-2 left-2 z-10">
+                <Badge className={`badge-auction-status ${statusDisplay.className}`}>
+                    {statusDisplay.text}
+                </Badge>
+            </div>
+             <div className="absolute top-2 right-2 z-10 flex flex-col items-end gap-1">
+                {mentalTriggers.map(trigger => (
+                    <Badge key={trigger} variant="secondary" className="badge-mental-trigger">
+                        {trigger.startsWith('ENCERRA') && <Clock className="icon-mental-trigger" />}
+                        {trigger === 'ALTA DEMANDA' && <Users className="icon-mental-trigger" />}
+                        {trigger === 'DESTAQUE' && <Star className="icon-mental-trigger" />}
+                        {trigger}
+                    </Badge>
+                ))}
+            </div>
+            <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex justify-center items-center gap-2">
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={handleFavoriteToggle} aria-label={isFavorite ? "Desfavoritar" : "Favoritar"}><Heart className={`icon-card-action ${isFavorite ? 'is-favorite' : ''}`} /></Button></TooltipTrigger><TooltipContent><p>{isFavorite ? "Desfavoritar" : "Favoritar"}</p></TooltipContent></Tooltip>
               <Tooltip><TooltipTrigger asChild><Button variant="outline" size="icon" className="btn-card-action" onClick={openPreviewModal} aria-label="Pré-visualizar"><Eye className="icon-card-action" /></Button></TooltipTrigger><TooltipContent><p>Pré-visualizar</p></TooltipContent></Tooltip>
               <DropdownMenu>
@@ -101,73 +195,61 @@ export default function AuctionCard({ auction, onUpdate }: AuctionCardProps) {
               </DropdownMenu>
               <EntityEditMenu entityType="auction" entityId={auction.id} publicId={auction.publicId!} currentTitle={auction.title} isFeatured={auction.isFeaturedOnMarketplace || false} onUpdate={onUpdate}/>
             </div>
-             {sellerLogoUrl && (
-                <Tooltip>
-                    <TooltipTrigger asChild>
-                        <Link href={auction.seller?.slug ? `/sellers/${auction.seller.slug}` : '#'} onClick={(e) => e.stopPropagation()} className="absolute bottom-2 right-2 z-10">
-                            <Avatar className="h-10 w-10 border-2 bg-background border-border shadow-md">
-                                <AvatarImage src={sellerLogoUrl} alt={sellerName || "Logo Comitente"} data-ai-hint={auction.seller?.dataAiHintLogo || 'logo comitente pequeno'} />
-                                <AvatarFallback>{consignorInitial}</AvatarFallback>
-                            </Avatar>
-                        </Link>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                       <p>Comitente: {sellerName}</p>
-                    </TooltipContent>
-                </Tooltip>
-            )}
-             <div className="absolute top-2 left-2 z-10">
-                <Badge className={`badge-auction-status bg-green-600 text-white`}>
-                    {getAuctionStatusText(auction.status)}
-                </Badge>
-            </div>
           </div>
 
           <CardContent className="card-content-auction">
-            <h2 className="text-xl font-bold leading-tight tracking-tight text-primary dark:text-white mb-4 line-clamp-2 h-14">
-                <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                {auction.title}
-                </Link>
-            </h2>
-            <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                {IconComponent && (
-                    <div className="flex items-center gap-2" title={`Tipo: ${auctionTypeDisplay?.label}`}>
-                        <IconComponent className="h-4 w-4 text-primary dark:text-secondary"/>
-                        <p>{auctionTypeDisplay?.label}</p>
-                    </div>
+            <div className="container-auction-meta">
+              <span className="text-auction-id" title={`ID: ${auction.publicId || auction.id}`} data-ai-id="auction-card-public-id">ID: {auction.publicId || auction.id}</span>
+              {auctionTypeDisplay?.label && (
+                <div className="container-auction-type" data-ai-id="auction-card-type">
+                    {getAuctionTypeIcon()}
+                    <span className="label-auction-type">{auctionTypeDisplay.label}</span>
+                </div>
                 )}
-                <div className="flex items-center gap-2" title={`Modalidade: ${auction.participation}`}>
-                    <Wifi className="h-4 w-4 text-primary dark:text-secondary"/>
-                    <p>{auction.participation}</p>
+            </div>
+            <Link href={`/auctions/${auction.publicId || auction.id}`} className="link-auction-title">
+              <h3 data-ai-id="auction-card-title" className="title-auction-card">
+                {auction.title}
+              </h3>
+            </Link>
+            
+            <div className="grid-auction-counters" data-ai-id="auction-card-counters">
+                <div className="item-counter" title={`${auction.totalLots || 0} Lotes`}>
+                    <ListChecks className="icon-counter" />
+                    <span className="text-counter">{auction.totalLots || 0} Lotes</span>
+                </div>
+                 <div className="item-counter" title={`${auction.visits || 0} Visitas`}>
+                    <Eye className="icon-counter" />
+                    <span className="text-counter">{auction.visits || 0} Visitas</span>
+                </div>
+                 <div className="item-counter" title={`${auction.totalHabilitatedUsers || 0} Usuários Habilitados`}>
+                    <Users className="icon-counter" />
+                    <span className="text-counter">{auction.totalHabilitatedUsers || 0} Habilitados</span>
                 </div>
             </div>
-
-            {auction.auctionStages && auction.auctionStages.length > 0 && (
-                <div className="mb-6">
-                    <p className="text-sm font-medium text-muted-foreground mb-2">Praças do Leilão</p>
-                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} variant="compact" />
+            
+            {auction.auctionStages && auction.auctionStages.length > 0 ? (
+                <div className="container-auction-timeline" data-ai-id="auction-card-timeline">
+                    <BidExpertAuctionStagesTimeline auctionOverallStartDate={new Date(auction.auctionDate as string)} stages={auction.auctionStages} />
                 </div>
-            )}
+            ) : null}
+
+
           </CardContent>
           <CardFooter className="card-footer-auction">
-            <div className="space-y-4 w-full">
-              {auction.status === 'ABERTO_PARA_LANCES' && auctionEndDate && (
-                <div className="mb-2">
-                  <p className="text-center text-sm font-medium text-muted-foreground mb-2">
-                    Encerra em:
-                  </p>
-                  <LotCountdown endDate={auctionEndDate} status={auction.status as any} className="text-primary dark:text-secondary" />
-                </div>
-              )}
-              <p className="text-text-light dark:text-text-dark text-base font-normal leading-normal text-center">
-                {auction.totalLots || 0} Lotes Disponíveis
-              </p>
-              <Button asChild className="w-full">
-                <Link href={`/auctions/${auction.publicId || auction.id}`}>
-                  <Eye className="mr-2 h-4 w-4"/> Ver Lotes
-                </Link>
-              </Button>
-            </div>
+            {auction.initialOffer && (
+              <div className="container-initial-offer" data-ai-id="auction-card-initial-offer">
+                <p className="label-initial-offer">
+                  {auction.auctionType === 'TOMADA_DE_PRECOS' ? 'Valor de Referência' : 'A partir de'}
+                </p>
+                <p className="text-initial-offer">
+                  R$ {auction.initialOffer.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+              </div>
+            )}
+            <Button asChild className="btn-view-lots">
+              <Link href={`/auctions/${auction.publicId || auction.id}`}>Ver Lotes ({auction.totalLots || 0})</Link>
+            </Button>
           </CardFooter>
         </Card>
         {isPreviewModalOpen && (
