@@ -10,30 +10,39 @@ export class PlatformSettingsRepository {
     this.prisma = prisma;
   }
   
-  async findFirst(): Promise<PlatformSettings | null> {
+  async findFirst(): Promise<any | null> {
     const settings = await this.prisma.platformSettings.findFirst({
         include: {
-            themes: true,
-            platformPublicIdMasks: true,
+            themeSettings: true,
+            idMasks: true,
             mapSettings: true,
             biddingSettings: true,
-            // Adicionar includes para outros novos modelos de configuração aqui...
+            paymentGatewaySettings: true,
+            notificationSettings: true,
+            mentalTriggerSettings: true,
+            sectionBadgeVisibility: true,
+            variableIncrementTable: true,
         }
     });
-    return settings as PlatformSettings | null;
+    return settings;
   }
 
   async create(data: Prisma.PlatformSettingsCreateInput): Promise<PlatformSettings> {
     const settings = await this.prisma.platformSettings.create({ 
         data,
         include: {
-            themes: true,
+            themeSettings: true,
             mapSettings: true,
             biddingSettings: true,
-            platformPublicIdMasks: true,
+            idMasks: true,
+            paymentGatewaySettings: true,
+            notificationSettings: true,
+            mentalTriggerSettings: true,
+            sectionBadgeVisibility: true,
+            variableIncrementTable: true,
         }
     });
-    return settings as PlatformSettings;
+    return settings as unknown as PlatformSettings;
   }
 
   async update(id: string, data: Partial<PlatformSettings>): Promise<PlatformSettings> {

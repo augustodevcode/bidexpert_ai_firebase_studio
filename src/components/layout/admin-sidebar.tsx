@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 
 const topLevelNavItems = [
@@ -87,6 +87,13 @@ const platformNavItems = [
     { title: 'Configurações', href: '/admin/settings', icon: Settings },
 ];
 
+const settingsSubNavItems = [
+  { title: "Identidade Visual", href: "/admin/settings/themes" },
+  { title: "Geral", href: "/admin/settings/general" },
+  { title: "Mapas", href: "/admin/settings/maps" },
+  { title: "Lances", href: "/admin/settings/bidding" },
+];
+
 
 const NavButton = ({ item, pathname, onLinkClick }: { item: { href: string; title: string; icon: React.ElementType; disabled?: boolean }; pathname: string; onLinkClick?: () => void; }) => (
   <Button
@@ -119,7 +126,7 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
         if (reportsNavItems.some(i => pathname.startsWith(i.href))) {
             openItems.push('reports');
         }
-        if (platformNavItems.some(i => pathname.startsWith(i.href))) {
+        if (platformNavItems.some(i => pathname.startsWith(i.href)) || settingsSubNavItems.some(i => pathname.startsWith(i.href))) {
             openItems.push('platform');
         }
         return openItems;
@@ -172,7 +179,24 @@ function SidebarContent({ onLinkClick }: { onLinkClick?: () => void }) {
                                 Plataforma
                             </AccordionTrigger>
                             <AccordionContent className="pt-1 space-y-1">
-                                {platformNavItems.map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                                {platformNavItems.filter(item => item.href !== '/admin/settings').map((item) => <NavButton key={item.href} item={item} pathname={pathname} onLinkClick={onLinkClick} />)}
+                                
+                                {/* Settings Sub-menu */}
+                                <Accordion type="single" collapsible defaultValue={pathname.startsWith('/admin/settings') ? 'settings' : undefined}>
+                                  <AccordionItem value="settings" className="border-b-0">
+                                    <AccordionTrigger className="text-sm font-medium text-sidebar-foreground/80 hover:no-underline rounded-md px-3 py-1.5 hover:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground data-[state=open]:bg-sidebar-accent">
+                                      <Settings className="mr-2 h-4 w-4" /> Configurações
+                                    </AccordionTrigger>
+                                    <AccordionContent className="pt-1 space-y-1 pl-4 border-l border-sidebar-border ml-3">
+                                       <Button asChild variant={pathname === '/admin/settings' ? 'secondary' : 'ghost'} className="w-full justify-start h-9 text-sm"><Link href="/admin/settings">Visão Geral</Link></Button>
+                                       {settingsSubNavItems.map(item => (
+                                         <Button key={item.href} asChild variant={pathname === item.href ? 'secondary' : 'ghost'} className="w-full justify-start h-9 text-sm">
+                                           <Link href={item.href}>{item.title}</Link>
+                                         </Button>
+                                       ))}
+                                    </AccordionContent>
+                                  </AccordionItem>
+                                </Accordion>
                             </AccordionContent>
                         </AccordionItem>
                     </Accordion>

@@ -8,38 +8,57 @@
 import * as z from 'zod';
 import type { MapSettings, SearchPaginationType, StorageProviderType, ThemeSettings } from '@/types'; // Import MapSettings, StorageProviderType
 
+// Schema para ThemeSettings
+const ThemeColorsSchema = z.object({
+  primary: z.string().optional().nullable(),
+  background: z.string().optional().nullable(),
+  accent: z.string().optional().nullable(),
+});
+
+const ThemeSettingsSchema = z.object({
+  colors: z.object({
+    light: ThemeColorsSchema.optional(),
+    dark: ThemeColorsSchema.optional(),
+  }).optional(),
+});
+
+// Schema para MapSettings
+const MapSettingsSchema = z.object({
+  defaultProvider: z.enum(['openstreetmap', 'google', 'staticImage']).default('openstreetmap'),
+  googleMapsApiKey: z.string().optional().nullable(),
+  staticImageMapZoom: z.number().int().min(1).max(20).default(15),
+  staticImageMapMarkerColor: z.string().default('blue'),
+});
+
+// Schema para BiddingSettings
+const BiddingSettingsSchema = z.object({
+  instantBiddingEnabled: z.boolean().default(true),
+  getBidInfoInstantly: z.boolean().default(true),
+  biddingInfoCheckIntervalSeconds: z.number().int().min(1).max(60).default(1),
+});
+
+// Schema para IdMasks
+const IdMasksSchema = z.object({
+    auctions: z.string().optional().nullable(),
+    lots: z.string().optional().nullable(),
+    auctioneers: z.string().optional().nullable(),
+    sellers: z.string().optional().nullable(),
+});
+
+
+// Schema principal de configurações da plataforma
 export const platformSettingsFormSchema = z.object({
   siteTitle: z.string().min(3, { message: "O título do site deve ter pelo menos 3 caracteres."}).max(100, { message: "O título do site não pode exceder 100 caracteres."}),
   siteTagline: z.string().max(200, { message: "O tagline não pode exceder 200 caracteres."}).optional().nullable(),
   logoUrl: z.string().url("URL do logo inválida.").optional().or(z.literal('')),
   
-  // ThemeSettings
-  themes: z.object({
-    colors: z.object({
-      light: z.object({
-        primary: z.string().optional(),
-        background: z.string().optional(),
-        accent: z.string().optional(),
-      }).optional(),
-      dark: z.object({
-        primary: z.string().optional(),
-        background: z.string().optional(),
-        accent: z.string().optional(),
-      }).optional(),
-    }).optional(),
-  }).optional(),
-
-  // Outras configurações permanecem aqui por enquanto, serão movidas em etapas futuras.
-  galleryImageBasePath: z.string()
-    .min(1, { message: "O caminho base da galeria de imagens é obrigatório." })
-    .startsWith("/", { message: "O caminho deve começar com uma barra '/'." })
-    .endsWith("/", { message: "O caminho deve terminar com uma barra '/'." })
-    .regex(/^(\/[a-zA-Z0-9_-]+)+\/$/, { message: "Caminho inválido. Use apenas letras, números, hífens, underscores e barras. Ex: /media/gallery/" })
-    .max(200, { message: "O caminho não pode exceder 200 caracteres." }),
-  storageProvider: z.enum(['local', 'firebase'], {
-    errorMap: () => ({ message: "Por favor, selecione um provedor de armazenamento válido." })
-  }).optional().default('local'),
-  firebaseStorageBucket: z.string().max(200, {message: "Nome do bucket muito longo."}).optional().nullable(),
+  // Relações que serão tratadas separadamente
+  themes: ThemeSettingsSchema.optional(),
+  mapSettings: MapSettingsSchema.optional(),
+  biddingSettings: BiddingSettingsSchema.optional(),
+  platformPublicIdMasks: IdMasksSchema.optional(),
+  
+  // Configurações Gerais
   crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
 });
 

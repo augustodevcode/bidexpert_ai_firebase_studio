@@ -6,9 +6,11 @@
  * além de permitir a sua atualização.
  */
 import { PlatformSettingsRepository } from '@/repositories/platform-settings.repository';
-import type { PlatformSettings, ThemeSettings, MapSettings, BiddingSettings, IdMasks, PaymentGatewaySettings, NotificationSettings } from '@/types';
+import type { PlatformSettings } from '@/types';
 import type { Prisma } from '@prisma/client';
 import { tenantContext } from '@/lib/tenant-context'; // Importa o contexto do tenant
+import { prisma } from '@/lib/prisma'; // Importa a instância direta do prisma
+
 
 export class PlatformSettingsService {
   private repository: PlatformSettingsRepository;
@@ -42,10 +44,14 @@ export class PlatformSettingsService {
         data: {
             ...defaultData,
             tenant: { connect: { id: tenantId } },
-            themes: { create: {} },
+            themeSettings: { create: {} },
             mapSettings: { create: {} },
             biddingSettings: { create: {} },
-            platformPublicIdMasks: { create: {} },
+            idMasks: { create: {} },
+            paymentGatewaySettings: { create: {} },
+            notificationSettings: { create: {} },
+            mentalTriggerSettings: { create: {} },
+            sectionBadgeVisibility: { create: {} },
         }
     });
 
@@ -60,7 +66,7 @@ export class PlatformSettingsService {
       // A criação de settings é sempre para o tenant '1' se não existir
       return this.createDefaultSettings('1');
     }
-    return settings;
+    return settings as PlatformSettings;
   }
   
   async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
@@ -71,7 +77,7 @@ export class PlatformSettingsService {
         return { success: false, message: 'Nenhuma configuração encontrada para atualizar.' };
       }
       
-      const { tenantId, themes, mapSettings, biddingSettings, platformPublicIdMasks, ...restOfData } = data;
+      const { tenantId, themeSettings, mapSettings, biddingSettings, idMasks, paymentGatewaySettings, notificationSettings, mentalTriggerSettings, sectionBadgeVisibility, variableIncrementTable, ...restOfData } = data;
       
       await this.prisma.$transaction(async (tx) => {
         await tx.platformSettings.update({
@@ -79,17 +85,67 @@ export class PlatformSettingsService {
             data: restOfData as any,
         });
 
-        if (themes) {
-            await tx.themeSettings.update({ where: { platformSettingsId: currentSettings.id }, data: themes });
+        if (themeSettings) {
+            await tx.themeSettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id },
+                update: themeSettings as any,
+                create: { ...(themeSettings as any), platformSettingsId: currentSettings.id }
+            });
         }
         if (mapSettings) {
-            await tx.mapSettings.update({ where: { platformSettingsId: currentSettings.id }, data: mapSettings });
+            await tx.mapSettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: mapSettings,
+                create: { ...mapSettings, platformSettingsId: currentSettings.id } 
+            });
         }
         if (biddingSettings) {
-            await tx.biddingSettings.update({ where: { platformSettingsId: currentSettings.id }, data: biddingSettings });
+            await tx.biddingSettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: biddingSettings,
+                create: { ...biddingSettings, platformSettingsId: currentSettings.id } 
+            });
         }
-        if (platformPublicIdMasks) {
-            await tx.idMasks.update({ where: { platformSettingsId: currentSettings.id }, data: platformPublicIdMasks });
+        if (idMasks) {
+            await tx.idMasks.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: idMasks,
+                create: { ...idMasks, platformSettingsId: currentSettings.id } 
+            });
+        }
+         if (paymentGatewaySettings) {
+            await tx.paymentGatewaySettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: paymentGatewaySettings,
+                create: { ...paymentGatewaySettings, platformSettingsId: currentSettings.id } 
+            });
+        }
+        if (notificationSettings) {
+            await tx.notificationSettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: notificationSettings,
+                create: { ...notificationSettings, platformSettingsId: currentSettings.id }
+            });
+        }
+        if (mentalTriggerSettings) {
+            await tx.mentalTriggerSettings.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: mentalTriggerSettings,
+                create: { ...mentalTriggerSettings, platformSettingsId: currentSettings.id } 
+            });
+        }
+        if (sectionBadgeVisibility) {
+            await tx.sectionBadgeVisibility.upsert({ 
+                where: { platformSettingsId: currentSettings.id }, 
+                update: sectionBadgeVisibility,
+                create: { ...sectionBadgeVisibility, platformSettingsId: currentSettings.id }
+            });
+        }
+         if (variableIncrementTable) {
+            await tx.variableIncrementRule.deleteMany({ where: { platformSettingsId: currentSettings.id }});
+            await tx.variableIncrementRule.createMany({ 
+                data: (variableIncrementTable as any[]).map(rule => ({ ...rule, platformSettingsId: currentSettings.id }))
+            });
         }
       });
     

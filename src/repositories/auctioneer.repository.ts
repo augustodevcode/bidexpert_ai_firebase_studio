@@ -31,6 +31,10 @@ export class AuctioneerRepository {
     });
   }
 
+  async findByName(tenantId: string, name: string): Promise<AuctioneerProfileInfo | null> {
+    return this.prisma.auctioneer.findFirst({ where: { name, tenantId } });
+  }
+
   async create(data: Prisma.AuctioneerCreateInput): Promise<AuctioneerProfileInfo> {
     return this.prisma.auctioneer.create({ data });
   }
