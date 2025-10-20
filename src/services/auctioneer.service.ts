@@ -49,6 +49,11 @@ export class AuctioneerService {
       return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
   }
 
+  async getAuctioneerByName(tenantId: string, name: string): Promise<AuctioneerProfileInfo | null> {
+    // @ts-ignore
+    return this.auctioneerRepository.findByName(tenantId, name);
+  }
+
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
     try {
       const { 
