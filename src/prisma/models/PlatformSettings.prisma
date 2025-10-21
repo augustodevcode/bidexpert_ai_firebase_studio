@@ -1,0 +1,38 @@
+// prisma/models/PlatformSettings.prisma
+model PlatformSettings {
+  id                      String                   @id @default("global")
+  tenantId                String                   @unique
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [id])
+  siteTitle               String                   @default("BidExpert")
+  siteTagline             String?
+  logoUrl                 String?
+  faviconUrl              String?
+  galleryImageBasePath    String                   @default("/uploads/media/")
+  storageProvider         StorageProviderType      @default(local)
+  firebaseStorageBucket   String?
+  activeThemeName         String?
+  searchPaginationType    SearchPaginationType     @default(loadMore)
+  searchItemsPerPage      Int                      @default(12)
+  searchLoadMoreCount     Int                      @default(12)
+  showCountdownOnLotDetail Boolean                  @default(true)
+  showCountdownOnCards    Boolean                  @default(false)
+  showRelatedLotsOnLotDetail Boolean               @default(true)
+  relatedLotsCount        Int                      @default(4)
+  defaultListItemsPerPage Int                      @default(10)
+  defaultUrgencyTimerHours Int?
+  isSetupComplete         Boolean                  @default(false)
+  crudFormMode            CrudFormMode             @default(modal) // Corrigido
+
+  themes                  ThemeSettings[]
+  platformPublicIdMasks   IdMasks[]
+  mapSettings             MapSettings[]
+  biddingSettings         BiddingSettings[]
+  paymentGatewaySettings  PaymentGatewaySettings[]
+  notificationSettings    NotificationSettings[]
+  mentalTriggerSettings   MentalTriggerSettings[]
+  sectionBadgeVisibility  SectionBadgeVisibility[]
+  variableIncrementTable  VariableIncrementRule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

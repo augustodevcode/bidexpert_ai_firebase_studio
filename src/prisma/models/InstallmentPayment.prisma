@@ -1,0 +1,16 @@
+// prisma/models/InstallmentPayment.prisma
+model InstallmentPayment {
+  id                  String        @id @default(cuid())
+  userWinId           String
+  lotId               String
+  installmentNumber   Int
+  totalInstallments   Int
+  amount              Decimal       @db.Decimal(12, 2)
+  dueDate             DateTime
+  paymentDate         DateTime?
+  status              PaymentStatus @default(PENDENTE)
+
+  userWin UserWin @relation(fields: [userWinId], references: [id], onDelete: Cascade)
+
+  @@index([userWinId])
+}
