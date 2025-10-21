@@ -4,7 +4,7 @@
  * Este arquivo contém a lógica de backend para os processos de login e logout,
  * bem como para a recuperação de informações do usuário logado. As ações interagem
  * com a camada de serviço e com a biblioteca de sessão (jose) para validar
-* credenciais, criar e destruir sessões seguras em cookies.
+ * credenciais, criar e destruir sessões seguras em cookies.
  */
 'use server';
 
@@ -92,22 +92,6 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    // Se o tenant não foi especificado e o usuário só tem um, loga nele
-    if (!tenantId && user.tenants?.length === 1) {
-        tenantId = user.tenants[0].tenantId.toString();
-    } else if (!tenantId && user.tenants && user.tenants.length > 1) {
-        // Se tem múltiplos tenants e nenhum foi escolhido, retorna os dados para o seletor da UI
-        const userProfile = formatUserWithPermissions(user);
-        return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfile };
-    }
-    
-    // Se um tenantId foi especificado, verifica se o usuário pertence a ele
-    const userBelongsToTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
-    if (tenantId && !userBelongsToTenant) {
-        console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
-        return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
-    }
-
     console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
     const isPasswordValid = await bcryptjs.compare(password, user.password);
 
@@ -121,8 +105,35 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Falha ao processar o perfil do usuário.' };
     }
 
+    // Tenant Selection Logic
+    if (!tenantId) {
+        if (user.tenants?.length === 1) {
+            // Se o usuário pertence a apenas um tenant, usa esse por padrão.
+            tenantId = user.tenants[0].tenantId;
+        } else if (user.tenants && user.tenants.length > 1) {
+            // Se tem múltiplos tenants, retorna para a UI escolher.
+            return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
+        } else {
+            // Se o usuário não pertence a nenhum tenant, associa ao Landlord como fallback.
+            console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord (ID '1').`);
+            tenantId = '1'; 
+        }
+    }
+    
+    // Verifica se o usuário pertence ao tenantId final (seja do form ou do fallback).
+    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId === tenantId);
+    if (!userBelongsToFinalTenant) {
+        // Se o usuário não pertence explicitamente ao tenant, mas o fallback para Landlord está sendo usado,
+        // E ele não pertence a nenhum outro, permite o login no Landlord.
+        // Isso cobre o caso do primeiro admin que ainda não foi associado a um tenant.
+        if (tenantId !== '1' || (user.tenants && user.tenants.length > 0)) {
+            console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
+            return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
+        }
+    }
+    
     // A sessão é criada para o tenant correto
-    await createSession(userProfileWithPerms, tenantId!);
+    await createSession(userProfileWithPerms, tenantId);
 
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
 
