@@ -65,7 +65,7 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 
 const slugify = (text: string) => {
   if (!text) return '';
-  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^\w-]+/g, '').replace(/--+/g, '-');
+  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^-￿\w-]+/g, '').replace(/--+/g, '-');
 };
 
 // --- Armazenamento de Entidades Criadas ---
@@ -169,8 +169,7 @@ const IMAGE_PLACEHOLDER_DIR = path.join(process.cwd(), 'public/uploads/sample-im
 
 async function main() {
   console.log('🚀 Iniciando o seed completo e robusto do banco de dados...');
-  console.log('=====================================================
-');
+  console.log('=====================================================\n');
 
   try {
     await cleanupPreviousData();
@@ -186,8 +185,7 @@ async function main() {
     await seedPostAuctionInteractions();
     await seedMiscData();
 
-    console.log('
-=====================================================');
+    console.log('\n=====================================================');
     console.log('✅ Seed do banco de dados finalizado com sucesso!');
     console.log('=====================================================');
     logSummary();
@@ -506,7 +504,7 @@ async function seedParticipants() {
         const isJudicial = i % 4 === 0;
         const name = isJudicial ? `Massa Falida ${faker.company.name()}` : `Vendedor Particular ${i+1}`;
         const data: Prisma.SellerCreateInput = {
-            name, 
+            name,
             publicId: uuidv4(),
             slug: slugify(name),
             email: faker.internet.email(),
@@ -751,7 +749,7 @@ async function seedInteractions() {
 
 async function seedPostAuctionInteractions() {
     log('Fase 10: Interações Pós-Leilão (Vendas Diretas, Perguntas, Avaliações)...', 0);
-    const unsoldLots = entityStore.lots.filter(l => [Prisma.LotStatus.NAO_VENDIDO, Prisma.LotStatus.ENCERRADO].includes(l.status));
+    const unsoldLots = entityStore.lots.filter(l => l.status === Prisma.LotStatus.NAO_VENDIDO || l.status === Prisma.LotStatus.ENCERRADO);
     const users = entityStore.users.filter(u => u.habilitation === UserHabilitationStatus.HABILITADO);
 
     if (users.length === 0) return;
@@ -849,6 +847,7 @@ async function logSummary() {
     console.log(`- Lotes: ${counts.lots}`);
     console.log(`- Lances: ${counts.bids}`);
     console.log(`- Arremates: ${counts.wins}`);
-    console.log('=====================================================
-');
+    console.log('=====================================================\n');
 }
+
+main();
