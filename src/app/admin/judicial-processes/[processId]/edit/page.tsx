@@ -65,7 +65,6 @@ export default function EditJudicialProcessPage() {
 
 
   async function handleUpdateProcess(data: JudicialProcessFormValues) {
-    'use server';
     return updateJudicialProcessAction(processId, data);
   }
 

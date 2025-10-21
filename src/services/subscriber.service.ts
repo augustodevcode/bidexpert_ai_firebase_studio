@@ -1,14 +1,61 @@
-import { PrismaClient } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+// src/services/subscriber.service.ts
+/**
+ * @fileoverview Lógica de negócio para a entidade Subscriber.
+ * gerencia a criação de novos inscritos na newsletter.
+ */
+import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
+import { z } from 'zod';
 
-export class SubscriberService {
-  private prisma: PrismaClient;
+// Zod schema for input validation
+export const subscriptionFormSchema = z.object({
+  email: z.string().email({ message: 'Por favor, insira um email válido.' }),
+  name: z.string().optional(),
+});
 
-  constructor() {
-    this.prisma = prisma;
+export type SubscriptionFormData = z.infer<typeof subscriptionFormSchema>;
+
+export class SubscriptionService {
+  /**
+   * Cria um novo assinante.
+   * @param data Os dados do formulário de inscrição.
+   * @returns Resultado da operação.
+   */
+  async createSubscriber(data: SubscriptionFormData): Promise<{ success: boolean; message: string; }> {
+    const validation = subscriptionFormSchema.safeParse(data);
+    if (!validation.success) {
+      return { success: false, message: validation.error.errors.map(e => e.message).join(', ') };
+    }
+
+    const { email, name } = validation.data;
+
+    try {
+      const existingSubscriber = await prisma.subscriber.findUnique({
+        where: { email },
+      });
+
+      if (existingSubscriber) {
+        return { success: false, message: 'Este e-mail já está inscrito.' };
+      }
+
+      await prisma.subscriber.create({
+        data: {
+          email,
+          name,
+        },
+      });
+
+      return { success: true, message: 'Inscrição realizada com sucesso!' };
+    } catch (error: any) {
+      console.error("[SubscriptionService] Error creating subscriber:", error);
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+         return { success: false, message: 'Este e-mail já está inscrito.' };
+      }
+      return { success: false, message: 'Não foi possível completar a inscrição no momento.' };
+    }
   }
 
   async deleteMany(args: any) {
-    await this.prisma.subscriber.deleteMany(args);
+    await prisma.subscriber.deleteMany(args);
   }
 }

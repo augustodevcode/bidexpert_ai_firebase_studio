@@ -58,7 +58,7 @@ export const createColumns = (): ColumnDef<Bem>[] => [
     accessorKey: "evaluationValue",
     header: ({ column }) => <DataTableColumnHeader column={column} title="Valor (R$)" />,
     cell: ({ row }) => {
-      const value = parseFloat(row.getValue("evaluationValue"));
+      const value = parseFloat(String(row.getValue("evaluationValue")));
       return <div className="text-right font-medium">{value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</div>;
     },
   },
