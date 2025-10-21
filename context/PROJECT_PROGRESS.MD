@@ -43,18 +43,19 @@
 - **Item 42: Simplificação dos Formulários de Ativos e Lotes:** Removidos campos específicos de categoria e substituídos por um único campo "Propriedades".
 
 ## DOING
+- **Item 43: Implementar Modos de Edição de CRUD (Modal e Sheet) e Padronizar Formulários:**
+    - **43.1:** **(EM ANDAMENTO)** Criar cenários de teste E2E para a nova funcionalidade.
 
 ## NEXT
 - **Item 16:** Implementar a lógica para relistar um lote que não foi vendido, incluindo a UI para o administrador.
 - **Item 17:** Implementar a lógica para "relotear" um bem, desvinculando-o de um lote não vendido.
 - **Item 18:** Implementar pagamento parcelado para arremates.
 - **Item 40:** Implementar um fluxo de "onboarding" guiado (`react-joyride` ou similar) para novos administradores.
-- **Item 43:** **Implementar Modos de Edição de CRUD (Modal e Sheet) e Padronizar Formulários:**
-    - **43.1:** Adicionar uma opção nas Configurações da Plataforma (`PlatformSettings`) para o administrador escolher o modo de edição padrão: 'modal' (usando `<Dialog>`) ou 'sheet' (usando `<Sheet>`).
-    - **43.2:** Criar um componente de invólucro (wrapper) chamado `CrudFormContainer.tsx` que recebe `isOpen`, `onClose`, e o `children` (o formulário em si). Internamente, este componente lerá a preferência do usuário e renderizará o `Dialog` ou o `Sheet` apropriado.
-    - **43.3:** Refatorar as páginas de listagem do admin (ex: `/admin/auctions/page.tsx`, `/admin/assets/page.tsx`) para que, em vez de navegarem para uma página `/new` ou `/[id]/edit`, elas controlem o estado de um `CrudFormContainer`, passando o formulário apropriado (ex: `AuctionForm`) como filho. O botão "Novo" abrirá o container sem dados, e o botão "Editar" abrirá o container com os dados da entidade selecionada.
-    - **43.4:** Padronizar todos os formulários CRUD da plataforma para usar a biblioteca `react-hook-form` com `zodResolver` para validação, seguindo o padrão já estabelecido em `ProfileForm`.
-    - **43.5:** Criar um arquivo de teste `tests/ui-e2e/crud-modes.spec.ts` para validar o novo fluxo: verificar se a configuração no admin funciona, se clicar em "Novo" abre um formulário em branco no modo correto (modal/sheet), e se clicar em "Editar" abre um formulário preenchido no modo correto.
+- **Item 43.2:** Adicionar uma opção nas Configurações da Plataforma (`PlatformSettings`) para o administrador escolher o modo de edição padrão: 'modal' (usando `<Dialog>`) ou 'sheet' (usando `<Sheet>`).
+- **Item 43.3:** Criar um componente de invólucro (wrapper) chamado `CrudFormContainer.tsx` que recebe `isOpen`, `onClose`, e o `children` (o formulário em si). Internamente, este componente lerá a preferência do usuário e renderizará o `Dialog` ou o `Sheet` apropriado.
+- **Item 43.4:** Refatorar as páginas de listagem do admin (ex: `/admin/auctions/page.tsx`, `/admin/assets/page.tsx`) para que, em vez de navegarem para uma página `/new` ou `/[id]/edit`, elas controlem o estado de um `CrudFormContainer`, passando o formulário apropriado (ex: `AuctionForm`) como filho. O botão "Novo" abrirá o container sem dados, e o botão "Editar" abrirá o container com os dados da entidade selecionada.
+- **Item 43.5:** Padronizar todos os formulários CRUD da plataforma para usar a biblioteca `react-hook-form` com `zodResolver` para validação, seguindo o padrão já estabelecido em `ProfileForm`.
+- **Item 43.6:** Criar um arquivo de teste `tests/ui-e2e/crud-modes.spec.ts` para validar o novo fluxo: verificar se a configuração no admin funciona, se clicar em "Novo" abre um formulário em branco no modo correto (modal/sheet), e se clicar em "Editar" abre um formulário preenchido no modo correto.
 - **Item 44: Refatorar Entidade `PlatformSettings` em Módulos Separados:**
     - **44.1:** Analisar o modelo `PlatformSettings` atual e dividi-lo em novas entidades lógicas no `schema.prisma` (ex: `ThemeSettings`, `MapSettings`, `BiddingRules`, `IdMasks`, `NotificationPreferences`).
     - **44.2:** Refatorar o `PlatformSettingsService` para interagir com as novas tabelas de configuração individuais.

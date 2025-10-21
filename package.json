@@ -13,6 +13,7 @@
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
+        "db:seed:simple": "npx tsx --env-file=.env scripts/seed.ts",
         "db:push": "npm run prisma:build && npx prisma db push --accept-data-loss",
         "prisma:build": "npx tsx scripts/build-prisma-schema.ts",
         "test": "vitest",

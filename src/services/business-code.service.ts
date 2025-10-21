@@ -29,46 +29,41 @@ export class BusinessCodeService {
     const platformSettings = await this.prisma.platformSettings.findUnique({
       where: { tenantId },
       select: {
-        auctionCodeMask: true,
-        lotCodeMask: true,
-        sellerCodeMask: true,
-        userCodeMask: true,
-        auctioneerCodeMask: true,
-        assetCodeMask: true,
-        categoryCodeMask: true,
-        subcategoryCodeMask: true,
+        platformPublicIdMasks: true,
       },
     });
 
-    if (!platformSettings) {
-      throw new Error('Platform settings not found for tenant.');
+    if (!platformSettings || !platformSettings.platformPublicIdMasks) {
+      throw new Error('Platform settings or public ID masks not found for tenant.');
     }
+
+    const masks = platformSettings.platformPublicIdMasks as Record<string, string>;
 
     let mask: string | null | undefined;
     switch (entityType) {
       case 'auction':
-        mask = platformSettings.auctionCodeMask;
+        mask = masks.auctionCodeMask;
         break;
       case 'lot':
-        mask = platformSettings.lotCodeMask;
+        mask = masks.lotCodeMask;
         break;
       case 'seller':
-        mask = platformSettings.sellerCodeMask;
+        mask = masks.sellerCodeMask;
         break;
       case 'user':
-        mask = platformSettings.userCodeMask;
+        mask = masks.userCodeMask;
         break;
       case 'auctioneer':
-        mask = platformSettings.auctioneerCodeMask;
+        mask = masks.auctioneerCodeMask;
         break;
       case 'asset':
-        mask = platformSettings.assetCodeMask;
+        mask = masks.assetCodeMask;
         break;
       case 'category':
-        mask = platformSettings.categoryCodeMask;
+        mask = masks.categoryCodeMask;
         break;
       case 'subcategory':
-        mask = platformSettings.subcategoryCodeMask;
+        mask = masks.subcategoryCodeMask;
         break;
       default:
         throw new Error(`Unknown entity type: ${entityType}`);
@@ -116,49 +111,49 @@ export class BusinessCodeService {
     return baseCode.replace(/NNNNN/, paddedSequence);
   }
 
-  private async findLastCode(entityType: EntityType, tenantId: string, prefix: string): Promise<string | null> {
+  private async findLastCode(entityType: EntityType, tenantId: bigint, prefix: string): Promise<string | null> {
     // This is a simplified approach. For a high-volume system, a dedicated sequence table
     // or a more robust locking mechanism might be needed to prevent race conditions.
     // For now, we'll query the database for the highest existing code matching the prefix.
     const whereClause: any = {
       tenantId,
-      codigo: {
+      publicId: {
         startsWith: prefix,
       },
     };
 
-    let orderByClause: any = { codigo: 'desc' };
+    let orderByClause: any = { publicId: 'desc' };
 
     let result;
     switch (entityType) {
       case 'auction':
-        result = await this.prisma.auction.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.auction.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'lot':
-        result = await this.prisma.lot.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.lot.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'seller':
-        result = await this.prisma.seller.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.seller.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'user':
-        result = await this.prisma.user.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.user.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'auctioneer':
-        result = await this.prisma.auctioneer.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.auctioneer.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'asset':
-        result = await this.prisma.asset.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.asset.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'category':
-        result = await this.prisma.lotCategory.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.lotCategory.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'subcategory':
-        result = await this.prisma.subcategory.findFirst({ where: whereClause, orderBy: orderByClause, select: { codigo: true } });
+        result = await this.prisma.subcategory.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       default:
         return null;
     }
 
-    return result?.codigo || null;
+    return result?.publicId || null;
   }
 }
