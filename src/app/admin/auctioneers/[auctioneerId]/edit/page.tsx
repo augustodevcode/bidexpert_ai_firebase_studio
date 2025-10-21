@@ -1,205 +1,202 @@
-// src/app/admin/auctioneers/[auctioneerId]/edit/page.tsx
+// src/app/admin/auctioneers/page.tsx
 /**
- * @fileoverview Página para edição e visualização de um Leiloeiro específico.
- * Permite alternar entre o modo de visualização e o modo de edição dos dados
- * do leiloeiro através do `FormPageLayout`. Também exibe um dashboard de
- * performance individual para o leiloeiro selecionado.
+ * @fileoverview Página principal para listagem e gerenciamento de Leiloeiros.
+ * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
+ * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
  */
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import AuctioneerForm from '../../auctioneer-form';
-import { getAuctioneer, updateAuctioneer, deleteAuctioneer, type AuctioneerFormData } from '../../actions';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { getAuctioneers as getAuctioneersAction, deleteAuctioneer, createAuctioneer, updateAuctioneer } from './actions';
+import type { AuctioneerProfileInfo, PlatformSettings, AuctioneerFormData, StateInfo, CityInfo } from '@/types';
+import { PlusCircle, Landmark } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
+import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
+import BidExpertCard from '@/components/BidExpertCard';
+import BidExpertListItem from '@/components/BidExpertListItem';
+import { Skeleton } from '@/components/ui/skeleton';
+import { createColumns } from './columns';
+import CrudFormContainer from '@/components/admin/CrudFormContainer';
+import AuctioneerForm from './auctioneer-form';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
-import { notFound, useRouter, useParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Gavel, BarChart3, Loader2 } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { getAuctioneerDashboardDataAction } from '../../analysis/actions';
-import type { AuctioneerDashboardData } from '@/services/auctioneer.service';
-import type { StateInfo, CityInfo } from '@/types';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
-import { LineChart, BarChart as RechartsBarChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Separator } from '@/components/ui/separator';
-import FormPageLayout from '@/components/admin/form-page-layout';
 
-const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
-    <Card className="bg-secondary/40">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-            <Icon className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-            <div className="text-2xl font-bold">{value}</div>
-        </CardContent>
-    </Card>
-);
+const sortOptions = [
+  { value: 'name_asc', label: 'Nome A-Z' },
+  { value: 'name_desc', label: 'Nome Z-A' },
+  { value: 'createdAt_desc', label: 'Mais Recentes' },
+];
 
-function AuctioneerDashboardSection({ auctioneerId }: { auctioneerId: string }) {
-    const [dashboardData, setDashboardData] = useState<AuctioneerDashboardData | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-
-    useEffect(() => {
-        async function fetchData() {
-            setIsLoading(true);
-            try {
-                const data = await getAuctioneerDashboardDataAction(auctioneerId);
-                setDashboardData(data);
-            } catch (e) {
-                console.error("Failed to fetch auctioneer dashboard data:", e);
-                setDashboardData(null);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        fetchData();
-    }, [auctioneerId]);
-
-    if (isLoading) {
-        return <div className="p-4 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto"/></div>;
-    }
-    
-    if (!dashboardData) {
-        return <p>Não foi possível carregar os dados de performance para este leiloeiro.</p>;
-    }
-    
-    return (
-        <div className="space-y-4">
-             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Faturamento Bruto" value={dashboardData.totalRevenue.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} icon={Gavel} />
-                <StatCard title="Taxa de Venda" value={`${dashboardData.salesRate.toFixed(1)}%`} icon={Gavel} />
-                <StatCard title="Total de Leilões" value={dashboardData.totalAuctions} icon={Gavel} />
-                <StatCard title="Total de Lotes" value={dashboardData.totalLots} icon={Gavel} />
-            </div>
-             <Card>
-                <CardHeader>
-                    <CardTitle>Faturamento Mensal</CardTitle>
-                </CardHeader>
-                <CardContent className="h-72">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <RechartsBarChart data={dashboardData.salesByMonth} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="name" stroke="#888888" fontSize={10} />
-                            <YAxis stroke="#888888" fontSize={10} tickFormatter={(value) => `R$${Number(value)/1000}k`} />
-                            <Tooltip formatter={(value: number) => `R$ ${value.toLocaleString('pt-BR')}`} />
-                            <Legend />
-                            <Bar dataKey="Faturamento" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </RechartsBarChart>
-                    </ResponsiveContainer>
-                </CardContent>
-            </Card>
-        </div>
-    )
-}
-
-export default function EditAuctioneerPage() {
-  const params = useParams();
-  const auctioneerId = params.auctioneerId as string;
-  const router = useRouter();
-  
-  const [auctioneer, setAuctioneer] = useState<AuctioneerFormData | null>(null);
-  const [states, setStates] = useState<StateInfo[]>([]);
-  const [cities, setCities] = useState<CityInfo[]>([]);
+export default function AdminAuctioneersPage() {
+  const [allAuctioneers, setAllAuctioneers] = useState<AuctioneerProfileInfo[]>([]);
+  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isViewMode, setIsViewMode] = useState(true);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const formRef = useRef<any>(null);
-  
-  const fetchPageData = useCallback(async () => {
-    if (!auctioneerId) return;
-    setIsLoading(true);
-    try {
-        const [fetchedAuctioneer, fetchedStates, fetchedCities] = await Promise.all([
-          getAuctioneer(auctioneerId),
-          getStates(),
-          getCities(),
-        ]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-        if (!fetchedAuctioneer) {
-            notFound();
-            return;
-        }
-        setAuctioneer(fetchedAuctioneer);
-        setStates(fetchedStates);
-        setCities(fetchedCities);
-    } catch(e) {
-        console.error("Failed to fetch auctioneer", e);
-        toast({title: "Erro", description: "Falha ao buscar dados do leiloeiro.", variant: "destructive"})
+  // Form Modal State
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingAuctioneer, setEditingAuctioneer] = useState<AuctioneerProfileInfo | null>(null);
+
+  // Dependencies for the form
+  const [dependencies, setDependencies] = useState<{ allStates: StateInfo[], allCities: CityInfo[] } | null>(null);
+
+  const fetchPageData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const [fetchedAuctioneers, settings, states, cities] = await Promise.all([
+        getAuctioneersAction(),
+        getPlatformSettings(),
+        getStates(),
+        getCities(),
+      ]);
+      setAllAuctioneers(fetchedAuctioneers);
+      setPlatformSettings(settings as PlatformSettings);
+      setDependencies({ allStates: states, allCities: cities });
+    } catch (e) {
+      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leiloeiros.";
+      console.error("Error fetching auctioneers:", e);
+      setError(errorMessage);
+      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [auctioneerId, toast]);
+  }, [toast]);
 
   useEffect(() => {
     fetchPageData();
-  }, [fetchPageData]);
-  
-  const handleFormSubmit = async (data: AuctioneerFormData) => {
-    setIsSubmitting(true);
-    const result = await updateAuctioneer(auctioneerId, data);
-    if (result.success) {
-        toast({ title: 'Sucesso!', description: 'Leiloeiro atualizado.' });
-        fetchPageData();
-        setIsViewMode(true);
-    } else {
-        toast({ title: 'Erro ao Salvar', description: result.message, variant: 'destructive' });
-    }
-    setIsSubmitting(false);
-  };
-  
-  const handleDelete = async () => {
-    const result = await deleteAuctioneer(auctioneerId);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      router.push('/admin/auctioneers');
-    } else {
-      toast({ title: "Erro ao Excluir", description: result.message, variant: "destructive" });
-    }
+  }, [fetchPageData, refetchTrigger]);
+
+  const onUpdate = useCallback(() => {
+    setRefetchTrigger(c => c + 1);
+  }, []);
+
+  const handleNewClick = () => {
+    setEditingAuctioneer(null);
+    setIsFormOpen(true);
   };
 
-  const handleSave = () => {
-    formRef.current?.requestSubmit();
+  const handleEditClick = (auctioneer: AuctioneerProfileInfo) => {
+    setEditingAuctioneer(auctioneer);
+    setIsFormOpen(true);
   };
+  
+  const handleFormSuccess = () => {
+      setIsFormOpen(false);
+      setEditingAuctioneer(null);
+      onUpdate();
+  };
+
+  const handleDelete = useCallback(async (id: string) => {
+    const result = await deleteAuctioneer(id);
+    if(result.success) {
+      toast({ title: "Sucesso!", description: result.message });
+      onUpdate();
+    } else {
+      toast({ title: "Erro", description: result.message, variant: "destructive" });
+    }
+  }, [toast, onUpdate]);
+
+  const handleDeleteSelected = useCallback(async (selectedItems: AuctioneerProfileInfo[]) => {
+      for (const item of selectedItems) {
+        await deleteAuctioneer(item.id);
+      }
+      toast({ title: "Sucesso!", description: `${selectedItems.length} leiloeiro(s) excluído(s).` });
+      onUpdate();
+  }, [onUpdate, toast]);
+
+  const formAction = async (data: AuctioneerFormData) => {
+    if (editingAuctioneer) {
+      return updateAuctioneer(editingAuctioneer.id, data);
+    }
+    return createAuctioneer(data);
+  };
+
+  const renderGridItem = (item: AuctioneerProfileInfo) => <BidExpertCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const renderListItem = (item: AuctioneerProfileInfo) => <BidExpertListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  
+  const facetedFilterOptions = useMemo(() => {
+      const stateOptions = [...new Set(allAuctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+      return [
+          { id: 'state', title: 'Estado', options: stateOptions },
+      ];
+  }, [allAuctioneers]);
+  
+  if (isLoading || !platformSettings || !dependencies) {
+    return (
+        <div className="space-y-6">
+            <Card className="shadow-lg">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <Skeleton className="h-10 w-36"/>
+                </CardHeader>
+                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      <FormPageLayout
-        formTitle={isViewMode ? "Visualizar Leiloeiro" : "Editar Leiloeiro"}
-        formDescription={auctioneer?.name || 'Carregando...'}
-        icon={Gavel}
-        isViewMode={isViewMode}
-        isLoading={isLoading}
-        isSubmitting={isSubmitting}
-        isValid={formRef.current?.formState.isValid}
-        onEnterEditMode={() => setIsViewMode(false)}
-        onCancel={() => setIsViewMode(true)}
-        onSave={handleSave}
-        onDelete={handleDelete}
-      >
-          <AuctioneerForm
-            ref={formRef}
-            initialData={auctioneer}
-            allStates={states}
-            allCities={cities}
-            onSubmitAction={handleFormSubmit}
-          />
-      </FormPageLayout>
-
-      <Separator className="my-8" />
-       <Card>
-          <CardHeader>
-              <CardTitle className="text-xl font-semibold flex items-center">
-                  <BarChart3 className="mr-2 h-5 w-5 text-primary"/> Análise de Performance
-              </CardTitle>
-              <CardDescription>
-                  KPIs e métricas de desempenho para este leiloeiro.
-              </CardDescription>
-          </CardHeader>
-          <CardContent>
-              <AuctioneerDashboardSection auctioneerId={auctioneerId} />
-          </CardContent>
+    <>
+    <div className="space-y-6" data-ai-id="admin-auctioneers-page-container">
+      <Card className="shadow-lg" data-ai-id="admin-auctioneers-card">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold font-headline flex items-center">
+              <Landmark className="h-6 w-6 mr-2 text-primary" />
+              Listagem de Leiloeiros
+            </CardTitle>
+            <CardDescription>
+              Adicione, edite ou remova leiloeiros da plataforma.
+            </CardDescription>
+          </div>
+          <Button onClick={handleNewClick}>
+            <PlusCircle className="mr-2 h-4 w-4" /> Novo Leiloeiro
+          </Button>
+        </CardHeader>
       </Card>
+
+      <BidExpertSearchResultsFrame
+        items={allAuctioneers}
+        totalItemsCount={allAuctioneers.length}
+        renderGridItem={renderGridItem}
+        renderListItem={renderListItem}
+        dataTableColumns={columns}
+        sortOptions={sortOptions}
+        initialSortBy="name_asc"
+        onSortChange={() => {}}
+        platformSettings={platformSettings}
+        isLoading={isLoading}
+        searchTypeLabel="leiloeiros"
+        emptyStateMessage="Nenhum leiloeiro encontrado."
+        facetedFilterColumns={facetedFilterOptions}
+        searchColumnId='name'
+        searchPlaceholder='Buscar por nome...'
+        onDeleteSelected={handleDeleteSelected as any}
+      />
     </div>
+    <CrudFormContainer
+      isOpen={isFormOpen}
+      onClose={() => setIsFormOpen(false)}
+      mode={platformSettings?.crudFormMode || 'modal'}
+      title={editingAuctioneer ? 'Editar Leiloeiro' : 'Novo Leiloeiro'}
+      description={editingAuctioneer ? 'Modifique os detalhes do leiloeiro.' : 'Cadastre um novo leiloeiro.'}
+    >
+      <AuctioneerForm
+        initialData={editingAuctioneer}
+        allStates={dependencies.allStates}
+        allCities={dependencies.allCities}
+        onSubmitAction={formAction}
+        onSuccess={handleFormSuccess}
+        onCancel={() => setIsFormOpen(false)}
+      />
+    </CrudFormContainer>
+    </>
   );
 }

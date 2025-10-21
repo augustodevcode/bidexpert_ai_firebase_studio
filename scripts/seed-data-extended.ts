@@ -415,6 +415,7 @@ async function seedCategoriesAndVehicles() {
             entityStore.categories.push({ id: category.id, subcategoryIds });
         }
     }
+    console.log('Categories in entityStore:', entityStore.categories);
 
     log('Criando Marcas e Modelos de Veículos...', 1);
     const vehicleData = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'scripts/data/vehicle-makes-and-models.json'), 'utf-8'));

@@ -58,11 +58,7 @@ export class SubcategoryService {
         parentCategory: { connect: { id: data.parentCategoryId } },
       };
 
-      const newSubcategory = await this.prisma.subcategory.upsert({
-        where: { name_parentCategoryId: { name: dataToUpsert.name, parentCategoryId: data.parentCategoryId } },
-        update: dataToUpsert,
-        create: dataToUpsert,
-      });
+      const newSubcategory = await this.repository.upsert(dataToUpsert);
       return { success: true, message: 'Subcategoria criada/atualizada com sucesso.', subcategoryId: newSubcategory.id };
     } catch (error: any) {
       console.error("Error in SubcategoryService.create:", error);

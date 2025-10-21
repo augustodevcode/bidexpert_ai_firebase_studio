@@ -7,12 +7,11 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctions as getAuctionsAction, deleteAuction, createAuction, updateAuction } from './actions';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, PlatformSettings, AuctionFormData, StateInfo, CityInfo, LotCategory, JudicialProcess } from '@/types';
-import { PlusCircle, Gavel, Loader2 } from 'lucide-react';
+import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
@@ -146,7 +145,7 @@ export default function AdminAuctionsPage() {
 
   const renderGridItem = (item: Auction) => <BidExpertCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Auction) => <BidExpertListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
 
   const facetedFilterOptions = useMemo(() => {
       const statusOptions = [...new Set(auctions.map(a => a.status))].map(status => ({ value: status!, label: getAuctionStatusText(status) }));

@@ -26,6 +26,14 @@ export class SubcategoryRepository {
     return prisma.subcategory.update({ where: { id }, data });
   }
 
+  async upsert(data: Prisma.SubcategoryCreateInput): Promise<Subcategory> {
+    return prisma.subcategory.upsert({
+      where: { name_parentCategoryId: { name: data.name, parentCategoryId: data.parentCategory.connect.id } },
+      update: data,
+      create: data,
+    });
+  }
+
   async delete(id: BigInt): Promise<void> {
     await prisma.subcategory.delete({ where: { id } });
   }

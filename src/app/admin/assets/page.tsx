@@ -8,15 +8,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAssets, createAsset, updateAsset, deleteAsset } from './actions';
 import type { Asset, PlatformSettings, LotCategory, JudicialProcess, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
-import { PlusCircle, Package, Loader2 } from 'lucide-react';
+import { PlusCircle, Package } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { createColumns } from './columns';
-import AssetDetailsModal from '@/components/admin/assets/asset-details-modal';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -111,7 +109,6 @@ export default function AdminAssetsPage() {
   };
 
   const handleDelete = useCallback(async (id: string) => {
-    // Adicionar um confirm dialog aqui seria ideal em um app real
     const result = await deleteAsset(id);
     if (result.success) {
       toast({ title: "Sucesso", description: result.message });
@@ -131,7 +128,7 @@ export default function AdminAssetsPage() {
     onUpdate();
   }, [onUpdate, toast]);
   
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
   const renderGridItem = (item: Asset) => <BidExpertCard item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Asset) => <BidExpertListItem item={item} type="asset" platformSettings={platformSettings!} onUpdate={onUpdate} />;
 

@@ -28,7 +28,7 @@ import { useRouter } from 'next/navigation';
 import { assetFormSchema, type AssetFormData } from './asset-form-schema';
 import type { Asset, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Trash2, ImagePlus } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
 import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
@@ -37,7 +37,6 @@ import { getLotCategories } from '../categories/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
 import { getSellers } from '../sellers/actions';
 import AddressGroup from '@/components/address-group';
-import { Separator } from '@/components/ui/separator';
 
 interface AssetFormProps {
   initialData?: Partial<Asset> | null;
@@ -60,7 +59,7 @@ const assetStatusOptions: { value: Asset['status']; label: string }[] = [
     { value: 'INATIVADO', label: 'Inativado' },
 ];
 
-export default function AssetForm({
+const AssetForm = React.forwardRef<any, AssetFormProps>(({
   initialData,
   processes: initialProcesses,
   categories: initialCategories,
@@ -70,7 +69,7 @@ export default function AssetForm({
   onSubmitAction,
   onSuccess,
   onCancel,
-}: AssetFormProps) {
+}, ref) => {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [availableSubcategories, setAvailableSubcategories] = React.useState<Subcategory[]>([]);
@@ -85,16 +84,14 @@ export default function AssetForm({
   const form = useForm<AssetFormData>({
     resolver: zodResolver(assetFormSchema),
     mode: 'onChange',
-    defaultValues: {
-      ...initialData,
-      status: initialData?.status || 'DISPONIVEL',
-      categoryId: initialData?.categoryId || '',
-      evaluationValue: initialData?.evaluationValue || undefined,
-      galleryImageUrls: initialData?.galleryImageUrls || [],
-      mediaItemIds: initialData?.mediaItemIds || [],
-    },
+    defaultValues: initialData || {},
   });
   
+  React.useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmit),
+    formState: form.formState,
+  }));
+
   const { formState } = form;
 
   const selectedCategoryId = useWatch({ control: form.control, name: 'categoryId' });
@@ -102,14 +99,7 @@ export default function AssetForm({
   const galleryUrls = useWatch({ control: form.control, name: 'galleryImageUrls' });
   
   React.useEffect(() => {
-    form.reset({
-      ...initialData,
-      status: initialData?.status || 'DISPONIVEL',
-      categoryId: initialData?.categoryId || '',
-      evaluationValue: initialData?.evaluationValue || undefined,
-      galleryImageUrls: initialData?.galleryImageUrls || [],
-      mediaItemIds: initialData?.mediaItemIds || [],
-    });
+    form.reset(initialData || {});
   }, [initialData, form]);
 
   const handleRefetch = React.useCallback(async (entity: 'categories' | 'processes' | 'sellers') => {
@@ -201,7 +191,7 @@ export default function AssetForm({
   return (
     <>
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
+        <form onSubmit={form.handleSubmit(onSubmit)} data-ai-id="asset-form">
             <div className="space-y-6">
               <section className="space-y-4">
                 <FormField name="title" control={form.control} render={({ field }) => (<FormItem><FormLabel>Título/Nome do Bem<span className='text-destructive'>*</span></FormLabel><FormControl><Input placeholder="Ex: Apartamento 3 quartos, Trator Massey Ferguson" {...field} /></FormControl><FormMessage /></FormItem>)} />
@@ -212,7 +202,7 @@ export default function AssetForm({
                   <FormField name="evaluationValue" control={form.control} render={({ field }) => (<FormItem><FormLabel>Valor de Avaliação (R$)</FormLabel><FormControl><Input type="number" placeholder="150000.00" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isSubmitting} /><FormMessage /></FormItem>)} />
+                  <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={categories.map(c => ({ value: c.id, label: c.name }))} placeholder="Selecione a categoria" searchPlaceholder="Buscar categoria..." emptyStateMessage="Nenhuma categoria encontrada." createNewUrl="/admin/categories/new" editUrlPrefix="/admin/categories" onRefetch={() => handleRefetch('categories')} isFetching={isSubmitting} entityName="category" /><FormMessage /></FormItem>)} />
                   <FormField name="subcategoryId" control={form.control} render={({ field }) => (<FormItem><FormLabel>Subcategoria (Opcional)</FormLabel><Select onValueChange={field.onChange} value={field.value ?? undefined} disabled={isLoadingSubcategories || availableSubcategories.length === 0}><FormControl><SelectTrigger><SelectValue placeholder={isLoadingSubcategories ? 'Carregando...' : 'Selecione a subcategoria'} /></SelectTrigger></FormControl><SelectContent>{availableSubcategories.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
                 </div>
               </section>
@@ -221,8 +211,8 @@ export default function AssetForm({
               
               <section className="space-y-4">
                 <h3 className="text-lg font-semibold text-primary border-b pb-2">Origem / Proprietário</h3>
-                <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isSubmitting} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
-                <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isSubmitting} /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Se aplicável)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={processes.map(p => ({ value: p.id, label: p.processNumber }))} placeholder="Vincule a um processo" searchPlaceholder="Buscar processo..." emptyStateMessage="Nenhum processo." createNewUrl="/admin/judicial-processes/new" editUrlPrefix="/admin/judicial-processes" onRefetch={() => handleRefetch('processes')} isFetching={isSubmitting} entityName="judicialProcess" /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+                <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className='text-destructive'>*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={sellers.map(s => ({ value: s.id, label: s.name }))} placeholder="Vincule a um comitente" searchPlaceholder="Buscar comitente..." emptyStateMessage="Nenhum comitente." createNewUrl="/admin/sellers/new" editUrlPrefix="/admin/sellers" onRefetch={() => handleRefetch('sellers')} isFetching={isSubmitting} entityName="seller" /><FormDescription>Para bens de venda direta, extrajudicial, etc.</FormDescription><FormMessage /></FormItem>)} />
               </section>
               
               <Separator />
@@ -261,9 +251,9 @@ export default function AssetForm({
               </section>
 
             </div>
-            <div className="flex justify-end gap-2 p-6 border-t">
+             <div className="flex justify-end gap-2 p-6 border-t">
               {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
-              <Button type="submit" disabled={isSubmitting || !formState.isDirty}>
+              <Button type="submit" disabled={isSubmitting || !formState.isValid}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {initialData ? "Salvar Alterações" : "Criar Ativo"}
               </Button>
@@ -273,4 +263,7 @@ export default function AssetForm({
       <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={dialogTarget === 'gallery'} />
     </>
   );
-}
+});
+
+AssetForm.displayName = 'AssetForm';
+export default AssetForm;
