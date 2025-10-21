@@ -2,6 +2,7 @@
 model Lot {
   id                           BigInt                  @id @default(autoincrement())
   publicId                     String                  @unique @default(cuid())
+  codigo                       String                  @unique @default(cuid())
   number                       String?
   title                        String
   description                  String?                 @db.Text

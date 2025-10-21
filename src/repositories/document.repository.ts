@@ -69,4 +69,8 @@ export class DocumentRepository {
   async deleteAllUserDocuments(): Promise<void> {
     await this.prisma.userDocument.deleteMany({});
   }
+
+  async deleteAllDocuments(): Promise<void> {
+    await this.prisma.document.deleteMany({});
+  }
 }

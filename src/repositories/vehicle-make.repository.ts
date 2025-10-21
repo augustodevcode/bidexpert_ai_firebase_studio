@@ -27,6 +27,10 @@ export class VehicleMakeRepository {
   async delete(id: string): Promise<void> {
     await prisma.vehicleMake.delete({ where: { id } });
   }
+
+  async deleteMany(where: Prisma.VehicleMakeWhereInput): Promise<void> {
+    await prisma.vehicleMake.deleteMany({ where });
+  }
   
   async countModels(makeId: string): Promise<number> {
     return prisma.vehicleModel.count({ where: { makeId } });

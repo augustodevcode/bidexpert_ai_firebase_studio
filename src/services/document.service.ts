@@ -96,4 +96,13 @@ export class DocumentService {
       return { success: false, message: 'Falha ao excluir todos os documentos de usuários.' };
     }
   }
+
+  async deleteAllDocuments(): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteAllDocuments();
+      return { success: true, message: 'Todos os documentos foram excluídos.' };
+    } catch (error: any) {
+      return { success: false, message: 'Falha ao excluir todos os documentos.' };
+    }
+  }
 }

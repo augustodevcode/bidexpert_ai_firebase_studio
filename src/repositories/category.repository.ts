@@ -23,10 +23,13 @@ export class CategoryRepository {
     return prisma.lotCategory.findUnique({ where: { slug } });
   }
 
+  async findByName(name: string): Promise<LotCategory | null> {
+    return prisma.lotCategory.findUnique({ where: { name } });
+  }
+
   async create(data: Prisma.LotCategoryCreateInput): Promise<LotCategory> {
     return prisma.lotCategory.create({ data });
   }
-
   async update(id: BigInt, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
     return prisma.lotCategory.update({ where: { id }, data });
   }

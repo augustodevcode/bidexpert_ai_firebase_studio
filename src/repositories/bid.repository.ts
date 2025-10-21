@@ -10,4 +10,8 @@ export class BidRepository {
   async deleteMany(where: Prisma.BidWhereInput): Promise<Prisma.BatchPayload> {
     return prisma.bid.deleteMany({ where });
   }
+
+  async count(): Promise<number> {
+    return prisma.bid.count();
+  }
 }

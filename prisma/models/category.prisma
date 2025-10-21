@@ -1,5 +1,6 @@
 model LotCategory {
   id                  BigInt        @id @default(autoincrement())
+  codigo              String        @unique @default(cuid())
   name                String      @unique
   slug                String      @unique
   description         String?

@@ -69,4 +69,14 @@ export class VehicleMakeService {
       return { success: false, message: `Falha ao excluir marca: ${error.message}` };
     }
   }
+
+  async deleteMany(where: Prisma.VehicleMakeWhereInput): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteMany(where);
+      return { success: true, message: 'Marcas excluídas com sucesso.' };
+    } catch (error: any) {
+      console.error("Error in VehicleMakeService.deleteMany:", error);
+      return { success: false, message: `Falha ao excluir marcas: ${error.message}` };
+    }
+  }
 }

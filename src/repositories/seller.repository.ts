@@ -47,8 +47,8 @@ export class SellerRepository {
       });
   }
 
-  async create(data: Prisma.SellerCreateInput & { judicialBranchId?: string }): Promise<SellerProfileInfo> {
-    const { judicialBranchId, ...restData } = data;
+  async create(data: Prisma.SellerCreateInput & { judicialBranchId?: string; judicialDistrictId?: string; courtId?: string }): Promise<SellerProfileInfo> {
+    const { judicialBranchId, judicialDistrictId, courtId, ...restData } = data;
 
     const createData: Prisma.SellerCreateInput = {
       ...restData,
@@ -57,7 +57,21 @@ export class SellerRepository {
     if (judicialBranchId) {
       createData.judicialBranch = {
         connect: {
-          id: judicialBranchId,
+          id: BigInt(judicialBranchId),
+        },
+      };
+    }
+    if (judicialDistrictId) {
+      createData.judicialDistrict = {
+        connect: {
+          id: BigInt(judicialDistrictId),
+        },
+      };
+    }
+    if (courtId) {
+      createData.court = {
+        connect: {
+          id: BigInt(courtId),
         },
       };
     }

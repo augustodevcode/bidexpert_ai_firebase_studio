@@ -1,6 +1,7 @@
 model Asset {
   id                  BigInt   @id @default(autoincrement())
   publicId            String   @unique @default(cuid())
+  codigo              String   @unique @default(cuid())
   title               String
   description         String?  @db.Text
   status              String   @default("DISPONIVEL")

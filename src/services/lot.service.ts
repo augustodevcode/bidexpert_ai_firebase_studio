@@ -502,6 +502,11 @@ export class LotService {
       return { success: false, message: 'Falha ao excluir todos os lotes.' };
     }
   }
+
+  async getLotsByStatus(status: Prisma.LotStatus, tenantId?: string): Promise<Lot[]> {
+    const lots = await this.repository.findAll(tenantId, { status });
+    return lots.map(lot => this.mapLotWithDetails(lot));
+  }
   
   async finalizeLot(lotId: string): Promise<{ success: boolean; message: string }> {
       const lot = await this.getLotById(lotId);

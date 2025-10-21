@@ -89,4 +89,14 @@ export class VehicleModelService {
       return { success: false, message: `Falha ao excluir modelo: ${error.message}` };
     }
   }
+
+  async deleteMany(where: Prisma.VehicleModelWhereInput): Promise<{ success: boolean; message: string; }> {
+    try {
+      await this.repository.deleteMany(where);
+      return { success: true, message: 'Modelos excluídos com sucesso.' };
+    } catch (error: any) {
+      console.error("Error in VehicleModelService.deleteMany:", error);
+      return { success: false, message: `Falha ao excluir modelos: ${error.message}` };
+    }
+  }
 }

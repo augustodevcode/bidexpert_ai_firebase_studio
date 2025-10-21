@@ -82,7 +82,8 @@ export class SellerService {
     return this.sellerRepository.findFirst({ isJudicial: true });
   }
 
-    async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+    async createSeller(tenantId: BigInt, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+      console.log('Received data in createSeller:', data);
       try {
         const existingSeller = await this.sellerRepository.findByName(tenantId, data.name);
         if (existingSeller) {
@@ -91,7 +92,7 @@ export class SellerService {
   
         const {
           userId, street, number, complement, neighborhood,
-          cityId, stateId, latitude, longitude, ...sellerData
+          cityId, stateId, latitude, longitude, tenantId: dataTenantId, ...sellerData
         } = data;
   
         const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
@@ -101,23 +102,25 @@ export class SellerService {
           address: fullAddress,
           slug: slugify(data.name),
           publicId: `COM-${uuidv4()}`,
-          tenant: { connect: { id: tenantId } },
+          tenant: { connect: { id: BigInt(tenantId) } }, // Convert to BigInt
         };
   
         if (userId) dataToCreate.user = { connect: { id: userId } };
         if (cityId) {
-          const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+          const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }}); // Convert to BigInt
           if (city) dataToCreate.city = city.name;
         }
         if (stateId) {
-          const state = await this.prisma.state.findUnique({ where: { id: stateId }});
-          if (state) dataToCreate.state = state.uf;
-        }
-  
-        const newSeller = await this.sellerRepository.create(dataToCreate);
-        return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
+          const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }}); // Convert to BigInt
+                  if (state) dataToCreate.state = state.uf;
+                }
+                console.log('Data to create seller in service:', dataToCreate);
+                const newSeller = await this.sellerRepository.create(dataToCreate);
+                console.log('Result of sellerRepository.create:', newSeller);
+                return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
       } catch (error: any) {
         console.error("Error in SellerService.createSeller:", error);
+        console.error("Error details:", error.message, error.stack);
         return { success: false, message: `Falha ao criar comitente: ${error.message}` };
       }
     }

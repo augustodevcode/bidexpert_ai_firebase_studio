@@ -1,6 +1,7 @@
 model Seller {
   id                   BigInt              @id @default(autoincrement())
   publicId             String              @unique
+  codigo               String              @unique @default(cuid())
   slug                 String              @unique
   name                 String              @unique
   contactName          String?             @db.Text

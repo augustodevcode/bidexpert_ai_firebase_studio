@@ -15,7 +15,7 @@ export const subscriptionFormSchema = z.object({
 
 export type SubscriptionFormData = z.infer<typeof subscriptionFormSchema>;
 
-export class SubscriptionService {
+export class SubscriberService {
   /**
    * Cria um novo assinante.
    * @param data Os dados do formulário de inscrição.
@@ -47,7 +47,7 @@ export class SubscriptionService {
 
       return { success: true, message: 'Inscrição realizada com sucesso!' };
     } catch (error: any) {
-      console.error("[SubscriptionService] Error creating subscriber:", error);
+      console.error("[SubscriberService] Error creating subscriber:", error);
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
          return { success: false, message: 'Este e-mail já está inscrito.' };
       }

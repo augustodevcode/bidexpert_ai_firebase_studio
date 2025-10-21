@@ -35,4 +35,8 @@ export class VehicleModelRepository {
   async delete(id: string): Promise<void> {
     await prisma.vehicleModel.delete({ where: { id } });
   }
+
+  async deleteMany(where: Prisma.VehicleModelWhereInput): Promise<void> {
+    await prisma.vehicleModel.deleteMany({ where });
+  }
 }

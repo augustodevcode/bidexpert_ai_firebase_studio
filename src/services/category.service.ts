@@ -25,16 +25,23 @@ export class CategoryService {
     return this.categoryRepository.findById(id);
   }
 
+  async getCategoryByName(name: string): Promise<LotCategory | null> {
+    return this.categoryRepository.findByName(name);
+  }
+
   async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; categoryId?: BigInt; }> {
     try {
       const slug = slugify(data.name);
-      
-      const newCategory = await prisma.lotCategory.upsert({
-        where: { slug },
-        update: { ...data, slug },
-        create: { ...data, slug, hasSubcategories: false },
-      });
-      return { success: true, message: 'Categoria criada/atualizada com sucesso.', categoryId: newCategory.id };
+      let category = await this.categoryRepository.findByName(data.name);
+
+      if (category) {
+        // If category exists, update it
+        category = await this.categoryRepository.update(category.id, { ...data, slug });
+      } else {
+        // If category does not exist, create it
+        category = await this.categoryRepository.create({ ...data, slug, hasSubcategories: false });
+      }
+      return { success: true, message: 'Categoria criada/atualizada com sucesso.', categoryId: category.id };
     } catch (error: any) {
       return { success: false, message: `Falha ao criar categoria: ${error.message}` };
     }
