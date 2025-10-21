@@ -1,46 +1,65 @@
 // prisma/models/PlatformSettings.prisma
+/**
+ * @fileoverview Define as configurações globais da plataforma.
+ */
+import { StorageProviderType, SearchPaginationType, CrudFormMode } from './enums.prisma';
 
 model PlatformSettings {
-  id                        BigInt    @id @default(autoincrement())
-  isSetupComplete           Boolean   @default(false) @map("is_setup_complete")
-  siteTitle                 String?   @map("site_title")
-  siteTagline               String?   @map("site_tagline")
-  logoUrl                   String?   @map("logo_url")
-  faviconUrl                String?   @map("favicon_url")
-  galleryImageBasePath      String?   @map("gallery_image_base_path")
-  storageProvider           String?   @map("storage_provider")
-  firebaseStorageBucket     String?   @map("firebase_storage_bucket")
-  activeThemeName           String?   @map("active_theme_name")
-  themes                    Json?
-  platformPublicIdMasks     Json?     @map("platform_public_id_masks")
-  auctionCodeMask           String?   @map("auction_code_mask")
-  lotCodeMask               String?   @map("lot_code_mask")
-  sellerCodeMask            String?   @map("seller_code_mask")
-  userCodeMask              String?   @map("user_code_mask")
-  auctioneerCodeMask        String?   @map("auctioneer_code_mask")
-  assetCodeMask             String?   @map("asset_code_mask")
-  categoryCodeMask          String?   @map("category_code_mask")
-  subcategoryCodeMask       String?   @map("subcategory_code_mask")
-  mentalTriggerSettings     Json?     @map("mental_trigger_settings")
-  sectionBadgeVisibility    Json?     @map("section_badge_visibility")
-  mapSettings               Json?     @map("map_settings")
-  notificationSettings      Json?     @map("notification_settings")
-  defaultUrgencyTimerHours  Int?      @map("default_urgency_timer_hours")
-  variableIncrementTable    Json?     @map("variable_increment_table")
-  biddingSettings           Json?     @map("bidding_settings")
-  paymentGatewaySettings    Json?     @map("payment_gateway_settings")
-  homepageSections          Json?     @map("homepage_sections")
-  searchPaginationType      String?   @default("loadMore") @map("search_pagination_type")
-  searchItemsPerPage        Int?      @default(12) @map("search_items_per_page")
-  searchLoadMoreCount       Int?      @default(12) @map("search_load_more_count")
-  showCountdownOnLotDetail  Boolean?  @default(true) @map("show_countdown_on_lot_detail")
-  showCountdownOnCards      Boolean?  @default(true) @map("show_countdown_on_cards")
-  showRelatedLotsOnLotDetail Boolean? @default(true) @map("show_related_lots_on_lot_detail")
-  relatedLotsCount          Int?      @default(5) @map("related_lots_count")
-  defaultListItemsPerPage   Int?      @default(10) @map("default_list_items_per_page")
-  updatedAt                 DateTime? @updatedAt @map("updated_at")
+  id                      String                   @id @default("global")
+  tenantId                String                   @unique
+  tenant                  Tenant                   @relation(fields: [tenantId], references: [id])
+  siteTitle               String                   @default("BidExpert")
+  siteTagline             String?
+  logoUrl                 String?
+  faviconUrl              String?
+  galleryImageBasePath    String                   @default("/uploads/media/")
+  storageProvider         StorageProviderType      @default(local)
+  firebaseStorageBucket   String?
+  activeThemeName         String?
+  searchPaginationType    SearchPaginationType     @default(loadMore)
+  searchItemsPerPage      Int                      @default(12)
+  searchLoadMoreCount     Int                      @default(12)
+  showCountdownOnLotDetail Boolean                  @default(true)
+  showCountdownOnCards    Boolean                  @default(true)
+  showRelatedLotsOnLotDetail Boolean               @default(true)
+  relatedLotsCount        Int                      @default(4)
+  defaultListItemsPerPage Int                      @default(10)
+  defaultUrgencyTimerHours Int?
+  isSetupComplete         Boolean                  @default(false)
+  crudFormMode            CrudFormMode             @default(modal) // Novo campo
 
-  // Relation to Tenant
-  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId BigInt @unique @map("tenant_id")
+  themes                  ThemeSettings[]
+  platformPublicIdMasks   IdMasks[]
+  mapSettings             MapSettings[]
+  biddingSettings         BiddingSettings[]
+  paymentGatewaySettings  PaymentGatewaySettings[]
+  notificationSettings    NotificationSettings[]
+  mentalTriggerSettings   MentalTriggerSettings[]
+  sectionBadgeVisibility  SectionBadgeVisibility[]
+  variableIncrementTable  VariableIncrementRule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ThemeSettings {
+  id               String           @id @default(cuid())
+  platformSettings PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String
+  name             String           @unique
+  colors           Json
+}
+
+model IdMasks {
+  id                 String           @id @default(cuid())
+  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String
+  auctionCodeMask    String?
+  lotCodeMask        String?
+  sellerCodeMask     String?
+  auctioneerCodeMask String?
+  userCodeMask       String?
+  assetCodeMask      String?
+  categoryCodeMask   String?
+  subcategoryCodeMask String?
 }

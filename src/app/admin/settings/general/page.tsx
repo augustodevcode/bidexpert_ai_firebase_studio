@@ -44,8 +44,8 @@ export default function GeneralSettingsPage() {
               </FormItem>
             )}
           />
-          <FormField control={form.control} name="platformPublicIdMasks.auctions" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Leilões)</FormLabel><FormControl><Input placeholder="LEIL-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de leilões.</FormDescription><FormMessage /></FormItem>)} />
-          <FormField control={form.control} name="platformPublicIdMasks.lots" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Lotes)</FormLabel><FormControl><Input placeholder="LOTE-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de lotes.</FormDescription><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="platformPublicIdMasks.auctionCodeMask" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Leilões)</FormLabel><FormControl><Input placeholder="LEIL-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de leilões.</FormDescription><FormMessage /></FormItem>)} />
+          <FormField control={form.control} name="platformPublicIdMasks.lotCodeMask" render={({ field }) => (<FormItem><FormLabel>Máscara de ID (Lotes)</FormLabel><FormControl><Input placeholder="LOTE-" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Prefixo para os IDs públicos de lotes.</FormDescription><FormMessage /></FormItem>)} />
         </>
       )}
     </SettingsFormWrapper>

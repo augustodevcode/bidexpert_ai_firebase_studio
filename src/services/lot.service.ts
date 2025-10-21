@@ -32,8 +32,8 @@ export class LotService {
     const assets: Asset[] = lot.assets?.map((la: any) => la.asset).filter(Boolean) || [];
     
     // Lógica de herança de mídia centralizada aqui
-    const inheritedAsset = (lot.inheritedMediaFromBemId && assets.length > 0)
-      ? assets.find((a: any) => a.id === lot.inheritedMediaFromBemId)
+    const inheritedAsset = (lot.inheritedMediaFromAssetId && assets.length > 0)
+      ? assets.find((a: any) => a.id === lot.inheritedMediaFromAssetId)
       : null;
     
     const finalImageUrl = inheritedAsset?.imageUrl || lot.imageUrl;
@@ -303,7 +303,7 @@ export class LotService {
       };
 
       // Determine which asset to inherit from, if any
-      let assetForInheritanceId: string | null = (data as any).inheritedMediaFromBemId || null;
+      let assetForInheritanceId: string | null = data.inheritedMediaFromAssetId || null;
       if (!assetForInheritanceId && assetIds?.length === 1) {
           assetForInheritanceId = assetIds[0];
       }
@@ -316,17 +316,17 @@ export class LotService {
             if (!data.imageUrl && sourceAsset.imageUrl) {
                 dataToCreate.imageUrl = sourceAsset.imageUrl;
             }
-            if (!(data as any).imageMediaId && sourceAsset.imageMediaId) {
+            if (!data.imageMediaId && sourceAsset.imageMediaId) {
                 dataToCreate.imageMediaId = sourceAsset.imageMediaId;
             }
 
             // Inherit location only if not explicitly provided on the lot
-            if (!data.cityName && !data.stateUf && sourceAsset) {
-                dataToCreate.cityName = sourceAsset.city?.name;
-                dataToCreate.stateUf = sourceAsset.state?.uf;
-                dataToCreate.mapAddress = sourceAsset.street;
-                dataToCreate.latitude = sourceAsset.latitude;
-                dataToCreate.longitude = sourceAsset.longitude;
+            if (!data.cityId && !data.stateId && sourceAsset) {
+                const city = await this.prisma.city.findFirst({ where: { name: sourceAsset.cityName, stateUf: sourceAsset.stateUf }});
+                if(city) dataToCreate.city = { connect: { id: city.id }};
+                
+                const state = await this.prisma.state.findFirst({where: {uf: sourceAsset.stateUf}});
+                if(state) dataToCreate.state = { connect: {id: state.id}};
             }
             // Inherit price only if not explicitly provided on the lot
             if (!data.price && !data.initialPrice && sourceAsset.evaluationValue) {
@@ -406,8 +406,8 @@ export class LotService {
       if (stateId) {
         dataToUpdate.state = { connect: { id: stateId } };
       }
-      if (data.hasOwnProperty('inheritedMediaFromBemId')) {
-        dataToUpdate.inheritedMediaFromBemId = data.inheritedMediaFromBemId;
+      if (data.hasOwnProperty('inheritedMediaFromAssetId')) {
+        dataToUpdate.inheritedMediaFromAssetId = data.inheritedMediaFromAssetId;
       }
       
       await this.repository.update(id, dataToUpdate, assetIds);

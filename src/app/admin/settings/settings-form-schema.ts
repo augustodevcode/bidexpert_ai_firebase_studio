@@ -16,18 +16,18 @@ const ThemeColorsSchema = z.object({
 });
 
 const ThemeSettingsSchema = z.object({
+  name: z.string(),
   colors: z.object({
     light: ThemeColorsSchema.optional(),
     dark: ThemeColorsSchema.optional(),
   }).optional(),
 });
 
+
 // Schema para MapSettings
 const MapSettingsSchema = z.object({
   defaultProvider: z.enum(['openstreetmap', 'google', 'staticImage']).default('openstreetmap'),
   googleMapsApiKey: z.string().optional().nullable(),
-  staticImageMapZoom: z.coerce.number().int().min(1).max(20).default(15),
-  staticImageMapMarkerColor: z.string().default('blue'),
 });
 
 // Schema para BiddingSettings
@@ -39,10 +39,14 @@ const BiddingSettingsSchema = z.object({
 
 // Schema para IdMasks
 const IdMasksSchema = z.object({
-    auctions: z.string().optional().nullable(),
-    lots: z.string().optional().nullable(),
-    auctioneers: z.string().optional().nullable(),
-    sellers: z.string().optional().nullable(),
+    auctionCodeMask: z.string().optional().nullable(),
+    lotCodeMask: z.string().optional().nullable(),
+    sellerCodeMask: z.string().optional().nullable(),
+    auctioneerCodeMask: z.string().optional().nullable(),
+    userCodeMask: z.string().optional().nullable(),
+    assetCodeMask: z.string().optional().nullable(),
+    categoryCodeMask: z.string().optional().nullable(),
+    subcategoryCodeMask: z.string().optional().nullable(),
 });
 
 // Schema para PaymentGatewaySettings
@@ -100,10 +104,10 @@ export const platformSettingsFormSchema = z.object({
   crudFormMode: z.enum(['modal', 'sheet']).optional().default('modal'),
   
   // Relations
-  themes: ThemeSettingsSchema.optional(),
+  themes: z.array(ThemeSettingsSchema).optional(),
   mapSettings: MapSettingsSchema.optional(),
   biddingSettings: BiddingSettingsSchema.optional(),
-  idMasks: IdMasksSchema.optional(),
+  platformPublicIdMasks: IdMasksSchema.optional(),
   paymentGatewaySettings: PaymentGatewaySettingsSchema.optional(),
   notificationSettings: NotificationSettingsSchema.optional(),
   mentalTriggerSettings: MentalTriggerSettingsSchema.optional(),

@@ -1,158 +1,86 @@
 // src/services/platform-settings.service.ts
 /**
- * @fileoverview Este arquivo contém a classe PlatformSettingsService, que gerencia
- * as configurações globais da plataforma. Ele é responsável por buscar as
- * configurações do banco de dados ou criar um conjunto padrão caso não existam,
- * além de permitir a sua atualização.
+ * @fileoverview Lógica de negócio para as configurações da plataforma.
+ * Garante que as configurações existam para um tenant, criando um conjunto
+ * padrão se necessário, o que é crucial para a inicialização da aplicação e o fluxo de setup.
  */
-import { PlatformSettingsRepository } from '@/repositories/platform-settings.repository';
-import type { PlatformSettings } from '@/types';
-import type { Prisma } from '@prisma/client';
-import { tenantContext } from '@/lib/tenant-context'; // Importa o contexto do tenant
-import { prisma } from '@/lib/prisma'; // Importa a instância direta do prisma
-
+import { prisma } from '@/lib/prisma';
+import type { Prisma, PlatformSettings } from '@prisma/client';
 
 export class PlatformSettingsService {
-  private repository: PlatformSettingsRepository;
   private prisma;
 
   constructor() {
-    this.repository = new PlatformSettingsRepository();
     this.prisma = prisma;
   }
-  
-  private async createDefaultSettings(tenantId: string): Promise<PlatformSettings> {
-    const defaultData: Omit<Prisma.PlatformSettingsCreateInput, 'tenant'> = {
-        isSetupComplete: false,
-        siteTitle: 'BidExpert',
-        siteTagline: 'Sua plataforma de leilões online.',
-        logoUrl: null,
-        crudFormMode: 'modal',
-        galleryImageBasePath: '/uploads/media/',
-        storageProvider: 'local',
-        searchPaginationType: 'loadMore',
-        searchItemsPerPage: 12,
-        searchLoadMoreCount: 12,
-        showCountdownOnLotDetail: true,
-        showCountdownOnCards: true,
-        showRelatedLotsOnLotDetail: true,
-        relatedLotsCount: 4,
-        defaultListItemsPerPage: 10,
-    };
 
-    const newSettings = await this.prisma.platformSettings.create({
-        data: {
-            ...defaultData,
-            tenant: { connect: { id: tenantId } },
-            themeSettings: { create: {} },
-            mapSettings: { create: {} },
-            biddingSettings: { create: {} },
-            idMasks: { create: {} },
-            paymentGatewaySettings: { create: {} },
-            notificationSettings: { create: {} },
-            mentalTriggerSettings: { create: {} },
-            sectionBadgeVisibility: { create: {} },
-        }
+  /**
+   * Obtém as configurações para um tenant específico. Se não existirem,
+   * cria e retorna um conjunto de configurações padrão para esse tenant.
+   * @param tenantId O ID do tenant para buscar as configurações.
+   * @returns As configurações da plataforma para o tenant.
+   */
+  async getSettings(tenantId: string = '1'): Promise<PlatformSettings> {
+    const settings = await this.prisma.platformSettings.findUnique({
+      where: { tenantId },
+      include: {
+        themes: true,
+        platformPublicIdMasks: true,
+        mapSettings: true,
+        biddingSettings: true,
+        mentalTriggerSettings: true,
+        sectionBadgeVisibility: true,
+        variableIncrementTable: true,
+        paymentGatewaySettings: true,
+        notificationSettings: true,
+      }
     });
 
-    return (await this.repository.findFirst())!;
-  }
-
-
-  async getSettings(): Promise<PlatformSettings | null> {
-    const settings = await this.repository.findFirst();
     if (!settings) {
-      console.log("[PlatformSettingsService] No settings found, creating default settings for Landlord Tenant...");
-      // A criação de settings é sempre para o tenant '1' se não existir
-      return this.createDefaultSettings('1');
-    }
-    return settings as PlatformSettings;
-  }
-  
-  async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-    try {
-      const currentSettings = await this.repository.findFirst();
-
-      if (!currentSettings) {
-        return { success: false, message: 'Nenhuma configuração encontrada para atualizar.' };
-      }
-      
-      const { tenantId, themeSettings, mapSettings, biddingSettings, idMasks, paymentGatewaySettings, notificationSettings, mentalTriggerSettings, sectionBadgeVisibility, variableIncrementTable, ...restOfData } = data;
-      
-      await this.prisma.$transaction(async (tx) => {
-        await tx.platformSettings.update({
-            where: { id: currentSettings.id },
-            data: restOfData as any,
-        });
-
-        if (themeSettings) {
-            await tx.themeSettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id },
-                update: themeSettings as any,
-                create: { ...(themeSettings as any), platformSettingsId: currentSettings.id }
-            });
-        }
-        if (mapSettings) {
-            await tx.mapSettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: mapSettings,
-                create: { ...mapSettings, platformSettingsId: currentSettings.id } 
-            });
-        }
-        if (biddingSettings) {
-            await tx.biddingSettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: biddingSettings,
-                create: { ...biddingSettings, platformSettingsId: currentSettings.id } 
-            });
-        }
-        if (idMasks) {
-            await tx.idMasks.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: idMasks,
-                create: { ...idMasks, platformSettingsId: currentSettings.id } 
-            });
-        }
-         if (paymentGatewaySettings) {
-            await tx.paymentGatewaySettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: paymentGatewaySettings,
-                create: { ...paymentGatewaySettings, platformSettingsId: currentSettings.id } 
-            });
-        }
-        if (notificationSettings) {
-            await tx.notificationSettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: notificationSettings,
-                create: { ...notificationSettings, platformSettingsId: currentSettings.id }
-            });
-        }
-        if (mentalTriggerSettings) {
-            await tx.mentalTriggerSettings.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: mentalTriggerSettings,
-                create: { ...mentalTriggerSettings, platformSettingsId: currentSettings.id } 
-            });
-        }
-        if (sectionBadgeVisibility) {
-            await tx.sectionBadgeVisibility.upsert({ 
-                where: { platformSettingsId: currentSettings.id }, 
-                update: sectionBadgeVisibility,
-                create: { ...sectionBadgeVisibility, platformSettingsId: currentSettings.id }
-            });
-        }
-         if (variableIncrementTable) {
-            await tx.variableIncrementRule.deleteMany({ where: { platformSettingsId: currentSettings.id }});
-            await tx.variableIncrementRule.createMany({ 
-                data: (variableIncrementTable as any[]).map(rule => ({ ...rule, platformSettingsId: currentSettings.id }))
-            });
+      console.log(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating default settings.`);
+      // Se não encontrar, cria um registro padrão para esse tenant
+      return this.prisma.platformSettings.create({
+        data: {
+          tenant: { connect: { id: tenantId } },
+          siteTitle: 'BidExpert',
+          isSetupComplete: false, // Fundamental para o fluxo de setup
+        },
+        include: {
+            themes: true,
+            platformPublicIdMasks: true,
+            mapSettings: true,
+            biddingSettings: true,
+            mentalTriggerSettings: true,
+            sectionBadgeVisibility: true,
+            variableIncrementTable: true,
+            paymentGatewaySettings: true,
+            notificationSettings: true,
         }
       });
-    
-      return { success: true, message: 'Configurações atualizadas com sucesso.' };
-    } catch (error: any) {
-      console.error(`Error in PlatformSettingsService.updateSettings:`, error);
-      return { success: false, message: `Falha ao atualizar configurações: ${error.message}` };
     }
+
+    return settings;
+  }
+
+  /**
+   * Atualiza as configurações de um tenant específico.
+   * @param data Os dados parciais das configurações a serem atualizados.
+   * @returns O resultado da operação.
+   */
+  async updateSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string }> {
+      const tenantId = data.tenantId;
+      if (!tenantId) {
+          return { success: false, message: "Tenant ID é obrigatório para atualizar as configurações." };
+      }
+      try {
+        await this.prisma.platformSettings.update({
+            where: { tenantId: tenantId },
+            data: data as Prisma.PlatformSettingsUpdateInput,
+        });
+        return { success: true, message: "Configurações atualizadas com sucesso." };
+      } catch (error: any) {
+          console.error("Error updating platform settings:", error);
+          return { success: false, message: `Falha ao atualizar configurações: ${error.message}`};
+      }
   }
 }

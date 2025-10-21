@@ -8,9 +8,9 @@
  */
 'use server';
 
-import { SubscriptionService, type SubscriptionFormData } from '@/services/subscriber.service';
+import { SubscriberService, type SubscriptionFormData } from '@/services/subscriber.service';
 
-const subscriptionService = new SubscriptionService();
+const subscriptionService = new SubscriberService();
 
 /**
  * Server Action to handle new newsletter/notification subscriptions.

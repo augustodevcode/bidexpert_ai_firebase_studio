@@ -2,8 +2,8 @@
 'use client';
 
 import { Suspense } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Settings as SettingsIcon, AlertTriangle, Database, RefreshCw, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot, FileText as FileTextIcon } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Settings as SettingsIcon, Database, Palette, Wrench, MapPin as MapIcon, Zap, ArrowUpDown, CreditCard, Bell, Bot } from 'lucide-react';
 import Link from 'next/link';
 
 interface SettingCardProps {
@@ -35,14 +35,13 @@ function AdminSettingsPageContent() {
     const settingSections: SettingCardProps[] = [
         { title: "Identidade Visual e Temas", description: "Gerencie o título, logo e o tema de cores.", icon: Palette, link: "/admin/settings/themes", dataAiId: "settings-card-themes" },
         { title: "Configurações Gerais", description: "Gerencie modos de formulário e máscaras de ID.", icon: Wrench, link: "/admin/settings/general", dataAiId: "settings-card-general" },
-        { title: "Configurações de Mapa", description: "Escolha o provedor de mapa e chaves de API.", icon: MapIcon, link: "/admin/settings/maps", dataAiId: "settings-card-maps" },
+        { title: "Configurações de Mapa", description: "Escolha o provedor de mapas e chaves de API.", icon: MapIcon, link: "/admin/settings/maps", dataAiId: "settings-card-maps" },
         { title: "Regras de Lances", description: "Defina lances instantâneos e intervalos.", icon: Zap, link: "/admin/settings/bidding", dataAiId: "settings-card-bidding" },
         { title: "Incremento Variável", description: "Configure a tabela de incrementos por valor.", icon: ArrowUpDown, link: "/admin/settings/increments", dataAiId: "settings-card-increments" },
         { title: "Gateway de Pagamento", description: "Defina o provedor e comissões.", icon: CreditCard, link: "/admin/settings/payment", dataAiId: "settings-card-payment" },
         { title: "Notificações", description: "Controle os e-mails de notificação.", icon: Bell, link: "/admin/settings/notifications", dataAiId: "settings-card-notifications" },
         { title: "Gatilhos Mentais & Badges", description: "Ajuste os gatilhos de marketing e visibilidade.", icon: Bot, link: "/admin/settings/triggers", dataAiId: "settings-card-triggers" },
         { title: "Dados de Exemplo", description: "Popule o banco de dados para demonstração.", icon: Database, link: "/admin/settings/seeding", dataAiId: "settings-card-seeding" },
-        { title: "Templates de Documento", description: "Gerencie os modelos de PDF e termos.", icon: FileTextIcon, link: "/admin/document-templates", dataAiId: "settings-card-doc-templates" },
     ];
 
     return (

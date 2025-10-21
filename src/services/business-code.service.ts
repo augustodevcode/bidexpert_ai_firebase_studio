@@ -136,6 +136,8 @@ export class BusinessCodeService {
         result = await this.prisma.seller.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'user':
+        whereClause.tenants = { some: { tenantId } };
+        delete whereClause.tenantId; // Remove tenantId from top-level where
         result = await this.prisma.user.findFirst({ where: whereClause, orderBy: orderByClause, select: { publicId: true } });
         break;
       case 'auctioneer':
