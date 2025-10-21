@@ -62,7 +62,11 @@ export default function LoginPage() {
         } else if (result.success && result.user) {
             // Login bem-sucedido e tenant definido: redirecionar
             const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
-            loginUser(result.user, selectedTenantId || result.user.tenants[0].id);
+            
+            // CORREÇÃO: Garante que tenantId seja obtido de forma segura
+            const finalTenantId = selectedTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
+
+            loginUser(result.user, finalTenantId);
 
             // Adiciona o toast e um pequeno delay antes de redirecionar
             toast({
