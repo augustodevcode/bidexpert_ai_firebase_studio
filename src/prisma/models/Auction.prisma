@@ -1,75 +1,69 @@
-// prisma/models/Auction.prisma
+
 model Auction {
   id                        String                 @id @default(cuid())
   publicId                  String                 @unique @default(cuid())
-  slug                      String                 @unique
   title                     String
+  slug                      String                 @unique
   description               String?                @db.Text
   status                    AuctionStatus          @default(RASCUNHO)
   auctionDate               DateTime               @default(now())
   endDate                   DateTime?
-  visits                    Int?                   @default(0)
-  totalLots                 Int?                   @default(0)
+  visits                    Int                    @default(0)
+  isFeaturedOnMarketplace   Boolean                @default(false)
+  marketplaceAnnouncementTitle String?
   initialOffer              Decimal?               @db.Decimal(12, 2)
   achievedRevenue           Decimal?               @db.Decimal(12, 2)
   estimatedRevenue          Decimal?               @db.Decimal(12, 2)
-  bidsCount                 Int?                   @default(0)
-  winningBidsCount          Int?                   @default(0)
-  isFeaturedOnMarketplace   Boolean?               @default(false)
-  marketplaceAnnouncementTitle String?
-  additionalTriggers        Json?
+  auctionType               AuctionType            @default(EXTRAJUDICIAL)
+  auctionMethod             AuctionMethod          @default(STANDARD)
+  participation             AuctionParticipation   @default(ONLINE)
+  onlineUrl                 String?
+  address                   String?
+  cityId                    String?
+  city                      City?                  @relation(fields: [cityId], references: [id])
+  stateId                   String?
+  state                     State?                 @relation(fields: [stateId], references: [id])
+  zipCode                   String?
+  latitude                  Decimal?               @db.Decimal(9, 6)
+  longitude                 Decimal?               @db.Decimal(9, 6)
   documentsUrl              String?
   evaluationReportUrl       String?
   auctionCertificateUrl     String?
   dataAiHint                String?
-  street                    String?
-  number                    String?
-  complement                String?
-  neighborhood              String?
-  zipCode                   String?
-  latitude                  Decimal?               @db.Decimal(10, 8)
-  longitude                 Decimal?               @db.Decimal(11, 8)
-  cityId                    String?
-  stateId                   String?
-  imageMediaId              String?
-  imageUrl                  String?
-  auctionType               AuctionType?
-  auctionMethod             AuctionMethod?         @default(STANDARD)
-  participation             AuctionParticipation?  @default(ONLINE)
-  softCloseEnabled          Boolean?               @default(false)
-  softCloseMinutes          Int?                   @default(2)
-  decrementAmount           Decimal?               @db.Decimal(12, 2)
-  decrementIntervalSeconds  Int?
-  floorPrice                Decimal?               @db.Decimal(12, 2)
-  silentBiddingEnabled      Boolean?               @default(false)
-  allowInstallmentBids      Boolean?               @default(true)
-  allowMultipleBidsPerUser  Boolean?               @default(true)
-  sellingBranch             String?
-  relistSettingsId          String?                @unique
-  totalHabilitatedUsers     Int?                   @default(0)
+
+  // Timestamps
   createdAt                 DateTime               @default(now())
   updatedAt                 DateTime               @updatedAt
 
+  // Relationships
   tenantId                  String
   tenant                    Tenant                 @relation(fields: [tenantId], references: [id])
-
   auctioneerId              String?
   auctioneer                Auctioneer?            @relation(fields: [auctioneerId], references: [id])
   sellerId                  String?
   seller                    Seller?                @relation(fields: [sellerId], references: [id])
   categoryId                String?
   category                  LotCategory?           @relation(fields: [categoryId], references: [id])
-  city                      City?                  @relation(fields: [cityId], references: [id])
-  state                     State?                 @relation(fields: [stateId], references: [id])
-  judicialProcessId         String?
-  judicialProcess           JudicialProcess?       @relation(fields: [judicialProcessId], references: [id])
-
   lots                      Lot[]
   bids                      Bid[]
   reviews                   Review[]
-  relistSettings            RelistSettings?        @relation(fields: [relistSettingsId], references: [id])
+  questions                 LotQuestion[]
   habilitations             AuctionHabilitation[]
   stages                    AuctionStage[]
-
-  @@index([tenantId])
+  judicialProcessId         String?
+  judicialProcess           JudicialProcess?       @relation(fields: [judicialProcessId], references: [id])
+  courtId                   String?
+  court                     Court?                 @relation(fields: [courtId], references: [id])
+  imageMediaId              String?
+  
+  // Settings
+  softCloseEnabled          Boolean                @default(false)
+  softCloseMinutes          Int?                   @default(2)
+  automaticBiddingEnabled   Boolean                @default(false)
+  allowInstallmentBids      Boolean                @default(true)
+  silentBiddingEnabled      Boolean                @default(false)
+  allowMultipleBidsPerUser  Boolean                @default(true)
+  decrementAmount           Decimal?               @db.Decimal(12, 2)
+  decrementIntervalSeconds  Int?
+  floorPrice                Decimal?               @db.Decimal(12, 2)
 }

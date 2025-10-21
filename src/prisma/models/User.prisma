@@ -1,81 +1,56 @@
-// prisma/models/User.prisma
+
 model User {
-  id                   String                   @id @default(cuid())
-  publicId             String?                  @unique @default(cuid())
-  email                String                   @unique
-  fullName             String?
-  password             String
-  cpf                  String?                  @unique
-  rgNumber             String?
-  rgIssuer             String?
-  rgIssueDate          DateTime?
-  rgState              String?
-  dateOfBirth          DateTime?
-  cellPhone            String?
-  homePhone            String?
-  gender               String?
-  profession           String?
-  nationality          String?                  @default("Brasileira")
-  maritalStatus        String?
-  propertyRegime       String?
-  spouseName           String?
-  spouseCpf            String?
-  zipCode              String?
-  street               String?
-  number               String?
-  complement           String?
-  neighborhood         String?
-  city                 String?
-  state                String?
-  avatarUrl            String?
-  dataAiHint           String?
-  lastLogin            DateTime?
-  accountType          AccountType              @default(PHYSICAL)
-  razaoSocial          String?
-  cnpj                 String?
-  inscricaoEstadual    String?
-  website              String?
-  responsibleName      String?
-  responsibleCpf       String?
-  optInMarketing       Boolean                  @default(false)
-  habilitationStatus   UserHabilitationStatus   @default(PENDING_DOCUMENTS)
-  createdAt            DateTime                 @default(now())
-  updatedAt            DateTime                 @updatedAt
+  id                    String                 @id @default(cuid())
+  publicId              String?                @unique @default(cuid())
+  email                 String                 @unique
+  password              String?
+  fullName              String?
+  cpf                   String?                @unique
+  rgNumber              String?
+  rgIssuer              String?
+  rgState               String?
+  rgIssueDate           DateTime?
+  dateOfBirth           DateTime?
+  gender                String?
+  profession            String?
+  nationality           String?
+  maritalStatus         String?
+  propertyRegime        String?
+  spouseName            String?
+  spouseCpf             String?
+  cellPhone             String?
+  homePhone             String?
+  zipCode               String?
+  street                String?
+  number                String?
+  complement            String?
+  neighborhood          String?
+  city                  String?
+  state                 String?
+  avatarUrl             String?
+  dataAiHint            String?
+  optInMarketing        Boolean                @default(false)
+  habilitationStatus    UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType           AccountType            @default(PHYSICAL)
+  razaoSocial           String?
+  cnpj                  String?                @unique
+  inscricaoEstadual     String?
+  website               String?
+  responsibleName       String?
+  responsibleCpf        String?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
 
-  roles             UsersOnRoles[]
-  tenants           UsersOnTenants[]
-  bids              Bid[]
-  wins              UserWin[]            @relation("WonLots")
-  reviews           Review[]
-  questions         LotQuestion[]
-  documents         UserDocument[]
-  maxBids           UserLotMaxBid[]
-  habilitations     AuctionHabilitation[]
-  uploadedMedia     MediaItem[]
-  sellerProfile     Seller?              @relation("SellerUser")
-  auctioneerProfile Auctioneer?          @relation("AuctioneerUser")
-}
-
-model UsersOnRoles {
-  userId      String
-  roleId      String
-  assignedAt  DateTime @default(now())
-  assignedBy  String
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@id([userId, roleId])
-}
-
-model UsersOnTenants {
-  userId      String
-  tenantId    String
-  assignedAt  DateTime @default(now())
-  assignedBy  String
-
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@id([userId, tenantId])
+  // Relationships
+  roles                 UsersOnRoles[]
+  tenants               UsersOnTenants[]
+  bids                  Bid[]
+  wins                  UserWin[]
+  maxBids               UserLotMaxBid[]
+  questions             LotQuestion[]
+  reviews               Review[]
+  documents             UserDocument[]
+  uploadedMedia         MediaItem[]
+  sellerProfile         Seller?
+  auctioneerProfile     Auctioneer?
 }

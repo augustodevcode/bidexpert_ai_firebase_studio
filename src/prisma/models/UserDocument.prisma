@@ -1,0 +1,19 @@
+
+model UserDocument {
+  id                String               @id @default(cuid())
+  userId            String
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentTypeId    String
+  documentType      DocumentType         @relation(fields: [documentTypeId], references: [id])
+  fileUrl           String
+  fileName          String
+  status            UserDocumentStatus   @default(SUBMITTED)
+  rejectionReason   String?
+  verifiedAt        DateTime?
+  verifiedBy        String? // Could be a user ID of the analyst
+
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  @@unique([userId, documentTypeId])
+}
