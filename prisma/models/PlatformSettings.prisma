@@ -1,9 +1,5 @@
-// prisma/models/PlatformSettings.prisma
-/**
- * @fileoverview Define as configurações globais da plataforma.
- */
-import { StorageProviderType, SearchPaginationType, CrudFormMode } from './enums.prisma';
-
+// Define as configurações globais da plataforma.
+// Centraliza opções de tema, busca, e outras funcionalidades para serem gerenciadas pelo admin.
 model PlatformSettings {
   id                      String                   @id @default("global")
   tenantId                String                   @unique
@@ -26,7 +22,7 @@ model PlatformSettings {
   defaultListItemsPerPage Int                      @default(10)
   defaultUrgencyTimerHours Int?
   isSetupComplete         Boolean                  @default(false)
-  crudFormMode            CrudFormMode             @default(modal) // Novo campo
+  crudFormMode            CrudFormMode             @default("modal")
 
   themes                  ThemeSettings[]
   platformPublicIdMasks   IdMasks[]
@@ -43,23 +39,100 @@ model PlatformSettings {
 }
 
 model ThemeSettings {
-  id               String           @id @default(cuid())
-  platformSettings PlatformSettings @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String
-  name             String           @unique
-  colors           Json
+  id        String   @id @default(cuid())
+  name      String   @unique
+  isDefault Boolean  @default(false)
+  settings  PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  colorsId  String?
+  colors    ThemeColors? @relation(fields: [colorsId], references: [id])
+}
+
+model ThemeColors {
+  id      String   @id @default(cuid())
+  light   Json?
+  dark    Json?
+  themes  ThemeSettings[]
 }
 
 model IdMasks {
-  id                 String           @id @default(cuid())
-  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String
-  auctionCodeMask    String?
-  lotCodeMask        String?
-  sellerCodeMask     String?
-  auctioneerCodeMask String?
-  userCodeMask       String?
-  assetCodeMask      String?
-  categoryCodeMask   String?
-  subcategoryCodeMask String?
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  auctionCodeMask      String?
+  lotCodeMask          String?
+  sellerCodeMask       String?
+  auctioneerCodeMask   String?
+  userCodeMask         String?
+  assetCodeMask        String?
+  categoryCodeMask     String?
+  subcategoryCodeMask  String?
+}
+
+model MapSettings {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  defaultProvider String   @default("openstreetmap") // openstreetmap, google, staticImage
+  googleMapsApiKey String?
+}
+
+model BiddingSettings {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  instantBiddingEnabled           Boolean  @default(true)
+  getBidInfoInstantly             Boolean  @default(true)
+  biddingInfoCheckIntervalSeconds Int      @default(1)
+  defaultStageDurationDays        Int?     @default(7)
+  defaultDaysBetweenStages        Int?     @default(1)
+}
+
+model PaymentGatewaySettings {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  defaultGateway             String @default("Manual")
+  platformCommissionPercentage Decimal @default(5.0)
+  gatewayApiKey                String?
+  gatewayEncryptionKey         String?
+}
+
+model NotificationSettings {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  notifyOnNewAuction         Boolean @default(true)
+  notifyOnFeaturedLot        Boolean @default(false)
+  notifyOnAuctionEndingSoon  Boolean @default(true)
+  notifyOnPromotions         Boolean @default(true)
+}
+
+model MentalTriggerSettings {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  showDiscountBadge       Boolean @default(true)
+  showPopularityBadge     Boolean @default(true)
+  popularityViewThreshold Int     @default(500)
+  showHotBidBadge         Boolean @default(true)
+  hotBidThreshold         Int     @default(10)
+  showExclusiveBadge      Boolean @default(true)
+}
+
+model SectionBadgeVisibility {
+  id String @id @default(cuid())
+  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  searchGrid Json?
+  lotDetail  Json?
+}
+
+model VariableIncrementRule {
+  id        String   @id @default(cuid())
+  settings  PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
+  platformSettingsId String?
+  from      Decimal
+  to        Decimal?
+  increment Decimal
 }

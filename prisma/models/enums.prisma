@@ -1,9 +1,6 @@
-// prisma/models/enums.prisma
-/**
- * @fileoverview Define todos os enums utilizados no schema do Prisma.
- * Centralizar os enums aqui previne erros de definição duplicada e facilita
- * a manutenção do modelo de dados.
- */
+// Define todos os enums utilizados no schema do Prisma.
+// Centralizar os enums aqui previne erros de definição duplicada e facilita
+// a manutenção do modelo de dados.
 
 enum AuctionStatus {
   RASCUNHO
@@ -28,6 +25,15 @@ enum LotStatus {
   CANCELADO
 }
 
+enum AssetStatus {
+  CADASTRO
+  DISPONIVEL
+  LOTEADO
+  VENDIDO
+  REMOVIDO
+  INATIVADO
+}
+
 enum UserHabilitationStatus {
   PENDING_DOCUMENTS
   PENDING_ANALYSIS
@@ -36,18 +42,18 @@ enum UserHabilitationStatus {
   BLOCKED
 }
 
+enum AccountType {
+  PHYSICAL
+  LEGAL
+  DIRECT_SALE_CONSIGNOR
+}
+
 enum UserDocumentStatus {
   NOT_SENT
   SUBMITTED
   PENDING_ANALYSIS
   APPROVED
   REJECTED
-}
-
-enum AccountType {
-  PHYSICAL
-  LEGAL
-  DIRECT_SALE_CONSIGNOR
 }
 
 enum PaymentStatus {
@@ -78,14 +84,17 @@ enum AuctionParticipation {
   HIBRIDO
 }
 
-enum StorageProviderType {
-  local
-  firebase
+enum DirectSaleOfferStatus {
+  RASCUNHO
+  PENDING_APPROVAL
+  ACTIVE
+  SOLD
+  EXPIRED
 }
 
-enum SearchPaginationType {
-  pagination
-  loadMore
+enum DirectSaleOfferType {
+  BUY_NOW
+  ACCEPTS_PROPOSALS
 }
 
 enum ProcessPartyType {
@@ -101,35 +110,24 @@ enum ProcessPartyType {
   OUTRO
 }
 
-enum DocumentTemplateType {
-  WINNING_BID_TERM
-  EVALUATION_REPORT
-  AUCTION_CERTIFICATE
+enum StorageProviderType {
+  local
+  firebase
+  aws_s3
 }
 
-enum DirectSaleOfferStatus {
-  ACTIVE
-  PENDING_APPROVAL
-  SOLD
-  EXPIRED
-  RASCUNHO
-}
-
-enum DirectSaleOfferType {
-  BUY_NOW
-  ACCEPTS_PROPOSALS
-}
-
-enum AssetStatus {
-  CADASTRO
-  DISPONIVEL
-  LOTEADO
-  VENDIDO
-  REMOVIDO
-  INATIVADO
+enum SearchPaginationType {
+  pagination
+  loadMore
 }
 
 enum CrudFormMode {
   modal
   sheet
+}
+
+enum DocumentTemplateType {
+  WINNING_BID_TERM
+  EVALUATION_REPORT
+  AUCTION_CERTIFICATE
 }
