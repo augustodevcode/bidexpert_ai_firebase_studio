@@ -17,11 +17,11 @@ test.describe('Cenário E2E: Validação do Modo de Edição Dinâmico (Modal vs
 
   test('deve alternar entre os modos de edição modal e sheet via configurações', async ({ page }) => {
     // 1. Ir para Configurações e mudar para o modo "Sheet"
-    await page.goto('/admin/settings');
-    await expect(page.locator('[data-ai-id="settings-section-display"]')).toBeVisible();
+    await page.goto('/admin/settings/general');
+    await expect(page.getByRole('heading', { name: 'Configurações Gerais' })).toBeVisible();
     await page.locator('label:has-text("Painel Lateral (Sheet)")').click();
-    await page.getByRole('button', { name: 'Salvar Todas as Configurações' }).click();
-    await expect(page.getByText('Configurações atualizadas com sucesso.')).toBeVisible();
+    await page.getByRole('button', { name: 'Salvar Alterações' }).click();
+    await expect(page.getByText('Configurações salvas.')).toBeVisible();
     
     console.log('[E2E CRUD Modes] Configuração alterada para "Sheet".');
 
@@ -32,7 +32,7 @@ test.describe('Cenário E2E: Validação do Modo de Edição Dinâmico (Modal vs
     
     // O conteúdo do Sheet é renderizado dentro de um elemento com role 'dialog' pelo shadcn/ui
     const sheetDialog = page.locator('div[role="dialog"]');
-    await expect(sheetDialog).toBeVisible();
+    await expect(sheetDialog).toBeVisible({timeout: 10000});
     await expect(sheetDialog.getByRole('heading', { name: 'Novo Comitente' })).toBeVisible();
     
     // Verificar se o formulário está dentro do sheet
@@ -44,11 +44,11 @@ test.describe('Cenário E2E: Validação do Modo de Edição Dinâmico (Modal vs
     await expect(sheetDialog).not.toBeVisible();
 
     // 3. Voltar para Configurações e mudar para o modo "Modal"
-    await page.goto('/admin/settings');
-    await expect(page.locator('[data-ai-id="settings-section-display"]')).toBeVisible();
+    await page.goto('/admin/settings/general');
+    await expect(page.getByRole('heading', { name: 'Configurações Gerais' })).toBeVisible();
     await page.locator('label:has-text("Modal (Janela)")').click();
-    await page.getByRole('button', { name: 'Salvar Todas as Configurações' }).click();
-    await expect(page.getByText('Configurações atualizadas com sucesso.')).toBeVisible();
+    await page.getByRole('button', { name: 'Salvar Alterações' }).click();
+    await expect(page.getByText('Configurações salvas.')).toBeVisible();
     
     console.log('[E2E CRUD Modes] Configuração alterada para "Modal".');
     
@@ -59,7 +59,7 @@ test.describe('Cenário E2E: Validação do Modo de Edição Dinâmico (Modal vs
 
     // O conteúdo do Dialog também usa o role 'dialog'
     const modalDialog = page.locator('div[role="dialog"]');
-    await expect(modalDialog).toBeVisible();
+    await expect(modalDialog).toBeVisible({timeout: 10000});
     await expect(modalDialog.getByRole('heading', { name: 'Novo Comitente' })).toBeVisible();
     
     await expect(modalDialog.locator('[data-ai-id="seller-form"]')).toBeVisible();

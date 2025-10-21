@@ -3,6 +3,7 @@
  * @fileoverview Página principal para listagem e gerenciamento de Comitentes (Vendedores).
  * Utiliza o componente BidExpertSearchResultsFrame para exibir os dados de forma interativa,
  * permitindo busca, ordenação, filtros por faceta e visualização em grade, lista ou tabela.
+ * A criação e edição são feitas através de um modal (`CrudFormContainer`).
  */
 'use client';
 
@@ -47,7 +48,6 @@ export default function AdminSellersPage() {
     allStates: StateInfo[],
     allCities: CityInfo[],
   } | null>(null);
-
 
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
@@ -188,21 +188,21 @@ export default function AdminSellersPage() {
       />
     </div>
     <CrudFormContainer
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        mode={platformSettings?.crudFormMode || 'modal'}
-        title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
-        description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
+      isOpen={isFormOpen}
+      onClose={() => setIsFormOpen(false)}
+      mode={platformSettings?.crudFormMode || 'modal'}
+      title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
+      description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
     >
-        <SellerForm
-          initialData={editingSeller}
-          judicialBranches={dependencies.judicialBranches}
-          allStates={dependencies.allStates}
-          allCities={dependencies.allCities}
-          onSubmitAction={formAction}
-          onSuccess={handleFormSuccess}
-          onCancel={() => setIsFormOpen(false)}
-        />
+      <SellerForm
+        initialData={editingSeller}
+        judicialBranches={dependencies.judicialBranches}
+        allStates={dependencies.allStates}
+        allCities={dependencies.allCities}
+        onSubmitAction={formAction}
+        onSuccess={handleFormSuccess}
+        onCancel={() => setIsFormOpen(false)}
+      />
     </CrudFormContainer>
     </>
   );
