@@ -37,6 +37,14 @@ export class CityRepository {
     return prisma.city.update({ where: { id }, data });
   }
 
+  async upsert(data: Prisma.CityCreateInput): Promise<CityInfo> {
+    return prisma.city.upsert({
+      where: { name_stateId: { name: data.name, stateId: data.state.connect.id } },
+      update: data,
+      create: data,
+    });
+  }
+
   async delete(id: string): Promise<void> {
     await prisma.city.delete({ where: { id } });
   }

@@ -6,59 +6,38 @@
  */
 import { prisma } from '@/lib/prisma';
 import type { Prisma, PlatformSettings } from '@prisma/client';
+import { PlatformSettingsRepository } from '../repositories/platform-settings.repository';
 
 export class PlatformSettingsService {
+  private repository: PlatformSettingsRepository;
   private prisma;
 
   constructor() {
+    this.repository = new PlatformSettingsRepository();
     this.prisma = prisma;
   }
 
   /**
    * Obtém as configurações para um tenant específico. Se não existirem,
-   * cria e retorna um conjunto de configurações padrão para esse tenant.
-   * @param tenantId O ID do tenant para buscar as configurações.
-   * @returns As configurações da plataforma para o tenant.
+   * cria e retorna um conjunto de configurações padrão.
+   * @param {bigint} tenantId - O ID do tenant.
+   * @returns {Promise<PlatformSettings>} As configurações da plataforma.
    */
-  async getSettings(tenantId: string = '1'): Promise<PlatformSettings> {
-    const settings = await this.prisma.platformSettings.findUnique({
-      where: { tenantId },
-      include: {
-        themes: true,
-        platformPublicIdMasks: true,
-        mapSettings: true,
-        biddingSettings: true,
-        mentalTriggerSettings: true,
-        sectionBadgeVisibility: true,
-        variableIncrementTable: true,
-        paymentGatewaySettings: true,
-        notificationSettings: true,
-      }
-    });
-
+  async getSettings(tenantId: bigint): Promise<PlatformSettings> {
+    const settings = await this.repository.findByTenantId(tenantId);
+    
     if (!settings) {
-      console.log(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating default settings.`);
-      // Se não encontrar, cria um registro padrão para esse tenant
-      return this.prisma.platformSettings.create({
-        data: {
-          tenant: { connect: { id: tenantId } },
+      console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating default settings.`);
+      const defaultSettings = await this.repository.create(tenantId, {
+          isSetupComplete: false,
           siteTitle: 'BidExpert',
-          isSetupComplete: false, // Fundamental para o fluxo de setup
-        },
-        include: {
-            themes: true,
-            platformPublicIdMasks: true,
-            mapSettings: true,
-            biddingSettings: true,
-            mentalTriggerSettings: true,
-            sectionBadgeVisibility: true,
-            variableIncrementTable: true,
-            paymentGatewaySettings: true,
-            notificationSettings: true,
-        }
+          siteTagline: 'Sua plataforma de leilões online.',
+          crudFormMode: 'modal',
+          // Adicione outros valores padrão conforme necessário
       });
+      return defaultSettings;
     }
-
+    
     return settings;
   }
 

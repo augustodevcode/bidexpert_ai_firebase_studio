@@ -37,11 +37,7 @@ export class StateService {
         slug: slugify(data.name),
       };
 
-      const newState = await prisma.state.upsert({
-        where: { uf: data.uf.toUpperCase() },
-        update: dataToUpsert,
-        create: dataToUpsert,
-      });
+      const newState = await this.repository.upsert(dataToUpsert);
       return { success: true, message: 'Estado criado/atualizado com sucesso.', stateId: newState.id };
     } catch (error: any) {
       console.error("Error in StateService.create:", error);

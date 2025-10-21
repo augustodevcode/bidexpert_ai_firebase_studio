@@ -5,14 +5,17 @@ import { revalidatePath } from 'next/cache';
 import type { PlatformSettings } from '@/types';
 import { PlatformSettingsService } from '@/services/platform-settings.service';
 import { runFullSeedAction as seedAction } from './actions-old'; 
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
 
 const settingsService = new PlatformSettingsService();
 
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
   console.log('[getPlatformSettings Action] Fetching settings via service...');
   try {
-    const settings = await settingsService.getSettings();
-    return settings;
+    const tenantId = await getTenantIdFromRequest();
+    // A conversão para BigInt é necessária se o ID do tenant for string
+    const settings = await settingsService.getSettings(BigInt(tenantId));
+    return settings as PlatformSettings;
   } catch (error: any) {
     console.error("[getPlatformSettings Action] Error fetching or creating settings:", error);
     const errorMessage = error.name + ': ' + error.message;
@@ -22,7 +25,8 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
 
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
-    const result = await settingsService.updateSettings(data);
+    const tenantId = await getTenantIdFromRequest();
+    const result = await settingsService.updateSettings({ ...data, tenantId: BigInt(tenantId) });
     
     if (result.success && process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
         revalidatePath('/', 'layout');

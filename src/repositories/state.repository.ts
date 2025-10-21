@@ -31,6 +31,14 @@ export class StateRepository {
     return prisma.state.update({ where: { id }, data });
   }
 
+  async upsert(data: Prisma.StateCreateInput): Promise<StateInfo> {
+    return prisma.state.upsert({
+      where: { uf: data.uf },
+      update: data,
+      create: data,
+    });
+  }
+
   async delete(id: string): Promise<void> {
     await prisma.state.delete({ where: { id } });
   }

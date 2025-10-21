@@ -68,11 +68,7 @@ export class CityService {
         ibgeCode: data.ibgeCode || null,
       };
 
-      const newCity = await prisma.city.upsert({
-        where: { name_stateId: { name: data.name, stateId: data.stateId } },
-        update: dataToUpsert,
-        create: dataToUpsert,
-      });
+      const newCity = await this.cityRepository.upsert(dataToUpsert);
       return { success: true, message: 'Cidade criada/atualizada com sucesso.', cityId: newCity.id };
     } catch (error: any) {
       console.error("Error in CityService.createCity:", error);
