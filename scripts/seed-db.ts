@@ -1,4 +1,3 @@
-
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
@@ -143,7 +142,7 @@ async function seedEssentialData() {
     const landlordTenant = await prisma.tenant.upsert({
         where: { id: "1" },
         update: {},
-        create: {           id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
@@ -169,7 +168,6 @@ async function seedEssentialData() {
             showRelatedLotsOnLotDetail: true,
             relatedLotsCount: 4,
             defaultListItemsPerPage: 10,
-            homepageSections: [],
         }
     });
     console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
