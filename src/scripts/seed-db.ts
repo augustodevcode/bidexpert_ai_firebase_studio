@@ -2,7 +2,7 @@
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { slugify } from '../lib/ui-helpers';
+import { slugify } from '../src/lib/ui-helpers';
 
 const prisma = new PrismaClient();
 
@@ -143,7 +143,7 @@ async function seedEssentialData() {
     const landlordTenant = await prisma.tenant.upsert({
         where: { id: "1" },
         update: {},
-        create: { id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: {           id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
@@ -151,12 +151,16 @@ async function seedEssentialData() {
     console.log('[DB SEED] Seeding Platform Settings for Landlord...');
     await prisma.platformSettings.upsert({
         where: { tenantId: landlordTenant.id },
-        update: {},
+        update: {
+            siteTitle: 'BidExpert',
+            siteTagline: 'Sua plataforma de leilões online.',
+        },
         create: {
-            tenant: { connect: { id: landlordTenant.id } },
+            tenantId: landlordTenant.id,
             siteTitle: 'BidExpert',
             siteTagline: 'Sua plataforma de leilões online.',
             galleryImageBasePath: '/uploads/media/',
+            storageProvider: 'local',
             searchPaginationType: 'loadMore',
             searchItemsPerPage: 12,
             searchLoadMoreCount: 12,
