@@ -1,5 +1,0 @@
-enum DocumentTemplateType {
-  WINNING_BID_TERM
-  EVALUATION_REPORT
-  AUCTION_CERTIFICATE
-}

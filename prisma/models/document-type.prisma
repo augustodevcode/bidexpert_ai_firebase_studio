@@ -1,8 +1,0 @@
-model DocumentType {
-  id              BigInt         @id @default(autoincrement())
-  name            String   @unique
-  description     String?
-  isRequired      Boolean        @default(true)
-  appliesTo       String // e.g., 'PHYSICAL,LEGAL'
-  userDocuments   UserDocument[]
-}

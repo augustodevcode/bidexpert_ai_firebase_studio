@@ -1,5 +1,0 @@
-enum AuctionMethod {
-  STANDARD
-  DUTCH
-  SILENT
-}

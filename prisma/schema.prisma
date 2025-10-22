@@ -86,6 +86,8 @@ model Auction {
   @@index([auctioneerId])
   @@index([categoryId])
   @@index([tenantId])
+  @@index([cityId])
+  @@index([stateId])
 }
 
 model Auctioneer {
@@ -129,6 +131,7 @@ model AuctionHabilitation {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, auctionId])
+  @@index([auctionId])
 }
 
 model AuctionStage {

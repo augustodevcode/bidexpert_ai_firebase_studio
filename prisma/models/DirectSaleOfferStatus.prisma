@@ -1,7 +1,0 @@
-enum DirectSaleOfferStatus {
-  ACTIVE
-  PENDING_APPROVAL
-  SOLD
-  EXPIRED
-  RASCUNHO
-}

@@ -1,9 +1,0 @@
-model VehicleModel {
-  id     BigInt     @id @default(autoincrement())
-  name   String
-  slug   String   @unique
-  make   VehicleMake @relation(fields: [makeId], references: [id])
-  makeId BigInt
-
-  @@unique([makeId, name])
-}
