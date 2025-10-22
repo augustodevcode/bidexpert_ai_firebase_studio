@@ -1,0 +1,66 @@
+// prisma/models/User.prisma
+model User {
+  id                    String                   @id @default(cuid())
+  publicId              String?                  @unique
+  email                 String                   @unique
+  fullName              String?
+  password              String
+  avatarUrl             String?
+  dataAiHint            String?
+  cpf                   String?                  @unique
+  rgNumber              String?
+  rgIssuer              String?
+  rgIssueDate           DateTime?
+  rgState               String?
+  dateOfBirth           DateTime?
+  gender                String?
+  profession            String?
+  nationality           String?                  @default("Brasileiro(a)")
+  maritalStatus         String?
+  propertyRegime        String?
+  spouseName            String?
+  spouseCpf             String?
+  cellPhone             String?
+  homePhone             String?
+  zipCode               String?
+  street                String?
+  number                String?
+  complement            String?
+  neighborhood          String?
+  city                  String?
+  state                 String?
+  optInMarketing        Boolean                  @default(false)
+
+  habilitationStatus    UserHabilitationStatus   @default(PENDING_DOCUMENTS)
+  accountType           AccountType              @default(PHYSICAL)
+
+  createdAt             DateTime                 @default(now())
+  updatedAt             DateTime                 @updatedAt
+
+  razaoSocial           String?
+  cnpj                  String?                  @unique
+  inscricaoEstadual     String?
+  responsibleName       String?
+  responsibleCpf        String?
+  website               String?
+
+  bids                  Bid[]
+  wonLots               Lot[]                    @relation("WonLots")
+  wins                  UserWin[]
+  maxBids               UserLotMaxBid[]
+  reviews               Review[]
+  questions             LotQuestion[]
+  documents             UserDocument[]
+  notifications         Notification[]
+  habilitations         AuctionHabilitation[]
+
+  roles                 UsersOnRoles[]
+  tenants               UsersOnTenants[]
+
+  createdAuctioneer     Auctioneer?              @relation("CreatedByUser")
+  createdSeller         Seller?                  @relation("CreatedByUser")
+  
+  uploadedMedia         MediaItem[]
+
+  @@index([email])
+}

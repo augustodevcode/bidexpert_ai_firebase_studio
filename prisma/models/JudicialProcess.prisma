@@ -1,46 +1,31 @@
 // prisma/models/JudicialProcess.prisma
-import { Court, JudicialDistrict, JudicialBranch, Seller, Auction } from './';
-import { ProcessPartyType } from './enums.prisma';
-
-
 model JudicialProcess {
-  id            String          @id @default(cuid())
-  publicId      String          @unique @default(cuid())
-  processNumber String          @unique
-  isElectronic  Boolean         @default(true)
+  id                   String        @id @default(cuid())
+  publicId             String?       @unique
+  processNumber        String        
+  isElectronic         Boolean       @default(true)
+
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  auctions             Auction[]
+  assets               Asset[]
+  parties              JudicialParty[]
   
-  courtId       String?
-  court         Court?          @relation(fields: [courtId], references: [id])
+  courtId              String?
+  court                Court?        @relation(fields: [courtId], references: [id], onDelete: SetNull)
+
+  districtId           String?
+  district             JudicialDistrict? @relation(fields: [districtId], references: [id], onDelete: SetNull)
   
-  districtId    String?
-  district      JudicialDistrict? @relation(fields: [districtId], references: [id])
+  branchId             String?
+  branch               JudicialBranch?   @relation(fields: [branchId], references: [id], onDelete: SetNull)
   
-  branchId      String?
-  branch        JudicialBranch? @relation(fields: [branchId], references: [id])
+  sellerId             String?
+  seller               Seller?       @relation(fields: [sellerId], references: [id], onDelete: SetNull)
   
-  sellerId      String?
-  seller        Seller?         @relation(fields: [sellerId], references: [id])
-
-  parties       JudicialParty[]
-  assets        Asset[]
-  auctions      Auction[]
-
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
-  tenantId      String
-  tenant        Tenant          @relation(fields: [tenantId], references: [id])
-
-  @@index([processNumber])
-  @@index([tenantId])
-}
-
-model JudicialParty {
-  id              String            @id @default(cuid())
-  processId       String
-  process         JudicialProcess   @relation(fields: [processId], references: [id], onDelete: Cascade)
-  name            String
-  documentNumber  String?
-  partyType       ProcessPartyType
-
-  @@index([processId])
+  tenantId             String
+  tenant               Tenant        @relation(fields: [tenantId], references: [id])
+  
+  @@unique([processNumber, tenantId])
 }

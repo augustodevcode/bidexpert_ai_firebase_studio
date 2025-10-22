@@ -66,6 +66,45 @@ enum AuctionType {
   VENDA_DIRETA
 }
 
+// prisma/models/DirectSaleOffer.prisma
+import { LotCategory, Seller, User } from './';
+import { DirectSaleOfferStatus, DirectSaleOfferType } from './enums.prisma';
+
+model DirectSaleOffer {
+  id              String                  @id @default(cuid())
+  publicId        String                  @unique @default(cuid())
+  title           String
+  description     String?                 @db.Text
+  offerType       DirectSaleOfferType
+  status          DirectSaleOfferStatus   @default(PENDING_APPROVAL)
+  price           Decimal?                @db.Decimal(10, 2)
+  minimumOfferPrice Decimal?              @db.Decimal(10, 2)
+  
+  categoryId      String
+  category        LotCategory             @relation(fields: [categoryId], references: [id])
+  
+  sellerId        String
+  seller          Seller                  @relation(fields: [sellerId], references: [id])
+
+  locationCity    String?
+  locationState   String?
+
+  imageUrl        String?
+  imageMediaId    String?
+  dataAiHint      String?
+  galleryImageUrls Json?
+  mediaItemIds    String[]
+
+  expiresAt       DateTime?
+
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+  tenantId        String
+  tenant          Tenant                  @relation(fields: [tenantId], references: [id])
+
+  @@index([tenantId])
+}
+
 enum DirectSaleOfferStatus {
   ACTIVE
   PENDING_APPROVAL
@@ -79,10 +118,69 @@ enum DirectSaleOfferType {
   ACCEPTS_PROPOSALS
 }
 
+// prisma/models/DocumentTemplate.prisma
+import { DocumentTemplateType } from './enums.prisma';
+
+model DocumentTemplate {
+  id        String                 @id @default(cuid())
+  name      String                 @unique
+  type      DocumentTemplateType
+  content   String                 @db.Text
+  createdAt DateTime               @default(now())
+  updatedAt DateTime               @updatedAt
+}
+
 enum DocumentTemplateType {
   WINNING_BID_TERM
   EVALUATION_REPORT
   AUCTION_CERTIFICATE
+}
+
+// prisma/models/JudicialProcess.prisma
+import { Court, JudicialDistrict, JudicialBranch, Seller, Auction } from './';
+import { ProcessPartyType } from './enums.prisma';
+
+
+model JudicialProcess {
+  id            String          @id @default(cuid())
+  publicId      String          @unique @default(cuid())
+  processNumber String          @unique
+  isElectronic  Boolean         @default(true)
+  
+  courtId       String?
+  court         Court?          @relation(fields: [courtId], references: [id])
+  
+  districtId    String?
+  district      JudicialDistrict? @relation(fields: [districtId], references: [id])
+  
+  branchId      String?
+  branch        JudicialBranch? @relation(fields: [branchId], references: [id])
+  
+  sellerId      String?
+  seller        Seller?         @relation(fields: [sellerId], references: [id])
+
+  parties       JudicialParty[]
+  assets        Asset[]
+  auctions      Auction[]
+
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  tenantId      String
+  tenant        Tenant          @relation(fields: [tenantId], references: [id])
+
+  @@index([processNumber])
+  @@index([tenantId])
+}
+
+model JudicialParty {
+  id              String            @id @default(cuid())
+  processId       String
+  process         JudicialProcess   @relation(fields: [processId], references: [id], onDelete: Cascade)
+  name            String
+  documentNumber  String?
+  partyType       ProcessPartyType
+
+  @@index([processId])
 }
 
 
@@ -156,32 +254,25 @@ enum PaymentStatus {
   ATRASADO
 }
 
-// Define as configurações globais da plataforma.
-// Centraliza opções de tema, busca, e outras funcionalidades para serem gerenciadas pelo admin.
+// prisma/models/PlatformSettings.prisma
+import { CrudFormMode } from './enums.prisma';
+
 model PlatformSettings {
   id                      String                   @id @default("global")
   tenantId                String                   @unique
   tenant                  Tenant                   @relation(fields: [tenantId], references: [id])
+  
   siteTitle               String                   @default("BidExpert")
   siteTagline             String?
   logoUrl                 String?
   faviconUrl              String?
-  galleryImageBasePath    String                   @default("/uploads/media/")
-  storageProvider         StorageProviderType      @default(local)
-  firebaseStorageBucket   String?
-  activeThemeName         String?
-  searchPaginationType    SearchPaginationType     @default(loadMore)
-  searchItemsPerPage      Int                      @default(12)
-  searchLoadMoreCount     Int                      @default(12)
-  showCountdownOnLotDetail Boolean                  @default(true)
-  showCountdownOnCards    Boolean                  @default(true)
-  showRelatedLotsOnLotDetail Boolean               @default(true)
-  relatedLotsCount        Int                      @default(4)
-  defaultListItemsPerPage Int                      @default(10)
-  defaultUrgencyTimerHours Int?
+  
   isSetupComplete         Boolean                  @default(false)
-  crudFormMode            CrudFormMode             @default("modal")
-
+  crudFormMode            CrudFormMode             @default(modal)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
   themes                  ThemeSettings[]
   platformPublicIdMasks   IdMasks[]
   mapSettings             MapSettings[]
@@ -191,109 +282,8 @@ model PlatformSettings {
   mentalTriggerSettings   MentalTriggerSettings[]
   sectionBadgeVisibility  SectionBadgeVisibility[]
   variableIncrementTable  VariableIncrementRule[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
-model ThemeSettings {
-  id        String   @id @default(cuid())
-  name      String   @unique
-  isDefault Boolean  @default(false)
-  settings  PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  colorsId  String?
-  colors    ThemeColors? @relation(fields: [colorsId], references: [id])
-}
-
-model ThemeColors {
-  id      String   @id @default(cuid())
-  light   Json?
-  dark    Json?
-  themes  ThemeSettings[]
-}
-
-model IdMasks {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  auctionCodeMask      String?
-  lotCodeMask          String?
-  sellerCodeMask       String?
-  auctioneerCodeMask   String?
-  userCodeMask         String?
-  assetCodeMask        String?
-  categoryCodeMask     String?
-  subcategoryCodeMask  String?
-}
-
-model MapSettings {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  defaultProvider String   @default("openstreetmap") // openstreetmap, google, staticImage
-  googleMapsApiKey String?
-}
-
-model BiddingSettings {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  instantBiddingEnabled           Boolean  @default(true)
-  getBidInfoInstantly             Boolean  @default(true)
-  biddingInfoCheckIntervalSeconds Int      @default(1)
-  defaultStageDurationDays        Int?     @default(7)
-  defaultDaysBetweenStages        Int?     @default(1)
-}
-
-model PaymentGatewaySettings {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  defaultGateway             String @default("Manual")
-  platformCommissionPercentage Decimal @default(5.0)
-  gatewayApiKey                String?
-  gatewayEncryptionKey         String?
-}
-
-model NotificationSettings {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  notifyOnNewAuction         Boolean @default(true)
-  notifyOnFeaturedLot        Boolean @default(false)
-  notifyOnAuctionEndingSoon  Boolean @default(true)
-  notifyOnPromotions         Boolean @default(true)
-}
-
-model MentalTriggerSettings {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  showDiscountBadge       Boolean @default(true)
-  showPopularityBadge     Boolean @default(true)
-  popularityViewThreshold Int     @default(500)
-  showHotBidBadge         Boolean @default(true)
-  hotBidThreshold         Int     @default(10)
-  showExclusiveBadge      Boolean @default(true)
-}
-
-model SectionBadgeVisibility {
-  id String @id @default(cuid())
-  settings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  searchGrid Json?
-  lotDetail  Json?
-}
-
-model VariableIncrementRule {
-  id        String   @id @default(cuid())
-  settings  PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
-  from      Decimal
-  to        Decimal?
-  increment Decimal
-}
 enum ProcessPartyType {
   AUTOR
   REU
