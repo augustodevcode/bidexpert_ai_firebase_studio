@@ -480,6 +480,25 @@ model Lot {
   @@index([tenantId])
 }
 
+model LotQuestion {
+  id                      String    @id @default(cuid())
+  lotId                   String
+  lot                     Lot       @relation(fields: [lotId], references: [id])
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id])
+  userDisplayName         String
+  questionText            String    @db.Text
+  answerText              String?   @db.Text
+  isPublic                Boolean   @default(true)
+  createdAt               DateTime  @default(now())
+  answeredAt              DateTime?
+  answeredByUserId        String?
+  answeredByUserDisplayName String?
+  
+  @@index([lotId])
+  @@index([userId])
+}
+
 model LotCategory {
   id                    String        @id @default(cuid())
   name                  String        @unique
