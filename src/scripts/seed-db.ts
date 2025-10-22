@@ -143,7 +143,7 @@ async function seedEssentialData() {
     const landlordTenant = await prisma.tenant.upsert({
         where: { id: "1" },
         update: {},
-        create: {           id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
+        create: { id: "1", name: 'Landlord', subdomain: 'www', domain: 'bidexpert.com.br' },
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
