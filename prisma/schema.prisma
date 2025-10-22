@@ -1,4 +1,3 @@
-
 // Arquivo de cabeçalho para o schema do Prisma
 // Contém a configuração do datasource e do generator.
 
@@ -10,10 +9,6 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-}
-
-generator genkit {
-  provider = "genkit-prisma-plugin"
 }
 
 // -----------------------------------------------------
@@ -81,11 +76,11 @@ model Auction {
   stages                    AuctionStage[]
   habilitations             AuctionHabilitation[]
   bids                      Bid[]
+  questions                 LotQuestion[]
   createdAt                 DateTime                 @default(now())
   updatedAt                 DateTime                 @updatedAt
   tenantId                  String
   tenant                    Tenant                   @relation(fields: [tenantId], references: [id])
-  lotQuestions              LotQuestion[]
 
   @@index([sellerId])
   @@index([auctioneerId])
@@ -218,7 +213,7 @@ model Bid {
   isMaxBid      Boolean  @default(false)
   bidderDisplay String?
   lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction)
   bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   tenantId      String
   tenant        Tenant   @relation(fields: [tenantId], references: [id])
@@ -234,7 +229,7 @@ model City {
   slug      String    @unique
   ibgeCode  String?   @unique
   stateId   String
-  state     State     @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state     State     @relation(fields: [stateId], references: [id])
   stateUf   String?
   latitude  Decimal?  @db.Decimal(9, 6)
   longitude Decimal?  @db.Decimal(9, 6)
@@ -265,9 +260,9 @@ model Court {
   website           String?
   judicialDistricts JudicialDistrict[]
   judicialProcesses JudicialProcess[]
+  sellers           Seller[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
-  sellers           Seller[]
 }
 
 model DataSource {
@@ -351,7 +346,7 @@ model JudicialBranch {
   phone             String?
   email             String?
   districtId        String
-  district          JudicialDistrict    @relation(fields: [districtId], references: [id], onDelete: Cascade)
+  district          JudicialDistrict    @relation(fields: [districtId], references: [id])
   processes         JudicialProcess[]
   sellers           Seller[]
   createdAt         DateTime            @default(now())
@@ -366,9 +361,9 @@ model JudicialDistrict {
   slug       String            @unique
   zipCode    String?
   courtId    String
-  court      Court             @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  court      Court             @relation(fields: [courtId], references: [id])
   stateId    String
-  state      State             @relation(fields: [stateId], references: [id], onDelete: Cascade)
+  state      State             @relation(fields: [stateId], references: [id])
   branches   JudicialBranch[]
   processes  JudicialProcess[]
   sellers    Seller[]
@@ -406,11 +401,11 @@ model JudicialProcess {
   auctions        Auction[]
   sellerId        String?
   seller          Seller?          @relation(fields: [sellerId], references: [id])
+  mediaItems      MediaItem[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   tenantId        String
   tenant          Tenant           @relation(fields: [tenantId], references: [id])
-  mediaItems      MediaItem[]
   
   @@unique([processNumber, tenantId])
   @@index([courtId])
@@ -459,7 +454,7 @@ model Lot {
   auctioneerId              String?
   auctioneer                Auctioneer?         @relation(fields: [auctioneerId], references: [id])
   winnerId                  String?
-  winner                    User?               @relation("WonLots", fields: [winnerId], references: [id])
+  winner                    User?               @relation("WonLots", fields: [winnerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   assets                    AssetsOnLots[]
   bids                      Bid[]
   reviews                   Review[]
@@ -508,25 +503,6 @@ model LotCategory {
   auctions              Auction[]
 }
 
-model LotQuestion {
-  id                        String   @id @default(cuid())
-  lotId                     String
-  auctionId                 String
-  userId                    String
-  userDisplayName           String
-  questionText              String   @db.Text
-  isPublic                  Boolean  @default(true)
-  answerText                String?  @db.Text
-  answeredAt                DateTime?
-  answeredByUserId          String?
-  answeredByUserDisplayName String?
-  createdAt                 DateTime @default(now())
-  updatedAt                 DateTime @updatedAt
-  lot                       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction                   Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction)
-  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
-
 model LotStageDetails {
   id              String   @id @default(cuid())
   lotId           String
@@ -552,10 +528,10 @@ model MediaItem {
   caption             String?
   description         String?
   dataAiHint          String?
+  uploadedBy          User    @relation(fields: [uploadedById], references: [id])
   uploadedById        String
-  uploadedBy          User    @relation(fields: [uploadedById], references: [id], onDelete: Cascade)
   judicialProcessId   String?
-  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id], onDelete: SetNull)
+  judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
@@ -570,9 +546,27 @@ model Notification {
   updatedAt DateTime @updatedAt
   tenantId  String
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@index([userId])
+}
+
+model LotQuestion {
+  id                      String    @id @default(cuid())
+  lotId                   String
+  auctionId               String
+  userId                  String
+  userDisplayName         String
+  questionText            String    @db.Text
+  isPublic                Boolean   @default(true)
+  answerText              String?   @db.Text
+  answeredAt              DateTime?
+  answeredByUserId        String?
+  answeredByUserDisplayName String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: NoAction)
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {
@@ -633,9 +627,9 @@ model Seller {
   address            String?
   city               String?
   state              String?
-  zipCode            String?
-  latitude           Decimal?            @db.Decimal(9, 6)
-  longitude          Decimal?            @db.Decimal(9, 6)
+  zipCode              String?
+  latitude             Decimal?            @db.Decimal(9, 6)
+  longitude            Decimal?            @db.Decimal(9, 6)
   judicialBranchId   String?             @unique
   judicialBranch     JudicialBranch?     @relation(fields: [judicialBranchId], references: [id])
   judicialDistrictId String?
@@ -678,7 +672,7 @@ model Subcategory {
   iconMediaId       String?
   dataAiHintIcon    String?
   parentCategoryId  String
-  parentCategory    LotCategory  @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
+  parentCategory    LotCategory  @relation(fields: [parentCategoryId], references: [id])
   lots              Lot[]
   assets            Asset[]
 
@@ -713,9 +707,10 @@ model Tenant {
   subscribers        Subscriber[]
   reports            Report[]
   platformSettings   PlatformSettings?
+  notifications      Notification[]
+  bids               Bid[]
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
-  notifications      Notification[]
 }
 
 model User {
@@ -769,10 +764,9 @@ model User {
   sellerProfile           Seller?
   auctioneerProfile       Auctioneer?
   uploadedMedia           MediaItem[]
+  habilitations           AuctionHabilitation[]
   createdAt               DateTime               @default(now())
   updatedAt               DateTime               @updatedAt
-  habilitations           AuctionHabilitation[]
-  notifications           Notification[]
 }
 
 model UserDocument {
@@ -786,7 +780,7 @@ model UserDocument {
   submittedAt      DateTime           @default(now())
   verifiedAt       DateTime?
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentType     DocumentType       @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  documentType     DocumentType       @relation(fields: [documentTypeId], references: [id])
   
   @@unique([userId, documentTypeId])
 }
@@ -800,7 +794,7 @@ model UserLotMaxBid {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: NoAction)
+  lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
 
   @@unique([userId, lotId])
 }
@@ -855,7 +849,7 @@ model VehicleModel {
   name    String
   slug    String      @unique
   makeId  String
-  make    VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
+  make    VehicleMake @relation(fields: [makeId], references: [id])
   
   @@unique([makeId, name])
 }
@@ -1133,5 +1127,3 @@ enum CrudFormMode {
   modal
   sheet
 }
-
-    
