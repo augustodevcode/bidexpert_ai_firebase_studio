@@ -9,17 +9,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getCourts, deleteCourt, createCourt, updateCourt } from './actions';
+import { getCourts, deleteCourt, createCourt, updateCourt } from '@/app/admin/courts/actions';
 import type { Court, PlatformSettings, CourtFormData, StateInfo } from '@/types';
 import { PlusCircle, Scale } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/courts/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import CourtForm from './court-form';
+import CourtForm from '@/app/admin/courts/court-form';
 
 export default function AdminCourtsPage() {
   const [courts, setCourts] = useState<Court[]>([]);

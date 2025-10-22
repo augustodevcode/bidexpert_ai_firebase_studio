@@ -9,18 +9,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from './actions';
+import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from '@/app/admin/judicial-districts/actions';
 import type { JudicialDistrict, PlatformSettings, JudicialDistrictFormData, Court, StateInfo } from '@/types';
 import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/judicial-districts/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCourts } from '../courts/actions';
-import { getStates } from '../states/actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getStates } from '@/app/admin/states/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialDistrictForm from './judicial-district-form';
+import JudicialDistrictForm from '@/app/admin/judicial-districts/judicial-district-form';
 
 export default function AdminJudicialDistrictsPage() {
   const [districts, setDistricts] = useState<JudicialDistrict[]>([]);

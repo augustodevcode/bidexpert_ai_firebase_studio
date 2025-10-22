@@ -9,17 +9,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialBranches, deleteJudicialBranch, createJudicialBranch, updateJudicialBranch } from './actions';
+import { getJudicialBranches, deleteJudicialBranch, createJudicialBranch, updateJudicialBranch } from '@/app/admin/judicial-branches/actions';
 import type { JudicialBranch, PlatformSettings, JudicialBranchFormData, JudicialDistrict } from '@/types';
 import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/judicial-branches/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getJudicialDistricts } from '../judicial-districts/actions';
+import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialBranchForm from './judicial-branch-form';
+import JudicialBranchForm from '@/app/admin/judicial-branches/judicial-branch-form';
 
 export default function AdminJudicialBranchesPage() {
   const [branches, setBranches] = useState<JudicialBranch[]>([]);
@@ -122,7 +122,7 @@ export default function AdminJudicialBranchesPage() {
         <div className="space-y-6">
             <Card className="shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between">
-                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
+                    <div><NewShimmer /></div>
                     <Skeleton className="h-10 w-36"/>
                 </CardHeader>
                 <CardContent><Skeleton className="h-96 w-full" /></CardContent>

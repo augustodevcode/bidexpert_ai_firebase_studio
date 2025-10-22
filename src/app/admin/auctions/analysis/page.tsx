@@ -8,12 +8,12 @@
 'use client';
 
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { getAuctionsPerformanceAction, type AuctionPerformanceData, analyzeAuctionDataAction } from './actions';
+import { getAuctionsPerformanceAction, type AuctionPerformanceData, analyzeAuctionDataAction } from '@/app/admin/auctions/analysis/actions';
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { DataTable } from '@/components/ui/data-table';
 import { DollarSign, Gavel, Loader2, Package, TrendingUp, BarChart3, TrendingDown, BrainCircuit, Calendar } from 'lucide-react';
-import { createAuctionAnalysisColumns } from './columns';
+import { createAuctionAnalysisColumns } from '@/app/admin/auctions/analysis/columns';
 import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import AuctionGanttChart from '@/components/admin/analysis/auction-gantt-chart';

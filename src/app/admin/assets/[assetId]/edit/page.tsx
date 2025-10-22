@@ -25,17 +25,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { assetFormSchema, type AssetFormData } from './asset-form-schema';
+import { assetFormSchema, type AssetFormData } from '@/app/admin/assets/asset-form-schema';
 import type { Asset, LotCategory, JudicialProcess, Subcategory, MediaItem, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 import { Loader2, Save, Package, Gavel, Image as ImageIcon, Users, Trash2, ImagePlus } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
-import { getSubcategoriesByParentIdAction } from '../subcategories/actions';
+import { getSubcategoriesByParentIdAction } from '@/app/admin/subcategories/actions';
 import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
 import Image from 'next/image';
 import EntitySelector from '@/components/ui/entity-selector';
-import { getLotCategories } from '../categories/actions';
-import { getJudicialProcesses } from '../judicial-processes/actions';
-import { getSellers } from '../sellers/actions';
+import { getLotCategories } from '@/app/admin/categories/actions';
+import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
+import { getSellers } from '@/app/admin/sellers/actions';
 import AddressGroup from '@/components/address-group';
 
 interface AssetFormProps {
