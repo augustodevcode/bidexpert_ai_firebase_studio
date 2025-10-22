@@ -1,5 +1,4 @@
 // prisma/models/PlatformSettings.prisma
-import { CrudFormMode } from './enums.prisma';
 
 model PlatformSettings {
   id                      String                   @id @default("global")
@@ -12,7 +11,7 @@ model PlatformSettings {
   faviconUrl              String?
   
   isSetupComplete         Boolean                  @default(false)
-  crudFormMode            CrudFormMode             @default(modal)
+  crudFormMode            CrudFormMode             @default(modal) // Novo campo
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
