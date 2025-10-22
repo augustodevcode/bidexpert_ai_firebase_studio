@@ -18,7 +18,6 @@ export default function FinishStep() {
     setIsFinishing(true);
     console.log("[FinishStep] Finalizando o setup e marcando como completo no DB...");
     
-    // Atualiza a flag no banco de dados.
     const result = await markSetupAsComplete();
 
     if (result.success) {
@@ -26,10 +25,10 @@ export default function FinishStep() {
         title: "Configuração Concluída!",
         description: "Você será redirecionado para o painel de administração.",
       });
-      // A sessão do admin já foi criada no passo anterior.
-      // Apenas redirecionamos APÓS a confirmação do update no DB.
+      // Força um reload completo para garantir que o layout raiz receba a nova prop
+      // e o AuthContext seja reinicializado com o usuário logado.
       router.push('/admin/dashboard');
-      router.refresh(); // Força a revalidação do layout raiz para ler o novo estado de `isSetupComplete`.
+      router.refresh();
     } else {
        toast({
         title: "Erro ao Finalizar",

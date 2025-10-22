@@ -6,9 +6,8 @@ import bcrypt from 'bcryptjs';
 import type { Role, UserProfileWithPermissions, Tenant } from '@/types';
 import { cookies } from 'next/headers';
 import { createSession } from '@/server/lib/session';
-import { updatePlatformSettings } from '@/app/admin/settings/actions';
+import { PlatformSettingsService } from '@/services/platform-settings.service';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { tenantContext } from '@/lib/prisma';
 
 /**
  * Verifica se os dados essenciais (ex: roles e settings) existem no banco de dados.
@@ -46,8 +45,6 @@ function formatUserForSession(user: any): UserProfileWithPermissions | null {
     
     return {
         ...user,
-        id: user.id,
-        uid: user.id,
         roles,
         tenants,
         roleIds: roles.map((r: any) => r.id),
@@ -130,11 +127,9 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
  */
 export async function markSetupAsComplete(): Promise<{ success: boolean; message: string }> {
   try {
+    const settingsService = new PlatformSettingsService();
     // The setup completion flag is a global setting tied to the Landlord tenant.
-    // We must run the update within that tenant's context.
-    const result = await tenantContext.run({ tenantId: '1' }, () => 
-      updatePlatformSettings({ isSetupComplete: true })
-    );
+    const result = await settingsService.updateSettings({ tenantId: '1', isSetupComplete: true });
 
     if (result.success) {
       console.log('[Setup Action] Platform setup marked as complete in the database.');

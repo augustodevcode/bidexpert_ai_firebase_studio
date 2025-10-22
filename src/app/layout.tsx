@@ -35,12 +35,14 @@ async function getLayoutData() {
   try {
     const settings = await getPlatformSettings();
     return { 
-      platformSettings: settings, 
+      platformSettings: settings,
+      isSetupComplete: settings?.isSetupComplete ?? false, // Directly use the boolean value from the service
     };
   } catch (error) {
     console.error("[Layout Data Fetch] Failed to fetch layout data:", error);
     return {
       platformSettings: null,
+      isSetupComplete: false, // Assume setup is not complete on error
     };
   }
 }
@@ -63,10 +65,7 @@ export default async function RootLayout({
 }>) {
   
   const { initialUser, initialTenantId } = await getInitialAuthData();
-  const { platformSettings } = await getLayoutData();
-  
-  // Agora, a conclusão do setup é verificada através do banco de dados, não de uma variável de ambiente.
-  const isSetupComplete = platformSettings?.isSetupComplete ?? false;
+  const { platformSettings, isSetupComplete } = await getLayoutData();
 
   return (
     <html lang="pt-BR" suppressHydrationWarning>
