@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 // Arquivo de cabeçalho para o schema do Prisma
 // Contém a configuração do datasource e do generator.
 
@@ -9,6 +12,10 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+}
+
+generator genkit {
+  provider = "genkit-prisma-plugin"
 }
 
 // -----------------------------------------------------
@@ -76,18 +83,16 @@ model Auction {
   stages                    AuctionStage[]
   habilitations             AuctionHabilitation[]
   bids                      Bid[]
-  questions                 LotQuestion[]
   createdAt                 DateTime                 @default(now())
   updatedAt                 DateTime                 @updatedAt
   tenantId                  String
   tenant                    Tenant                   @relation(fields: [tenantId], references: [id])
+  lotQuestions              LotQuestion[]
 
   @@index([sellerId])
   @@index([auctioneerId])
   @@index([categoryId])
   @@index([tenantId])
-  @@index([cityId])
-  @@index([stateId])
 }
 
 model Auctioneer {
@@ -131,7 +136,6 @@ model AuctionHabilitation {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, auctionId])
-  @@index([auctionId])
 }
 
 model AuctionStage {
@@ -402,9 +406,9 @@ model JudicialProcess {
   parties         JudicialParty[]
   assets          Asset[]
   auctions        Auction[]
+  mediaItems      MediaItem[]
   sellerId        String?
   seller          Seller?          @relation(fields: [sellerId], references: [id])
-  mediaItems      MediaItem[]
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   tenantId        String
@@ -457,7 +461,7 @@ model Lot {
   auctioneerId              String?
   auctioneer                Auctioneer?         @relation(fields: [auctioneerId], references: [id])
   winnerId                  String?
-  winner                    User?               @relation("WonLots", fields: [winnerId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  winner                    User?               @relation("WonLots", fields: [winnerId], references: [id])
   assets                    AssetsOnLots[]
   bids                      Bid[]
   reviews                   Review[]
@@ -506,6 +510,22 @@ model LotCategory {
   auctions              Auction[]
 }
 
+model LotQuestion {
+  id                        String   @id @default(cuid())
+  lotId                     String
+  auctionId                 String
+  userId                    String
+  userDisplayName           String
+  questionText              String
+  answerText                String?
+  answeredAt                DateTime?
+  isPublic                  Boolean  @default(true)
+  createdAt                 DateTime @default(now())
+  lot                       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction                   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
 model LotStageDetails {
   id              String   @id @default(cuid())
   lotId           String
@@ -531,8 +551,8 @@ model MediaItem {
   caption             String?
   description         String?
   dataAiHint          String?
-  uploadedBy          User    @relation(fields: [uploadedById], references: [id])
   uploadedById        String
+  uploadedBy          User    @relation(fields: [uploadedById], references: [id])
   judicialProcessId   String?
   judicialProcess     JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
   createdAt           DateTime @default(now())
@@ -551,25 +571,6 @@ model Notification {
   tenant    Tenant   @relation(fields: [tenantId], references: [id])
   
   @@index([userId])
-}
-
-model LotQuestion {
-  id                      String    @id @default(cuid())
-  lotId                   String
-  auctionId               String
-  userId                  String
-  userDisplayName         String
-  questionText            String    @db.Text
-  isPublic                Boolean   @default(true)
-  answerText              String?   @db.Text
-  answeredAt              DateTime?
-  answeredByUserId        String?
-  answeredByUserDisplayName String?
-  createdAt               DateTime  @default(now())
-  updatedAt               DateTime  @updatedAt
-  lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: NoAction)
-  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Report {
@@ -630,9 +631,9 @@ model Seller {
   address            String?
   city               String?
   state              String?
-  zipCode              String?
-  latitude             Decimal?            @db.Decimal(9, 6)
-  longitude            Decimal?            @db.Decimal(9, 6)
+  zipCode            String?
+  latitude           Decimal?            @db.Decimal(9, 6)
+  longitude          Decimal?            @db.Decimal(9, 6)
   judicialBranchId   String?             @unique
   judicialBranch     JudicialBranch?     @relation(fields: [judicialBranchId], references: [id])
   judicialDistrictId String?
@@ -783,7 +784,7 @@ model UserDocument {
   submittedAt      DateTime           @default(now())
   verifiedAt       DateTime?
   user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentType     DocumentType       @relation(fields: [documentTypeId], references: [id])
+  documentType     DocumentType       @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
   
   @@unique([userId, documentTypeId])
 }
@@ -852,7 +853,7 @@ model VehicleModel {
   name    String
   slug    String      @unique
   makeId  String
-  make    VehicleMake @relation(fields: [makeId], references: [id])
+  make    VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
   
   @@unique([makeId, name])
 }
@@ -861,14 +862,14 @@ model ThemeSettings {
   id                 String       @id @default(cuid())
   name               String       @unique
   platformSettingsId String
-  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   colors             ThemeColors?
 }
 
 model ThemeColors {
   id              String         @id @default(cuid())
   themeSettingsId String         @unique
-  themeSettings   ThemeSettings  @relation(fields: [themeSettingsId], references: [id])
+  themeSettings   ThemeSettings  @relation(fields: [themeSettingsId], references: [id], onDelete: Cascade)
   primary         String?
   background      String?
   accent          String?
@@ -883,7 +884,7 @@ model ThemeColors {
 model IdMasks {
   id                    String            @id @default(cuid())
   platformSettingsId    String            @unique
-  platformSettings      PlatformSettings  @relation(fields: [platformSettingsId], references: [id])
+  platformSettings      PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   auctionCodeMask       String?
   lotCodeMask           String?
   sellerCodeMask        String?
@@ -897,7 +898,7 @@ model IdMasks {
 model MapSettings {
   id                 String           @id @default(cuid())
   platformSettingsId String           @unique
-  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   defaultProvider    String           @default("openstreetmap")
   googleMapsApiKey   String?
 }
@@ -905,7 +906,7 @@ model MapSettings {
 model BiddingSettings {
   id                              String           @id @default(cuid())
   platformSettingsId              String           @unique
-  platformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings                PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   instantBiddingEnabled           Boolean          @default(true)
   getBidInfoInstantly             Boolean          @default(true)
   biddingInfoCheckIntervalSeconds Int              @default(1)
@@ -916,7 +917,7 @@ model BiddingSettings {
 model PaymentGatewaySettings {
   id                           String           @id @default(cuid())
   platformSettingsId           String           @unique
-  platformSettings             PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings             PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   defaultGateway               String           @default("Manual")
   platformCommissionPercentage Float            @default(5)
   gatewayApiKey                String?
@@ -926,7 +927,7 @@ model PaymentGatewaySettings {
 model NotificationSettings {
   id                         String           @id @default(cuid())
   platformSettingsId       String           @unique
-  platformSettings         PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings         PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   notifyOnNewAuction       Boolean          @default(true)
   notifyOnFeaturedLot      Boolean          @default(false)
   notifyOnAuctionEndingSoon Boolean          @default(true)
@@ -936,7 +937,7 @@ model NotificationSettings {
 model MentalTriggerSettings {
   id                      String           @id @default(cuid())
   platformSettingsId    String           @unique
-  platformSettings      PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings      PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   showDiscountBadge     Boolean          @default(true)
   showPopularityBadge   Boolean          @default(true)
   popularityViewThreshold Int              @default(500)
@@ -948,7 +949,7 @@ model MentalTriggerSettings {
 model SectionBadgeVisibility {
   id                      String           @id @default(cuid())
   platformSettingsId    String           @unique
-  platformSettings      PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings      PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   searchGrid_showStatusBadge    Boolean @default(true)
   searchGrid_showDiscountBadge  Boolean @default(true)
   searchGrid_showUrgencyTimer   Boolean @default(true)
@@ -960,7 +961,7 @@ model SectionBadgeVisibility {
 model VariableIncrementRule {
   id                 String           @id @default(cuid())
   platformSettingsId String
-  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id])
+  platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   from               Decimal          @db.Decimal(12, 2)
   to                 Decimal?         @db.Decimal(12, 2)
   increment          Decimal          @db.Decimal(12, 2)
@@ -981,7 +982,7 @@ model PlatformSettings {
   firebaseStorageBucket   String?
   activeThemeName         String?
   
-  searchPaginationType    String                   @default("loadMore")
+  searchPaginationType    SearchPaginationType     @default(loadMore)
   searchItemsPerPage      Int                      @default(12)
   searchLoadMoreCount     Int                      @default(12)
   showCountdownOnLotDetail Boolean                  @default(true)
