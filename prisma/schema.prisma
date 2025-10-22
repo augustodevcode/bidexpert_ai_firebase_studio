@@ -1,4 +1,5 @@
-// prisma/schema.prisma
+// Arquivo de cabeçalho para o schema do Prisma
+// Contém a configuração do datasource e do generator.
 
 datasource db {
   provider     = "mysql"
@@ -8,10 +9,6 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-}
-
-generator genkit {
-  provider = "genkit-prisma-plugin"
 }
 
 // -----------------------------------------------------
@@ -125,8 +122,8 @@ model AuctionHabilitation {
   id        String   @id @default(cuid())
   userId    String
   auctionId String
-  user      User     @relation(fields: [userId], references: [id])
-  auction   Auction  @relation(fields: [auctionId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  auction   Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -140,7 +137,7 @@ model AuctionStage {
   startDate    DateTime
   endDate      DateTime
   initialPrice Decimal?  @db.Decimal(12, 2)
-  auction      Auction   @relation(fields: [auctionId], references: [id])
+  auction      Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   lotDetails   LotStageDetails[]
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -193,9 +190,9 @@ model Asset {
 }
 
 model AssetsOnLots {
-  asset      Asset    @relation(fields: [assetId], references: [id])
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
   assetId    String
-  lot        Lot      @relation(fields: [lotId], references: [id])
+  lot        Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   lotId      String
   assignedAt DateTime @default(now())
   assignedBy String?
@@ -216,7 +213,7 @@ model Bid {
   bidderDisplay String?
   lot           Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction)
-  bidder        User     @relation(fields: [bidderId], references: [id], onDelete: NoAction)
+  bidder        User     @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   tenantId      String
   tenant        Tenant   @relation(fields: [tenantId], references: [id])
 
@@ -262,7 +259,7 @@ model Court {
   website           String?
   judicialDistricts JudicialDistrict[]
   judicialProcesses JudicialProcess[]
-  sellers           Seller[] // Relação de volta
+  sellers           Seller[]
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
 }
@@ -329,7 +326,7 @@ model DocumentType {
 model InstallmentPayment {
   id                String        @id @default(cuid())
   userWinId         String
-  userWin           UserWin       @relation(fields: [userWinId], references: [id])
+  userWin           UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
   installmentNumber Int
   totalInstallments Int
   amount            Decimal       @db.Decimal(12, 2)
@@ -382,7 +379,7 @@ model JudicialParty {
   documentNumber String?
   partyType      ProcessPartyType
   processId      String
-  process        JudicialProcess @relation(fields: [processId], references: [id])
+  process        JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
 
   @@index([processId])
 }
@@ -401,6 +398,7 @@ model JudicialProcess {
   parties         JudicialParty[]
   assets          Asset[]
   auctions        Auction[]
+  mediaItems      MediaItem[]
   sellerId        String?
   seller          Seller?          @relation(fields: [sellerId], references: [id])
   createdAt       DateTime         @default(now())
@@ -445,7 +443,7 @@ model Lot {
   latitude                  Decimal?            @db.Decimal(9, 6)
   longitude                 Decimal?            @db.Decimal(9, 6)
   auctionId                 String
-  auction                   Auction             @relation(fields: [auctionId], references: [id])
+  auction                   Auction             @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   categoryId                String?
   category                  LotCategory?        @relation(fields: [categoryId], references: [id])
   subcategoryId             String?
@@ -464,7 +462,7 @@ model Lot {
   maxBids                   UserLotMaxBid[]
   stageDetails              LotStageDetails[]
   originalLotId             String?             @unique
-  originalLot               Lot?                @relation("RelistedLots", fields: [originalLotId], references: [id])
+  originalLot               Lot?                @relation("RelistedLots", fields: [originalLotId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLot               Lot?                @relation("RelistedLots")
   isRelisted                Boolean             @default(false)
   relistCount               Int                 @default(0)
@@ -504,33 +502,14 @@ model LotCategory {
   auctions              Auction[]
 }
 
-model LotQuestion {
-  id            String   @id @default(cuid())
-  lotId         String
-  auctionId     String
-  userId        String
-  userDisplayName String
-  questionText  String
-  answerText    String?
-  isPublic      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  answeredAt    DateTime?
-  answeredByUserId String?
-  answeredByUserDisplayName String?
-  
-  lot Lot @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auction Auction @relation(fields: [auctionId], references: [id], onDelete: NoAction)
-  user User @relation(fields: [userId], references: [id], onDelete: NoAction)
-}
-
 model LotStageDetails {
   id              String   @id @default(cuid())
   lotId           String
   stageId         String
   initialBid      Decimal? @db.Decimal(12, 2)
   bidIncrement    Decimal? @db.Decimal(12, 2)
-  lot             Lot      @relation(fields: [lotId], references: [id])
-  stage           AuctionStage @relation(fields: [stageId], references: [id])
+  lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  stage           AuctionStage @relation(fields: [stageId], references: [id], onDelete: NoAction)
   
   @@unique([lotId, stageId])
 }
@@ -570,6 +549,26 @@ model Notification {
   @@index([userId])
 }
 
+model LotQuestion {
+  id                       String   @id @default(cuid())
+  lotId                    String
+  auctionId                String
+  userId                   String
+  userDisplayName          String
+  questionText             String   @db.Text
+  isPublic                 Boolean  @default(true)
+  answerText               String?  @db.Text
+  answeredByUserId         String?
+  answeredByUserDisplayName String?
+  createdAt                DateTime @default(now())
+  answeredAt               DateTime?
+  lot                      Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  auction                  Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction)
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+}
+
 model Report {
   id           String   @id @default(cuid())
   name         String
@@ -597,7 +596,7 @@ model Review {
   updatedAt       DateTime @updatedAt
   lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: NoAction)
-  user            User     @relation(fields: [userId], references: [id], onDelete: NoAction)
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([lotId, userId])
 }
@@ -708,8 +707,8 @@ model Tenant {
   subscribers        Subscriber[]
   reports            Report[]
   platformSettings   PlatformSettings?
-  notifications      Notification[] // Relação de volta
   bids               Bid[]
+  notifications      Notification[]
   createdAt          DateTime               @default(now())
   updatedAt          DateTime               @updatedAt
 }
@@ -779,7 +778,7 @@ model UserDocument {
   rejectionReason  String?
   submittedAt      DateTime           @default(now())
   verifiedAt       DateTime?
-  user             User               @relation(fields: [userId], references: [id])
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentType     DocumentType       @relation(fields: [documentTypeId], references: [id])
   
   @@unique([userId, documentTypeId])
@@ -816,9 +815,9 @@ model UserWin {
 }
 
 model UsersOnRoles {
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
-  role       Role     @relation(fields: [roleId], references: [id])
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId     String
   assignedAt DateTime @default(now())
   assignedBy String
@@ -827,9 +826,9 @@ model UsersOnRoles {
 }
 
 model UsersOnTenants {
-  user       User     @relation(fields: [userId], references: [id])
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId     String
-  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+  tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   tenantId   String
   assignedAt DateTime @default(now())
   assignedBy String
@@ -973,6 +972,7 @@ model PlatformSettings {
   logoUrl                 String?
   faviconUrl              String?
   
+  galleryImageBasePath    String                   @default("/uploads/media/")
   isSetupComplete         Boolean                  @default(false)
   crudFormMode            CrudFormMode             @default(modal)
   
