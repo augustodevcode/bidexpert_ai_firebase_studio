@@ -39,15 +39,14 @@ Qualquer pedido para modificar o código do aplicativo **deve** ser respondido p
 
 **Justificativa:** Garante que os usuários finais vejam apenas conteúdo relevante e finalizado, evitando a exposição de leilões incompletos, cancelados ou já terminados na página principal. Aplicar o filtro de status de preparação na camada de repositório cria uma barreira de segurança mais robusta.
 
-## 6. Estrutura Modular do Schema Prisma
+## 6. Estrutura do Schema Prisma (Monolítico)
 
-**Regra:** Para manter a organização e a legibilidade do modelo de dados, o schema do Prisma é modularizado.
-- **Diretório de Modelos:** Todos os modelos (`model`) e enumerações (`enum`) do Prisma **devem** ser definidos em arquivos `.prisma` individuais dentro do diretório `prisma/models/`. Cada arquivo deve conter apenas um modelo.
-- **Arquivo Principal:** O arquivo `prisma/schema.prisma` é um arquivo **gerado** e **NÃO DEVE SER EDITADO DIRETAMENTE**. Ele contém o cabeçalho de configuração (`generator`, `datasource`) e é populado pelo script de build.
-- **Processo de Build:** O script `scripts/build-prisma-schema.ts` é responsável por ler todos os arquivos em `prisma/models/`, concatená-los e gerar o arquivo `prisma/schema.prisma` final.
-- **Execução:** Este script é executado automaticamente pelos comandos `npm run dev`, `npm run build` e `npm run db:push`, garantindo que o Prisma sempre opere com o schema mais recente.
+**Regra:** Para simplificar o desenvolvimento e evitar erros de build, o schema do Prisma é gerenciado em um **único arquivo**.
+- **Arquivo Principal:** O arquivo `prisma/schema.prisma` é a **única fonte da verdade** para o modelo de dados.
+- **Edição Direta:** Todas as alterações no schema, como adicionar modelos, campos ou enums, **devem ser feitas diretamente** no arquivo `prisma/schema.prisma`.
+- **Processo de Build:** Não há mais um script para construir o schema a partir de múltiplos arquivos. Os comandos `npm run dev`, `npm run build` e `npm run db:push` agora utilizam o `schema.prisma` diretamente.
 
-**Justificativa:** Esta abordagem evita um arquivo `schema.prisma` monolítico e gigantesco, facilitando a manutenção e a localização de modelos de dados específicos. Qualquer alteração direta no `schema.prisma` será perdida.
+**Justificativa:** Esta abordagem monolítica elimina a complexidade da sincronização de múltiplos arquivos, previne erros de validação causados por duplicações ou sintaxe incorreta, e torna o processo de desenvolvimento mais direto e menos propenso a falhas.
 
 ## 7. Princípio da Não-Regressão e Autorização Humana
 
