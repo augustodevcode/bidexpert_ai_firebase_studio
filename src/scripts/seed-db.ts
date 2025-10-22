@@ -2,7 +2,7 @@
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { slugify } from '../src/lib/ui-helpers';
+import { slugify } from '../lib/ui-helpers';
 
 const prisma = new PrismaClient();
 
@@ -251,8 +251,6 @@ async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
     try {
         await seedEssentialData();
-        // The seedDataSources function is now called from within seedEssentialData
-        // console.log('--- [DB SEED] You can add demo data seeding logic here if needed. ---');
     } catch (error) {
         console.error("[DB SEED] ❌ FATAL ERROR during seeding process:", error);
         process.exit(1);
@@ -262,3 +260,5 @@ async function main() {
 }
 
 main();
+
+    
