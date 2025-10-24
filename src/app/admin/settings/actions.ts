@@ -14,7 +14,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
   try {
     const tenantId = await getTenantIdFromRequest();
     // A conversão para BigInt é necessária se o ID do tenant for string
-    const settings = await settingsService.getSettings(BigInt(tenantId));
+    const settings = await settingsService.getSettings(tenantId);
     return settings as PlatformSettings;
   } catch (error: any) {
     console.error("[getPlatformSettings Action] Error fetching or creating settings:", error);
@@ -26,7 +26,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await settingsService.updateSettings({ ...data, tenantId: BigInt(tenantId) });
+    const result = await settingsService.updateSettings({ ...data, tenantId });
     
     if (result.success && process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
         revalidatePath('/', 'layout');
