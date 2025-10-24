@@ -12,8 +12,7 @@ const settingsService = new PlatformSettingsService();
 export async function getPlatformSettings(): Promise<PlatformSettings | null> {
   console.log('[getPlatformSettings Action] Fetching settings via service...');
   try {
-    const tenantId = await getTenantIdFromRequest();
-    // A conversão para BigInt é necessária se o ID do tenant for string
+    const tenantId = await getTenantIdFromRequest(true); // Allow public fallback to '1'
     const settings = await settingsService.getSettings(tenantId);
     return settings as PlatformSettings;
   } catch (error: any) {

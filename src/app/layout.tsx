@@ -36,13 +36,15 @@ async function getLayoutData() {
     const settings = await getPlatformSettings();
     return { 
       platformSettings: settings,
-      isSetupComplete: settings?.isSetupComplete ?? false, // Directly use the boolean value from the service
+      isSetupComplete: settings?.isSetupComplete ?? false,
     };
   } catch (error) {
-    console.error("[Layout Data Fetch] Failed to fetch layout data:", error);
+    // This error happens on the very first run when the database is empty.
+    // It's safe to assume setup is not complete.
+    console.warn("[Layout Data Fetch] Could not fetch platform settings (this is expected on first run):", error);
     return {
       platformSettings: null,
-      isSetupComplete: false, // Assume setup is not complete on error
+      isSetupComplete: false,
     };
   }
 }

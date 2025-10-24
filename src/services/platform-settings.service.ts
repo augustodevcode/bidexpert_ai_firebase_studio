@@ -42,9 +42,6 @@ export class PlatformSettingsService {
                 settings = await this.createDefaultSettings(tenantId);
             }
 
-            // Garante que isSetupComplete seja sempre um booleano.
-            // O valor '1' ou '0' do MySQL é convertido para booleano pelo Prisma,
-            // mas esta é uma camada extra de segurança para garantir a tipagem correta.
             return {
                 ...settings,
                 isSetupComplete: Boolean(settings.isSetupComplete),
@@ -62,19 +59,20 @@ export class PlatformSettingsService {
      * @returns As configurações padrão recém-criadas.
      */
     private async createDefaultSettings(tenantId: string): Promise<any> {
+        // A lógica de criação do Tenant foi movida para o script de seed para evitar race conditions.
+        // O serviço agora assume que o tenant já existe.
         return this.prisma.platformSettings.create({
             data: {
                 tenant: { connect: { id: tenantId } },
                 siteTitle: 'BidExpert',
                 siteTagline: 'Sua plataforma de leilões online.',
                 isSetupComplete: false,
-                // Cria entradas padrão para as tabelas relacionadas
                 mapSettings: { create: {} },
                 biddingSettings: { create: {} },
                 paymentGatewaySettings: { create: {} },
                 notificationSettings: { create: {} },
                 mentalTriggerSettings: { create: {} },
-                sectionBadgeVisibility: { create: {} },
+                sectionBadgeVisibility: { create: { searchGrid: {}, lotDetail: {} } },
                 platformPublicIdMasks: { create: {} },
             },
             include: {

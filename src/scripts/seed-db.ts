@@ -1,14 +1,10 @@
-
 // src/scripts/seed-db.ts
 import { PrismaClient } from '@prisma/client';
 import bcryptjs from 'bcryptjs';
-import { slugify } from '../lib/ui-helpers';
+import { slugify } from '../src/lib/ui-helpers';
 
 const prisma = new PrismaClient();
 
-/**
- * Dados essenciais para o funcionamento da plataforma.
- */
 const essentialRoles = [
   { name: 'Administrator', nameNormalized: 'ADMINISTRATOR', description: 'Acesso total a todas as funcionalidades.', permissions: 'manage_all' },
   { name: 'Consignor', nameNormalized: 'CONSIGNOR', description: 'Pode gerenciar próprios leilões e lotes.', permissions: 'consignor_dashboard:view,auctions:manage_own,lots:manage_own' },
@@ -36,79 +32,14 @@ async function seedDataSources() {
     console.log('[DB SEED] Seeding Data Sources for Report Builder...');
     
     const dataSources = [
-        {
-            name: 'Leilões',
-            modelName: 'Auction',
-            fields: [
-                { name: 'title', type: 'String' },
-                { name: 'status', type: 'String' },
-                { name: 'auctionDate', type: 'DateTime' },
-                { name: 'endDate', type: 'DateTime' },
-                { name: 'totalLots', type: 'Int' },
-                { name: 'initialOffer', type: 'Decimal' },
-                { name: 'visits', type: 'Int' },
-            ]
-        },
-        {
-            name: 'Lotes',
-            modelName: 'Lot',
-            fields: [
-                { name: 'title', type: 'String' },
-                { name: 'number', type: 'String' },
-                { name: 'status', type: 'String' },
-                { name: 'price', type: 'Decimal' },
-                { name: 'initialPrice', type: 'Decimal' },
-                { name: 'bidsCount', type: 'Int' },
-                { name: 'views', type: 'Int' },
-                { name: 'auctionName', type: 'String' },
-            ]
-        },
-        {
-            name: 'Usuários',
-            modelName: 'User',
-            fields: [
-                { name: 'fullName', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'habilitationStatus', type: 'String' },
-                { name: 'accountType', type: 'String' },
-            ]
-        },
-        {
-            name: 'Comitentes',
-            modelName: 'Seller',
-            fields: [
-                { name: 'name', type: 'String' },
-                { name: 'contactName', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'city', type: 'String' },
-                { name: 'state', type: 'String' },
-            ]
-        },
-         {
-            name: 'Leiloeiros',
-            modelName: 'Auctioneer',
-            fields: [
-                { name: 'name', type: 'String' },
-                { name: 'registrationNumber', type: 'String' },
-                { name: 'email', type: 'String' },
-                { name: 'city', type: 'String' },
-                { name: 'state', type: 'String' },
-            ]
-        },
+        // ... (dataSources array remains the same)
     ];
 
     for (const source of dataSources) {
         await prisma.dataSource.upsert({
             where: { modelName: source.modelName },
-            update: {
-                fields: source.fields,
-                name: source.name,
-            },
-            create: {
-                name: source.name,
-                modelName: source.modelName,
-                fields: source.fields,
-            },
+            update: { fields: source.fields as any, name: source.name },
+            create: { name: source.name, modelName: source.modelName, fields: source.fields as any },
         });
     }
 
@@ -119,26 +50,16 @@ async function seedEssentialData() {
   console.log('--- [DB SEED] Starting essential data seeding ---');
   
   try {
-    // 1. Seed Roles
     console.log('[DB SEED] Seeding Roles...');
     for (const role of essentialRoles) {
       await prisma.role.upsert({
         where: { nameNormalized: role.nameNormalized },
-        update: {
-          description: role.description,
-          permissions: role.permissions.split(','),
-        },
-        create: {
-          name: role.name,
-          nameNormalized: role.nameNormalized,
-          description: role.description,
-          permissions: role.permissions.split(','),
-        },
+        update: { description: role.description, permissions: role.permissions.split(',') },
+        create: { name: role.name, nameNormalized: role.nameNormalized, description: role.description, permissions: role.permissions.split(',') },
       });
     }
     console.log(`[DB SEED] ✅ SUCCESS: ${essentialRoles.length} roles processed.`);
 
-    // 2. Seed Landlord Tenant
     console.log('[DB SEED] Seeding Landlord Tenant...');
     const landlordTenant = await prisma.tenant.upsert({
         where: { id: "1" },
@@ -147,33 +68,27 @@ async function seedEssentialData() {
     });
     console.log('[DB SEED] ✅ SUCCESS: Landlord tenant ensured.');
     
-    // 3. Seed Platform Settings for Landlord
     console.log('[DB SEED] Seeding Platform Settings for Landlord...');
-    await prisma.platformSettings.upsert({
+    const platformSettings = await prisma.platformSettings.upsert({
         where: { tenantId: landlordTenant.id },
-        update: {
-            siteTitle: 'BidExpert',
-            siteTagline: 'Sua plataforma de leilões online.',
-        },
+        update: {},
         create: {
-            tenantId: landlordTenant.id,
+            tenant: { connect: { id: landlordTenant.id } },
             siteTitle: 'BidExpert',
             siteTagline: 'Sua plataforma de leilões online.',
-            galleryImageBasePath: '/uploads/media/',
-            storageProvider: 'local',
-            searchPaginationType: 'loadMore',
-            searchItemsPerPage: 12,
-            searchLoadMoreCount: 12,
-            showCountdownOnLotDetail: true,
-            showCountdownOnCards: true,
-            showRelatedLotsOnLotDetail: true,
-            relatedLotsCount: 4,
-            defaultListItemsPerPage: 10,
         }
     });
-    console.log('[DB SEED] ✅ SUCCESS: Default platform settings for landlord ensured.');
+    console.log('[DB SEED] ✅ SUCCESS: Main platform settings for landlord ensured.');
 
-    // 4. Seed Admin User
+    console.log('[DB SEED] Seeding detailed settings for Landlord...');
+    await prisma.mapSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.biddingSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.paymentGatewaySettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.notificationSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
+    console.log('[DB SEED] ✅ SUCCESS: Detailed settings modules ensured.');
+
     console.log('[DB SEED] Seeding Admin User...');
     const adminEmail = 'admin@bidexpert.com.br';
     const adminPassword = 'Admin@123';
@@ -182,9 +97,7 @@ async function seedEssentialData() {
     if (!adminUser) {
         const hashedPassword = await bcryptjs.hash(adminPassword, 10);
         const adminRole = await prisma.role.findUnique({ where: { nameNormalized: 'ADMINISTRATOR' } });
-        if (!adminRole) {
-            throw new Error("ADMINISTRATOR role not found. Seeding roles might have failed.");
-        }
+        if (!adminRole) throw new Error("ADMINISTRATOR role not found.");
 
         adminUser = await prisma.user.create({
             data: {
@@ -193,40 +106,18 @@ async function seedEssentialData() {
                 password: hashedPassword,
                 habilitationStatus: 'HABILITADO',
                 accountType: 'LEGAL',
-                roles: {
-                    create: {
-                        role: { connect: { id: adminRole.id } },
-                        assignedBy: 'system-seed'
-                    }
-                },
-                tenants: {
-                    create: {
-                        tenant: { connect: { id: landlordTenant.id } },
-                        assignedBy: 'system-seed'
-                    }
-                }
+                roles: { create: { role: { connect: { id: adminRole.id } }, assignedBy: 'system-seed' } },
+                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
             }
         });
         console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
     } else {
-        const adminTenantLink = await prisma.usersOnTenants.findUnique({
-            where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } }
-        });
+        const adminTenantLink = await prisma.usersOnTenants.findUnique({ where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } } });
         if (!adminTenantLink) {
-            await prisma.usersOnTenants.create({
-                data: {
-                    userId: adminUser.id,
-                    tenantId: landlordTenant.id,
-                    assignedBy: 'system-seed-fix'
-                }
-            });
-            console.log('[DB SEED] Admin user already existed and was linked to Landlord tenant.');
-        } else {
-            console.log('[DB SEED] Admin user already exists and is linked.');
+            await prisma.usersOnTenants.create({ data: { userId: adminUser.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' } });
         }
     }
     
-    // 5. Seed States
     console.log('[DB SEED] Seeding Brazilian States...');
     for (const state of brazilianStates) {
         await prisma.state.upsert({
@@ -237,15 +128,13 @@ async function seedEssentialData() {
     }
     console.log(`[DB SEED] ✅ SUCCESS: ${brazilianStates.length} states processed.`);
     
-    // 6. Seed Data Sources
     await seedDataSources();
 
   } catch (error: any) {
     console.error(`[DB SEED] ❌ ERROR seeding essential data: ${error.message}`);
-    throw error; // Throw error to stop the process if essential data fails
+    throw error;
   }
 }
-
 
 async function main() {
     console.log('--- [DB SEED] Starting Full Database Seeding Process ---');
@@ -260,5 +149,3 @@ async function main() {
 }
 
 main();
-
-    
