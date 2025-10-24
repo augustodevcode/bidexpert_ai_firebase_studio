@@ -21,7 +21,7 @@ export class CategoryService {
     return this.categoryRepository.findAll();
   }
 
-  async getCategoryById(id: BigInt): Promise<LotCategory | null> {
+  async getCategoryById(id: string): Promise<LotCategory | null> {
     return this.categoryRepository.findById(id);
   }
 
@@ -29,7 +29,7 @@ export class CategoryService {
     return this.categoryRepository.findByName(name);
   }
 
-  async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; categoryId?: BigInt; }> {
+  async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
     try {
       const slug = slugify(data.name);
       let category = await this.categoryRepository.findByName(data.name);
@@ -41,13 +41,13 @@ export class CategoryService {
         // If category does not exist, create it
         category = await this.categoryRepository.create({ ...data, slug, hasSubcategories: false });
       }
-      return { success: true, message: 'Categoria criada/atualizada com sucesso.', categoryId: category.id };
+      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category };
     } catch (error: any) {
       return { success: false, message: `Falha ao criar categoria: ${error.message}` };
     }
   }
 
-  async updateCategory(id: BigInt, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
+  async updateCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
     try {
       const dataToUpdate: Partial<LotCategory> = { ...data };
       if (data.name) {
@@ -61,7 +61,7 @@ export class CategoryService {
     }
   }
 
-  async deleteCategory(id: BigInt): Promise<{ success: boolean; message: string; }> {
+  async deleteCategory(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // In a real app, you might want to check for subcategories or lots before deleting.
       await this.categoryRepository.delete(id);
