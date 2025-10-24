@@ -23,7 +23,7 @@
         "test:ui:report": "playwright show-report",
         "test:ui:clean": "rm -rf test-results playwright-report",
         "postinstall": "npx prisma generate",
-        "clean": "rm -rf .next dist build out && rm -rf tests/ui/test-results && rm -rf tests/ui/playwright-report && rm -rf /home/user/studio/.idx/.data"
+        "clean": "rm -rf .next dist build out && rm -rf tests/ui/test-results && rm -rf tests/ui/playwright-report"
     },
     "dependencies": {
         "@firebasegen/default-connector": "file:dataconnect-generated/js/default-connector",

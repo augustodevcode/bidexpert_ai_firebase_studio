@@ -86,7 +86,23 @@ export async function createAdminUser(formData: FormData): Promise<{ success: bo
             console.log(`[Setup Action] Usuário admin ${email} já existe. Confirmando e prosseguindo.`);
             userToLogin = existingUser;
         } else {
-             throw new Error("Usuário administrador não encontrado. Por favor, rode o `db:init` ou `db:seed` primeiro.");
+             console.log(`[Setup Action] Usuário admin ${email} não existe. Criando agora...`);
+             const hashedPassword = await bcrypt.hash(password, 10);
+             userToLogin = await prisma.user.create({
+                 data: {
+                     email,
+                     fullName,
+                     password: hashedPassword,
+                     habilitationStatus: 'HABILITADO',
+                     accountType: 'LEGAL',
+                     roles: {
+                         create: { roleId: adminRole.id, assignedBy: 'system-setup' }
+                     },
+                     tenants: {
+                         create: { tenantId: landlordTenantId, assignedBy: 'system-setup' }
+                     }
+                 }
+             });
         }
 
         // Logar o usuário recém-criado/confirmado
