@@ -82,7 +82,7 @@ export class SellerService {
     return this.sellerRepository.findFirst({ isJudicial: true });
   }
 
-    async createSeller(tenantId: BigInt, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
+    async createSeller(tenantId: string, data: SellerFormData): Promise<{ success: boolean; message: string; sellerId?: string; }> {
       console.log('Received data in createSeller:', data);
       try {
         const existingSeller = await this.sellerRepository.findByName(tenantId, data.name);
@@ -102,16 +102,16 @@ export class SellerService {
           address: fullAddress,
           slug: slugify(data.name),
           publicId: `COM-${uuidv4()}`,
-          tenant: { connect: { id: BigInt(tenantId) } }, // Convert to BigInt
+          tenant: { connect: { id: tenantId } }, // Removed BigInt conversion
         };
   
         if (userId) dataToCreate.user = { connect: { id: userId } };
         if (cityId) {
-          const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }}); // Convert to BigInt
+          const city = await this.prisma.city.findUnique({ where: { id: cityId }}); // Removed BigInt conversion
           if (city) dataToCreate.city = city.name;
         }
         if (stateId) {
-          const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }}); // Convert to BigInt
+          const state = await this.prisma.state.findUnique({ where: { id: stateId }}); // Removed BigInt conversion
                   if (state) dataToCreate.state = state.uf;
                 }
                 console.log('Data to create seller in service:', dataToCreate);
