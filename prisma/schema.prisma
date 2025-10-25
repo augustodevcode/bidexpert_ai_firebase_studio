@@ -116,6 +116,8 @@ model Tenant {
   processes   JudicialProcess[]
   subscribers Subscriber[]
   settings    PlatformSettings?
+
+  DirectSaleOffer DirectSaleOffer[]
 }
 
 model UsersOnTenants {
@@ -202,6 +204,7 @@ model Lot {
   judicialProcesses   JudicialProcess[]
 
   @@unique([auctionId, number])
+  Notification Notification[]
 }
 
 model Asset {
@@ -447,6 +450,8 @@ model Auction {
 
   @@index([auctioneerId])
   @@index([sellerId])
+  Review Review[]
+  LotQuestion LotQuestion[]
 }
 
 model AuctionStage {

@@ -57,21 +57,21 @@ export class SellerRepository {
     if (judicialBranchId) {
       createData.judicialBranch = {
         connect: {
-          id: BigInt(judicialBranchId),
+          id: judicialBranchId,
         },
       };
     }
     if (judicialDistrictId) {
       createData.judicialDistrict = {
         connect: {
-          id: BigInt(judicialDistrictId),
+          id: judicialDistrictId,
         },
       };
     }
     if (courtId) {
       createData.court = {
         connect: {
-          id: BigInt(courtId),
+          id: courtId,
         },
       };
     }
