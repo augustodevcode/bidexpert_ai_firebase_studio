@@ -5,10 +5,10 @@ model MapSettings {
   settings                PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   settingsId              BigInt           @unique
 
-  defaultProvider         String  @default("openstreetmap") // 'google', 'openstreetmap', 'staticImage'
-  googleMapsApiKey        String?
+  defaultProvider         BigInt  @default("openstreetmap") // 'google', 'openstreetmap', 'staticImage'
+  googleMapsApiKey        BigInt?
   staticImageMapZoom      Int     @default(15)
-  staticImageMapMarkerColor String  @default("blue")
+  staticImageMapMarkerColor BigInt  @default("blue")
 
   @@map("map_settings")
 }

@@ -1,48 +1,48 @@
 
 model Auction {
-  id                        String                 @id @default(cuid())
-  publicId                  String                 @unique @default(cuid())
-  title                     String
-  slug                      String                 @unique
-  description               String?                @db.Text
+  id                        BigInt                 @id @default(autoincrement())
+  publicId                  BigInt                 @unique @default(cuid())
+  title                     BigInt
+  slug                      BigInt                 @unique
+  description               BigInt?                @db.Text
   status                    AuctionStatus          @default(RASCUNHO)
   auctionDate               DateTime               @default(now())
   endDate                   DateTime?
   visits                    Int                    @default(0)
   isFeaturedOnMarketplace   Boolean                @default(false)
-  marketplaceAnnouncementTitle String?
+  marketplaceAnnouncementTitle BigInt?
   initialOffer              Decimal?               @db.Decimal(12, 2)
   achievedRevenue           Decimal?               @db.Decimal(12, 2)
   estimatedRevenue          Decimal?               @db.Decimal(12, 2)
   auctionType               AuctionType            @default(EXTRAJUDICIAL)
   auctionMethod             AuctionMethod          @default(STANDARD)
   participation             AuctionParticipation   @default(ONLINE)
-  onlineUrl                 String?
-  address                   String?
-  cityId                    String?
+  onlineUrl                 BigInt?
+  address                   BigInt?
+  cityId                    BigInt?
   city                      City?                  @relation(fields: [cityId], references: [id])
-  stateId                   String?
+  stateId                   BigInt?
   state                     State?                 @relation(fields: [stateId], references: [id])
-  zipCode                   String?
+  zipCode                   BigInt?
   latitude                  Decimal?               @db.Decimal(9, 6)
   longitude                 Decimal?               @db.Decimal(9, 6)
-  documentsUrl              String?
-  evaluationReportUrl       String?
-  auctionCertificateUrl     String?
-  dataAiHint                String?
+  documentsUrl              BigInt?
+  evaluationReportUrl       BigInt?
+  auctionCertificateUrl     BigInt?
+  dataAiHint                BigInt?
 
   // Timestamps
   createdAt                 DateTime               @default(now())
   updatedAt                 DateTime               @updatedAt
 
   // Relationships
-  tenantId                  String
+  tenantId                  BigInt
   tenant                    Tenant                 @relation(fields: [tenantId], references: [id])
-  auctioneerId              String?
+  auctioneerId              BigInt?
   auctioneer                Auctioneer?            @relation(fields: [auctioneerId], references: [id])
-  sellerId                  String?
+  sellerId                  BigInt?
   seller                    Seller?                @relation(fields: [sellerId], references: [id])
-  categoryId                String?
+  categoryId                BigInt?
   category                  LotCategory?           @relation(fields: [categoryId], references: [id])
   lots                      Lot[]
   bids                      Bid[]
@@ -50,11 +50,11 @@ model Auction {
   questions                 LotQuestion[]
   habilitations             AuctionHabilitation[]
   stages                    AuctionStage[]
-  judicialProcessId         String?
+  judicialProcessId         BigInt?
   judicialProcess           JudicialProcess?       @relation(fields: [judicialProcessId], references: [id])
-  courtId                   String?
+  courtId                   BigInt?
   court                     Court?                 @relation(fields: [courtId], references: [id])
-  imageMediaId              String?
+  imageMediaId              BigInt?
   
   // Settings
   softCloseEnabled          Boolean                @default(false)

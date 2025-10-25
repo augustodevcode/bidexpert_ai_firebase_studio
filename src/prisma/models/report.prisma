@@ -1,12 +1,12 @@
 
 /// Modelo para salvar as definições de relatórios criados no Construtor de Relatórios.
 model Report {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
+  id          BigInt   @id @default(autoincrement())
+  name        BigInt
+  description BigInt?
   definition  Json
   
-  tenantId    String
+  tenantId    BigInt
   tenant      Tenant   @relation(fields: [tenantId], references: [id])
   
   createdAt   DateTime @default(now())

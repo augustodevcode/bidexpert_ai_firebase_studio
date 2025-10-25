@@ -1,8 +1,8 @@
 // prisma/models/InstallmentPayment.prisma
 model InstallmentPayment {
-  id                  String        @id @default(cuid())
-  userWinId           String
-  lotId               String
+  id                  BigInt        @id @default(autoincrement())
+  userWinId           BigInt
+  lotId               BigInt
   installmentNumber   Int
   totalInstallments   Int
   amount              Decimal       @db.Decimal(12, 2)

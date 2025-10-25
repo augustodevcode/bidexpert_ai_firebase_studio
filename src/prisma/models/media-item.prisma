@@ -5,24 +5,24 @@ import { Asset } from './asset.prisma'
 import { AssetMedia } from './asset-media.prisma'
 
 model MediaItem {
-  id                      String   @id @default(cuid())
-  fileName                String
-  mimeType                String
+  id                      BigInt   @id @default(autoincrement())
+  fileName                BigInt
+  mimeType                BigInt
   sizeBytes               Int
-  storagePath             String // Caminho no bucket de armazenamento
-  urlOriginal             String   @unique
-  urlThumbnail            String?
+  storagePath             BigInt // Caminho no bucket de armazenamento
+  urlOriginal             BigInt   @unique
+  urlThumbnail            BigInt?
   
-  title                   String?
-  altText                 String?
-  caption                 String?
-  description             String?
-  dataAiHint              String?
+  title                   BigInt?
+  altText                 BigInt?
+  caption                 BigInt?
+  description             BigInt?
+  dataAiHint              BigInt?
   
-  uploadedByUserId        String? @map("uploaded_by_user_id")
+  uploadedByUserId        BigInt? @map("uploaded_by_user_id")
   uploadedByUser          User?   @relation(fields: [uploadedByUserId], references: [id])
   
-  judicialProcessId       String? @map("judicial_process_id")
+  judicialProcessId       BigInt? @map("judicial_process_id")
   judicialProcess         JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
 
   // Back-relations para Asset

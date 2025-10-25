@@ -5,10 +5,10 @@ model PaymentGatewaySettings {
   settings                       PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   settingsId                     BigInt           @unique
 
-  defaultGateway                 String  @default("Manual") // 'Pagarme', 'Stripe', 'Manual'
+  defaultGateway                 BigInt  @default("Manual") // 'Pagarme', 'Stripe', 'Manual'
   platformCommissionPercentage   Decimal @default(5.0) @db.Decimal(5, 2)
-  gatewayApiKey                  String?
-  gatewayEncryptionKey           String?
+  gatewayApiKey                  BigInt?
+  gatewayEncryptionKey           BigInt?
 
   @@map("payment_gateway_settings")
 }

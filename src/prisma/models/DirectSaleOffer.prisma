@@ -1,18 +1,18 @@
 
 model DirectSaleOffer {
-  id                      String                @id @default(cuid())
-  publicId                String                @unique @default(cuid())
-  title                   String
-  description             String?               @db.Text
+  id                      BigInt                @id @default(autoincrement())
+  publicId                BigInt                @unique @default(cuid())
+  title                   BigInt
+  description             BigInt?               @db.Text
   status                  DirectSaleOfferStatus @default(PENDING_APPROVAL)
   offerType               DirectSaleOfferType   @default(BUY_NOW)
   price                   Decimal?              @db.Decimal(12, 2)
   minimumOfferPrice       Decimal?              @db.Decimal(12, 2)
-  locationCity            String?
-  locationState           String?
-  imageUrl                String?
-  imageMediaId            String?
-  dataAiHint              String?
+  locationCity            BigInt?
+  locationState           BigInt?
+  imageUrl                BigInt?
+  imageMediaId            BigInt?
+  dataAiHint              BigInt?
   views                   Int                   @default(0)
   proposalsCount          Int                   @default(0)
   expiresAt               DateTime?
@@ -22,10 +22,10 @@ model DirectSaleOffer {
   updatedAt               DateTime              @updatedAt
 
   // Relationships
-  tenantId                String
+  tenantId                BigInt
   tenant                  Tenant                @relation(fields: [tenantId], references: [id])
-  categoryId              String?
+  categoryId              BigInt?
   category                LotCategory?          @relation(fields: [categoryId], references: [id])
-  sellerId                String?
+  sellerId                BigInt?
   seller                  Seller?               @relation(fields: [sellerId], references: [id])
 }

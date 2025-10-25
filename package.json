@@ -5,7 +5,7 @@
     "scripts": {
         "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
         "dev": "next dev --port 9002 --hostname 0.0.0.0",
-        "dev:seed": "npm run prisma:build && npx prisma db push --accept-data-loss && npx tsx --env-file=.env scripts/seed-db.ts && next dev --port 9002 --hostname 0.0.0.0",
+        "dev:seed": "npm run db:push && npm run db:seed:extended && next dev --port 9002 --hostname 0.0.0.0",
         "start": "npm run prisma:build && next start --port 9002 --hostname 0.0.0.0",
         "build": "npx prisma generate && npm run prisma:build && next build",
         "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
@@ -14,7 +14,7 @@
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
         "db:push": "npm run prisma:build && npx prisma db push --accept-data-loss",
-        "db:setup": "npx tsx --env-file=.env scripts/init-db.ts && npx tsx --env-file=.env scripts/seed.ts",
+        "db:setup": "npm run db:push && npm run db:seed:extended",
         "prisma:build": "npx tsx scripts/build-prisma-schema.ts",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",

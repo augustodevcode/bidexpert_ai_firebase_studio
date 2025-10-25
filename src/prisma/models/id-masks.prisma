@@ -5,10 +5,10 @@ model IdMasks {
   settings      PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   settingsId    BigInt           @unique
 
-  auctions      String?
-  lots          String?
-  auctioneers   String?
-  sellers       String?
+  auctions      BigInt?
+  lots          BigInt?
+  auctioneers   BigInt?
+  sellers       BigInt?
 
   @@map("id_masks")
 }

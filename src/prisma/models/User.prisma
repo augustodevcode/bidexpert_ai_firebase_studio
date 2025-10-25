@@ -1,43 +1,43 @@
 
 model User {
-  id                    String                 @id @default(cuid())
-  publicId              String?                @unique @default(cuid())
-  email                 String                 @unique
-  password              String?
-  fullName              String?
-  cpf                   String?                @unique
-  rgNumber              String?
-  rgIssuer              String?
-  rgState               String?
+  id                    BigInt                 @id @default(autoincrement())
+  publicId              BigInt?                @unique @default(cuid())
+  email                 BigInt                 @unique
+  password              BigInt?
+  fullName              BigInt?
+  cpf                   BigInt?                @unique
+  rgNumber              BigInt?
+  rgIssuer              BigInt?
+  rgState               BigInt?
   rgIssueDate           DateTime?
   dateOfBirth           DateTime?
-  gender                String?
-  profession            String?
-  nationality           String?
-  maritalStatus         String?
-  propertyRegime        String?
-  spouseName            String?
-  spouseCpf             String?
-  cellPhone             String?
-  homePhone             String?
-  zipCode               String?
-  street                String?
-  number                String?
-  complement            String?
-  neighborhood          String?
-  city                  String?
-  state                 String?
-  avatarUrl             String?
-  dataAiHint            String?
+  gender                BigInt?
+  profession            BigInt?
+  nationality           BigInt?
+  maritalStatus         BigInt?
+  propertyRegime        BigInt?
+  spouseName            BigInt?
+  spouseCpf             BigInt?
+  cellPhone             BigInt?
+  homePhone             BigInt?
+  zipCode               BigInt?
+  street                BigInt?
+  number                BigInt?
+  complement            BigInt?
+  neighborhood          BigInt?
+  city                  BigInt?
+  state                 BigInt?
+  avatarUrl             BigInt?
+  dataAiHint            BigInt?
   optInMarketing        Boolean                @default(false)
   habilitationStatus    UserHabilitationStatus @default(PENDING_DOCUMENTS)
   accountType           AccountType            @default(PHYSICAL)
-  razaoSocial           String?
-  cnpj                  String?                @unique
-  inscricaoEstadual     String?
-  website               String?
-  responsibleName       String?
-  responsibleCpf        String?
+  razaoSocial           BigInt?
+  cnpj                  BigInt?                @unique
+  inscricaoEstadual     BigInt?
+  website               BigInt?
+  responsibleName       BigInt?
+  responsibleCpf        BigInt?
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
 

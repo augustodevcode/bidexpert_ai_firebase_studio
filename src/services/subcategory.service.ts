@@ -25,19 +25,23 @@ export class SubcategoryService {
     this.prisma = prisma;
   }
 
-  async getSubcategoriesByParentId(parentCategoryId: BigInt): Promise<Subcategory[]> {
+  async getSubcategoriesByParentId(parentCategoryId: string): Promise<Subcategory[]> {
     const subcategories = await this.repository.findAllByParentId(parentCategoryId);
     return subcategories.map(s => ({
       ...s,
+      id: s.id.toString(),
+      parentCategoryId: s.parentCategoryId.toString(),
       parentCategoryName: s.parentCategory?.name,
     }));
   }
 
-  async getSubcategoryById(id: BigInt): Promise<Subcategory | null> {
-    return this.repository.findById(id);
+  async getSubcategoryById(id: string): Promise<Subcategory | null> {
+    const subcategory = await this.repository.findById(id);
+    if (!subcategory) return null;
+    return { ...subcategory, id: subcategory.id.toString(), parentCategoryId: subcategory.parentCategoryId.toString() };
   }
 
-  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: BigInt; }> {
+  async createSubcategory(data: SubcategoryFormData): Promise<{ success: boolean; message: string; subcategoryId?: string; }> {
     try {
       const parentCategory = await this.categoryRepository.findById(data.parentCategoryId);
       if (!parentCategory) {
@@ -59,14 +63,14 @@ export class SubcategoryService {
       };
 
       const newSubcategory = await this.repository.upsert(dataToUpsert);
-      return { success: true, message: 'Subcategoria criada/atualizada com sucesso.', subcategoryId: newSubcategory.id };
+      return { success: true, message: 'Subcategoria criada/atualizada com sucesso.', subcategoryId: newSubcategory.id.toString() };
     } catch (error: any) {
       console.error("Error in SubcategoryService.create:", error);
       return { success: false, message: `Falha ao criar subcategoria: ${error.message}` };
     }
   }
 
-  async updateSubcategory(id: BigInt, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
+  async updateSubcategory(id: string, data: Partial<SubcategoryFormData>): Promise<{ success: boolean; message: string; }> {
     try {
         const dataToUpdate: Prisma.SubcategoryUpdateInput = { ...data };
         if (data.name) {
@@ -85,7 +89,7 @@ export class SubcategoryService {
     }
   }
 
-  async deleteSubcategory(id: BigInt): Promise<{ success: boolean; message: string; }> {
+  async deleteSubcategory(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // In a real app, check for lots linked to this subcategory
       await this.repository.delete(id);

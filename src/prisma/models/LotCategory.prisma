@@ -4,21 +4,21 @@
  * É um modelo global, compartilhado entre todos os tenants.
  */
 model LotCategory {
-  id                String         @id @default(uuid())
-  name              String         @unique
-  slug              String         @unique
-  description       String?        @db.Text
+  id                BigInt         @id @default(uuid())
+  name              BigInt         @unique
+  slug              BigInt         @unique
+  description       BigInt?        @db.Text
   hasSubcategories  Boolean?       @default(false) @map("has_subcategories")
-  logoUrl           String?        @map("logo_url")
-  logoMediaId       String?        @map("logo_media_id")
-  dataAiHintLogo    String?        @map("data_ai_hint_logo")
-  coverImageUrl     String?        @map("cover_image_url")
-  coverImageMediaId String?        @map("cover_image_media_id")
-  dataAiHintCover   String?        @map("data_ai_hint_cover")
-  megaMenuImageUrl  String?        @map("mega_menu_image_url")
-  megaMenuImageMediaId String?     @map("mega_menu_image_media_id")
-  dataAiHintMegaMenu String?       @map("data_ai_hint_mega_menu")
-  iconName          String?        @map("icon_name")
+  logoUrl           BigInt?        @map("logo_url")
+  logoMediaId       BigInt?        @map("logo_media_id")
+  dataAiHintLogo    BigInt?        @map("data_ai_hint_logo")
+  coverImageUrl     BigInt?        @map("cover_image_url")
+  coverImageMediaId BigInt?        @map("cover_image_media_id")
+  dataAiHintCover   BigInt?        @map("data_ai_hint_cover")
+  megaMenuImageUrl  BigInt?        @map("mega_menu_image_url")
+  megaMenuImageMediaId BigInt?     @map("mega_menu_image_media_id")
+  dataAiHintMegaMenu BigInt?       @map("data_ai_hint_mega_menu")
+  iconName          BigInt?        @map("icon_name")
   auctions          Auction[]
   lots              Lot[]
   bens              Bem[]

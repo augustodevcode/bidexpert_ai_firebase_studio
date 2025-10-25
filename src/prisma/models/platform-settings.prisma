@@ -5,17 +5,17 @@ model PlatformSettings {
   tenantId                BigInt  @unique
   tenant                  Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
-  siteTitle               String   @default("BidExpert")
-  siteTagline             String?
-  logoUrl                 String?
-  faviconUrl              String?
+  siteTitle               BigInt   @default("BidExpert")
+  siteTagline             BigInt?
+  logoUrl                 BigInt?
+  faviconUrl              BigInt?
 
   // Flags e Modos
   isSetupComplete         Boolean  @default(false)
-  crudFormMode            String   @default("modal") // 'modal' or 'sheet'
+  crudFormMode            BigInt   @default("modal") // 'modal' or 'sheet'
 
   // Configurações de UI e Exibição
-  searchPaginationType    String   @default("loadMore") // 'loadMore' or 'numberedPages'
+  searchPaginationType    BigInt   @default("loadMore") // 'loadMore' or 'numberedPages'
   searchItemsPerPage      Int      @default(12)
   searchLoadMoreCount     Int      @default(12)
   defaultListItemsPerPage Int      @default(10)

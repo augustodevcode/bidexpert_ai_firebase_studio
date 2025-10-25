@@ -1,3 +1,5 @@
+
+
 // src/services/category.service.ts
 /**
  * @fileoverview Este arquivo contém a classe CategoryService, responsável por
@@ -9,6 +11,7 @@
 import { CategoryRepository } from '@/repositories/category.repository';
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
+import { prisma } from '@/lib/prisma'; // Import prisma directly
 
 export class CategoryService {
   private categoryRepository: CategoryRepository;
@@ -18,30 +21,33 @@ export class CategoryService {
   }
 
   async getCategories(): Promise<LotCategory[]> {
-    return this.categoryRepository.findAll();
+    const categories = await this.categoryRepository.findAll();
+    return categories.map(c => ({...c, id: c.id.toString(), _count: { lots: c._count.lots }}));
   }
 
   async getCategoryById(id: string): Promise<LotCategory | null> {
-    return this.categoryRepository.findById(id);
+    const category = await this.categoryRepository.findById(id);
+    if (!category) return null;
+    return {...category, id: category.id.toString()};
   }
 
   async getCategoryByName(name: string): Promise<LotCategory | null> {
-    return this.categoryRepository.findByName(name);
+    const category = await this.categoryRepository.findByName(name);
+    if (!category) return null;
+    return {...category, id: category.id.toString()};
   }
 
   async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
     try {
       const slug = slugify(data.name);
-      let category = await this.categoryRepository.findByName(data.name);
+      
+      const newCategory = await prisma.lotCategory.upsert({
+        where: { name: data.name },
+        update: { ...data, slug },
+        create: { ...data, slug, hasSubcategories: false },
+      });
 
-      if (category) {
-        // If category exists, update it
-        category = await this.categoryRepository.update(category.id, { ...data, slug });
-      } else {
-        // If category does not exist, create it
-        category = await this.categoryRepository.create({ ...data, slug, hasSubcategories: false });
-      }
-      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category };
+      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category: { ...newCategory, id: newCategory.id.toString()} };
     } catch (error: any) {
       return { success: false, message: `Falha ao criar categoria: ${error.message}` };
     }
@@ -53,7 +59,6 @@ export class CategoryService {
       if (data.name) {
         dataToUpdate.slug = slugify(data.name);
       }
-      // @ts-ignore
       await this.categoryRepository.update(id, dataToUpdate);
       return { success: true, message: 'Categoria atualizada com sucesso.' };
     } catch (error: any) {
@@ -63,7 +68,6 @@ export class CategoryService {
 
   async deleteCategory(id: string): Promise<{ success: boolean; message: string; }> {
     try {
-      // In a real app, you might want to check for subcategories or lots before deleting.
       await this.categoryRepository.delete(id);
       return { success: true, message: 'Categoria excluída com sucesso.' };
     } catch (error: any) {

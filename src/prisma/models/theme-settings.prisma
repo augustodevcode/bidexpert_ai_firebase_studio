@@ -5,7 +5,7 @@ model ThemeSettings {
   settings         PlatformSettings @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   settingsId       BigInt           @unique
 
-  activeThemeName  String?
+  activeThemeName  BigInt?
   themes           Theme[]
 
   @@map("theme_settings")
@@ -13,7 +13,7 @@ model ThemeSettings {
 
 model Theme {
   id          BigInt         @id @default(autoincrement())
-  name        String         @unique
+  name        BigInt         @unique
   settings    ThemeSettings? @relation(fields: [settingsId], references: [id], onDelete: Cascade)
   settingsId  BigInt?
   colors      ThemeColors[]
@@ -25,8 +25,8 @@ model ThemeColors {
   id      BigInt  @id @default(autoincrement())
   theme   Theme   @relation(fields: [themeId], references: [id], onDelete: Cascade)
   themeId BigInt
-  name    String // e.g., 'primary', 'background', 'accent'
-  value   String // e.g., 'hsl(24.6 95% 53.1%)'
+  name    BigInt // e.g., 'primary', 'background', 'accent'
+  value   BigInt // e.g., 'hsl(24.6 95% 53.1%)'
 
   @@map("theme_colors")
 }

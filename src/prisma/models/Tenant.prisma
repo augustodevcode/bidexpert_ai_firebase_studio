@@ -1,11 +1,11 @@
 
 /// Define um Tenant (inquilino) na plataforma. Cada Tenant representa um leiloeiro ou cliente.
 model Tenant {
-  id          String   @id @default(cuid())
-  name        String
-  subdomain   String   @unique
-  domain      String?  @unique
-  logoUrl     String?
+  id          BigInt   @id @default(autoincrement())
+  name        BigInt
+  subdomain   BigInt   @unique
+  domain      BigInt?  @unique
+  logoUrl     BigInt?
   theme       Json?
   
   users       UsersOnTenants[]

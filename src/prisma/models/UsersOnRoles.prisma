@@ -2,11 +2,11 @@
 /// Tabela de junção para a relação muitos-para-muitos entre User e Role.
 model UsersOnRoles {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  userId     BigInt
   role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId     String
+  roleId     BigInt
   assignedAt DateTime @default(now())
-  assignedBy String
+  assignedBy BigInt
 
   @@id([userId, roleId])
 }

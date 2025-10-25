@@ -7,8 +7,8 @@ import { Asset } from './asset.prisma'
 import { MediaItem } from './media-item.prisma'
 
 model AssetMedia {
-  assetId     String    @map("asset_id")
-  mediaItemId String    @map("media_item_id")
+  assetId     BigInt    @map("asset_id")
+  mediaItemId BigInt    @map("media_item_id")
   order       Int       @default(0)
 
   asset       Asset     @relation("AssetGallery", fields: [assetId], references: [id], onDelete: Cascade)

@@ -1,27 +1,27 @@
 
 model Asset {
-  id                String         @id @default(cuid())
-  publicId          String         @unique @default(cuid())
-  title             String
-  description       String?        @db.Text
+  id                BigInt         @id @default(autoincrement())
+  publicId          BigInt         @unique @default(cuid())
+  title             BigInt
+  description       BigInt?        @db.Text
   status            AssetStatus    @default(DISPONIVEL)
   evaluationValue   Decimal?       @db.Decimal(12, 2)
-  imageUrl          String?
-  imageMediaId      String?
-  videoUrl          String?
-  dataAiHint        String?
+  imageUrl          BigInt?
+  imageMediaId      BigInt?
+  videoUrl          BigInt?
+  dataAiHint        BigInt?
   properties        Json?
 
   // Location Fields
-  street            String?
-  number            String?
-  complement        String?
-  neighborhood      String?
-  cityId            String?
+  street            BigInt?
+  number            BigInt?
+  complement        BigInt?
+  neighborhood      BigInt?
+  cityId            BigInt?
   city              City?          @relation(fields: [cityId], references: [id])
-  stateId           String?
+  stateId           BigInt?
   state             State?         @relation(fields: [stateId], references: [id])
-  zipCode           String?
+  zipCode           BigInt?
   latitude          Decimal?       @db.Decimal(9, 6)
   longitude         Decimal?       @db.Decimal(9, 6)
 
@@ -30,15 +30,15 @@ model Asset {
   updatedAt         DateTime       @updatedAt
 
   // Relationships
-  tenantId          String
+  tenantId          BigInt
   tenant            Tenant         @relation(fields: [tenantId], references: [id])
-  categoryId        String?
+  categoryId        BigInt?
   category          LotCategory?   @relation(fields: [categoryId], references: [id])
-  subcategoryId     String?
+  subcategoryId     BigInt?
   subcategory       Subcategory?   @relation(fields: [subcategoryId], references: [id])
-  sellerId          String?
+  sellerId          BigInt?
   seller            Seller?        @relation(fields: [sellerId], references: [id])
-  judicialProcessId String?
+  judicialProcessId BigInt?
   judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
   lots              AssetsOnLots[]
   media             AssetMedia[]

@@ -1,16 +1,16 @@
 // prisma/models/PlatformSettings.prisma
 model PlatformSettings {
-  id                      String                   @id @default("global")
-  tenantId                String                   @unique
+  id                      BigInt                   @id @default("global")
+  tenantId                BigInt                   @unique
   tenant                  Tenant                   @relation(fields: [tenantId], references: [id])
-  siteTitle               String                   @default("BidExpert")
-  siteTagline             String?
-  logoUrl                 String?
-  faviconUrl              String?
-  galleryImageBasePath    String                   @default("/uploads/media/")
+  siteTitle               BigInt                   @default("BidExpert")
+  siteTagline             BigInt?
+  logoUrl                 BigInt?
+  faviconUrl              BigInt?
+  galleryImageBasePath    BigInt                   @default("/uploads/media/")
   storageProvider         StorageProviderType      @default(local)
-  firebaseStorageBucket   String?
-  activeThemeName         String?
+  firebaseStorageBucket   BigInt?
+  activeThemeName         BigInt?
   searchPaginationType    SearchPaginationType     @default(loadMore)
   searchItemsPerPage      Int                      @default(12)
   searchLoadMoreCount     Int                      @default(12)

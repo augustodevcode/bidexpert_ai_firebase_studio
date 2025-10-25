@@ -4,10 +4,10 @@ import { Lot } from './lot.prisma'
 import { Asset } from './asset.prisma'
 
 model State {
-  id          String   @id @default(cuid())
-  name        String
-  uf          String   @unique
-  slug        String   @unique
+  id          BigInt   @id @default(autoincrement())
+  name        BigInt
+  uf          BigInt   @unique
+  slug        BigInt   @unique
   
   auctions    Auction[]
   lots        Lot[]
@@ -22,14 +22,14 @@ model State {
 }
 
 model City {
-  id          String   @id @default(cuid())
-  name        String
-  slug        String
-  ibgeCode    String?  @unique @map("ibge_code")
+  id          BigInt   @id @default(autoincrement())
+  name        BigInt
+  slug        BigInt
+  ibgeCode    BigInt?  @unique @map("ibge_code")
   
-  stateId     String   @map("state_id")
+  stateId     BigInt   @map("state_id")
   state       State    @relation(fields: [stateId], references: [id])
-  stateUf     String?  @map("state_uf") // Denormalized for easier access
+  stateUf     BigInt?  @map("state_uf") // Denormalized for easier access
   
   auctions    Auction[]
   lots        Lot[]

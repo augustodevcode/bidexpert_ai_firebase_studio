@@ -1,16 +1,16 @@
 
 model UserDocument {
-  id                String               @id @default(cuid())
-  userId            String
+  id                BigInt               @id @default(autoincrement())
+  userId            BigInt
   user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentTypeId    String
+  documentTypeId    BigInt
   documentType      DocumentType         @relation(fields: [documentTypeId], references: [id])
-  fileUrl           String
-  fileName          String
+  fileUrl           BigInt
+  fileName          BigInt
   status            UserDocumentStatus   @default(SUBMITTED)
-  rejectionReason   String?
+  rejectionReason   BigInt?
   verifiedAt        DateTime?
-  verifiedBy        String? // Could be a user ID of the analyst
+  verifiedBy        BigInt? // Could be a user ID of the analyst
 
   createdAt         DateTime             @default(now())
   updatedAt         DateTime             @updatedAt
