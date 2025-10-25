@@ -1,4 +1,4 @@
-
+// src/app/admin/layout.tsx
 'use client';
 
 import { useEffect } from 'react';
@@ -9,8 +9,6 @@ import { hasPermission } from '@/lib/permissions';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
 import AdminHeader from '@/components/layout/admin-header';
 import { featureFlagService } from '@/services/feature-flags.service';
-
-// Import the existing sidebar
 import AdminSidebar from '@/components/layout/admin-sidebar';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -33,11 +31,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   if (!userProfileWithPermissions) {
-    return (
-       <div className="flex items-center justify-center min-h-screen bg-background">
-        <Loader2 className="h-12 w-12 animate-spin text-primary" />
-      </div>
-    );
+    return null; // Don't render anything while redirecting
   }
   
   const canAccessAdmin = hasPermission(userProfileWithPermissions, 'manage_all');

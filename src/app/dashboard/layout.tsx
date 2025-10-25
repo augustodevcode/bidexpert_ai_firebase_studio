@@ -1,11 +1,4 @@
 // src/app/dashboard/layout.tsx
-/**
- * @fileoverview Layout principal para o Painel do Usuário (Arrematante).
- * Este componente de cliente envolve todas as páginas do dashboard do arrematante.
- * Ele renderiza a barra lateral (`DashboardSidebar`), o novo cabeçalho (`AdminHeader`),
- * e o conteúdo da página, garantindo uma experiência de usuário consistente e
- * separada da área pública do site.
- */
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -19,17 +12,22 @@ import CommandPalette from '@/components/layout/command-palette';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
 
-
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { userProfileWithPermissions, loading } = useAuth();
+  const router = useRouter();
   const pathname = usePathname();
   const [isCommandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [isWidgetConfigModalOpen, setIsWidgetConfigModalOpen] = useState(false);
 
+  useEffect(() => {
+    if (!loading && !userProfileWithPermissions) {
+      redirect(`/auth/login?redirect=${pathname}`);
+    }
+  }, [userProfileWithPermissions, loading, pathname]);
   
   if (loading) {
     return (
@@ -41,7 +39,7 @@ export default function DashboardLayout({
   }
 
   if (!userProfileWithPermissions) {
-    redirect(`/auth/login?redirect=${pathname}`);
+    return null; // Don't render anything while redirecting
   }
 
   return (
@@ -65,8 +63,7 @@ export default function DashboardLayout({
             isOpen={isCommandPaletteOpen}
             onOpenChange={setCommandPaletteOpen}
         />
-        {/* O modal de configuração não é relevante para o usuário comum neste dashboard */}
-         <WidgetConfigurationModal 
+        <WidgetConfigurationModal 
             isOpen={isWidgetConfigModalOpen}
             onClose={() => setIsWidgetConfigModalOpen(false)}
         />

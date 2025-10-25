@@ -12,6 +12,7 @@ import { CategoryRepository } from '@/repositories/category.repository';
 import type { LotCategory } from '@/types';
 import { slugify } from '@/lib/ui-helpers';
 import { prisma } from '@/lib/prisma'; // Import prisma directly
+import type { Prisma } from '@prisma/client';
 
 export class CategoryService {
   private categoryRepository: CategoryRepository;
@@ -22,7 +23,11 @@ export class CategoryService {
 
   async getCategories(): Promise<LotCategory[]> {
     const categories = await this.categoryRepository.findAll();
-    return categories.map(c => ({...c, id: c.id.toString(), _count: { lots: c._count.lots }}));
+    return categories.map(c => ({
+      ...c, 
+      id: c.id.toString(), // Convert BigInt to string
+      _count: { lots: c._count.lots }
+    }));
   }
 
   async getCategoryById(id: string): Promise<LotCategory | null> {

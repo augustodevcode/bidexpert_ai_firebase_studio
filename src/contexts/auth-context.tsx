@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction } from '@/app/auth/actions';
+import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -35,7 +35,7 @@ export function AuthProvider({
 }) {
   const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
   const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(false); // Loading is no longer needed for initial auth check
+  const [loading, setLoading] = useState(true); // Set to true initially
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
@@ -51,9 +51,14 @@ export function AuthProvider({
   }, []);
   
   const refetchUser = useCallback(async () => {
-     router.refresh();
      if (userProfileWithPermissions?.id) {
-       await fetchUnreadCount(userProfileWithPermissions.id);
+       const user = await getCurrentUser();
+       setUserProfileWithPermissions(user); // Re-fetch and update user
+       if (user) {
+         await fetchUnreadCount(user.id);
+       }
+     } else {
+        router.refresh(); // Fallback to full refresh if no user context
      }
   }, [router, userProfileWithPermissions?.id, fetchUnreadCount]);
   
@@ -64,11 +69,43 @@ export function AuthProvider({
   }, [fetchUnreadCount]);
 
   useEffect(() => {
+    async function checkSession() {
+      // If we already have a user from server-side render, no need to check again initially
+      if (initialUser) {
+        setUserProfileWithPermissions(initialUser);
+        setActiveTenantId(initialTenantId);
+        setLoading(false);
+        return;
+      }
+
+      // If no initial user, try to fetch from the session cookie
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          setUserProfileWithPermissions(user);
+          if (user.tenants && user.tenants.length > 0) {
+            // Default to first tenant or landlord
+            setActiveTenantId(user.tenants[0].id || '1');
+          }
+        }
+      } catch (e) {
+        console.error("Session check failed:", e);
+        // Ensure user is logged out if session is invalid
+        setUserProfileWithPermissions(null);
+        setActiveTenantId(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+    checkSession();
+  }, []); // Run only once on mount
+
+
+  useEffect(() => {
     if (userProfileWithPermissions?.id) {
       fetchUnreadCount(userProfileWithPermissions.id);
     }
     
-    // Listener for notification updates from other tabs
     const handleStorageChange = () => {
       if (userProfileWithPermissions?.id) {
         fetchUnreadCount(userProfileWithPermissions.id);
@@ -88,7 +125,6 @@ export function AuthProvider({
         setActiveTenantId(null);
         setUnreadNotificationsCount(0);
         toast({ title: "Logout realizado com sucesso." });
-        // Full page reload to ensure all server-side context is cleared.
         window.location.href = '/auth/login'; 
     } catch (error) {
         console.error("Logout error", error);

@@ -1,21 +1,14 @@
 // src/app/consignor-dashboard/layout.tsx
-/**
- * @fileoverview Layout principal para o Painel do Comitente.
- * Este componente de cliente envolve todas as páginas do dashboard do comitente,
- * garantindo que apenas usuários autenticados com as permissões corretas possam
- * acessar. Ele renderiza a barra lateral (`ConsignorSidebar`), o novo cabeçalho
- * (`AdminHeader`), e o conteúdo da página filha.
- */
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, redirect } from 'next/navigation';
 import { useAuth } from '@/contexts/auth-context';
 import { Loader2, ShieldAlert } from 'lucide-react';
 import ConsignorSidebar from '@/components/layout/consignor-sidebar';
 import { hasAnyPermission } from '@/lib/permissions'; 
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
-import AdminHeader from '@/components/layout/admin-header'; // Reutilizando o header
+import AdminHeader from '@/components/layout/admin-header';
 import CommandPalette from '@/components/layout/command-palette';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
@@ -34,9 +27,9 @@ export default function ConsignorDashboardLayout({
 
   useEffect(() => {
     if (!loading && !userProfileWithPermissions) {
-      router.push(`/auth/login?redirect=${pathname}`);
+      redirect(`/auth/login?redirect=${pathname}`);
     }
-  }, [userProfileWithPermissions, loading, router, pathname]);
+  }, [userProfileWithPermissions, loading, pathname]);
 
   if (loading) {
     return (
@@ -48,11 +41,7 @@ export default function ConsignorDashboardLayout({
   }
 
   if (!userProfileWithPermissions) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-muted-foreground">Redirecionando para login...</p>
-      </div>
-    );
+    return null; // Don't render anything while redirecting
   }
   
   const canAccessConsignorDashboard = hasAnyPermission(userProfileWithPermissions, [
@@ -102,8 +91,7 @@ export default function ConsignorDashboardLayout({
             isOpen={isCommandPaletteOpen}
             onOpenChange={setCommandPaletteOpen}
         />
-        {/* O modal de configuração de widgets não é relevante para o comitente, então não é renderizado aqui. */}
-         <WidgetConfigurationModal 
+        <WidgetConfigurationModal 
             isOpen={isWidgetConfigModalOpen}
             onClose={() => setIsWidgetConfigModalOpen(false)}
         />
