@@ -7,8 +7,7 @@ datasource db {
 }
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 // ==================================================
@@ -176,13 +175,15 @@ model User {
   bids                 Bid[]
   notifications        Notification[]
   habilitations        AuctionHabilitation[]
-  wins                 UserWin[]              @relation("LotsWon")
+  wins                 UserWin[]
   reviews              Review[]
   questions            LotQuestion[]
   documents            UserDocument[]
   tenants              UsersOnTenants[]
   createdReports       Report[]
   createdMedia         MediaItem[]            @relation("UploadedBy")
+  maxBids              UserLotMaxBid[]
+  wonLots              Lot[]                  @relation("LotsWon")
 }
 
 model Role {
@@ -203,6 +204,7 @@ model UsersOnRoles {
   assignedBy  String
 
   @@id([userId, roleId])
+  @@index([roleId])
 }
 
 model UsersOnTenants {
@@ -214,6 +216,7 @@ model UsersOnTenants {
   assignedBy  String
 
   @@id([userId, tenantId])
+  @@index([tenantId])
 }
 
 model Tenant {
@@ -234,7 +237,49 @@ model Tenant {
   notifications        Notification[]
   directSaleOffers     DirectSaleOffer[]
   reports              Report[]
-  settings             PlatformSettings?
+  settingsId           String?            @unique
+  settings             PlatformSettings?  @relation(fields: [settingsId], references: [id])
+}
+
+model PlatformSettings {
+  id                      String   @id @default(cuid())
+  commissionRate          Decimal  @default(0.05) @db.Decimal(5, 4)
+  tenant                  Tenant?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+}
+
+model Seller {
+  id                  String            @id @default(cuid())
+  user                User?
+  name                String
+  auctions            Auction[]
+  lots                Lot[]
+  assets              Asset[]
+  directSaleOffers    DirectSaleOffer[]
+  judicialProcesses   JudicialProcess[]
+  judicialBranches    JudicialBranch[]
+  tenantId            String
+  tenant              Tenant            @relation(fields: [tenantId], references: [id])
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@index([tenantId])
+}
+
+model Auctioneer {
+  id              String    @id @default(cuid())
+  user            User?
+  name            String
+  registration    String?   @unique
+  auctions        Auction[]
+  lots            Lot[]
+  tenantId        String
+  tenant          Tenant    @relation(fields: [tenantId], references: [id])
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tenantId])
 }
 
 model Lot {
@@ -249,8 +294,7 @@ model Lot {
   secondInitialPrice       Decimal?               @db.Decimal(10, 2)
   bidIncrementStep         Decimal?               @db.Decimal(10, 2)
   evaluationValue          Decimal?               @db.Decimal(10, 2)
-  reservePrice             Decimal?               @db.Decimal(10
-, 2)
+  reservePrice             Decimal?               @db.Decimal(10, 2)
   bidsCount                Int?                   @default(0)
   views                    Int?                   @default(0)
   isFeatured               Boolean?               @default(false)
@@ -317,6 +361,10 @@ model Lot {
   @@index([categoryId])
   @@index([stateId])
   @@index([tenantId])
+  @@index([auctioneerId])
+  @@index([subcategoryId])
+  @@index([judicialProcessId])
+  @@index([cityId])
 }
 
 model Asset {
@@ -357,6 +405,14 @@ model Asset {
   media               AssetMedia[]
   tenantId            String
   tenant              Tenant         @relation(fields: [tenantId], references: [id])
+
+  @@index([categoryId])
+  @@index([subcategoryId])
+  @@index([judicialProcessId])
+  @@index([sellerId])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([tenantId])
 }
 
 model AssetsOnLots {
@@ -368,6 +424,7 @@ model AssetsOnLots {
   assignedBy String?
 
   @@id([assetId, lotId])
+  @@index([lotId])
 }
 
 model Auction {
@@ -385,9 +442,9 @@ model Auction {
   initialOffer                Decimal?                @db.Decimal(10, 2)
   estimatedRevenue            Decimal?                @db.Decimal(10, 2)
   achievedRevenue             Decimal?                @db.Decimal(10, 2)
-  decrementAmount             Decimal?                @db(Decimal)
+  decrementAmount             Decimal?                @db.Decimal(10, 2)
   decrementIntervalSeconds    Int?
-  floorPrice                  Decimal?                @db(Decimal)
+  floorPrice                  Decimal?                @db.Decimal(10, 2)
   softCloseEnabled            Boolean?                @default(false)
   softCloseMinutes            Int?
   onlineUrl                   String?
@@ -414,7 +471,6 @@ model Auction {
   bids                        Bid[]
   notifications               Notification[]
   stages                      AuctionStage[]
-  lotPrices                   LotStagePrice[]
   habilitations               AuctionHabilitation[]
   auctioneerId                String?
   auctioneer                  Auctioneer?             @relation(fields: [auctioneerId], references: [id])
@@ -432,10 +488,22 @@ model Auction {
   court                       Court?                  @relation(fields: [courtId], references: [id])
   tenantId                    String
   tenant                      Tenant                  @relation(fields: [tenantId], references: [id])
+  judicialDistrictId          String?
+  judicialDistrict            JudicialDistrict?       @relation(fields: [judicialDistrictId], references: [id])
+  judicialBranchId            String?
+  judicialBranch              JudicialBranch?         @relation(fields: [judicialBranchId], references: [id])
 
   @@index([sellerId])
   @@index([auctioneerId])
   @@index([status])
+  @@index([categoryId])
+  @@index([cityId])
+  @@index([stateId])
+  @@index([judicialProcessId])
+  @@index([courtId])
+  @@index([tenantId])
+  @@index([judicialDistrictId])
+  @@index([judicialBranchId])
 }
 
 model JudicialProcess {
@@ -461,6 +529,12 @@ model JudicialProcess {
   mediaItems      MediaItem[]
   tenantId        String
   tenant          Tenant           @relation(fields: [tenantId], references: [id])
+
+  @@index([courtId])
+  @@index([districtId])
+  @@index([branchId])
+  @@index([sellerId])
+  @@index([tenantId])
 }
 
 model JudicialParty {
@@ -515,6 +589,8 @@ model Subcategory {
   parentCategoryId    String?
   lots                Lot[]
   assets              Asset[]
+
+  @@index([parentCategoryId])
 }
 
 model Court {
@@ -544,6 +620,9 @@ model JudicialDistrict {
   judicialBranches  JudicialBranch[]
   judicialProcesses JudicialProcess[]
   auctions          Auction[]
+
+  @@index([courtId])
+  @@index([stateId])
 }
 
 model JudicialBranch {
@@ -558,8 +637,12 @@ model JudicialBranch {
   districtId        String?
   district          JudicialDistrict? @relation(fields: [districtId], references: [id])
   judicialProcesses JudicialProcess[]
-  sellers           Seller[]
+  sellerId          String?
+  sellers           Seller?           @relation(fields: [sellerId], references: [id])
   auctions          Auction[]
+
+  @@index([districtId])
+  @@index([sellerId])
 }
 
 model AssetMedia {
@@ -570,6 +653,7 @@ model AssetMedia {
   isPrimary  Boolean  @default(false)
 
   @@id([assetId, mediaItemId])
+  @@index([mediaItemId])
 }
 
 model State {
@@ -581,6 +665,7 @@ model State {
   judicialDistricts JudicialDistrict[]
   lots              Lot[]
   auctions          Auction[]          @relation("StateAuctions")
+  assets            Asset[]
 }
 
 model City {
@@ -595,6 +680,8 @@ model City {
   auctions   Auction[] @relation("CityAuctions")
   lots       Lot[]
   assets     Asset[]
+
+  @@index([stateId])
 }
 
 model UserWin {
@@ -602,11 +689,13 @@ model UserWin {
   lotId              String             @unique
   lot                Lot                  @relation(fields: [lotId], references: [id])
   userId             String
-  user               User                 @relation("LotsWon", fields: [userId], references: [id])
+  user               User                 @relation(fields: [userId], references: [id])
   winningBidAmount   Decimal              @db.Decimal(10, 2)
   winDate            DateTime             @default(now())
   paymentStatus      PaymentStatus        @default(PENDENTE)
   installments       InstallmentPayment[]
+
+  @@index([userId])
 }
 
 model InstallmentPayment {
@@ -619,6 +708,8 @@ model InstallmentPayment {
   dueDate           DateTime
   paymentDate       DateTime?
   status            PaymentStatus
+
+  @@index([userWinId])
 }
 
 model Bid {
@@ -636,6 +727,9 @@ model Bid {
   tenant        Tenant   @relation(fields: [tenantId], references: [id])
 
   @@index([lotId, timestamp])
+  @@index([auctionId])
+  @@index([bidderId])
+  @@index([tenantId])
 }
 
 model Notification {
@@ -651,6 +745,10 @@ model Notification {
   lotId     String?
   tenantId  String
   tenant    Tenant    @relation(fields: [tenantId], references: [id])
+
+  @@index([userId])
+  @@index([auctionId])
+  @@index([tenantId])
 }
 
 model Review {
@@ -664,6 +762,9 @@ model Review {
   comment     String?  @db.Text
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([lotId])
+  @@index([userId])
 }
 
 model LotQuestion {
@@ -680,6 +781,9 @@ model LotQuestion {
   answeredAt            DateTime?
   answeredByUserId      String?
   answeredByUserDisplayName String?
+
+  @@index([lotId])
+  @@index([userId])
 }
 
 model DirectSaleOffer {
@@ -709,6 +813,10 @@ model DirectSaleOffer {
   tenantId              String
   itemsIncluded         Json?
   dataAiHint            String?
+
+  @@index([categoryId])
+  @@index([sellerId])
+  @@index([tenantId])
 }
 
 model Subscriber {
@@ -742,6 +850,7 @@ model UserDocument {
   verifiedBy      String? // Could be linked to an admin User ID
 
   @@unique([userId, documentTypeId])
+  @@index([documentTypeId])
 }
 
 model AuctionHabilitation {
@@ -752,6 +861,7 @@ model AuctionHabilitation {
   createdAt DateTime @default(now())
 
   @@id([userId, auctionId])
+  @@index([auctionId])
 }
 
 model UserLotMaxBid {
@@ -766,6 +876,7 @@ model UserLotMaxBid {
   updatedAt DateTime @updatedAt
 
   @@unique([userId, lotId])
+  @@index([lotId])
 }
 
 model LotStagePrice {
@@ -778,6 +889,7 @@ model LotStagePrice {
   bidIncrement Decimal?    @db.Decimal(10, 2)
 
   @@unique([lotId, stageId])
+  @@index([stageId])
 }
 
 model AuctionStage {
@@ -803,6 +915,9 @@ model Report {
   createdBy    User     @relation(fields: [createdById], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([createdById])
 }
 
 model DataSource {
@@ -831,6 +946,9 @@ model MediaItem {
   assetGalleries      AssetMedia[]
   judicialProcess     JudicialProcess?   @relation(fields: [judicialProcessId], references: [id])
   judicialProcessId   String?
+
+  @@index([uploadedById])
+  @@index([judicialProcessId])
 }
 
 model VehicleMake {
@@ -849,5 +967,3 @@ model VehicleModel {
 
   @@unique([makeId, name])
 }
-
-    
