@@ -14,6 +14,94 @@ O projeto segue uma arquitetura MVC com uma camada de serviço e repositório pa
 -   `prisma`: Schema do banco de dados.
 -   `tests`: Testes de integração e end-to-end.
 -   `tests/ui`: Testes de interface do usuário com Playwright.
+-   `.windsurf/rules`: Regras e diretrizes para o agente de IA do Windsurf.
+-   `.windsurf/global_rules.md`: Regras globais aplicáveis a todos os projetos.
+
+## Regras de Desenvolvimento com Windsurf
+
+O projeto utiliza o sistema de regras do Windsurf para manter consistência no código e automatizar revisões.
+
+### Regras Configuradas
+
+#### Regras do Workspace (`.windsurf/rules/`)
+- **`bidexpert-coding-standards.md`**: Padrões específicos do projeto BidExpert incluindo:
+  - Diretrizes React/Next.js e gerenciamento de estado
+  - Padrões de UI/UX com Tailwind CSS
+  - Configurações de teste com Playwright
+  - Diretrizes específicas do domínio de leilões
+
+#### Regras Globais (`.windsurf/global_rules.md`)
+- Diretrizes gerais de desenvolvimento aplicáveis a todos os projetos
+- Padrões de segurança e performance
+- Boas práticas de documentação e acessibilidade
+
+### Como Funciona
+O agente Cascade do Windsurf automaticamente:
+- Aplica essas regras ao sugerir código
+- Usa como contexto para refatorações
+- Considera as diretrizes durante explicações de código
+- Encontra regras relevantes baseado no arquivo sendo editado
+
+### Adicionando Novas Regras
+1. Para regras específicas do projeto: adicione arquivos `.md` em `.windsurf/rules/`
+2. Para regras globais: edite `.windsurf/global_rules.md`
+3. As regras são automaticamente descobertas pelo Windsurf
+
+Para mais informações sobre como configurar regras no Windsurf, consulte: https://docs.windsurf.com/windsurf/cascade/memories
+
+## Regras de Desenvolvimento com Windsurf
+
+O projeto BidExpert utiliza um sistema completo de regras do Windsurf para garantir consistência, qualidade e evolução contínua do código.
+
+### 📁 Estrutura de Regras Configuradas
+
+#### Regras Globais (`.windsurf/global_rules.md`)
+- Diretrizes de desenvolvimento aplicáveis a todos os projetos
+- Padrões de segurança, performance e documentação
+- Boas práticas de Git, testes e deployment
+
+#### Regras Específicas do Projeto (`.windsurf/rules/`)
+- **`bidexpert-coding-standards.md`** - Padrões de código React/Next.js, TypeScript, Prisma
+- **`bidexpert-multitenant-rules.md`** - Arquitetura multi-tenant e isolamento de dados (segurança crítica)
+- **`bidexpert-auction-rules.md`** - Sistema de leilões, lotes, countdown e bidding
+- **`bidexpert-design-system.md`** - Design system ShadCN/UI, Tailwind, responsividade
+- **`bidexpert-testing-rules.md`** - Estratégia de testes Playwright, timeouts estendidos
+- **`bidexpert-performance-rules.md`** - Otimização, caching, bundle analysis
+- **`bidexpert-development-workflow.md`** - Git workflow, database, deployment
+
+### 🎯 Como o Cascade (Agente IA) Usa as Regras
+
+O agente de IA do Windsurf automaticamente:
+- **Aplica padrões específicos** baseados no arquivo sendo editado
+- **Mantém consistência** com a arquitetura multi-tenant
+- **Sugere código otimizado** seguindo as diretrizes de performance
+- **Gera testes adequados** respeitando timeouts e data-ai-id
+- **Refatora código** mantendo padrões estabelecidos
+
+### 💡 Exemplo de Regra em Ação
+
+```typescript
+// Ao editar um componente de leilão, o Cascade aplicará:
+// ✅ UniversalCard ao invés de AuctionCard direto
+// ✅ data-ai-id para todos os elementos
+// ✅ Multi-tenant isolation em queries
+// ✅ Design system (ShadCN/UI + Tailwind)
+// ✅ Countdown baseado em AuctionStages
+```
+
+### 🔧 Adicionando Novas Regras
+
+1. **Para funcionalidades específicas:** Crie `.windsurf/rules/nome-funcionalidade.md`
+2. **Para regras globais:** Edite `.windsurf/global_rules.md`
+3. **Regras são detectadas automaticamente** pelo Windsurf
+
+### 📚 Documentação das Regras
+
+Consulte `.windsurf/rules/README.md` para:
+- Como cada categoria de regras funciona
+- Exemplos de implementação
+- Melhores práticas para criação de regras
+- Troubleshooting e solução de problemas
 
 ## Funcionalidades da Plataforma
 

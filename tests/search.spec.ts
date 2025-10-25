@@ -2,8 +2,8 @@
 // tests/ui/search-and-filter.spec.ts
 import { test, expect, type Page } from '@playwright/test';
 import { Prisma, PrismaClient } from '@prisma/client';
-import { slugify } from '../../src/lib/ui-helpers';
-import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../../src/types';
+import { slugify } from '../src/lib/ui-helpers';
+import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, LotCategory, Lot, Tenant } from '../src/types';
 import { v4 as uuidv4 } from 'uuid';
 
 const testRunId = `search-e2e-${uuidv4().substring(0, 8)}`;

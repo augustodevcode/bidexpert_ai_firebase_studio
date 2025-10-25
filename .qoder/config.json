@@ -1,0 +1,37 @@
+{
+  "rules": {
+    "alwaysApply": [
+      "bidexpert-project-rules.md",
+      "code-modification-patterns.md",
+      "implementation-guidelines.md",
+      "technology-specific-rules.md"
+    ],
+    "modelDecision": [],
+    "applyManually": [],
+    "specificFiles": []
+  },
+  "agent": {
+    "autoApplyChanges": false,
+    "confirmCommands": true,
+    "useMcpTools": true,
+    "autonomousPlanning": true
+  },
+  "indexing": {
+    "include": [
+      "src/**/*",
+      "components/**/*",
+      "lib/**/*",
+      "services/**/*",
+      "repositories/**/*",
+      "prisma/schema.prisma",
+      "context/**/*"
+    ],
+    "exclude": [
+      "node_modules/**/*",
+      ".next/**/*",
+      "out/**/*",
+      "*.log",
+      ".git/**/*"
+    ]
+  }
+}
