@@ -4,7 +4,7 @@
     "private": true,
     "scripts": {
         "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
-        "dev": "npx prisma migrate dev --name init && npx tsx scripts/seed-data-extended.ts && next dev --port 9002 --hostname 0.0.0.0",
+        "dev": "npx prisma db push --accept-data-loss && npx tsx scripts/seed-data-extended.ts && next dev --port 9002 --hostname 0.0.0.0",
         "start": "next start --port 9002 --hostname 0.0.0.0",
         "build": "npx prisma generate && next build",
         "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
@@ -13,7 +13,7 @@
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
-        "db:migrate": "npx prisma migrate dev",
+        "db:migrate": "npx prisma db push --accept-data-loss",
         "db:reset": "npm run db:init && npm run db:seed",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",
