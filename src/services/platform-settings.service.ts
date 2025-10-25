@@ -38,8 +38,24 @@ export class PlatformSettingsService {
             });
 
             if (!settings) {
-                console.log(`[PlatformSettingsService] No settings found for tenant ${tenantId}, creating default.`);
-                settings = await this.createDefaultSettings(tenantId);
+                console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Returning in-memory default. This is not an error if the setup is not complete.`);
+                // Retorna um objeto padrão em memória para evitar crash se o tenant não existir.
+                // A UI deve ser capaz de lidar com a ausência de configurações completas.
+                return {
+                    tenantId,
+                    siteTitle: 'BidExpert',
+                    siteTagline: 'Sua plataforma de leilões online.',
+                    isSetupComplete: false,
+                    themes: [],
+                    platformPublicIdMasks: null,
+                    mapSettings: null,
+                    biddingSettings: null,
+                    paymentGatewaySettings: null,
+                    notificationSettings: null,
+                    mentalTriggerSettings: null,
+                    sectionBadgeVisibility: null,
+                    variableIncrementTable: [],
+                } as unknown as PlatformSettings;
             }
 
             return {

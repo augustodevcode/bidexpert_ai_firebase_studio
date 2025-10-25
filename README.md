@@ -15,6 +15,10 @@ O projeto segue uma arquitetura MVC com uma camada de serviço e repositório pa
 -   `tests`: Testes de integração e end-to-end.
 -   `tests/ui`: Testes de interface do usuário com Playwright.
 
+## Funcionalidades da Plataforma
+
+Para um entendimento detalhado de todas as funcionalidades, regras de negócio e o progresso atual do projeto, é essencial ler os arquivos de documentação na pasta `/home/user/studio/context`. Eles servem como a fonte da verdade para o que a plataforma faz e como ela deve se comportar.
+
 ## Como Executar os Testes
 
 Para garantir a qualidade e a estabilidade do código, siga a ordem de execução abaixo.
