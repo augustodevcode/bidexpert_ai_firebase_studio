@@ -82,7 +82,7 @@ export class UserService {
 
   async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {
-        const { roleIds: providedRoleIds, tenantIds: providedTenantIds, ...userData } = data;
+        const { roleIds: providedRoleIds, tenantId: providedTenantId, ...userData } = data;
         if (!userData.email || !userData.password) {
             return { success: false, message: "Email e senha são obrigatórios." };
         }
@@ -114,10 +114,10 @@ export class UserService {
                 }))
             },
             tenants: {
-                create: providedTenantIds.map(tenantId => ({
-                    tenant: { connect: { id: tenantId } },
+                create: providedTenantId ? [{
+                    tenant: { connect: { id: providedTenantId } },
                     assignedBy: 'system-signup'
-                }))
+                }] : []
             }
         };
         

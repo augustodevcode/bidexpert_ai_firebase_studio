@@ -1,60 +1,56 @@
-// Modelo para Usuários. Armazena informações de perfil, autenticação e
-// status de habilitação. É um modelo global, não associado a um tenant específico.
-model User {
-  id                      BigInt                @id @default(autoincrement())
-  email                   BigInt                @unique
-  password                BigInt?               @db.Text
-  fullName                BigInt?               @db.Text
-  habilitationStatus      UserHabilitationStatus @default(PENDING_DOCUMENTS)
-  accountType             AccountType           @default(PHYSICAL)
-  avatarUrl               BigInt?               @db.Text
-  dataAiHint              BigInt?               @db.Text
-  badges                  Json?
-  createdAt               DateTime              @default(now())
-  updatedAt               DateTime              @updatedAt
-  cpf                     BigInt?               @db.Text
-  rgNumber                BigInt?               @db.Text
-  rgIssuer                BigInt?               @db.Text
-  rgIssueDate             DateTime?
-  rgState                 BigInt?               @db.Text
-  dateOfBirth             DateTime?
-  cellPhone               BigInt?               @db.Text
-  homePhone               BigInt?               @db.Text
-  gender                  BigInt?               @db.Text
-  profession              BigInt?               @db.Text
-  nationality             BigInt?               @db.Text
-  maritalStatus           BigInt?               @db.Text
-  propertyRegime          BigInt?               @db.Text
-  spouseName              BigInt?               @db.Text
-  spouseCpf               BigInt?               @db.Text
-  zipCode                 BigInt?               @db.Text
-  street                  BigInt?               @db.Text
-  number                  BigInt?               @db.Text
-  complement              BigInt?               @db.Text
-  neighborhood            BigInt?               @db.Text
-  city                    BigInt?               @db.Text
-  state                   BigInt?               @db.Text
-  optInMarketing          Boolean?              @default(false)
-  razaoSocial             BigInt?               @db.Text
-  cnpj                    BigInt?               @db.Text
-  inscricaoEstadual       BigInt?               @db.Text
-  website                 BigInt?               @db.Text
-  responsibleName         BigInt?               @db.Text
-  responsibleCpf          BigInt?               @db.Text
 
-  // Relations
-  notifications           Notification[]
-  mediaItems              MediaItem[]           @relation("MediaItemUploader")
-  documents               UserDocument[]
-  bids                    Bid[]
-  maxBids                 UserLotMaxBid[]
-  sellerProfile           Seller?               @relation("UserSeller")
-  auctioneerProfile       Auctioneer?           @relation("UserAuctioneer")
-  roles                   UsersOnRoles[]
-  tenants                 UsersOnTenants[]
-  wins                    UserWin[]
-  lotsWon                 Lot[]                 @relation("LotWinner")
-  auctionHabilitations    AuctionHabilitation[]
-  lotQuestions            LotQuestion[]
-  reviews                 Review[]
+model User {
+  id                    BigInt                 @id @default(autoincrement())
+  publicId              BigInt?                @unique @default(cuid())
+  email                 BigInt                 @unique
+  password              BigInt?
+  fullName              BigInt?
+  cpf                   BigInt?                @unique
+  rgNumber              BigInt?
+  rgIssuer              BigInt?
+  rgState               BigInt?
+  rgIssueDate           DateTime?
+  dateOfBirth           DateTime?
+  gender                BigInt?
+  profession            BigInt?
+  nationality           BigInt?
+  maritalStatus         BigInt?
+  propertyRegime        BigInt?
+  spouseName            BigInt?
+  spouseCpf             BigInt?
+  cellPhone             BigInt?
+  homePhone             BigInt?
+  zipCode               BigInt?
+  street                BigInt?
+  number                BigInt?
+  complement            BigInt?
+  neighborhood          BigInt?
+  city                  BigInt?
+  state                 BigInt?
+  avatarUrl             BigInt?
+  dataAiHint            BigInt?
+  optInMarketing        Boolean                @default(false)
+  habilitationStatus    UserHabilitationStatus @default(PENDING_DOCUMENTS)
+  accountType           AccountType            @default(PHYSICAL)
+  razaoSocial           BigInt?
+  cnpj                  BigInt?                @unique
+  inscricaoEstadual     BigInt?
+  website               BigInt?
+  responsibleName       BigInt?
+  responsibleCpf        BigInt?
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+
+  // Relationships
+  roles                 UsersOnRoles[]
+  tenants               UsersOnTenants[]
+  bids                  Bid[]
+  wins                  UserWin[]
+  maxBids               UserLotMaxBid[]
+  questions             LotQuestion[]
+  reviews               Review[]
+  documents             UserDocument[]
+  uploadedMedia         MediaItem[]
+  sellerProfile         Seller?
+  auctioneerProfile     Auctioneer?
 }
