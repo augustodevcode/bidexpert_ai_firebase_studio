@@ -3,17 +3,17 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
-        "dev": "npx prisma db push --force-reset --accept-data-loss && npx tsx scripts/seed-data-extended.ts && npx next dev --port 9002 --hostname 0.0.0.0",
-        "start": "next start --port 9002 --hostname 0.0.0.0",
+        "dev": "npx next dev --port 9002",
         "build": "npx prisma generate && next build",
-        "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
+        "start": "next start",
+        "postinstall": "npx prisma generate",
         "lint": "next lint",
         "db:init": "npx prisma migrate reset --force",
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
         "db:migrate": "npx prisma migrate dev",
+        "db:push": "npx prisma db push",
         "db:reset": "npm run db:init && npm run db:seed",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",
@@ -22,7 +22,6 @@
         "test:ui:debug": "playwright test --debug",
         "test:ui:report": "playwright show-report",
         "test:ui:clean": "rm -rf test-results playwright-report",
-        "postinstall": "npx prisma generate",
         "clean": "rm -rf .next dist build out && rm -rf tests/ui/test-results && rm -rf tests/ui/playwright-report"
     },
     "dependencies": {
@@ -87,7 +86,8 @@
         "server-only": "^0.0.1",
         "tailwind-merge": "^2.4.0",
         "tailwindcss-animate": "^1.0.7",
-        "uuid": "^10.0.0",
+        "ts-node": "^10.9.2",
+        "uuid": "^9.0.1",
         "winston": "^3.13.1",
         "zod": "^3.23.8"
     },
@@ -100,16 +100,14 @@
         "@types/react": "^18.3.3",
         "@types/react-dom": "^18.3.0",
         "@types/uuid": "^9.0.8",
-        "dotenv": "^16.4.2",
+        "dotenv": "^16.4.5",
         "eslint": "^8",
         "eslint-config-next": "14.2.3",
         "postcss": "^8",
         "prisma": "6.18.0",
         "tailwindcss": "^3.4.1",
-        "ts-node": "^10.9.2",
         "tsx": "^4.16.2",
         "typescript": "^5.5.4",
-        "vite-tsconfig-paths": "^4.3.2",
-        "vitest": "^2.0.4"
+        "vite-tsconfig-paths": "^4.3.2"
     }
 }
