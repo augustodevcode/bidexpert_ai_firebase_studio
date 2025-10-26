@@ -21,7 +21,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const result = await bidderService.updatePaymentMethod(BigInt(params.id), body);
+    const result = await bidderService.updatePaymentMethod(params.id, body);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });
@@ -55,7 +55,7 @@ export async function DELETE(
       );
     }
 
-    const result = await bidderService.deletePaymentMethod(BigInt(params.id));
+    const result = await bidderService.deletePaymentMethod(params.id);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });

@@ -23,10 +23,10 @@ export async function POST(
     const body = await request.json();
     const { dueDate } = body;
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const result = await bidderService.generateBoleto(
       userId,
-      BigInt(params.id),
+      params.id,
       dueDate ? new Date(dueDate) : undefined
     );
 

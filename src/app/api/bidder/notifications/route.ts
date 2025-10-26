@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const isRead = searchParams.get('isRead');
     const search = searchParams.get('search');
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const result = await bidderService.getBidderNotifications(userId, {
       page,
       limit,

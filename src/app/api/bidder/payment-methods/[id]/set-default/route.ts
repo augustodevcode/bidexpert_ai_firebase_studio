@@ -20,7 +20,7 @@ export async function POST(
       );
     }
 
-    const result = await bidderService.setDefaultPaymentMethod(BigInt(params.id));
+    const result = await bidderService.setDefaultPaymentMethod(params.id);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });

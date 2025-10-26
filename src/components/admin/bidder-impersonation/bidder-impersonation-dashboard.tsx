@@ -5,50 +5,64 @@
  */
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { User, Eye, EyeOff, Users, Trophy, CreditCard, FileText, Bell, History, TrendingUp, AlertTriangle } from 'lucide-react';
-import type { UserProfileWithPermissions, ConsignorDashboardStats } from '@/types';
+import { User, Eye, EyeOff, Users, Trophy, CreditCard, FileText, Bell, History, TrendingUp, AlertTriangle, Loader2 } from 'lucide-react';
+import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { getUserHabilitationStatusInfo } from '@/lib/ui-helpers';
-import ConsignorOverviewPage from '@/app/consignor-dashboard/overview/page';
+import { getDashboardOverviewDataAction, type DashboardOverviewData } from '@/app/dashboard/overview/actions';
 
 interface BidderImpersonationDashboardProps {
   bidders: UserProfileWithPermissions[];
 }
 
+const StatCard = ({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) => (
+    <Card className="bg-secondary/30">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            <Icon className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+            <div className="text-2xl font-bold">{value}</div>
+        </CardContent>
+    </Card>
+);
+
 export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDashboardProps) {
   const [selectedBidderId, setSelectedBidderId] = useState<string | null>(null);
   const [isImpersonating, setIsImpersonating] = useState(false);
-  const [impersonatedBidder, setImpersonatedBidder] = useState<UserProfileWithPermissions | null>(null);
-  const [bidderOverview, setBidderOverview] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [bidderOverview, setBidderOverview] = useState<DashboardOverviewData | null>(null);
+  const [loadingData, setLoadingData] = useState(false);
   const { toast } = useToast();
 
   const selectedBidder = bidders.find(b => b.id === selectedBidderId);
 
-  const handleStartImpersonation = async () => {
-    if (!selectedBidder) {
+  const handleStartImpersonation = useCallback(async () => {
+    if (!selectedBidderId) {
         toast({ title: "Selecione um arrematante", variant: "destructive" });
         return;
     }
-    setLoading(true);
-    // Em um cenário real, aqui seria feita uma chamada à API para buscar os dados do dashboard do usuário.
-    // Por enquanto, vamos apenas simular a entrada no modo de impersonação.
-    setImpersonatedBidder(selectedBidder);
-    setIsImpersonating(true);
-    setLoading(false);
-    toast({ title: "Visualização Ativada", description: `Agora você está vendo o painel como ${selectedBidder.fullName || selectedBidder.email}.` });
-  };
+    setLoadingData(true);
+    try {
+        const overviewData = await getDashboardOverviewDataAction(selectedBidderId);
+        setBidderOverview(overviewData);
+        setIsImpersonating(true);
+        toast({ title: "Visualização Ativada", description: `Agora você está vendo o painel como ${selectedBidder?.fullName || selectedBidder?.email}.` });
+    } catch(err: any) {
+        toast({ title: "Erro ao buscar dados", description: err.message, variant: "destructive" });
+    } finally {
+        setLoadingData(false);
+    }
+  }, [selectedBidderId, selectedBidder, toast]);
 
   const handleExitImpersonation = () => {
     setIsImpersonating(false);
-    setImpersonatedBidder(null);
-    setSelectedBidderId(null);
+    setBidderOverview(null);
   };
   
   const HabilitationStatusBadge = ({ status }: { status: UserProfileWithPermissions['habilitationStatus'] }) => {
@@ -57,8 +71,7 @@ export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDas
     return <Badge variant="outline" className={`border-l-2 ${statusInfo.textColor.replace('text-', 'border-')}`}><Icon className={`mr-1 h-3 w-3 ${statusInfo.textColor}`} />{statusInfo.text}</Badge>
   }
 
-
-  if (isImpersonating && impersonatedBidder) {
+  if (isImpersonating && selectedBidder && bidderOverview) {
     return (
       <div className="space-y-4">
         <Alert className="border-blue-500 bg-blue-50 dark:bg-blue-900/30">
@@ -66,7 +79,7 @@ export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDas
           <AlertDescription className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="font-medium text-blue-800 dark:text-blue-200">
-                Visualizando como: {impersonatedBidder.fullName || impersonatedBidder.email}
+                Visualizando como: {selectedBidder.fullName || selectedBidder.email}
               </span>
             </div>
             <Button variant="outline" size="sm" onClick={handleExitImpersonation}>
@@ -76,10 +89,21 @@ export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDas
           </AlertDescription>
         </Alert>
 
-        {/* Aqui seria renderizado o dashboard real do usuário.
-            Por enquanto, vamos usar um placeholder.
-            Futuramente, podemos passar o `impersonatedBidder` para os componentes do dashboard. */}
-        <ConsignorOverviewPage />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard title="Lances Ativos" value={bidderOverview.activeBidsCount} icon={Gavel} />
+            <StatCard title="Lotes Arrematados" value={bidderOverview.auctionsWonCount} icon={Trophy} />
+            <StatCard title="Pagamentos Pendentes" value={bidderOverview.pendingWinsCount} icon={CreditCard} />
+            <StatCard title="Notificações não Lidas" value={0} icon={Bell} />
+        </div>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle>Atividades Recentes</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground">O painel detalhado de atividades do usuário será implementado aqui.</p>
+            </CardContent>
+        </Card>
       </div>
     );
   }
@@ -106,7 +130,7 @@ export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDas
                 </SelectTrigger>
                 <SelectContent>
                   {bidders.map((bidder) => (
-                    <SelectItem key={bidder.id} value={bidder.id.toString()}>
+                    <SelectItem key={bidder.id} value={bidder.id}>
                       <div className="flex items-center justify-between w-full">
                         <span>{bidder.fullName || bidder.email}</span>
                         <HabilitationStatusBadge status={bidder.habilitationStatus} />
@@ -118,9 +142,9 @@ export function BidderImpersonationDashboard({ bidders }: BidderImpersonationDas
             </div>
             <Button
               onClick={handleStartImpersonation}
-              disabled={loading || !selectedBidderId}
+              disabled={loadingData || !selectedBidderId}
             >
-              {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Eye className="h-4 w-4 mr-2"/>}
+              {loadingData ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Eye className="h-4 w-4 mr-2"/>}
               Iniciar Visualização
             </Button>
           </div>

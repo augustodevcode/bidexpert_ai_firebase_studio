@@ -30,12 +30,12 @@ export async function POST(
       );
     }
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const result = await bidderService.processWonLotPayment(
       userId,
-      BigInt(params.id),
-      BigInt(paymentMethodId),
-      amount ? BigInt(amount) : undefined
+      params.id,
+      paymentMethodId,
+      amount
     );
 
     if (!result.success) {

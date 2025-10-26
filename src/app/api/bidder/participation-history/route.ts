@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const result = searchParams.get('result')?.split(',') as any;
     const search = searchParams.get('search');
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const history = await bidderService.getParticipationHistory(userId, {
       page,
       limit,

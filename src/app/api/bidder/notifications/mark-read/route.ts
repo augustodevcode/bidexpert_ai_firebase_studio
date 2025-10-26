@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const result = await bidderService.markNotificationsAsRead(userId, notificationIds);
 
     if (!result.success) {

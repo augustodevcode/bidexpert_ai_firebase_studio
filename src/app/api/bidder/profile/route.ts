@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const profile = await bidderService.getOrCreateBidderProfile(userId);
 
     return NextResponse.json({
@@ -49,7 +49,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const result = await bidderService.updateBidderProfile(userId, body);
 
     if (!result.success) {

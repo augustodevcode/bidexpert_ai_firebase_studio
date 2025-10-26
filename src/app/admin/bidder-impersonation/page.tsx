@@ -8,7 +8,7 @@ import { BidderImpersonationDashboard } from '@/components/admin/bidder-imperson
 import { getCurrentUser } from '@/app/auth/actions';
 import { hasPermission } from '@/lib/permissions';
 import { getUsersWithRoles } from '@/app/admin/users/actions';
-import { UserProfileWithPermissions } from '@/types';
+import type { UserProfileWithPermissions } from '@/types';
 
 export default async function BidderImpersonationPage() {
   const user = await getCurrentUser();

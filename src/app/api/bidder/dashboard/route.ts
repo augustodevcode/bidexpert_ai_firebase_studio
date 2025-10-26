@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userId = BigInt(session.userId);
+    const userId = session.userId;
     const overview = await bidderService.getBidderDashboardOverview(userId);
 
     return NextResponse.json({
