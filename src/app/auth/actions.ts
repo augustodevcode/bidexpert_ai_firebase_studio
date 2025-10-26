@@ -164,14 +164,13 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
  */
 export async function getCurrentUser(): Promise<UserProfileWithPermissions | null> {
     const session = await getSessionFromCookie();
-    if (!session?.userId) {
-        return null;
+    if (session?.userId) {
+        const userService = new UserService();
+        const user = await userService.getUserById(session.userId);
+        return user;
     }
-
-    const userService = new UserService();
-    const user = await userService.getUserById(session.userId);
-
-    return user;
+    
+    return null;
 }
 
 
