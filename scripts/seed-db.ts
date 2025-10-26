@@ -38,8 +38,8 @@ async function seedDataSources() {
     for (const source of dataSources) {
         await prisma.dataSource.upsert({
             where: { modelName: source.modelName },
-            update: { fields: source.fields, name: source.name },
-            create: { name: source.name, modelName: source.modelName, fields: source.fields },
+            update: { fields: source.fields as any, name: source.name },
+            create: { name: source.name, modelName: source.modelName, fields: source.fields as any },
         });
     }
 
@@ -73,7 +73,7 @@ async function seedEssentialData() {
         where: { tenantId: landlordTenant.id },
         update: {},
         create: {
-            tenantId: landlordTenant.id,
+            tenant: { connect: { id: landlordTenant.id } },
             siteTitle: 'BidExpert',
             siteTagline: 'Sua plataforma de leilões online.',
         }
@@ -86,7 +86,7 @@ async function seedEssentialData() {
     await prisma.paymentGatewaySettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
     await prisma.notificationSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
     await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
     console.log('[DB SEED] ✅ SUCCESS: Detailed settings modules ensured.');
 
     console.log('[DB SEED] Seeding Admin User...');
