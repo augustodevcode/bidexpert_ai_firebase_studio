@@ -7,12 +7,12 @@ const isDevelopment = process.env.NODE_ENV === 'development';
 const config = {
   /* config options here */
   typescript: {
-    // Em desenvolvimento, ignoramos erros para não quebrar o HMR. Em produção, forçamos a verificação.
-    ignoreBuildErrors: isDevelopment,
+    // Forçar a verificação de erros de TypeScript durante o build de desenvolvimento
+    ignoreBuildErrors: false,
   },
   eslint: {
-    // Em desenvolvimento, ignoramos erros para não quebrar o HMR. Em produção, forçamos a verificação.
-    ignoreDuringBuilds: isDevelopment,
+    // Forçar a verificação de erros do ESLint durante o build de desenvolvimento
+    ignoreDuringBuilds: false,
   },
   images: {
     remotePatterns: [
@@ -28,16 +28,11 @@ const config = {
         port: '',
         pathname: '/**',
       },
-      {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
     ],
   },
 };
 
-console.log(`[next.config.mjs] LOG: Strict build checks are ${isDevelopment ? 'DISABLED' : 'ENABLED'}.`);
+// A lógica original foi alterada para sempre habilitar os checks.
+console.log(`[next.config.mjs] LOG: Strict build checks are now ENABLED for all environments.`);
 
 export default config;

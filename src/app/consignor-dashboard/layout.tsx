@@ -35,7 +35,7 @@ export default function ConsignorDashboardLayout({
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
+         <p className="ml-3 text-muted-foreground">Verificando autenticação e permissões...</p>
       </div>
     );
   }
