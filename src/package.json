@@ -1,13 +1,20 @@
-{
-    "name": "bid-expert",
-    "version": "0.1.0",
-    "private": true,
-    "scripts": {
-        "dev:playwright": "next dev --port 9003 --hostname 0.0.0.0",
-        "dev": "npx prisma migrate dev --name init && npx tsx scripts/seed-data-extended.ts && next dev --port 9002 --hostname 0.0.0.0",
-        "start": "next start --port 9002 --hostname 0.0.0.0",
-        "build": "npx prisma generate && next build",
-        "reinstall": "rm -rf node_modules package-lock.json .next dist && npm cache clean --force && npm install",
+tjs": "^2.4.6",
+        "@types/leaflet": "^1.9.12",
+        "@types/node": "^20.14.12",
+        "@types/react": "^18.3.3",
+        "@types/react-dom": "^18.3.0",
+        "@types/uuid": "^9.0.8",
+        "dotenv": "^17.2.2",
+        "eslint": "^8",
+        "eslint-config-next": "14.2.3",
+        "postcss": "^8",
+        "prisma": "6.18.0",
+        "tailwindcss": "^3.4.1",
+        "tsx": "^4.16.2",
+        "typescript": "^5.5.4",
+        "vite-tsconfig-paths": "^4.3.2"
+    }
+}n --force && npm install",
         "lint": "next lint",
         "db:init": "npx prisma migrate reset --force",
         "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
@@ -31,7 +38,7 @@
         "@genkit-ai/googleai": "^1.1.0",
         "@google/generative-ai": "^0.2.1",
         "@hookform/resolvers": "^3.9.0",
-        "@prisma/client": "5.22.0",
+        "@prisma/client": "6.18.0",
         "@radix-ui/react-accordion": "^1.2.0",
         "@radix-ui/react-alert-dialog": "^1.1.1",
         "@radix-ui/react-avatar": "^1.1.0",
@@ -87,24 +94,12 @@
         "server-only": "^0.0.1",
         "tailwind-merge": "^2.4.0",
         "tailwindcss-animate": "^1.0.7",
+        "ts-node": "^10.9.2",
         "uuidv4": "^6.2.13",
         "winston": "^3.13.1",
         "zod": "^3.23.8"
     },
     "devDependencies": {
-        "@types/bcryptjs": "^2.4.6",
-        "@types/leaflet": "^1.9.12",
-        "@types/node": "^20.14.12",
-        "@types/react": "^18.3.3",
-        "@types/react-dom": "^18.3.0",
-        "@types/uuid": "^9.0.8",
-        "dotenv": "^17.2.2",
-        "eslint": "^8",
-        "eslint-config-next": "14.2.3",
-        "postcss": "^8",
-        "tailwindcss": "^3.4.1",
-        "tsx": "^4.16.2",
-        "typescript": "^5.5.4",
-        "vite-tsconfig-paths": "^4.3.2"
-    }
-}
+        "@faker-js/faker": "^10.1.0",
+        "@playwright/test": "^1.56.1",
+        "@types/bcryp
