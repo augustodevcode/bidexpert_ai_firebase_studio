@@ -2,20 +2,18 @@
 /**
  * @fileoverview API para processar pagamento de lote arrematado
  */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { bidderService } from '@/services/bidder.service';
-import { authOptions } from '@/lib/auth';
+import { getSession } from '@/server/lib/session';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
@@ -32,11 +30,11 @@ export async function POST(
       );
     }
 
-    const userId = BigInt(session.user.id);
+    const userId = BigInt(session.userId);
     const result = await bidderService.processWonLotPayment(
       userId,
-      params.id,
-      paymentMethodId,
+      BigInt(params.id),
+      BigInt(paymentMethodId),
       amount ? BigInt(amount) : undefined
     );
 

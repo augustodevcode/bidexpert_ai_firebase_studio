@@ -3,45 +3,48 @@
  * @fileoverview Página de visualização como arrematante para administradores
  * Permite que admins vejam o dashboard como se fossem um arrematante específico
  */
-
 import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { BidderImpersonationDashboard } from '@/components/admin/bidder-impersonation/bidder-impersonation-dashboard';
+import { getCurrentUser } from '@/app/auth/actions';
+import { hasPermission } from '@/lib/permissions';
+import { SellerService } from '@/services/seller.service';
 
 export default async function BidderImpersonationPage() {
-  const session = await getServerSession(authOptions);
+  const user = await getCurrentUser();
 
-  if (!session?.user?.id) {
-    redirect('/login');
+  if (!user) {
+    redirect('/auth/login');
   }
 
-  // TODO: Verificar se usuário tem permissão de admin
-  // const userRole = await checkUserRole(session.user.id);
-  // if (!userRole?.permissions.includes('IMPERSONATE_BIDDER')) {
-  //   redirect('/admin');
-  // }
+  // Verificar se o usuário tem permissão de admin
+  if (!hasPermission(user, 'manage_all')) {
+     redirect('/dashboard/overview');
+  }
 
   try {
-    // Buscar todos os bidders para seleção
-    const bidders = await prisma.bidderProfile.findMany({
-      include: {
-        user: true,
-        _count: {
-          select: {
-            wonLots: true,
-            notifications: true,
-            paymentMethods: true
-          }
-        }
-      },
-      orderBy: { createdAt: 'desc' }
-    });
+    const sellerService = new SellerService();
+    // No nosso sistema, 'Bidders' são 'Sellers' que não são judiciais
+    const tenantId = user.tenants?.[0]?.id?.toString() || '1';
+    const bidders = await sellerService.getSellers(tenantId);
+    
+    // Convertendo para o formato esperado pelo BidderImpersonationDashboard, se necessário,
+    // ou ajustando o componente para aceitar SellerProfileInfo diretamente.
+    // Por simplicidade, faremos um cast. A estrutura é similar.
+    const biddersAsProfiles = bidders.map(b => ({
+      ...b,
+      userId: b.userId || '',
+      documentStatus: 'APPROVED', // Placeholder
+      _count: {
+        wonLots: 0,
+        notifications: 0,
+        paymentMethods: 0,
+      }
+    })) as any[];
 
     return (
       <div className="container mx-auto px-4 py-8">
-        <BidderImpersonationDashboard bidders={bidders} />
+        <BidderImpersonationDashboard bidders={biddersAsProfiles} />
       </div>
     );
   } catch (error) {
@@ -53,7 +56,7 @@ export default async function BidderImpersonationPage() {
             Erro ao carregar visualização
           </h1>
           <p className="text-muted-foreground">
-            Ocorreu um erro ao carregar os dados dos arrematantes.
+            Ocorreu um erro ao carregar os dados dos comitentes.
             Tente novamente em alguns instantes.
           </p>
         </div>

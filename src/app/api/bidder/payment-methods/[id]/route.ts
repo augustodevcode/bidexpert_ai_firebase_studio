@@ -2,20 +2,18 @@
 /**
  * @fileoverview API para gerenciar método de pagamento específico
  */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { bidderService } from '@/services/bidder.service';
-import { authOptions } from '@/lib/auth';
+import { getSession } from '@/server/lib/session';
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
@@ -23,8 +21,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const userId = BigInt(session.user.id);
-    const result = await bidderService.updatePaymentMethod(params.id, body);
+    const result = await bidderService.updatePaymentMethod(BigInt(params.id), body);
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });
@@ -49,17 +46,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
       );
     }
 
-    const userId = BigInt(session.user.id);
-    const result = await bidderService.deletePaymentMethod(params.id);
+    const result = await bidderService.deletePaymentMethod(BigInt(params.id));
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });

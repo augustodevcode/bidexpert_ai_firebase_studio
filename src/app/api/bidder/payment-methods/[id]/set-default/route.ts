@@ -2,28 +2,25 @@
 /**
  * @fileoverview API para definir método de pagamento como padrão
  */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { bidderService } from '@/services/bidder.service';
-import { authOptions } from '@/lib/auth';
+import { getSession } from '@/server/lib/session';
 
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
       );
     }
 
-    const userId = BigInt(session.user.id);
-    const result = await bidderService.setDefaultPaymentMethod(params.id);
+    const result = await bidderService.setDefaultPaymentMethod(BigInt(params.id));
 
     if (!result.success) {
       return NextResponse.json(result, { status: 400 });

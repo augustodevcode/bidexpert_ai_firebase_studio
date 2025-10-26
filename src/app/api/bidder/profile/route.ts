@@ -2,24 +2,22 @@
 /**
  * @fileoverview API para gerenciar perfil do bidder
  */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { bidderService } from '@/services/bidder.service';
-import { authOptions } from '@/lib/auth';
+import { getSession } from '@/server/lib/session';
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
       );
     }
 
-    const userId = BigInt(session.user.id);
+    const userId = BigInt(session.userId);
     const profile = await bidderService.getOrCreateBidderProfile(userId);
 
     return NextResponse.json({
@@ -41,9 +39,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getSession();
 
-    if (!session?.user?.id) {
+    if (!session?.userId) {
       return NextResponse.json(
         { success: false, error: 'Não autorizado' },
         { status: 401 }
@@ -51,7 +49,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const userId = BigInt(session.user.id);
+    const userId = BigInt(session.userId);
     const result = await bidderService.updateBidderProfile(userId, body);
 
     if (!result.success) {
