@@ -29,7 +29,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     const roles: Role[] = user.roles?.map((ur: any) => ({
       ...ur.role,
-      id: ur.role.id.toString(), // Convert BigInt to string
+      id: ur.role.id,
     })) || [];
 
     const permissions = Array.from(new Set(roles.flatMap((r: any) => {
@@ -44,16 +44,16 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     
     const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
         ...ut.tenant,
-        id: ut.tenant.id.toString(), // Convert BigInt to string
+        id: ut.tenant.id,
     })) || [];
 
     return {
         ...user,
-        id: user.id.toString(), // Convert BigInt to string
-        uid: user.id.toString(), // Convert BigInt to string
+        id: user.id,
+        uid: user.id,
         roles,
         tenants,
-        roleIds: roles.map((r: any) => r.id), // Now already strings
+        roleIds: roles.map((r: any) => r.id),
         roleNames: roles.map((r: any) => r.name),
         permissions,
         roleName: roles[0]?.name,
@@ -108,31 +108,23 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     // Tenant Selection Logic
     if (!tenantId) {
         if (user.tenants?.length === 1) {
-            // Se o usuário pertence a apenas um tenant, usa esse por padrão.
             tenantId = user.tenants[0].tenantId;
         } else if (user.tenants && user.tenants.length > 1) {
-            // Se tem múltiplos tenants, retorna para a UI escolher.
             return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
         } else {
-            // Se o usuário não pertence a nenhum tenant, associa ao Landlord como fallback.
             console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord (ID '1').`);
             tenantId = '1'; 
         }
     }
     
-    // Verifica se o usuário pertence ao tenantId final (seja do form ou do fallback).
     const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId === tenantId);
     if (!userBelongsToFinalTenant) {
-        // Se o usuário não pertence explicitamente ao tenant, mas o fallback para Landlord está sendo usado,
-        // E ele não pertence a nenhum outro, permite o login no Landlord.
-        // Isso cobre o caso do primeiro admin que ainda não foi associado a um tenant.
         if (tenantId !== '1' || (user.tenants && user.tenants.length > 0)) {
             console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
             return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
         }
     }
     
-    // A sessão é criada para o tenant correto
     await createSession(userProfileWithPerms, tenantId);
 
     return { success: true, message: 'Login bem-sucedido!', user: userProfileWithPerms };
@@ -156,8 +148,6 @@ export async function logout(): Promise<{ success: boolean; message: string }> {
   }
 }
 
-
-
 /**
  * Obtém o perfil completo do usuário autenticado na sessão atual.
  * @returns {Promise<UserProfileWithPermissions | null>} O perfil completo do usuário ou null.
@@ -169,17 +159,12 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
         const user = await userService.getUserById(session.userId);
         return user;
     }
-    
     return null;
 }
-
 
 // Ação para resetar a senha
 export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {
   console.log(`[Password Reset] Solicitação para: ${email}`);
-  // Lógica de placeholder. Em um app real, isso geraria um token seguro,
-  // o salvaria no DB com uma expiração, e enviaria um email/SMS para o usuário.
-  // Por agora, vamos apenas retornar uma mensagem de sucesso para a UI.
   return {
     success: true,
     message: 'Se uma conta com este e-mail existir, um link de redefinição de senha foi enviado.'
@@ -187,7 +172,6 @@ export async function requestPasswordReset(email: string): Promise<{ success: bo
 }
 
 export async function verifyPasswordResetToken(token: string): Promise<{ success: boolean; message: string }> {
-  // Lógica de placeholder
   if (token && token.length > 10) {
     return { success: true, message: "Token válido." };
   }
@@ -195,7 +179,6 @@ export async function verifyPasswordResetToken(token: string): Promise<{ success
 }
 
 export async function resetPassword(token: string, newPassword: string): Promise<{ success: boolean; message: string }> {
-  // Lógica de placeholder
   console.log(`[Password Reset] Senha redefinida com token: ${token}`);
   if (token && newPassword.length >= 6) {
     return { success: true, message: "Senha redefinida com sucesso." };

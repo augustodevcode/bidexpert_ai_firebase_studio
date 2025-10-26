@@ -37,7 +37,9 @@ export async function middleware(req: NextRequest) {
     const hostname = req.headers.get('host') || '';
     let tenantId = await getTenantIdFromHostname(hostname);
 
+    // getSession agora lida com o auto-login em dev.
     const session = await getSession();
+    
     // A sessão do usuário tem precedência para definir o tenant ativo
     if (session?.tenantId) {
         tenantId = session.tenantId;
