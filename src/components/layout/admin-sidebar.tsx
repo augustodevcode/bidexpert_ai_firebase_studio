@@ -14,7 +14,7 @@ import {
   ListChecks, Package, Landmark, Users, Settings, LayoutDashboard, Gavel, Map, 
   Building2, Library, ShieldCheck, Layers, Tv, ShoppingCart, Scale, FileText, 
   Boxes, Rocket, FileUp, BarChart3, BookOpen, UserCheck, MessageSquare, Files, 
-  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database
+  ClipboardCheck, MapPin, PlusCircle, FileSpreadsheet, Briefcase, Menu, ServerCrash, Palette, Wrench, Zap, ArrowUpDown, Database, Eye
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -47,6 +47,7 @@ const managementNavGroups = [
             { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
             { title: 'Usuários', href: '/admin/users', icon: Users },
             { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
+            { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye }, // Link Adicionado
         ]
     },
      { 
