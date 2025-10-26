@@ -1,3 +1,4 @@
+
 // src/app/auth/actions.ts
 /**
  * @fileoverview Server Actions para autenticação de usuários.
@@ -108,7 +109,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     // Tenant Selection Logic
     if (!tenantId) {
         if (user.tenants?.length === 1) {
-            tenantId = user.tenants[0].tenantId;
+            tenantId = user.tenants[0].tenantId.toString();
         } else if (user.tenants && user.tenants.length > 1) {
             return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
         } else {
@@ -117,7 +118,7 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
         }
     }
     
-    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId === tenantId);
+    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
     if (!userBelongsToFinalTenant) {
         if (tenantId !== '1' || (user.tenants && user.tenants.length > 0)) {
             console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
@@ -156,7 +157,7 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     const session = await getSessionFromCookie();
     if (session?.userId) {
         const userService = new UserService();
-        const user = await userService.getUserById(session.userId);
+        const user = await userService.getUserById(BigInt(session.userId));
         return user;
     }
     return null;

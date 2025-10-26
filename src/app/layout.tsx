@@ -1,3 +1,4 @@
+
 // src/app/layout.tsx
 /**
  * @fileoverview O layout raiz da aplicação.
@@ -36,22 +37,24 @@ async function getLayoutData() {
     const settings = await getPlatformSettings();
     return { 
       platformSettings: settings,
-      isSetupComplete: true, // TEMPORÁRIO: Forçar setup como completo
+      isSetupComplete: settings?.isSetupComplete || false, 
     };
   } catch (error) {
-    // This error happens on the very first run when the database is empty.
-    // It's safe to assume setup is not complete.
     console.warn("[Layout Data Fetch] Could not fetch platform settings (this is expected on first run):", error);
     return {
       platformSettings: null,
-      isSetupComplete: true, // TEMPORÁRIO: Forçar setup como completo
+      isSetupComplete: false, 
     };
   }
 }
 
+/**
+ * Fetches the initial user data based on the current session cookie.
+ * This function only READS the session, it does not create one.
+ */
 async function getInitialAuthData() {
-  const user = await getCurrentUser();
   const session = await getSession();
+  const user = session ? await getCurrentUser() : null;
   
   return { 
     initialUser: user, 
