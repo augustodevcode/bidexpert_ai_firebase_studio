@@ -27,6 +27,7 @@ These rules provide specific guidance for working with the technologies and fram
 ## 2. Prisma ORM Guidelines
 
 ### Schema Design
+- **Primary Keys**: Use `BigInt` for all `id` fields with `@id @default(autoincrement())`.
 - Keep all models in prisma/schema.prisma
 - Add tenantId to all tenant-specific models
 - Use proper relations with referential actions

@@ -64,11 +64,12 @@ These rules must always be followed by the Qoder AI agent when creating, modifyi
 
 ## 7. Database and Prisma Guidelines
 
-- **Single Schema**: All Prisma models must be in prisma/schema.prisma file
-- **Field Requirements**: All tenant-specific models must have mandatory tenantId field
-- **Relationships**: Use proper Prisma relations with appropriate referential actions
-- **Migrations**: Use prisma db push for development, proper migrations for production
-- **Queries**: Use repositories for all database access, never direct Prisma calls in components
+- **Single Schema**: All Prisma models must be in prisma/schema.prisma file.
+- **Primary Keys**: All `id` fields in models must use `BigInt @id @default(autoincrement())` for primary keys. This ensures scalability and avoids integer overflow.
+- **Field Requirements**: All tenant-specific models must have a mandatory `tenantId` field.
+- **Relationships**: Use proper Prisma relations with appropriate referential actions.
+- **Migrations**: Use prisma db push for development, proper migrations for production.
+- **Queries**: Use repositories for all database access, never direct Prisma calls in components.
 
 ## 8. Security Requirements
 
