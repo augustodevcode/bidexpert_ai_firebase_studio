@@ -16,7 +16,7 @@ datasource db {
 // -----------------------------
 
 model User {
-  id                       String                 @id @default(cuid())
+  id                       BigInt                 @id @default(autoincrement())
   email                    String               @unique
   password                 String?              @db.Text
   fullName                 String?              @db.Text
@@ -70,10 +70,11 @@ model User {
   maxBids                  UserLotMaxBid[]
   roles                    UsersOnRoles[]
   tenants                  UsersOnTenants[]
+  bidderProfile            BidderProfile?
 }
 
 model Role {
-  id              String         @id @default(cuid())
+  id              BigInt         @id @default(autoincrement())
   name            String         @unique
   nameNormalized  String         @unique
   description     String?
@@ -83,9 +84,9 @@ model Role {
 
 model UsersOnRoles {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  userId     BigInt
   role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
-  roleId     String
+  roleId     BigInt
   assignedAt DateTime @default(now())
   assignedBy String
 
@@ -98,7 +99,7 @@ model UsersOnRoles {
 // -----------------------------
 
 model Tenant {
-  id          String         @id @default(cuid())
+  id          BigInt         @id @default(autoincrement())
   name        String
   subdomain   String         @unique
   domain      String?        @unique
@@ -122,9 +123,9 @@ model Tenant {
 
 model UsersOnTenants {
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId     String
+  userId     BigInt
   tenant     Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  tenantId   String
+  tenantId   BigInt
   assignedAt DateTime @default(now())
   assignedBy String?
 
@@ -133,9 +134,9 @@ model UsersOnTenants {
 }
 
 model Lot {
-  id                  String               @id @default(cuid())
+  id                  BigInt               @id @default(autoincrement())
   publicId            String?              @unique
-  auctionId           String
+  auctionId           BigInt
   number              String?
   title               String
   description         String?              @db.Text
@@ -152,7 +153,7 @@ model Lot {
   discountPercentage  Int?
   additionalTriggers  Json?
   imageUrl            String?              @db.Text
-  imageMediaId        String?
+  imageMediaId        BigInt?
   galleryImageUrls    Json?
   mediaItemIds        Json?
   stageDetails        Json?
@@ -160,13 +161,13 @@ model Lot {
   type                String
   condition           String?
   dataAiHint          String?
-  winnerId            String?
+  winnerId            BigInt?
   winner              User?                @relation("LotsWon", fields: [winnerId], references: [id], onDelete: SetNull)
   winningBidTermUrl   String?
   allowInstallmentBids Boolean?             @default(false)
   isRelisted          Boolean              @default(false)
   relistCount         Int                  @default(0)
-  original_lot_id     String?              @unique
+  original_lot_id     BigInt?              @unique
   originalLot         Lot?                 @relation("RelistedLot", fields: [original_lot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLot         Lot?                 @relation("RelistedLot")
   createdAt           DateTime             @default(now())
@@ -175,24 +176,24 @@ model Lot {
   lotSpecificAuctionDate DateTime?
   secondAuctionDate   DateTime?
   auction             Auction              @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  categoryId          String?
+  categoryId          BigInt?
   category            LotCategory?         @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  subcategoryId       String?
+  subcategoryId       BigInt?
   subcategory         Subcategory?         @relation(fields: [subcategoryId], references: [id], onDelete: SetNull)
-  sellerId            String?
+  sellerId            BigInt?
   seller              Seller?              @relation(fields: [sellerId], references: [id], onDelete: SetNull)
-  auctioneerId        String?
+  auctioneerId        BigInt?
   auctioneer          Auctioneer?          @relation(fields: [auctioneerId], references: [id])
-  cityId              String?
+  cityId              BigInt?
   city                City?                @relation(fields: [cityId], references: [id])
-  stateId             String?
+  stateId             BigInt?
   state               State?               @relation(fields: [stateId], references: [id])
   cityName            String?
   stateUf             String?
   latitude            Decimal?
   longitude           Decimal?
   mapAddress          String?
-  tenantId            String
+  tenantId            BigInt
   tenant              Tenant               @relation(fields: [tenantId], references: [id], onUpdate: Cascade)
   bids                Bid[]
   wins                UserWin[]
@@ -208,22 +209,22 @@ model Lot {
 }
 
 model Asset {
-  id                           String          @id @default(cuid())
+  id                           BigInt          @id @default(autoincrement())
   publicId                     String          @unique
   title                        String
   description                  String?         @db.Text
   status                       AssetStatus     @default(DISPONIVEL)
-  categoryId                   String?
+  categoryId                   BigInt?
   category                     LotCategory?    @relation(fields: [categoryId], references: [id])
-  subcategoryId                String?
+  subcategoryId                BigInt?
   subcategory                  Subcategory?    @relation(fields: [subcategoryId], references: [id])
-  judicialProcessId            String?
+  judicialProcessId            BigInt?
   judicialProcess              JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
-  sellerId                     String?
+  sellerId                     BigInt?
   seller                       Seller?         @relation(fields: [sellerId], references: [id])
   evaluationValue              Decimal?        @db.Decimal(15, 2)
   imageUrl                     String?
-  imageMediaId                 String?
+  imageMediaId                 BigInt?
   galleryImageUrls             Json?
   mediaItemIds                 Json?
   dataAiHint                   String?
@@ -234,7 +235,7 @@ model Asset {
   longitude                    Decimal?
   createdAt                    DateTime        @default(now())
   updatedAt                    DateTime        @updatedAt
-  tenantId                     String
+  tenantId                     BigInt
   tenant                       Tenant          @relation(fields: [tenantId], references: [id], onUpdate: Cascade)
   lots                         AssetsOnLots[]
   gallery                      AssetMedia[]
@@ -370,9 +371,9 @@ model Asset {
 
 model AssetsOnLots {
   lot        Lot      @relation(fields: [lotId], references: [id])
-  lotId      String
+  lotId      BigInt
   asset      Asset    @relation(fields: [assetId], references: [id])
-  assetId    String
+  assetId    BigInt
   assignedAt DateTime @default(now())
   assignedBy String
 
@@ -380,7 +381,7 @@ model AssetsOnLots {
 }
 
 model Auction {
-  id                          String                @id @default(cuid())
+  id                          BigInt                @id @default(autoincrement())
   publicId                    String?               @unique
   slug                        String?               @unique
   title                       String
@@ -414,16 +415,16 @@ model Auction {
   additionalTriggers          Json?
   createdAt                   DateTime              @default(now())
   updatedAt                   DateTime              @updatedAt
-  tenantId                    String
+  tenantId                    BigInt
   tenant                      Tenant                @relation(fields: [tenantId], references: [id], onUpdate: Cascade)
-  auctioneerId                String?
+  auctioneerId                BigInt?
   auctioneer                  Auctioneer?           @relation(fields: [auctioneerId], references: [id])
-  sellerId                    String?
+  sellerId                    BigInt?
   seller                      Seller?               @relation(fields: [sellerId], references: [id])
-  imageMediaId                String?
+  imageMediaId                BigInt?
   isRelisted                  Boolean               @default(false)
   relistCount                 Int                   @default(0)
-  originalAuctionId           String?               @unique
+  originalAuctionId           BigInt?               @unique
   originalAuction             Auction?              @relation("RelistedAuction", fields: [originalAuctionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedAuction             Auction?              @relation("RelistedAuction")
   
@@ -431,11 +432,11 @@ model Auction {
   courts             Court[]
   judicialDistricts  JudicialDistrict[]
   judicialBranches   JudicialBranch[]
-  cityId             String?
+  cityId             BigInt?
   cityRef            City?                 @relation("CityAuctions", fields: [cityId], references: [id])
-  stateId            String?
+  stateId            BigInt?
   stateRef           State?                @relation("StateAuctions", fields: [stateId], references: [id])
-  judicialProcessId  String?
+  judicialProcessId  BigInt?
   judicialProcess    JudicialProcess?      @relation(fields: [judicialProcessId], references: [id])
   
   // Relacionamentos com outras entidades
@@ -446,7 +447,7 @@ model Auction {
   stages             AuctionStage[]
   habilitations      AuctionHabilitation[]
   category           LotCategory?          @relation(fields: [categoryId], references: [id])
-  categoryId         String?
+  categoryId         BigInt?
 
   @@index([auctioneerId])
   @@index([sellerId])
@@ -455,11 +456,11 @@ model Auction {
 }
 
 model AuctionStage {
-  id           String        @id @default(cuid())
+  id           BigInt        @id @default(autoincrement())
   name         String
   startDate    DateTime      @db.DateTime
   endDate      DateTime      @db.DateTime
-  auctionId    String
+  auctionId    BigInt
   auction      Auction       @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   initialPrice Decimal?      @db.Decimal(15, 2)
   lotPrices    LotStagePrice[]
@@ -468,12 +469,12 @@ model AuctionStage {
 }
 
 model LotStagePrice {
-  id              String       @id @default(cuid())
-  lotId           String
+  id              BigInt       @id @default(autoincrement())
+  lotId           BigInt
   lot             Lot          @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId       String
+  auctionId       BigInt
   auction         Auction      @relation(fields: [auctionId], references: [id])
-  auctionStageId  String
+  auctionStageId  BigInt
   auctionStage    AuctionStage @relation(fields: [auctionStageId], references: [id], onDelete: Cascade)
   initialBid      Decimal?     @db.Decimal(15, 2)
   bidIncrement    Decimal?     @db.Decimal(10, 2)
@@ -483,21 +484,21 @@ model LotStagePrice {
 }
 
 model JudicialProcess {
-  id              String             @id @default(cuid())
+  id              BigInt             @id @default(autoincrement())
   publicId        String             @unique
   processNumber   String
   isElectronic    Boolean            @default(true)
   createdAt       DateTime?          @default(now())
   updatedAt       DateTime?          @updatedAt
-  tenantId        String
+  tenantId        BigInt
   tenant          Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  courtId         String?
+  courtId         BigInt?
   court           Court?             @relation(fields: [courtId], references: [id])
-  districtId      String?
+  districtId      BigInt?
   district        JudicialDistrict?  @relation(fields: [districtId], references: [id])
-  branchId        String?
+  branchId        BigInt?
   branch          JudicialBranch?    @relation(fields: [branchId], references: [id])
-  sellerId        String?
+  sellerId        BigInt?
   seller          Seller?            @relation(fields: [sellerId], references: [id])
   parties         JudicialParty[]
   lots            Lot[]
@@ -509,23 +510,23 @@ model JudicialProcess {
 }
 
 model JudicialParty {
-  id             String          @id @default(cuid())
+  id             BigInt          @id @default(autoincrement())
   name           String
   documentNumber String?
   partyType      ProcessPartyType
-  processId      String
+  processId      BigInt
   process        JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
 
   @@index([processId])
 }
 
 model Seller {
-  id               String          @id @default(cuid())
+  id               BigInt          @id @default(autoincrement())
   publicId         String          @unique
   name             String          @unique
   description      String?         @db.Text
   logoUrl          String?         @db.Text
-  logoMediaId      String?
+  logoMediaId      BigInt?
   dataAiHintLogo   String?
   website          String?         @db.Text
   email            String?         @db.Text
@@ -537,13 +538,13 @@ model Seller {
   zipCode          String?
   slug             String          @unique
   isJudicial       Boolean         @default(false)
-  judicialBranchId String?         @unique
+  judicialBranchId BigInt?         @unique
   judicialBranch   JudicialBranch? @relation(fields: [judicialBranchId], references: [id])
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  tenantId         String
+  tenantId         BigInt
   tenant           Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId           String?         @unique
+  userId           BigInt?         @unique
   user             User?           @relation(fields: [userId], references: [id])
   auctions         Auction[]
   lots             Lot[]
@@ -553,14 +554,14 @@ model Seller {
 }
 
 model Auctioneer {
-  id                  String     @id @default(cuid())
+  id                  BigInt     @id @default(autoincrement())
   publicId            String     @unique
   name                String
   slug                String     @unique
   description         String?    @db.Text
   registrationNumber  String?
   logoUrl             String?    @db.Text
-  logoMediaId         String?
+  logoMediaId         BigInt?
   dataAiHintLogo      String?
   website             String?    @db.Text
   email               String?
@@ -572,16 +573,16 @@ model Auctioneer {
   zipCode             String?
   createdAt           DateTime   @default(now())
   updatedAt           DateTime   @updatedAt
-  tenantId            String
+  tenantId            BigInt
   tenant              Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  userId              String?    @unique
+  userId              BigInt?    @unique
   user                User?      @relation(fields: [userId], references: [id])
   auctions            Auction[]
   lots                Lot[]
 }
 
 model Court {
-  id                String             @id @default(cuid())
+  id                BigInt             @id @default(autoincrement())
   slug              String             @unique
   name              String
   stateUf           String
@@ -594,12 +595,12 @@ model Court {
 }
 
 model JudicialDistrict {
-  id                String            @id @default(cuid())
+  id                BigInt            @id @default(autoincrement())
   slug              String            @unique
   name              String            @unique
-  courtId           String?
+  courtId           BigInt?
   court             Court?            @relation(fields: [courtId], references: [id])
-  stateId           String?
+  stateId           BigInt?
   state             State?            @relation(fields: [stateId], references: [id])
   zipCode           String?
   createdAt         DateTime          @default(now())
@@ -610,10 +611,10 @@ model JudicialDistrict {
 }
 
 model JudicialBranch {
-  id                String            @id @default(cuid())
+  id                BigInt            @id @default(autoincrement())
   slug              String            @unique
   name              String            @unique
-  districtId        String?
+  districtId        BigInt?
   district          JudicialDistrict? @relation(fields: [districtId], references: [id])
   contactName       String?
   phone             String?
@@ -626,7 +627,7 @@ model JudicialBranch {
 }
 
 model State {
-  id                String             @id @default(cuid())
+  id                BigInt             @id @default(autoincrement())
   slug              String             @unique
   name              String
   uf                String             @unique
@@ -637,9 +638,9 @@ model State {
 }
 
 model City {
-  id        String    @id @default(cuid())
+  id        BigInt    @id @default(autoincrement())
   name      String
-  stateId   String
+  stateId   BigInt
   state     State     @relation(fields: [stateId], references: [id])
   ibgeCode  String?   @unique
   slug      String?
@@ -653,11 +654,11 @@ model City {
 }
 
 model AssetMedia {
-  id          String   @id @default(cuid())
+  id          BigInt   @id @default(autoincrement())
   asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  assetId     String
+  assetId     BigInt
   mediaItem   MediaItem @relation(fields: [mediaItemId], references: [id], onDelete: Cascade)
-  mediaItemId String
+  mediaItemId BigInt
   isPrimary   Boolean  @default(false)
   displayOrder Int     @default(0)
 
@@ -666,17 +667,17 @@ model AssetMedia {
 }
 
 model Bid {
-  id            String    @id @default(cuid())
-  lotId         String
+  id            BigInt    @id @default(autoincrement())
+  lotId         BigInt
   lot           Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId     String
+  auctionId     BigInt
   auction       Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidderId      String
+  bidderId      BigInt
   bidder        User      @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   amount        Decimal   @db.Decimal(15, 2)
   timestamp     DateTime  @default(now())
   bidderDisplay String?
-  tenantId      String
+  tenantId      BigInt
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([lotId])
@@ -684,10 +685,10 @@ model Bid {
 }
 
 model UserWin {
-  id                 String             @id @default(cuid())
-  lotId              String             @unique
+  id                 BigInt             @id @default(autoincrement())
+  lotId              BigInt             @unique
   lot                Lot                @relation(fields: [lotId], references: [id])
-  userId             String
+  userId             BigInt
   user               User               @relation(fields: [userId], references: [id])
   winningBidAmount   Decimal            @db.Decimal(15, 2)
   winDate            DateTime           @default(now())
@@ -700,8 +701,8 @@ model UserWin {
 }
 
 model InstallmentPayment {
-  id                String        @id @default(cuid())
-  userWinId         String
+  id                BigInt        @id @default(autoincrement())
+  userWinId         BigInt
   userWin           UserWin       @relation(fields: [userWinId], references: [id], onDelete: Cascade)
   lot               Lot[]         @relation("InstallmentPaymentToLot")
   installmentNumber Int
@@ -718,10 +719,10 @@ model InstallmentPayment {
 }
 
 model UserLotMaxBid {
-  id         String   @id @default(cuid())
-  userId     String
+  id         BigInt   @id @default(autoincrement())
+  userId     BigInt
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lotId      String
+  lotId      BigInt
   lot        Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   maxAmount  Decimal  @db.Decimal(15, 2)
   isActive   Boolean  @default(true)
@@ -732,18 +733,18 @@ model UserLotMaxBid {
 }
 
 model LotCategory {
-  id                   String            @id @default(cuid())
+  id                   BigInt            @id @default(autoincrement())
   slug                 String            @unique
   name                 String            @unique
   description          String?           @db.Text
   logoUrl              String?
-  logoMediaId          String?
+  logoMediaId          BigInt?
   dataAiHintLogo       String?
   coverImageUrl        String?
-  coverImageMediaId    String?
+  coverImageMediaId    BigInt?
   dataAiHintCover      String?
   megaMenuImageUrl     String?
-  megaMenuImageMediaId String?
+  megaMenuImageMediaId BigInt?
   dataAiHintMegaMenu   String?
   hasSubcategories     Boolean?          @default(false)
   subcategories        Subcategory[]
@@ -756,15 +757,15 @@ model LotCategory {
 }
 
 model Subcategory {
-  id               String       @id @default(cuid())
+  id               BigInt       @id @default(autoincrement())
   name             String
   slug             String
   description      String?
-  parentCategoryId String
+  parentCategoryId BigInt
   parentCategory   LotCategory  @relation(fields: [parentCategoryId], references: [id], onDelete: Cascade)
   displayOrder     Int          @default(0)
   iconUrl          String?
-  iconMediaId      String?
+  iconMediaId      BigInt?
   dataAiHintIcon   String?
   lots             Lot[]
   assets           Asset[]
@@ -773,7 +774,7 @@ model Subcategory {
 }
 
 model DirectSaleOffer {
-  id                   String              @id @default(cuid())
+  id                   BigInt              @id @default(autoincrement())
   publicId             String              @unique
   title                String
   description          String?             @db.Text
@@ -784,7 +785,7 @@ model DirectSaleOffer {
   locationCity         String?
   locationState        String?
   imageUrl             String?
-  imageMediaId         String?
+  imageMediaId         BigInt?
   dataAiHint           String?
   galleryImageUrls     Json?
   mediaItemIds         Json?
@@ -792,66 +793,66 @@ model DirectSaleOffer {
   createdAt            DateTime            @default(now())
   updatedAt            DateTime            @updatedAt
   category             LotCategory         @relation(fields: [categoryId], references: [id])
-  categoryId           String
+  categoryId           BigInt
   seller               Seller              @relation(fields: [sellerId], references: [id])
-  sellerId             String
+  sellerId             BigInt
   sellerName           String?
   sellerLogoUrl        String?
   dataAiHintSellerLogo String?
   tenant               Tenant              @relation(fields: [tenantId], references: [id])
-  tenantId             String
+  tenantId             BigInt
   itemsIncluded        Json?
   views                Int                 @default(0)
 }
 
 model Notification {
-  id        String   @id @default(cuid())
-  userId    String
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   link      String?
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())
-  lotId     String?
+  lotId     BigInt?
   lot       Lot?     @relation(fields: [lotId], references: [id])
-  auctionId String?
+  auctionId BigInt?
   auction   Auction? @relation(fields: [auctionId], references: [id])
-  tenantId  String
+  tenantId  BigInt
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model UserDocument {
-  id              String           @id @default(cuid())
-  userId          String
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  documentTypeId  String
-  documentType    DocumentType     @relation(fields: [documentTypeId], references: [id])
+  id              BigInt           @id @default(autoincrement())
   status          UserDocumentStatus @default(PENDING_ANALYSIS)
-  fileUrl         String
-  fileName        String?
-  rejectionReason String?
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
+  userId          BigInt
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documentTypeId  BigInt
+  documentType    DocumentType     @relation(fields: [documentTypeId], references: [id], onDelete: Cascade)
+  fileName        String?
+  fileUrl         String
+  rejectionReason String?
 
   @@unique([userId, documentTypeId])
-  @@index([userId])
+  @@index([documentTypeId])
 }
 
 model DocumentType {
-  id          String         @id @default(cuid())
+  id          BigInt         @id @default(autoincrement())
   name        String         @unique
   description String?
   isRequired  Boolean        @default(true)
-  appliesTo   String // e.g. "PHYSICAL", "LEGAL", "PHYSICAL,LEGAL"
+  appliesTo   String
   documents   UserDocument[]
 }
 
 model AuctionHabilitation {
-  userId        String
+  userId        BigInt
   user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  auctionId     String
+  auctionId     BigInt
   auction       Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   habilitatedAt DateTime @default(now())
 
@@ -860,12 +861,12 @@ model AuctionHabilitation {
 }
 
 model Review {
-  id              String    @id @default(cuid())
-  lotId           String
+  id              BigInt    @id @default(autoincrement())
+  lotId           BigInt
   lot             Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId       String
+  auctionId       BigInt
   auction         Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  userId          String
+  userId          BigInt
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   rating          Int
   comment         String?   @db.Text
@@ -876,12 +877,12 @@ model Review {
 }
 
 model LotQuestion {
-  id                      String    @id @default(cuid())
-  lotId                   String
+  id                      BigInt    @id @default(autoincrement())
+  lotId                   BigInt
   lot                     Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
-  auctionId               String
+  auctionId               BigInt
   auction                 Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  userId                  String
+  userId                  BigInt
   user                    User      @relation(fields: [userId], references: [id])
   userDisplayName         String
   questionText            String    @db.Text
@@ -889,14 +890,14 @@ model LotQuestion {
   isPublic                Boolean   @default(true)
   createdAt               DateTime  @default(now())
   answeredAt              DateTime?
-  answeredByUserId        String?
+  answeredByUserId        BigInt?
   answeredByUserDisplayName String?
 
   @@index([lotId])
 }
 
 model MediaItem {
-  id               String       @id @default(cuid())
+  id               BigInt       @id @default(autoincrement())
   fileName         String
   storagePath      String
   urlOriginal      String
@@ -911,17 +912,17 @@ model MediaItem {
   title            String?
   dataAiHint       String?
   uploadedAt       DateTime     @default(now())
-  uploadedByUserId String?
+  uploadedByUserId BigInt?
   uploadedBy       User?        @relation("UploadedBy", fields: [uploadedByUserId], references: [id], onDelete: SetNull)
-  judicialProcessId String?
+  judicialProcessId BigInt?
   judicialProcess   JudicialProcess? @relation(fields: [judicialProcessId], references: [id])
   linkedLotIds      Json?
   assetGallery      AssetMedia[]
 }
 
 model PlatformSettings {
-  id                              String                    @id @default("global")
-  tenantId                        String                    @unique
+  id                              BigInt                    @id @default(autoincrement())
+  tenantId                        BigInt                    @unique
   tenant                          Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   siteTitle                       String?
   siteTagline                     String?
@@ -955,24 +956,24 @@ model PlatformSettings {
 }
 
 model ThemeSettings {
-  id               String            @id @default(cuid())
+  id               BigInt            @id @default(autoincrement())
   name             String            @unique
   platformSettings PlatformSettings? @relation(fields: [platformSettingsId], references: [id])
-  platformSettingsId String?
+  platformSettingsId BigInt?
   colors           ThemeColors?
 }
 
 model ThemeColors {
-  id              String         @id @default(cuid())
-  themeSettingsId String         @unique
+  id              BigInt         @id @default(autoincrement())
+  themeSettingsId BigInt         @unique
   themeSettings   ThemeSettings  @relation(fields: [themeSettingsId], references: [id], onDelete: Cascade)
   light           Json?
   dark            Json?
 }
 
 model IdMasks {
-  id                  String            @id @default(cuid())
-  platformSettingsId  String            @unique
+  id                  BigInt            @id @default(autoincrement())
+  platformSettingsId  BigInt            @unique
   platformSettings    PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   auctionCodeMask     String?
   lotCodeMask         String?
@@ -985,8 +986,8 @@ model IdMasks {
 }
 
 model VariableIncrementRule {
-    id                  String           @id @default(cuid())
-    platformSettingsId  String
+    id                  BigInt           @id @default(autoincrement())
+    platformSettingsId  BigInt
     platformSettings    PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
     from                Float
     to                  Float?
@@ -994,16 +995,16 @@ model VariableIncrementRule {
 }
 
 model MapSettings {
-  id                 String           @id @default(cuid())
-  platformSettingsId String           @unique
+  id                 BigInt           @id @default(autoincrement())
+  platformSettingsId BigInt           @unique
   platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   defaultProvider    String?          @default("openstreetmap")
   googleMapsApiKey   String?
 }
 
 model BiddingSettings {
-  id                              String            @id @default(cuid())
-  platformSettingsId              String            @unique
+  id                              BigInt            @id @default(autoincrement())
+  platformSettingsId              BigInt            @unique
   platformSettings                PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   instantBiddingEnabled           Boolean?          @default(true)
   getBidInfoInstantly             Boolean?          @default(true)
@@ -1013,8 +1014,8 @@ model BiddingSettings {
 }
 
 model PaymentGatewaySettings {
-  id                           String            @id @default(cuid())
-  platformSettingsId           String            @unique
+  id                           BigInt            @id @default(autoincrement())
+  platformSettingsId           BigInt            @unique
   platformSettings             PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   defaultGateway               String?           @default("Manual")
   platformCommissionPercentage Float?            @default(5.0)
@@ -1023,8 +1024,8 @@ model PaymentGatewaySettings {
 }
 
 model NotificationSettings {
-  id                           String            @id @default(cuid())
-  platformSettingsId           String            @unique
+  id                           BigInt            @id @default(autoincrement())
+  platformSettingsId           BigInt            @unique
   platformSettings             PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   notifyOnNewAuction           Boolean           @default(true)
   notifyOnFeaturedLot          Boolean           @default(false)
@@ -1033,8 +1034,8 @@ model NotificationSettings {
 }
 
 model MentalTriggerSettings {
-  id                      String            @id @default(cuid())
-  platformSettingsId      String            @unique
+  id                      BigInt            @id @default(autoincrement())
+  platformSettingsId      BigInt            @unique
   platformSettings        PlatformSettings  @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   showDiscountBadge       Boolean           @default(true)
   showPopularityBadge     Boolean           @default(true)
@@ -1045,47 +1046,47 @@ model MentalTriggerSettings {
 }
 
 model SectionBadgeVisibility {
-  id                 String           @id @default(cuid())
-  platformSettingsId String           @unique
+  id                 BigInt           @id @default(autoincrement())
+  platformSettingsId BigInt           @unique
   platformSettings   PlatformSettings @relation(fields: [platformSettingsId], references: [id], onDelete: Cascade)
   searchGrid         Json?
   lotDetail          Json?
 }
 
 model DataSource {
-  id        String @id @default(cuid())
+  id        BigInt @id @default(autoincrement())
   name      String
   modelName String @unique
   fields    Json
 }
 
 model Report {
-  id           String   @id @default(cuid())
+  id           BigInt   @id @default(autoincrement())
   name         String
   description  String?
   definition   Json
-  tenantId     String
+  tenantId     BigInt
   tenant       Tenant   @relation(fields: [tenantId], references: [id])
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
   createdBy    User     @relation("CreatedBy", fields: [createdById], references: [id])
-  createdById  String
+  createdById  BigInt
 }
 
 model Subscriber {
-  id          String   @id @default(cuid())
+  id          BigInt   @id @default(autoincrement())
   email       String   @unique
   name        String?
   phone       String?
   preferences Json?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  tenantId    String
+  tenantId    BigInt
   tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   email     String
   token     String   @unique
   expires   DateTime
@@ -1095,25 +1096,173 @@ model PasswordResetToken {
 }
 
 model VehicleMake {
-  id     String         @id @default(cuid())
+  id     BigInt         @id @default(autoincrement())
   name   String         @unique
   slug   String         @unique
   models VehicleModel[]
 }
 
 model VehicleModel {
-  id     String      @id @default(cuid())
+  id     BigInt      @id @default(autoincrement())
   name   String
   slug   String
-  makeId String
+  makeId BigInt
   make   VehicleMake @relation(fields: [makeId], references: [id], onDelete: Cascade)
 
   @@unique([makeId, name])
   @@index([slug])
 }
 
+// -----------------------------
+// Bidder Dashboard Models
+// -----------------------------
+
+model BidderProfile {
+  id                    BigInt   @id @default(autoincrement())
+  userId               BigInt   @unique
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Informações Pessoais
+  fullName             String?
+  cpf                  String?  @unique
+  phone                String?
+  dateOfBirth          DateTime?
+
+  // Endereço
+  address              String?
+  city                 String?
+  state                String?
+  zipCode              String?
+
+  // Documentos
+  documentStatus       BidderDocumentStatus @default(PENDING)
+  submittedDocuments   Json?    // Array de documentos submetidos
+
+  // Configurações
+  emailNotifications   Boolean  @default(true)
+  smsNotifications     Boolean  @default(false)
+
+  // Status
+  isActive             Boolean  @default(true)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  // Relacionamentos
+  wonLots              WonLot[]
+  notifications        BidderNotification[]
+  paymentMethods       PaymentMethod[]
+  participationHistory ParticipationHistory[]
+
+  @@map("bidder_profiles")
+}
+
+model WonLot {
+  id              BigInt   @id @default(autoincrement())
+  bidderId        BigInt
+  bidder          BidderProfile @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  // Informações do Lote
+  lotId           BigInt
+  auctionId       BigInt
+  title           String
+  finalBid        Decimal  @db.Decimal(10,2)
+  wonAt           DateTime @default(now())
+
+  // Status do Arremate
+  status          WonLotStatus @default(WON)
+  paymentStatus   PaymentStatus @default(PENDENTE)
+
+  // Pagamento
+  totalAmount     Decimal @db.Decimal(10,2) // Valor final + taxas
+  paidAmount      Decimal @db.Decimal(10,2) @default(0)
+  dueDate         DateTime?
+
+  // Entrega
+  deliveryStatus  DeliveryStatus @default(PENDING)
+  trackingCode    String?
+
+  // Documentos
+  invoiceUrl      String?
+  receiptUrl      String?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("won_lots")
+}
+
+model BidderNotification {
+  id          BigInt   @id @default(autoincrement())
+  bidderId    BigInt
+  bidder      BidderProfile @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  type        BidderNotificationType
+  title       String
+  message     String
+  data        Json?    // Dados adicionais
+
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@map("bidder_notifications")
+}
+
+model PaymentMethod {
+  id              BigInt   @id @default(autoincrement())
+  bidderId        BigInt
+  bidder          BidderProfile @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  type            PaymentMethodType // CREDIT_CARD, DEBIT_CARD, PIX, BOLETO
+  isDefault       Boolean  @default(false)
+
+  // Para Cartão de Crédito
+  cardLast4       String?
+  cardBrand       String? // VISA, MASTERCARD, etc
+  cardToken       String? // Token seguro do gateway
+
+  // Para PIX
+  pixKey          String?
+  pixKeyType      String? // CPF, EMAIL, PHONE, RANDOM
+
+  // Status
+  isActive        Boolean  @default(true)
+  expiresAt       DateTime?
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("payment_methods")
+}
+
+model ParticipationHistory {
+  id            BigInt   @id @default(autoincrement())
+  bidderId      BigInt
+  bidder        BidderProfile @relation(fields: [bidderId], references: [id], onDelete: Cascade)
+
+  // Informações da Participação
+  lotId         BigInt
+  auctionId     BigInt
+  title         String
+  auctionName   String
+
+  // Valores
+  maxBid        Decimal? @db.Decimal(10,2)
+  finalBid      Decimal? @db.Decimal(10,2)
+  result        ParticipationResult // WON, LOST, WITHDRAWN
+
+  // Detalhes
+  participatedAt DateTime @default(now())
+  bidCount      Int      @default(0)
+
+  createdAt     DateTime @default(now())
+
+  @@map("participation_history")
+}
+
 model ContactMessage {
-  id        String   @id @default(cuid())
+  id        BigInt   @id @default(autoincrement())
   name      String
   email     String
   subject   String?
@@ -1123,14 +1272,13 @@ model ContactMessage {
 }
 
 model DocumentTemplate {
-  id        String              @id @default(cuid())
+  id        BigInt              @id @default(autoincrement())
   name      String              @unique
   type      DocumentTemplateType
   content   String?             @db.Text
   createdAt DateTime            @default(now())
   updatedAt DateTime            @updatedAt
 }
-
 
 // -----------------------------
 // Enums
@@ -1260,4 +1408,55 @@ enum DocumentTemplateType {
   WINNING_BID_TERM
   EVALUATION_REPORT
   AUCTION_CERTIFICATE
+}
+
+// -----------------------------
+// Bidder Dashboard Enums
+// -----------------------------
+enum BidderDocumentStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  EXPIRED
+}
+
+enum BidderNotificationType {
+  AUCTION_WON
+  PAYMENT_DUE
+  PAYMENT_OVERDUE
+  DOCUMENT_APPROVED
+  DOCUMENT_REJECTED
+  DELIVERY_UPDATE
+  AUCTION_ENDING
+  SYSTEM_UPDATE
+}
+
+enum PaymentMethodType {
+  CREDIT_CARD
+  DEBIT_CARD
+  PIX
+  BOLETO
+  BANK_TRANSFER
+}
+
+enum ParticipationResult {
+  WON
+  LOST
+  WITHDRAWN
+}
+
+enum WonLotStatus {
+  WON
+  PAID
+  DELIVERED
+  CANCELLED
+}
+
+enum DeliveryStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  FAILED
 }

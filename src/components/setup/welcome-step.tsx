@@ -67,7 +67,7 @@ DATABASE_URL="mysql://USER:PASSWORD@HOST:PORT/DATABASE"
         )}
       </CardContent>
       <CardFooter className="flex justify-end">
-        <Button onClick={onNext} disabled={!isMySqlOrPostgres}>
+        <Button onClick={onNext} disabled={!isMySqlOrPostgres} data-ai-id="setup-welcome-next-button">
             {isMySqlOrPostgres ? "Avançar para Dados Iniciais" : "Configure o DB para Continuar"}
         </Button>
       </CardFooter>

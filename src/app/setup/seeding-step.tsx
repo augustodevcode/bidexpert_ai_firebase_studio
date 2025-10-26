@@ -86,7 +86,7 @@ export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
           <AlertDescription>
             Clique no botão abaixo para popular sua plataforma com um conjunto completo de dados para testes, incluindo leilões, lotes, usuários e o administrador padrão. Você pode executar este comando múltiplas vezes sem problemas.
           </AlertDescription>
-          <Button onClick={handleSeedClick} disabled={isSeeding} className="mt-4">
+          <Button onClick={handleSeedClick} disabled={isSeeding} className="mt-4" data-ai-id="setup-seeding-populate-button">
              {isSeeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Database className="mr-2 h-4 w-4" />}
              {isSeeding ? 'Populando...' : 'Popular com Dados de Demonstração'}
           </Button>
@@ -94,8 +94,8 @@ export default function SeedingStep({ onNext, onPrev }: SeedingStepProps) {
 
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} disabled={isSeeding || isVerifying}>Voltar</Button>
-        <Button onClick={handleNextClick} disabled={isSeeding || isVerifying}>
+        <Button variant="outline" onClick={onPrev} disabled={isSeeding || isVerifying} data-ai-id="setup-seeding-back-button">Voltar</Button>
+        <Button onClick={handleNextClick} disabled={isSeeding || isVerifying} data-ai-id="setup-seeding-verify-button">
             {isVerifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Verificar e Avançar
         </Button>

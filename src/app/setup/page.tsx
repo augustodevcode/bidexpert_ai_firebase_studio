@@ -80,7 +80,7 @@ export default function SetupPage() {
             ))}
         </ol>
         
-        <Card className="shadow-2xl">
+        <Card className="shadow-2xl" data-ai-id="setup-main-card">
           {renderCurrentStep()}
         </Card>
       </div>

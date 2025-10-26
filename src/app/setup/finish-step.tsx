@@ -52,7 +52,7 @@ export default function FinishStep() {
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">
-        <Button size="lg" onClick={handleFinish} disabled={isFinishing}>
+        <Button size="lg" onClick={handleFinish} disabled={isFinishing} data-ai-id="setup-finish-button">
             {isFinishing && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
             {isFinishing ? 'Redirecionando...' : 'Ir para o Painel de Administração'}
         </Button>

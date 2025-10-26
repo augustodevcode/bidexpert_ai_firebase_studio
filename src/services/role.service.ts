@@ -9,6 +9,7 @@
 import { RoleRepository } from '@/repositories/role.repository';
 import type { Role, RoleFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 
 export class RoleService {
   private repository: RoleRepository;
@@ -21,11 +22,11 @@ export class RoleService {
     return this.repository.findAll();
   }
 
-  async getRoleById(id: string): Promise<Role | null> {
+  async getRoleById(id: bigint): Promise<Role | null> {
     return this.repository.findById(id);
   }
 
-  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: string }> {
+  async createRole(data: RoleFormData): Promise<{ success: boolean; message: string; roleId?: bigint }> {
     try {
       const nameNormalized = data.name.toUpperCase().replace(/\s/g, '_');
       const existing = await this.repository.findByNormalizedName(nameNormalized);
@@ -48,15 +49,15 @@ export class RoleService {
     }
   }
 
-  async updateRole(id: string, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
+  async updateRole(id: bigint, data: Partial<RoleFormData>): Promise<{ success: boolean; message: string }> {
     try {
-      const dataToUpdate: Partial<Prisma.RoleUpdateInput> = { ...data };
+      const dataToUpdate: any = { ...data };
       if (data.name) {
         dataToUpdate.nameNormalized = data.name.toUpperCase().replace(/\s/g, '_');
       }
       // Garante que a permissão seja um objeto JSON válido ou nulo.
-      if (data.permissions) {
-        dataToUpdate.permissions = data.permissions;
+      if (data.permissions !== undefined) {
+        dataToUpdate.permissions = data.permissions || Prisma.JsonNull;
       }
       
       await this.repository.update(id, dataToUpdate);
@@ -67,7 +68,7 @@ export class RoleService {
     }
   }
 
-  async deleteRole(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteRole(id: bigint): Promise<{ success: boolean; message: string; }> {
     try {
       // Add check for users with this role
       const usersWithRole = await prisma.usersOnRoles.count({ where: { roleId: id } });
@@ -88,7 +89,7 @@ export class RoleService {
       const roles = await this.repository.findAll();
       for (const role of roles) {
         if (!essentialRoles.includes(role.nameNormalized)) {
-          await this.deleteRole(role.id);
+          await this.deleteRole(BigInt(role.id.toString()));
         }
       }
       return { success: true, message: 'Todos os perfis não-essenciais foram excluídos.' };

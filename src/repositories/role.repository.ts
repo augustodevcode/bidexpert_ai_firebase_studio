@@ -9,9 +9,13 @@ export class RoleRepository {
     return prisma.role.findMany({ orderBy: { name: 'asc' } });
   }
 
-  async findById(id: string): Promise<Role | null> {
+  async findById(id: bigint): Promise<Role | null> {
     // @ts-ignore
     return prisma.role.findUnique({ where: { id } });
+  }
+  
+  async findByName(name: string): Promise<Role | null> {
+    return prisma.role.findUnique({ where: { name } });
   }
   
   async findByNormalizedName(nameNormalized: string): Promise<Role | null> {
@@ -23,12 +27,12 @@ export class RoleRepository {
     return prisma.role.create({ data });
   }
 
-  async update(id: string, data: Prisma.RoleUpdateInput): Promise<Role> {
+  async update(id: bigint, data: Prisma.RoleUpdateInput): Promise<Role> {
     // @ts-ignore
     return prisma.role.update({ where: { id }, data });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: bigint): Promise<void> {
     await prisma.role.delete({ where: { id } });
   }
 }

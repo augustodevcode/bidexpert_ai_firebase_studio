@@ -53,7 +53,7 @@ export function AppContentWrapper({
                 platformSettings={platformSettings}
               />
           </Suspense>
-          <main className="flex-grow container mx-auto px-4 py-8">
+          <main className="flex-grow container mx-auto px-4 py-8" data-ai-id="main-content">
             {children}
           </main>
           <SubscriptionForm />

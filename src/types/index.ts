@@ -143,7 +143,7 @@ export type VehicleMake = PmVehicleMake;
 export type VehicleModel = PmVehicleModel & { makeName?: string };
 
 
-export type UserCreationData = Omit<UserFormData, 'passwordConfirmation' | 'termsAccepted'> & { roleIds: string[], tenantId?: string, habilitationStatus?: UserHabilitationStatus };
+export type UserCreationData = Omit<UserFormData, 'passwordConfirmation' | 'termsAccepted'> & { roleIds: bigint[], tenantId?: bigint, habilitationStatus?: UserHabilitationStatus };
 export type EditableUserProfileData = Partial<Omit<User, 'id' | 'email' | 'password' | 'createdAt' | 'updatedAt'>>;
 export type UserHabilitationStatus = 'PENDING_DOCUMENTS' | 'PENDING_ANALYSIS' | 'HABILITADO' | 'REJECTED_DOCUMENTS' | 'BLOCKED';
 export type PaymentStatus = 'PENDENTE' | 'PROCESSANDO' | 'PAGO' | 'FALHOU' | 'REEMBOLSADO' | 'CANCELADO';
@@ -161,7 +161,7 @@ export type AuctionParticipation = 'ONLINE' | 'PRESENCIAL' | 'HIBRIDO';
 export type UserProfileWithPermissions = User & {
     roles: (UsersOnRoles & { role: Role })[];
     tenants: (UsersOnTenants & { tenant: Tenant })[];
-    roleIds?: string[];
+    roleIds?: bigint[];
     roleNames?: string[];
     permissions: string[];
     roleName?: string;
@@ -194,10 +194,10 @@ export type SectionBadgeVisibility = PmSectionBadgeVisibility;
 export type BadgeVisibilitySettings = { [key: string]: boolean | undefined; };
 
 export interface RecentlyViewedLotInfo {
-  id: string;
+  id: bigint;
   title: string;
   imageUrl?: string | null;
-  auctionId: string;
+  auctionId: bigint;
   publicId?: string | null;
   dataAiHint?: string | null;
 }
@@ -254,7 +254,7 @@ export interface CnjProcessSource {
 export type AuctionStage = Omit<PmAuctionStage, 'initialPrice'> & {
     initialPrice?: number | null;
 };
-export type LotStageDetails = { stageId: string, stageName: string, initialBid?: number | null, bidIncrement?: number | null };
+export type LotStageDetails = { stageId: bigint, stageName: string, initialBid?: number | null, bidIncrement?: number | null };
 
 export interface AdminReportData {
   users: number;
@@ -272,7 +272,7 @@ export interface AdminReportData {
   averageLotsPerAuction: number;
 }
 export interface AuctionPerformanceData {
-  id: string;
+  id: bigint;
   publicId?: string | null;
   title: string;
   status: Auction['status'];
@@ -305,10 +305,10 @@ export interface ConsignorDashboardStats {
 }
 
 // Para usar em formulários onde não temos o ID completo ainda
-export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: string | null };
-export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: string | null };
-export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: string, stateId?: string, judicialProcessId?: string, tenantId?: string | null };
-export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls'> & { type: string, assetIds?: string[], inheritedMediaFromAssetId?: string | null, stageDetails?: LotStageDetails[], originalLotId?: string, isRelisted?: boolean, relistCount?: number, tenantId?: string | null, mediaItemIds?: string[], galleryImageUrls?: string[] };
+export type SellerFormData = Omit<SellerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'activeLotsCount' | 'memberSince' | 'auctionsFacilitatedCount' | 'rating'> & { userId?: bigint | null };
+export type AuctioneerFormData = Omit<AuctioneerProfileInfo, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'auctionsConductedCount' | 'memberSince' | 'rating'> & { userId?: bigint | null };
+export type AuctionFormData = Omit<Auction, 'id' | 'publicId' | 'slug' | 'createdAt' | 'updatedAt' | 'totalLots' | 'seller' | 'auctioneer' | 'sellerName' | 'auctioneerName' | 'lots' | 'totalHabilitatedUsers' | 'achievedRevenue' | 'imageUrl'> & { auctionStages: { name: string, startDate: Date, endDate: Date, initialPrice?: number | null }[], cityId?: bigint, stateId?: bigint, judicialProcessId?: bigint, tenantId?: bigint | null };
+export type LotFormData = Omit<Lot, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'auction' | 'assets' | 'categoryName' | 'subcategoryName' | 'sellerName' | 'auctionName' | 'galleryImageUrls'> & { type: string, assetIds?: bigint[], inheritedMediaFromAssetId?: bigint | null, stageDetails?: LotStageDetails[], originalLotId?: bigint, isRelisted?: boolean, relistCount?: number, tenantId?: bigint | null, mediaItemIds?: bigint[], galleryImageUrls?: string[] };
 export type RoleFormData = Omit<Role, 'id' | 'nameNormalized'>;
 export type StateFormData = Omit<StateInfo, 'id' | 'slug' | 'cityCount' | 'createdAt' | 'updatedAt'>;
 export type CityFormData = Omit<CityInfo, 'id' | 'slug' | 'stateUf' | 'createdAt' | 'updatedAt' | 'lotCount'>;
@@ -316,7 +316,7 @@ export type CourtFormData = Omit<Court, 'id' | 'slug'>;
 export type JudicialDistrictFormData = Omit<JudicialDistrict, 'id' | 'slug' | 'courtName' | 'stateUf'>;
 export type JudicialBranchFormData = Omit<JudicialBranch, 'id' | 'slug' | 'districtName' | 'stateUf'>;
 export type JudicialProcessFormData = Omit<JudicialProcess, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'courtName' | 'districtName' | 'branchName' | 'sellerName'>;
-export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery'> & { cityId?: string; stateId?: string; };
+export type AssetFormData = Omit<Asset, 'id' | 'publicId' | 'createdAt' | 'updatedAt' | 'categoryName' | 'subcategoryName' | 'judicialProcessNumber' | 'sellerName' | 'lots' | 'lotInfo' | 'gallery'> & { cityId?: bigint; stateId?: bigint; };
 export type SubcategoryFormData = Omit<Subcategory, 'id' | 'slug' | 'parentCategoryName' | 'itemCount'>;
 export type VehicleMakeFormData = Omit<VehicleMake, 'id' | 'slug'>;
 export type VehicleModelFormData = Omit<VehicleModel, 'id' | 'slug' | 'makeName'>;

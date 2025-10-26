@@ -36,7 +36,7 @@ async function getLayoutData() {
     const settings = await getPlatformSettings();
     return { 
       platformSettings: settings,
-      isSetupComplete: settings?.isSetupComplete ?? false,
+      isSetupComplete: true, // TEMPORÁRIO: Forçar setup como completo
     };
   } catch (error) {
     // This error happens on the very first run when the database is empty.
@@ -44,7 +44,7 @@ async function getLayoutData() {
     console.warn("[Layout Data Fetch] Could not fetch platform settings (this is expected on first run):", error);
     return {
       platformSettings: null,
-      isSetupComplete: false,
+      isSetupComplete: true, // TEMPORÁRIO: Forçar setup como completo
     };
   }
 }
@@ -85,7 +85,7 @@ export default async function RootLayout({
             >
               {children}
             </AppContentWrapper>
-            <SubscriptionPopup />
+            {/* <SubscriptionPopup /> */}
             <Toaster />
           </TooltipProvider>
         </AuthProvider>

@@ -15,7 +15,7 @@ export class CategoryRepository {
     });
   }
 
-  async findById(id: string): Promise<LotCategory | null> {
+  async findById(id: bigint): Promise<LotCategory | null> {
     return prisma.lotCategory.findUnique({ where: { id: id } });
   }
 
@@ -30,11 +30,11 @@ export class CategoryRepository {
   async create(data: Prisma.LotCategoryCreateInput): Promise<LotCategory> {
     return prisma.lotCategory.create({ data });
   }
-  async update(id: string, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
+  async update(id: bigint, data: Prisma.LotCategoryUpdateInput): Promise<LotCategory> {
     return prisma.lotCategory.update({ where: { id: id }, data });
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: bigint): Promise<void> {
     await prisma.lotCategory.delete({ where: { id: id } });
   }
 

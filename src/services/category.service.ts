@@ -1,5 +1,3 @@
-
-
 // src/services/category.service.ts
 /**
  * @fileoverview Este arquivo contém a classe CategoryService, responsável por
@@ -25,21 +23,21 @@ export class CategoryService {
     const categories = await this.categoryRepository.findAll();
     return categories.map(c => ({
       ...c, 
-      id: c.id.toString(), // Convert BigInt to string
+      id: c.id, // Keep BigInt as is
       _count: { lots: c._count.lots }
     }));
   }
 
-  async getCategoryById(id: string): Promise<LotCategory | null> {
+  async getCategoryById(id: bigint): Promise<LotCategory | null> {
     const category = await this.categoryRepository.findById(id);
     if (!category) return null;
-    return {...category, id: category.id.toString()};
+    return {...category, id: category.id};
   }
 
   async getCategoryByName(name: string): Promise<LotCategory | null> {
     const category = await this.categoryRepository.findByName(name);
     if (!category) return null;
-    return {...category, id: category.id.toString()};
+    return {...category, id: category.id};
   }
 
   async createCategory(data: Pick<LotCategory, 'name' | 'description'>): Promise<{ success: boolean; message: string; category?: LotCategory; }> {
@@ -52,13 +50,13 @@ export class CategoryService {
         create: { ...data, slug, hasSubcategories: false },
       });
 
-      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category: { ...newCategory, id: newCategory.id.toString()} };
+      return { success: true, message: 'Categoria criada/atualizada com sucesso.', category: { ...newCategory, id: newCategory.id } };
     } catch (error: any) {
       return { success: false, message: `Falha ao criar categoria: ${error.message}` };
     }
   }
 
-  async updateCategory(id: string, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
+  async updateCategory(id: bigint, data: Partial<Pick<LotCategory, 'name' | 'description'>>): Promise<{ success: boolean; message: string }> {
     try {
       const dataToUpdate: Partial<LotCategory> = { ...data };
       if (data.name) {
@@ -71,7 +69,7 @@ export class CategoryService {
     }
   }
 
-  async deleteCategory(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteCategory(id: bigint): Promise<{ success: boolean; message: string; }> {
     try {
       await this.categoryRepository.delete(id);
       return { success: true, message: 'Categoria excluída com sucesso.' };

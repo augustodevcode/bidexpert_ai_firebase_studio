@@ -1,4 +1,3 @@
-
 // src/repositories/user.repository.ts
 import { prisma as basePrisma } from '@/lib/prisma'; // Usa a instância base para modelos globais
 import type { Prisma, User } from '@prisma/client';
@@ -24,7 +23,7 @@ export class UserRepository {
     });
   }
 
-  async findById(id: string) {
+  async findById(id: bigint) {
     if (!id) return null;
     return basePrisma.user.findUnique({
       where: {
@@ -70,7 +69,7 @@ export class UserRepository {
     return basePrisma.user.create({ data });
   }
 
-  async update(userId: string, data: Partial<EditableUserProfileData>): Promise<User> {
+  async update(userId: bigint, data: Partial<EditableUserProfileData>): Promise<User> {
     return basePrisma.user.update({
       where: {
         id: userId,
@@ -79,7 +78,7 @@ export class UserRepository {
     });
   }
 
-  async updateUserRoles(userId: string, tenantIds: string[], roleIds: string[]) {
+  async updateUserRoles(userId: bigint, tenantIds: bigint[], roleIds: bigint[]) {
     if (!userId) return;
 
     // A lógica de roles é global, não por tenant, então usamos basePrisma
@@ -96,7 +95,7 @@ export class UserRepository {
     }
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: bigint): Promise<void> {
     await basePrisma.user.delete({
       where: {
         id,

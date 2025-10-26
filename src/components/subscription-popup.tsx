@@ -72,7 +72,7 @@ export default function SubscriptionPopup() {
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-md p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-md p-0 overflow-hidden" data-ai-id="subscription-modal">
         <div className="relative h-40 w-full">
             <Image 
                 src="https://images.unsplash.com/photo-1563986768609-322da13575f3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxNEWSLETTERfGVufDB8fHx8MTcxMTcxOTg3Mnww&ixlib=rb-4.1.0&q=80&w=1080"
@@ -101,6 +101,7 @@ export default function SubscriptionPopup() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   disabled={isLoading}
+                  data-ai-id="subscription-name-input"
                 />
               </div>
                <div className="space-y-1">
@@ -113,14 +114,15 @@ export default function SubscriptionPopup() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={isLoading}
+                  data-ai-id="subscription-email-input"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="subscription-submit-button">
                 {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {isLoading ? 'Inscrevendo...' : 'Inscrever-se Gratuitamente'}
               </Button>
             </form>
-            <Button variant="link" size="sm" className="w-full text-xs text-muted-foreground mt-2" onClick={handleClose}>
+            <Button variant="link" size="sm" className="w-full text-xs text-muted-foreground mt-2" onClick={handleClose} data-ai-id="subscription-close-button">
                 Não, obrigado.
             </Button>
         </div>

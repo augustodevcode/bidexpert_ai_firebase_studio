@@ -36,7 +36,7 @@ export default function AdminUserStep({ onNext, onPrev }: AdminUserStepProps) {
                 description: "O usuário principal da plataforma foi configurado e a sessão iniciada.",
             });
             // Atualiza o contexto de autenticação com o novo usuário
-            loginUser(result.user, result.user.tenants?.[0]?.id || '1');
+            loginUser(result.user, result.user.tenants?.[0]?.tenant?.id || '1');
             onNext();
         } else {
             toast({
@@ -57,18 +57,18 @@ export default function AdminUserStep({ onNext, onPrev }: AdminUserStepProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="space-y-2">
+         <div className="space-y-2">
             <Label htmlFor="fullName">Nome Completo</Label>
-            <Input id="fullName" name="fullName" defaultValue="Administrador" required disabled={isLoading} />
+            <Input id="fullName" name="fullName" defaultValue="Administrador" required disabled={isLoading} data-ai-id="setup-admin-fullname-input" />
         </div>
          <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" defaultValue="admin@bidexpert.com.br" required disabled={isLoading} />
+            <Input id="email" name="email" type="email" defaultValue="admin@bidexpert.com.br" required disabled={isLoading} data-ai-id="setup-admin-email-input" />
         </div>
          <div className="space-y-2">
             <Label htmlFor="password">Senha</Label>
             <div className="relative">
-                <Input id="password" name="password" type={passwordVisible ? 'text' : 'password'} defaultValue="Admin@123" required disabled={isLoading} />
+                <Input id="password" name="password" type={passwordVisible ? 'text' : 'password'} defaultValue="Admin@123" required disabled={isLoading} data-ai-id="setup-admin-password-input" />
                 <Button type="button" variant="ghost" size="icon" className="absolute top-1 right-1 h-7 w-7" onClick={() => setPasswordVisible(!passwordVisible)}>
                     {passwordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </Button>
@@ -76,8 +76,8 @@ export default function AdminUserStep({ onNext, onPrev }: AdminUserStepProps) {
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <Button variant="outline" onClick={onPrev} disabled={isLoading}>Voltar</Button>
-        <Button type="submit" disabled={isLoading}>
+        <Button variant="outline" onClick={onPrev} disabled={isLoading} data-ai-id="setup-admin-back-button">Voltar</Button>
+        <Button type="submit" disabled={isLoading} data-ai-id="setup-admin-create-button">
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
             {isLoading ? "Criando..." : "Salvar e Avançar"}
         </Button>

@@ -343,7 +343,7 @@ export default function Header({
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full shadow-md print:hidden">
+    <header className="sticky top-0 z-50 w-full shadow-md print:hidden" data-ai-id="header">
       {/* Promotion Bar */}
       <div className="bg-primary/80 text-primary-foreground text-xs sm:text-sm">
         <div className="container mx-auto px-4 h-10 flex items-center justify-center sm:justify-between">

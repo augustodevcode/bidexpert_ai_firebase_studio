@@ -59,7 +59,7 @@ export class UserService {
     return users.map(user => this.formatUser(user)).filter(Boolean) as UserProfileWithPermissions[];
   }
 
-  async getUserById(id: string): Promise<UserProfileWithPermissions | null> {
+  async getUserById(id: bigint): Promise<UserProfileWithPermissions | null> {
     if (!id) {
         console.warn("[UserService] getUserById called with a null or undefined id.");
         return null;
@@ -80,7 +80,7 @@ export class UserService {
     return this.formatUser(user);
   }
 
-  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
+  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: bigint; }> {
     try {
         const { roleIds: providedRoleIds, tenantId: providedTenantId, ...userData } = data;
         if (!userData.email || !userData.password) {
@@ -98,9 +98,15 @@ export class UserService {
         if (finalRoleIds.length === 0) {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {
+            // Try to find by name instead
+            const userRoleByName = await this.roleRepository.findByName('USER');
+            if (!userRoleByName) {
               throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
+            }
+            finalRoleIds.push(BigInt(userRoleByName.id.toString()));
+          } else {
+            finalRoleIds.push(userRole.id);
           }
-          finalRoleIds.push(userRole.id);
         }
 
         // Construct Prisma.UserCreateInput correctly
@@ -129,12 +135,12 @@ export class UserService {
     }
   }
   
-  async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string }> {
+  async updateUserRoles(userId: bigint, roleIds: bigint[]): Promise<{ success: boolean; message: string }> {
     try {
       const user = await this.userRepository.findById(userId);
       if(!user) return { success: false, message: 'Usuário não encontrado.'};
 
-      const tenantIds = user.tenants.map(t => t.tenantId);
+      const tenantIds = user.tenants.map((t: any) => t.tenantId);
 
       await this.userRepository.updateUserRoles(userId, tenantIds, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
@@ -145,14 +151,13 @@ export class UserService {
   }
 
 
-  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+  async updateUserProfile(userId: bigint, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     try {
-        const { password, ...profileData } = data;
-        const dataToUpdate: Partial<Prisma.UserUpdateInput> = { ...profileData };
+        const dataToUpdate: any = { ...data };
 
         // **CORREÇÃO:** Somente atualiza a senha se um novo valor válido for fornecido.
-        if (password && password.length >= 6) {
-          dataToUpdate.password = await bcrypt.hash(password, 10);
+        if ((data as any).password && (data as any).password.length >= 6) {
+          dataToUpdate.password = await bcrypt.hash((data as any).password, 10);
         }
 
         await this.userRepository.update(userId, dataToUpdate);
@@ -163,14 +168,14 @@ export class UserService {
     }
   }
 
-  async deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
+  async deleteUser(id: bigint): Promise<{ success: boolean; message: string; }> {
     try {
-        await this.prisma.bid.deleteMany({ where: { bidderId: id } });
-        await this.prisma.userWin.deleteMany({ where: { userId: id } });
-        await this.prisma.notification.deleteMany({ where: { userId: id } });
-        await this.prisma.userLotMaxBid.deleteMany({ where: { userId: id } });
-        await this.prisma.userDocument.deleteMany({ where: { userId: id } });
-        await this.prisma.auctionHabilitation.deleteMany({ where: { userId: id } });
+        await this.prisma.bid.deleteMany({ where: { bidderId: id.toString() } });
+        await this.prisma.userWin.deleteMany({ where: { userId: id.toString() } });
+        await this.prisma.notification.deleteMany({ where: { userId: id.toString() } });
+        await this.prisma.userLotMaxBid.deleteMany({ where: { userId: id.toString() } });
+        await this.prisma.userDocument.deleteMany({ where: { userId: id.toString() } });
+        await this.prisma.auctionHabilitation.deleteMany({ where: { userId: id.toString() } });
         await this.userRepository.delete(id);
         return { success: true, message: "Usuário excluído com sucesso." };
     } catch (error: any) {
@@ -184,7 +189,7 @@ export class UserService {
       const users = await this.userRepository.findAll();
       for (const user of users) {
         if (user.email !== 'admin@bidexpert.com') {
-          await this.deleteUser(user.id);
+          await this.deleteUser(BigInt(user.id.toString()));
         }
       }
       return { success: true, message: 'Todos os usuários não-administradores foram excluídos.' };
@@ -196,14 +201,14 @@ export class UserService {
   /**
    * Checks if a user has submitted all required documents and updates their status to 'HABILITADO' if so.
    * Also updates the status to 'PENDING_ANALYSIS' when the first document is submitted.
-   * @param {string} userId - The ID of the user to check.
+   * @param {bigint} userId - The ID of the user to check.
    * @returns {Promise<void>}
    */
-  async checkAndHabilitateUser(userId: string): Promise<void> {
+  async checkAndHabilitateUser(userId: bigint): Promise<void> {
     const user = await basePrisma.user.findUnique({
       where: { id: userId },
       include: { documents: true, tenants: true }
-    });
+    }) as any;
 
     if (!user || user.habilitationStatus === 'HABILITADO') {
       return; // Skip if user not found or already habilitated
@@ -221,7 +226,7 @@ export class UserService {
     });
 
     const submittedApprovedDocTypeIds = new Set(
-      user.documents.filter(d => d.status === 'APPROVED').map(d => d.documentTypeId)
+      user.documents?.filter((d: any) => d.status === 'APPROVED').map((d: any) => d.documentTypeId) || []
     );
 
     const allRequiredDocsApproved = requiredDocTypes.every(
@@ -234,7 +239,23 @@ export class UserService {
         data: { habilitationStatus: 'HABILITADO' }
       });
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
-      if(bidderRole && user.tenants) {
+      if (!bidderRole) {
+        // Try to find by name instead
+        const bidderRoleByName = await this.roleRepository.findByName('BIDDER');
+        if (bidderRoleByName && user.tenants) {
+          // Habilitar como licitante em todos os tenants aos quais ele pertence.
+          for (const userTenant of user.tenants) {
+              await basePrisma.usersOnRoles.createMany({
+                  data: [{ 
+                      userId: userId, 
+                      roleId: BigInt(bidderRoleByName.id.toString()), 
+                      assignedBy: 'system-habilitation' 
+                  }],
+                  skipDuplicates: true,
+              });
+          }
+        }
+      } else if (bidderRole && user.tenants) {
         // Habilitar como licitante em todos os tenants aos quais ele pertence.
         for (const userTenant of user.tenants) {
             await basePrisma.usersOnRoles.createMany({
@@ -247,7 +268,7 @@ export class UserService {
             });
         }
       }
-    } else if (user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
+    } else if (user.documents && user.documents.length > 0 && user.habilitationStatus === 'PENDING_DOCUMENTS') {
       await basePrisma.user.update({
         where: { id: userId },
         data: { habilitationStatus: 'PENDING_ANALYSIS' }
