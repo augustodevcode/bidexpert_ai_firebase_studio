@@ -12,7 +12,8 @@ const essentialRoles = [
   { name: 'Bidder', nameNormalized: 'BIDDER', description: 'Usuário habilitado para dar lances.', permissions: 'place_bids' },
   { name: 'User', nameNormalized: 'USER', description: 'Usuário padrão com acesso de visualização.', permissions: 'view_auctions,view_lots' },
   { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
-  { name: 'Financeiro', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
+  { name: 'Financial', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
+  { name: 'Auctioneer', nameNormalized: 'AUCTIONEER', description: 'Leiloeiro responsável por conduzir leilões.', permissions: 'conduct_auctions' },
 ];
 
 const brazilianStates = [
@@ -80,14 +81,39 @@ async function seedEssentialData() {
     });
     console.log('[DB SEED] ✅ SUCCESS: Main platform settings for landlord ensured.');
 
-    console.log('[DB SEED] Seeding detailed settings for Landlord...');
-    await prisma.mapSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.biddingSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.paymentGatewaySettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.notificationSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
-    await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
-    console.log('[DB SEED] ✅ SUCCESS: Detailed settings modules ensured.');
+    // Seed test users
+    console.log('[DB SEED] Seeding Test Users...');
+    const testUsers = [
+        { email: 'bidder@bidexpert.com.br', fullName: 'Arrematante de Teste', password: 'senha@123', roleName: 'BIDDER' },
+        { email: 'comit@bidexpert.com.br', fullName: 'Comitente de Teste', password: 'senha@123', roleName: 'CONSIGNOR' },
+        { email: 'leilo@bidexpert.com.br', fullName: 'Leiloeiro de Teste', password: 'senha@123', roleName: 'AUCTIONEER' },
+    ];
+
+    for (const userData of testUsers) {
+        let user = await prisma.user.findUnique({ where: { email: userData.email } });
+        if (!user) {
+            const hashedPassword = await bcryptjs.hash(userData.password, 10);
+            const role = await prisma.role.findUnique({ where: { nameNormalized: userData.roleName } });
+            if (!role) {
+                console.error(`[DB SEED] ❌ ERROR: Role '${userData.roleName}' not found for test user.`);
+                continue;
+            }
+
+            user = await prisma.user.create({
+                data: {
+                    email: userData.email,
+                    fullName: userData.fullName,
+                    password: hashedPassword,
+                    habilitationStatus: 'HABILITADO', // Habilitado para facilitar testes
+                    accountType: 'PHYSICAL',
+                    roles: { create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed' } },
+                    tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
+                }
+            });
+            console.log(`[DB SEED] ✅ SUCCESS: Test user '${userData.email}' created.`);
+        }
+    }
+
 
     console.log('[DB SEED] Seeding Admin User...');
     const adminEmail = 'admin@bidexpert.com.br';
