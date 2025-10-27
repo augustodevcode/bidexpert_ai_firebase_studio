@@ -39,7 +39,6 @@ export class PlatformSettingsService {
 
             if (!settings) {
                 console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
-                // Cria as configurações se não existirem, o que é crucial para o script de seed
                 settings = await this.prisma.platformSettings.create({
                     data: {
                         tenantId: tenantId,
@@ -53,8 +52,8 @@ export class PlatformSettingsService {
 
             return {
                 ...settings,
-                id: settings.id.toString(),
-                tenantId: settings.tenantId.toString(),
+                id: settings.id,
+                tenantId: settings.tenantId,
                 isSetupComplete: Boolean(settings.isSetupComplete),
             } as unknown as PlatformSettings;
 
@@ -80,9 +79,9 @@ export class PlatformSettingsService {
             const settings = await this.getSettings(tenantId);
             const platformSettingsId = settings.id;
 
-            await this.prisma.platformSettings.update({
+            await this.prisma.platformSettings.upsert({
                 where: { tenantId: tenantId },
-                data: {
+                update: {
                     ...mainSettings,
                     ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings, where: { platformSettingsId } } } }),
                     ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings, where: { platformSettingsId } } } }),
@@ -101,6 +100,18 @@ export class PlatformSettingsService {
                             }))
                         }
                     })
+                },
+                create: {
+                    ...(mainSettings as any),
+                    tenantId: tenantId,
+                    mapSettings: mapSettings ? { create: mapSettings } : undefined,
+                    biddingSettings: biddingSettings ? { create: biddingSettings } : undefined,
+                    paymentGatewaySettings: paymentGatewaySettings ? { create: paymentGatewaySettings } : undefined,
+                    notificationSettings: notificationSettings ? { create: notificationSettings } : undefined,
+                    mentalTriggerSettings: mentalTriggerSettings ? { create: mentalTriggerSettings } : undefined,
+                    sectionBadgeVisibility: sectionBadgeVisibility ? { create: sectionBadgeVisibility as any } : undefined,
+                    platformPublicIdMasks: platformPublicIdMasks ? { create: platformPublicIdMasks as any } : undefined,
+                    variableIncrementTable: variableIncrementTable ? { create: variableIncrementTable } : undefined,
                 },
             });
 

@@ -41,11 +41,11 @@ export class UserService {
     
     return {
       ...user,
-      id: user.id,
-      uid: user.id, 
+      id: user.id.toString(),
+      uid: user.id.toString(), 
       roles,
       tenants,
-      roleIds: roles.map((r: any) => r.id),
+      roleIds: roles.map((r: any) => r.id.toString()),
       roleNames: roles.map((r: any) => r.name),
       permissions,
       roleName: roles[0]?.name,
@@ -80,9 +80,9 @@ export class UserService {
     return this.formatUser(user);
   }
 
-  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: bigint; }> {
+  async createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
     try {
-        const { roleIds: providedRoleIds, tenantId: providedTenantId, ...userData } = data;
+        const { roleIds: providedRoleIds, tenantId, ...userData } = data;
         if (!userData.email || !userData.password) {
             return { success: false, message: "Email e senha são obrigatórios." };
         }
@@ -98,15 +98,9 @@ export class UserService {
         if (finalRoleIds.length === 0) {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {
-            // Try to find by name instead
-            const userRoleByName = await this.roleRepository.findByName('User');
-            if (!userRoleByName) {
-              throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
-            }
-            finalRoleIds.push(BigInt(userRoleByName.id));
-          } else {
-            finalRoleIds.push(userRole.id);
+            throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
           }
+          finalRoleIds.push(userRole.id);
         }
 
         // Construct Prisma.UserCreateInput correctly
@@ -120,18 +114,18 @@ export class UserService {
                 }))
             },
             tenants: {
-                create: providedTenantId ? [{
-                    tenant: { connect: { id: providedTenantId } },
+                create: tenantId ? [{
+                    tenant: { connect: { id: tenantId } },
                     assignedBy: 'system-signup'
                 }] : []
             }
         };
         
         const newUser = await this.userRepository.create(dataToCreate);
-        return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
+        return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id.toString() };
     } catch (error: any) {
         console.error(`Error in UserService.createUser for email ${data.email}:`, error);
-        return { success: false, message: `Falha ao criar usuário ${data.email}: ${error.message}` };
+        return { success: false, message: `Falha ao criar usuário: ${error.message}` };
     }
   }
   
@@ -206,10 +200,9 @@ export class UserService {
   /**
    * Checks if a user has submitted all required documents and updates their status to 'HABILITADO' if so.
    * Also updates the status to 'PENDING_ANALYSIS' when the first document is submitted.
-   * @param {bigint} userId - The ID of the user to check.
-   * @returns {Promise<void>}
+   * @param {string} userId - The ID of the user to check.
    */
-  async checkAndHabilitateUser(userId: bigint): Promise<void> {
+  async checkAndHabilitateUser(userId: string): Promise<void> {
     const user = await basePrisma.user.findUnique({
       where: { id: userId },
       include: { documents: true, tenants: true }
@@ -253,7 +246,7 @@ export class UserService {
               await basePrisma.usersOnRoles.createMany({
                   data: [{ 
                       userId: userId, 
-                      roleId: BigInt(bidderRoleByName.id.toString()), 
+                      roleId: bidderRoleByName.id, 
                       assignedBy: 'system-habilitation' 
                   }],
                   skipDuplicates: true,
