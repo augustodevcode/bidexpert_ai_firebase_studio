@@ -4,7 +4,7 @@
 import type { ReactNode, Dispatch, SetStateAction } from 'react';
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { Loader2 } from 'lucide-react';
-import { logout as logoutAction, getCurrentUser } from '@/app/auth/actions';
+import { logout as logoutAction, getCurrentUser, getAdminUserForDev } from '@/app/auth/actions';
 import type { UserProfileWithPermissions } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -51,7 +51,7 @@ export function AuthProvider({
        const user = await getCurrentUser();
        setUserProfileWithPermissions(user); // Re-fetch and update user
        if (user) {
-         await fetchUnreadCount(user.id);
+         await fetchUnreadCount(user.id.toString());
        }
      } else {
         router.refresh(); // Fallback to full refresh if no user context
@@ -61,19 +61,33 @@ export function AuthProvider({
   const loginUser = useCallback((user: UserProfileWithPermissions, tenantId: string) => {
     setUserProfileWithPermissions(user);
     setActiveTenantId(tenantId);
-    fetchUnreadCount(user.id);
+    fetchUnreadCount(user.id.toString());
   }, [fetchUnreadCount]);
 
   useEffect(() => {
     async function checkSession() {
       setLoading(true);
       try {
-        const user = await getCurrentUser();
+        let user = await getCurrentUser();
+        
+        // **DEV-ONLY AUTO-LOGIN LOGIC**
+        if (!user && process.env.NODE_ENV === 'development') {
+          console.log('[AuthProvider] No session found in dev. Attempting admin auto-login.');
+          const adminUser = await getAdminUserForDev();
+          if (adminUser) {
+            // We don't call createSession here because that sets a cookie, which is a side-effect.
+            // We just set the state for the current session. The user will need to log in properly
+            // if they refresh after the session cookie would have expired.
+            user = adminUser;
+            toast({ title: 'Dev Auto-Login', description: `Logado como ${adminUser.email}.`});
+          }
+        }
+
         if (user) {
           setUserProfileWithPermissions(user);
-          if (user.tenants && user.tenants.length > 0) {
-            setActiveTenantId(user.tenants[0].id || '1');
-          }
+          // Default to the first tenant or landlord '1'
+          const tenantId = user.tenants && user.tenants.length > 0 ? user.tenants[0].id.toString() : '1';
+          setActiveTenantId(tenantId);
         }
       } catch (e) {
         console.error("Session check failed:", e);
@@ -89,12 +103,12 @@ export function AuthProvider({
 
   useEffect(() => {
     if (userProfileWithPermissions?.id) {
-      fetchUnreadCount(userProfileWithPermissions.id);
+      fetchUnreadCount(userProfileWithPermissions.id.toString());
     }
     
     const handleStorageChange = () => {
       if (userProfileWithPermissions?.id) {
-        fetchUnreadCount(userProfileWithPermissions.id);
+        fetchUnreadCount(userProfileWithPermissions.id.toString());
       }
     };
     window.addEventListener('notifications-updated', handleStorageChange);

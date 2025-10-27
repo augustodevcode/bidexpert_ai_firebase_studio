@@ -1,9 +1,18 @@
 // src/app/admin/users/actions.ts
+/**
+ * @fileoverview Server Actions para a entidade User.
+ * Este arquivo funciona como a camada de Controller para todas as operações de CRUD
+ * relacionadas a usuários, garantindo a aplicação correta do contexto
+ * de tenant e revalidando o cache do Next.js quando ocorrem mutações de dados.
+ * Ele delega a lógica de negócio para a `UserService`.
+ */
 'use server';
 
 import { revalidatePath } from 'next/cache';
 import type { UserProfileWithPermissions, Role, UserCreationData, EditableUserProfileData, UserFormData } from '@/types';
 import { UserService } from '@/services/user.service';
+import { getTenantIdFromRequest } from '@/lib/actions/auth';
+import { prisma } from '@/lib/prisma'; // Import prisma directly for dev-only action
 
 const userService = new UserService();
 
@@ -12,10 +21,15 @@ export async function getUsersWithRoles(): Promise<UserProfileWithPermissions[]>
 }
 
 export async function getUserProfileData(userId: string): Promise<UserProfileWithPermissions | null> {
-    return userService.getUserById(userId);
+    const idAsBigInt = BigInt(userId);
+    return userService.getUserById(idAsBigInt);
 }
 
-// Nova função para buscar o admin em ambiente de desenvolvimento
+/**
+ * Fetches the admin user specifically for development auto-login purposes.
+ * This should only be used in non-production environments.
+ * @returns {Promise<UserProfileWithPermissions | null>} The admin user profile or null.
+ */
 export async function getAdminUserForDev(): Promise<UserProfileWithPermissions | null> {
   if (process.env.NODE_ENV !== 'development') {
     return null;
@@ -25,15 +39,21 @@ export async function getAdminUserForDev(): Promise<UserProfileWithPermissions |
 
 
 export async function createUser(data: UserCreationData): Promise<{ success: boolean; message: string; userId?: string; }> {
-  const result = await userService.createUser(data);
-  if (result.success && process.env.NODE_ENV !== 'test') {
-    revalidatePath('/admin/users');
+  // Pass tenantId as null, the service will handle the default
+  const result = await userService.createUser({ ...data, tenantId: data.tenantId || null });
+  if (result.success) {
+    if (process.env.NODE_ENV !== 'test') {
+      revalidatePath('/admin/users');
+    }
+    return { ...result, userId: result.userId?.toString() };
   }
-  return result;
+  return { ...result, userId: undefined };
 }
 
+
 export async function updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{success: boolean; message: string}> {
-  const result = await userService.updateUserProfile(userId, data);
+  const idAsBigInt = BigInt(userId);
+  const result = await userService.updateUserProfile(idAsBigInt, data);
    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
         revalidatePath(`/admin/users/${userId}/edit`);
@@ -43,7 +63,9 @@ export async function updateUserProfile(userId: string, data: EditableUserProfil
 
 
 export async function updateUserRoles(userId: string, roleIds: string[]): Promise<{success: boolean; message: string}> {
-  const result = await userService.updateUserRoles(userId, roleIds);
+  const idAsBigInt = BigInt(userId);
+  const roleIdsAsBigInt = roleIds.map(id => BigInt(id));
+  const result = await userService.updateUserRoles(idAsBigInt, roleIdsAsBigInt);
    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
         revalidatePath(`/admin/users/${userId}/edit`);
@@ -52,7 +74,8 @@ export async function updateUserRoles(userId: string, roleIds: string[]): Promis
 }
 
 export async function deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
-  const result = await userService.deleteUser(id);
+  const idAsBigInt = BigInt(id);
+  const result = await userService.deleteUser(idAsBigInt);
    if (result.success && process.env.NODE_ENV !== 'test') {
         revalidatePath('/admin/users');
     }
