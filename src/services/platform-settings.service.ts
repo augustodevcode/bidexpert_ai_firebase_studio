@@ -16,7 +16,7 @@ export class PlatformSettingsService {
 
     /**
      * Obtém as configurações da plataforma para um tenant, incluindo todos os módulos relacionados.
-     * Se nenhuma configuração for encontrada, retorna um objeto padrão em memória.
+     * Se nenhuma configuração for encontrada, cria uma com valores padrão.
      * @param tenantId O ID do tenant.
      * @returns O objeto de configurações completo.
      */

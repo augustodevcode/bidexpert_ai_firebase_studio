@@ -59,7 +59,7 @@ export class UserService {
     return users.map(user => this.formatUser(user)).filter(Boolean) as UserProfileWithPermissions[];
   }
 
-  async getUserById(id: bigint): Promise<UserProfileWithPermissions | null> {
+  async getUserById(id: string): Promise<UserProfileWithPermissions | null> {
     if (!id) {
         console.warn("[UserService] getUserById called with a null or undefined id.");
         return null;
@@ -129,7 +129,7 @@ export class UserService {
     }
   }
   
-  async updateUserRoles(userId: bigint, roleIds: bigint[]): Promise<{ success: boolean; message: string }> {
+  async updateUserRoles(userId: string, roleIds: string[]): Promise<{ success: boolean; message: string }> {
     try {
       const user = await this.userRepository.findById(userId);
       if(!user) return { success: false, message: 'Usuário não encontrado.'};
@@ -145,7 +145,7 @@ export class UserService {
   }
 
 
-  async updateUserProfile(userId: bigint, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
+  async updateUserProfile(userId: string, data: EditableUserProfileData): Promise<{ success: boolean; message: string; }> {
     try {
         const dataToUpdate: any = { ...data };
 
@@ -164,7 +164,7 @@ export class UserService {
     }
   }
 
-  async deleteUser(id: bigint): Promise<{ success: boolean; message: string; }> {
+  async deleteUser(id: string): Promise<{ success: boolean; message: string; }> {
     try {
         // Using basePrisma because deletion needs to cascade across tenants for this global entity.
         await basePrisma.$transaction([
@@ -188,7 +188,7 @@ export class UserService {
       const users = await this.userRepository.findAll();
       for (const user of users) {
         if (user.email !== 'admin@bidexpert.com.br') { // Corrigido email
-          await this.deleteUser(BigInt(user.id.toString()));
+          await this.deleteUser(user.id.toString());
         }
       }
       return { success: true, message: 'Todos os usuários não-administradores foram excluídos.' };
