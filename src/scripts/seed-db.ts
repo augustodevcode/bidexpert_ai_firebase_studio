@@ -14,6 +14,9 @@ const essentialRoles = [
   { name: 'Tenant Admin', nameNormalized: 'TENANT_ADMIN', description: 'Administrador de um tenant específico.', permissions: 'manage_tenant_users,manage_tenant_auctions' },
   { name: 'Financial', nameNormalized: 'FINANCIAL', description: 'Gerencia pagamentos e faturamento.', permissions: 'financial:view,financial:manage' },
   { name: 'Auctioneer', nameNormalized: 'AUCTIONEER', description: 'Leiloeiro responsável por conduzir leilões.', permissions: 'conduct_auctions' },
+  { name: 'ADMIN', nameNormalized: 'ADMIN', description: 'Perfil ADMIN', permissions: '' },
+  { name: 'SELLER_ADMIN', nameNormalized: 'SELLER_ADMIN', description: 'Perfil SELLER_ADMIN', permissions: '' },
+  { name: 'AUCTIONEER_ADMIN', nameNormalized: 'AUCTIONEER_ADMIN', description: 'Perfil AUCTIONEER_ADMIN', permissions: '' },
 ];
 
 const brazilianStates = [
@@ -81,8 +84,16 @@ async function seedEssentialData() {
     });
     console.log('[DB SEED] ✅ SUCCESS: Main platform settings for landlord ensured.');
 
-    // Seed test users
-    console.log('[DB SEED] Seeding Test Users...');
+    console.log('[DB SEED] Seeding detailed settings for Landlord...');
+    await prisma.mapSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.biddingSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.paymentGatewaySettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.notificationSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
+    await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
+    console.log('[DB SEED] ✅ SUCCESS: Detailed settings modules ensured.');
+    
+    console.log('[DB SEED] Seeding test users (bidder, consignor, auctioneer)...');
     const testUsers = [
         { email: 'bidder@bidexpert.com.br', fullName: 'Arrematante de Teste', password: 'senha@123', roleName: 'BIDDER' },
         { email: 'comit@bidexpert.com.br', fullName: 'Comitente de Teste', password: 'senha@123', roleName: 'CONSIGNOR' },
@@ -90,30 +101,47 @@ async function seedEssentialData() {
     ];
 
     for (const userData of testUsers) {
-        let user = await prisma.user.findUnique({ where: { email: userData.email } });
-        if (!user) {
-            const hashedPassword = await bcryptjs.hash(userData.password, 10);
-            const role = await prisma.role.findUnique({ where: { nameNormalized: userData.roleName } });
-            if (!role) {
-                console.error(`[DB SEED] ❌ ERROR: Role '${userData.roleName}' not found for test user.`);
-                continue;
-            }
+        const hashedPassword = await bcryptjs.hash(userData.password, 10);
+        const role = await prisma.role.findUnique({ where: { nameNormalized: userData.roleName } });
 
-            user = await prisma.user.create({
-                data: {
-                    email: userData.email,
-                    fullName: userData.fullName,
-                    password: hashedPassword,
-                    habilitationStatus: 'HABILITADO', // Habilitado para facilitar testes
-                    accountType: 'PHYSICAL',
-                    roles: { create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed' } },
-                    tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
-                }
-            });
-            console.log(`[DB SEED] ✅ SUCCESS: Test user '${userData.email}' created.`);
+        if (!role) {
+            console.error(`[DB SEED] ❌ ERROR: Role '${userData.roleName}' not found for test user. Skipping user creation.`);
+            continue;
         }
-    }
 
+        const user = await prisma.user.upsert({
+            where: { email: userData.email },
+            update: {
+                fullName: userData.fullName,
+                password: hashedPassword,
+                roles: {
+                    deleteMany: {}, // Clear existing roles to avoid duplicates
+                    create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed-update' }
+                }
+            },
+            create: {
+                email: userData.email,
+                fullName: userData.fullName,
+                password: hashedPassword,
+                habilitationStatus: 'HABILITADO',
+                accountType: 'PHYSICAL',
+                roles: { create: { role: { connect: { id: role.id } }, assignedBy: 'system-seed' } },
+                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
+            }
+        });
+
+        // Ensure tenant association exists if user was updated
+        const userTenantLink = await prisma.usersOnTenants.findUnique({
+            where: { userId_tenantId: { userId: user.id, tenantId: landlordTenant.id } }
+        });
+        if (!userTenantLink) {
+            await prisma.usersOnTenants.create({
+                data: { userId: user.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' }
+            });
+        }
+
+        console.log(`[DB SEED] ✅ SUCCESS: Test user '${userData.email}' upserted with role '${userData.roleName}'.`);
+    }
 
     console.log('[DB SEED] Seeding Admin User...');
     const adminEmail = 'admin@bidexpert.com.br';
