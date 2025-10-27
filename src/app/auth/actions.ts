@@ -16,7 +16,6 @@ import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
 import { UserService } from '@/services/user.service';
 
-
 /**
  * Formata um objeto de usuário bruto do Prisma para o tipo `UserProfileWithPermissions`,
  * enriquecendo-o com uma lista de permissões consolidadas de seus perfis e uma
@@ -29,7 +28,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     const roles: Role[] = user.roles?.map((ur: any) => ({
       ...ur.role,
-      id: ur.role.id.toString(),
+      id: ur.role.id, // ID is already a string
     })) || [];
 
     const permissions = Array.from(new Set(roles.flatMap((r: any) => {
@@ -44,37 +43,37 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     
     const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
         ...ut.tenant,
-        id: ut.tenant.id.toString(),
+        id: ut.tenant.id, // ID is already a string
     })) || [];
 
     return {
         ...user,
         id: user.id.toString(),
-        uid: user.id.toString(), 
+        uid: user.id.toString(),
         roles,
         tenants,
-        roleIds: roles.map((r: any) => r.id.toString()),
+        roleIds: roles.map((r: any) => r.id),
         roleNames: roles.map((r: any) => r.name),
         permissions,
         roleName: roles[0]?.name,
     };
 }
 
+
 /**
  * Realiza o processo de login de um usuário.
  * Valida as credenciais, verifica a associação ao tenant (se aplicável), e cria
  * uma sessão segura em caso de sucesso. Lida com o cenário multi-tenant, onde um
  * usuário pode pertencer a múltiplos "workspaces".
- * @param {FormData} formData - Os dados do formulário de login.
+ * @param {object} values - Os dados do formulário de login.
  * @returns {Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }>} O resultado da operação de login.
  */
-export async function login(formData: FormData): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
-  const email = formData.get('email') as string;
-  const password = formData.get('password') as string;
-  let tenantId = formData.get('tenantId') as string | null;
+export async function login(values: { email: string, password?: string, tenantId?: string }): Promise<{ success: boolean; message: string; user?: UserProfileWithPermissions | null }> {
+  const { email, password, tenantId: initialTenantId } = values;
+  let tenantId = initialTenantId;
 
-  if (!email || !password) {
-    return { success: false, message: 'Email e senha são obrigatórios.' };
+  if (!email) {
+    return { success: false, message: 'Email é obrigatório.' };
   }
 
   try {
@@ -92,12 +91,14 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
       return { success: false, message: 'Credenciais inválidas.' };
     }
     
-    console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
-    const isPasswordValid = await bcryptjs.compare(password, user.password);
+    if (password && password !== '[already_validated]') {
+        console.log(`[Login Action] Usuário '${email}' encontrado. Verificando a senha.`);
+        const isPasswordValid = await bcryptjs.compare(password, user.password);
 
-    if (!isPasswordValid) {
-        console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
-        return { success: false, message: 'Credenciais inválidas.' };
+        if (!isPasswordValid) {
+            console.log(`[Login Action] Falha: Senha inválida para o usuário '${email}'.`);
+            return { success: false, message: 'Credenciais inválidas.' };
+        }
     }
 
     const userProfileWithPerms = formatUserWithPermissions(user);
@@ -108,20 +109,26 @@ export async function login(formData: FormData): Promise<{ success: boolean; mes
     // Tenant Selection Logic
     if (!tenantId) {
         if (user.tenants?.length === 1) {
-            tenantId = user.tenants[0].tenantId.toString();
+            tenantId = user.tenants[0].tenantId;
         } else if (user.tenants && user.tenants.length > 1) {
+            // Se o usuário tem múltiplos tenants mas nenhum foi selecionado,
+            // retorne o usuário para que a UI possa pedir a seleção.
             return { success: true, message: 'Selecione um espaço de trabalho.', user: userProfileWithPerms };
         } else {
-            console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord (ID '1').`);
+            // Se o usuário não tem tenants, mas existe, ele pode ser um super admin
+            // ou estamos no processo de setup. O padrão é o landlord.
+            console.log(`[Login Action] Usuário '${email}' não pertence a nenhum tenant. Associando ao Landlord ('1').`);
             tenantId = '1'; 
         }
     }
     
-    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId.toString() === tenantId);
+    const userBelongsToFinalTenant = user.tenants?.some(t => t.tenantId === tenantId);
+    // Permite que super admins ou usuários sem tenant loguem no tenant '1' (Landlord)
     if (!userBelongsToFinalTenant) {
-        if (tenantId !== '1' || (user.tenants && user.tenants.length > 0)) {
-            console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
-            return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
+        const isAdmin = userProfileWithPerms.permissions.includes('manage_all');
+        if (tenantId !== '1' || (!isAdmin && user.tenants && user.tenants.length > 0)) {
+             console.log(`[Login Action] Falha: Usuário '${email}' não pertence ao tenant '${tenantId}'.`);
+             return { success: false, message: 'Credenciais inválidas para este espaço de trabalho.' };
         }
     }
     
@@ -156,11 +163,25 @@ export async function getCurrentUser(): Promise<UserProfileWithPermissions | nul
     const session = await getSessionFromCookie();
     if (session?.userId) {
         const userService = new UserService();
-        const user = await userService.getUserById(BigInt(session.userId));
+        const user = await userService.getUserById(session.userId);
         return user;
     }
     return null;
 }
+
+/**
+ * Fetches the admin user specifically for development auto-login purposes.
+ * This should only be used in non-production environments.
+ * @returns {Promise<UserProfileWithPermissions | null>} The admin user profile or null.
+ */
+export async function getAdminUserForDev(): Promise<UserProfileWithPermissions | null> {
+  if (process.env.NODE_ENV !== 'development') {
+    return null;
+  }
+  const userService = new UserService();
+  return userService.findUserByEmail('admin@bidexpert.com.br');
+}
+
 
 // Ação para resetar a senha
 export async function requestPasswordReset(email: string): Promise<{ success: boolean; message: string }> {

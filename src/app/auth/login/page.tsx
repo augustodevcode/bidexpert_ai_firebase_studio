@@ -22,6 +22,20 @@ import { login } from '@/app/auth/actions';
 import { useAuth } from '@/contexts/auth-context';
 import type { UserProfileWithPermissions, Tenant } from '@/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
+
+
+const loginFormSchema = z.object({
+  email: z.string().email({ message: 'Por favor, insira um email válido.' }),
+  password: z.string().min(1, { message: 'A senha é obrigatória.' }),
+  tenantId: z.string().optional(),
+});
+
+type LoginFormValues = z.infer<typeof loginFormSchema>;
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,42 +47,46 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [userWithMultipleTenants, setUserWithMultipleTenants] = useState<UserProfileWithPermissions | null>(null);
   const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  
+  const form = useForm<LoginFormValues>({
+    resolver: zodResolver(loginFormSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
   useEffect(() => {
     if (userWithMultipleTenants?.tenants && userWithMultipleTenants.tenants.length > 0) {
-      setSelectedTenantId(userWithMultipleTenants.tenants[0].id);
+      const defaultTenantId = userWithMultipleTenants.tenants[0].id;
+      setSelectedTenantId(defaultTenantId);
+      form.setValue('tenantId', defaultTenantId);
     }
-  }, [userWithMultipleTenants]);
+  }, [userWithMultipleTenants, form]);
 
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleLogin = async (values: LoginFormValues) => {
     setIsLoading(true);
     setError(null);
     
-    const formData = new FormData(event.currentTarget);
-    
+    // Se um tenant foi selecionado no passo de multi-tenant, use-o
     if (selectedTenantId) {
-        formData.set('tenantId', selectedTenantId);
+        values.tenantId = selectedTenantId;
     }
     
     try {
-        const result = await login(formData);
+        const result = await login(values);
         
         if (result.success && result.user && result.user.tenants && result.user.tenants.length > 1 && !selectedTenantId) {
-            // Caso de múltiplos tenants: exibir o seletor
             toast({ title: "Múltiplos Espaços de Trabalho", description: "Selecione em qual deles você deseja entrar." });
             setUserWithMultipleTenants(result.user);
-            setIsLoading(false);
+            form.setValue('password', '[already_validated]'); // Placeholder para não reenviar senha
         } else if (result.success && result.user) {
-            // Login bem-sucedido e tenant definido: redirecionar
             const redirectUrl = searchParams.get('redirect') || '/dashboard/overview';
             
-            // CORREÇÃO: Garante que tenantId seja obtido de forma segura
             const finalTenantId = selectedTenantId || (result.user.tenants && result.user.tenants.length > 0 ? result.user.tenants[0].id : '1');
 
             loginUser(result.user, finalTenantId);
 
-            // Adiciona o toast e um pequeno delay antes de redirecionar
             toast({
                 title: "Login bem-sucedido!",
                 description: "Redirecionando para o seu painel...",
@@ -76,18 +94,17 @@ export default function LoginPage() {
 
             setTimeout(() => {
                 router.push(redirectUrl);
-            }, 300); // 300ms de delay
+            }, 300);
             
         } else {
-            // Falha no login
             setError(result.message);
             toast({ title: "Erro no Login", description: result.message, variant: "destructive" });
-            setIsLoading(false);
         }
     } catch (e: any) {
         const errorMessage = e.message || 'Ocorreu um erro inesperado.';
         setError(errorMessage);
         toast({ title: "Erro no Login", description: errorMessage, variant: "destructive" });
+    } finally {
         setIsLoading(false);
     }
   };
@@ -100,47 +117,64 @@ export default function LoginPage() {
           <CardTitle className="text-2xl font-bold font-headline">Bem-vindo de Volta!</CardTitle>
           <CardDescription>Insira suas credenciais para acessar sua conta.</CardDescription>
         </CardHeader>
-        <form data-ai-id="auth-login-form" onSubmit={handleLogin}>
-          <CardContent className="space-y-4">
-             {userWithMultipleTenants ? (
-                <div className="space-y-2">
-                    <Label htmlFor="tenant-select">Selecione o Espaço de Trabalho</Label>
-                    <Select onValueChange={setSelectedTenantId} defaultValue={selectedTenantId || undefined}>
-                        <SelectTrigger id="tenant-select">
-                            <SelectValue placeholder="Escolha um tenant..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {userWithMultipleTenants.tenants.map((tenant) => (
-                                <SelectItem key={tenant.id} value={tenant.id}>
-                                    {tenant.name}
-                                </SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                     {/* Hidden inputs to resubmit credentials */}
-                     <input type="hidden" name="email" value={userWithMultipleTenants.email} />
-                     <input type="hidden" name="password" value="[already_validated]" />
-                </div>
-            ) : (
-                <>
+        <Form {...form}>
+            <form data-ai-id="auth-login-form" onSubmit={form.handleSubmit(handleLogin)}>
+            <CardContent className="space-y-4">
+                {userWithMultipleTenants ? (
                     <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" placeholder="seu@email.com" required disabled={isLoading} data-ai-id="auth-login-email-input" />
+                        <Label htmlFor="tenant-select">Selecione o Espaço de Trabalho</Label>
+                        <Select onValueChange={setSelectedTenantId} defaultValue={selectedTenantId || undefined}>
+                            <SelectTrigger id="tenant-select">
+                                <SelectValue placeholder="Escolha um tenant..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {userWithMultipleTenants.tenants.map((tenant) => (
+                                    <SelectItem key={tenant.id} value={tenant.id}>
+                                        {tenant.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <Input id="password" name="password" type="password" required disabled={isLoading} data-ai-id="auth-login-password-input" />
-                    </div>
-                </>
-            )}
-            {error && <p className="text-sm text-destructive text-center">{error}</p>}
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
-              {isLoading ? <Loader2 className="animate-spin" /> : (userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login')}
-            </Button>
-          </CardFooter>
-        </form>
+                ) : (
+                    <>
+                        <FormField
+                            control={form.control}
+                            name="email"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="email">Email</Label>
+                                    <FormControl>
+                                        <Input id="email" type="email" placeholder="seu@email.com" required disabled={isLoading} {...field} data-ai-id="auth-login-email-input" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                         <FormField
+                            control={form.control}
+                            name="password"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <Label htmlFor="password">Senha</Label>
+                                    <FormControl>
+                                        <Input id="password" type="password" required disabled={isLoading} {...field} data-ai-id="auth-login-password-input" />
+                                    </FormControl>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </>
+                )}
+                {error && <p className="text-sm text-destructive text-center">{error}</p>}
+            </CardContent>
+            <CardFooter className="flex flex-col space-y-4">
+                <Button type="submit" className="w-full" disabled={isLoading} data-ai-id="auth-login-submit-button">
+                {isLoading ? <Loader2 className="animate-spin" /> : (userWithMultipleTenants ? 'Entrar no Espaço de Trabalho' : 'Login')}
+                </Button>
+            </CardFooter>
+            </form>
+        </Form>
          <div className="text-center text-sm pb-6 px-6">
               <Link href="/auth/forgot-password" className="text-primary hover:underline">
                 Esqueceu a senha?
