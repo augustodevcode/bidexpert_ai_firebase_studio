@@ -9,7 +9,7 @@
         "postinstall": "npx prisma generate",
         "lint": "next lint",
         "db:init": "npx tsx --env-file=.env scripts/init-db.ts",
-        "db:seed": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
+        "db:seed": "npx tsx --env-file=.env scripts/seed-db.ts",
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
         "db:migrate": "npx prisma migrate dev",

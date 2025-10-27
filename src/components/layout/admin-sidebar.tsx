@@ -47,7 +47,7 @@ const managementNavGroups = [
             { title: 'Leiloeiros', href: '/admin/auctioneers', icon: Landmark },
             { title: 'Usuários', href: '/admin/users', icon: Users },
             { title: 'Habilitações', href: '/admin/habilitations', icon: UserCheck },
-            { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye }, // Link Adicionado
+            { title: 'Ver como Arrematante', href: '/admin/bidder-impersonation', icon: Eye },
         ]
     },
      { 
