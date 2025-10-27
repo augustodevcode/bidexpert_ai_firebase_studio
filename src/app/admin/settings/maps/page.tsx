@@ -7,7 +7,7 @@
 
 import React from 'react';
 import SettingsFormWrapper from '../settings-form-wrapper';
-import { FormField, FormItem, FormLabel, FormDescription, FormControl } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/ui/form';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 
