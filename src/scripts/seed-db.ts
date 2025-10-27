@@ -92,6 +92,35 @@ async function seedEssentialData() {
     await prisma.mentalTriggerSettings.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id } });
     await prisma.sectionBadgeVisibility.upsert({ where: { platformSettingsId: platformSettings.id }, update: {}, create: { platformSettingsId: platformSettings.id, searchGrid: {}, lotDetail: {} } });
     console.log('[DB SEED] ✅ SUCCESS: Detailed settings modules ensured.');
+
+    console.log('[DB SEED] Seeding Admin User...');
+    const adminEmail = 'admin@bidexpert.com.br';
+    const adminPassword = 'Admin@123';
+    let adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
+
+    if (!adminUser) {
+        const hashedPassword = await bcryptjs.hash(adminPassword, 10);
+        const adminRole = await prisma.role.findUnique({ where: { nameNormalized: 'ADMINISTRATOR' } });
+        if (!adminRole) throw new Error("ADMINISTRATOR role not found.");
+
+        adminUser = await prisma.user.create({
+            data: {
+                email: adminEmail,
+                fullName: 'Administrador',
+                password: hashedPassword,
+                habilitationStatus: 'HABILITADO',
+                accountType: 'LEGAL',
+                roles: { create: { role: { connect: { id: adminRole.id } }, assignedBy: 'system-seed' } },
+                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
+            }
+        });
+        console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
+    } else {
+        const adminTenantLink = await prisma.usersOnTenants.findUnique({ where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } } });
+        if (!adminTenantLink) {
+            await prisma.usersOnTenants.create({ data: { userId: adminUser.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' } });
+        }
+    }
     
     console.log('[DB SEED] Seeding test users (bidder, consignor, auctioneer)...');
     const testUsers = [
@@ -139,39 +168,10 @@ async function seedEssentialData() {
                 data: { userId: user.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' }
             });
         }
-
+        
         console.log(`[DB SEED] ✅ SUCCESS: Test user '${userData.email}' upserted with role '${userData.roleName}'.`);
     }
 
-    console.log('[DB SEED] Seeding Admin User...');
-    const adminEmail = 'admin@bidexpert.com.br';
-    const adminPassword = 'Admin@123';
-    let adminUser = await prisma.user.findUnique({ where: { email: adminEmail } });
-
-    if (!adminUser) {
-        const hashedPassword = await bcryptjs.hash(adminPassword, 10);
-        const adminRole = await prisma.role.findUnique({ where: { nameNormalized: 'ADMINISTRATOR' } });
-        if (!adminRole) throw new Error("ADMINISTRATOR role not found.");
-
-        adminUser = await prisma.user.create({
-            data: {
-                email: adminEmail,
-                fullName: 'Administrador',
-                password: hashedPassword,
-                habilitationStatus: 'HABILITADO',
-                accountType: 'LEGAL',
-                roles: { create: { role: { connect: { id: adminRole.id } }, assignedBy: 'system-seed' } },
-                tenants: { create: { tenant: { connect: { id: landlordTenant.id } }, assignedBy: 'system-seed' } }
-            }
-        });
-        console.log('[DB SEED] ✅ SUCCESS: Admin user created.');
-    } else {
-        const adminTenantLink = await prisma.usersOnTenants.findUnique({ where: { userId_tenantId: { userId: adminUser.id, tenantId: landlordTenant.id } } });
-        if (!adminTenantLink) {
-            await prisma.usersOnTenants.create({ data: { userId: adminUser.id, tenantId: landlordTenant.id, assignedBy: 'system-seed-fix' } });
-        }
-    }
-    
     console.log('[DB SEED] Seeding Brazilian States...');
     for (const state of brazilianStates) {
         await prisma.state.upsert({
