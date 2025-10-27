@@ -1,5 +1,3 @@
-
-
 // src/services/platform-settings.service.ts
 /**
  * @fileoverview Este arquivo contém a classe PlatformSettingsService, responsável por
@@ -40,23 +38,17 @@ export class PlatformSettingsService {
             });
 
             if (!settings) {
-                console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Returning in-memory default. This is not an error if the setup is not complete.`);
-                // Retorna um objeto padrão em memória para evitar crash se o tenant não existir.
-                return {
-                    tenantId,
-                    siteTitle: 'BidExpert',
-                    siteTagline: 'Sua plataforma de leilões online.',
-                    isSetupComplete: false,
-                    themes: [],
-                    platformPublicIdMasks: null,
-                    mapSettings: null,
-                    biddingSettings: null,
-                    paymentGatewaySettings: null,
-                    notificationSettings: null,
-                    mentalTriggerSettings: null,
-                    sectionBadgeVisibility: null,
-                    variableIncrementTable: [],
-                } as unknown as PlatformSettings;
+                console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
+                // Cria as configurações se não existirem, o que é crucial para o script de seed
+                settings = await this.prisma.platformSettings.create({
+                    data: {
+                        tenantId: tenantId,
+                        siteTitle: 'BidExpert',
+                        siteTagline: 'Sua plataforma de leilões online.',
+                        isSetupComplete: false,
+                        crudFormMode: 'modal',
+                    }
+                });
             }
 
             return {
@@ -73,7 +65,7 @@ export class PlatformSettingsService {
     }
     
     /**
-     * Atualiza as configurações da plataforma de forma aninhada.
+     * Atualiza as configurações da plataforma de forma aninhada usando upsert.
      * @param data - Os dados parciais das configurações, incluindo sub-objetos.
      * @returns Um objeto indicando o sucesso da operação.
      */
@@ -85,17 +77,20 @@ export class PlatformSettingsService {
         }
         
         try {
+            const settings = await this.getSettings(tenantId);
+            const platformSettingsId = settings.id;
+
             await this.prisma.platformSettings.update({
                 where: { tenantId: tenantId },
                 data: {
                     ...mainSettings,
-                    ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings } } }),
-                    ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings } } }),
-                    ...(paymentGatewaySettings && { paymentGatewaySettings: { upsert: { create: paymentGatewaySettings, update: paymentGatewaySettings } } }),
-                    ...(notificationSettings && { notificationSettings: { upsert: { create: notificationSettings, update: notificationSettings } } }),
-                    ...(mentalTriggerSettings && { mentalTriggerSettings: { upsert: { create: mentalTriggerSettings, update: mentalTriggerSettings } } }),
-                    ...(sectionBadgeVisibility && { sectionBadgeVisibility: { upsert: { create: sectionBadgeVisibility as any, update: sectionBadgeVisibility as any } } }),
-                    ...(platformPublicIdMasks && { platformPublicIdMasks: { upsert: { create: platformPublicIdMasks as any, update: platformPublicIdMasks as any } } }),
+                    ...(mapSettings && { mapSettings: { upsert: { create: mapSettings, update: mapSettings, where: { platformSettingsId } } } }),
+                    ...(biddingSettings && { biddingSettings: { upsert: { create: biddingSettings, update: biddingSettings, where: { platformSettingsId } } } }),
+                    ...(paymentGatewaySettings && { paymentGatewaySettings: { upsert: { create: paymentGatewaySettings, update: paymentGatewaySettings, where: { platformSettingsId } } } }),
+                    ...(notificationSettings && { notificationSettings: { upsert: { create: notificationSettings, update: notificationSettings, where: { platformSettingsId } } } }),
+                    ...(mentalTriggerSettings && { mentalTriggerSettings: { upsert: { create: mentalTriggerSettings, update: mentalTriggerSettings, where: { platformSettingsId } } } }),
+                    ...(sectionBadgeVisibility && { sectionBadgeVisibility: { upsert: { create: sectionBadgeVisibility as any, update: sectionBadgeVisibility as any, where: { platformSettingsId } } } }),
+                    ...(platformPublicIdMasks && { platformPublicIdMasks: { upsert: { create: platformPublicIdMasks as any, update: platformPublicIdMasks as any, where: { platformSettingsId } } } }),
                     ...(variableIncrementTable && {
                         variableIncrementTable: {
                             deleteMany: {}, // Limpa as regras existentes

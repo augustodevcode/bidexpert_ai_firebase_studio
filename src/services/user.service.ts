@@ -99,11 +99,11 @@ export class UserService {
           const userRole = await this.roleRepository.findByNormalizedName('USER');
           if (!userRole) {
             // Try to find by name instead
-            const userRoleByName = await this.roleRepository.findByName('USER');
+            const userRoleByName = await this.roleRepository.findByName('User');
             if (!userRoleByName) {
               throw new Error("O perfil padrão 'USER' não foi encontrado. Popule os dados essenciais primeiro.");
             }
-            finalRoleIds.push(BigInt(userRoleByName.id.toString()));
+            finalRoleIds.push(BigInt(userRoleByName.id));
           } else {
             finalRoleIds.push(userRole.id);
           }
@@ -130,8 +130,8 @@ export class UserService {
         const newUser = await this.userRepository.create(dataToCreate);
         return { success: true, message: 'Usuário criado com sucesso.', userId: newUser.id };
     } catch (error: any) {
-        console.error("Error in UserService.createUser:", error);
-        return { success: false, message: `Falha ao criar usuário: ${error.message}` };
+        console.error(`Error in UserService.createUser for email ${data.email}:`, error);
+        return { success: false, message: `Falha ao criar usuário ${data.email}: ${error.message}` };
     }
   }
   
@@ -140,7 +140,7 @@ export class UserService {
       const user = await this.userRepository.findById(userId);
       if(!user) return { success: false, message: 'Usuário não encontrado.'};
 
-      const tenantIds = user.tenants.map((t: any) => t.tenantId);
+      const tenantIds = user.tenants?.map((t: any) => t.tenantId) || [];
 
       await this.userRepository.updateUserRoles(userId, tenantIds, roleIds);
       return { success: true, message: "Perfis do usuário atualizados com sucesso." };
@@ -158,6 +158,8 @@ export class UserService {
         // **CORREÇÃO:** Somente atualiza a senha se um novo valor válido for fornecido.
         if ((data as any).password && (data as any).password.length >= 6) {
           dataToUpdate.password = await bcrypt.hash((data as any).password, 10);
+        } else {
+          delete dataToUpdate.password;
         }
 
         await this.userRepository.update(userId, dataToUpdate);
@@ -170,14 +172,17 @@ export class UserService {
 
   async deleteUser(id: bigint): Promise<{ success: boolean; message: string; }> {
     try {
-        await this.prisma.bid.deleteMany({ where: { bidderId: id.toString() } });
-        await this.prisma.userWin.deleteMany({ where: { userId: id.toString() } });
-        await this.prisma.notification.deleteMany({ where: { userId: id.toString() } });
-        await this.prisma.userLotMaxBid.deleteMany({ where: { userId: id.toString() } });
-        await this.prisma.userDocument.deleteMany({ where: { userId: id.toString() } });
-        await this.prisma.auctionHabilitation.deleteMany({ where: { userId: id.toString() } });
-        await this.userRepository.delete(id);
-        return { success: true, message: "Usuário excluído com sucesso." };
+        // Using basePrisma because deletion needs to cascade across tenants for this global entity.
+        await basePrisma.$transaction([
+            basePrisma.usersOnRoles.deleteMany({ where: { userId: id } }),
+            basePrisma.usersOnTenants.deleteMany({ where: { userId: id } }),
+            basePrisma.userDocument.deleteMany({ where: { userId: id } }),
+            basePrisma.bid.deleteMany({ where: { bidderId: id } }),
+            basePrisma.userWin.deleteMany({ where: { userId: id } }),
+            basePrisma.userLotMaxBid.deleteMany({ where: { userId: id } }),
+            basePrisma.user.delete({ where: { id } }),
+        ]);
+        return { success: true, message: "Usuário e todos os dados relacionados foram excluídos." };
     } catch (error: any) {
         console.error(`Error in UserService.deleteUser for id ${id}:`, error);
         return { success: false, message: `Falha ao excluir usuário: ${error.message}` };
@@ -188,7 +193,7 @@ export class UserService {
     try {
       const users = await this.userRepository.findAll();
       for (const user of users) {
-        if (user.email !== 'admin@bidexpert.com') {
+        if (user.email !== 'admin@bidexpert.com.br') { // Corrigido email
           await this.deleteUser(BigInt(user.id.toString()));
         }
       }
@@ -241,7 +246,7 @@ export class UserService {
       const bidderRole = await this.roleRepository.findByNormalizedName('BIDDER');
       if (!bidderRole) {
         // Try to find by name instead
-        const bidderRoleByName = await this.roleRepository.findByName('BIDDER');
+        const bidderRoleByName = await this.roleRepository.findByName('Bidder');
         if (bidderRoleByName && user.tenants) {
           // Habilitar como licitante em todos os tenants aos quais ele pertence.
           for (const userTenant of user.tenants) {
