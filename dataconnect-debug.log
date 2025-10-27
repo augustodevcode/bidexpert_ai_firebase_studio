@@ -1,30 +1,17 @@
-E1027 03:34:56.213713   51007 dev.go:79] Failed to load initial config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:34:56.214906   51007 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
-I1027 03:34:56.326820   51007 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
-E1027 03:35:06.220820   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:35:16.226795   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:35:26.216804   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:35:36.224801   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:35:46.225161   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:35:56.216031   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:06.223979   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:16.223856   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:26.215653   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:36.222358   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:46.215438   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:56.216151   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:36:56.216221   51007 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
-E1027 03:37:06.225469   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:37:16.240229   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:37:26.217013   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:37:36.224130   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:37:46.224873   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:37:56.216148   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:38:06.223852   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:38:16.226836   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:38:26.216734   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:38:36.233176   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:38:46.339535   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:41:36.097847   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
-E1027 03:41:36.211879   51007 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
-E1027 03:41:36.341893   51007 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:11:36.799183    1004 dev.go:79] Failed to load initial config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:11:36.806448    1004 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
+I1027 23:11:36.824820    1004 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
+E1027 23:11:46.811892    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:11:56.816785    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:06.808003    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:16.817861    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:26.815849    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:36.808804    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:46.815982    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:12:56.817150    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:13:06.811898    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:13:16.811916    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:13:26.815821    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:13:36.821459    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
+E1027 23:13:36.909020    1004 watch.go:102] watchAllDir unable to walk dir `/home/user/studio/dataconnect`: lstat /home/user/studio/dataconnect: no such file or directory
+E1027 23:13:46.828030    1004 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect.yaml`
