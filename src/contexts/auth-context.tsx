@@ -26,16 +26,12 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ 
   children,
-  initialUser,
-  initialTenantId
 }: { 
   children: ReactNode,
-  initialUser: UserProfileWithPermissions | null,
-  initialTenantId: string | null
 }) {
-  const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(initialUser);
-  const [activeTenantId, setActiveTenantId] = useState<string | null>(initialTenantId);
-  const [loading, setLoading] = useState(true); // Set to true initially
+  const [userProfileWithPermissions, setUserProfileWithPermissions] = useState<UserProfileWithPermissions | null>(null);
+  const [activeTenantId, setActiveTenantId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const router = useRouter();
   const { toast } = useToast();
@@ -70,27 +66,17 @@ export function AuthProvider({
 
   useEffect(() => {
     async function checkSession() {
-      // If we already have a user from server-side render, no need to check again initially
-      if (initialUser) {
-        setUserProfileWithPermissions(initialUser);
-        setActiveTenantId(initialTenantId);
-        setLoading(false);
-        return;
-      }
-
-      // If no initial user, try to fetch from the session cookie
+      setLoading(true);
       try {
         const user = await getCurrentUser();
         if (user) {
           setUserProfileWithPermissions(user);
           if (user.tenants && user.tenants.length > 0) {
-            // Default to first tenant or landlord
             setActiveTenantId(user.tenants[0].id || '1');
           }
         }
       } catch (e) {
         console.error("Session check failed:", e);
-        // Ensure user is logged out if session is invalid
         setUserProfileWithPermissions(null);
         setActiveTenantId(null);
       } finally {
@@ -98,7 +84,7 @@ export function AuthProvider({
       }
     }
     checkSession();
-  }, []); // Run only once on mount
+  }, []);
 
 
   useEffect(() => {

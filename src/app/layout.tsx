@@ -1,4 +1,3 @@
-
 // src/app/layout.tsx
 /**
  * @fileoverview O layout raiz da aplicação.
@@ -15,10 +14,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
-import { getSession } from '@/server/lib/session';
-import type { UserProfileWithPermissions, PlatformSettings } from '@/types';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { UserService } from '@/services/user.service';
 import SubscriptionPopup from '@/components/subscription-popup';
 import { getCurrentUser } from '@/app/auth/actions';
 
@@ -48,28 +44,14 @@ async function getLayoutData() {
   }
 }
 
-/**
- * Fetches the initial user data based on the current session cookie.
- * This function only READS the session, it does not create one.
- */
-async function getInitialAuthData() {
-  const session = await getSession();
-  const user = session ? await getCurrentUser() : null;
-  
-  return { 
-    initialUser: user, 
-    initialTenantId: session?.tenantId || '1' 
-  };
-}
-
-
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   
-  const { initialUser, initialTenantId } = await getInitialAuthData();
+  // A busca inicial do usuário foi movida para o AuthProvider no lado do cliente
+  // para evitar erros de renderização estática e modificação de cookies.
   const { platformSettings, isSetupComplete } = await getLayoutData();
 
   return (
@@ -80,7 +62,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider initialUser={initialUser} initialTenantId={initialTenantId}>
+        <AuthProvider>
           <TooltipProvider delayDuration={0}>
             <AppContentWrapper 
               isSetupComplete={isSetupComplete}

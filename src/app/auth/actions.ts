@@ -1,4 +1,3 @@
-
 // src/app/auth/actions.ts
 /**
  * @fileoverview Server Actions para autenticação de usuários.
@@ -11,7 +10,7 @@
 
 import { redirect } from 'next/navigation';
 import { createSession, getSession as getSessionFromCookie, deleteSession as deleteSessionFromCookie } from '@/server/lib/session';
-import type { UserProfileWithPermissions, Role, Tenant, UserCreationData } from '@/types';
+import type { UserProfileWithPermissions, Role, Tenant, UserCreationData, EditableUserProfileData } from '@/types';
 import { revalidatePath } from 'next/cache';
 import bcryptjs from 'bcryptjs';
 import { prisma as basePrisma } from '@/lib/prisma';
@@ -30,7 +29,7 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
 
     const roles: Role[] = user.roles?.map((ur: any) => ({
       ...ur.role,
-      id: ur.role.id,
+      id: ur.role.id.toString(),
     })) || [];
 
     const permissions = Array.from(new Set(roles.flatMap((r: any) => {
@@ -45,16 +44,16 @@ function formatUserWithPermissions(user: any): UserProfileWithPermissions | null
     
     const tenants: Tenant[] = user.tenants?.map((ut: any) => ({
         ...ut.tenant,
-        id: ut.tenant.id,
+        id: ut.tenant.id.toString(),
     })) || [];
 
     return {
         ...user,
-        id: user.id,
-        uid: user.id,
+        id: user.id.toString(),
+        uid: user.id.toString(), 
         roles,
         tenants,
-        roleIds: roles.map((r: any) => r.id),
+        roleIds: roles.map((r: any) => r.id.toString()),
         roleNames: roles.map((r: any) => r.name),
         permissions,
         roleName: roles[0]?.name,
