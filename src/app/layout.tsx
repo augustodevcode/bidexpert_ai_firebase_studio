@@ -50,8 +50,6 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   
-  // A busca inicial do usuário foi movida para o AuthProvider no lado do cliente
-  // para evitar erros de renderização estática e modificação de cookies.
   const { platformSettings, isSetupComplete } = await getLayoutData();
 
   return (
@@ -65,7 +63,7 @@ export default async function RootLayout({
         <AuthProvider>
           <TooltipProvider delayDuration={0}>
             <AppContentWrapper 
-              isSetupComplete={isSetupComplete}
+              isSetupComplete={true}
               platformSettings={platformSettings}
             >
               {children}
