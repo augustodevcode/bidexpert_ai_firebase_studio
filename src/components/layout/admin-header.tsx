@@ -14,6 +14,7 @@ import UserNav from './user-nav';
 import Link from 'next/link';
 import { Badge } from '../ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
+import { ThemeToggle } from './theme-toggle'; // Importado
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
@@ -69,15 +70,9 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
                 </TooltipTrigger>
                 <TooltipContent><p>Visualizar o site público</p></TooltipContent>
             </Tooltip>
-            <Tooltip>
-                <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                        <Sun className="h-4 w-4" />
-                        <span className="sr-only">Alternar tema</span>
-                    </Button>
-                </TooltipTrigger>
-                 <TooltipContent><p>Alternar tema (Light/Dark)</p></TooltipContent>
-            </Tooltip>
+            
+            <ThemeToggle />
+
             <Tooltip>
                 <TooltipTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-9 w-9 text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground" asChild>

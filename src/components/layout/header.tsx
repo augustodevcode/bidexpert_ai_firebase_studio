@@ -34,6 +34,7 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
+  NavigationMenuLink,
 } from "@/components/ui/navigation-menu";
 import MegaMenuCategories from './mega-menu-categories';
 import type { MegaMenuGroup } from './mega-menu-link-list';
@@ -42,7 +43,7 @@ import TwoColumnMegaMenu from './two-column-mega-menu';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { getUnreadNotificationCountAction } from '@/app/dashboard/notifications/actions';
-
+import { ThemeToggle } from './theme-toggle'; // Importado
 
 // HistoryListItem é usado por MainNav quando renderiza o conteúdo do Histórico
 export const HistoryListItem = forwardRef<
@@ -524,26 +525,35 @@ export default function Header({
             </form>
            </div>
           <div className="flex items-center space-x-0.5 sm:space-x-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Busca por Mapa" asChild>
-                  <Link href="/map-search">
-                    <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
-                  </Link>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent><p>Busca por Mapa</p></TooltipContent>
-            </Tooltip>
-             <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar em todo o site" asChild>
-                        <Link href="/search">
-                            <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                        </Link>
-                    </Button>
-                </TooltipTrigger>
-                <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
-            </Tooltip>
+            <TooltipProvider>
+              <ThemeToggle />
+            </TooltipProvider>
+
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button asChild variant="ghost" size="icon" className="h-9 w-9 sm:h-10 sm:w-10">
+                            <Link href="/map-search" aria-label="Busca por Mapa">
+                                <MapPin className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </Link>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Busca por Mapa</p></TooltipContent>
+                </Tooltip>
+            </TooltipProvider>
+
+             <TooltipProvider>
+                 <Tooltip>
+                    <TooltipTrigger asChild>
+                         <Button variant="ghost" size="icon" className="md:hidden hover:bg-accent focus-visible:ring-accent-foreground h-9 w-9 sm:h-10 sm:w-10" aria-label="Buscar em todo o site" asChild>
+                            <Link href="/search">
+                                <SearchIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                            </Link>
+                        </Button>
+                    </TooltipTrigger>
+                    <TooltipContent><p>Buscar em todo o site</p></TooltipContent>
+                </Tooltip>
+             </TooltipProvider>
             <UserNav />
           </div>
         </div>

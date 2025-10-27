@@ -4,9 +4,7 @@
  * Este componente Server-Side é o ponto de entrada para toda a aplicação.
  * Ele busca dados essenciais como configurações da plataforma e o estado de
  * autenticação do usuário, envolve a aplicação com providers de contexto
- * (Autenticação, Tooltip) e renderiza a estrutura HTML base. Também inclui
- * o `AppContentWrapper` que decide qual layout principal renderizar (público ou admin)
- * e o `SubscriptionPopup` para capturar novos inscritos.
+ * (Autenticação, Tooltip, Tema) e renderiza a estrutura HTML base.
  */
 import type { Metadata } from 'next';
 import './globals.css';
@@ -16,7 +14,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AppContentWrapper } from './app-content-wrapper';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import SubscriptionPopup from '@/components/subscription-popup';
-import { getCurrentUser } from '@/app/auth/actions';
+import { ThemeProvider } from '@/components/theme-provider'; // Importado
 
 console.log('[layout.tsx] LOG: RootLayout component is rendering/executing.');
 
@@ -25,9 +23,6 @@ export const metadata: Metadata = {
   description: 'Sua plataforma especialista em leilões online.',
 };
 
-/**
- * Fetches only the essential data for the main layout, which is platform settings.
- */
 async function getLayoutData() {
   try {
     const settings = await getPlatformSettings();
@@ -60,18 +55,25 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap" rel="stylesheet" />
       </head>
       <body>
-        <AuthProvider>
-          <TooltipProvider delayDuration={0}>
-            <AppContentWrapper 
-              isSetupComplete={true}
-              platformSettings={platformSettings}
-            >
-              {children}
-            </AppContentWrapper>
-            {/* <SubscriptionPopup /> */}
-            <Toaster />
-          </TooltipProvider>
-        </AuthProvider>
+        <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+        >
+            <AuthProvider>
+            <TooltipProvider delayDuration={0}>
+                <AppContentWrapper 
+                isSetupComplete={true}
+                platformSettings={platformSettings}
+                >
+                {children}
+                </AppContentWrapper>
+                {/* <SubscriptionPopup /> */}
+                <Toaster />
+            </TooltipProvider>
+            </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
