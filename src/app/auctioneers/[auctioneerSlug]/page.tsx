@@ -16,8 +16,7 @@ import { getAuctionsByAuctioneerSlug } from '@/app/admin/auctions/actions';
 import { getAuctioneerBySlug } from '@/app/admin/auctioneers/actions'; 
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { Auction, AuctioneerProfileInfo, PlatformSettings, Lot } from '@/types';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+
 import SearchResultsFrame from '@/components/search-results-frame';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -47,14 +46,23 @@ const sortOptionsAuctions = [
 
 function RecentAuctionCarouselItem({ auction, platformSettings }: { auction: Auction, platformSettings: PlatformSettings }) {
   return (
-      <UniversalCard 
-        item={auction}
-        type="auction"
-        platformSettings={platformSettings}
-      />
+      <Card className="h-full flex flex-col">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg line-clamp-2">{auction.title}</CardTitle>
+        </CardHeader>
+        <CardContent className="flex-grow">
+          <p className="text-sm text-muted-foreground">Data: {format(new Date(auction.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })}</p>
+          <p className="text-sm text-muted-foreground">Status: {auction.status}</p>
+          {/* Add more relevant auction details here if needed */}
+        </CardContent>
+        <CardFooter className="pt-0">
+            <Link href={`/auctions/${auction.id}`} className="w-full">
+                <Button variant="outline" className="w-full">Ver Detalhes</Button>
+            </Link>
+        </CardFooter>
+      </Card>
   );
 }
-
 
 export default function AuctioneerDetailsPage() {
   const params = useParams();
@@ -169,9 +177,35 @@ export default function AuctioneerDetailsPage() {
       setCurrentAuctionPage(1);
   }
   
-  const renderAuctionGridItem = (auction: Auction) => <UniversalCard item={auction} type="auction" platformSettings={platformSettings!} />;
-  const renderAuctionListItem = (auction: Auction) => <UniversalListItem item={auction} type="auction" platformSettings={platformSettings!} />;
-
+  const renderAuctionGridItem = (auction: Auction) => (
+    <Card className="h-full flex flex-col">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg line-clamp-2">{auction.title}</CardTitle>
+      </CardHeader>
+      <CardContent className="flex-grow">
+        <p className="text-sm text-muted-foreground">Data: {format(new Date(auction.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })}</p>
+        <p className="text-sm text-muted-foreground">Status: {auction.status}</p>
+      </CardContent>
+      <CardFooter className="pt-0">
+          <Link href={`/auctions/${auction.id}`} className="w-full">
+              <Button variant="outline" className="w-full">Ver Detalhes</Button>
+          </Link>
+      </CardFooter>
+    </Card>
+  );
+  const renderAuctionListItem = (auction: Auction) => (
+    <Card className="flex items-center space-x-4 p-4">
+      <div className="flex-grow">
+        <CardTitle className="text-xl line-clamp-1">{auction.title}</CardTitle>
+        <CardDescription>
+          Data: {format(new Date(auction.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })} - Status: {auction.status}
+        </CardDescription>
+      </div>
+      <Link href={`/auctions/${auction.id}`}>
+        <Button>Ver Detalhes</Button>
+      </Link>
+    </Card>
+  );
   if (isLoading || !platformSettings) {
     return (
       <div className="flex flex-col items-center justify-center py-12 space-y-4 min-h-[calc(100vh-20rem)]" data-ai-id="auctioneer-details-loading-spinner">

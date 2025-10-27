@@ -24,7 +24,7 @@ import { getPlatformSettings } from '@/app/admin/settings/actions';
 import type { LatLngBounds } from 'leaflet';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/components/ui/skeleton';
-import UniversalCard from '@/components/universal-card'; // Importando o novo componente
+
 
 const MapSearchComponent = dynamic(() => import('@/components/map-search-component'), {
     ssr: false,
@@ -191,13 +191,22 @@ export default function MapSearchPage() {
                 )}
                 {!isLoading && !error && platformSettings && displayedItems.length > 0 && (
                     displayedItems.map(item => (
-                       <UniversalCard
-                            key={item.id}
-                            item={item}
-                            type={searchType === 'lots' ? 'lot' : 'auction'}
-                            platformSettings={platformSettings}
-                            parentAuction={searchType === 'lots' ? allAuctions.find(a => a.id === (item as Lot).auctionId) : undefined}
-                       />
+                       <Card key={item.id} className="mb-3 p-3 shadow-sm">
+                            <CardHeader className="p-0 pb-2">
+                                <CardTitle className="text-md line-clamp-2">{'title' in item ? item.title : 'Item sem título'}</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-0 text-sm text-muted-foreground">
+                                <p>Tipo: {searchType === 'lots' ? 'Lote' : 'Leilão'}</p>
+                                {'city' in item && item.city && <p>Local: {item.city} - {'state' in item ? item.state : ''}</p>}
+                                {'initialPrice' in item && item.initialPrice && <p>Preço Inicial: {item.initialPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>}
+                                {'auctionDate' in item && item.auctionDate && <p>Data: {format(new Date(item.auctionDate as string), 'dd/MM/yyyy', { locale: ptBR })}</p>}
+                            </CardContent>
+                            <CardFooter className="p-0 pt-2">
+                                <Link href={searchType === 'lots' ? `/lots/${item.id}` : `/auctions/${item.id}`} className="w-full">
+                                    <Button variant="outline" size="sm" className="w-full">Ver Detalhes</Button>
+                                </Link>
+                            </CardFooter>
+                       </Card>
                     ))
                 )}
                 </CardContent>

@@ -21,8 +21,7 @@ import { getLotCategories as getCategories } from '@/app/admin/categories/action
 import { getDirectSaleOffers } from '@/app/direct-sales/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import UniversalCard from '@/components/universal-card';
-import UniversalListItem from '@/components/universal-list-item';
+
 import { getAuctions } from '@/app/admin/auctions/actions';
 import { getLots } from '@/app/admin/lots/actions';
 
@@ -184,9 +183,33 @@ export default function DirectSalesPage() {
     router.push(`/direct-sales?${currentParams.toString()}`);
   };
 
-  const renderGridItem = (item: DirectSaleOffer) => <UniversalCard item={item} type="direct_sale" platformSettings={platformSettings!} />;
-  const renderListItem = (item: DirectSaleOffer) => <UniversalListItem item={item} type="direct_sale" platformSettings={platformSettings!} />;
-
+  const renderGridItem = (item: DirectSaleOffer) => (
+    <Card className="h-full flex flex-col">
+      <CardContent className="flex-grow p-4">
+        <h3 className="text-lg font-semibold line-clamp-2">{item.title}</h3>
+        <p className="text-sm text-muted-foreground">Preço: {item.price?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+        <p className="text-sm text-muted-foreground">Vendedor: {item.sellerName}</p>
+      </CardContent>
+      <div className="p-4 pt-0">
+        <Link href={`/direct-sales/${item.id}`}>
+          <Button className="w-full">Ver Oferta</Button>
+        </Link>
+      </div>
+    </Card>
+  );
+  const renderListItem = (item: DirectSaleOffer) => (
+    <Card className="flex items-center space-x-4 p-4">
+      <div className="flex-grow">
+        <h3 className="text-xl font-semibold line-clamp-1">{item.title}</h3>
+        <p className="text-muted-foreground">
+          Preço: {item.price?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} - Vendedor: {item.sellerName}
+        </p>
+      </div>
+      <Link href={`/direct-sales/${item.id}`}>
+        <Button>Ver Oferta</Button>
+      </Link>
+    </Card>
+  );
   if (isFilterDataLoading || !platformSettings) {
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-20rem)]">
