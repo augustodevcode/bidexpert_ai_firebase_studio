@@ -13,7 +13,7 @@ import { isPast, differenceInDays } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { getAuctionStatusText, isValidImageUrl, getAuctionTypeDisplayData } from '@/lib/ui-helpers';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline'; // Corrigido aqui
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import EntityEditMenu from '../entity-edit-menu';
 
@@ -121,7 +121,7 @@ export default function LotListItem({ lot, auction, platformSettings, onUpdate }
               </div>
               <EntityEditMenu 
                  entityType="lot" 
-                 entityId={lot.id}
+                 entityId={lot.id.toString()}
                  publicId={lot.publicId!} 
                  currentTitle={lot.title} 
                  isFeatured={lot.isFeatured || false}
