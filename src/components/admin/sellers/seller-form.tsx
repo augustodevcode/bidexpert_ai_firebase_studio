@@ -1,200 +1,201 @@
-// src/app/admin/judicial-processes/page.tsx
-/**
- * @fileoverview Página principal para listagem e gerenciamento de Processos Judiciais.
- * Utiliza o componente BidExpertSearchResultsFrame para exibir os processos de forma interativa,
- * permitindo busca, ordenação, filtros facetados e ações como exclusão.
- */
+// src/components/admin/sellers/seller-form.tsx
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialProcesses, deleteJudicialProcess, createJudicialProcessAction, updateJudicialProcessAction } from './actions';
-import type { JudicialProcess, PlatformSettings, JudicialProcessFormData, Court, JudicialDistrict, JudicialBranch, SellerProfileInfo } from '@/types';
-import { PlusCircle, Gavel, FileUp } from 'lucide-react';
+import * as React from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm, useWatch } from 'react-hook-form';
+import { sellerFormSchema, type SellerFormValues } from '@/app/admin/sellers/seller-form-schema';
+import type { SellerProfileInfo, MediaItem, JudicialBranch, StateInfo, CityInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
-import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { Skeleton } from '@/components/ui/skeleton';
-import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialProcessForm from './judicial-process-form';
-import { getCourts } from '../courts/actions';
-import { getJudicialDistricts } from '../judicial-districts/actions';
-import { getJudicialBranches } from '../judicial-branches/actions';
-import { getSellers } from '../sellers/actions';
-import Link from 'next/link';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Image as ImageIcon, Scale, Save } from 'lucide-react';
+import Image from 'next/image';
+import ChooseMediaDialog from '@/components/admin/media/choose-media-dialog';
+import EntitySelector from '@/components/ui/entity-selector';
+import { getJudicialBranches } from '@/app/admin/judicial-branches/actions';
+import { isValidImageUrl } from '@/lib/ui-helpers';
+import AddressGroup from '@/components/address-group';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
-export default function AdminJudicialProcessesPage() {
-  const [processes, setProcesses] = useState<JudicialProcess[]>([]);
-  const [platformSettings, setPlatformSettings] = useState<PlatformSettings | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+interface SellerFormProps {
+  initialData?: Partial<SellerProfileInfo> | null;
+  judicialBranches: JudicialBranch[];
+  allStates: StateInfo[];
+  allCities: CityInfo[];
+  onSubmitAction: (data: SellerFormValues) => Promise<any>;
+  onSuccess?: (sellerId?: string) => void;
+  onCancel?: () => void;
+}
+
+const SellerForm = React.forwardRef<any, SellerFormProps>(({
+  initialData,
+  judicialBranches: initialBranches,
+  allStates,
+  allCities,
+  onSubmitAction,
+  onSuccess,
+  onCancel,
+}, ref) => {
   const { toast } = useToast();
-  const [refetchTrigger, setRefetchTrigger] = useState(0);
+  const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
+  const [judicialBranches, setJudicialBranches] = React.useState(initialBranches);
+  const [isFetchingBranches, setIsFetchingBranches] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Form Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingProcess, setEditingProcess] = useState<JudicialProcess | null>(null);
+  const form = useForm<SellerFormValues>({
+    resolver: zodResolver(sellerFormSchema),
+    mode: 'onChange',
+    defaultValues: initialData || {},
+  });
+  
+  React.useEffect(() => {
+    form.reset(initialData || {});
+  }, [initialData, form]);
 
-  // Dependencies for the form
-  const [dependencies, setDependencies] = useState<{
-    courts: Court[],
-    allDistricts: JudicialDistrict[],
-    allBranches: JudicialBranch[],
-    sellers: SellerProfileInfo[],
-  } | null>(null);
+  const { formState } = form;
 
-  const fetchPageData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  useImperativeHandle(ref, () => ({
+    requestSubmit: form.handleSubmit(onSubmit),
+    formState: formState,
+  }));
+
+  const logoUrlPreview = useWatch({ control: form.control, name: 'logoUrl' });
+  const isJudicial = useWatch({ control: form.control, name: 'isJudicial' });
+
+  const handleRefetchBranches = React.useCallback(async () => {
+    setIsFetchingBranches(true);
+    const data = await getJudicialBranches();
+    setJudicialBranches(data);
+    setIsFetchingBranches(false);
+  }, []);
+
+  const handleMediaSelect = (selectedItems: Partial<MediaItem>[]) => {
+    if (selectedItems.length > 0) {
+      const selectedMediaItem = selectedItems[0];
+      if (selectedMediaItem?.urlOriginal) {
+        form.setValue('logoUrl', selectedMediaItem.urlOriginal, { shouldDirty: true, shouldValidate: true });
+        form.setValue('logoMediaId', selectedMediaItem.id || null, { shouldDirty: true });
+      } else {
+        toast({ title: "Seleção Inválida", description: "O item de mídia selecionado não possui uma URL válida.", variant: "destructive" });
+      }
+    }
+    setIsMediaDialogOpen(false);
+  };
+  
+  async function onSubmit(values: SellerFormValues) {
+    setIsSubmitting(true);
     try {
-      const [fetchedItems, settings, courts, districts, branches, sellers] = await Promise.all([
-        getJudicialProcesses(),
-        getPlatformSettings(),
-        getCourts(),
-        getJudicialDistricts(),
-        getJudicialBranches(),
-        getSellers(),
-      ]);
-      setProcesses(fetchedItems);
-      setPlatformSettings(settings as PlatformSettings);
-      setDependencies({ courts, allDistricts: districts, allBranches: branches, sellers });
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : "Falha ao buscar processos judiciais.";
-      console.error("Error fetching judicial processes:", e);
-      setError(errorMessage);
-      toast({ title: "Erro", description: errorMessage, variant: "destructive" });
+        const result = await onSubmitAction(values);
+        if(result.success) {
+            toast({ title: "Sucesso!", description: result.message });
+            if(onSuccess) onSuccess(result.sellerId);
+        } else {
+            toast({ title: "Erro ao Salvar", description: result.message, variant: "destructive"});
+        }
+    } catch (e: any) {
+        toast({ title: "Erro Inesperado", description: e.message, variant: "destructive"});
     } finally {
-      setIsLoading(false);
+        setIsSubmitting(false);
     }
-  }, [toast]);
-  
-  useEffect(() => {
-    fetchPageData();
-  }, [fetchPageData, refetchTrigger]);
-
-  const onUpdate = useCallback(() => setRefetchTrigger(c => c + 1), []);
-  const handleNewClick = () => { setEditingProcess(null); setIsFormOpen(true); };
-  const handleEditClick = (process: JudicialProcess) => { setEditingProcess(process); setIsFormOpen(true); };
-  const handleFormSuccess = (processId?: string) => { 
-    setIsFormOpen(false); 
-    setEditingProcess(null); 
-    onUpdate();
-    // Logic to redirect if it was a new process, if needed.
-  };
-
-  const handleDelete = useCallback(async (id: string) => {
-    const result = await deleteJudicialProcess(id);
-    if (result.success) {
-      toast({ title: "Sucesso!", description: result.message });
-      onUpdate();
-    } else {
-      toast({ title: "Erro", description: result.message, variant: "destructive" });
-    }
-  }, [toast, onUpdate]);
-
-  const handleDeleteSelected = useCallback(async (selectedItems: JudicialProcess[]) => {
-    if (selectedItems.length === 0) return;
-    for (const item of selectedItems) {
-      await deleteJudicialProcess(item.id);
-    }
-    toast({ title: "Exclusão em Massa Concluída", description: `${selectedItems.length} processo(s) excluído(s) com sucesso.` });
-    onUpdate();
-  }, [onUpdate, toast]);
-  
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
-
-  const formAction = async (data: JudicialProcessFormData) => {
-    if (editingProcess) {
-      return updateJudicialProcessAction(editingProcess.id, data);
-    }
-    return createJudicialProcessAction(data);
-  };
-  
-  const facetedFilterOptions = useMemo(() => {
-    const courts = [...new Set(processes.map(p => p.courtName).filter(Boolean))] as string[];
-    const branches = [...new Set(processes.map(p => p.branchName).filter(Boolean))] as string[];
-    return [
-      { id: 'courtName', title: 'Tribunal', options: courts.map(name => ({label: name!, value: name!})) },
-      { id: 'branchName', title: 'Vara', options: branches.map(name => ({label: name!, value: name!})) }
-    ];
-  }, [processes]);
-
-  if (isLoading || !platformSettings || !dependencies) {
-    return (
-        <div className="space-y-6">
-            <Card className="shadow-lg">
-                <CardHeader className="flex flex-row items-center justify-between">
-                    <div><Skeleton className="h-8 w-64 mb-2"/><Skeleton className="h-4 w-80"/></div>
-                    <Skeleton className="h-10 w-36"/>
-                </CardHeader>
-                <CardContent><Skeleton className="h-96 w-full" /></CardContent>
-            </Card>
-        </div>
-    );
   }
+
+  const validLogoPreviewUrl = isValidImageUrl(logoUrlPreview) ? logoUrlPreview : null;
 
   return (
     <>
-      <div className="space-y-6" data-ai-id="admin-judicial-processes-page-container">
-        <Card className="shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-2xl font-bold font-headline flex items-center">
-                <Gavel className="h-6 w-6 mr-2 text-primary" />
-                Gerenciar Processos Judiciais
-              </CardTitle>
-              <CardDescription>
-                Adicione, edite ou remova os processos judiciais que originam os leilões.
-              </CardDescription>
-            </div>
-             <div className="flex items-center gap-2">
-                <Button asChild variant="secondary">
-                    <Link href="/admin/import/cnj">
-                        <FileUp className="mr-2 h-4 w-4" /> Importar do CNJ
-                    </Link>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" data-ai-id="seller-form">
+           <Accordion type="multiple" defaultValue={['general', 'contact', 'address']} className="w-full">
+            <AccordionItem value="general">
+              <AccordionTrigger className="text-md font-semibold">Informações Gerais</AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                  <FormField control={form.control} name="name" render={({ field }) => (
+                        <FormItem data-ai-id="form-field-seller-name">
+                          <FormLabel>Nome do Comitente/Empresa<span className="text-destructive">*</span></FormLabel>
+                          <FormControl><Input placeholder="Ex: Banco XYZ S.A., 1ª Vara Cível de Lagarto" {...field} /></FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )} />
+                     {initialData?.publicId && (
+                        <FormField control={form.control} name="publicId" render={({ field }) => (<FormItem><FormLabel>ID Público</FormLabel><FormControl><Input readOnly disabled className="cursor-not-allowed bg-muted/70" {...field} value={field.value ?? ""} /></FormControl><FormDescription>Este é o ID público do comitente, gerado pelo sistema.</FormDescription><FormMessage /></FormItem>)} />
+                    )}
+                    <FormField control={form.control} name="isJudicial" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>É Comitente Judicial?</FormLabel><FormDescription>Marque se este comitente é uma entidade judicial (Vara, Tribunal, etc).</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>
+                      )} />
+                    {isJudicial && (
+                        <FormField control={form.control} name="judicialBranchId" render={({ field }) => (
+                            <FormItem><FormLabel className="flex items-center gap-2"><Scale className="h-4 w-4"/>Vara Judicial Vinculada (Opcional)</FormLabel>
+                                <EntitySelector 
+                                    entityName="judicialBranch"
+                                    value={field.value}
+                                    onChange={field.onChange}
+                                    options={judicialBranches.map(b => ({ value: b.id, label: `${b.name} - ${b.districtName}` }))}
+                                    placeholder="Nenhuma vara judicial vinculada"
+                                    searchPlaceholder="Buscar vara..."
+                                    emptyStateMessage="Nenhuma vara encontrada."
+                                    createNewUrl="/admin/judicial-branches/new"
+                                    editUrlPrefix="/admin/judicial-branches"
+                                    onRefetch={handleRefetchBranches}
+                                    isFetching={isFetchingBranches}
+                                />
+                                <FormDescription>Se este comitente representa uma entidade judicial, vincule-a aqui.</FormDescription><FormMessage /></FormItem>
+                            )} />
+                    )}
+                    <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição/Observações (Opcional)</FormLabel><FormControl><Textarea placeholder="Detalhes adicionais sobre o comitente..." {...field} value={field.value ?? ""} rows={4} /></FormControl><FormMessage /></FormItem>)} />
+              </AccordionContent>
+            </AccordionItem>
+             <AccordionItem value="contact">
+              <AccordionTrigger className="text-md font-semibold">Contato e Mídia</AccordionTrigger>
+              <AccordionContent className="space-y-4 pt-4">
+                  <div className="grid md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="contactName" render={({ field }) => (<FormItem><FormLabel>Nome do Contato (Opcional)</FormLabel><FormControl><Input placeholder="Nome do responsável" {...field} value={field.value ?? ''}/></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="email" render={({ field }) => (<FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="contato@comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+                   <div className="grid md:grid-cols-2 gap-6">
+                      <FormField control={form.control} name="phone" render={({ field }) => (<FormItem><FormLabel>Telefone (Opcional)</FormLabel><FormControl><Input placeholder="(XX) XXXXX-XXXX" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                      <FormField control={form.control} name="website" render={({ field }) => (<FormItem><FormLabel>Website (Opcional)</FormLabel><FormControl><Input type="url" placeholder="https://www.comitente.com" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+                  </div>
+                    <FormItem>
+                      <FormLabel>Logo do Comitente</FormLabel>
+                      <div className="flex items-center gap-4">
+                        <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">
+                          {validLogoPreviewUrl ? ( <Image src={validLogoPreviewUrl} alt="Prévia do Logo" fill className="object-contain" data-ai-hint="previa logo comitente" />) : (<div className="flex items-center justify-center h-full text-muted-foreground"><ImageIcon className="h-8 w-8" /></div>)}
+                        </div>
+                        <div className="flex-grow space-y-2">
+                          <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)} data-ai-id="btn-choose-logo">{validLogoPreviewUrl ? 'Alterar Logo' : 'Escolher da Biblioteca'}</Button>
+                          <FormField control={form.control} name="logoUrl" render={({ field }) => (<FormControl><Input type="text" placeholder="Ou cole a URL aqui" {...field} value={field.value ?? ""} /></FormControl>)} />
+                          <FormMessage />
+                        </div>
+                      </div>
+                    </FormItem>
+                    <FormField control={form.control} name="dataAiHintLogo" render={({ field }) => (<FormItem><FormLabel>Dica para IA (Logo - Opcional)</FormLabel><FormControl><Input placeholder="Ex: banco logo, empresa tecnologia" {...field} value={field.value ?? ''} /></FormControl><FormDescription>Duas palavras chave para ajudar a IA encontrar uma imagem de placeholder, se a URL do logo não for fornecida.</FormDescription><FormMessage /></FormItem>)} />
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="address">
+               <AccordionTrigger className="text-md font-semibold">Endereço</AccordionTrigger>
+               <AccordionContent className="space-y-4 pt-4">
+                  <AddressGroup form={form} allStates={allStates} allCities={allCities} />
+               </AccordionContent>
+            </AccordionItem>
+           </Accordion>
+           <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                    {isSubmitting ? <Loader2 className="animate-spin mr-2"/> : <Save className="mr-2 h-4 w-4"/>}
+                    Salvar
                 </Button>
-                <Button onClick={handleNewClick}>
-                    <PlusCircle className="mr-2 h-4 w-4" /> Novo Processo
-                </Button>
             </div>
-          </CardHeader>
-          <CardContent>
-             <BidExpertSearchResultsFrame
-                  items={processes}
-                  dataTableColumns={columns}
-                  onSortChange={() => {}}
-                  platformSettings={platformSettings}
-                  isLoading={isLoading}
-                  searchTypeLabel="processos"
-                  searchColumnId="processNumber"
-                  searchPlaceholder="Buscar por nº do processo..."
-                  facetedFilterColumns={facetedFilterOptions}
-                  onDeleteSelected={handleDeleteSelected as any}
-                  sortOptions={[{ value: 'processNumber', label: 'Nº do Processo' }]}
-              />
-          </CardContent>
-        </Card>
-      </div>
-      <CrudFormContainer
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          mode={platformSettings?.crudFormMode || 'modal'}
-          title={editingProcess ? 'Editar Processo Judicial' : 'Novo Processo Judicial'}
-          description={editingProcess ? 'Modifique os detalhes do processo.' : 'Cadastre um novo processo judicial.'}
-      >
-          <JudicialProcessForm
-              initialData={editingProcess}
-              courts={dependencies.courts}
-              allDistricts={dependencies.allDistricts}
-              allBranches={dependencies.allBranches}
-              sellers={dependencies.sellers}
-              onSubmitAction={formAction}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setIsFormOpen(false)}
-          />
-      </CrudFormContainer>
+        </form>
+      </Form>
+     <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
     </>
   );
-}
+});
+
+SellerForm.displayName = "SellerForm";
+export default SellerForm;

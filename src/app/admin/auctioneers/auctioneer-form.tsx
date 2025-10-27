@@ -60,7 +60,7 @@ const AuctioneerForm = React.forwardRef<any, AuctioneerFormProps>(({
   });
 
   React.useImperativeHandle(ref, () => ({
-    requestSubmit: form.handleSubmit(onSubmit),
+    requestSubmit: form.handleSubmit(onSubmitAction),
     formState: form.formState,
   }));
   

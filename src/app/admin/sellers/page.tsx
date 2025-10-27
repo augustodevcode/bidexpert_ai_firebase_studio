@@ -23,8 +23,8 @@ import { createColumns } from './columns';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
 import SellerForm from './seller-form';
 import { getJudicialBranches } from '../judicial-branches/actions';
-import { getStates } from '../states/actions';
-import { getCities } from '../cities/actions';
+import { getStates } from '@/app/admin/states/actions';
+import { getCities } from '@/app/admin/cities/actions';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
