@@ -7,7 +7,7 @@
 
 import React from 'react';
 import SettingsFormWrapper from '../settings-form-wrapper';
-import { FormField, FormItem, FormLabel, FormDescription, FormControl } from '@/components/ui/form';
+import { FormField, FormItem, FormLabel, FormDescription, FormControl, FormMessage } from '@/components/ui/form';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
 
