@@ -62,7 +62,91 @@ interface AuctionFormProps {
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
   defaultAuctionId?: string;
+  onSuccessCallback?: () => void;
   onAddNewEntity?: (entity: 'auctioneer' | 'seller' | 'judicialProcess' | 'category') => void;
+}
+
+const renderAccordionContent = (section: string, form: any, initialCategories: any[], initialAuctioneers: any[], initialSellers: any[], initialJudicialProcesses: any[], allCities: any[], initialStates: any[], handleRefetchCategories: any, isSubmitting: boolean, handleRefetchAuctioneers: any, handleRefetchSellers: any, handleRefetchProcesses: any, watchedAuctionMethod: string, watchedImageMediaId: string | null, displayImageUrl: string | null | undefined, setIsMediaDialogOpen: React.Dispatch<React.SetStateAction<boolean>>, handleAddStageWithDefaults: () => void, remove: (index: number) => void) => {
+    switch (section) {
+        case "geral": return (
+            <div className="space-y-4">
+                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Leilão de Veículos da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
+                <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione a categoria" searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' onRefetch={handleRefetchCategories} isFetching={isSubmitting} /><FormMessage /></FormItem>)} />
+                </div>
+            </div>
+        );
+        case "participantes": return (
+             <div className="space-y-4">
+                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' onRefetch={handleRefetchAuctioneers} isFetching={isSubmitting}/><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' onRefetch={handleRefetchSellers} isFetching={isSubmitting} /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' onRefetch={handleRefetchProcesses} isFetching={isSubmitting} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+             </div>
+        );
+        case "modalidade": return (
+             <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Participação<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionParticipationOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="auctionMethod" render={({ field }) => (<FormItem><FormLabel>Método<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionMethodOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
+                </div>
+                <FormField control={form.control} name="onlineUrl" render={({ field }) => (<FormItem><FormLabel>URL do Leilão Online</FormLabel><FormControl><Input placeholder="https://meet.google.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
+            </div>
+        );
+        case "localizacao": return (
+            <AddressGroup form={form} allCities={allCities} allStates={initialStates} />
+        );
+        case "prazos": return (
+            <BidExpertAuctionStagesTimeline
+                // @ts-ignore
+                stages={form.watch('auctionStages') || []}
+                isEditable={true}
+                onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true })}
+                onAddStage={handleAddStageWithDefaults}
+                onRemoveStage={remove}
+            />
+        );
+        case "midia": return (
+            <div className="space-y-4">
+                <FormField control={form.control} name="imageMediaId" render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Imagem Principal do Leilão</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value || 'CUSTOM'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="CUSTOM">Imagem Customizada</SelectItem><SelectItem value="INHERIT">Herdar do Lote em Destaque</SelectItem></SelectContent></Select>
+                        <FormDescription>Você pode definir uma imagem específica ou herdar dinamicamente da imagem do lote que estiver marcado como destaque.</FormDescription>
+                        <FormMessage/>
+                    </FormItem>
+                )}/>
+                {watchedImageMediaId !== 'INHERIT' && (
+                    <FormItem>
+                        <div className="flex items-center gap-4">
+                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl!} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
+                            <div className="space-y-2 flex-grow">
+                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{isValidImageUrl(displayImageUrl) ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
+                            </div>
+                        </div>
+                    </FormItem>
+                )}
+                {watchedImageMediaId === 'INHERIT' && (
+                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 flex items-center gap-3">
+                       <Info className="h-5 w-5 flex-shrink-0"/>
+                       <div>A imagem deste leilão será a mesma do lote que você marcar como &quot;Destaque&quot;. Se nenhum lote for marcado, uma imagem padrão será usada.</div>
+                    </div>
+                )}
+            </div>
+        );
+        case "opcoes": return (
+            <div className="space-y-4">
+                {watchedAuctionMethod === 'DUTCH' && (
+                    <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingDown />Configurações do Leilão Holandês</CardTitle></CardHeader><CardContent className="space-y-4"><FormField control={form.control} name="decrementAmount" render={({ field }) => (<FormItem><FormLabel>Valor do Decremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (<FormItem><FormLabel>Intervalo do Decremento (Segundos)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="floorPrice" render={({ field }) => (<FormItem><FormLabel>Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /></CardContent></Card>
+                )}
+                <FormField control={form.control} name="isFeaturedOnMarketplace" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Destaque no Marketplace</FormLabel><FormDescription>Exibir este leilão na seção de destaques da home page.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+                <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Permitir Lances Parcelados</FormLabel><FormDescription>Habilita a opção de checkout com parcelamento para os lotes deste leilão.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
+            </div>
+        );
+        default: return null;
+    }
 }
 
 const AuctionForm = forwardRef<any, AuctionFormProps>(({
@@ -78,6 +162,8 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   isWizardMode = false,
   onWizardDataChange,
   formRef,
+  defaultAuctionId,
+  onSuccessCallback,
   onAddNewEntity,
 }, ref) => {
   
@@ -119,7 +205,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
     name: "auctionStages",
   });
   
-  const watchedAuctionStages = useWatch({ control: form.control, name: 'auctionStages' });
   const watchedImageMediaId = useWatch({ control: form.control, name: 'imageMediaId' });
   const watchedImageUrl = form.watch('imageUrl');
 
@@ -179,90 +264,6 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
   }, [fields, append, platformSettings]);
 
 
-  const accordionContent = (section: string) => {
-    switch (section) {
-        case "geral": return (
-            <div className="space-y-4">
-                <FormField control={form.control} name="title" render={({ field }) => (<FormItem><FormLabel>Título do Leilão<span className="text-destructive">*</span></FormLabel><FormControl><Input placeholder="Ex: Leilão de Veículos da Empresa X" {...field} /></FormControl><FormMessage /></FormItem>)} />
-                <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione a categoria" searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' onAddNew={() => onAddNewEntity?.('category')} /><FormMessage /></FormItem>)} />
-                </div>
-            </div>
-        );
-        case "participantes": return (
-             <div className="space-y-4">
-                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' onAddNew={() => onAddNewEntity?.('auctioneer')} /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' onAddNew={() => onAddNewEntity?.('seller')} /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' onAddNew={() => onAddNewEntity?.('judicialProcess')} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
-             </div>
-        );
-        case "modalidade": return (
-             <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormField control={form.control} name="auctionType" render={({ field }) => (<FormItem><FormLabel>Modalidade<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionTypeOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="participation" render={({ field }) => (<FormItem><FormLabel>Participação<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionParticipationOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="auctionMethod" render={({ field }) => (<FormItem><FormLabel>Método<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger></FormControl><SelectContent>{auctionMethodOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                </div>
-                <FormField control={form.control} name="onlineUrl" render={({ field }) => (<FormItem><FormLabel>URL do Leilão Online</FormLabel><FormControl><Input placeholder="https://meet.google.com/..." {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} />
-            </div>
-        );
-        case "localizacao": return (
-            <AddressGroup form={form} allCities={allCities} allStates={initialStates} />
-        );
-        case "prazos": return (
-            <BidExpertAuctionStagesTimeline
-                stages={watchedAuctionStages || []}
-                isEditable={true}
-                platformSettings={platformSettings}
-                onStageChange={(index, field, value) => form.setValue(`auctionStages.${index}.${field}`, value, { shouldDirty: true, shouldValidate: true })}
-                onAddStage={handleAddStageWithDefaults}
-                onRemoveStage={remove}
-            />
-        );
-        case "midia": return (
-            <div className="space-y-4">
-                <FormField control={form.control} name="imageMediaId" render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Imagem Principal do Leilão</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value || 'CUSTOM'}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="CUSTOM">Imagem Customizada</SelectItem><SelectItem value="INHERIT">Herdar do Lote em Destaque</SelectItem></SelectContent></Select>
-                        <FormDescription>Você pode definir uma imagem específica ou herdar dinamicamente da imagem do lote que estiver marcado como destaque.</FormDescription>
-                        <FormMessage/>
-                    </FormItem>
-                )}/>
-                {watchedImageMediaId !== 'INHERIT' && (
-                    <FormItem>
-                        <div className="flex items-center gap-4">
-                            <div className="relative w-24 h-24 flex-shrink-0 bg-muted rounded-md overflow-hidden border">{isValidImageUrl(displayImageUrl) ? (<Image src={displayImageUrl!} alt="Prévia" fill className="object-contain" />) : (<ImageIcon className="h-8 w-8 text-muted-foreground m-auto"/>)}</div>
-                            <div className="space-y-2 flex-grow">
-                                <Button type="button" variant="outline" onClick={() => setIsMediaDialogOpen(true)}>{isValidImageUrl(displayImageUrl) ? 'Alterar Imagem' : 'Escolher da Biblioteca'}</Button>
-                            </div>
-                        </div>
-                    </FormItem>
-                )}
-                {watchedImageMediaId === 'INHERIT' && (
-                    <div className="p-4 bg-blue-50 border border-blue-200 rounded-md text-sm text-blue-800 flex items-center gap-3">
-                       <Info className="h-5 w-5 flex-shrink-0"/>
-                       <div>A imagem deste leilão será a mesma do lote que você marcar como &quot;Destaque&quot;. Se nenhum lote for marcado, uma imagem padrão será usada.</div>
-                    </div>
-                )}
-            </div>
-        );
-        case "opcoes": return (
-            <div className="space-y-4">
-                {watchedAuctionMethod === 'DUTCH' && (
-                    <Card><CardHeader><CardTitle className="flex items-center gap-2"><TrendingDown />Configurações do Leilão Holandês</CardTitle></CardHeader><CardContent className="space-y-4"><FormField control={form.control} name="decrementAmount" render={({ field }) => (<FormItem><FormLabel>Valor do Decremento (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="decrementIntervalSeconds" render={({ field }) => (<FormItem><FormLabel>Intervalo do Decremento (Segundos)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /><FormField control={form.control} name="floorPrice" render={({ field }) => (<FormItem><FormLabel>Preço Mínimo (R$)</FormLabel><FormControl><Input type="number" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>)} /></CardContent></Card>
-                )}
-                <FormField control={form.control} name="isFeaturedOnMarketplace" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Destaque no Marketplace</FormLabel><FormDescription>Exibir este leilão na seção de destaques da home page.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-                <FormField control={form.control} name="allowInstallmentBids" render={({ field }) => (<FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm bg-background"><div className="space-y-0.5"><FormLabel>Permitir Lances Parcelados</FormLabel><FormDescription>Habilita a opção de checkout com parcelamento para os lotes deste leilão.</FormDescription></div><FormControl><Switch checked={field.value} onCheckedChange={field.onChange} /></FormControl></FormItem>)} />
-            </div>
-        );
-        default: return null;
-    }
-  }
-  
-
   return (
     <>
       <div data-ai-id="admin-auction-form-card">
@@ -270,12 +271,12 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <Accordion type="multiple" defaultValue={["geral", "participantes"]} className="w-full">
-                        <AccordionItem value="geral"><AccordionTrigger>Informações Gerais</AccordionTrigger><AccordionContent className="p-4">{accordionContent("geral")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="participantes"><AccordionTrigger>Participantes</AccordionTrigger><AccordionContent className="p-4">{accordionContent("participantes")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="modalidade"><AccordionTrigger>Modalidade, Método e Local</AccordionTrigger><AccordionContent className="p-4">{accordionContent("modalidade")}{accordionContent("localizacao")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="prazos"><AccordionTrigger>Datas e Prazos</AccordionTrigger><AccordionContent className="p-4">{accordionContent("prazos")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{accordionContent("midia")}</AccordionContent></AccordionItem>
-                        <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{accordionContent("opcoes")}</AccordionContent></AccordionItem>
+                        <AccordionItem value="geral"><AccordionTrigger>Informações Gerais</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("geral", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
+                        <AccordionItem value="participantes"><AccordionTrigger>Participantes</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("participantes", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
+                        <AccordionItem value="modalidade"><AccordionTrigger>Modalidade, Método e Local</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("modalidade", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}{renderAccordionContent("localizacao", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
+                        <AccordionItem value="prazos"><AccordionTrigger>Datas e Prazos</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("prazos", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
+                        <AccordionItem value="midia"><AccordionTrigger>Mídia</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("midia", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
+                        <AccordionItem value="opcoes"><AccordionTrigger>Opções Avançadas</AccordionTrigger><AccordionContent className="p-4">{renderAccordionContent("opcoes", form, initialCategories, initialAuctioneers, initialSellers, initialJudicialProcesses, allCities, initialStates, ()=>{}, isSubmitting, ()=>{}, ()=>{}, ()=>{}, watchedAuctionMethod, watchedImageMediaId, displayImageUrl, setIsMediaDialogOpen, handleAddStageWithDefaults, remove)}</AccordionContent></AccordionItem>
                     </Accordion>
                     {!isWizardMode && (
                     <div className="flex justify-end pt-4">
@@ -289,7 +290,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>(({
             </Form>
         </FormProvider>
       </div>
-      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={handleMediaSelect} allowMultiple={false} />
+      <ChooseMediaDialog isOpen={isMediaDialogOpen} onOpenChange={setIsMediaDialogOpen} onMediaSelect={(items) => handleMediaSelect(items)} allowMultiple={false} />
     </>
   );
 });
