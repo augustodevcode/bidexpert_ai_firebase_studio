@@ -23,8 +23,8 @@ import { createColumns } from './columns';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
 import SellerForm from './seller-form';
 import { getJudicialBranches } from '../judicial-branches/actions';
-import { getStates } from '@/app/admin/states/actions';
-import { getCities } from '@/app/admin/cities/actions';
+import { getStates } from '../states/actions';
+import { getCities } from '../cities/actions';
 
 const sortOptions = [
   { value: 'name_asc', label: 'Nome A-Z' },
@@ -72,7 +72,7 @@ export default function AdminSellersPage() {
       setIsLoading(false);
     }
   }, [toast]);
-
+  
   useEffect(() => {
     fetchPageData();
   }, [fetchPageData, refetchTrigger]);
@@ -106,7 +106,7 @@ export default function AdminSellersPage() {
       toast({ title: "Erro", description: result.message, variant: "destructive" });
     }
   }, [toast, onUpdate]);
-  
+
   const handleDeleteSelected = useCallback(async (selectedItems: SellerProfileInfo[]) => {
       for (const item of selectedItems) {
         await deleteSeller(item.id);
@@ -124,14 +124,14 @@ export default function AdminSellersPage() {
 
   const renderGridItem = (item: SellerProfileInfo) => <BidExpertCard item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: SellerProfileInfo) => <BidExpertListItem item={item} type="seller" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
-
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
+  
   const facetedFilterOptions = useMemo(() => {
-      const stateOptions = [...new Set(allSellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
-      return [
-          { id: 'state', title: 'Estado', options: stateOptions },
-          { id: 'isJudicial', title: 'Tipo', options: [{value: 'true', label: 'Judicial'}, {value: 'false', label: 'Não Judicial'}]}
-      ];
+    const stateOptions = [...new Set(allSellers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
+    return [
+      { id: 'state', title: 'Estado', options: stateOptions },
+      { id: 'isJudicial', title: 'Tipo', options: [{ value: 'true', label: 'Judicial'}, { value: 'false', label: 'Não Judicial'}]}
+    ];
   }, [allSellers]);
   
   if (isLoading || !platformSettings || !dependencies) {
@@ -183,7 +183,7 @@ export default function AdminSellersPage() {
         emptyStateMessage="Nenhum comitente encontrado."
         facetedFilterColumns={facetedFilterOptions}
         searchColumnId='name'
-        searchPlaceholder='Buscar por nome ou email...'
+        searchPlaceholder='Buscar por nome...'
         onDeleteSelected={handleDeleteSelected as any}
       />
     </div>
@@ -194,15 +194,15 @@ export default function AdminSellersPage() {
       title={editingSeller ? 'Editar Comitente' : 'Novo Comitente'}
       description={editingSeller ? 'Modifique os detalhes do comitente.' : 'Cadastre um novo comitente/vendedor.'}
     >
-      <SellerForm
-        initialData={editingSeller}
-        judicialBranches={dependencies.judicialBranches}
-        allStates={dependencies.allStates}
-        allCities={dependencies.allCities}
-        onSubmitAction={formAction}
-        onSuccess={handleFormSuccess}
-        onCancel={() => setIsFormOpen(false)}
-      />
+        <SellerForm
+            initialData={editingSeller}
+            judicialBranches={dependencies.judicialBranches}
+            allStates={dependencies.allStates}
+            allCities={dependencies.allCities}
+            onSubmitAction={formAction}
+            onSuccess={handleFormSuccess}
+            onCancel={() => setIsFormOpen(false)}
+        />
     </CrudFormContainer>
     </>
   );

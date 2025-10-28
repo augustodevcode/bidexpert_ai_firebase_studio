@@ -32,7 +32,7 @@ import { getStates } from '@/app/admin/states/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import Image from 'next/image';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import AuctionStagesTimeline from '@/components/auction/auction-stages-timeline';
+import BidExpertAuctionStagesTimeline from '@/components/auction/BidExpertAuctionStagesTimeline';
 import { getPlatformSettings } from '../settings/actions';
 import { addDays } from 'date-fns';
 import { getMediaItems } from '@/app/admin/media/actions';
@@ -62,10 +62,10 @@ interface AuctionFormProps {
   onWizardDataChange?: (data: Partial<AuctionFormValues>) => void;
   formRef?: React.Ref<any>;
   defaultAuctionId?: string;
+  onAddNewEntity?: (entity: 'auctioneer' | 'seller' | 'judicialProcess' | 'category') => void;
 }
 
-const AuctionForm = forwardRef<any, AuctionFormProps>((
-{
+const AuctionForm = forwardRef<any, AuctionFormProps>(({
   initialData,
   auctioneers: initialAuctioneers,
   sellers: initialSellers,
@@ -78,6 +78,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
   isWizardMode = false,
   onWizardDataChange,
   formRef,
+  onAddNewEntity,
 }, ref) => {
   
   const { toast } = useToast();
@@ -186,15 +187,15 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
                 <FormField control={form.control} name="description" render={({ field }) => (<FormItem><FormLabel>Descrição (Opcional)</FormLabel><FormControl><Textarea placeholder="Descreva os detalhes gerais do leilão, regras de visitação, etc." {...field} value={field.value ?? ""} /></FormControl><FormMessage /></FormItem>)} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <FormField control={form.control} name="status" render={({ field }) => (<FormItem><FormLabel>Status<span className="text-destructive">*</span></FormLabel><Select onValueChange={field.onChange} value={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecione o status" /></SelectTrigger></FormControl><SelectContent>{auctionStatusOptions.map(opt => <SelectItem key={opt} value={opt}>{opt}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem>)} />
-                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione a categoria" searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' createNewUrl="/admin/categories/new" /><FormMessage /></FormItem>)} />
+                    <FormField control={form.control} name="categoryId" render={({ field }) => (<FormItem><FormLabel>Categoria Principal<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialCategories||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione a categoria" searchPlaceholder='Buscar...' emptyStateMessage='Nenhuma categoria.' onAddNew={() => onAddNewEntity?.('category')} /><FormMessage /></FormItem>)} />
                 </div>
             </div>
         );
         case "participantes": return (
              <div className="space-y-4">
-                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' createNewUrl="/admin/auctioneers/new" /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' createNewUrl="/admin/sellers/new" /><FormMessage /></FormItem>)} />
-                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' createNewUrl="/admin/judicial-processes/new" /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
+                 <FormField control={form.control} name="auctioneerId" render={({ field }) => (<FormItem><FormLabel>Leiloeiro<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialAuctioneers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o leiloeiro" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum leiloeiro.' onAddNew={() => onAddNewEntity?.('auctioneer')} /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="sellerId" render={({ field }) => (<FormItem><FormLabel>Comitente/Vendedor<span className="text-destructive">*</span></FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialSellers||[]).map(c=>({value: c.id, label:c.name}))} placeholder="Selecione o comitente" searchPlaceholder='Buscar...' emptyStateMessage='Nenhum comitente.' onAddNew={() => onAddNewEntity?.('seller')} /><FormMessage /></FormItem>)} />
+                 <FormField control={form.control} name="judicialProcessId" render={({ field }) => (<FormItem><FormLabel>Processo Judicial (Opcional)</FormLabel><EntitySelector value={field.value} onChange={field.onChange} options={(initialJudicialProcesses||[]).map(p=>({value: p.id, label:p.processNumber}))} placeholder="Vincule a um processo" searchPlaceholder='Buscar processo...' emptyStateMessage='Nenhum processo.' onAddNew={() => onAddNewEntity?.('judicialProcess')} /><FormDescription>Para bens de origem judicial.</FormDescription></FormItem>)} />
              </div>
         );
         case "modalidade": return (
@@ -211,7 +212,7 @@ const AuctionForm = forwardRef<any, AuctionFormProps>((
             <AddressGroup form={form} allCities={allCities} allStates={initialStates} />
         );
         case "prazos": return (
-            <AuctionStagesTimeline
+            <BidExpertAuctionStagesTimeline
                 stages={watchedAuctionStages || []}
                 isEditable={true}
                 platformSettings={platformSettings}

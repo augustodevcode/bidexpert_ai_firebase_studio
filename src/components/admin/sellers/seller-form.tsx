@@ -87,7 +87,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
     setIsMediaDialogOpen(false);
   };
   
-  async function onSubmit(values: SellerFormValues) {
+   async function onSubmit(values: SellerFormValues) {
     setIsSubmitting(true);
     try {
         const result = await onSubmitAction(values);
@@ -138,8 +138,6 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                                     placeholder="Nenhuma vara judicial vinculada"
                                     searchPlaceholder="Buscar vara..."
                                     emptyStateMessage="Nenhuma vara encontrada."
-                                    createNewUrl="/admin/judicial-branches/new"
-                                    editUrlPrefix="/admin/judicial-branches"
                                     onRefetch={handleRefetchBranches}
                                     isFetching={isFetchingBranches}
                                 />

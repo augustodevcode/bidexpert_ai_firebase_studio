@@ -10,7 +10,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Check, ChevronsUpDown, PlusCircle, Pencil, X, RefreshCw, Loader2, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -45,12 +44,11 @@ interface EntitySelectorProps {
   placeholder: string;
   searchPlaceholder: string;
   emptyStateMessage: string;
-  createNewUrl?: string | null;
+  onAddNew?: () => void;
   editUrlPrefix?: string | null;
   onRefetch?: () => void;
   isFetching?: boolean;
   disabled?: boolean;
-  onAddNew?: () => void;
 }
 
 export default function EntitySelector({
@@ -61,12 +59,11 @@ export default function EntitySelector({
   placeholder,
   searchPlaceholder,
   emptyStateMessage,
-  createNewUrl,
+  onAddNew,
   editUrlPrefix,
   onRefetch,
   isFetching = false,
   disabled = false,
-  onAddNew
 }: EntitySelectorProps) {
   const [isListModalOpen, setIsListModalOpen] = React.useState(false);
 
@@ -83,9 +80,6 @@ export default function EntitySelector({
     setIsListModalOpen(false); // Fecha o modal de lista
     if (onAddNew) {
         onAddNew(); // Chama a função para abrir o formulário de criação
-    } else if (createNewUrl) {
-        // Fallback para abrir em nova aba se onAddNew não for fornecido
-        window.open(createNewUrl, '_blank');
     }
   }
 
@@ -129,7 +123,7 @@ export default function EntitySelector({
                   />
               </div>
               <DialogFooter className="p-4 border-t flex justify-between">
-                  {(createNewUrl || onAddNew) && (
+                  {onAddNew && (
                       <Button variant="secondary" onClick={handleAddNewClick} data-ai-id={`entity-selector-add-new-${entityName}`}>
                           <PlusCircle className="mr-2 h-4 w-4"/>
                           Criar Novo

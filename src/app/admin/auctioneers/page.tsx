@@ -9,7 +9,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctioneers as getAuctioneersAction, deleteAuctioneer, createAuctioneer, updateAuctioneer } from './actions';
+import { getAuctioneers as getAuctioneersAction, deleteAuctioneer, createAuctioneer, updateAuctioneer } from '@/app/admin/auctioneers/actions';
 import type { AuctioneerProfileInfo, PlatformSettings, AuctioneerFormData, StateInfo, CityInfo } from '@/types';
 import { PlusCircle, Landmark } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -18,9 +18,9 @@ import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFram
 import BidExpertCard from '@/components/BidExpertCard';
 import BidExpertListItem from '@/components/BidExpertListItem';
 import { Skeleton } from '@/components/ui/skeleton';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/auctioneers/columns';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import AuctioneerForm from './auctioneer-form';
+import AuctioneerForm from '@/app/admin/auctioneers/auctioneer-form';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 
@@ -119,7 +119,7 @@ export default function AdminAuctioneersPage() {
 
   const renderGridItem = (item: AuctioneerProfileInfo) => <BidExpertCard item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: AuctioneerProfileInfo) => <BidExpertListItem item={item} type="auctioneer" platformSettings={platformSettings!} onUpdate={onUpdate} />;
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
   
   const facetedFilterOptions = useMemo(() => {
       const stateOptions = [...new Set(allAuctioneers.map(s => s.state).filter(Boolean))].map(s => ({ value: s!, label: s! }));
