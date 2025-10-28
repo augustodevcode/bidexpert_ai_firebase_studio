@@ -72,6 +72,7 @@ export async function processPaymentAction(winId: string, paymentData: CheckoutF
             const installmentsToCreate = Array.from({ length: installmentCount }, (_, i) => ({
                 userWinId: winId,
                 installmentNumber: i + 1,
+                totalInstallments: installmentCount,
                 amount: installmentAmount,
                 dueDate: convertSaoPauloToUtc(add(nowInSaoPaulo(), { months: i + 1 })),
                 status: 'PENDENTE' as const
