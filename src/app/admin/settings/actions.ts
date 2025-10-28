@@ -25,7 +25,7 @@ export async function getPlatformSettings(): Promise<PlatformSettings | null> {
 
 export async function updatePlatformSettings(data: Partial<PlatformSettings>): Promise<{ success: boolean; message: string; }> {
     const tenantId = await getTenantIdFromRequest();
-    const result = await settingsService.updateSettings({ ...data, tenantId });
+    const result = await settingsService.updateSettings(tenantId, data);
     
     if (result.success && process.env.NODE_ENV !== 'test' && !process.env.VITEST) {
         revalidatePath('/', 'layout');
