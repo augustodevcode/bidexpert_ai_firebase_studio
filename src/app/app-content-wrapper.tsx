@@ -16,7 +16,8 @@ import { SetupRedirect } from './setup/setup-redirect';
 import type { PlatformSettings } from '@/types';
 import { Loader2 } from 'lucide-react';
 import DevInfoIndicator from '@/components/layout/dev-info-indicator';
-import SubscriptionForm from '@/components/subscription-form'; // Importar o novo componente
+import SubscriptionForm from '@/components/subscription-form'; 
+import { ThemeProvider } from '@/components/theme-provider';
 
 export function AppContentWrapper({ 
   children, 
@@ -37,29 +38,38 @@ export function AppContentWrapper({
   // Determine if the current path is a special dashboard/admin layout
   const isDashboardLayout = pathname.startsWith('/admin') || pathname.startsWith('/dashboard') || pathname.startsWith('/consignor-dashboard');
 
-  return (
-    <>
-      <SetupRedirect isSetupComplete={isSetupComplete} />
-      {isDashboardLayout ? (
-        // For dashboard layouts, render children directly without main header/footer
+  if (isDashboardLayout) {
+    return (
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="system"
+        enableSystem
+        disableTransitionOnChange
+      >
         <div className="flex min-h-screen flex-col bg-muted/40">
           {children}
         </div>
-      ) : (
-        // For public pages, render the full site layout
-        <div className="flex flex-col min-h-screen">
-          <Suspense fallback={<div className="flex items-center justify-center h-24 border-b"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
-              <Header 
-                platformSettings={platformSettings}
-              />
-          </Suspense>
-          <main className="flex-grow container mx-auto px-4 py-8" data-ai-id="main-content">
-            {children}
-          </main>
-          <SubscriptionForm />
-          <Footer />
-        </div>
-      )}
+      </ThemeProvider>
+    );
+  }
+
+  // For public pages, render the full site layout without the ThemeProvider
+  // to enforce the default light theme.
+  return (
+    <>
+      <SetupRedirect isSetupComplete={isSetupComplete} />
+      <div className="flex flex-col min-h-screen">
+        <Suspense fallback={<div className="flex items-center justify-center h-24 border-b"><Loader2 className="h-6 w-6 animate-spin" /></div>}>
+            <Header 
+              platformSettings={platformSettings}
+            />
+        </Suspense>
+        <main className="flex-grow container mx-auto px-4 py-8" data-ai-id="main-content">
+          {children}
+        </main>
+        <SubscriptionForm />
+        <Footer />
+      </div>
     </>
   );
 }

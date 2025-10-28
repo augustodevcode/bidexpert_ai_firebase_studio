@@ -12,6 +12,7 @@ import { featureFlagService } from '@/services/feature-flags.service';
 import AdminSidebar from '@/components/layout/admin-sidebar';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { userProfileWithPermissions, loading } = useAuth();
@@ -59,26 +60,33 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <WidgetPreferencesProvider>
-        <div className="flex min-h-screen bg-secondary">
-          <AdminSidebar />
-          <div className="flex flex-1 flex-col">
-            <AdminHeader 
-                onSearchClick={() => setCommandPaletteOpen(true)} 
-                onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
-            />
-            <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
-              <div className="mx-auto max-w-7xl">
-                {children}
-                <DevInfoIndicator />
-              </div>
-            </main>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <WidgetPreferencesProvider>
+          <div className="flex min-h-screen bg-secondary">
+            <AdminSidebar />
+            <div className="flex flex-1 flex-col">
+              <AdminHeader 
+                  onSearchClick={() => setCommandPaletteOpen(true)} 
+                  onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
+              />
+              <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-y-auto">
+                <div className="mx-auto max-w-7xl">
+                  {children}
+                  <DevInfoIndicator />
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
-        <WidgetConfigurationModal 
-            isOpen={isWidgetConfigModalOpen}
-            onClose={() => setIsWidgetConfigModalOpen(false)}
-        />
-    </WidgetPreferencesProvider>
+          <WidgetConfigurationModal 
+              isOpen={isWidgetConfigModalOpen}
+              onClose={() => setIsWidgetConfigModalOpen(false)}
+          />
+      </WidgetPreferencesProvider>
+    </ThemeProvider>
   );
 }

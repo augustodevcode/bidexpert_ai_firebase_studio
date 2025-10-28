@@ -12,6 +12,7 @@ import AdminHeader from '@/components/layout/admin-header';
 import CommandPalette from '@/components/layout/command-palette';
 import { WidgetPreferencesProvider } from '@/contexts/widget-preferences-context';
 import WidgetConfigurationModal from '@/components/admin/dashboard/WidgetConfigurationModal';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function ConsignorDashboardLayout({
   children,
@@ -71,30 +72,37 @@ export default function ConsignorDashboardLayout({
   }
 
   return (
-     <WidgetPreferencesProvider>
-      <div className="flex min-h-screen bg-secondary">
-        <ConsignorSidebar />
-        <div className="flex flex-1 flex-col">
-           <AdminHeader 
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem
+      disableTransitionOnChange
+    >
+      <WidgetPreferencesProvider>
+        <div className="flex min-h-screen bg-secondary">
+          <ConsignorSidebar />
+          <div className="flex flex-1 flex-col">
+            <AdminHeader 
                 onSearchClick={() => setCommandPaletteOpen(true)} 
                 onSettingsClick={() => setIsWidgetConfigModalOpen(true)}
             />
-          <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto">
-             <div className="mx-auto max-w-7xl">
-                {children}
-                <DevInfoIndicator />
-             </div>
-          </main>
+            <main className="flex-1 p-4 sm:p-6 md:p-8 bg-muted/30 overflow-y-auto">
+              <div className="mx-auto max-w-7xl">
+                  {children}
+                  <DevInfoIndicator />
+              </div>
+            </main>
+          </div>
         </div>
-      </div>
-       <CommandPalette 
-            isOpen={isCommandPaletteOpen}
-            onOpenChange={setCommandPaletteOpen}
-        />
-        <WidgetConfigurationModal 
-            isOpen={isWidgetConfigModalOpen}
-            onClose={() => setIsWidgetConfigModalOpen(false)}
-        />
-    </WidgetPreferencesProvider>
+        <CommandPalette 
+              isOpen={isCommandPaletteOpen}
+              onOpenChange={setCommandPaletteOpen}
+          />
+          <WidgetConfigurationModal 
+              isOpen={isWidgetConfigModalOpen}
+              onClose={() => setIsWidgetConfigModalOpen(false)}
+          />
+      </WidgetPreferencesProvider>
+    </ThemeProvider>
   );
 }
