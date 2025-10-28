@@ -1,4 +1,4 @@
-
+// scripts/seed-data-extended.ts
 /**
  * @fileoverview Script de seed completo e robusto para a plataforma BidExpert.
  * Popula TODAS as tabelas do banco de dados com dados consistentes e interligados,
@@ -49,7 +49,7 @@ import { ContactMessageService } from '../src/services/contact-message.service';
 import { DocumentTemplateService } from '../src/services/document-template.service';
 import { SubscriberService } from '../src/services/subscriber.service';
 import { UserLotMaxBidService } from '../src/services/user-lot-max-bid.service';
-import { DataSourceService } from '@/services/data-source.service';
+import { DataSourceService } from '../src/services/data-source.service';
 
 
 const prisma = new PrismaClient();
@@ -66,7 +66,7 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 
 const slugify = (text: string) => {
   if (!text) return '';
-  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+  return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
 };
 
 // --- Armazenamento de Entidades Criadas ---
@@ -150,6 +150,7 @@ const services = {
   documentTemplate: new DocumentTemplateService(),
   subscriber: new SubscriberService(),
   userLotMaxBid: new UserLotMaxBidService(),
+  dataSource: new DataSourceService(),
 };
 
 // --- Constantes de Geração ---
@@ -199,8 +200,6 @@ async function main() {
     logSummary();
     
     console.log('\n🎉 Dataset maior gerado com sucesso!');
-    console.log('Para verificar se os requisitos foram atendidos, execute:');
-    console.log('npx tsx scripts/verify-requirements.ts');
   } catch (error) {
     console.error('\n❌ Ocorreu um erro catastrófico durante o processo de seeding:');
     console.error(error);
@@ -214,7 +213,6 @@ async function cleanupPreviousData() {
     log('Fase 0: Limpando dados antigos...', 0);
     // A ordem de exclusão é crucial para evitar erros de constraint de chave estrangeira.
     
-    // 1. Entidades que têm muitas dependências de outras.
     await services.installmentPayment.deleteMany({});
     await services.userWin.deleteAllUserWins();
     await services.bid.deleteMany({});
@@ -225,30 +223,27 @@ async function cleanupPreviousData() {
     await services.contactMessage.deleteAllContactMessages();
     await services.subscriber.deleteMany({});
 
-    // 2. Entidades de junção ou que dependem diretamente de 'principais'.
     await services.asset.deleteManyAssetsOnLots({});
     await services.document.deleteAllUserDocuments();
     await services.auctionStage.deleteMany({});
     
-    // 3. Entidades principais
-    await services.lot.deleteAllLots();
-    await services.auction.deleteAllAuctions(entityStore.tenantId);
+    await prisma.lot.deleteMany({}); // Delete lots directly after dependencies
+    await prisma.auction.deleteMany({}); // Delete auctions directly
+    
     await services.asset.deleteAllAssets(entityStore.tenantId);
-    await services.directSaleOffer.deleteMany({});
+    await services.directSaleOffer.deleteMany({where: {}});
 
-    // 4. Entidades de participantes
-    await services.judicialProcess.deleteAllJudicialProcesses(entityStore.tenantId); // Deleta processos e suas partes
+    await services.judicialProcess.deleteAllJudicialProcesses(entityStore.tenantId);
     await services.seller.deleteAllSellers(entityStore.tenantId);
     await services.auctioneer.deleteAllAuctioneers(entityStore.tenantId);
     
-    // 5. Configurações e usuários
     await prisma.usersOnRoles.deleteMany({});
     await prisma.usersOnTenants.deleteMany({});
     await services.user.deleteAllUsers();
+    
     await prisma.platformSettings.deleteMany({});
     await services.tenant.deleteMany({ where: { id: { not: BigInt(1) } } }); // Não deletar o landlord tenant
 
-    // 6. Entidades de catálogo e configuração global
     await services.vehicleModel.deleteMany({});
     await services.vehicleMake.deleteMany({});
     await services.subcategory.deleteAllSubcategories();
@@ -259,7 +254,7 @@ async function cleanupPreviousData() {
     await services.media.deleteAllMediaItems();
     await services.documentTemplate.deleteAllDocumentTemplates();
     await prisma.documentType.deleteMany({});
-    await prisma.dataSource.deleteMany({});
+    await services.dataSource.deleteAll();
     await services.city.deleteAllCities();
     await services.state.deleteAllStates();
     
@@ -269,32 +264,18 @@ async function cleanupPreviousData() {
 async function seedCoreInfra() {
   log('Fase 1: Infraestrutura Core (Tenant, Roles, Admin, Configs)...', 0);
 
-  // 1. Create Tenant
   const tenantResult = await services.tenant.createTenant({ name: 'BidExpert Platform', subdomain: 'bidexpert' });
   if (!tenantResult.success || !tenantResult.tenant) throw new Error(tenantResult.message);
   entityStore.tenantId = tenantResult.tenant.id.toString();
   log(`Tenant "${tenantResult.tenant.name}" criado.`, 1);
 
-  // 2. Create Platform Settings
-  try {
-    await prisma.platformSettings.create({
-      data: {
-        tenantId: BigInt(entityStore.tenantId),
-        siteTitle: 'BidExpert',
-        siteTagline: 'Sua plataforma de leilões online.',
-        isSetupComplete: true,
-      },
-    });
-    log('Configurações padrão da plataforma criadas.', 1);
-  } catch (e: any) {
-    if (e.code === 'P2002') {
-      log('Configurações da plataforma já existem, ignorando criação.', 1);
-    } else {
-      throw e;
-    }
-  }
-
-  // 3. Create Roles
+  await services.platformSettings.updateSettings(entityStore.tenantId, {
+    siteTitle: 'BidExpert',
+    siteTagline: 'Sua plataforma de leilões online.',
+    isSetupComplete: true,
+  });
+  log('Configurações padrão da plataforma criadas/atualizadas.', 1);
+  
   const roleNames = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN', 'FINANCIAL', 'CONSIGNOR', 'AUCTIONEER'];
   const allRoles = await prisma.role.findMany();
   const roleMap = new Map<string, bigint>(allRoles.map(r => [r.nameNormalized, r.id]));
@@ -308,18 +289,17 @@ async function seedCoreInfra() {
   entityStore.roles = Object.fromEntries(roleMap);
   log(`${roleNames.length} perfis (Roles) garantidos.`, 1);
 
-  // 4. Create Admin User & Test Users
   const usersToSeed = [
-    { email: 'admin@bidexpert.com.br', password: 'Admin@123', fullName: 'Administrador Global', roleName: 'ADMIN', habilitationStatus: UserHabilitationStatus.HABILITADO },
-    { email: 'bidder@bidexpert.com.br', password: 'senha@123', fullName: 'Arrematante de Teste', roleName: 'BIDDER', habilitationStatus: UserHabilitationStatus.HABILITADO },
-    { email: 'comit@bidexpert.com.br', password: 'senha@123', fullName: 'Comitente de Teste', roleName: 'CONSIGNOR', habilitationStatus: UserHabilitationStatus.HABILITADO },
-    { email: 'leilo@bidexpert.com.br', password: 'senha@123', fullName: 'Leiloeiro de Teste', roleName: 'AUCTIONEER', habilitationStatus: UserHabilitationStatus.HABILITADO },
+    { email: 'admin@bidexpert.com.br', password: 'Admin@123', fullName: 'Administrador Global', roleNames: ['ADMIN', 'USER'], habilitationStatus: UserHabilitationStatus.HABILITADO },
+    { email: 'bidder@bidexpert.com.br', password: 'senha@123', fullName: 'Arrematante de Teste', roleNames: ['BIDDER', 'USER'], habilitationStatus: UserHabilitationStatus.HABILITADO },
+    { email: 'comit@bidexpert.com.br', password: 'senha@123', fullName: 'Comitente de Teste', roleNames: ['CONSIGNOR', 'USER'], habilitationStatus: UserHabilitationStatus.HABILITADO },
+    { email: 'leilo@bidexpert.com.br', password: 'senha@123', fullName: 'Leiloeiro de Teste', roleNames: ['AUCTIONEER', 'USER'], habilitationStatus: UserHabilitationStatus.HABILITADO },
   ];
 
   for (const userData of usersToSeed) {
-    const roleId = entityStore.roles[userData.roleName];
-    if (!roleId) {
-        throw new Error(`Perfil (Role) '${userData.roleName}' não foi encontrado no mapa de perfis.`);
+    const roleIds = userData.roleNames.map(rn => entityStore.roles[rn]).filter(Boolean);
+    if (roleIds.length !== userData.roleNames.length) {
+        throw new Error(`Um ou mais perfis para o usuário ${userData.email} não foram encontrados.`);
     }
 
     const userResult = await services.user.createUser({
@@ -328,35 +308,32 @@ async function seedCoreInfra() {
       fullName: userData.fullName,
       habilitationStatus: userData.habilitationStatus,
       accountType: 'PHYSICAL',
-      roleIds: [roleId],
-      tenantId: BigInt(entityStore.tenantId),
+      roleIds: roleIds.map(id => id.toString()),
+      tenantId: entityStore.tenantId,
     });
 
-    if (!userResult.success || !userResult.userId) {
+    if (!userResult.success) {
         const existing = await services.user.findUserByEmail(userData.email);
         if (existing) {
             log(`Usuário ${userData.email} já existe. Ignorando criação.`, 2);
-            const user = await services.user.getUserById(existing.id);
-            if(user) entityStore.users.push({ ...user, roleNames: [userData.roleName] } as any);
+            entityStore.users.push({ ...existing, roleNames: userData.roleNames } as any);
         } else {
              throw new Error(`Falha ao criar usuário ${userData.email}: ${userResult.message}`);
         }
     } else {
-        const user = await services.user.getUserById(userResult.userId);
+        const user = await services.user.getUserById(userResult.userId!);
         if (!user) throw new Error('Falha ao buscar usuário recém-criado.');
-        entityStore.users.push({ ...user, roleNames: [userData.roleName] } as any);
-        log(`Usuário ${userData.roleName} criado: ${user.email}`, 1);
+        entityStore.users.push({ ...user, roleNames: userData.roleNames } as any);
+        log(`Usuário ${userData.roleNames.join(', ')} criado: ${user.email}`, 1);
     }
   }
 
-
-  // 5. Create Document Types
   const docTypes = [
-    { name: 'CPF', description: 'Cadastro de Pessoa Física', isRequired: true, appliesTo: 'PHYSICAL' },
-    { name: 'RG', description: 'Registro Geral', isRequired: true, appliesTo: 'PHYSICAL' },
-    { name: 'Comprovante de Residência', description: 'Comprovante de endereço', isRequired: true, appliesTo: 'PHYSICAL,LEGAL' },
-    { name: 'CNPJ', description: 'Cadastro Nacional de Pessoa Jurídica', isRequired: true, appliesTo: 'LEGAL' },
-    { name: 'Contrato Social', description: 'Contrato social da empresa', isRequired: true, appliesTo: 'LEGAL' },
+    { name: 'CPF', description: 'Cadastro de Pessoa Física', isRequired: true, appliesTo: 'PHYSICAL,ALL' },
+    { name: 'RG', description: 'Registro Geral', isRequired: true, appliesTo: 'PHYSICAL,ALL' },
+    { name: 'Comprovante de Residência', description: 'Comprovante de endereço', isRequired: true, appliesTo: 'PHYSICAL,LEGAL,ALL' },
+    { name: 'CNPJ', description: 'Cadastro Nacional de Pessoa Jurídica', isRequired: true, appliesTo: 'LEGAL,ALL' },
+    { name: 'Contrato Social', description: 'Contrato social da empresa', isRequired: true, appliesTo: 'LEGAL,ALL' },
   ];
   for (const docType of docTypes) {
     const created = await services.documentType.upsertDocumentType(docType as any);
@@ -379,9 +356,7 @@ async function seedMedia() {
             {
                 fileName: fileName,
                 mimeType: `image/${path.extname(fileName).substring(1)}`,
-                sizeBytes: fs.statSync(path.join(IMAGE_PLACEHOLDER_DIR, fileName)).size,
                 storagePath: url,
-                urlOriginal: url,
                 title: faker.commerce.productName(),
             },
             url, 
@@ -400,16 +375,11 @@ async function seedMedia() {
 async function seedCategoriesAndVehicles() {
     log('Fase 3: Categorias, Subcategorias e Veículos...', 0);
     const categoryData: Record<string, string[]> = {
-      'Imóveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais', 'Galpões', 'Fazendas', 'Sítios', 'Chácaras', 'Lotes', 'Coberturas'],
-      'Veículos': ['Carros', 'Motos', 'Caminhões', 'Ônibus', 'Vans', 'Maquinário Pesado', 'Tratores', 'Empilhadeiras', 'Motoniveladoras', 'Escavadeiras'],
-      'Eletrônicos': ['Celulares', 'Notebooks', 'TVs', 'Câmeras', 'Videogames', 'Tablets', 'Fones de Ouvido', 'Smartwatches', 'Consoles', 'Acessórios'],
-      'Arte e Antiguidades': ['Pinturas', 'Esculturas', 'Móveis Antigos', 'Itens de Colecionador', 'Joias', 'Relíquias', 'Armas Antigas', 'Livros Raros', 'Manuscritos', 'Cerâmicas'],
-      'Maquinário Industrial': ['Tornos', 'Prensas', 'Geradores', 'Compressores', 'Bombas', 'Caldeiras', 'Transformadores', 'Extrusoras', 'Misturadores', 'Lavadoras'],
-      'Diversos': ['Materiais de Escritório', 'Saldos de Estoque', 'Direitos Creditórios', 'Equipamentos Médicos', 'Ferramentas', 'Materiais de Construção', 'Produtos Agrícolas', 'Equipamentos Esportivos', 'Instrumentos Musicais', 'Brinquedos'],
-      'Roupas e Acessórios': ['Roupas Masculinas', 'Roupas Femininas', 'Calçados', 'Bolsas', 'Acessórios', 'Roupas Infantis', 'Roupas Esportivas', 'Lingerie', 'Moda Íntima', 'Moda Praia'],
-      'Alimentos e Bebidas': ['Produtos Perecíveis', 'Bebidas Alcoólicas', 'Vinhos', 'Licores', 'Cafés Especiais', 'Chás Finos', 'Suplementos', 'Orgânicos', 'Gourmet', 'Doces Artesanais'],
-      'Serviços': ['Serviços de Consultoria', 'Serviços Técnicos', 'Serviços de Manutenção', 'Licenças de Software', 'Franquias', 'Direitos de Marca', 'Patentes', 'Serviços de Marketing', 'Serviços Jurídicos', 'Serviços de TI'],
-      'Animais e Derivados': ['Gado de Corte', 'Gado Leiteiro', 'Animais de Estimação', 'Animais Exóticos', 'Produtos Veterinários', 'Sêmen Animal', 'Ovos Fertilizados', 'Rações', 'Equipamentos para Pecuária', 'Produtos Apícolas'],
+      'Imóveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais'],
+      'Veículos': ['Carros', 'Motos', 'Caminhões', 'Ônibus'],
+      'Eletrônicos': ['Celulares', 'Notebooks', 'TVs', 'Câmeras'],
+      'Arte e Antiguidades': ['Pinturas', 'Esculturas', 'Móveis Antigos'],
+      'Maquinário Industrial': ['Tornos', 'Prensas', 'Geradores'],
     };
 
     for (const catName in categoryData) {
@@ -420,7 +390,6 @@ async function seedCategoriesAndVehicles() {
                     name: subcatName, 
                     parentCategoryId: catResult.category.id,
                     description: `Subcategoria de ${subcatName}`,
-                    displayOrder: faker.number.int({ min: 0, max: 10 }),
                 });
             }
             const fullCategory = await prisma.lotCategory.findUnique({ where: { id: catResult.category.id }, include: { subcategories: true } });
@@ -445,26 +414,20 @@ async function seedCategoriesAndVehicles() {
                 entityStore.vehicleMakes.push(make);
                 const models = vehicleData[makeName];
                 for (const modelName of models) {
-                    const modelResult = await services.vehicleModel.createVehicleModel({ name: modelName, makeId: makeResult.makeId });
-                    if (modelResult.success && modelResult.modelId) {
-                        const model = await prisma.vehicleModel.findUnique({ where: { id: modelResult.modelId } });
-                        if (model) {
-                            entityStore.vehicleModels.push(model);
-                        }
-                    }
+                    await services.vehicleModel.createVehicleModel({ name: modelName, makeId: makeResult.makeId });
                 }
             }
         }
     }
-    log(`${entityStore.vehicleMakes.length} marcas e ${entityStore.vehicleModels.length} modelos de veículos criados.`, 1);
+    log(`${entityStore.vehicleMakes.length} marcas e modelos de veículos criados.`, 1);
 }
 
 async function seedLocations() {
     log('Fase 4: Localizações (Estados e Cidades)...', 0);
     const locations = [
-      { "nome": "São Paulo", "sigla": "SP", "cidades": [ "São Paulo", "Guarulhos", "Campinas", "São Bernardo do Campo", "Santo André" ] },
-      { "nome": "Rio de Janeiro", "sigla": "RJ", "cidades": [ "Rio de Janeiro", "São Gonçalo", "Duque de Caxias", "Nova Iguaçu" ] },
-      { "nome": "Minas Gerais", "sigla": "MG", "cidades": [ "Belo Horizonte", "Uberlândia", "Contagem", "Juiz de Fora" ] }
+      { "nome": "São Paulo", "sigla": "SP", "cidades": [ "São Paulo", "Guarulhos", "Campinas" ] },
+      { "nome": "Rio de Janeiro", "sigla": "RJ", "cidades": [ "Rio de Janeiro", "São Gonçalo", "Duque de Caxias" ] },
+      { "nome": "Minas Gerais", "sigla": "MG", "cidades": [ "Belo Horizonte", "Uberlândia", "Contagem" ] }
     ];
     
     for (const stateData of locations) {
@@ -474,18 +437,12 @@ async function seedLocations() {
             if (createdState) {
                 entityStore.states.push(createdState);
                 for (const cityName of stateData.cidades) {
-                    const cityResult = await services.city.createCity({ name: cityName, stateId: createdState.id, ibgeCode: faker.string.numeric(7) });
-                    if (cityResult.success && cityResult.cityId) {
-                        const createdCity = await prisma.city.findUnique({ where: { id: cityResult.cityId } });
-                        if (createdCity) {
-                            entityStore.cities.push(createdCity);
-                        }
-                    }
+                    await services.city.createCity({ name: cityName, stateId: createdState.id });
                 }
             }
         }
     }
-    log(`${entityStore.states.length} estados e ${entityStore.cities.length} cidades criados.`, 1);
+    log(`${entityStore.states.length} estados e suas cidades criados.`, 1);
 }
 
 async function seedJudicialInfra() {
@@ -533,28 +490,20 @@ async function seedParticipants() {
     log('Fase 6: Participantes (Leiloeiros, Vendedores, Arrematantes)...', 0);
     
     for (let i = 0; i < TOTAL_AUCTIONEERS; i++) {
-        const result = await services.auctioneer.createAuctioneer(entityStore.tenantId.toString(), {
-          name: `Leiloeiro Oficial ${i + 1}`, email: faker.internet.email(), 
-        } as any);
-        if (result.success && result.auctioneerId) {
-            const auctioneer = await prisma.auctioneer.findUnique({ where: { id: result.auctioneerId } });
-            if (auctioneer) entityStore.auctioneers.push(auctioneer);
-        }
+        await services.auctioneer.createAuctioneer(entityStore.tenantId, { name: `Leiloeiro Oficial ${i + 1}`, email: faker.internet.email() } as any);
     }
+    entityStore.auctioneers = await services.auctioneer.getAuctioneers(entityStore.tenantId);
     log(`${entityStore.auctioneers.length} leiloeiros criados.`, 1);
 
     for (let i = 0; i < TOTAL_SELLERS; i++) {
         const isJudicial = i % 4 === 0;
-        const result = await services.seller.createSeller(entityStore.tenantId.toString(), {
+        await services.seller.createSeller(entityStore.tenantId, {
             name: isJudicial ? `Massa Falida ${faker.company.name()}` : faker.company.name(),
             isJudicial,
             judicialBranchId: isJudicial ? faker.helpers.arrayElement(entityStore.judicialBranches).id : undefined,
         } as any);
-        if (result.success && result.sellerId) {
-             const seller = await prisma.seller.findUnique({ where: { id: result.sellerId } });
-             if (seller) entityStore.sellers.push(seller);
-        }
     }
+    entityStore.sellers = await services.seller.getSellers(entityStore.tenantId);
     log(`${entityStore.sellers.length} vendedores criados.`, 1);
     
     await seedJudicialProcesses();
@@ -564,16 +513,14 @@ async function seedParticipants() {
         const email = `arrematante${i}@bidexpert.com`;
         const habilitationStatus = userStatuses[i % userStatuses.length];
         const accountType = i % 3 === 0 ? 'LEGAL' : 'PHYSICAL';
-        const userResult = await services.user.createUser({
+        await services.user.createUser({
             email, password: 'bidder123', fullName: faker.person.fullName(), habilitationStatus, accountType,
-            roleIds: [entityStore.roles.BIDDER, entityStore.roles.USER],
-            tenantId: BigInt(entityStore.tenantId),
+            roleIds: [entityStore.roles.BIDDER.toString(), entityStore.roles.USER.toString()],
+            tenantId: entityStore.tenantId,
         });
-        if (userResult.success && userResult.userId) {
-            const user = await services.user.getUserById(userResult.userId);
-            if(user) entityStore.users.push({ ...user, roleNames: ['BIDDER', 'USER'] } as any);
-        }
     }
+    const allUsers = await services.user.getUsers();
+    entityStore.users = [...entityStore.users, ...allUsers.filter(u => u.email.startsWith('arrematante'))] as any[];
     log(`${TOTAL_USERS} usuários (arrematantes) criados.`, 1);
     await seedUserDocuments();
 }
@@ -606,14 +553,14 @@ async function seedJudicialProcesses() {
     if (judicialSellers.length === 0) return;
 
     for (const seller of judicialSellers) {
-        const processResult = await services.judicialProcess.createJudicialProcess(entityStore.tenantId.toString(), {
+        const processResult = await services.judicialProcess.createJudicialProcess(entityStore.tenantId, {
             processNumber: `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${faker.date.past({years: 5}).getFullYear()}.${faker.string.numeric(1)}.${faker.string.numeric(2)}.${faker.string.numeric(4)}`,
-            sellerId: seller.id,
-            branchId: seller.judicialBranchId,
+            sellerId: seller.id.toString(),
+            branchId: seller.judicialBranchId?.toString(),
             parties: [ { name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR }, { name: faker.company.name(), partyType: ProcessPartyType.REU } ]
         } as any);
         if (processResult.success && processResult.processId) {
-            const process = await prisma.judicialProcess.findUnique({where: { id: processResult.processId }});
+            const process = await prisma.judicialProcess.findUnique({where: { id: BigInt(processResult.processId) }});
             if (process) entityStore.judicialProcesses.push(process);
         }
     }
@@ -627,19 +574,16 @@ async function seedAssets() {
         const subcategory = faker.helpers.arrayElement(category.subcategories);
         const seller = faker.helpers.arrayElement(entityStore.sellers);
         
-        const result = await services.asset.createAsset(entityStore.tenantId.toString(), {
+        await services.asset.createAsset(entityStore.tenantId, {
             title: `${faker.commerce.productName()} (Asset ${i})`,
             status: AssetStatus.DISPONIVEL,
             evaluationValue: faker.number.int({ min: 500, max: 250000 }),
-            categoryId: category.id,
-            subcategoryId: subcategory.id,
-            sellerId: seller.id,
+            categoryId: category.id.toString(),
+            subcategoryId: subcategory?.id.toString(),
+            sellerId: seller.id.toString(),
         } as any);
-        if (result.success && result.assetId) {
-            const asset = await prisma.asset.findUnique({ where: { id: result.assetId } });
-            if (asset) entityStore.assets.push(asset);
-        }
     }
+    entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId });
     log(`${entityStore.assets.length} ativos criados.`, 1);
 }
 
@@ -651,35 +595,35 @@ async function seedAuctionsAndLots() {
         const status = randomEnum(AuctionStatus);
         const auctionDate = status === 'EM_BREVE' ? faker.date.soon({ days: 15 }) : faker.date.recent({ days: 10 });
 
-        const auctionResult = await services.auction.createAuction(entityStore.tenantId.toString(), {
+        const auctionResult = await services.auction.createAuction(entityStore.tenantId, {
             title: `Leilão ${auctionType} #${i + 1}`,
             status, auctionType,
-            auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers).id,
-            sellerId: seller.id,
+            auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers).id.toString(),
+            sellerId: seller.id.toString(),
             auctionStages: [ { name: '1ª Praça', startDate: auctionDate, endDate: new Date(auctionDate.getTime() + 3 * 24 * 60 * 60 * 1000) } ]
         } as any);
 
         if (!auctionResult.success || !auctionResult.auctionId) continue;
         
         const numLots = status === 'RASCUNHO' ? 0 : faker.number.int({ min: 1, max: MAX_LOTS_PER_AUCTION });
-        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id);
+        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id.toString());
 
         for (let j = 0; j < numLots; j++) {
             const assetsForLot = faker.helpers.arrayElements(availableAssets, { min: 1, max: MAX_ASSETS_PER_LOT });
             if (assetsForLot.length === 0) continue;
-            assetsForLot.forEach(a => a.status = AssetStatus.LOTEADO);
+            assetsForLot.forEach(a => { a.status = AssetStatus.LOTEADO });
 
             const lotResult = await services.lot.createLot({
                 title: faker.commerce.productName(),
                 auctionId: auctionResult.auctionId,
                 assetIds: assetsForLot.map(a => a.id.toString()),
-            }, entityStore.tenantId.toString(), entityStore.users[0].id.toString());
+            }, entityStore.tenantId, entityStore.users[0].id.toString());
             if(lotResult.success && lotResult.lotId) {
-                const lot = await prisma.lot.findUnique({where: {id: lotResult.lotId}});
+                const lot = await prisma.lot.findUnique({where: {id: BigInt(lotResult.lotId)}});
                 if(lot) entityStore.lots.push(lot);
             }
         }
-        const auction = await prisma.auction.findUnique({ where: { id: auctionResult.auctionId }, include: { stages: true } });
+        const auction = await prisma.auction.findUnique({ where: { id: BigInt(auctionResult.auctionId) }, include: { stages: true } });
         if (auction) {
             entityStore.auctions.push(auction);
             await seedAuctionHabilitations(auction.id.toString());
@@ -696,7 +640,7 @@ async function seedAuctionHabilitations(auctionId: string) {
         await prisma.auctionHabilitation.create({
             data: {
                 auctionId: BigInt(auctionId),
-                userId: user.id,
+                userId: BigInt(user.id),
             }
         });
     }
@@ -705,7 +649,7 @@ async function seedAuctionHabilitations(auctionId: string) {
 async function seedInteractions() {
     log('Fase 9: Interações (Lances, Arremates, Pagamentos)...', 0);
     const lotsForBidding = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
-    const bidderUsers = entityStore.users.filter(u => u.habilitationStatus === UserHabilitationStatus.HABILITADO);
+    const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
     if (lotsForBidding.length === 0 || bidderUsers.length < 2) return;
 
@@ -741,7 +685,7 @@ async function seedInteractions() {
                 
                 const paymentResult = await services.installmentPayment.createInstallmentsForWin(winResult as any, faker.number.int({ min: 1, max: 6 }));
                 if (paymentResult.success) {
-                    await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
+                    await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id.toString(), PaymentStatus.PAGO);
                 }
             }
         }
@@ -753,7 +697,7 @@ async function seedInteractions() {
 async function seedUserLotMaxBids() {
     log('Fase 9a: Lances Máximos de Usuários (Auto-Lances)...', 0);
     const lotsWithBids = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
-    const habilitatedUsers = entityStore.users.filter(u => u.habilitationStatus === UserHabilitationStatus.HABILITADO);
+    const habilitatedUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
     if (lotsWithBids.length === 0 || habilitatedUsers.length === 0) return;
 
@@ -761,7 +705,7 @@ async function seedUserLotMaxBids() {
         if (faker.datatype.boolean(0.3)) {
             const user = faker.helpers.arrayElement(habilitatedUsers);
             await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-                userId: user.id, lotId: lot.id, maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
+                userId: BigInt(user.id), lotId: BigInt(lot.id), maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
             });
         }
     }
@@ -769,15 +713,15 @@ async function seedUserLotMaxBids() {
 
 async function seedPostAuctionInteractions() {
     log('Fase 10: Interações Pós-Leilão (Perguntas, Avaliações)...', 0);
-    const users = entityStore.users.filter(u => u.habilitationStatus === UserHabilitationStatus.HABILITADO);
+    const users = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
     if (users.length === 0) return;
 
     for (const lot of entityStore.lots) {
         if (faker.datatype.boolean(0.2)) {
             const questionResult = await services.lotQuestion.create({
-                lotId: lot.id, userId: faker.helpers.arrayElement(users).id, userDisplayName: faker.person.fullName(), questionText: faker.lorem.sentence() + '?',
+                lotId: lot.id.toString(), userId: faker.helpers.arrayElement(users).id.toString(), userDisplayName: faker.person.fullName(), questionText: faker.lorem.sentence() + '?',
             });
-            await services.lotQuestion.addAnswer(questionResult.id, faker.lorem.sentence());
+            await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
         }
     }
     log(`Perguntas e respostas criadas.`, 1);
@@ -788,7 +732,7 @@ async function seedPostAuctionInteractions() {
             const lot = await prisma.lot.findUnique({ where: { id: win.lotId } });
             if (lot) {
                 await services.review.create({
-                    lotId: win.lotId, auctionId: lot.auctionId, userId: win.userId, userDisplayName: user?.fullName || 'Avaliador',
+                    lotId: win.lotId.toString(), auctionId: lot.auctionId.toString(), userId: win.userId.toString(), userDisplayName: user?.fullName || 'Avaliador',
                     rating: faker.number.int({ min: 3, max: 5 }), comment: faker.lorem.paragraph(),
                 });
             }
@@ -808,37 +752,31 @@ async function seedDirectSaleOffers() {
           status: randomEnum(DirectSaleOfferStatus),
           offerType: randomEnum(DirectSaleOfferType),
           price: faker.number.int({ min: 1000, max: 50000 }),
-          categoryId: category.id,
-          sellerId: seller.id,
+          categoryId: category.id.toString(),
+          sellerId: seller.id.toString(),
         } as any);
     }
 }
 
 async function seedMiscData() {
     log('Fase 11: Dados Diversos (Mensagens, Notificações, Assinantes, etc)...', 0);
-    await seedNotifications();
-    await seedSubscribers();
-}
+    await services.notification.deleteMany({});
+    await services.subscriber.deleteMany({});
 
-async function seedSubscribers() {
-    log('Fase 11c: Assinantes...', 0);
+    const usersWithNotifications = faker.helpers.arrayElements(entityStore.users, { min: 10, max: 30 });
+    for (const user of usersWithNotifications) {
+        await services.notification.createNotification({
+            userId: BigInt(user.id),
+            message: faker.lorem.sentence(),
+            link: faker.internet.url(),
+            tenantId: BigInt(entityStore.tenantId),
+        });
+    }
+
     for (let i = 0; i < 50; i++) {
         await services.subscriber.createSubscriber({
             email: faker.internet.email(),
             name: faker.person.fullName(),
-        });
-    }
-}
-
-async function seedNotifications() {
-    log('Fase 11b: Notificações...', 0);
-    const usersWithNotifications = faker.helpers.arrayElements(entityStore.users, { min: 10, max: 30 });
-    for (const user of usersWithNotifications) {
-        await services.notification.createNotification({
-            userId: user.id,
-            message: faker.lorem.sentence(),
-            link: faker.internet.url(),
-            tenantId: BigInt(entityStore.tenantId),
         });
     }
 }
@@ -867,4 +805,3 @@ async function logSummary() {
 }
 
 main();
-
