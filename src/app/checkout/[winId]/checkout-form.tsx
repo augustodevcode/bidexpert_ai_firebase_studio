@@ -39,7 +39,7 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
       paymentMethod: 'credit_card',
-      installments: 1,
+      installments: 2, // Default to 2 installments
       cardDetails: {
         cardholderName: '',
         cardNumber: '',
@@ -53,14 +53,16 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
   const installmentCount = useWatch({ control: form.control, name: 'installments' }) || 1;
   
   const installmentAmount = React.useMemo(() => {
-    if (installmentCount > 1) {
-      // Simulate 1.5% interest per month for installments > 1
-      const interestRate = 0.015;
-      const totalWithInterest = totalAmount * (1 + (interestRate * installmentCount));
+    if (paymentMethod === 'installments' && installmentCount > 1) {
+      // Simula juros simples de 1.5% ao mês sobre o total para o parcelamento
+      const interestRatePerMonth = 0.015;
+      const totalWithInterest = totalAmount * (1 + (interestRatePerMonth * installmentCount));
       return totalWithInterest / installmentCount;
     }
     return totalAmount;
-  }, [totalAmount, installmentCount]);
+  }, [totalAmount, installmentCount, paymentMethod]);
+  
+  const totalPayable = paymentMethod === 'installments' ? installmentAmount * installmentCount : totalAmount;
 
   async function onSubmit(values: CheckoutFormValues) {
     setIsLoading(true);
@@ -151,11 +153,13 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                                     </FormControl>
                                     <SelectContent>
                                     {[2,3,4,5,6,7,8,9,10,11,12].map(i => (
-                                        <SelectItem key={i} value={String(i)}>{i}x de {`R$ ${(totalAmount / i).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`}</SelectItem>
+                                        <SelectItem key={i} value={String(i)}>
+                                            {i}x de R$ {((totalAmount * (1 + 0.015 * i)) / i).toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                                        </SelectItem>
                                     ))}
                                     </SelectContent>
                                 </Select>
-                                <FormDescription>O valor das parcelas pode incluir juros.</FormDescription>
+                                <FormDescription>O valor das parcelas inclui juros de 1.5% ao mês.</FormDescription>
                                 <FormMessage />
                                 </FormItem>
                             )}
@@ -164,9 +168,14 @@ export default function CheckoutForm({ winId, totalAmount }: CheckoutFormProps) 
                 )}
             </CardContent>
             <CardFooter className="flex-col gap-4">
+                <div className="text-center text-sm w-full">
+                  <p>Total a ser pago:</p>
+                  <p className="text-2xl font-bold">R$ {totalPayable.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</p>
+                  {paymentMethod === 'installments' && <p className="text-xs text-muted-foreground">({installmentCount}x de R$ {installmentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})</p>}
+                </div>
                 <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                     {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
-                    {isLoading ? 'Processando...' : `Confirmar Pagamento (${installmentCount}x de R$ ${installmentAmount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })})`}
+                    {isLoading ? 'Processando...' : `Confirmar Pagamento`}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">Transação segura e criptografada.</p>
             </CardFooter>

@@ -14,8 +14,10 @@ import { checkoutFormSchema, type CheckoutFormValues } from './checkout-form-sch
 import { add } from 'date-fns';
 import { nowInSaoPaulo, convertSaoPauloToUtc } from '@/lib/timezone';
 import { UserWinService } from '@/services/user-win.service';
+import { InstallmentPaymentService } from '@/services/installment-payment.service';
 
 const winService = new UserWinService();
+const installmentService = new InstallmentPaymentService();
 
 /**
  * Fetches the details for a specific user win to display on the checkout page.
@@ -65,28 +67,16 @@ export async function processPaymentAction(winId: string, paymentData: CheckoutF
         
         if (paymentData.paymentMethod === 'installments') {
             const installmentCount = paymentData.installments || 1;
-            const interestRate = 0.015; // Simulate interest for installments
-            const totalWithInterest = Number(win.winningBidAmount) * (1 + (interestRate * installmentCount));
-            const installmentAmount = totalWithInterest / installmentCount;
+            if (installmentCount <= 1) {
+                return { success: false, message: "Para parcelamento, selecione 2 ou mais parcelas."};
+            }
             
-            const installmentsToCreate = Array.from({ length: installmentCount }, (_, i) => ({
-                userWinId: winId,
-                installmentNumber: i + 1,
-                totalInstallments: installmentCount,
-                amount: installmentAmount,
-                dueDate: convertSaoPauloToUtc(add(nowInSaoPaulo(), { months: i + 1 })),
-                status: 'PENDENTE' as const
-            }));
+            await installmentService.createInstallmentsForWin(win, installmentCount);
             
-            await prisma.$transaction([
-                prisma.installmentPayment.createMany({
-                    data: installmentsToCreate,
-                }),
-                prisma.userWin.update({
-                    where: { id: winId },
-                    data: { paymentStatus: 'PROCESSANDO' } 
-                })
-            ]);
+            await prisma.userWin.update({
+                where: { id: winId },
+                data: { paymentStatus: 'PROCESSANDO' } // 'PROCESSANDO' indica que está em andamento (parcelado)
+            });
             
             revalidatePath(`/dashboard/wins`);
             revalidatePath(`/checkout/${winId}`);
