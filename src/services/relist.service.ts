@@ -34,7 +34,7 @@ export class RelistService {
           return { success: false, message: 'Apenas lotes não vendidos ou encerrados sem venda podem ser relistados.'};
       }
       
-      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, ...restOfLotData } = originalLot;
+      const { id, publicId, status, auction, auctionId, createdAt, updatedAt, bidsCount, views, winnerId, winningBidTermUrl, originalLotId: oldOriginalId, ...restOfLotData } = originalLot;
 
       const newLotData: Partial<Lot> = {
           ...restOfLotData,
@@ -62,7 +62,7 @@ export class RelistService {
       }
       
       // Create the new lot
-      const createResult = await this.lotService.createLot(newLotData, originalLot.tenantId);
+      const createResult = await this.lotService.createLot(newLotData, originalLot.tenantId.toString());
 
       if (!createResult.success) {
           return createResult;

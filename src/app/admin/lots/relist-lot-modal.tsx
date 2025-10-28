@@ -57,7 +57,7 @@ export default function RelistLotModal({ isOpen, onClose, originalLot, auctions,
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2"><Repeat /> Relistar Lote &quot;{originalLot.title}&quot;</DialogTitle>
+          <DialogTitle className="flex items-center gap-2"><Repeat /> Relistar Lote "{originalLot.title}"</DialogTitle>
           <DialogDescription>
             Crie um novo lote com base neste item para um novo leilão.
           </DialogDescription>
@@ -66,6 +66,7 @@ export default function RelistLotModal({ isOpen, onClose, originalLot, auctions,
           <div className="space-y-2">
             <Label htmlFor="new-auction">Leilão de Destino</Label>
              <EntitySelector
+                entityName="Leilão"
                 value={newAuctionId}
                 onChange={setNewAuctionId}
                 options={availableAuctions.map(a => ({ value: a.id, label: `${a.title} (ID: ...${a.id.slice(-6)})` }))}
