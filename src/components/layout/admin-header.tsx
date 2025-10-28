@@ -14,12 +14,12 @@ import UserNav from './user-nav';
 import Link from 'next/link';
 import { Badge } from '../ui/badge';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '../ui/tooltip';
-import { ThemeToggle } from './theme-toggle'; // Importado
+import { ThemeToggle } from './theme-toggle'; 
 
 interface AdminHeaderProps {
   onSearchClick: () => void;
   onSettingsClick: () => void;
-  onMobileMenuClick?: () => void; // Adicionado para o gatilho do menu móvel
+  onMobileMenuClick?: () => void; 
 }
 
 export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMenuClick }: AdminHeaderProps) {
@@ -28,7 +28,6 @@ export default function AdminHeader({ onSearchClick, onSettingsClick, onMobileMe
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-sidebar px-4 text-sidebar-foreground shadow-md sm:px-6">
       
-      {/* Gatilho do Menu Móvel, se a função for passada */}
       {onMobileMenuClick && (
         <Button variant="ghost" size="icon" className="md:hidden h-9 w-9" onClick={onMobileMenuClick}>
             <Menu className="h-5 w-5" />

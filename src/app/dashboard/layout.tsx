@@ -27,7 +27,7 @@ export default function DashboardLayout({
     if (!loading && !userProfileWithPermissions) {
       redirect(`/auth/login?redirect=${pathname}`);
     }
-  }, [userProfileWithPermissions, loading, pathname]);
+  }, [userProfileWithPermissions, loading, pathname, router]);
   
   if (loading) {
     return (
