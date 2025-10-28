@@ -135,6 +135,20 @@ const BidReportBuilder = () => {
                 <div data-ai-id="report-builder-container" className="flex flex-col h-[80vh] bg-muted/30 rounded-lg border">
                     <Toolbar onAddElement={handleAddElement as any} onSave={() => setIsSaveModalOpen(true)} onLoad={() => setIsLoadModalOpen(true)} onExport={handleExportReport} />
                     <div className="flex flex-grow overflow-hidden">
+                        <aside className="w-80 flex-shrink-0 bg-card border-r flex flex-col" data-ai-id="report-builder-sidebar">
+                             <Tabs defaultValue="datasources" className="w-full h-full flex flex-col">
+                                <TabsList className="flex-shrink-0 mx-2 mt-2">
+                                    <TabsTrigger value="datasources" className="flex-1 text-xs">Dados</TabsTrigger>
+                                    <TabsTrigger value="media" className="flex-1 text-xs">Mídia</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
+                                    <DataSourceManager onAddElement={handleAddElement as any} />
+                                </TabsContent>
+                                <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
+                                    <MediaLibrary onSelectImage={handleSelectImage} />
+                                </TabsContent>
+                            </Tabs>
+                        </aside>
                         <main className="flex-grow flex flex-col border-r" data-ai-id="report-builder-main-panel">
                             <div className="flex-grow relative">
                                 <DesignSurface 
@@ -146,26 +160,11 @@ const BidReportBuilder = () => {
                                 />
                             </div>
                         </main>
-                        <aside className="w-80 flex-shrink-0 bg-card border-l flex flex-col" data-ai-id="report-builder-sidebar">
-                            <Tabs defaultValue="properties" className="w-full h-full flex flex-col">
-                                <TabsList className="flex-shrink-0 mx-2 mt-2">
-                                    <TabsTrigger value="properties" className="flex-1 text-xs">Propriedades</TabsTrigger>
-                                    <TabsTrigger value="datasources" className="flex-1 text-xs">Dados</TabsTrigger>
-                                    <TabsTrigger value="media" className="flex-1 text-xs">Mídia</TabsTrigger>
-                                </TabsList>
-                                <TabsContent value="properties" className="flex-grow overflow-y-auto" data-ai-id="report-builder-properties-tab">
-                                    <PropertiesPanel 
-                                        selectedElement={selectedElement} 
-                                        onElementChange={handleElementChange}
-                                    />
-                                </TabsContent>
-                                <TabsContent value="datasources" className="flex-grow overflow-y-auto" data-ai-id="report-builder-variables-tab">
-                                    <DataSourceManager onAddElement={handleAddElement as any} />
-                                </TabsContent>
-                                <TabsContent value="media" className="flex-grow overflow-y-auto" data-ai-id="report-builder-media-tab">
-                                    <MediaLibrary onSelectImage={handleSelectImage} />
-                                </TabsContent>
-                            </Tabs>
+                        <aside className="w-72 flex-shrink-0 bg-card border-l" data-ai-id="report-builder-properties-panel">
+                            <PropertiesPanel 
+                                selectedElement={selectedElement} 
+                                onElementChange={handleElementChange}
+                            />
                         </aside>
                     </div>
                 </div>

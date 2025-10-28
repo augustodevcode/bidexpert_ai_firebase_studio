@@ -121,5 +121,3 @@ const DesignSurface: React.FC<DesignSurfaceProps> = ({
     </div>
   );
 };
-
-export default DesignSurface;

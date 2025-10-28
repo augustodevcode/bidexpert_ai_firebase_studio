@@ -83,6 +83,7 @@ export default function DataSourceManager({ onAddElement }: DataSourceManagerPro
 
     return (
         <div className="p-4 h-full flex flex-col" data-ai-id="report-data-source-manager">
+            <h3 className="text-md font-semibold border-b pb-2 mb-2">Fontes de Dados</h3>
              <Input 
                 placeholder="Buscar variável..." 
                 className="mb-3 h-8 text-xs"
