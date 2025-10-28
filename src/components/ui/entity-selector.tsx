@@ -10,6 +10,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Check, ChevronsUpDown, PlusCircle, Pencil, X, RefreshCw, Loader2, ListChecks } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -146,7 +147,7 @@ export default function EntitySelector({
       
       {value && editUrlPrefix && (
            <Button type="button" variant="outline" size="icon" className="h-10 w-10 flex-shrink-0" disabled={disabled} title="Editar registro selecionado" asChild>
-              <Link href={`${editUrlPrefix}/${value}/edit`} target="_blank">
+              <Link href={`${editUrlPrefix}/${value}`} target="_blank">
                   <Pencil className="h-4 w-4" />
               </Link>
           </Button>
