@@ -78,9 +78,9 @@ export default function EntitySelector({
   const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
 
   const handleAddNewClick = () => {
-    setIsListModalOpen(false); // Fecha o modal de lista
+    // Não fecha o modal de lista, chama a função para abrir o de criação
     if (onAddNew) {
-        onAddNew(); // Chama a função para abrir o formulário de criação
+        onAddNew(); 
     }
   }
 

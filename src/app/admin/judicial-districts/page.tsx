@@ -9,18 +9,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from './actions';
+import { getJudicialDistricts, deleteJudicialDistrict, createJudicialDistrict, updateJudicialDistrict } from '@/app/admin/judicial-districts/actions';
 import type { JudicialDistrict, PlatformSettings, JudicialDistrictFormData, Court, StateInfo } from '@/types';
 import { PlusCircle, Map } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import { createColumns } from './columns';
+import { createColumns } from '@/app/admin/judicial-districts/columns';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
-import { getCourts } from '../courts/actions';
-import { getStates } from '../states/actions';
+import { getCourts } from '@/app/admin/courts/actions';
+import { getStates } from '@/app/admin/states/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';
-import JudicialDistrictForm from './judicial-district-form';
+import JudicialDistrictForm from '@/app/admin/judicial-districts/judicial-district-form';
 
 export default function AdminJudicialDistrictsPage() {
   const [districts, setDistricts] = useState<JudicialDistrict[]>([]);
@@ -33,6 +33,7 @@ export default function AdminJudicialDistrictsPage() {
   // Form Modal State
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingDistrict, setEditingDistrict] = useState<JudicialDistrict | null>(null);
+  const [isSubformOpen, setIsSubformOpen] = useState<'court' | 'state' | null>(null);
 
   // Dependencies for the form
   const [dependencies, setDependencies] = useState<{ courts: Court[], states: StateInfo[] } | null>(null);
@@ -67,17 +68,14 @@ export default function AdminJudicialDistrictsPage() {
   
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
-  }, []);
+    // Adicional: Fechar subformulários se estiverem abertos
+    if (isSubformOpen) {
+        setIsSubformOpen(null);
+    }
+  }, [isSubformOpen]);
 
-  const handleNewClick = () => {
-    setEditingDistrict(null);
-    setIsFormOpen(true);
-  };
-
-  const handleEditClick = (district: JudicialDistrict) => {
-    setEditingDistrict(district);
-    setIsFormOpen(true);
-  };
+  const handleNewClick = () => { setEditingDistrict(null); setIsFormOpen(true); };
+  const handleEditClick = (district: JudicialDistrict) => { setEditingDistrict(district); setIsFormOpen(true); };
   
   const handleFormSuccess = () => {
       setIsFormOpen(false);
@@ -104,7 +102,7 @@ export default function AdminJudicialDistrictsPage() {
     onUpdate();
   }, [onUpdate, toast]);
 
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
 
   const formAction = async (data: JudicialDistrictFormData) => {
     if (editingDistrict) {
@@ -112,7 +110,7 @@ export default function AdminJudicialDistrictsPage() {
     }
     return createJudicialDistrict(data);
   };
-
+  
   if (isLoading || !platformSettings || !dependencies) {
     return (
         <div className="space-y-6">
@@ -174,6 +172,8 @@ export default function AdminJudicialDistrictsPage() {
             states={dependencies.states}
             onSubmitAction={formAction}
             onSuccess={handleFormSuccess}
+            onCancel={() => setIsFormOpen(false)}
+            onAddNewEntity={(entity) => setIsSubformOpen(entity)}
         />
     </CrudFormContainer>
     </>

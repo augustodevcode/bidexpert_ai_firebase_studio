@@ -67,7 +67,7 @@ export default function CrudFormContainer({
             <SheetHeader className="p-6">
                {headerContent}
             </SheetHeader>
-            <div className="flex-grow overflow-y-auto px-6">
+            <div className="flex-grow overflow-y-auto px-6 pb-6">
                 {children}
             </div>
         </SheetContent>
