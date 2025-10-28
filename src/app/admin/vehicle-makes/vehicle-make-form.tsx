@@ -24,28 +24,32 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 interface VehicleMakeFormProps {
   initialData?: VehicleMake | null;
   onSubmitAction: (data: VehicleMakeFormData) => Promise<{ success: boolean; message: string; makeId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSuccess?: (id?: string) => void;
+  onCancel?: () => void;
 }
 
 export default function VehicleMakeForm({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  onSuccess,
+  onCancel,
 }: VehicleMakeFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<VehicleMakeFormData>({
     resolver: zodResolver(vehicleMakeFormSchema),
+    mode: 'onChange',
     defaultValues: {
       name: initialData?.name || '',
     },
   });
+  
+  const { formState } = form;
+
+  React.useEffect(() => {
+    form.reset(initialData || {});
+  }, [initialData, form]);
 
   async function onSubmit(values: VehicleMakeFormData) {
     setIsSubmitting(true);
@@ -56,8 +60,7 @@ export default function VehicleMakeForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/vehicle-makes');
-        router.refresh();
+        if(onSuccess) onSuccess(result.makeId);
       } else {
         toast({
           title: 'Erro',
@@ -77,14 +80,8 @@ export default function VehicleMakeForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Car className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
               name="name"
@@ -98,18 +95,14 @@ export default function VehicleMakeForm({
                 </FormItem>
               )}
             />
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/vehicle-makes')} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
+            <div className="flex justify-end gap-2 pt-4">
+                {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+                <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                    {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    Salvar
+                </Button>
+            </div>
         </form>
       </Form>
-    </Card>
   );
 }

@@ -53,12 +53,12 @@ export default function CourtForm({
     mode: 'onChange',
     defaultValues: initialData || {},
   });
-
-  const { formState } = form;
   
   React.useEffect(() => {
     form.reset(initialData || {});
   }, [initialData, form]);
+
+  const { formState } = form;
 
   const handleRefetchStates = React.useCallback(async () => {
     setIsFetchingStates(true);
@@ -107,6 +107,7 @@ export default function CourtForm({
             <FormItem>
               <FormLabel>Estado (UF)<span className="text-destructive">*</span></FormLabel>
               <EntitySelector
+                  entityName="Estado"
                   value={field.value}
                   onChange={(value) => field.onChange(value || '')}
                   options={states.map(s => ({ value: s.uf, label: `${s.name} (${s.uf})` }))}
@@ -116,7 +117,6 @@ export default function CourtForm({
                   onAddNew={() => onAddNewEntity?.('state')}
                   onRefetch={handleRefetchStates}
                   isFetching={isFetchingStates}
-                  entityName="Estado"
                 />
               <FormMessage />
             </FormItem>

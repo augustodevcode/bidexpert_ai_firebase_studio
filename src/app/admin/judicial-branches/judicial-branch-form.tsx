@@ -15,10 +15,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
-import { judicialBranchFormSchema, type JudicialBranchFormValues } from './judicial-branch-form-schema';
+import { judicialBranchFormSchema, type JudicialBranchFormValues } from '@/app/admin/judicial-branches/judicial-branch-form-schema';
 import type { JudicialBranch, JudicialDistrict } from '@/types';
 import { Loader2, Save, Building2 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import EntitySelector from '@/components/ui/entity-selector';
 import { getJudicialDistricts } from '../judicial-districts/actions';
 
@@ -26,21 +25,20 @@ interface JudicialBranchFormProps {
   initialData?: JudicialBranch | null;
   districts: JudicialDistrict[];
   onSubmitAction: (data: JudicialBranchFormValues) => Promise<{ success: boolean; message: string; branchId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSuccess?: (id?: string) => void;
+  onCancel?: () => void;
+  onAddNewEntity?: (entity: 'district') => void;
 }
 
 export default function JudicialBranchForm({
   initialData,
   districts: initialDistricts,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  onSuccess,
+  onCancel,
+  onAddNewEntity,
 }: JudicialBranchFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [districts, setDistricts] = React.useState(initialDistricts);
   const [isFetchingDistricts, setIsFetchingDistricts] = React.useState(false);
@@ -48,15 +46,15 @@ export default function JudicialBranchForm({
   const form = useForm<JudicialBranchFormValues>({
     resolver: zodResolver(judicialBranchFormSchema),
     mode: 'onChange',
-    defaultValues: {
-      name: initialData?.name || '',
-      districtId: initialData?.districtId || '',
-      contactName: initialData?.contactName || '',
-      phone: initialData?.phone || '',
-      email: initialData?.email || '',
-    },
+    defaultValues: initialData || {},
   });
+
+  const { formState } = form;
   
+  React.useEffect(() => {
+    form.reset(initialData || {});
+  }, [initialData, form]);
+
   const handleRefetchDistricts = React.useCallback(async () => {
     setIsFetchingDistricts(true);
     const data = await getJudicialDistricts();
@@ -64,15 +62,13 @@ export default function JudicialBranchForm({
     setIsFetchingDistricts(false);
   }, []);
 
-
   async function onSubmit(values: JudicialBranchFormValues) {
     setIsSubmitting(true);
     try {
       const result = await onSubmitAction(values);
       if (result.success) {
         toast({ title: 'Sucesso!', description: result.message });
-        router.push('/admin/judicial-branches');
-        router.refresh();
+        if(onSuccess) onSuccess(result.branchId);
       } else {
         toast({ title: 'Erro', description: result.message, variant: 'destructive' });
       }
@@ -84,93 +80,59 @@ export default function JudicialBranchForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg" data-ai-id="judicial-branch-form-card">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Building2 className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-             <FormField
-              control={form.control}
-              name="districtId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Comarca<span className="text-destructive">*</span></FormLabel>
-                   <EntitySelector
-                      entityName="district"
-                      value={field.value}
-                      onChange={field.onChange}
-                      options={districts.map(d => ({ value: d.id, label: `${d.name} (${d.stateUf})` }))}
-                      placeholder="Selecione a comarca"
-                      searchPlaceholder="Buscar comarca..."
-                      emptyStateMessage="Nenhuma comarca encontrada."
-                      createNewUrl="/admin/judicial-districts/new"
-                      editUrlPrefix="/admin/judicial-districts"
-                      onRefetch={handleRefetchDistricts}
-                      isFetching={isFetchingDistricts}
-                    />
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Vara<span className="text-destructive">*</span></FormLabel>
-                  <FormControl><Input placeholder="Ex: 1ª Vara Cível e Criminal" {...field} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="contactName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Contato (Opcional)</FormLabel>
-                  <FormControl><Input placeholder="Nome do escrivão ou diretor" {...field} value={field.value ?? ''} /></FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Telefone (Opcional)</FormLabel>
-                    <FormControl><Input placeholder="(00) 0000-0000" {...field} value={field.value ?? ''} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email (Opcional)</FormLabel>
-                    <FormControl><Input type="email" placeholder="contato@vara.jus.br" {...field} value={field.value ?? ''} /></FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/judicial-branches')} disabled={isSubmitting}>Cancelar</Button>
-            <Button type="submit" disabled={isSubmitting || !form.formState.isValid}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-4">
+           <FormField
+            control={form.control}
+            name="districtId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Comarca<span className="text-destructive">*</span></FormLabel>
+                 <EntitySelector
+                    entityName="Comarca"
+                    value={field.value}
+                    onChange={field.onChange}
+                    options={districts.map(d => ({ value: d.id, label: `${d.name} (${d.stateUf})` }))}
+                    placeholder="Selecione a comarca"
+                    searchPlaceholder="Buscar comarca..."
+                    emptyStateMessage="Nenhuma comarca encontrada."
+                    onAddNew={() => onAddNewEntity?.('district')}
+                    onRefetch={handleRefetchDistricts}
+                    isFetching={isFetchingDistricts}
+                  />
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField control={form.control} name="name" render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome da Vara<span className="text-destructive">*</span></FormLabel>
+                <FormControl><Input placeholder="Ex: 1ª Vara Cível e Criminal" {...field} /></FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField control={form.control} name="contactName" render={({ field }) => (
+              <FormItem><FormLabel>Nome do Contato (Opcional)</FormLabel><FormControl><Input placeholder="Nome do escrivão ou diretor" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+          )}/>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField control={form.control} name="phone" render={({ field }) => (
+                  <FormItem> <FormLabel>Telefone (Opcional)</FormLabel><FormControl><Input placeholder="(00) 0000-0000" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+              )}/>
+              <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem><FormLabel>Email (Opcional)</FormLabel><FormControl><Input type="email" placeholder="contato@vara.jus.br" {...field} value={field.value ?? ''} /></FormControl><FormMessage /></FormItem>
+              )}/>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 pt-4">
+            {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+            <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar
             </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+        </div>
+      </form>
+    </Form>
   );
 }
