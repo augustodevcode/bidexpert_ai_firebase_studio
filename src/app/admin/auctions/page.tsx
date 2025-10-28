@@ -7,6 +7,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getAuctions as getAuctionsAction, deleteAuction, createAuction, updateAuction } from './actions';
@@ -17,8 +18,6 @@ import { getAuctionStatusText } from '@/lib/ui-helpers';
 import { getSellers } from '../sellers/actions';
 import { getAuctioneers } from '../auctioneers/actions';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
-import BidExpertCard from '@/components/BidExpertCard';
-import BidExpertListItem from '@/components/BidExpertListItem';
 import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { createColumns } from './columns';
@@ -94,11 +93,6 @@ export default function AdminAuctionsPage() {
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
   }, []);
-
-  const handleNewClick = () => {
-    setEditingAuction(null);
-    setIsFormOpen(true);
-  };
 
   const handleEditClick = (auction: Auction) => {
     setEditingAuction(auction);
@@ -186,8 +180,10 @@ export default function AdminAuctionsPage() {
                 Visualize, adicione e edite os leilões da plataforma.
               </CardDescription>
             </div>
-            <Button onClick={handleNewClick}>
-              <PlusCircle className="mr-2 h-4 w-4" /> Novo Leilão
+            <Button asChild>
+              <Link href="/admin/auctions/new">
+                <PlusCircle className="mr-2 h-4 w-4" /> Novo Leilão
+              </Link>
             </Button>
           </CardHeader>
         </Card>
