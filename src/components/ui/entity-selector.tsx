@@ -77,13 +77,6 @@ export default function EntitySelector({
   
   const tableColumns = React.useMemo(() => createEntitySelectorColumns(handleSelectAndClose), [handleSelectAndClose]);
 
-  const handleAddNewClick = () => {
-    // Não fecha o modal de lista, chama a função para abrir o de criação
-    if (onAddNew) {
-        onAddNew(); 
-    }
-  }
-
   return (
     <div className="flex items-center gap-2" data-ai-id={`entity-selector-container-${entityName}`}>
       <Dialog open={isListModalOpen} onOpenChange={setIsListModalOpen}>
@@ -125,7 +118,7 @@ export default function EntitySelector({
               </div>
               <DialogFooter className="p-4 border-t flex justify-between">
                   {onAddNew && (
-                      <Button variant="secondary" onClick={handleAddNewClick} data-ai-id={`entity-selector-add-new-${entityName}`}>
+                      <Button variant="secondary" onClick={onAddNew} data-ai-id={`entity-selector-add-new-${entityName}`}>
                           <PlusCircle className="mr-2 h-4 w-4"/>
                           Criar Novo
                       </Button>

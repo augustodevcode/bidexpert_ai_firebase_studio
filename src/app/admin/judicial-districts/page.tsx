@@ -31,8 +31,7 @@ export default function AdminJudicialDistrictsPage() {
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // Form Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingDistrict, setEditingDistrict] = useState<JudicialDistrict | null>(null);
+  const [modalState, setModalState] = useState<{ mode: 'closed' | 'create' | 'edit'; data?: JudicialDistrict }>({ mode: 'closed' });
   const [isSubformOpen, setIsSubformOpen] = useState<'court' | 'state' | null>(null);
 
   // Dependencies for the form
@@ -68,18 +67,16 @@ export default function AdminJudicialDistrictsPage() {
   
   const onUpdate = useCallback(() => {
     setRefetchTrigger(c => c + 1);
-    // Adicional: Fechar subformulários se estiverem abertos
-    if (isSubformOpen) {
-        setIsSubformOpen(null);
+    if(isSubformOpen) {
+      setIsSubformOpen(null);
     }
   }, [isSubformOpen]);
 
-  const handleNewClick = () => { setEditingDistrict(null); setIsFormOpen(true); };
-  const handleEditClick = (district: JudicialDistrict) => { setEditingDistrict(district); setIsFormOpen(true); };
+  const handleNewClick = () => setModalState({ mode: 'create' });
+  const handleEditClick = (district: JudicialDistrict) => setModalState({ mode: 'edit', data: district });
   
   const handleFormSuccess = () => {
-      setIsFormOpen(false);
-      setEditingDistrict(null);
+      setModalState({ mode: 'closed' });
       onUpdate();
   };
 
@@ -102,15 +99,15 @@ export default function AdminJudicialDistrictsPage() {
     onUpdate();
   }, [onUpdate, toast]);
 
-  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete, handleEditClick]);
+  const columns = useMemo(() => createColumns({ handleDelete, onEdit: handleEditClick }), [handleDelete]);
 
   const formAction = async (data: JudicialDistrictFormData) => {
-    if (editingDistrict) {
-      return updateJudicialDistrict(editingDistrict.id, data);
+    if (modalState.mode === 'edit' && modalState.data) {
+      return updateJudicialDistrict(modalState.data.id, data);
     }
     return createJudicialDistrict(data);
   };
-  
+
   if (isLoading || !platformSettings || !dependencies) {
     return (
         <div className="space-y-6">
@@ -153,29 +150,35 @@ export default function AdminJudicialDistrictsPage() {
                 searchTypeLabel="comarcas"
                 searchColumnId="name"
                 searchPlaceholder="Buscar por nome da comarca..."
-                onDeleteSelected={handleDeleteSelected as any}
+                onDeleteSelected={handleDeleteSelected}
                 sortOptions={[{ value: 'name', label: 'Nome' }]}
             />
         </CardContent>
       </Card>
     </div>
      <CrudFormContainer
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
+        isOpen={modalState.mode !== 'closed'}
+        onClose={() => setModalState({ mode: 'closed' })}
         mode={platformSettings?.crudFormMode || 'modal'}
-        title={editingDistrict ? 'Editar Comarca' : 'Nova Comarca'}
-        description={editingDistrict ? 'Modifique os detalhes da comarca.' : 'Cadastre uma nova comarca judicial.'}
+        title={modalState.mode === 'edit' ? 'Editar Comarca' : 'Nova Comarca'}
+        description={modalState.mode === 'edit' ? 'Modifique os detalhes da comarca.' : 'Cadastre uma nova comarca judicial.'}
     >
         <JudicialDistrictForm
-            initialData={editingDistrict}
+            initialData={modalState.mode === 'edit' ? modalState.data : null}
             courts={dependencies.courts}
             states={dependencies.states}
             onSubmitAction={formAction}
             onSuccess={handleFormSuccess}
-            onCancel={() => setIsFormOpen(false)}
-            onAddNewEntity={(entity) => setIsSubformOpen(entity)}
+            onCancel={() => setModalState({ mode: 'closed' })}
+            onAddNewEntity={(entity) => {
+              // Esta é a lógica para abrir um sub-modal.
+              // A implementação real do sub-modal viveria aqui,
+              // gerenciando seu próprio estado de abertura.
+              alert(`Ação para abrir o modal de criação de '${entity}'`);
+            }}
         />
     </CrudFormContainer>
     </>
   );
 }
+

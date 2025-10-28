@@ -99,6 +99,7 @@ export default function EditAssetPage() {
       isViewMode={false} // Edit page is always in edit mode
       isLoading={isLoading}
       isSubmitting={isSubmitting}
+      isValid={formRef.current?.formState.isValid}
       onSave={handleSave}
       onDelete={handleDelete}
       onCancel={() => router.push('/admin/assets')}
@@ -120,3 +121,4 @@ export default function EditAssetPage() {
     </FormPageLayout>
   );
 }
+

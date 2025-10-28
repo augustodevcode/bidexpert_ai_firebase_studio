@@ -30,6 +30,7 @@ interface SellerFormProps {
   onSubmitAction: (data: SellerFormValues) => Promise<any>;
   onSuccess?: (sellerId?: string) => void;
   onCancel?: () => void;
+  onAddNewEntity?: (entity: 'branch') => void;
 }
 
 const SellerForm = React.forwardRef<any, SellerFormProps>(({
@@ -40,6 +41,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
   onSubmitAction,
   onSuccess,
   onCancel,
+  onAddNewEntity,
 }, ref) => {
   const { toast } = useToast();
   const [isMediaDialogOpen, setIsMediaDialogOpen] = React.useState(false);
@@ -138,6 +140,7 @@ const SellerForm = React.forwardRef<any, SellerFormProps>(({
                                     placeholder="Nenhuma vara judicial vinculada"
                                     searchPlaceholder="Buscar vara..."
                                     emptyStateMessage="Nenhuma vara encontrada."
+                                    onAddNew={() => onAddNewEntity?.('branch')}
                                     onRefetch={handleRefetchBranches}
                                     isFetching={isFetchingBranches}
                                 />

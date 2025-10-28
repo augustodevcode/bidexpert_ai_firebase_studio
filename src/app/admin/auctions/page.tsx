@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getAuctions as getAuctionsAction, deleteAuction, createAuction, updateAuction } from './actions';
+import { getAuctions as getAuctionsAction, deleteAuction } from './actions';
 import type { Auction, SellerProfileInfo, AuctioneerProfileInfo, PlatformSettings, AuctionFormData, StateInfo, CityInfo, LotCategory, JudicialProcess } from '@/types';
 import { PlusCircle, Gavel } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -28,7 +28,6 @@ import { getCities } from '@/app/admin/cities/actions';
 import { getLotCategories } from '../categories/actions';
 import { getJudicialProcesses } from '../judicial-processes/actions';
 
-
 const sortOptions = [
   { value: 'auctionDate_desc', label: 'Data: Mais Recentes' },
   { value: 'auctionDate_asc', label: 'Data: Mais Antigos' },
@@ -45,37 +44,16 @@ export default function AdminAuctionsPage() {
   const { toast } = useToast();
   const [refetchTrigger, setRefetchTrigger] = useState(0);
 
-  // Form Modal State
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [editingAuction, setEditingAuction] = useState<Auction | null>(null);
-  
-  // Dependencies for the form
-  const [dependencies, setDependencies] = useState<{
-    auctioneers: AuctioneerProfileInfo[],
-    sellers: SellerProfileInfo[],
-    states: StateInfo[],
-    allCities: CityInfo[],
-    judicialProcesses: JudicialProcess[],
-    categories: LotCategory[]
-  } | null>(null);
-
   const fetchPageData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const [fetchedAuctions, settings, sellers, auctioneers, states, cities, processes, categories] = await Promise.all([
+      const [fetchedAuctions, settings] = await Promise.all([
         getAuctionsAction(false), // Fetch all for admin
         getPlatformSettings(),
-        getSellers(),
-        getAuctioneers(),
-        getStates(),
-        getCities(),
-        getJudicialProcesses(),
-        getLotCategories(),
       ]);
       setAuctions(fetchedAuctions);
       setPlatformSettings(settings as PlatformSettings);
-      setDependencies({ auctioneers, sellers, states, allCities: cities, judicialProcesses: processes, categories });
     } catch (e) {
       const errorMessage = e instanceof Error ? e.message : "Falha ao buscar leilões.";
       console.error("Error fetching auctions:", e);
@@ -95,14 +73,8 @@ export default function AdminAuctionsPage() {
   }, []);
 
   const handleEditClick = (auction: Auction) => {
-    setEditingAuction(auction);
-    setIsFormOpen(true);
-  };
-  
-  const handleFormSuccess = () => {
-      setIsFormOpen(false);
-      setEditingAuction(null);
-      onUpdate();
+    // A edição agora é feita navegando para a página de edição
+    router.push(`/admin/auctions/${auction.id}/edit`);
   };
 
   const handleDelete = useCallback(
@@ -110,7 +82,7 @@ export default function AdminAuctionsPage() {
       const result = await deleteAuction(id);
       if (result.success) {
         toast({ title: "Sucesso!", description: result.message });
-        setRefetchTrigger((c) => c + 1);
+        onUpdate();
       } else {
         toast({
           title: "Erro ao Excluir",
@@ -119,7 +91,7 @@ export default function AdminAuctionsPage() {
         });
       }
     },
-    [toast]
+    [toast, onUpdate]
   );
   
   const handleDeleteSelected = useCallback(async (selectedItems: Auction[]) => {
@@ -129,13 +101,6 @@ export default function AdminAuctionsPage() {
       toast({ title: "Sucesso!", description: `${selectedItems.length} leilão(ões) excluído(s).` });
       onUpdate();
   }, [onUpdate, toast]);
-
-  const formAction = async (data: AuctionFormData) => {
-    if (editingAuction) {
-      return updateAuction(editingAuction.id, data);
-    }
-    return createAuction(data);
-  };
 
   const renderGridItem = (item: Auction) => <BidExpertCard item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
   const renderListItem = (item: Auction) => <BidExpertListItem item={item} type="auction" platformSettings={platformSettings!} onUpdate={onUpdate} />;
@@ -152,7 +117,7 @@ export default function AdminAuctionsPage() {
       ];
   }, [auctions]);
   
-  if (isLoading || !platformSettings || !dependencies) {
+  if (isLoading || !platformSettings) {
     return (
         <div className="space-y-6">
             <Card className="shadow-lg">
@@ -207,26 +172,6 @@ export default function AdminAuctionsPage() {
           onDeleteSelected={handleDeleteSelected as any}
         />
       </div>
-      <CrudFormContainer
-          isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          mode={platformSettings?.crudFormMode || 'modal'}
-          title={editingAuction ? 'Editar Leilão' : 'Novo Leilão'}
-          description={editingAuction ? 'Modifique os detalhes do leilão existente.' : 'Preencha os detalhes para criar um novo leilão.'}
-      >
-          <AuctionForm
-              initialData={editingAuction}
-              auctioneers={dependencies.auctioneers}
-              sellers={dependencies.sellers}
-              states={dependencies.states}
-              allCities={dependencies.allCities}
-              categories={dependencies.categories}
-              judicialProcesses={dependencies.judicialProcesses}
-              onSubmitAction={formAction}
-              onSuccess={handleFormSuccess}
-              onCancel={() => setIsFormOpen(false)}
-          />
-      </CrudFormContainer>
     </>
   );
 }

@@ -21,38 +21,38 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { useRouter } from 'next/navigation';
 import { stateFormSchema, type StateFormValues } from './state-form-schema';
 import type { StateInfo } from '@/types';
-import { Loader2, Save, Landmark } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
+import { Loader2, Save } from 'lucide-react';
 
 interface StateFormProps {
   initialData?: StateInfo | null;
   onSubmitAction: (data: StateFormValues) => Promise<{ success: boolean; message: string; stateId?: string }>;
-  formTitle: string;
-  formDescription: string;
-  submitButtonText: string;
+  onSuccess?: (id?: string) => void;
+  onCancel?: () => void;
 }
 
 export default function StateForm({
   initialData,
   onSubmitAction,
-  formTitle,
-  formDescription,
-  submitButtonText,
+  onSuccess,
+  onCancel,
 }: StateFormProps) {
   const { toast } = useToast();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const form = useForm<StateFormValues>({
     resolver: zodResolver(stateFormSchema),
-    defaultValues: {
-      name: initialData?.name || '',
-      uf: initialData?.uf || '',
-    },
+    mode: 'onChange',
+    defaultValues: initialData || { name: '', uf: '' },
   });
+  
+  const { formState } = form;
+
+  React.useEffect(() => {
+    form.reset(initialData || { name: '', uf: '' });
+  }, [initialData, form]);
+
 
   async function onSubmit(values: StateFormValues) {
     setIsSubmitting(true);
@@ -63,8 +63,7 @@ export default function StateForm({
           title: 'Sucesso!',
           description: result.message,
         });
-        router.push('/admin/states');
-        router.refresh();
+        if(onSuccess) onSuccess(result.stateId);
       } else {
         toast({
           title: 'Erro',
@@ -85,53 +84,43 @@ export default function StateForm({
   }
 
   return (
-    <Card className="max-w-xl mx-auto shadow-lg">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Landmark className="h-6 w-6 text-primary" /> {formTitle}</CardTitle>
-        <CardDescription>{formDescription}</CardDescription>
-      </CardHeader>
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-6 p-6 bg-secondary/30">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Estado</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: São Paulo, Bahia" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="uf"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>UF (Sigla)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: SP, BA" {...field} maxLength={2} style={{ textTransform: 'uppercase' }} />
-                  </FormControl>
-                  <FormDescription>Sigla do estado com 2 letras maiúsculas.</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 p-6 border-t">
-            <Button type="button" variant="outline" onClick={() => router.push('/admin/states')} disabled={isSubmitting}>
-              Cancelar
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Nome do Estado<span className="text-destructive">*</span></FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: São Paulo, Bahia" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="uf"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>UF (Sigla)<span className="text-destructive">*</span></FormLabel>
+                <FormControl>
+                  <Input placeholder="Ex: SP, BA" {...field} maxLength={2} style={{ textTransform: 'uppercase' }} />
+                </FormControl>
+                <FormDescription>Sigla do estado com 2 letras maiúsculas.</FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <div className="flex justify-end gap-2 pt-4">
+            {onCancel && <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>}
+            <Button type="submit" disabled={isSubmitting || !formState.isValid}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                Salvar
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              {submitButtonText}
-            </Button>
-          </CardFooter>
-        </form>
-      </Form>
-    </Card>
+          </div>
+      </form>
+    </Form>
   );
 }
