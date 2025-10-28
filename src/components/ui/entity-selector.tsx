@@ -38,9 +38,9 @@ export const createEntitySelectorColumns = (onSelect: (value: string) => void): 
 ];
 
 interface EntitySelectorProps {
-  value: string | null | undefined;
+  value: string | bigint | null | undefined;
   onChange: (value: string | null) => void;
-  options: { value: string; label: string; [key: string]: any }[];
+  options: { value: string | bigint; label: string; [key: string]: any }[];
   entityName?: string; 
   placeholder: string;
   searchPlaceholder: string;
@@ -68,10 +68,12 @@ export default function EntitySelector({
 }: EntitySelectorProps) {
   const [isListModalOpen, setIsListModalOpen] = React.useState(false);
 
-  const selectedOption = options.find((option) => option.value === value);
+  const stringValue = value?.toString() ?? null;
+
+  const selectedOption = options.find((option) => option.value.toString() === stringValue);
   
-  const handleSelectAndClose = (selectedValue: string) => {
-    onChange(selectedValue);
+  const handleSelectAndClose = (selectedValue: string | bigint) => {
+    onChange(selectedValue.toString());
     setIsListModalOpen(false);
   }
   
@@ -109,7 +111,7 @@ export default function EntitySelector({
               <div className="flex-grow overflow-hidden p-4">
                   <DataTable
                       columns={tableColumns}
-                      data={options.map(opt => ({...opt, id: opt.value}))}
+                      data={options.map(opt => ({...opt, id: opt.value.toString()}))}
                       searchColumnId="label"
                       searchPlaceholder={searchPlaceholder}
                       isLoading={isFetching}

@@ -25,6 +25,13 @@ export interface AuctioneerDashboardData {
   salesByMonth: { name: string; Faturamento: number }[];
 }
 
+const mapAuctioneer = (auctioneer: any): AuctioneerProfileInfo => ({
+  ...auctioneer,
+  id: auctioneer.id.toString(),
+  userId: auctioneer.userId?.toString() ?? null,
+  tenantId: auctioneer.tenantId.toString(),
+});
+
 export class AuctioneerService {
   private auctioneerRepository: AuctioneerRepository;
   private prisma;
@@ -35,23 +42,26 @@ export class AuctioneerService {
   }
 
   async getAuctioneers(tenantId: string, limit?: number): Promise<AuctioneerProfileInfo[]> {
-    // @ts-ignore
-    return this.auctioneerRepository.findAll(tenantId, limit);
+    const auctioneers = await this.auctioneerRepository.findAll(tenantId, limit);
+    return auctioneers.map(mapAuctioneer);
   }
 
   async getAuctioneerById(tenantId: string, id: string): Promise<AuctioneerProfileInfo | null> {
-    // @ts-ignore
-    return this.auctioneerRepository.findById(tenantId, id);
+    const auctioneer = await this.auctioneerRepository.findById(tenantId, BigInt(id));
+    if (!auctioneer) return null;
+    return mapAuctioneer(auctioneer);
   }
 
   async getAuctioneerBySlug(tenantId: string, slugOrId: string): Promise<AuctioneerProfileInfo | null> {
-      // @ts-ignore
-      return this.auctioneerRepository.findBySlug(tenantId, slugOrId);
+      const auctioneer = await this.auctioneerRepository.findBySlug(tenantId, slugOrId);
+      if (!auctioneer) return null;
+      return mapAuctioneer(auctioneer);
   }
 
   async getAuctioneerByName(tenantId: string, name: string): Promise<AuctioneerProfileInfo | null> {
-    // @ts-ignore
-    return this.auctioneerRepository.findByName(tenantId, name);
+    const auctioneer = await this.auctioneerRepository.findByName(tenantId, name);
+    if (!auctioneer) return null;
+    return mapAuctioneer(auctioneer);
   }
 
   async createAuctioneer(tenantId: string, data: AuctioneerFormData): Promise<{ success: boolean; message: string; auctioneerId?: string; }> {
@@ -68,25 +78,25 @@ export class AuctioneerService {
         address: fullAddress,
         slug: slugify(data.name),
         publicId: `LEILOE-${uuidv4()}`,
-        tenant: { connect: { id: tenantId } },
+        tenant: { connect: { id: BigInt(tenantId) } },
       };
 
       if (userId) {
-        dataToCreate.user = { connect: { id: userId } };
+        dataToCreate.user = { connect: { id: BigInt(userId) } };
       }
 
       if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
         if (city) dataToCreate.city = city.name;
       }
 
       if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
         if (state) dataToCreate.state = state.uf;
       }
       
       const newAuctioneer = await this.auctioneerRepository.create(dataToCreate);
-      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: newAuctioneer.id };
+      return { success: true, message: 'Leiloeiro criado com sucesso.', auctioneerId: newAuctioneer.id.toString() };
     } catch (error: any) {
       console.error("Error in AuctioneerService.createAuctioneer:", error);
       if (error.code === 'P2002' && error.meta?.target?.includes('name')) {
@@ -114,7 +124,7 @@ export class AuctioneerService {
       ].filter(val => val !== undefined);
 
       if (addressPartsToUpdate.length > 0) {
-        const currentAuctioneer = await this.auctioneerRepository.findById(tenantId, id);
+        const currentAuctioneer = await this.auctioneerRepository.findById(tenantId, BigInt(id));
         const currentAddressParts = currentAuctioneer?.address?.split(', ') || [];
         dataToUpdate.address = [
           street ?? currentAddressParts[0] ?? '',
@@ -125,15 +135,15 @@ export class AuctioneerService {
       }
 
       if (cityId) {
-        const city = await this.prisma.city.findUnique({ where: { id: cityId }});
+        const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
         if (city) dataToUpdate.city = city.name;
       }
       if (stateId) {
-        const state = await this.prisma.state.findUnique({ where: { id: stateId }});
+        const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
         if (state) dataToUpdate.state = state.uf;
       }
 
-      await this.auctioneerRepository.update(tenantId, id, dataToUpdate);
+      await this.auctioneerRepository.update(tenantId, BigInt(id), dataToUpdate);
       return { success: true, message: 'Leiloeiro atualizado com sucesso.' };
     } catch (error: any) {
        console.error(`Error in AuctioneerService.updateAuctioneer for id ${id}:`, error);
@@ -144,10 +154,10 @@ export class AuctioneerService {
   async deleteAuctioneer(tenantId: string, id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Disconnect from related models
-      await this.prisma.auction.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
-      await this.prisma.lot.updateMany({ where: { auctioneerId: id }, data: { auctioneerId: null } });
+      await this.prisma.auction.updateMany({ where: { auctioneerId: BigInt(id) }, data: { auctioneerId: null } });
+      await this.prisma.lot.updateMany({ where: { auctioneerId: BigInt(id) }, data: { auctioneerId: null } });
 
-      await this.auctioneerRepository.delete(tenantId, id);
+      await this.auctioneerRepository.delete(tenantId, BigInt(id));
       return { success: true, message: 'Leiloeiro excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AuctioneerService.deleteAuctioneer for id ${id}:`, error);
@@ -159,7 +169,7 @@ export class AuctioneerService {
     try {
       const auctioneers = await this.auctioneerRepository.findAll(tenantId);
       for (const auctioneer of auctioneers) {
-        await this.deleteAuctioneer(tenantId, auctioneer.id);
+        await this.deleteAuctioneer(tenantId, auctioneer.id.toString());
       }
       return { success: true, message: 'Todos os leiloeiros foram excluídos.' };
     } catch (error: any) {
@@ -169,7 +179,7 @@ export class AuctioneerService {
 
   async getAuctioneerDashboardData(tenantId: string, auctioneerId: string): Promise<AuctioneerDashboardData | null> {
     const auctioneerData = await this.prisma.auctioneer.findFirst({
-      where: { id: auctioneerId, tenantId },
+      where: { id: BigInt(auctioneerId), tenantId: BigInt(tenantId) },
       include: {
         _count: {
           select: { auctions: true },
@@ -177,7 +187,7 @@ export class AuctioneerService {
         auctions: {
           include: {
             lots: {
-              where: { status: 'VENDIDO', tenantId },
+              where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true, updatedAt: true }
             },
             _count: {
@@ -228,7 +238,7 @@ export class AuctioneerService {
 
   async getAuctioneersPerformance(tenantId: string): Promise<any[]> {
     const auctioneers = await this.prisma.auctioneer.findMany({
-      where: { tenantId },
+      where: { tenantId: BigInt(tenantId) },
       include: {
         _count: {
           select: { auctions: true },
@@ -236,7 +246,7 @@ export class AuctioneerService {
         auctions: {
           include: {
             lots: {
-              where: { status: 'VENDIDO', tenantId },
+              where: { status: 'VENDIDO', tenantId: BigInt(tenantId) },
               select: { price: true },
             },
             _count: {
@@ -256,7 +266,7 @@ export class AuctioneerService {
       const salesRate = totalLotsInAuctions > 0 ? (lotsSoldCount / totalLotsInAuctions) * 100 : 0;
 
       return {
-        id: auctioneer.id,
+        id: auctioneer.id.toString(),
         name: auctioneer.name,
         totalAuctions: auctioneer._count.auctions,
         totalLots: totalLotsInAuctions,
