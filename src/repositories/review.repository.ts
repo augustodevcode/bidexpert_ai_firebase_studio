@@ -1,11 +1,10 @@
+// src/repositories/review.repository.ts
 /**
  * @fileoverview Repositório para a entidade Review, lidando com o acesso ao banco de dados.
  */
 
-import { PrismaClient } from '@prisma/client';
-import { CreateReviewInput } from '../lib/zod/review-schema';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 export class ReviewRepository {
   /**
@@ -13,8 +12,8 @@ export class ReviewRepository {
    * @param data Os dados para a nova avaliação.
    * @returns A avaliação criada.
    */
-  async create(data: CreateReviewInput) {
-    return await prisma.review.create({
+  async create(data: Prisma.ReviewCreateInput) {
+    return prisma.review.create({
       data,
     });
   }
@@ -25,8 +24,8 @@ export class ReviewRepository {
    * @returns Uma lista de avaliações para o lote especificado.
    */
   async findByLotId(lotId: string) {
-    return await prisma.review.findMany({
-      where: { lotId },
+    return prisma.review.findMany({
+      where: { lotId: BigInt(lotId) },
       orderBy: { createdAt: 'desc' },
     });
   }

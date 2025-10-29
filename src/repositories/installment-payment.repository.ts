@@ -23,7 +23,7 @@ export class InstallmentPaymentRepository {
    * @param userWinId O ID do arremate.
    * @returns Uma lista de parcelas para o arremate especificado.
    */
-  async findByUserWinId(userWinId: string): Promise<InstallmentPayment[]> {
+  async findByUserWinId(userWinId: bigint): Promise<InstallmentPayment[]> {
     return prisma.installmentPayment.findMany({
       where: { userWinId },
       orderBy: { installmentNumber: 'asc' },
@@ -34,7 +34,7 @@ export class InstallmentPaymentRepository {
    * Remove todas as parcelas associadas a um arremate.
    * @param userWinId - O ID do arremate.
    */
-  async deleteManyByUserWinId(userWinId: string): Promise<Prisma.BatchPayload> {
+  async deleteManyByUserWinId(userWinId: bigint): Promise<Prisma.BatchPayload> {
     return prisma.installmentPayment.deleteMany({
       where: { userWinId },
     });

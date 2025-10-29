@@ -21,7 +21,7 @@ export class SubscriberService {
    * @param data Os dados do formulário de inscrição.
    * @returns Resultado da operação.
    */
-  async createSubscriber(data: SubscriptionFormData): Promise<{ success: boolean; message: string; }> {
+  async createSubscriber(data: SubscriptionFormData, tenantId: string = '1'): Promise<{ success: boolean; message: string; }> {
     const validation = subscriptionFormSchema.safeParse(data);
     if (!validation.success) {
       return { success: false, message: validation.error.errors.map(e => e.message).join(', ') };
@@ -31,7 +31,7 @@ export class SubscriberService {
 
     try {
       const existingSubscriber = await prisma.subscriber.findUnique({
-        where: { email },
+        where: { email_tenantId: { email, tenantId: BigInt(tenantId) } },
       });
 
       if (existingSubscriber) {
@@ -42,6 +42,7 @@ export class SubscriberService {
         data: {
           email,
           name,
+          tenant: { connect: { id: BigInt(tenantId) } }
         },
       });
 
@@ -55,7 +56,7 @@ export class SubscriberService {
     }
   }
 
-  async deleteMany(args: any) {
-    await prisma.subscriber.deleteMany(args);
+  async deleteMany(where: Prisma.SubscriberWhereInput) {
+    return prisma.subscriber.deleteMany({ where });
   }
 }

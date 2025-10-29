@@ -7,19 +7,24 @@
  */
 import { ContactMessageRepository } from '@/repositories/contact-message.repository';
 import type { ContactMessage } from '@/types';
+import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 export class ContactMessageService {
   private repository: ContactMessageRepository;
+  private prisma;
 
   constructor() {
     this.repository = new ContactMessageRepository();
+    this.prisma = prisma;
   }
 
   async getContactMessages(): Promise<ContactMessage[]> {
-    return this.repository.findAll();
+    const messages = await this.repository.findAll();
+    return messages.map(m => ({ ...m, id: m.id.toString() }));
   }
 
-  async saveMessage(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead' | 'tenantId'>): Promise<{ success: boolean; message: string; }> {
+  async saveMessage(data: Omit<ContactMessage, 'id' | 'createdAt' | 'isRead'>): Promise<{ success: boolean; message: string; }> {
     try {
       await this.repository.create(data);
       return { success: true, message: 'Mensagem salva com sucesso.' };
@@ -31,7 +36,7 @@ export class ContactMessageService {
 
   async toggleReadStatus(id: string, isRead: boolean): Promise<{ success: boolean; message: string }> {
     try {
-      await this.repository.update(id, { isRead });
+      await this.repository.update(BigInt(id), { isRead });
       return { success: true, message: `Status da mensagem atualizado.` };
     } catch (error: any) {
       return { success: false, message: "Falha ao atualizar status da mensagem." };
@@ -40,7 +45,7 @@ export class ContactMessageService {
 
   async deleteMessage(id: string): Promise<{ success: boolean; message: string }> {
     try {
-      await this.repository.delete(id);
+      await this.repository.delete(BigInt(id));
       return { success: true, message: "Mensagem excluída." };
     } catch (error: any) {
       return { success: false, message: "Falha ao excluir mensagem." };
@@ -49,7 +54,7 @@ export class ContactMessageService {
 
   async deleteAllContactMessages(): Promise<{ success: boolean; message: string; }> {
     try {
-      await this.repository.deleteAll();
+      await this.prisma.contactMessage.deleteMany({});
       return { success: true, message: 'Todas as mensagens de contato foram excluídas.' };
     } catch (error: any) {
       return { success: false, message: 'Falha ao excluir todas as mensagens de contato.' };
