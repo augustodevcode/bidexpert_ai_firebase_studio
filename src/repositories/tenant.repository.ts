@@ -13,7 +13,7 @@ export class TenantRepository {
     });
   }
 
-  async findById(id: string): Promise<Tenant | null> {
+  async findById(id: bigint): Promise<Tenant | null> {
     return prisma.tenant.findUnique({
       where: { id },
     });
