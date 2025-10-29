@@ -66,12 +66,12 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 
 const slugify = (text: string) => {
   if (!text) return '';
-  return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
 };
 
 // --- Armazenamento de Entidades Criadas ---
 const entityStore: {
-  tenantId: string;
+  tenantId: bigint;
   roles: Record<string, bigint>;
   users: (Prisma.UserGetPayload<{}> & { roleNames: string[] })[];
   categories: (Prisma.LotCategoryGetPayload<{ include: { subcategories: true } }>)[];
@@ -92,7 +92,7 @@ const entityStore: {
   vehicleMakes: Prisma.VehicleMakeGetPayload<{}>[];
   vehicleModels: Prisma.VehicleModelGetPayload<{}>[];
 } = {
-  tenantId: '1',
+  tenantId: 1n,
   roles: {},
   users: [],
   categories: [],
@@ -254,7 +254,7 @@ async function cleanupPreviousData() {
     await services.media.deleteAllMediaItems();
     await services.documentTemplate.deleteAllDocumentTemplates();
     await prisma.documentType.deleteMany({});
-    await services.dataSource.deleteAll();
+    await services.dataSource.deleteAllDataSources();
     await services.city.deleteAllCities();
     await services.state.deleteAllStates();
     
@@ -266,7 +266,7 @@ async function seedCoreInfra() {
 
   const tenantResult = await services.tenant.createTenant({ name: 'BidExpert Platform', subdomain: 'bidexpert' });
   if (!tenantResult.success || !tenantResult.tenant) throw new Error(tenantResult.message);
-  entityStore.tenantId = tenantResult.tenant.id.toString();
+  entityStore.tenantId = tenantResult.tenant.id;
   log(`Tenant "${tenantResult.tenant.name}" criado.`, 1);
 
   await services.platformSettings.updateSettings(entityStore.tenantId, {
@@ -308,8 +308,8 @@ async function seedCoreInfra() {
       fullName: userData.fullName,
       habilitationStatus: userData.habilitationStatus,
       accountType: 'PHYSICAL',
-      roleIds: roleIds.map(id => id.toString()),
       tenantId: entityStore.tenantId,
+      roleIds: roleIds.map(id => id.toString()),
     });
 
     if (!userResult.success) {
@@ -349,7 +349,7 @@ async function seedMedia() {
         return;
     }
     const imageFiles = fs.readdirSync(IMAGE_PLACEHOLDER_DIR).filter(f => f.match(/\.(jpg|jpeg|png|webp)$/));
-    const adminUserId = entityStore.users[0].id.toString();
+    const adminUserId = entityStore.users[0].id;
     for (const fileName of imageFiles) {
         const url = `/uploads/sample-images/${fileName}`;
         const mediaResult = await services.media.createMediaItem(
@@ -360,7 +360,7 @@ async function seedMedia() {
                 title: faker.commerce.productName(),
             },
             url, 
-            adminUserId
+            adminUserId.toString()
         );
         if (mediaResult.success && mediaResult.item) {
             entityStore.mediaItems.push(mediaResult.item as any);
@@ -386,14 +386,18 @@ async function seedCategoriesAndVehicles() {
         const catResult = await services.category.createCategory({ name: catName, description: `Categoria de ${catName}` });
         if (catResult.success && catResult.category) {
             for (const subcatName of categoryData[catName]) {
-                await services.subcategory.createSubcategory({ 
+                await services.subcategory.createSubcategory({
                     name: subcatName, 
                     parentCategoryId: catResult.category.id,
                     description: `Subcategoria de ${subcatName}`,
+                    displayOrder: 0,
+                    iconUrl: null,
+                    iconMediaId: null,
+                    dataAiHintIcon: null,
                 });
             }
             const fullCategory = await prisma.lotCategory.findUnique({ where: { id: catResult.category.id }, include: { subcategories: true } });
-            if (fullCategory) entityStore.categories.push(fullCategory);
+            if (fullCategory) entityStore.categories.push(fullCategory as any);
         }
     }
     log(`${entityStore.categories.length} categorias e suas subcategorias foram criadas.`, 1);
@@ -450,7 +454,7 @@ async function seedJudicialInfra() {
     
     for (let i = 0; i < 5; i++) {
         const state = faker.helpers.arrayElement(entityStore.states);
-        const courtResult = await services.court.createCourt({ name: `Tribunal de Justiça de ${state.name}`, stateUf: state.uf });
+        const courtResult = await services.court.createCourt({ name: `Tribunal de Justiça de ${state.name}`, stateUf: state.uf, website: null, createdAt: new Date(), updatedAt: new Date() });
         if (courtResult.success && courtResult.courtId) {
             const court = await prisma.court.findUnique({ where: { id: courtResult.courtId } });
             if (court) entityStore.courts.push(court);
@@ -492,7 +496,7 @@ async function seedParticipants() {
     for (let i = 0; i < TOTAL_AUCTIONEERS; i++) {
         await services.auctioneer.createAuctioneer(entityStore.tenantId, { name: `Leiloeiro Oficial ${i + 1}`, email: faker.internet.email() } as any);
     }
-    entityStore.auctioneers = await services.auctioneer.getAuctioneers(entityStore.tenantId);
+    entityStore.auctioneers = await services.auctioneer.getAuctioneers(entityStore.tenantId) as any[];
     log(`${entityStore.auctioneers.length} leiloeiros criados.`, 1);
 
     for (let i = 0; i < TOTAL_SELLERS; i++) {
@@ -503,7 +507,7 @@ async function seedParticipants() {
             judicialBranchId: isJudicial ? faker.helpers.arrayElement(entityStore.judicialBranches).id : undefined,
         } as any);
     }
-    entityStore.sellers = await services.seller.getSellers(entityStore.tenantId);
+    entityStore.sellers = await services.seller.getSellers(entityStore.tenantId) as any[];
     log(`${entityStore.sellers.length} vendedores criados.`, 1);
     
     await seedJudicialProcesses();
@@ -515,7 +519,7 @@ async function seedParticipants() {
         const accountType = i % 3 === 0 ? 'LEGAL' : 'PHYSICAL';
         await services.user.createUser({
             email, password: 'bidder123', fullName: faker.person.fullName(), habilitationStatus, accountType,
-            roleIds: [entityStore.roles.BIDDER.toString(), entityStore.roles.USER.toString()],
+            roleIds: [entityStore.roles.BIDDER, entityStore.roles.USER].map(id => id.toString()),
             tenantId: entityStore.tenantId,
         });
     }
@@ -555,12 +559,12 @@ async function seedJudicialProcesses() {
     for (const seller of judicialSellers) {
         const processResult = await services.judicialProcess.createJudicialProcess(entityStore.tenantId, {
             processNumber: `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${faker.date.past({years: 5}).getFullYear()}.${faker.string.numeric(1)}.${faker.string.numeric(2)}.${faker.string.numeric(4)}`,
-            sellerId: seller.id.toString(),
-            branchId: seller.judicialBranchId?.toString(),
+            sellerId: seller.id,
+            branchId: seller.judicialBranchId,
             parties: [ { name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR }, { name: faker.company.name(), partyType: ProcessPartyType.REU } ]
         } as any);
         if (processResult.success && processResult.processId) {
-            const process = await prisma.judicialProcess.findUnique({where: { id: BigInt(processResult.processId) }});
+            const process = await prisma.judicialProcess.findUnique({where: { id: processResult.processId }});
             if (process) entityStore.judicialProcesses.push(process);
         }
     }
@@ -578,12 +582,12 @@ async function seedAssets() {
             title: `${faker.commerce.productName()} (Asset ${i})`,
             status: AssetStatus.DISPONIVEL,
             evaluationValue: faker.number.int({ min: 500, max: 250000 }),
-            categoryId: category.id.toString(),
-            subcategoryId: subcategory?.id.toString(),
-            sellerId: seller.id.toString(),
+            categoryId: category.id,
+            subcategoryId: subcategory?.id,
+            sellerId: seller.id,
         } as any);
     }
-    entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId });
+    entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId }) as any[];
     log(`${entityStore.assets.length} ativos criados.`, 1);
 }
 
@@ -598,15 +602,15 @@ async function seedAuctionsAndLots() {
         const auctionResult = await services.auction.createAuction(entityStore.tenantId, {
             title: `Leilão ${auctionType} #${i + 1}`,
             status, auctionType,
-            auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers).id.toString(),
-            sellerId: seller.id.toString(),
+            auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers).id,
+            sellerId: seller.id,
             auctionStages: [ { name: '1ª Praça', startDate: auctionDate, endDate: new Date(auctionDate.getTime() + 3 * 24 * 60 * 60 * 1000) } ]
         } as any);
 
         if (!auctionResult.success || !auctionResult.auctionId) continue;
         
         const numLots = status === 'RASCUNHO' ? 0 : faker.number.int({ min: 1, max: MAX_LOTS_PER_AUCTION });
-        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id.toString());
+        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id);
 
         for (let j = 0; j < numLots; j++) {
             const assetsForLot = faker.helpers.arrayElements(availableAssets, { min: 1, max: MAX_ASSETS_PER_LOT });
@@ -619,28 +623,28 @@ async function seedAuctionsAndLots() {
                 assetIds: assetsForLot.map(a => a.id.toString()),
             }, entityStore.tenantId, entityStore.users[0].id.toString());
             if(lotResult.success && lotResult.lotId) {
-                const lot = await prisma.lot.findUnique({where: {id: BigInt(lotResult.lotId)}});
+                const lot = await prisma.lot.findUnique({where: {id: lotResult.lotId}});
                 if(lot) entityStore.lots.push(lot);
             }
         }
-        const auction = await prisma.auction.findUnique({ where: { id: BigInt(auctionResult.auctionId) }, include: { stages: true } });
+        const auction = await prisma.auction.findUnique({ where: { id: auctionResult.auctionId }, include: { stages: true } });
         if (auction) {
             entityStore.auctions.push(auction);
-            await seedAuctionHabilitations(auction.id.toString());
+            await seedAuctionHabilitations(auction.id);
         }
     }
     log(`${entityStore.auctions.length} leilões e ${entityStore.lots.length} lotes criados.`, 1);
 }
 
-async function seedAuctionHabilitations(auctionId: string) {
+async function seedAuctionHabilitations(auctionId: bigint) {
     const habilitatedUsers = entityStore.users.filter(u => u.habilitationStatus === UserHabilitationStatus.HABILITADO);
     const usersToHabilitate = faker.helpers.arrayElements(habilitatedUsers, { min: 5, max: 20 });
 
     for (const user of usersToHabilitate) {
         await prisma.auctionHabilitation.create({
             data: {
-                auctionId: BigInt(auctionId),
-                userId: BigInt(user.id),
+                auctionId: auctionId,
+                userId: user.id,
             }
         });
     }
@@ -656,7 +660,7 @@ async function seedInteractions() {
     await seedUserLotMaxBids();
     
     for (const lot of lotsForBidding) {
-        let currentPrice = Number(lot.price);
+        let currentPrice = Number(lot.initialPrice);
         let lastBidder: any = null;
         const bidsForThisLot = faker.number.int({ min: 10, max: MAX_BIDS_PER_LOT });
         for (let i = 0; i < bidsForThisLot; i++) {
@@ -666,7 +670,7 @@ async function seedInteractions() {
                 lot: { connect: { id: lot.id } },
                 auction: { connect: { id: lot.auctionId } },
                 bidder: { connect: { id: bidder.id } },
-                tenant: { connect: { id: BigInt(entityStore.tenantId) } },
+                tenant: { connect: { id: entityStore.tenantId } },
                 bidderDisplay: bidder.fullName || 'Anônimo',
                 amount: currentPrice,
             });
@@ -685,7 +689,7 @@ async function seedInteractions() {
                 
                 const paymentResult = await services.installmentPayment.createInstallmentsForWin(winResult as any, faker.number.int({ min: 1, max: 6 }));
                 if (paymentResult.success) {
-                    await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id.toString(), PaymentStatus.PAGO);
+                    await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
                 }
             }
         }
@@ -705,7 +709,9 @@ async function seedUserLotMaxBids() {
         if (faker.datatype.boolean(0.3)) {
             const user = faker.helpers.arrayElement(habilitatedUsers);
             await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
-                userId: BigInt(user.id), lotId: BigInt(lot.id), maxAmount: Number(lot.price) + faker.number.int({ min: 500, max: 5000 }),
+                user: { connect: { id: user.id } },
+                lot: { connect: { id: lot.id } },
+                maxAmount: Number(lot.initialPrice) + faker.number.int({ min: 500, max: 5000 }),
             });
         }
     }
@@ -718,8 +724,12 @@ async function seedPostAuctionInteractions() {
 
     for (const lot of entityStore.lots) {
         if (faker.datatype.boolean(0.2)) {
+            const user = faker.helpers.arrayElement(users);
             const questionResult = await services.lotQuestion.create({
-                lotId: lot.id.toString(), userId: faker.helpers.arrayElement(users).id.toString(), userDisplayName: faker.person.fullName(), questionText: faker.lorem.sentence() + '?',
+                lotId: lot.id.toString(), 
+                userId: user.id.toString(), 
+                authorName: user.fullName || 'Anônimo', 
+                question: faker.lorem.sentence() + '?',
             });
             await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
         }
@@ -730,10 +740,13 @@ async function seedPostAuctionInteractions() {
         if (faker.datatype.boolean(0.5)) {
             const user = entityStore.users.find(u => u.id === win.userId);
             const lot = await prisma.lot.findUnique({ where: { id: win.lotId } });
-            if (lot) {
+            if (lot && user) {
                 await services.review.create({
-                    lotId: win.lotId.toString(), auctionId: lot.auctionId.toString(), userId: win.userId.toString(), userDisplayName: user?.fullName || 'Avaliador',
-                    rating: faker.number.int({ min: 3, max: 5 }), comment: faker.lorem.paragraph(),
+                    lotId: win.lotId.toString(), 
+                    userId: win.userId.toString(), 
+                    authorName: user.fullName || 'Avaliador',
+                    rating: faker.number.int({ min: 3, max: 5 }), 
+                    comment: faker.lorem.paragraph(),
                 });
             }
         }
@@ -766,10 +779,10 @@ async function seedMiscData() {
     const usersWithNotifications = faker.helpers.arrayElements(entityStore.users, { min: 10, max: 30 });
     for (const user of usersWithNotifications) {
         await services.notification.createNotification({
-            userId: BigInt(user.id),
+            user: { connect: { id: user.id } },
             message: faker.lorem.sentence(),
             link: faker.internet.url(),
-            tenantId: BigInt(entityStore.tenantId),
+            tenant: { connect: { id: entityStore.tenantId } },
         });
     }
 

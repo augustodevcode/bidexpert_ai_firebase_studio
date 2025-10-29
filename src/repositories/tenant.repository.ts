@@ -18,4 +18,8 @@ export class TenantRepository {
       where: { id },
     });
   }
+
+  async deleteMany(args: Prisma.TenantDeleteManyArgs): Promise<Prisma.BatchPayload> {
+    return prisma.tenant.deleteMany(args);
+  }
 }
