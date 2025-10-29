@@ -4,7 +4,7 @@
  * gerenciar a lógica de negócio para as configurações globais da plataforma.
  */
 import { prisma } from '@/lib/prisma';
-import type { Prisma, PlatformSettings as PrismaPlatformSettings } from '@prisma/client';
+import { Prisma, type PlatformSettings as PrismaPlatformSettings } from '@prisma/client';
 import type { PlatformSettings } from '@/types';
 
 export class PlatformSettingsService {
@@ -22,32 +22,63 @@ export class PlatformSettingsService {
      */
     async getSettings(tenantId: string): Promise<PlatformSettings> {
         try {
-            let settings = await this.prisma.platformSettings.findUnique({
-                where: { tenantId: tenantId },
-                include: {
-                    themes: { include: { colors: true } },
-                    platformPublicIdMasks: true,
-                    mapSettings: true,
-                    biddingSettings: true,
-                    paymentGatewaySettings: true,
-                    notificationSettings: true,
-                    mentalTriggerSettings: true,
-                    sectionBadgeVisibility: true,
-                    variableIncrementTable: true,
-                },
-            });
+            const findSettings = async () => {
+                return await this.prisma.platformSettings.findUnique({
+                    where: { tenantId: tenantId },
+                    include: {
+                        themes: { include: { colors: true } },
+                        platformPublicIdMasks: true,
+                        mapSettings: true,
+                        biddingSettings: true,
+                        paymentGatewaySettings: true,
+                        notificationSettings: true,
+                        mentalTriggerSettings: true,
+                        sectionBadgeVisibility: true,
+                        variableIncrementTable: true,
+                    },
+                });
+            };
+
+            let settings = await findSettings();
 
             if (!settings) {
-                console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
-                settings = await this.prisma.platformSettings.create({
-                    data: {
-                        tenantId: tenantId,
-                        siteTitle: 'BidExpert',
-                        siteTagline: 'Sua plataforma de leilões online.',
-                        isSetupComplete: false,
-                        crudFormMode: 'modal',
+                try {
+                    console.warn(`[PlatformSettingsService] No settings found for tenant ${tenantId}. Creating with default values.`);
+                    settings = await this.prisma.platformSettings.create({
+                        data: {
+                            tenantId: tenantId,
+                            siteTitle: 'BidExpert',
+                            siteTagline: 'Sua plataforma de leilões online.',
+                            isSetupComplete: false,
+                            crudFormMode: 'modal',
+                        },
+                        include: {
+                            themes: { include: { colors: true } },
+                            platformPublicIdMasks: true,
+                            mapSettings: true,
+                            biddingSettings: true,
+                            paymentGatewaySettings: true,
+                            notificationSettings: true,
+                            mentalTriggerSettings: true,
+                            sectionBadgeVisibility: true,
+                            variableIncrementTable: true,
+                        },
+                    });
+                } catch (error: any) {
+                    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+                        // Unique constraint violation, settings were likely created by a concurrent request.
+                        // We can now safely assume the settings exist.
+                        console.log(`[PlatformSettingsService] Settings for tenant ${tenantId} created concurrently. Fetching again.`);
+                        settings = await findSettings();
+                        if (!settings) {
+                            // This should theoretically not happen in this race condition scenario
+                            throw new Error('Failed to fetch settings after a concurrent creation attempt.');
+                        }
+                    } else {
+                        // Re-throw other errors
+                        throw error;
                     }
-                });
+                }
             }
 
             return {

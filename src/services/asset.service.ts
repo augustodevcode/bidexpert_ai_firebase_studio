@@ -100,7 +100,7 @@ export class AssetService {
       if (categoryId) dataToCreate.category = { connect: { id: categoryId } };
       if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
       if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: judicialProcessId } };
-      if (sellerId) dataToCreate.seller = { connect: { id: sellerId } };
+      if (sellerId) dataToCreate.seller = { connect: { id: BigInt(sellerId) } };
       if (cityId) {
           const city = await this.prisma.city.findUnique({where: {id: cityId}});
           if(city) dataToCreate.locationCity = city.name;

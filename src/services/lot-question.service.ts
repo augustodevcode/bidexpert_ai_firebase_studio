@@ -14,11 +14,12 @@ export class LotQuestionService {
   }
 
   async create(data: CreateLotQuestionInput) {
+    const { lotId, userId, auctionId, ...rest } = data;
     return this.repository.create({
-      ...data,
-      lot: { connect: { id: data.lotId } },
-      user: { connect: { id: data.userId } },
-      auction: { connect: { id: data.auctionId } }
+      ...rest,
+      lot: { connect: { id: lotId } },
+      user: { connect: { id: userId } },
+      auction: { connect: { id: auctionId } }
     });
   }
 

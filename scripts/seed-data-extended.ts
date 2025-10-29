@@ -181,6 +181,7 @@ async function main() {
   console.log('=====================================================');
 
   try {
+    await prisma.$connect(); // Explicitly connect
     await runStep(cleanupPreviousData, 'Limpeza de dados antigos');
     await runStep(seedCoreInfra, 'Infraestrutura Core');
     await runStep(seedMedia, 'Mídia');
@@ -198,7 +199,7 @@ async function main() {
     console.log('\n=====================================================');
     console.log('✅ Seed do banco de dados finalizado com sucesso!');
     console.log('=====================================================');
-    logSummary();
+    await logSummary();
     
     console.log('\n🎉 Dataset completo gerado com sucesso!');
   } catch (error) {
@@ -233,7 +234,7 @@ async function cleanupPreviousData() {
     await prisma.auction.deleteMany({});
     
     await prisma.asset.deleteMany({});
-    await services.directSaleOffer.deleteMany({});
+    await prisma.directSaleOffer.deleteMany({});
 
     await prisma.judicialProcess.deleteMany({});
     await prisma.seller.deleteMany({});
@@ -584,16 +585,19 @@ async function seedAssets() {
         const seller = faker.helpers.arrayElement(entityStore.sellers);
         const randomMedia = entityStore.mediaItems.length > 0 ? faker.helpers.arrayElement(entityStore.mediaItems) : null;
         
-        await services.asset.createAsset(entityStore.tenantId, {
+        const assetResult = await services.asset.createAsset(entityStore.tenantId, {
             title: `${faker.commerce.productName()} (Asset ${i})`,
             status: AssetStatus.DISPONIVEL,
             evaluationValue: faker.number.int({ min: 500, max: 250000 }),
             categoryId: category.id.toString(),
-            subcategoryId: subcategory?.id.toString(),
             sellerId: seller.id.toString(),
             imageUrl: randomMedia?.urlOriginal,
             imageMediaId: randomMedia?.id.toString(),
         } as any);
+
+        if (!assetResult.success) {
+            console.error(`Falha ao criar ativo: ${assetResult.message}`);
+        }
     }
     entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId });
     log(`${entityStore.assets.length} ativos criados.`, 1);
@@ -619,10 +623,12 @@ async function seedAuctionsAndLots() {
         if (!auctionResult.success || !auctionResult.auctionId) continue;
         
         const numLots = status === 'RASCUNHO' ? 0 : faker.number.int({ min: 1, max: MAX_LOTS_PER_AUCTION });
-        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id.toString());
+        const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id);
+        log(`  - Seller ${seller.name} (${seller.id}): ${availableAssets.length} assets disponíveis.`, 2);
 
         for (let j = 0; j < numLots; j++) {
             const assetsForLot = faker.helpers.arrayElements(availableAssets.filter(a => a.status === AssetStatus.DISPONIVEL), { min: 1, max: MAX_ASSETS_PER_LOT });
+            log(`    - Tentando criar lote com ${assetsForLot.length} assets.`, 3);
             if (assetsForLot.length === 0) continue;
             
             const lotResult = await services.lot.createLot({

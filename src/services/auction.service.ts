@@ -39,6 +39,7 @@ export class AuctionService {
         
         return {
             ...a,
+            id: a.id.toString(),
             initialOffer: a.initialOffer ? Number(a.initialOffer) : undefined,
             estimatedRevenue: a.estimatedRevenue ? Number(a.estimatedRevenue) : undefined,
             achievedRevenue: a.achievedRevenue ? Number(a.achievedRevenue) : undefined,
@@ -47,8 +48,14 @@ export class AuctionService {
             latitude: a.latitude ? Number(a.latitude) : null,
             longitude: a.longitude ? Number(a.longitude) : null,
             totalLots: a._count?.lots ?? a.lots?.length ?? 0,
-            seller: a.seller ? { ...a.seller } : null,
-            auctioneer: a.auctioneer ? { ...a.auctioneer } : null,
+            sellerId: a.sellerId?.toString() ?? null,
+            auctioneerId: a.auctioneerId?.toString() ?? null,
+            categoryId: a.categoryId?.toString() ?? null,
+            judicialProcessId: a.judicialProcessId?.toString() ?? null,
+            tenantId: a.tenantId.toString(),
+            seller: a.seller ? { ...a.seller, id: a.seller.id.toString() } : null,
+            auctioneer: a.auctioneer ? { ...a.auctioneer, id: a.auctioneer.id.toString() } : null,
+            category: a.category ? { ...a.category, id: a.category.id.toString() } : null,
             sellerName: a.seller?.name,
             auctioneerName: a.auctioneer?.name,
             categoryName: a.category?.name,
@@ -56,10 +63,14 @@ export class AuctionService {
             imageUrl: a.imageMediaId === 'INHERIT' ? featuredLot?.imageUrl : a.imageUrl,
             auctionStages: (a.stages || a.auctionStages || []).map((stage: any) => ({
                 ...stage,
+                id: stage.id.toString(),
+                auctionId: stage.auctionId.toString(),
                 initialPrice: stage.initialPrice ? Number(stage.initialPrice) : null,
             })),
             lots: (a.lots || []).map((lot: any) => ({
                 ...lot,
+                id: lot.id.toString(),
+                auctionId: lot.auctionId.toString(),
                 price: Number(lot.price),
                 initialPrice: lot.initialPrice ? Number(lot.initialPrice) : null,
                 secondInitialPrice: lot.secondInitialPrice ? Number(lot.secondInitialPrice) : null,
@@ -67,6 +78,7 @@ export class AuctionService {
                 evaluationValue: lot.evaluationValue ? Number(lot.evaluationValue) : null,
                 assets: (lot.assets || []).map((assetRelation: any) => ({
                 ...assetRelation.asset,
+                id: assetRelation.asset.id.toString(),
                 evaluationValue: assetRelation.asset.evaluationValue ? Number(assetRelation.asset.evaluationValue) : null,
                 }))
             }))
@@ -174,41 +186,26 @@ export class AuctionService {
 
       let finalImageUrl = imageUrl;
       if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
-        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: data.imageMediaId }});
+        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
         if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
       }
       
       const newAuction = await this.prisma.$transaction(async (tx: any) => {
-        const createdAuction = await tx.auction.upsert({
-          where: { slug: slugify(data.title!) },
-          update: {
-            ...(restOfData as any),
-            imageUrl: finalImageUrl,
-            publicId: `AUC-${uuidv4()}`,
-            auctionDate: derivedAuctionDate,
-            softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            auctioneer: { connect: { id: auctioneerId } },
-            seller: { connect: { id: sellerId } },
-            category: categoryId ? { connect: { id: categoryId } } : undefined,
-            tenant: { connect: { id: tenantId } },
-            city: cityId ? { connect: { id: cityId } } : undefined,
-            state: stateId ? { connect: { id: stateId } } : undefined,
-            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
-          },
-          create: {
+        const createdAuction = await tx.auction.create({
+          data: {
             ...(restOfData as any),
             imageUrl: finalImageUrl,
             publicId: `AUC-${uuidv4()}`,
             slug: slugify(data.title!),
             auctionDate: derivedAuctionDate,
             softCloseMinutes: Number(data.softCloseMinutes) || undefined,
-            auctioneer: { connect: { id: auctioneerId } },
-            seller: { connect: { id: sellerId } },
-            category: categoryId ? { connect: { id: categoryId } } : undefined,
-            tenant: { connect: { id: tenantId } },
-            city: cityId ? { connect: { id: cityId } } : undefined,
-            state: stateId ? { connect: { id: stateId } } : undefined,
-            judicialProcess: judicialProcessId ? { connect: { id: judicialProcessId } } : undefined,
+            auctioneer: { connect: { id: BigInt(auctioneerId) } },
+            seller: { connect: { id: BigInt(sellerId) } },
+            category: categoryId ? { connect: { id: BigInt(categoryId) } } : undefined,
+            tenant: { connect: { id: BigInt(tenantId) } },
+            city: cityId ? { connect: { id: BigInt(cityId) } } : undefined,
+            state: stateId ? { connect: { id: BigInt(stateId) } } : undefined,
+            judicialProcess: judicialProcessId ? { connect: { id: BigInt(judicialProcessId) } } : undefined,
           }
         });
 
@@ -227,7 +224,7 @@ export class AuctionService {
         return createdAuction;
       });
 
-      return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id };
+      return { success: true, message: 'Leilão criado com sucesso.', auctionId: newAuction.id.toString() };
 
     } catch (error: any) {
       console.error("Error in AuctionService.createAuction:", error);
@@ -251,13 +248,13 @@ export class AuctionService {
       if (!auctionToUpdate) {
         return { success: false, message: 'Leilão não encontrado para este tenant.' };
       }
-      const internalId = auctionToUpdate.id;
+      const internalId = BigInt(auctionToUpdate.id);
 
       const { categoryId, auctioneerId, sellerId, auctionStages, judicialProcessId, auctioneerName, sellerName, cityId, stateId, tenantId: _tenantId, imageUrl, ...restOfData } = data;
 
       let finalImageUrl = imageUrl;
       if (data.imageMediaId && data.imageMediaId !== 'INHERIT' && !imageUrl) {
-        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: data.imageMediaId }});
+        const mediaItem = await this.prisma.mediaItem.findUnique({ where: { id: BigInt(data.imageMediaId) }});
         if (mediaItem) finalImageUrl = mediaItem.urlOriginal;
       }
 
@@ -269,13 +266,13 @@ export class AuctionService {
         
         if (data.title) dataToUpdate.slug = slugify(data.title);
         
-        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: auctioneerId } };
-        if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
-        if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-        if (cityId) dataToUpdate.city = { connect: {id: cityId }};
-        if (stateId) dataToUpdate.state = { connect: {id: stateId }};
+        if (auctioneerId) dataToUpdate.auctioneer = { connect: { id: BigInt(auctioneerId) } };
+        if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
+        if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
+        if (cityId) dataToUpdate.city = { connect: {id: BigInt(cityId) }};
+        if (stateId) dataToUpdate.state = { connect: {id: BigInt(stateId) }};
         if (judicialProcessId) {
-          dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
+          dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
         } else if (data.hasOwnProperty('judicialProcessId')) {
           dataToUpdate.judicialProcess = { disconnect: true };
         }
@@ -323,10 +320,11 @@ export class AuctionService {
       if (lotCount > 0) {
         return { success: false, message: `Não é possível excluir. O leilão possui ${lotCount} lote(s) associado(s).` };
       }
+      const auctionIdAsBigInt = BigInt(id);
       await this.prisma.$transaction(async (tx: any) => {
-          await tx.auctionHabilitation.deleteMany({ where: { auctionId: id } });
-          await tx.auctionStage.deleteMany({ where: { auctionId: id }});
-          await tx.auction.delete({ where: { id, tenantId } });
+          await tx.auctionHabilitation.deleteMany({ where: { auctionId: auctionIdAsBigInt } });
+          await tx.auctionStage.deleteMany({ where: { auctionId: auctionIdAsBigInt }});
+          await tx.auction.delete({ where: { id: auctionIdAsBigInt, tenantId: BigInt(tenantId) } });
       });
       return { success: true, message: 'Leilão excluído com sucesso.' };
     } catch (error: any) {
@@ -339,7 +337,7 @@ export class AuctionService {
     try {
       const auctions = await this.auctionRepository.findAll(tenantId);
       for (const auction of auctions) {
-        await this.deleteAuction(tenantId, auction.id);
+        await this.deleteAuction(tenantId, auction.id.toString());
       }
       return { success: true, message: 'Todos os leilões foram excluídos.' };
     } catch (error: any) {

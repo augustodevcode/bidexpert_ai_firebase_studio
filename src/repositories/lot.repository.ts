@@ -11,7 +11,7 @@ export class LotRepository {
   async findAll(tenantId: string | undefined, where: Prisma.LotWhereInput = {}, limit?: number, isPublicCall = false): Promise<any[]> {
     const finalWhere: Prisma.LotWhereInput = {
       ...where,
-      ...(tenantId && { tenantId }),
+      ...(tenantId && { tenantId: BigInt(tenantId) }),
     };
     
     if (isPublicCall) {
@@ -35,12 +35,14 @@ export class LotRepository {
 
   async findById(id: string, tenantId?: string): Promise<any | null> {
     const whereClause: Prisma.LotWhereInput = {
-        ...(tenantId && { tenantId }),
+        ...(tenantId && { tenantId: BigInt(tenantId) }),
     };
-    if (id.includes('-')) {
+
+    const isNumericId = /^\d+$/.test(id);
+    if (!isNumericId) {
         whereClause.publicId = id;
     } else {
-        whereClause.id = id;
+        whereClause.id = BigInt(id);
     }
 
     return prisma.lot.findFirst({
@@ -52,7 +54,7 @@ export class LotRepository {
     });
   }
   
-  async findByIds(ids: string[]): Promise<any[]> {
+  async findByIds(ids: bigint[]): Promise<any[]> {
     if (!ids || ids.length === 0) return [];
     return prisma.lot.findMany({
         where: { id: { in: ids } },
@@ -60,7 +62,7 @@ export class LotRepository {
     });
   }
 
-  async create(lotData: Prisma.LotCreateInput, assetIds: string[], assignedBy: string): Promise<Lot> {
+  async create(lotData: Prisma.LotCreateInput, assetIds: bigint[], creatorId: string): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
       // 1. Create the Lot
       const newLot = await tx.lot.create({
@@ -73,7 +75,7 @@ export class LotRepository {
           data: assetIds.map(assetId => ({
             lotId: newLot.id,
             assetId: assetId,
-            assignedBy: assignedBy,
+            assignedBy: creatorId,
           })),
         });
       }
@@ -82,36 +84,41 @@ export class LotRepository {
     });
   }
 
-  async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: string[]): Promise<Lot> {
+  async update(id: string, lotData: Prisma.LotUpdateInput, assetIds?: bigint[]): Promise<Lot> {
     return prisma.$transaction(async (tx) => {
-        const updatedLot = await tx.lot.update({
-            where: { id },
-            data: lotData,
-        });
-
+        const lotIdAsBigInt = BigInt(id);
+        
         if (assetIds !== undefined) {
             await tx.assetsOnLots.deleteMany({
-                where: { lotId: id },
+                where: { lotId: lotIdAsBigInt },
             });
             if (assetIds.length > 0) {
                 await tx.assetsOnLots.createMany({
                     data: assetIds.map(assetId => ({
-                        lotId: id,
+                        lotId: lotIdAsBigInt,
                         assetId: assetId,
+                        assignedBy: 'system-update', // Or get user from context
                     })),
                 });
             }
         }
+        
+        const updatedLot = await tx.lot.update({
+            where: { id: lotIdAsBigInt },
+            data: lotData,
+        });
+
         return updatedLot as Lot;
     });
   }
 
   async delete(id: string): Promise<void> {
      await prisma.$transaction(async (tx) => {
+        const lotIdAsBigInt = BigInt(id);
         await tx.assetsOnLots.deleteMany({
-            where: { lotId: id },
+            where: { lotId: lotIdAsBigInt },
         });
-        await tx.lot.delete({ where: { id } });
+        await tx.lot.delete({ where: { id: lotIdAsBigInt } });
     });
   }
 }

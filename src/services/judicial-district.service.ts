@@ -47,7 +47,7 @@ export class JudicialDistrictService {
       };
       
       const newDistrict = await prisma.judicialDistrict.upsert({
-        where: { name: data.name },
+        where: { slug: slugify(data.name) },
         update: dataToUpsert,
         create: dataToUpsert,
       });
