@@ -20,6 +20,7 @@ export class TenantRepository {
   }
 
   async deleteMany(args: Prisma.TenantDeleteManyArgs): Promise<Prisma.BatchPayload> {
+    // A correção é garantir que 'args' (que contém a cláusula 'where') seja passado diretamente.
     return prisma.tenant.deleteMany(args);
   }
 }
