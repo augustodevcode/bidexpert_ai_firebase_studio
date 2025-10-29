@@ -14,9 +14,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// ==============
+// =============
 //  Global Models
-// ==============
+// =============
 
 model Tenant {
   id        BigInt   @id @default(autoincrement())
@@ -37,6 +37,7 @@ model Tenant {
   subscribers Subscriber[]
   reports    Report[]
   platformSettings PlatformSettings?
+  judicialProcesses JudicialProcess[]
 }
 
 model UsersOnTenants {
@@ -105,6 +106,8 @@ model User {
   auctioneerProfile Auctioneer?
   uploadedMedia    MediaItem[]
   createdReports   Report[]
+  lotsWon          Lot[] @relation("LotsWon")
+  auctionHabilitations AuctionHabilitation[]
 }
 
 
@@ -236,9 +239,9 @@ model PasswordResetToken {
   @@unique([email, token])
 }
 
-// ==============
+// =============
 //  Tenant-Specific Models
-// ==============
+// =============
 
 model Auction {
   id                      BigInt          @id @default(autoincrement())
@@ -280,10 +283,10 @@ model Auction {
   tenantId         BigInt
   tenant           Tenant   @relation(fields: [tenantId], references: [id])
   
-  auctioneerId     BigInt?  @index
+  auctioneerId     BigInt?
   auctioneer       Auctioneer? @relation(fields: [auctioneerId], references: [id])
   
-  sellerId         BigInt?  @index
+  sellerId         BigInt?
   seller           Seller?  @relation(fields: [sellerId], references: [id])
 
   imageMediaId     BigInt?
@@ -318,6 +321,12 @@ model Auction {
   courts           Court[]           @relation("_AuctionToCourt")
   judicialDistricts JudicialDistrict[] @relation("_AuctionToJudicialDistrict")
   judicialBranches  JudicialBranch[]  @relation("_AuctionToJudicialBranch")
+
+  lotStagePrices LotStagePrice[]
+  notifications Notification[]
+
+  @@index([auctioneerId])
+  @@index([sellerId])
 }
 
 model AuctionStage {
@@ -325,16 +334,18 @@ model AuctionStage {
   name            String
   startDate       DateTime
   endDate         DateTime
-  auctionId       BigInt          @index
+  auctionId       BigInt
   auction         Auction         @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   initialPrice    Decimal?        @db.Decimal(15, 2)
   lotStagePrices  LotStagePrice[]
+
+  @@index([auctionId])
 }
 
 model Lot {
   id                BigInt      @id @default(autoincrement())
   publicId          String?     @unique
-  auctionId         BigInt      @index
+  auctionId         BigInt
   auction           Auction     @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   number            String?
   title             String
@@ -356,14 +367,14 @@ model Lot {
   imageMediaId      BigInt?
   galleryImageUrls  Json?
   mediaItemIds      Json?
-  stageDetails      Json?       @deprecated("Use LotStagePrice model instead")
+  stageDetails      Json?
 
   type              String      // Veículo, Imóvel, etc.
   condition         String?     // Novo, Usado, etc.
   dataAiHint        String?
 
-  winnerId          BigInt?     @index
-  winner            User?       @relation(fields: [winnerId], references: [id])
+  winnerId          BigInt?
+  winner            User?       @relation("LotsWon", fields: [winnerId], references: [id])
   win               UserWin?
   winningBidTermUrl String?
   
@@ -371,7 +382,7 @@ model Lot {
   installments      InstallmentPayment[] @relation("_InstallmentPaymentToLot")
   
   isRelisted        Boolean @default(false)
-  relistCount       Int @default(false)
+  relistCount       Int @default(0)
   original_lot_id   BigInt?      @unique
   originalLot       Lot?        @relation("RelistedLot", fields: [original_lot_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   relistedLot       Lot?        @relation("RelistedLot")
@@ -418,15 +429,18 @@ model Lot {
   judicialProcesses JudicialProcess[] @relation("_JudicialProcessToLot")
 
   stagePrices      LotStagePrice[]
+  notifications    Notification[]
 
   @@unique([auctionId, number])
+  @@index([auctionId])
+  @@index([winnerId])
 }
 
 model LotStagePrice {
     id              BigInt   @id @default(autoincrement())
     lotId           BigInt
     lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
-    auctionId       BigInt   @index
+    auctionId       BigInt
     auction         Auction  @relation(fields: [auctionId], references: [id])
     auctionStageId  BigInt
     auctionStage    AuctionStage @relation(fields: [auctionStageId], references: [id], onDelete: Cascade)
@@ -434,6 +448,7 @@ model LotStagePrice {
     bidIncrement    Decimal?     @db.Decimal(10, 2)
 
     @@unique([lotId, auctionStageId])
+    @@index([auctionId])
 }
 
 
@@ -614,24 +629,27 @@ model AssetsOnLots {
 
 model Bid {
   id            BigInt    @id @default(autoincrement())
-  lotId         BigInt    @index
+  lotId         BigInt
   lot           Lot       @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auctionId     BigInt
   auction       Auction   @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  bidderId      BigInt    @index
+  bidderId      BigInt
   bidder        User      @relation(fields: [bidderId], references: [id], onDelete: Cascade)
   amount        Decimal   @db.Decimal(15, 2)
   timestamp     DateTime  @default(now())
   bidderDisplay String?
   tenantId      BigInt
   tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([bidderId])
 }
 
 model UserWin {
   id              BigInt     @id @default(autoincrement())
   lotId           BigInt     @unique
   lot             Lot        @relation(fields: [lotId], references: [id])
-  userId          BigInt     @index
+  userId          BigInt
   user            User       @relation(fields: [userId], references: [id])
   winningBidAmount Decimal    @db.Decimal(15, 2)
   winDate         DateTime   @default(now())
@@ -640,19 +658,23 @@ model UserWin {
   invoiceUrl      String?
 
   installments     InstallmentPayment[]
+
+  @@index([userId])
 }
 
 model UserLotMaxBid {
   id        BigInt   @id @default(autoincrement())
-  userId    BigInt   @index
+  userId    BigInt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  lotId     BigInt   @index
+  lotId     BigInt
   lot       Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   maxAmount Decimal  @db.Decimal(15, 2)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
   @@unique([userId, lotId])
+  @@index([userId])
+  @@index([lotId])
 }
 
 model Auctioneer {
@@ -741,7 +763,7 @@ model Subscriber {
 
 model Notification {
   id        BigInt   @id @default(autoincrement())
-  userId    BigInt   @index
+  userId    BigInt
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   message   String
   link      String?
@@ -753,29 +775,34 @@ model Notification {
   auction   Auction? @relation(fields: [auctionId], references: [id])
   tenantId  BigInt
   tenant    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Review {
   id              BigInt   @id @default(autoincrement())
-  lotId           BigInt   @index
+  lotId           BigInt
   lot             Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auctionId       BigInt
   auction         Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  userId          BigInt   @index
+  userId          BigInt
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   rating          Int
   comment         String?  @db.Text
   createdAt       DateTime @default(now())
   userDisplayName String?
+
+  @@index([lotId])
+  @@index([userId])
 }
 
 model LotQuestion {
   id                      BigInt   @id @default(autoincrement())
-  lotId                   BigInt   @index
+  lotId                   BigInt
   lot                     Lot      @relation(fields: [lotId], references: [id], onDelete: Cascade)
   auctionId               BigInt
   auction                 Auction  @relation(fields: [auctionId], references: [id], onDelete: Cascade)
-  userId                  BigInt   @index
+  userId                  BigInt
   user                    User     @relation(fields: [userId], references: [id])
   userDisplayName         String
   questionText            String   @db.Text
@@ -785,6 +812,9 @@ model LotQuestion {
   answeredAt              DateTime?
   answeredByUserId        BigInt?
   answeredByUserDisplayName String?
+
+  @@index([lotId])
+  @@index([userId])
 }
 
 model UserDocument {
@@ -792,7 +822,7 @@ model UserDocument {
   status         UserDocumentStatus @default(PENDING_ANALYSIS)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  userId         BigInt     @index
+  userId         BigInt
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   documentTypeId BigInt
   documentType   DocumentType @relation(fields: [documentTypeId], references: [id])
@@ -801,12 +831,13 @@ model UserDocument {
   rejectionReason String?
 
   @@unique([userId, documentTypeId])
+  @@index([userId])
 }
 
 model AuctionHabilitation {
   userId BigInt
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  auctionId BigInt @index
+  auctionId BigInt
   auction   Auction @relation(fields: [auctionId], references: [id], onDelete: Cascade)
   habilitatedAt DateTime @default(now())
 
@@ -837,6 +868,7 @@ model JudicialProcess {
   assets            Asset[]
   auctions          Auction[]
   lots              Lot[] @relation("_JudicialProcessToLot")
+  mediaItems        MediaItem[]
 
   @@unique([processNumber, tenantId])
 }
@@ -846,8 +878,10 @@ model JudicialParty {
   name         String
   documentNumber String?
   partyType    ProcessPartyType
-  processId    BigInt      @index
+  processId    BigInt
   process      JudicialProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  @@index([processId])
 }
 
 model Court {
@@ -918,9 +952,9 @@ model MediaItem {
   linkedLotIds      Json?
 }
 
-// ==============
+// =============
 //  Platform Settings
-// ==============
+// =============
 
 model PlatformSettings {
   id                  BigInt   @id @default(autoincrement())
@@ -1094,9 +1128,9 @@ model DataSource {
     fields Json
 }
 
-// ==============
+// =============
 // Enums
-// ==============
+// =============
 
 enum UserHabilitationStatus {
   PENDING_DOCUMENTS

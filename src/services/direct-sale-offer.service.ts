@@ -79,6 +79,6 @@ export class DirectSaleOfferService {
   }
 
   async deleteMany(args: Prisma.DirectSaleOfferDeleteManyArgs) {
-    return this.prisma.directSaleOffer.deleteMany(args);
+    return this.repository.deleteMany(args);
   }
 }
