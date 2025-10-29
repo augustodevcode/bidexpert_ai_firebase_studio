@@ -4,7 +4,7 @@
  * gerencia a criação de novos inscritos na newsletter.
  */
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client'; // Importar Prisma
 import { z } from 'zod';
 
 // Zod schema for input validation
@@ -28,10 +28,12 @@ export class SubscriberService {
     }
 
     const { email, name } = validation.data;
+    const tenantIdAsBigInt = BigInt(tenantId);
 
     try {
+      // Correção: Usar o índice único composto 'email_tenantId'
       const existingSubscriber = await prisma.subscriber.findUnique({
-        where: { email_tenantId: { email, tenantId: BigInt(tenantId) } },
+        where: { email_tenantId: { email, tenantId: tenantIdAsBigInt } },
       });
 
       if (existingSubscriber) {
@@ -42,13 +44,14 @@ export class SubscriberService {
         data: {
           email,
           name,
-          tenant: { connect: { id: BigInt(tenantId) } }
+          tenant: { connect: { id: tenantIdAsBigInt } }
         },
       });
 
       return { success: true, message: 'Inscrição realizada com sucesso!' };
     } catch (error: any) {
       console.error("[SubscriberService] Error creating subscriber:", error);
+      // Correção: Agora Prisma.PrismaClientKnownRequestError está definido
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
          return { success: false, message: 'Este e-mail já está inscrito.' };
       }
