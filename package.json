@@ -3,7 +3,7 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "dev": "npx prisma db push && npm run db:seed:extended && npx next dev --port 9002 --hostname 0.0.0.0",
+        "dev": "npx prisma db push --accept-data-loss && npm run db:seed:extended && npx next dev --port 9002 --hostname 0.0.0.0",
         "build": "npx prisma generate && next build",
         "start": "next start",
         "postinstall": "npx prisma generate",
@@ -13,7 +13,7 @@
         "db:seed:samples": "npx tsx --env-file=.env scripts/seed-db-sample-data.ts",
         "db:seed:extended": "npx tsx --env-file=.env scripts/seed-data-extended.ts",
         "db:migrate": "npx prisma migrate dev",
-        "db:push": "npx prisma db push",
+        "db:push": "npx prisma db push --accept-data-loss",
         "db:reset": "npm run db:init && npm run db:seed",
         "test": "vitest",
         "test:e2e": "vitest run tests/bidding-e2e.test.ts",

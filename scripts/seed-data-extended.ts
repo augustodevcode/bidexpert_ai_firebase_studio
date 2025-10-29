@@ -214,30 +214,30 @@ async function cleanupPreviousData() {
     log('Fase 0: Limpando dados antigos...', 0);
     // A ordem de exclusão é crucial para evitar erros de constraint de chave estrangeira.
     
-    await services.installmentPayment.deleteMany({ where: {} });
+    await services.installmentPayment.deleteMany({});
     await services.userWin.deleteAllUserWins();
-    await services.bid.deleteMany({ where: {} });
-    await services.userLotMaxBid.deleteMany({ where: {} });
-    await services.lotQuestion.deleteMany({ where: {} });
-    await services.review.deleteMany({ where: {} });
-    await services.notification.deleteMany({ where: {} });
+    await services.bid.deleteMany({});
+    await services.userLotMaxBid.deleteMany({});
+    await services.lotQuestion.deleteMany({});
+    await services.review.deleteMany({});
+    await services.notification.deleteMany({});
     await services.contactMessage.deleteAllContactMessages();
-    await services.subscriber.deleteMany({ where: {} });
+    await services.subscriber.deleteMany({});
     await prisma.auctionHabilitation.deleteMany({});
 
-    await services.asset.deleteManyAssetsOnLots({ where: {} });
+    await services.asset.deleteManyAssetsOnLots({});
     await services.document.deleteAllUserDocuments();
-    await services.auctionStage.deleteMany({ where: {} });
+    await services.auctionStage.deleteMany({});
     
     await prisma.lot.deleteMany({});
     await prisma.auction.deleteMany({});
     
-    await services.asset.deleteAllAssets(entityStore.tenantId);
-    await services.directSaleOffer.deleteMany({ where: {} });
+    await prisma.asset.deleteMany({});
+    await services.directSaleOffer.deleteMany({});
 
-    await services.judicialProcess.deleteAllJudicialProcesses(entityStore.tenantId);
-    await services.seller.deleteAllSellers(entityStore.tenantId);
-    await services.auctioneer.deleteAllAuctioneers(entityStore.tenantId);
+    await prisma.judicialProcess.deleteMany({});
+    await prisma.seller.deleteMany({});
+    await prisma.auctioneer.deleteMany({});
     
     await prisma.usersOnRoles.deleteMany({});
     await prisma.usersOnTenants.deleteMany({});
@@ -245,8 +245,8 @@ async function cleanupPreviousData() {
     
     await prisma.platformSettings.deleteMany({});
     
-    await services.vehicleModel.deleteMany({ where: {} });
-    await services.vehicleMake.deleteMany({ where: {} });
+    await services.vehicleModel.deleteMany({});
+    await services.vehicleMake.deleteMany({});
     await services.subcategory.deleteAllSubcategories();
     await services.category.deleteAllCategories();
     await services.judicialBranch.deleteAllJudicialBranches();
@@ -255,9 +255,10 @@ async function cleanupPreviousData() {
     await services.media.deleteAllMediaItems();
     await services.documentTemplate.deleteAllDocumentTemplates();
     await prisma.documentType.deleteMany({});
-    await services.dataSource.deleteAll();
+    await services.dataSource.deleteAllDataSources();
     await services.city.deleteAllCities();
     await services.state.deleteAllStates();
+    await prisma.report.deleteMany({});
     
     // Tenants should be deleted last
     await services.tenant.deleteMany({ where: { id: { not: BigInt(1) } } }); 
@@ -787,8 +788,8 @@ async function seedDirectSaleOffers() {
 async function seedMiscData() {
     log('Fase 11: Dados Diversos (Mensagens, Notificações, Assinantes, etc)...', 0);
     
-    await services.notification.deleteMany({ where: {} });
-    await services.subscriber.deleteMany({ where: {} });
+    await services.notification.deleteMany({});
+    await services.subscriber.deleteMany({});
 
     const usersWithNotifications = faker.helpers.arrayElements(entityStore.users, { min: 10, max: 30 });
     for (const user of usersWithNotifications) {
