@@ -599,5 +599,79 @@ interface CrudFormContainerProps {
 
 ---
 
+## 💎 REGRAS DE NEGÓCIO ADICIONAIS (Descobertas na Análise de Código)
+Esta seção documenta funcionalidades e regras de negócio que foram identificadas durante a análise do código-fonte e que não estavam previamente formalizadas.
+
+### RN-AD-001: Ciclo de Vida do Ativo (Asset)
+Um `Asset` (bem individual) possui um ciclo de vida gerenciado pelo sistema para garantir o controle de inventário.
+- **Status:** `CADASTRO`, `DISPONIVEL`, `LOTEADO`, `VENDIDO`, `REMOVIDO`, `INATIVADO`.
+- **Lógica:**
+  - Ao ser associado a um lote, o status do ativo muda para `LOTEADO`.
+  - Se o lote for excluído, o ativo volta para `DISPONIVEL`.
+  - Se o lote for vendido, o ativo muda para `VENDIDO`.
+
+### RN-AD-002: Lances Automáticos (Proxy Bidding / Lance Máximo)
+O sistema suporta lances automáticos para melhorar a experiência do arrematante.
+- **Funcionalidade:** Um usuário pode registrar um `UserLotMaxBid` (lance máximo) para um lote.
+- **Lógica:** Se um lance é dado por outro usuário, o sistema automaticamente dá um contra-lance em nome do usuário com o lance máximo, no valor mínimo necessário para cobrir o lance atual (lance atual + incremento), até que o valor máximo seja atingido.
+
+### RN-AD-003: Tabela de Incremento de Lance Variável
+O incremento mínimo para um lance não é fixo e pode variar conforme o valor atual do lote.
+- **Configuração:** A regra é definida em `PlatformSettings.variableIncrementTable`.
+- **Exemplo:**
+  - Lotes de R$0 a R$100: incremento de R$10.
+  - Lotes de R$101 a R$500: incremento de R$20.
+- **Lógica:** O `lot.service` deve consultar esta tabela para determinar o próximo lance mínimo válido.
+
+### RN-AD-004: Comissão da Plataforma Configurável
+A comissão cobrada pela plataforma sobre um arremate é uma regra de negócio crítica e configurável.
+- **Configuração:** `PlatformSettings.paymentGatewaySettings.platformCommissionPercentage`.
+- **Risco Identificado:** O código do frontend possui valores fixos (ex: 5%) como fallback, o que pode gerar inconsistências de cálculo.
+- **Diretriz:** **TODA** lógica de cálculo de comissão, tanto no frontend quanto no backend, **DEVE** obrigatoriamente ler este valor das configurações da plataforma. Cálculos no frontend devem ser apenas para exibição, e a validação final **DEVE** ocorrer no backend.
+
+### RN-AD-005: Soft Close (Anti-Sniping)
+Para evitar "lances de último segundo" (sniping), o encerramento de um leilão pode ser estendido.
+- **Configuração:** `Auction.softCloseEnabled` (booleano) e `Auction.softCloseMinutes` (inteiro).
+- **Lógica:** Se um lance é recebido nos últimos `softCloseMinutes` de um leilão, a data de encerramento do leilão é estendida por mais `softCloseMinutes` a partir do momento do lance.
+
+### RN-AD-006: Lógica de Relistagem de Lotes
+Lotes não vendidos podem ser automaticamente reinseridos em um novo leilão.
+- **Condição:** O status do lote deve ser `NAO_VENDIDO` ou `ENCERRADO` (sem lances).
+- **Ação:**
+  1. O status do lote original é alterado para `RELISTADO`.
+  2. Uma cópia do lote é criada com status `EM_BREVE` e associada a um novo leilão.
+  3. Um `discountPercentage` pode ser aplicado sobre o `evaluationValue` ou `initialPrice` do lote original para definir o novo preço.
+  4. O novo lote mantém uma referência (`original_lot_id`) ao lote original.
+
+### RN-AD-007: Habilitação Granular por Leilão
+Além da habilitação geral na plataforma, o usuário precisa se habilitar para cada leilão individualmente.
+- **Modelo:** `AuctionHabilitation`.
+- **Lógica:** O serviço de lances (`lot.service`) verifica a existência de um registro em `AuctionHabilitation` que conecte o `userId` e o `auctionId` antes de aceitar um lance.
+
+### RN-AD-008: Notificação de Lance Superado
+O sistema ativamente engaja os usuários notificando-os quando perdem a posição de maior lance.
+- **Lógica:** Quando um `placeBid` é bem-sucedido e supera um lance de outro usuário, uma notificação é criada para o usuário que foi superado.
+- **Conteúdo:** A notificação informa sobre o lance superado e contém um link direto para o lote em questão.
+
+### RN-AD-009: Gatilhos Mentais Configuráveis (Badges)
+A plataforma pode exibir selos (badges) nos cards de lotes para criar um senso de urgência ou popularidade.
+- **Configuração:** `PlatformSettings.mentalTriggerSettings`.
+- **Regras:**
+  - `showPopularityBadge`: Exibe um selo "Popular" se as visualizações (`views`) ultrapassam `popularityViewThreshold`.
+  - `showHotBidBadge`: Exibe um selo "Disputado" se o número de lances (`bidsCount`) ultrapassa `hotBidThreshold`.
+  - `showExclusiveBadge`: Exibe um selo "Exclusivo" se o lote estiver marcado como `isExclusive`.
+
+### RN-AD-010: Regras de Visibilidade de Dados (Public vs. Private)
+Para o público geral, certos dados são omitidos para não expor informações internas ou de preparação.
+- **Lógica:** Os serviços (`AuctionService`, `LotService`) possuem um parâmetro `isPublicCall`.
+- **Filtros:** Quando `isPublicCall` é `true`, registros com status `RASCUNHO` ou `EM_PREPARACAO` são filtrados e não são retornados nas consultas.
+
+### RN-AD-011: Funcionalidades de Armazenamento Local (Client-Side)
+O frontend utiliza `localStorage` para persistir certas preferências e históricos do usuário.
+- **Favoritos (`favorite-store.ts`):** Usuários podem marcar lotes como favoritos, e a lista de IDs é salva localmente.
+- **Vistos Recentemente (`recently-viewed-store.ts`):** O sistema armazena os IDs dos últimos 10 lotes visitados por um período de 3 dias.
+
+---
+
 **Documento mantido por:** Equipe de Desenvolvimento BidExpert  
 **Última atualização:** 27/10/2025

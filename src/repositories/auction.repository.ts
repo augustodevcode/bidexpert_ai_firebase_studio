@@ -64,6 +64,7 @@ export class AuctionRepository {
       include: { 
           _count: { select: { lots: true } },
           seller: true,
+          stages: true,
       }
     });
   }
@@ -102,6 +103,7 @@ export class AuctionRepository {
       include: {
         _count: { select: { lots: true } },
         seller: true,
+        stages: true,
       },
       orderBy: { auctionDate: 'desc' },
     });
@@ -122,7 +124,8 @@ export class AuctionRepository {
         },
         include: { 
             _count: { select: { lots: true } },
-            seller: true 
+            seller: true,
+            stages: true,
         }
     });
   }

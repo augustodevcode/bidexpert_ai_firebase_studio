@@ -8,7 +8,7 @@
  *
  * Para executar: `npx tsx scripts/seed-data-extended.ts`
  */
-import { PrismaClient, Prisma, UserHabilitationStatus, AssetStatus, AuctionStatus, AuctionType, AuctionMethod, AuctionParticipation, ProcessPartyType, LotStatus, PaymentStatus, DirectSaleOfferStatus, DirectSaleOfferType } from '@prisma/client';
+import { PrismaClient, Prisma, UserHabilitationStatus, AssetStatus, AuctionStatus, AuctionType, AuctionMethod, AuctionParticipation, ProcessPartyType, LotStatus, PaymentStatus, DirectSaleOfferStatus, DirectSaleOfferType, DocumentTemplateType } from '@prisma/client';
 import { faker } from '@faker-js/faker/locale/pt_BR';
 import fs from 'fs';
 import path from 'path';
@@ -67,7 +67,7 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 
 const slugify = (text: string) => {
   if (!text) return '';
-  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+  return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
 };
 
 // --- Armazenamento de Entidades Criadas ---
@@ -75,23 +75,25 @@ const entityStore: {
   tenantId: string;
   roles: Record<string, bigint>;
   users: (Prisma.UserGetPayload<{}> & { roleNames: string[], id: bigint })[];
-  categories: (Prisma.LotCategoryGetPayload<{ include: { subcategories: true }, where: { id: bigint } }>)[];
-  states: Prisma.StateGetPayload<{ where: {id: bigint}}>[];
-  cities: Prisma.CityGetPayload<{ where: {id: bigint}}>[];
-  courts: Prisma.CourtGetPayload<{where: {id: bigint}}>[];
-  judicialDistricts: Prisma.JudicialDistrictGetPayload<{where: {id: bigint}}>[];
-  judicialBranches: Prisma.JudicialBranchGetPayload<{where: {id: bigint}}>[];
-  sellers: Prisma.SellerGetPayload<{where: {id: bigint}}>[];
-  auctioneers: Prisma.AuctioneerGetPayload<{where: {id: bigint}}>[];
-  judicialProcesses: Prisma.JudicialProcessGetPayload<{where: {id: bigint}}>[];
-  assets: Prisma.AssetGetPayload<{where: {id: bigint}}>[];
-  auctions: (Prisma.AuctionGetPayload<{ include: { stages: true } } & {id: bigint}>)[];
-  lots: Prisma.LotGetPayload<{where: {id: bigint}}>[];
-  mediaItems: Prisma.MediaItemGetPayload<{where: {id: bigint}}>[];
+  categories: (Prisma.LotCategoryGetPayload<{ include: { subcategories: true } }> & { id: bigint })[];
+  states: (Prisma.StateGetPayload<{}> & { id: bigint })[];
+  cities: (Prisma.CityGetPayload<{}> & { id: bigint })[];
+  courts: (Prisma.CourtGetPayload<{}> & { id: bigint })[];
+  judicialDistricts: (Prisma.JudicialDistrictGetPayload<{}> & { id: bigint })[];
+  judicialBranches: (Prisma.JudicialBranchGetPayload<{}> & { id: bigint })[];
+  sellers: (Prisma.SellerGetPayload<{}> & { id: bigint })[];
+  auctioneers: (Prisma.AuctioneerGetPayload<{}> & { id: bigint })[];
+  judicialProcesses: (Prisma.JudicialProcessGetPayload<{ include: { parties: true } }> & { id: bigint })[];
+  assets: (Prisma.AssetGetPayload<{}> & { id: bigint })[];
+  auctions: (Prisma.AuctionGetPayload<{ include: { stages: true } }> & { id: bigint })[];
+  lots: (Prisma.LotGetPayload<{ include: { stagePrices: true } }> & { id: bigint })[];
+  mediaItems: (Prisma.MediaItemGetPayload<{}> & { id: bigint })[];
   documentTypes: Record<string, bigint>;
-  userWins: Prisma.UserWinGetPayload<{where: {id: bigint}}>[];
-  vehicleMakes: Prisma.VehicleMakeGetPayload<{where: {id: bigint}}>[];
-  vehicleModels: Prisma.VehicleModelGetPayload<{where: {id: bigint}}>[];
+  documentTemplates: (Prisma.DocumentTemplateGetPayload<{}> & { id: bigint })[];
+  dataSources: (Prisma.DataSourceGetPayload<{}> & { id: bigint })[];
+  userWins: (Prisma.UserWinGetPayload<{}> & { id: bigint })[];
+  vehicleMakes: (Prisma.VehicleMakeGetPayload<{}> & { id: bigint })[];
+  vehicleModels: (Prisma.VehicleModelGetPayload<{}> & { id: bigint })[];
 } = {
   tenantId: '1',
   roles: {},
@@ -110,6 +112,8 @@ const entityStore: {
   lots: [],
   mediaItems: [],
   documentTypes: {},
+  documentTemplates: [],
+  dataSources: [],
   userWins: [],
   vehicleMakes: [],
   vehicleModels: [],
@@ -169,9 +173,12 @@ const IMAGE_PLACEHOLDER_DIR = path.join(process.cwd(), 'public/uploads/sample-im
 
 async function runStep(stepFunction: () => Promise<any>, stepName: string) {
   try {
+    log(`Iniciando: ${stepName}...`, 0);
     await stepFunction();
+    log(`Concluído: ${stepName}.`, 0);
   } catch (error) {
-    console.error(`\n❌ Erro na etapa: ${stepName}`);
+    console.error(`
+❌ Erro na etapa: ${stepName}`);
     throw error;
   }
 }
@@ -181,31 +188,36 @@ async function main() {
   console.log('=====================================================');
 
   try {
-    await prisma.$connect(); // Explicitly connect
-    await runStep(cleanupPreviousData, 'Limpeza de dados antigos');
-    await runStep(seedCoreInfra, 'Infraestrutura Core');
-    await runStep(seedPlatformSettings, 'Configurações da Plataforma');
-    await runStep(seedMedia, 'Mídia');
-    await runStep(seedCategoriesAndVehicles, 'Categorias e Veículos');
-    await runStep(seedLocations, 'Localizações');
-    await runStep(seedJudicialInfra, 'Infraestrutura Judicial');
-    await runStep(seedParticipants, 'Participantes');
-    await runStep(seedAssets, 'Ativos (Bens)');
-    await runStep(seedAuctionsAndLots, 'Leilões e Lotes');
-    await runStep(seedJudicialRelations, 'Relações Judiciais');
-    await runStep(seedInteractions, 'Interações');
-    await runStep(seedPostAuctionInteractions, 'Interações Pós-Leilão');
-    await runStep(seedDirectSaleOffers, 'Ofertas de Venda Direta');
-    await runStep(seedMiscData, 'Dados Diversos');
+    await prisma.$connect();
+    await runStep(cleanupPreviousData, `Limpeza de dados antigos`);
+    await runStep(seedCoreInfra, `Infraestrutura Core (Tenant, Roles, Admin)`);
+    await runStep(seedPlatformSettings, `Configurações da Plataforma`);
+    await runStep(seedDocumentTemplates, `Templates de Documentos`);
+    await runStep(seedReportBuilderData, `Dados do Construtor de Relatórios`);
+    await runStep(seedMedia, `Mídia de Exemplo`);
+    await runStep(seedCategoriesAndVehicles, `Categorias e Veículos`);
+    await runStep(seedLocations, `Localizações`);
+    await runStep(seedJudicialInfra, `Infraestrutura Judicial`);
+    await runStep(seedParticipants, `Participantes (Leiloeiros, Vendedores, Usuários)`);
+    await runStep(seedAssets, `Ativos (Bens)`);
+    await runStep(seedAuctionsAndLots, `Leilões e Lotes (com Múltiplas Etapas)`);
+    await runStep(seedJudicialRelations, `Relações Judiciais (Processos, Tribunais, etc.)`);
+    await runStep(seedInteractions, `Interações (Lances, Arremates, Pagamentos)`);
+    await runStep(seedPostAuctionInteractions, `Interações Pós-Leilão (Perguntas, Avaliações)`);
+    await runStep(seedDirectSaleOffers, `Ofertas de Venda Direta`);
+    await runStep(seedMiscData, `Dados Diversos (Notificações, Contatos)`);
 
-    console.log('\n=====================================================');
-    console.log('✅ Seed do banco de dados finalizado com sucesso!');
-    console.log('=====================================================');
+    console.log(`
+=====================================================`);
+    console.log(`✅ Seed do banco de dados finalizado com sucesso!`);
+    console.log(`=====================================================`);
     await logSummary();
     
-    console.log('\n🎉 Dataset completo gerado com sucesso!');
+    console.log(`
+🎉 Dataset completo gerado com sucesso!`);
   } catch (error) {
-    console.error('\n❌ Ocorreu um erro catastrófico durante o processo de seeding:');
+    console.error(`
+❌ Ocorreu um erro catastrófico durante o processo de seeding:`);
     console.error(error);
     process.exit(1);
   } finally {
@@ -214,9 +226,8 @@ async function main() {
 }
 
 async function cleanupPreviousData() {
-    log('Fase 0: Limpando dados antigos...', 0);
     // A ordem de exclusão é crucial para evitar erros de constraint de chave estrangeira.
-    
+    await prisma.lotStagePrice.deleteMany({});
     await prisma.variableIncrementRule.deleteMany({});
     await prisma.sectionBadgeVisibility.deleteMany({});
     await prisma.mentalTriggerSettings.deleteMany({});
@@ -227,20 +238,20 @@ async function cleanupPreviousData() {
     await prisma.idMasks.deleteMany({});
     await prisma.platformSettings.deleteMany({});
 
-    await services.installmentPayment.deleteMany({});
-    await services.userWin.deleteAllUserWins();
-    await services.bid.deleteMany({});
-    await services.userLotMaxBid.deleteMany({});
-    await services.lotQuestion.deleteMany({});
-    await services.review.deleteMany({});
-    await services.notification.deleteMany({});
-    await services.contactMessage.deleteAllContactMessages();
-    await services.subscriber.deleteMany({});
+    await prisma.installmentPayment.deleteMany({});
+    await prisma.userWin.deleteMany({});
+    await prisma.bid.deleteMany({});
+    await prisma.userLotMaxBid.deleteMany({});
+    await prisma.lotQuestion.deleteMany({});
+    await prisma.review.deleteMany({});
+    await prisma.notification.deleteMany({});
+    await prisma.contactMessage.deleteMany({});
+    await prisma.subscriber.deleteMany({});
     await prisma.auctionHabilitation.deleteMany({});
 
     await prisma.assetsOnLots.deleteMany({});
-    await services.document.deleteAllUserDocuments();
-    await services.auctionStage.deleteMany({});
+    await prisma.userDocument.deleteMany({});
+    await prisma.auctionStage.deleteMany({});
     
     await prisma.lot.deleteMany({});
     await prisma.auction.deleteMany({});
@@ -248,42 +259,39 @@ async function cleanupPreviousData() {
     await prisma.asset.deleteMany({});
     await prisma.directSaleOffer.deleteMany({});
 
+    await prisma.judicialParty.deleteMany({});
     await prisma.judicialProcess.deleteMany({});
     await prisma.seller.deleteMany({});
     await prisma.auctioneer.deleteMany({});
     
     await prisma.usersOnRoles.deleteMany({});
     await prisma.usersOnTenants.deleteMany({});
-    await services.user.deleteAllUsers();
+    await prisma.user.deleteMany({});
     
-    await services.vehicleModel.deleteMany({});
-    await services.vehicleMake.deleteMany({});
-    await services.subcategory.deleteAllSubcategories();
-    await services.category.deleteAllCategories();
-    await services.judicialBranch.deleteAllJudicialBranches();
-    await services.judicialDistrict.deleteAllJudicialDistricts();
-    await services.court.deleteAllCourts();
-    await services.media.deleteAllMediaItems();
-    await services.documentTemplate.deleteAllDocumentTemplates();
+    await prisma.vehicleModel.deleteMany({});
+    await prisma.vehicleMake.deleteMany({});
+    await prisma.subcategory.deleteMany({});
+    await prisma.lotCategory.deleteMany({});
+    await prisma.judicialBranch.deleteMany({});
+    await prisma.judicialDistrict.deleteMany({});
+    await prisma.court.deleteMany({});
+    await prisma.mediaItem.deleteMany({});
+    await prisma.documentTemplate.deleteMany({});
     await prisma.documentType.deleteMany({});
-    await services.dataSource.deleteAllDataSources();
-    await services.city.deleteAllCities();
-    await services.state.deleteAllStates();
     await prisma.report.deleteMany({});
+    await prisma.dataSource.deleteMany({});
+    await prisma.city.deleteMany({});
+    await prisma.state.deleteMany({});
     
     // Tenants should be deleted last
-    await services.tenant.deleteMany({ where: { id: { not: BigInt(1) } } }); 
-
-    log('Todos os dados antigos foram limpos.', 1);
+    await prisma.tenant.deleteMany({ where: { id: { not: BigInt(1) } } }); 
 }
 
 async function seedCoreInfra() {
-  log('Fase 1: Infraestrutura Core (Tenant, Roles, Admin)...', 0);
-
   const tenantResult = await services.tenant.createTenant({ name: 'BidExpert Platform', subdomain: 'bidexpert' });
   if (!tenantResult.success || !tenantResult.tenant) throw new Error(tenantResult.message);
   entityStore.tenantId = tenantResult.tenant.id.toString();
-  log(`Tenant \"${tenantResult.tenant.name}\" criado.`, 1);
+  log(`Tenant "${tenantResult.tenant.name}" criado.`, 1);
   
   const roleNames = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN', 'FINANCIAL', 'CONSIGNOR', 'AUCTIONEER'];
   const allRoles = await prisma.role.findMany();
@@ -352,8 +360,6 @@ async function seedCoreInfra() {
 }
 
 async function seedPlatformSettings() {
-  log('Fase Core: Configurações da Plataforma...', 0);
-
   const tenantId = BigInt(entityStore.tenantId);
 
   const settings = await prisma.platformSettings.create({
@@ -428,7 +434,7 @@ async function seedPlatformSettings() {
     { from: 1001, to: 5000, increment: 100 },
     { from: 5001, to: 10000, increment: 250 },
     { from: 10001, to: 50000, increment: 500 },
-    { from: 50001, to: null, increment: 1000 },
+    { from: 50001, to: 9999999, increment: 1000 },
   ];
 
   for (const rule of incrementRules) {
@@ -444,8 +450,57 @@ async function seedPlatformSettings() {
   log(`${incrementRules.length} regras de incremento de lance criadas.`, 1);
 }
 
+async function seedDocumentTemplates() {
+    const templates = [
+        { name: `Termo de Arrematação Padrão`, type: DocumentTemplateType.WINNING_BID_TERM, content: `<h1>Termo de Arrematação</h1><p>Pelo presente instrumento, o arrematante <strong>{{user.name}}</strong>, CPF/CNPJ <strong>{{user.document}}</strong>, arrematou o lote <strong>#{{lot.number}} - {{lot.title}}</strong> pelo valor de <strong>R$ {{win.amount}}</strong>.</p>` },
+        { name: `Laudo de Avaliação de Veículo`, type: DocumentTemplateType.EVALUATION_REPORT, content: `<h1>Laudo de Avaliação</h1><p>O bem <strong>{{asset.title}}</strong>, placa <strong>{{asset.plate}}</strong>, foi avaliado em <strong>R$ {{asset.evaluationValue}}</strong>.</p>` },
+        { name: `Certificado de Leilão`, type: DocumentTemplateType.AUCTION_CERTIFICATE, content: `<h1>Certificado de Leilão</h1><p>Certificamos que o leilão <strong>{{auction.title}}</strong> foi realizado em <strong>{{auction.date}}</strong>.</p>` },
+    ];
+
+    for (const templateData of templates) {
+        const result = await services.documentTemplate.createDocumentTemplate(templateData);
+        if (result) {
+            entityStore.documentTemplates.push(result as any);
+        }
+    }
+    log(`${entityStore.documentTemplates.length} templates de documento criados.`, 1);
+}
+
+async function seedReportBuilderData() {
+    const sources = [
+        { name: `Leilões`, modelName: `Auction`, fields: JSON.stringify(['id', 'title', 'status', 'auctionDate', 'achievedRevenue']) },
+        { name: `Lotes`, modelName: `Lot`, fields: JSON.stringify(['id', 'title', 'status', 'price', 'bidsCount', 'views']) },
+        { name: `Usuários`, modelName: `User`, fields: JSON.stringify(['id', 'fullName', 'email', 'habilitationStatus']) },
+    ];
+
+    for (const sourceData of sources) {
+        const result = await services.dataSource.createDataSource(sourceData);
+        entityStore.dataSources.push(result as any);
+    }
+    log(`${entityStore.dataSources.length} fontes de dados para relatórios criadas.`, 1);
+
+    const adminUser = entityStore.users.find(u => u.roleNames.includes('ADMIN'));
+    if (adminUser) {
+        await prisma.report.create({
+            data: {
+                name: `Relatório Mensal de Faturamento`,
+                description: `Um relatório de exemplo para análise de faturamento.`,
+                definition: JSON.stringify({
+                    title: `Faturamento por Leilão`,
+                    type: `barChart`,
+                    dataSource: `Auction`,
+                    xAxis: `title`,
+                    yAxis: `achievedRevenue`
+                }),
+                tenantId: BigInt(entityStore.tenantId),
+                createdById: adminUser.id,
+            }
+        });
+        log(`1 relatório de exemplo criado.`, 1);
+    }
+}
+
 async function seedMedia() {
-    log('Fase 2: Mídia (Imagens de Exemplo)...', 0);
     if (!fs.existsSync(IMAGE_PLACEHOLDER_DIR)) {
         log(`Diretório de imagens de exemplo não encontrado em ${IMAGE_PLACEHOLDER_DIR}. Pulando.`, 1);
         return;
@@ -470,12 +525,11 @@ async function seedMedia() {
     }
     log(`${entityStore.mediaItems.length} itens de mídia criados.`, 1);
     if (entityStore.mediaItems.length === 0) {
-        log("AVISO: Nenhuma imagem de exemplo foi carregada. O seed continuará, mas as entidades não terão imagens.", 1);
+        log(`AVISO: Nenhuma imagem de exemplo foi carregada. O seed continuará, mas as entidades não terão imagens.`, 1);
     }
 }
 
 async function seedCategoriesAndVehicles() {
-    log('Fase 3: Categorias, Subcategorias e Veículos...', 0);
     const categoryData: Record<string, string[]> = {
       'Imóveis': ['Apartamentos', 'Casas', 'Terrenos', 'Salas Comerciais'],
       'Veículos': ['Carros', 'Motos', 'Caminhões', 'Ônibus'],
@@ -495,7 +549,7 @@ async function seedCategoriesAndVehicles() {
                 });
             }
             const fullCategory = await prisma.lotCategory.findUnique({ where: { id: catResult.category.id }, include: { subcategories: true } });
-            if (fullCategory) entityStore.categories.push(fullCategory);
+            if (fullCategory) entityStore.categories.push(fullCategory as any);
         }
     }
     log(`${entityStore.categories.length} categorias e suas subcategorias foram criadas.`, 1);
@@ -513,7 +567,7 @@ async function seedCategoriesAndVehicles() {
         if (makeResult.success && makeResult.makeId) {
             const make = await prisma.vehicleMake.findUnique({ where: { id: BigInt(makeResult.makeId) } });
             if (make) {
-                entityStore.vehicleMakes.push(make);
+                entityStore.vehicleMakes.push(make as any);
                 const models = vehicleData[makeName];
                 for (const modelName of models) {
                     await services.vehicleModel.createVehicleModel({ name: modelName, makeId: makeResult.makeId });
@@ -525,7 +579,6 @@ async function seedCategoriesAndVehicles() {
 }
 
 async function seedLocations() {
-    log('Fase 4: Localizações (Estados e Cidades)...', 0);
     const locations = [
       { "nome": "São Paulo", "sigla": "SP", "cidades": [ "São Paulo", "Guarulhos", "Campinas" ] },
       { "nome": "Rio de Janeiro", "sigla": "RJ", "cidades": [ "Rio de Janeiro", "São Gonçalo", "Duque de Caxias" ] },
@@ -537,12 +590,12 @@ async function seedLocations() {
         if (stateResult.success && stateResult.stateId) {
             const createdState = await prisma.state.findUnique({ where: { id: BigInt(stateResult.stateId) } });
             if (createdState) {
-                entityStore.states.push(createdState);
+                entityStore.states.push(createdState as any);
                 for (const cityName of stateData.cidades) {
                     const cityResult = await services.city.createCity({ name: cityName, stateId: createdState.id.toString() });
                     if(cityResult.success && cityResult.cityId) {
                         const city = await prisma.city.findUnique({ where: { id: BigInt(cityResult.cityId) } });
-                        if (city) entityStore.cities.push(city);
+                        if (city) entityStore.cities.push(city as any);
                     }
                 }
             }
@@ -552,14 +605,12 @@ async function seedLocations() {
 }
 
 async function seedJudicialInfra() {
-    log('Fase 5: Infraestrutura Judicial (Tribunais, Comarcas, Varas)...', 0);
-    
     for (let i = 0; i < 5; i++) {
         const state = faker.helpers.arrayElement(entityStore.states);
         const courtResult = await services.court.createCourt({ name: `Tribunal de Justiça de ${state.name}`, stateUf: state.uf });
         if (courtResult.success && courtResult.courtId) {
             const court = await prisma.court.findUnique({ where: { id: BigInt(courtResult.courtId) } });
-            if (court) entityStore.courts.push(court);
+            if (court) entityStore.courts.push(court as any);
         }
     }
     log(`${entityStore.courts.length} tribunais criados.`, 1);
@@ -569,11 +620,13 @@ async function seedJudicialInfra() {
         const state = entityStore.states.find(s => s.uf === court.stateUf);
         if(state) {
             const districtResult = await services.judicialDistrict.createJudicialDistrict({
-                name: `Comarca de ${faker.location.city()}`, courtId: court.id.toString(), stateId: state.id.toString()
+                name: `Comarca de ${faker.location.city()}`,
+                courtId: court.id.toString(),
+                stateId: state.id.toString()
             });
             if (districtResult.success && districtResult.districtId) {
                 const district = await prisma.judicialDistrict.findUnique({ where: { id: BigInt(districtResult.districtId) } });
-                if (district) entityStore.judicialDistricts.push(district);
+                if (district) entityStore.judicialDistricts.push(district as any);
             }
         }
     }
@@ -582,23 +635,22 @@ async function seedJudicialInfra() {
     for (let i = 0; i < 20; i++) {
         const district = faker.helpers.arrayElement(entityStore.judicialDistricts);
         const branchResult = await services.judicialBranch.createJudicialBranch({
-            name: `${i + 1}ª Vara Cível`, districtId: district.id.toString()
+            name: `${i + 1}ª Vara Cível de ${district.name}`,
+            districtId: district.id.toString()
         });
         if (branchResult.success && branchResult.branchId) {
             const branch = await prisma.judicialBranch.findUnique({ where: { id: BigInt(branchResult.branchId) } });
-            if (branch) entityStore.judicialBranches.push(branch);
+            if (branch) entityStore.judicialBranches.push(branch as any);
         }
     }
     log(`${entityStore.judicialBranches.length} varas criadas.`, 1);
 }
 
 async function seedParticipants() {
-    log('Fase 6: Participantes (Leiloeiros, Vendedores, Arrematantes)...', 0);
-    
     for (let i = 0; i < TOTAL_AUCTIONEERS; i++) {
         await services.auctioneer.createAuctioneer(entityStore.tenantId, { name: `Leiloeiro Oficial ${i + 1}`, email: faker.internet.email() } as any);
     }
-    entityStore.auctioneers = await services.auctioneer.getAuctioneers(entityStore.tenantId);
+    entityStore.auctioneers = await services.auctioneer.getAuctioneers(entityStore.tenantId) as any;
     log(`${entityStore.auctioneers.length} leiloeiros criados.`, 1);
 
     for (let i = 0; i < TOTAL_SELLERS; i++) {
@@ -609,7 +661,7 @@ async function seedParticipants() {
             judicialBranchId: isJudicial ? faker.helpers.arrayElement(entityStore.judicialBranches).id.toString() : undefined,
         } as any);
     }
-    entityStore.sellers = await services.seller.getSellers(entityStore.tenantId);
+    entityStore.sellers = await services.seller.getSellers(entityStore.tenantId) as any;
     log(`${entityStore.sellers.length} vendedores criados.`, 1);
     
     await seedJudicialProcesses();
@@ -632,7 +684,6 @@ async function seedParticipants() {
 }
 
 async function seedUserDocuments() {
-    log('Fase 6a: Documentos dos Usuários...', 0);
     let count = 0;
     const usersForDocs = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
@@ -654,7 +705,6 @@ async function seedUserDocuments() {
 }
 
 async function seedJudicialProcesses() {
-    log('Fase 6b: Processos Judiciais...', 0);
     const judicialSellers = entityStore.sellers.filter(s => s.isJudicial);
     if (judicialSellers.length === 0) return;
 
@@ -663,18 +713,28 @@ async function seedJudicialProcesses() {
             processNumber: `${faker.string.numeric(7)}-${faker.string.numeric(2)}.${faker.date.past({years: 5}).getFullYear()}.${faker.string.numeric(1)}.${faker.string.numeric(2)}.${faker.string.numeric(4)}`,
             sellerId: seller.id.toString(),
             branchId: seller.judicialBranchId?.toString(),
-            parties: [ { name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR }, { name: faker.company.name(), partyType: ProcessPartyType.REU } ]
         } as any);
+
         if (processResult.success && processResult.processId) {
-            const process = await prisma.judicialProcess.findUnique({where: { id: BigInt(processResult.processId) }});
-            if (process) entityStore.judicialProcesses.push(process);
+            const process = await prisma.judicialProcess.findUnique({where: { id: BigInt(processResult.processId) }, include: { parties: true }});
+            if (process) {
+                // Criar Partes do Processo
+                await prisma.judicialParty.createMany({
+                    data: [
+                        { processId: process.id, name: faker.person.fullName(), partyType: ProcessPartyType.AUTOR },
+                        { processId: process.id, name: faker.company.name(), partyType: ProcessPartyType.REU },
+                        { processId: process.id, name: `Dr. ${faker.person.fullName()}`, partyType: ProcessPartyType.ADVOGADO_AUTOR },
+                    ]
+                });
+                const updatedProcess = await prisma.judicialProcess.findUnique({where: { id: process.id }, include: { parties: true }});
+                if (updatedProcess) entityStore.judicialProcesses.push(updatedProcess as any);
+            }
         }
     }
-    log(`${entityStore.judicialProcesses.length} processos judiciais criados.`, 1);
+    log(`${entityStore.judicialProcesses.length} processos judiciais e suas partes criados.`, 1);
 }
 
 async function seedAssets() {
-    log('Fase 7: Ativos (Bens)...', 0);
     for (let i = 0; i < TOTAL_ASSETS; i++) {
         const category = faker.helpers.arrayElement(entityStore.categories);
         const subcategory = faker.helpers.arrayElement(category.subcategories);
@@ -686,6 +746,7 @@ async function seedAssets() {
             status: AssetStatus.DISPONIVEL,
             evaluationValue: faker.number.int({ min: 500, max: 250000 }),
             categoryId: category.id.toString(),
+            subcategoryId: subcategory.id.toString(),
             sellerId: seller.id.toString(),
             imageUrl: randomMedia?.urlOriginal,
             imageMediaId: randomMedia?.id.toString(),
@@ -695,24 +756,29 @@ async function seedAssets() {
             console.error(`Falha ao criar ativo: ${assetResult.message}`);
         }
     }
-    entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId });
+    entityStore.assets = await services.asset.getAssets({ tenantId: entityStore.tenantId }) as any[];
     log(`${entityStore.assets.length} ativos criados.`, 1);
 }
 
 async function seedAuctionsAndLots() {
-    log('Fase 8: Leilões, Etapas e Lotes...', 0);
     for (let i = 0; i < TOTAL_AUCTIONS; i++) {
         const seller = faker.helpers.arrayElement(entityStore.sellers);
         const auctionType = seller.isJudicial ? AuctionType.JUDICIAL : randomEnum(AuctionType);
         const status = randomEnum(AuctionStatus);
         const auctionDate = status === 'EM_BREVE' ? faker.date.soon({ days: 15 }) : faker.date.recent({ days: 10 });
 
+        const hasTwoStages = i % 3 === 0; // 1/3 of auctions will have two stages
+        const stages = [{ name: '1ª Praça', startDate: auctionDate, endDate: add(auctionDate, { days: 3 }) }];
+        if (hasTwoStages) {
+            stages.push({ name: '2ª Praça', startDate: add(auctionDate, { days: 4 }), endDate: add(auctionDate, { days: 7 }) });
+        }
+
         const auctionResult = await services.auction.createAuction(entityStore.tenantId, {
-            title: `Leilão ${auctionType} #${i + 1}`,
+            title: `Leilão ${auctionType} #${i + 1} ${hasTwoStages ? '(2 Praças)' : ''}`,
             status, auctionType,
             auctioneerId: faker.helpers.arrayElement(entityStore.auctioneers).id.toString(),
             sellerId: seller.id.toString(),
-            auctionStages: [ { name: '1ª Praça', startDate: auctionDate, endDate: add(auctionDate, { days: 3 }) } ],
+            auctionStages: stages,
             categoryId: faker.helpers.arrayElement(entityStore.categories).id.toString(),
         } as any);
 
@@ -720,32 +786,42 @@ async function seedAuctionsAndLots() {
         
         const numLots = status === 'RASCUNHO' ? 0 : faker.number.int({ min: 1, max: MAX_LOTS_PER_AUCTION });
         const availableAssets = entityStore.assets.filter(a => a.status === AssetStatus.DISPONIVEL && a.sellerId === seller.id);
-        log(`  - Seller ${seller.name} (${seller.id}): ${availableAssets.length} assets disponíveis.`, 2);
 
         for (let j = 0; j < numLots; j++) {
             const assetsForLot = faker.helpers.arrayElements(availableAssets.filter(a => a.status === AssetStatus.DISPONIVEL), { min: 1, max: MAX_ASSETS_PER_LOT });
-            log(`    - Tentando criar lote com ${assetsForLot.length} assets.`, 3);
             if (assetsForLot.length === 0) continue;
             
+            const evaluationValue = assetsForLot.reduce((sum, a) => sum + (Number(a.evaluationValue) || 0), 0);
             const lotResult = await services.lot.createLot({
                 title: faker.commerce.productName(),
                 auctionId: auctionResult.auctionId,
                 assetIds: assetsForLot.map(a => a.id.toString()),
-                price: assetsForLot.reduce((sum, a) => sum + (a.evaluationValue || 0), 0),
+                price: evaluationValue,
+                evaluationValue: evaluationValue,
                 type: assetsForLot[0].categoryId?.toString(),
             }, entityStore.tenantId, entityStore.users[0].id.toString());
 
             if(lotResult.success && lotResult.lotId) {
-                const lot = await prisma.lot.findUnique({where: {id: BigInt(lotResult.lotId)}});
+                const lot = await prisma.lot.findUnique({where: {id: BigInt(lotResult.lotId)}, include: { stagePrices: true }});
                 if(lot) {
-                    entityStore.lots.push(lot);
+                    if (hasTwoStages) {
+                        const auctionStages = await prisma.auctionStage.findMany({ where: { auctionId: lot.auctionId }});
+                        await prisma.lotStagePrice.create({
+                            data: { lotId: lot.id, auctionId: lot.auctionId, auctionStageId: auctionStages[0].id, initialBid: evaluationValue }
+                        });
+                        await prisma.lotStagePrice.create({
+                            data: { lotId: lot.id, auctionId: lot.auctionId, auctionStageId: auctionStages[1].id, initialBid: evaluationValue * 0.5 }
+                        });
+                    }
+                    const updatedLot = await prisma.lot.findUnique({where: {id: lot.id}, include: { stagePrices: true }});
+                    entityStore.lots.push(updatedLot as any);
                     assetsForLot.forEach(a => { a.status = AssetStatus.LOTEADO });
                 }
             }
         }
         const auction = await prisma.auction.findUnique({ where: { id: BigInt(auctionResult.auctionId) }, include: { stages: true } });
         if (auction) {
-            entityStore.auctions.push(auction);
+            entityStore.auctions.push(auction as any);
             await seedAuctionHabilitations(auction.id.toString());
         }
     }
@@ -753,7 +829,6 @@ async function seedAuctionsAndLots() {
 }
 
 async function seedJudicialRelations() {
-    log('Fase Extra: Relações Judiciais (Leilão-Tribunal, Processo-Lote)...', 0);
     const judicialAuctions = entityStore.auctions.filter(a => a.auctionType === 'JUDICIAL');
     const judicialLots = entityStore.lots.filter(l => judicialAuctions.some(a => a.id === l.auctionId));
 
@@ -761,54 +836,22 @@ async function seedJudicialRelations() {
         for (const auction of judicialAuctions) {
             await prisma.auction.update({
                 where: { id: auction.id },
-                data: {
-                    courts: {
-                        connect: { id: faker.helpers.arrayElement(entityStore.courts).id }
-                    }
-                }
+                data: { courts: { connect: { id: faker.helpers.arrayElement(entityStore.courts).id } } }
             });
         }
         log(`${judicialAuctions.length} leilões judiciais conectados a tribunais.`, 1);
     }
 
-    if (entityStore.judicialDistricts.length > 0 && judicialAuctions.length > 0) {
-        for (const auction of judicialAuctions) {
-            await prisma.auction.update({
-                where: { id: auction.id },
-                data: {
-                    judicialDistricts: {
-                        connect: { id: faker.helpers.arrayElement(entityStore.judicialDistricts).id }
-                    }
-                }
-            });
-        }
-        log(`${judicialAuctions.length} leilões judiciais conectados a comarcas.`, 1);
-    }
-
-    if (entityStore.judicialBranches.length > 0 && judicialAuctions.length > 0) {
-        for (const auction of judicialAuctions) {
-            await prisma.auction.update({
-                where: { id: auction.id },
-                data: {
-                    judicialBranches: {
-                        connect: { id: faker.helpers.arrayElement(entityStore.judicialBranches).id }
-                    }
-                }
-            });
-        }
-        log(`${judicialAuctions.length} leilões judiciais conectados a varas.`, 1);
-    }
-
     if (entityStore.judicialProcesses.length > 0 && judicialLots.length > 0) {
         for (const lot of judicialLots) {
-            await prisma.lot.update({
-                where: { id: lot.id },
-                data: {
-                    judicialProcesses: {
-                        connect: { id: faker.helpers.arrayElement(entityStore.judicialProcesses).id }
-                    }
-                }
-            });
+            const auction = entityStore.auctions.find(a => a.id === lot.auctionId);
+            const process = entityStore.judicialProcesses.find(p => p.sellerId === auction?.sellerId);
+            if (process) {
+                await prisma.lot.update({
+                    where: { id: lot.id },
+                    data: { judicialProcesses: { connect: { id: process.id } } }
+                });
+            }
         }
         log(`${judicialLots.length} lotes judiciais conectados a processos.`, 1);
     }
@@ -831,13 +874,10 @@ async function seedAuctionHabilitations(auctionId: string) {
 }
 
 async function seedInteractions() {
-    log('Fase 9: Interações (Lances, Arremates, Pagamentos)...', 0);
-    
     await seedUserLotMaxBids();
     await seedBids();
     
     const lotsWithBids = await prisma.lot.findMany({ where: { bids: { some: {} } } });
-    const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
     for (const lot of lotsWithBids) {
         const lastBid = await prisma.bid.findFirst({ where: { lotId: lot.id }, orderBy: { amount: 'desc' } });
@@ -858,7 +898,6 @@ async function seedInteractions() {
 }
 
 async function seedBids() {
-    log('Fase 9a: Lances nos Lotes Abertos...', 0);
     const lotsForBidding = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
     const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER') && u.habilitationStatus === 'HABILITADO');
 
@@ -885,14 +924,12 @@ async function seedBids() {
             });
             totalBids++;
         }
-        // Update lot with final price
         await prisma.lot.update({ where: { id: lot.id }, data: { price: currentPrice } });
     }
     log(`${totalBids} lances foram criados.`, 1);
 }
 
 async function seedUserLotMaxBids() {
-    log('Fase 9b: Lances Máximos de Usuários (Auto-Lances)...', 0);
     const lotsWithBids = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
     const habilitatedUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
@@ -909,8 +946,7 @@ async function seedUserLotMaxBids() {
 }
 
 async function seedInstallmentPayments() {
-    log('Fase 9c: Pagamentos Parcelados para Arremates...', 0);
-    const winsWithInstallments = entityStore.userWins.filter(win => faker.datatype.boolean(0.4)); // 40% chance of having installments
+    const winsWithInstallments = entityStore.userWins.filter(win => faker.datatype.boolean(0.4));
     if (winsWithInstallments.length === 0) {
         log('Nenhum arremate selecionado para parcelamento.', 1);
         return;
@@ -928,16 +964,11 @@ async function seedInstallmentPayments() {
                 for (const payment of paymentResult.payments) {
                     await prisma.installmentPayment.update({
                         where: { id: payment.id },
-                        data: {
-                            lot: {
-                                connect: { id: lot.id }
-                            }
-                        }
+                        data: { lot: { connect: { id: lot.id } } }
                     });
                 }
             }
 
-            // Simulate some payments
             if (faker.datatype.boolean(0.8)) {
                 await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
                 if (numInstallments > 1 && faker.datatype.boolean(0.5)) {
@@ -950,7 +981,6 @@ async function seedInstallmentPayments() {
 }
 
 async function seedPostAuctionInteractions() {
-    log('Fase 10: Interações Pós-Leilão (Perguntas, Avaliações)...', 0);
     const users = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
     if (users.length === 0) return;
 
@@ -960,7 +990,9 @@ async function seedPostAuctionInteractions() {
             const questionResult = await services.lotQuestion.create({
                 lotId: lot.id.toString(), userId: user.id.toString(), userDisplayName: user.fullName!, questionText: faker.lorem.sentence() + '?', auctionId: lot.auctionId.toString()
             });
-            await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
+            if (questionResult) {
+                await services.lotQuestion.addAnswer(questionResult.id.toString(), faker.lorem.sentence(), entityStore.users[0].id.toString(), entityStore.users[0].fullName!);
+            }
         }
     }
     log(`Perguntas e respostas criadas.`, 1);
@@ -981,7 +1013,6 @@ async function seedPostAuctionInteractions() {
 }
 
 async function seedDirectSaleOffers() {
-    log('Fase 11a: Ofertas de Venda Direta...', 0);
     for (let i = 0; i < 20; i++) {
         const category = faker.helpers.arrayElement(entityStore.categories);
         const seller = faker.helpers.arrayElement(entityStore.sellers);
@@ -1000,11 +1031,6 @@ async function seedDirectSaleOffers() {
 }
 
 async function seedMiscData() {
-    log('Fase 11: Dados Diversos (Mensagens, Notificações, Assinantes, etc)...', 0);
-    
-    await services.notification.deleteMany({});
-    await services.subscriber.deleteMany({});
-
     const usersWithNotifications = faker.helpers.arrayElements(entityStore.users, { min: 10, max: 30 });
     for (const user of usersWithNotifications) {
         await services.notification.createNotification({
@@ -1019,11 +1045,11 @@ async function seedMiscData() {
         await services.subscriber.createSubscriber({
             email: faker.internet.email(),
             name: faker.person.fullName(),
+            tenantId: entityStore.tenantId,
         });
     }
     log('Notificações e assinantes criados.', 1);
 
-    await services.contactMessage.deleteAllContactMessages();
     for (let i = 0; i < 15; i++) {
         await services.contactMessage.saveMessage({
             name: faker.person.fullName(),
@@ -1032,7 +1058,7 @@ async function seedMiscData() {
             message: faker.lorem.paragraph(),
         });
     }
-    log('Mensagens de contato criadas.', 1);
+log('Mensagens de contato criadas.', 1);
 }
 
 async function logSummary() {
@@ -1048,20 +1074,14 @@ async function logSummary() {
       installments: await prisma.installmentPayment.count(),
       notifications: await prisma.notification.count(),
       directSales: await prisma.directSaleOffer.count(),
+      documentTemplates: await prisma.documentTemplate.count(),
+      reports: await prisma.report.count(),
+      judicialParties: await prisma.judicialParty.count(),
     };
-    console.log('\nResumo do Seeding:');
-    console.log(`- Tenants: ${counts.tenants}`);
-    console.log(`- Usuários: ${counts.users}`);
-    console.log(`- Categorias: ${counts.categories}`);
-    console.log(`- Ativos: ${counts.assets}`);
-    console.log(`- Leilões: ${counts.auctions}`);
-    console.log(`- Lotes: ${counts.lots}`);
-    console.log(`- Lances: ${counts.bids}`);
-    console.log(`- Arremates (Wins): ${counts.wins}`);
-    console.log(`- Parcelas: ${counts.installments}`);
-    console.log(`- Notificações: ${counts.notifications}`);
-    console.log(`- Vendas Diretas: ${counts.directSales}`);
-    console.log('=====================================================');
+    console.log(`
+Resumo do Seeding:`);
+    console.table(counts);
+    console.log(`=====================================================`);
 }
 
 main();
