@@ -85,7 +85,7 @@ const entityStore: {
   auctioneers: (Prisma.AuctioneerGetPayload<{}> & { id: bigint })[];
   judicialProcesses: (Prisma.JudicialProcessGetPayload<{ include: { parties: true } }> & { id: bigint })[];
   assets: (Prisma.AssetGetPayload<{}> & { id: bigint })[];
-  auctions: (Prisma.AuctionGetPayload<{ include: { stages: true } }> & { id: bigint })[];
+  auctions: (Prisma.AuctionGetPayload<{ include: { stages: true, judicialProcess: true, seller: true } }> & { id: bigint })[];
   lots: (Prisma.LotGetPayload<{ include: { stagePrices: true } }> & { id: bigint })[];
   mediaItems: (Prisma.MediaItemGetPayload<{}> & { id: bigint })[];
   documentTypes: Record<string, bigint>;
@@ -202,7 +202,8 @@ async function main() {
     await runStep(seedAssets, `Ativos (Bens)`);
     await runStep(seedAuctionsAndLots, `Leilões e Lotes (com Múltiplas Etapas)`);
     await runStep(seedJudicialRelations, `Relações Judiciais (Processos, Tribunais, etc.)`);
-    await runStep(seedInteractions, `Interações (Lances, Arremates, Pagamentos)`);
+    await runStep(seedScenarioBasedInteractions, `Cenários de Interação (Guerras de Lances, Relistagem)`);
+    await runStep(seedGenericInteractions, `Interações Genéricas (Lances, Arremates, Pagamentos)`);
     await runStep(seedPostAuctionInteractions, `Interações Pós-Leilão (Perguntas, Avaliações)`);
     await runStep(seedDirectSaleOffers, `Ofertas de Venda Direta`);
     await runStep(seedMiscData, `Dados Diversos (Notificações, Contatos)`);
@@ -233,9 +234,9 @@ async function cleanupPreviousData() {
         'platformSettings', 'installmentPayment', 'userWin', 'bid', 'userLotMaxBid', 'lotQuestion',
         'review', 'notification', 'contactMessage', 'subscriber', 'auctionHabilitation', 'assetsOnLots',
         'userDocument', 'auctionStage', 'lot', 'auction', 'asset', 'directSaleOffer', 'judicialParty',
-        'judicialProcess', 'seller', 'auctioneer', 'usersOnRoles', 'usersOnTenants', 'user',
+        'judicialProcess', 'seller', 'auctioneer', 'report', 'usersOnRoles', 'usersOnTenants', 'user',
         'vehicleModel', 'vehicleMake', 'subcategory', 'lotCategory', 'judicialBranch',
-        'judicialDistrict', 'court', 'mediaItem', 'documentTemplate', 'documentType', 'report',
+        'judicialDistrict', 'court', 'mediaItem', 'documentTemplate', 'documentType', 
         'dataSource', 'city', 'state'
     ];
 
@@ -815,7 +816,7 @@ async function seedAuctionsAndLots() {
                 }
             }
         }
-        const auction = await prisma.auction.findUnique({ where: { id: BigInt(auctionResult.auctionId) }, include: { stages: true } });
+        const auction = await prisma.auction.findUnique({ where: { id: BigInt(auctionResult.auctionId) }, include: { stages: true, judicialProcess: true, seller: true } });
         if (auction) {
             entityStore.auctions.push(auction as any);
             await seedAuctionHabilitations(auction.id.toString());
@@ -826,31 +827,30 @@ async function seedAuctionsAndLots() {
 
 async function seedJudicialRelations() {
     const judicialAuctions = entityStore.auctions.filter(a => a.auctionType === 'JUDICIAL');
-    const judicialLots = entityStore.lots.filter(l => judicialAuctions.some(a => a.id === l.auctionId));
 
-    if (entityStore.courts.length > 0 && judicialAuctions.length > 0) {
-        for (const auction of judicialAuctions) {
+    for (const auction of judicialAuctions) {
+        const process = entityStore.judicialProcesses.find(p => p.sellerId === auction.sellerId);
+        if (process) {
             await prisma.auction.update({
                 where: { id: auction.id },
-                data: { courts: { connect: { id: faker.helpers.arrayElement(entityStore.courts).id } } }
+                data: {
+                    judicialProcessId: process.id,
+                    courts: { connect: { id: process.courtId! } },
+                    judicialDistricts: { connect: { id: process.districtId! } },
+                    judicialBranches: { connect: { id: process.branchId! } },
+                }
             });
-        }
-        log(`${judicialAuctions.length} leilões judiciais conectados a tribunais.`, 1);
-    }
 
-    if (entityStore.judicialProcesses.length > 0 && judicialLots.length > 0) {
-        for (const lot of judicialLots) {
-            const auction = entityStore.auctions.find(a => a.id === lot.auctionId);
-            const process = entityStore.judicialProcesses.find(p => p.sellerId === auction?.sellerId);
-            if (process) {
-                await prisma.lot.update({
+            const lotsOfAuction = entityStore.lots.filter(l => l.auctionId === auction.id);
+            for (const lot of lotsOfAuction) {
+                 await prisma.lot.update({
                     where: { id: lot.id },
                     data: { judicialProcesses: { connect: { id: process.id } } }
                 });
             }
         }
-        log(`${judicialLots.length} lotes judiciais conectados a processos.`, 1);
     }
+    log(`${judicialAuctions.length} leilões judiciais conectados a processos, tribunais, comarcas e varas.`, 1);
 }
 
 async function seedAuctionHabilitations(auctionId: string) {
@@ -869,7 +869,115 @@ async function seedAuctionHabilitations(auctionId: string) {
     }
 }
 
-async function seedInteractions() {
+async function seedScenarioBasedInteractions() {
+    await seedScenario_BiddingWar();
+    await seedScenario_UnsoldAndRelistedLot();
+}
+
+async function seedScenario_BiddingWar() {
+    log('Iniciando Cenário: Guerra de Lances com Lance Máximo...', 1);
+    const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER') && u.habilitationStatus === 'HABILITADO');
+    if (bidderUsers.length < 2) {
+        log('Não há arrematantes suficientes para o cenário de guerra de lances. Pulando.', 2);
+        return;
+    }
+    const lot = faker.helpers.arrayElement(entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES));
+    if (!lot) {
+        log('Nenhum lote aberto para lances encontrado para o cenário. Pulando.', 2);
+        return;
+    }
+
+    const [bidderA, bidderB] = bidderUsers;
+    let currentPrice = Number(lot.price);
+    const increment = Number(lot.bidIncrementStep) || 100;
+
+    // Bidder A define um lance máximo
+    const maxBidAmount = currentPrice + (increment * 5);
+    await services.userLotMaxBid.createOrUpdateUserLotMaxBid({
+        userId: bidderA.id, lotId: lot.id, maxAmount: maxBidAmount,
+    });
+    log(`Arrematante A (${bidderA.fullName}) definiu lance máximo de R$ ${maxBidAmount} para o lote #${lot.number}.`, 2);
+
+    // Bidder B dá um lance
+    let newBid = currentPrice + increment;
+    await services.bid.createBid({ lot: { connect: { id: lot.id } }, auction: { connect: { id: lot.auctionId } }, bidder: { connect: { id: bidderB.id } }, tenant: { connect: { id: BigInt(entityStore.tenantId) } }, bidderDisplay: bidderB.fullName!, amount: newBid });
+    log(`Arrematante B deu um lance de R$ ${newBid}.`, 2);
+
+    // O sistema deve ter criado um lance automático para A
+    const autoBid = await prisma.bid.findFirst({ where: { lotId: lot.id, bidderId: bidderA.id, amount: { gt: newBid } } });
+    if (autoBid) {
+        log(`SUCESSO: Sistema criou um contra-lance automático para A no valor de R$ ${autoBid.amount}.`, 2);
+        currentPrice = Number(autoBid.amount);
+    } else {
+        log(`FALHA: Sistema não criou o contra-lance automático para A.`, 2);
+    }
+
+    // Bidder B tenta de novo
+    newBid = currentPrice + increment;
+    await services.bid.createBid({ lot: { connect: { id: lot.id } }, auction: { connect: { id: lot.auctionId } }, bidder: { connect: { id: bidderB.id } }, tenant: { connect: { id: BigInt(entityStore.tenantId) } }, bidderDisplay: bidderB.fullName!, amount: newBid });
+    log(`Arrematante B deu outro lance de R$ ${newBid}.`, 2);
+
+    const finalAutoBid = await prisma.bid.findFirst({ where: { lotId: lot.id, bidderId: bidderA.id, amount: { gt: newBid } } });
+    if (finalAutoBid) {
+        log(`SUCESSO: Sistema novamente cobriu o lance para A no valor de R$ ${finalAutoBid.amount}.`, 2);
+    } else {
+        log(`FALHA: Sistema não cobriu o segundo lance.`, 2);
+    }
+}
+
+async function seedScenario_UnsoldAndRelistedLot() {
+    log('Iniciando Cenário: Lote Não Vendido e Relistado...', 1);
+    const unsoldLot = faker.helpers.arrayElement(entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES && l.bidsCount === 0));
+    if (!unsoldLot) {
+        log('Nenhum lote adequado para o cenário de relistagem. Pulando.', 2);
+        return;
+    }
+
+    // Forçar o lote a ser "Não Vendido"
+    await prisma.lot.update({ where: { id: unsoldLot.id }, data: { status: LotStatus.NAO_VENDIDO } });
+    log(`Lote #${unsoldLot.number} marcado como NÃO VENDIDO.`, 2);
+
+    const futureAuction = faker.helpers.arrayElement(entityStore.auctions.filter(a => a.status === AuctionStatus.EM_BREVE));
+    if (!futureAuction) {
+        log('Nenhum leilão futuro para relistar o lote. Pulando.', 2);
+        return;
+    }
+
+    // Usar o serviço para relistar (assumindo que ele existe e segue a RN-AD-006)
+    // Se o serviço não existir, simulamos a lógica aqui.
+    try {
+        // Simulação da lógica do serviço de relistagem
+        const originalLot = await prisma.lot.findUnique({ where: { id: unsoldLot.id } });
+        if (!originalLot) throw new Error("Lote original não encontrado");
+
+        const discount = 0.20; // 20% de desconto
+        const newPrice = Number(originalLot.price) * (1 - discount);
+
+        const relistedLotResult = await services.lot.createLot({
+            title: `${originalLot.title} (RELISTADO)`,
+            auctionId: futureAuction.id.toString(),
+            assetIds: (await prisma.assetsOnLots.findMany({ where: { lotId: originalLot.id } })).map(aol => aol.assetId.toString()),
+            price: newPrice,
+            initialPrice: newPrice,
+            isRelisted: true,
+            original_lot_id: originalLot.id,
+            relistCount: (originalLot.relistCount || 0) + 1,
+            status: LotStatus.EM_BREVE,
+        }, entityStore.tenantId, entityStore.users[0].id.toString());
+
+        if (relistedLotResult.success && relistedLotResult.lotId) {
+            await prisma.lot.update({ where: { id: originalLot.id }, data: { status: LotStatus.RELISTADO } });
+            log(`SUCESSO: Lote #${originalLot.number} foi relistado no leilão #${futureAuction.id} com 20% de desconto. Novo lote ID: ${relistedLotResult.lotId}.`, 2);
+        } else {
+            throw new Error(relistedLotResult.message);
+        }
+    } catch (error) {
+        log(`FALHA ao tentar relistar o lote: ${error.message}`, 2);
+    }
+}
+
+
+async function seedGenericInteractions() {
     await seedUserLotMaxBids();
     await seedBids();
     
