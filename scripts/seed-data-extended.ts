@@ -785,6 +785,20 @@ async function seedJudicialRelations() {
         log(`${judicialAuctions.length} leilões judiciais conectados a comarcas.`, 1);
     }
 
+    if (entityStore.judicialBranches.length > 0 && judicialAuctions.length > 0) {
+        for (const auction of judicialAuctions) {
+            await prisma.auction.update({
+                where: { id: auction.id },
+                data: {
+                    judicialBranches: {
+                        connect: { id: faker.helpers.arrayElement(entityStore.judicialBranches).id }
+                    }
+                }
+            });
+        }
+        log(`${judicialAuctions.length} leilões judiciais conectados a varas.`, 1);
+    }
+
     if (entityStore.judicialProcesses.length > 0 && judicialLots.length > 0) {
         for (const lot of judicialLots) {
             await prisma.lot.update({
@@ -908,6 +922,21 @@ async function seedInstallmentPayments() {
         const paymentResult = await services.installmentPayment.createInstallmentsForWin(win as any, numInstallments);
         if (paymentResult.success && paymentResult.payments.length > 0) {
             totalInstallments += paymentResult.payments.length;
+            
+            const lot = await prisma.lot.findUnique({ where: { id: win.lotId } });
+            if (lot) {
+                for (const payment of paymentResult.payments) {
+                    await prisma.installmentPayment.update({
+                        where: { id: payment.id },
+                        data: {
+                            lot: {
+                                connect: { id: lot.id }
+                            }
+                        }
+                    });
+                }
+            }
+
             // Simulate some payments
             if (faker.datatype.boolean(0.8)) {
                 await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
