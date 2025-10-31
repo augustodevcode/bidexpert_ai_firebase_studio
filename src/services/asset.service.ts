@@ -32,7 +32,7 @@ export class AssetService {
   private mapAssetsWithDetails(assets: any[]): Asset[] {
     return assets.map(asset => {
         const primaryLot = asset.lots?.[0]?.lot;
-        const lotInfo = primaryLot ? `Lote ${primaryLot.number || primaryLot.id.substring(0,4)}: ${primaryLot.title}` : null;
+        const lotInfo = primaryLot ? `Lote ${primaryLot.number || primaryLot.id.toString().substring(0,4)}: ${primaryLot.title}` : null;
         return {
             ...asset,
             evaluationValue: asset.evaluationValue ? Number(asset.evaluationValue) : null,
@@ -94,24 +94,24 @@ export class AssetService {
       const dataToCreate: Prisma.AssetCreateInput = {
         ...(assetData as any),
         publicId: `ASSET-${uuidv4()}`,
-        tenant: { connect: { id: tenantId } },
+        tenant: { connect: { id: BigInt(tenantId) } },
       };
       
-      if (categoryId) dataToCreate.category = { connect: { id: categoryId } };
-      if (subcategoryId) dataToCreate.subcategory = { connect: { id: subcategoryId } };
-      if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: judicialProcessId } };
+      if (categoryId) dataToCreate.category = { connect: { id: BigInt(categoryId) } };
+      if (subcategoryId) dataToCreate.subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (judicialProcessId) dataToCreate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
       if (sellerId) dataToCreate.seller = { connect: { id: BigInt(sellerId) } };
       if (cityId) {
-          const city = await this.prisma.city.findUnique({where: {id: cityId}});
+          const city = await this.prisma.city.findUnique({where: {id: BigInt(cityId)}});
           if(city) dataToCreate.locationCity = city.name;
       }
       if (stateId) {
-          const state = await this.prisma.state.findUnique({where: {id: stateId}});
+          const state = await this.prisma.state.findUnique({where: {id: BigInt(stateId)}});
           if(state) dataToCreate.locationState = state.uf;
       }
       
       const newAsset = await this.repository.create(dataToCreate);
-      return { success: true, message: 'Ativo criado com sucesso.', assetId: newAsset.id };
+      return { success: true, message: 'Ativo criado com sucesso.', assetId: newAsset.id.toString() };
     } catch (error: any) {
       console.error("Error in AssetService.createAsset:", error);
       return { success: false, message: `Falha ao criar ativo: ${error.message}` };
@@ -129,21 +129,21 @@ export class AssetService {
       const { categoryId, subcategoryId, judicialProcessId, sellerId, cityId, stateId, ...assetData } = data;
       const dataToUpdate: Prisma.AssetUpdateInput = { ...assetData };
       
-      if (categoryId) dataToUpdate.category = { connect: { id: categoryId } };
-      if (subcategoryId) dataToUpdate.subcategory = { connect: { id: subcategoryId } };
-      if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: judicialProcessId } };
-      if (sellerId) dataToUpdate.seller = { connect: { id: sellerId } };
+      if (categoryId) dataToUpdate.category = { connect: { id: BigInt(categoryId) } };
+      if (subcategoryId) dataToUpdate.subcategory = { connect: { id: BigInt(subcategoryId) } };
+      if (judicialProcessId) dataToUpdate.judicialProcess = { connect: { id: BigInt(judicialProcessId) } };
+      if (sellerId) dataToUpdate.seller = { connect: { id: BigInt(sellerId) } };
       if (cityId) {
-          const city = await this.prisma.city.findUnique({where: {id: cityId}});
+          const city = await this.prisma.city.findUnique({where: {id: BigInt(cityId)}});
           if(city) dataToUpdate.locationCity = city.name;
       }
       if (stateId) {
-          const state = await this.prisma.state.findUnique({where: {id: stateId}});
+          const state = await this.prisma.state.findUnique({where: {id: BigInt(stateId)}});
           if(state) dataToUpdate.locationState = state.uf;
       }
 
 
-      await this.repository.update(id, dataToUpdate);
+      await this.repository.update(BigInt(id), dataToUpdate);
       return { success: true, message: 'Ativo atualizado com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.updateAsset for id ${id}:`, error);
@@ -159,9 +159,9 @@ export class AssetService {
   async deleteAsset(id: string): Promise<{ success: boolean; message: string; }> {
     try {
       // Disconnect asset from any lots it is linked to.
-      await this.prisma.assetsOnLots.deleteMany({ where: { assetId: id } });
+      await this.prisma.assetsOnLots.deleteMany({ where: { assetId: BigInt(id) } });
 
-      await this.repository.delete(id);
+      await this.repository.delete(BigInt(id));
       return { success: true, message: 'Ativo excluído com sucesso.' };
     } catch (error: any) {
       console.error(`Error in AssetService.deleteAsset for id ${id}:`, error);
@@ -180,7 +180,4 @@ export class AssetService {
       return { success: false, message: 'Falha ao excluir todos os ativos.' };
     }
   }
-
-  async deleteManyAssetsOnLots(where: Prisma.AssetsOnLotsWhereInput): Promise<Prisma.BatchPayload> {
-    return this.repository.deleteManyAssetsOnLots(where);
-  }}
+}

@@ -10,7 +10,7 @@ import Step3AuctionDetails from '@/components/admin/wizard/steps/step-3-auction-
 import Step4Lotting from '@/components/admin/wizard/steps/step-4-lotting';
 import Step5Review from '@/components/admin/wizard/steps/step-5-review';
 import { getWizardInitialData } from './actions';
-import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Asset, Auction, Court, JudicialDistrict, JudicialBranch, Lot } from '@/types';
+import type { JudicialProcess, LotCategory, AuctioneerProfileInfo, SellerProfileInfo, Asset, Auction, Court, JudicialDistrict, JudicialBranch, Lot, StateInfo, CityInfo } from '@/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Rocket, Loader2, Workflow, Eye, Search, Expand, PackagePlus } from 'lucide-react';
@@ -42,6 +42,8 @@ interface WizardDataForFetching {
     courts: Court[];
     districts: JudicialDistrict[];
     branches: JudicialBranch[];
+    allStates: StateInfo[]; 
+    allCities: CityInfo[]; 
 }
 
 function WizardContent({ 
@@ -105,7 +107,7 @@ function WizardContent({
   const handleAssetCreated = async () => {
     toast({ title: "Sucesso!", description: "Ativo cadastrado com sucesso." });
     setIsDataRefetching(true);
-    await refetchData(wizardData.judicialProcess?.id);
+    await refetchData(wizardData.judicialProcess?.id?.toString());
     setWizardMode('main');
     setIsDataRefetching(false);
   }
@@ -136,19 +138,18 @@ function WizardContent({
       return (
         <AssetForm
           initialData={{
-            judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id : undefined,
-            sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId : undefined,
+            judicialProcessId: wizardData.auctionType === 'JUDICIAL' ? wizardData.judicialProcess?.id?.toString() : undefined,
+            sellerId: wizardData.auctionType !== 'JUDICIAL' ? wizardData.auctionDetails?.sellerId?.toString() : undefined,
             status: 'DISPONIVEL',
           }}
           processes={fetchedData.judicialProcesses}
           categories={fetchedData.categories}
           sellers={fetchedData.sellers}
+          allStates={fetchedData.allStates}
+          allCities={fetchedData.allCities}
           onSubmitAction={createAssetAction}
           onSuccess={handleAssetCreated}
           onCancel={() => setWizardMode('main')}
-          formTitle="Novo Ativo (Wizard)"
-          formDescription="Cadastre o ativo. Ele ficará disponível para loteamento ao salvar."
-          submitButtonText="Criar e Voltar ao Loteamento"
         />
       );
     }
@@ -248,7 +249,7 @@ function WizardPageContent() {
             setFetchedData(data);
             
             if (newProcessIdToSelect) {
-                const newProcess = data.judicialProcesses.find(p => p.id === newProcessIdToSelect);
+                const newProcess = data.judicialProcesses.find(p => p.id.toString() === newProcessIdToSelect);
                 if (newProcess) {
                     setWizardData(prev => ({...prev, judicialProcess: newProcess}));
                 }
