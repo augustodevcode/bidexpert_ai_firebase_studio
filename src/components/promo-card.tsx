@@ -1,5 +1,4 @@
-
-
+// src/components/promo-card.tsx
 import Image from 'next/image';
 import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
@@ -44,6 +43,7 @@ export default function PromoCard({
               fill
               className="object-contain"
               data-ai-hint={dataAiHint}
+              sizes="(max-width: 768px) 33vw, 150px"
             />
           </div>
         </CardContent>

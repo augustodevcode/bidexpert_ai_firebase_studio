@@ -67,7 +67,7 @@ const randomEnum = <T extends object>(e: T): T[keyof T] => {
 
 const slugify = (text: string) => {
   if (!text) return '';
-  return text.toString().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
+  return text.toString().normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').replace(/--+/g, '-');
 };
 
 // --- Armazenamento de Entidades Criadas ---
@@ -184,6 +184,7 @@ async function main() {
     await prisma.$connect(); // Explicitly connect
     await runStep(cleanupPreviousData, 'Limpeza de dados antigos');
     await runStep(seedCoreInfra, 'Infraestrutura Core');
+    await runStep(seedPlatformSettings, 'Configurações da Plataforma');
     await runStep(seedMedia, 'Mídia');
     await runStep(seedCategoriesAndVehicles, 'Categorias e Veículos');
     await runStep(seedLocations, 'Localizações');
@@ -191,6 +192,7 @@ async function main() {
     await runStep(seedParticipants, 'Participantes');
     await runStep(seedAssets, 'Ativos (Bens)');
     await runStep(seedAuctionsAndLots, 'Leilões e Lotes');
+    await runStep(seedJudicialRelations, 'Relações Judiciais');
     await runStep(seedInteractions, 'Interações');
     await runStep(seedPostAuctionInteractions, 'Interações Pós-Leilão');
     await runStep(seedDirectSaleOffers, 'Ofertas de Venda Direta');
@@ -215,6 +217,16 @@ async function cleanupPreviousData() {
     log('Fase 0: Limpando dados antigos...', 0);
     // A ordem de exclusão é crucial para evitar erros de constraint de chave estrangeira.
     
+    await prisma.variableIncrementRule.deleteMany({});
+    await prisma.sectionBadgeVisibility.deleteMany({});
+    await prisma.mentalTriggerSettings.deleteMany({});
+    await prisma.notificationSettings.deleteMany({});
+    await prisma.paymentGatewaySettings.deleteMany({});
+    await prisma.biddingSettings.deleteMany({});
+    await prisma.mapSettings.deleteMany({});
+    await prisma.idMasks.deleteMany({});
+    await prisma.platformSettings.deleteMany({});
+
     await services.installmentPayment.deleteMany({});
     await services.userWin.deleteAllUserWins();
     await services.bid.deleteMany({});
@@ -226,7 +238,7 @@ async function cleanupPreviousData() {
     await services.subscriber.deleteMany({});
     await prisma.auctionHabilitation.deleteMany({});
 
-    await services.asset.deleteManyAssetsOnLots({});
+    await prisma.assetsOnLots.deleteMany({});
     await services.document.deleteAllUserDocuments();
     await services.auctionStage.deleteMany({});
     
@@ -243,8 +255,6 @@ async function cleanupPreviousData() {
     await prisma.usersOnRoles.deleteMany({});
     await prisma.usersOnTenants.deleteMany({});
     await services.user.deleteAllUsers();
-    
-    await prisma.platformSettings.deleteMany({});
     
     await services.vehicleModel.deleteMany({});
     await services.vehicleMake.deleteMany({});
@@ -268,19 +278,12 @@ async function cleanupPreviousData() {
 }
 
 async function seedCoreInfra() {
-  log('Fase 1: Infraestrutura Core (Tenant, Roles, Admin, Configs)...', 0);
+  log('Fase 1: Infraestrutura Core (Tenant, Roles, Admin)...', 0);
 
   const tenantResult = await services.tenant.createTenant({ name: 'BidExpert Platform', subdomain: 'bidexpert' });
   if (!tenantResult.success || !tenantResult.tenant) throw new Error(tenantResult.message);
   entityStore.tenantId = tenantResult.tenant.id.toString();
-  log(`Tenant "${tenantResult.tenant.name}" criado.`, 1);
-
-  await services.platformSettings.updateSettings(entityStore.tenantId, {
-    siteTitle: 'BidExpert',
-    siteTagline: 'Sua plataforma de leilões online.',
-    isSetupComplete: true,
-  });
-  log('Configurações padrão da plataforma criadas/atualizadas.', 1);
+  log(`Tenant \"${tenantResult.tenant.name}\" criado.`, 1);
   
   const roleNames = ['ADMIN', 'USER', 'BIDDER', 'SELLER_ADMIN', 'AUCTIONEER_ADMIN', 'FINANCIAL', 'CONSIGNOR', 'AUCTIONEER'];
   const allRoles = await prisma.role.findMany();
@@ -348,6 +351,99 @@ async function seedCoreInfra() {
   log(`${docTypes.length} tipos de documento garantidos.`, 1);
 }
 
+async function seedPlatformSettings() {
+  log('Fase Core: Configurações da Plataforma...', 0);
+
+  const tenantId = BigInt(entityStore.tenantId);
+
+  const settings = await prisma.platformSettings.create({
+    data: {
+      tenant: { connect: { id: tenantId } },
+      siteTitle: 'BidExpert Leilões',
+      siteTagline: 'A sua melhor oportunidade, a um lance de distância.',
+      isSetupComplete: true,
+      crudFormMode: 'sheet',
+      searchPaginationType: 'numberedPages',
+      showCountdownOnCards: true,
+      showCountdownOnLotDetail: true,
+      showRelatedLotsOnLotDetail: true,
+      relatedLotsCount: 4,
+      defaultListItemsPerPage: 12,
+      platformPublicIdMasks: {
+        create: {
+          auctionCodeMask: "LE#",
+          lotCodeMask: "LT#",
+          sellerCodeMask: "VEND#",
+          auctioneerCodeMask: "LEIL#",
+          userCodeMask: "USR#",
+          assetCodeMask: "BEM#",
+        }
+      },
+      biddingSettings: {
+        create: {
+          instantBiddingEnabled: true,
+          getBidInfoInstantly: true,
+          biddingInfoCheckIntervalSeconds: 2,
+          defaultStageDurationDays: 5,
+          defaultDaysBetweenStages: 2,
+        }
+      },
+      paymentGatewaySettings: {
+        create: {
+          defaultGateway: 'Manual',
+          platformCommissionPercentage: 5.0,
+        }
+      },
+      notificationSettings: {
+        create: {
+          notifyOnNewAuction: true,
+          notifyOnFeaturedLot: true,
+          notifyOnAuctionEndingSoon: true,
+          notifyOnPromotions: true,
+        }
+      },
+      mentalTriggerSettings: {
+        create: {
+          showDiscountBadge: true,
+          showPopularityBadge: true,
+          popularityViewThreshold: 100,
+          showHotBidBadge: true,
+          hotBidThreshold: 15,
+          showExclusiveBadge: true,
+        }
+      },
+      sectionBadgeVisibility: {
+        create: {
+          searchGrid: { "hot": true, "new": true, "endingSoon": true, "exclusive": false },
+          lotDetail: { "hot": true, "new": false, "endingSoon": true, "exclusive": true },
+        }
+      },
+    }
+  });
+
+  log('Configurações da plataforma, máscaras de ID e gatilhos mentais criados.', 1);
+
+  const incrementRules = [
+    { from: 0, to: 1000, increment: 50 },
+    { from: 1001, to: 5000, increment: 100 },
+    { from: 5001, to: 10000, increment: 250 },
+    { from: 10001, to: 50000, increment: 500 },
+    { from: 50001, to: null, increment: 1000 },
+  ];
+
+  for (const rule of incrementRules) {
+    await prisma.variableIncrementRule.create({
+      data: {
+        platformSettingsId: settings.id,
+        from: rule.from,
+        to: rule.to,
+        increment: rule.increment,
+      }
+    });
+  }
+  log(`${incrementRules.length} regras de incremento de lance criadas.`, 1);
+}
+
 async function seedMedia() {
     log('Fase 2: Mídia (Imagens de Exemplo)...', 0);
     if (!fs.existsSync(IMAGE_PLACEHOLDER_DIR)) {
@@ -392,7 +488,7 @@ async function seedCategoriesAndVehicles() {
         const catResult = await services.category.createCategory({ name: catName, description: `Categoria de ${catName}` });
         if (catResult.success && catResult.category) {
             for (const subcatName of categoryData[catName]) {
-                await services.subcategory.createSubcategory({ 
+                await services.subcategory.createSubcategory({
                     name: subcatName, 
                     parentCategoryId: catResult.category.id.toString(),
                     description: `Subcategoria de ${subcatName}`,
@@ -656,6 +752,54 @@ async function seedAuctionsAndLots() {
     log(`${entityStore.auctions.length} leilões e ${entityStore.lots.length} lotes criados.`, 1);
 }
 
+async function seedJudicialRelations() {
+    log('Fase Extra: Relações Judiciais (Leilão-Tribunal, Processo-Lote)...', 0);
+    const judicialAuctions = entityStore.auctions.filter(a => a.auctionType === 'JUDICIAL');
+    const judicialLots = entityStore.lots.filter(l => judicialAuctions.some(a => a.id === l.auctionId));
+
+    if (entityStore.courts.length > 0 && judicialAuctions.length > 0) {
+        for (const auction of judicialAuctions) {
+            await prisma.auction.update({
+                where: { id: auction.id },
+                data: {
+                    courts: {
+                        connect: { id: faker.helpers.arrayElement(entityStore.courts).id }
+                    }
+                }
+            });
+        }
+        log(`${judicialAuctions.length} leilões judiciais conectados a tribunais.`, 1);
+    }
+
+    if (entityStore.judicialDistricts.length > 0 && judicialAuctions.length > 0) {
+        for (const auction of judicialAuctions) {
+            await prisma.auction.update({
+                where: { id: auction.id },
+                data: {
+                    judicialDistricts: {
+                        connect: { id: faker.helpers.arrayElement(entityStore.judicialDistricts).id }
+                    }
+                }
+            });
+        }
+        log(`${judicialAuctions.length} leilões judiciais conectados a comarcas.`, 1);
+    }
+
+    if (entityStore.judicialProcesses.length > 0 && judicialLots.length > 0) {
+        for (const lot of judicialLots) {
+            await prisma.lot.update({
+                where: { id: lot.id },
+                data: {
+                    judicialProcesses: {
+                        connect: { id: faker.helpers.arrayElement(entityStore.judicialProcesses).id }
+                    }
+                }
+            });
+        }
+        log(`${judicialLots.length} lotes judiciais conectados a processos.`, 1);
+    }
+}
+
 async function seedAuctionHabilitations(auctionId: string) {
     const habilitatedUsers = entityStore.users.filter(u => u.habilitationStatus === UserHabilitationStatus.HABILITADO);
     if(habilitatedUsers.length === 0) return;
@@ -674,17 +818,46 @@ async function seedAuctionHabilitations(auctionId: string) {
 
 async function seedInteractions() {
     log('Fase 9: Interações (Lances, Arremates, Pagamentos)...', 0);
-    const lotsForBidding = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
+    
+    await seedUserLotMaxBids();
+    await seedBids();
+    
+    const lotsWithBids = await prisma.lot.findMany({ where: { bids: { some: {} } } });
     const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
-    if (lotsForBidding.length === 0 || bidderUsers.length < 2) return;
+    for (const lot of lotsWithBids) {
+        const lastBid = await prisma.bid.findFirst({ where: { lotId: lot.id }, orderBy: { amount: 'desc' } });
+        if (lastBid && lot.status !== LotStatus.VENDIDO) {
+             const winResult = await services.userWin.create({
+                user: { connect: { id: lastBid.bidderId } },
+                lot: { connect: { id: lot.id } },
+                winningBidAmount: new Prisma.Decimal(lastBid.amount),
+            });
+            if (winResult) {
+                entityStore.userWins.push(winResult as any);
+                await prisma.lot.update({ where: { id: lot.id }, data: { status: LotStatus.VENDIDO, winnerId: lastBid.bidderId } });
+            }
+        }
+    }
+    log(`${entityStore.userWins.length} lotes arrematados.`, 1);
+    await seedInstallmentPayments();
+}
 
-    await seedUserLotMaxBids();
-    
+async function seedBids() {
+    log('Fase 9a: Lances nos Lotes Abertos...', 0);
+    const lotsForBidding = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
+    const bidderUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER') && u.habilitationStatus === 'HABILITADO');
+
+    if (lotsForBidding.length === 0 || bidderUsers.length < 2) {
+        log('Nenhum lote aberto ou arrematantes habilitados suficientes para criar lances.', 1);
+        return;
+    }
+
+    let totalBids = 0;
     for (const lot of lotsForBidding) {
         let currentPrice = Number(lot.price);
-        let lastBidder: any = null;
-        const bidsForThisLot = faker.number.int({ min: 10, max: MAX_BIDS_PER_LOT });
+        const bidsForThisLot = faker.number.int({ min: 5, max: MAX_BIDS_PER_LOT });
+        
         for (let i = 0; i < bidsForThisLot; i++) {
             const bidder = faker.helpers.arrayElement(bidderUsers);
             currentPrice += faker.number.int({ min: 50, max: 500 });
@@ -693,39 +866,19 @@ async function seedInteractions() {
                 auction: { connect: { id: lot.auctionId } },
                 bidder: { connect: { id: bidder.id } },
                 tenant: { connect: { id: BigInt(entityStore.tenantId) } },
-                bidderDisplay: bidder.fullName || 'Anônimo',
+                bidderDisplay: bidder.fullName || 'Arrematante Anônimo',
                 amount: currentPrice,
             });
-            lastBidder = bidder;
+            totalBids++;
         }
-
-        if (lastBidder && lot.status !== LotStatus.VENDIDO) {
-             const winResult = await services.userWin.create({
-                user: { connect: { id: lastBidder.id } },
-                lot: { connect: { id: lot.id } },
-                winningBidAmount: new Prisma.Decimal(currentPrice),
-            });
-            if (winResult) {
-                entityStore.userWins.push(winResult as any);
-                await prisma.lot.update({ where: { id: lot.id }, data: { status: LotStatus.VENDIDO, winnerId: lastBidder.id } });
-                
-                if(faker.datatype.boolean(0.5)) {
-                    const paymentResult = await services.installmentPayment.createInstallmentsForWin(winResult as any, faker.number.int({ min: 2, max: 6 }));
-                    if (paymentResult.success && paymentResult.payments.length > 0) {
-                        await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
-                    }
-                } else {
-                    await prisma.userWin.update({ where: { id: winResult.id }, data: { paymentStatus: 'PAGO' } });
-                }
-            }
-        }
+        // Update lot with final price
+        await prisma.lot.update({ where: { id: lot.id }, data: { price: currentPrice } });
     }
-    const bidCount = await prisma.bid.count();
-    log(`${bidCount} lances criados e ${entityStore.userWins.length} lotes arrematados.`, 1);
+    log(`${totalBids} lances foram criados.`, 1);
 }
 
 async function seedUserLotMaxBids() {
-    log('Fase 9a: Lances Máximos de Usuários (Auto-Lances)...', 0);
+    log('Fase 9b: Lances Máximos de Usuários (Auto-Lances)...', 0);
     const lotsWithBids = entityStore.lots.filter(l => l.status === LotStatus.ABERTO_PARA_LANCES);
     const habilitatedUsers = entityStore.users.filter(u => u.roleNames.includes('BIDDER'));
 
@@ -739,6 +892,32 @@ async function seedUserLotMaxBids() {
             });
         }
     }
+}
+
+async function seedInstallmentPayments() {
+    log('Fase 9c: Pagamentos Parcelados para Arremates...', 0);
+    const winsWithInstallments = entityStore.userWins.filter(win => faker.datatype.boolean(0.4)); // 40% chance of having installments
+    if (winsWithInstallments.length === 0) {
+        log('Nenhum arremate selecionado para parcelamento.', 1);
+        return;
+    }
+
+    let totalInstallments = 0;
+    for (const win of winsWithInstallments) {
+        const numInstallments = faker.number.int({ min: 2, max: 12 });
+        const paymentResult = await services.installmentPayment.createInstallmentsForWin(win as any, numInstallments);
+        if (paymentResult.success && paymentResult.payments.length > 0) {
+            totalInstallments += paymentResult.payments.length;
+            // Simulate some payments
+            if (faker.datatype.boolean(0.8)) {
+                await services.installmentPayment.updatePaymentStatus(paymentResult.payments[0].id, PaymentStatus.PAGO);
+                if (numInstallments > 1 && faker.datatype.boolean(0.5)) {
+                     await services.installmentPayment.updatePaymentStatus(paymentResult.payments[1].id, PaymentStatus.PAGO);
+                }
+            }
+        }
+    }
+    log(`${totalInstallments} parcelas criadas para ${winsWithInstallments.length} arremates.`, 1);
 }
 
 async function seedPostAuctionInteractions() {
@@ -839,6 +1018,7 @@ async function logSummary() {
       wins: await prisma.userWin.count(),
       installments: await prisma.installmentPayment.count(),
       notifications: await prisma.notification.count(),
+      directSales: await prisma.directSaleOffer.count(),
     };
     console.log('\nResumo do Seeding:');
     console.log(`- Tenants: ${counts.tenants}`);
@@ -851,6 +1031,7 @@ async function logSummary() {
     console.log(`- Arremates (Wins): ${counts.wins}`);
     console.log(`- Parcelas: ${counts.installments}`);
     console.log(`- Notificações: ${counts.notifications}`);
+    console.log(`- Vendas Diretas: ${counts.directSales}`);
     console.log('=====================================================');
 }
 

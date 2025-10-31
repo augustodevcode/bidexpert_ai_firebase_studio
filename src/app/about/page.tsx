@@ -45,7 +45,7 @@ export default function AboutPage() {
           </p>
         </div>
         <div className="container-image-who-we-are">
-          <Image src="https://placehold.co/600x400.png" alt="Nossa Equipe" fill className="img-team" data-ai-hint="team meeting" />
+          <Image src="https://placehold.co/600x400.png" alt="Nossa Equipe" fill sizes="(max-width: 768px) 100vw, 50vw" className="img-team" data-ai-hint="team meeting" />
         </div>
       </section>
       

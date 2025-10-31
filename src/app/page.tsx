@@ -86,7 +86,6 @@ export default async function HomePage() {
     return {
         ...lot,
         endDate: relevantEndDate, // Use a data da etapa se disponível
-        auction: undefined, // Remove para evitar conflito de tipo
     };
   }).filter(lot => lot.endDate && !isPast(new Date(lot.endDate as string))) as unknown as Lot[];
 

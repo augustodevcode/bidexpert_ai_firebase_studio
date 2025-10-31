@@ -92,7 +92,7 @@ export class SellerService {
   
         const {
           userId, street, number, complement, neighborhood,
-          cityId, stateId, latitude, longitude, tenantId: dataTenantId, ...sellerData
+          cityId, stateId, latitude, longitude, tenantId: dataTenantId, judicialBranchId, ...sellerData
         } = data;
   
         const fullAddress = [street, number, complement, neighborhood].filter(Boolean).join(', ');
@@ -102,22 +102,25 @@ export class SellerService {
           address: fullAddress,
           slug: slugify(data.name),
           publicId: `COM-${uuidv4()}`,
-          tenant: { connect: { id: tenantId } }, // Removed BigInt conversion
+          tenant: { connect: { id: BigInt(tenantId) } },
         };
   
-        if (userId) dataToCreate.user = { connect: { id: userId } };
+        if (userId) dataToCreate.user = { connect: { id: BigInt(userId) } };
         if (cityId) {
-          const city = await this.prisma.city.findUnique({ where: { id: cityId }}); // Removed BigInt conversion
+          const city = await this.prisma.city.findUnique({ where: { id: BigInt(cityId) }});
           if (city) dataToCreate.city = city.name;
         }
         if (stateId) {
-          const state = await this.prisma.state.findUnique({ where: { id: stateId }}); // Removed BigInt conversion
-                  if (state) dataToCreate.state = state.uf;
-                }
-                console.log('Data to create seller in service:', dataToCreate);
-                const newSeller = await this.sellerRepository.create(dataToCreate);
-                console.log('Result of sellerRepository.create:', newSeller);
-                return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id };
+          const state = await this.prisma.state.findUnique({ where: { id: BigInt(stateId) }});
+          if (state) dataToCreate.state = state.uf;
+        }
+        if (judicialBranchId) {
+            dataToCreate.judicialBranch = { connect: { id: BigInt(judicialBranchId) } };
+        }
+        console.log('Data to create seller in service:', dataToCreate);
+        const newSeller = await this.sellerRepository.create(dataToCreate);
+        console.log('Result of sellerRepository.create:', newSeller);
+        return { success: true, message: 'Comitente criado com sucesso.', sellerId: newSeller.id.toString() };
       } catch (error: any) {
         console.error("Error in SellerService.createSeller:", error);
         console.error("Error details:", error.message, error.stack);
