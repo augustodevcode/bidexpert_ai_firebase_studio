@@ -226,66 +226,33 @@ async function main() {
 }
 
 async function cleanupPreviousData() {
-    // A ordem de exclusão é crucial para evitar erros de constraint de chave estrangeira.
-    await prisma.lotStagePrice.deleteMany({});
-    await prisma.variableIncrementRule.deleteMany({});
-    await prisma.sectionBadgeVisibility.deleteMany({});
-    await prisma.mentalTriggerSettings.deleteMany({});
-    await prisma.notificationSettings.deleteMany({});
-    await prisma.paymentGatewaySettings.deleteMany({});
-    await prisma.biddingSettings.deleteMany({});
-    await prisma.mapSettings.deleteMany({});
-    await prisma.idMasks.deleteMany({});
-    await prisma.platformSettings.deleteMany({});
+    console.log("DEBUG: Iniciando cleanupPreviousData");
+    const tables = [
+        'themeColors', 'themeSettings', 'lotStagePrice', 'variableIncrementRule', 'sectionBadgeVisibility', 'mentalTriggerSettings',
+        'notificationSettings', 'paymentGatewaySettings', 'biddingSettings', 'mapSettings', 'idMasks',
+        'platformSettings', 'installmentPayment', 'userWin', 'bid', 'userLotMaxBid', 'lotQuestion',
+        'review', 'notification', 'contactMessage', 'subscriber', 'auctionHabilitation', 'assetsOnLots',
+        'userDocument', 'auctionStage', 'lot', 'auction', 'asset', 'directSaleOffer', 'judicialParty',
+        'judicialProcess', 'seller', 'auctioneer', 'usersOnRoles', 'usersOnTenants', 'user',
+        'vehicleModel', 'vehicleMake', 'subcategory', 'lotCategory', 'judicialBranch',
+        'judicialDistrict', 'court', 'mediaItem', 'documentTemplate', 'documentType', 'report',
+        'dataSource', 'city', 'state'
+    ];
 
-    await prisma.installmentPayment.deleteMany({});
-    await prisma.userWin.deleteMany({});
-    await prisma.bid.deleteMany({});
-    await prisma.userLotMaxBid.deleteMany({});
-    await prisma.lotQuestion.deleteMany({});
-    await prisma.review.deleteMany({});
-    await prisma.notification.deleteMany({});
-    await prisma.contactMessage.deleteMany({});
-    await prisma.subscriber.deleteMany({});
-    await prisma.auctionHabilitation.deleteMany({});
+    for (const table of tables) {
+        console.log(`DEBUG: Limpando tabela: ${table}`);
+        if (prisma[table]) {
+            await prisma[table].deleteMany({});
+        } else {
+            console.warn(`DEBUG: Modelo prisma.${table} não encontrado para limpeza.`);
+        }
+    }
 
-    await prisma.assetsOnLots.deleteMany({});
-    await prisma.userDocument.deleteMany({});
-    await prisma.auctionStage.deleteMany({});
-    
-    await prisma.lot.deleteMany({});
-    await prisma.auction.deleteMany({});
-    
-    await prisma.asset.deleteMany({});
-    await prisma.directSaleOffer.deleteMany({});
-
-    await prisma.judicialParty.deleteMany({});
-    await prisma.judicialProcess.deleteMany({});
-    await prisma.seller.deleteMany({});
-    await prisma.auctioneer.deleteMany({});
-    
-    await prisma.usersOnRoles.deleteMany({});
-    await prisma.usersOnTenants.deleteMany({});
-    await prisma.user.deleteMany({});
-    
-    await prisma.vehicleModel.deleteMany({});
-    await prisma.vehicleMake.deleteMany({});
-    await prisma.subcategory.deleteMany({});
-    await prisma.lotCategory.deleteMany({});
-    await prisma.judicialBranch.deleteMany({});
-    await prisma.judicialDistrict.deleteMany({});
-    await prisma.court.deleteMany({});
-    await prisma.mediaItem.deleteMany({});
-    await prisma.documentTemplate.deleteMany({});
-    await prisma.documentType.deleteMany({});
-    await prisma.report.deleteMany({});
-    await prisma.dataSource.deleteMany({});
-    await prisma.city.deleteMany({});
-    await prisma.state.deleteMany({});
-    
-    // Tenants should be deleted last
-    await prisma.tenant.deleteMany({ where: { id: { not: BigInt(1) } } }); 
+    console.log(`DEBUG: Limpando tabela: tenant`);
+    await prisma.tenant.deleteMany({ where: { id: { not: BigInt(1) } } });
+    console.log("DEBUG: Finalizado cleanupPreviousData");
 }
+
 
 async function seedCoreInfra() {
   const tenantResult = await services.tenant.createTenant({ name: 'BidExpert Platform', subdomain: 'bidexpert' });
@@ -375,6 +342,29 @@ async function seedPlatformSettings() {
       showRelatedLotsOnLotDetail: true,
       relatedLotsCount: 4,
       defaultListItemsPerPage: 12,
+      themes: {
+        create: [
+          {
+            name: 'BidExpert Padrão',
+            colors: {
+              create: {
+                light: {
+                  "background": "hsl(0 0% 100%)",
+                  "foreground": "hsl(222.2 84% 4.9%)",
+                  "primary": "hsl(222.2 47.4% 11.2%)",
+                  "primary-foreground": "hsl(210 40% 98%)",
+                },
+                dark: {
+                  "background": "hsl(222.2 84% 4.9%)",
+                  "foreground": "hsl(210 40% 98%)",
+                  "primary": "hsl(210 40% 98%)",
+                  "primary-foreground": "hsl(222.2 47.4% 11.2%)",
+                }
+              }
+            }
+          }
+        ]
+      },
       platformPublicIdMasks: {
         create: {
           auctionCodeMask: "LE#",
@@ -392,6 +382,12 @@ async function seedPlatformSettings() {
           biddingInfoCheckIntervalSeconds: 2,
           defaultStageDurationDays: 5,
           defaultDaysBetweenStages: 2,
+        }
+      },
+      mapSettings: {
+        create: {
+          defaultProvider: "googlemaps",
+          googleMapsApiKey: "YOUR_GOOGLE_MAPS_API_KEY_HERE", // Lembre-se de substituir por uma chave real
         }
       },
       paymentGatewaySettings: {
@@ -474,7 +470,7 @@ async function seedReportBuilderData() {
     ];
 
     for (const sourceData of sources) {
-        const result = await services.dataSource.createDataSource(sourceData);
+        const result = await services.dataSource.upsertDataSource(sourceData as any);
         entityStore.dataSources.push(result as any);
     }
     log(`${entityStore.dataSources.length} fontes de dados para relatórios criadas.`, 1);

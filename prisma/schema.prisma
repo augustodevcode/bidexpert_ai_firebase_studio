@@ -1265,6 +1265,15 @@ enum DirectSaleOfferType {
     ACCEPTS_PROPOSALS
 }
 
+model DocumentTemplate {
+  id        BigInt   @id @default(autoincrement())
+  name      String   @unique
+  type      DocumentTemplateType
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum DocumentTemplateType {
     WINNING_BID_TERM
     EVALUATION_REPORT
