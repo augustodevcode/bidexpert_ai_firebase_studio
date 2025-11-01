@@ -18,8 +18,8 @@ export class DirectSaleOfferRepository {
     });
   }
   
-  async create(data: Prisma.DirectSaleOfferCreateInput): Promise<DirectSaleOffer> {
-    return prisma.directSaleOffer.create({ data });
+  async create(data: Prisma.DirectSaleOfferCreateInput, publicId: string): Promise<DirectSaleOffer> {
+    return prisma.directSaleOffer.create({ data: { ...data, publicId } });
   }
 
   async update(id: string, data: Prisma.DirectSaleOfferUpdateInput): Promise<DirectSaleOffer> {

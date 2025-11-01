@@ -42,14 +42,14 @@ export class DirectSaleOfferService {
   async createDirectSaleOffer(tenantId: string, data: DirectSaleOfferFormData): Promise<{ success: boolean, message: string, offerId?: string }> {
       try {
         const { categoryId, sellerId, ...rest } = data;
-        const dataToCreate: Prisma.DirectSaleOfferCreateInput = {
+        const publicId = `DSO-${uuidv4()}`;
+        const dataToCreate: Omit<Prisma.DirectSaleOfferCreateInput, 'publicId'> = {
             ...rest,
-            publicId: `DSO-${uuidv4()}`,
             category: { connect: { id: BigInt(categoryId) } },
             seller: { connect: { id: BigInt(sellerId) } },
             tenant: { connect: { id: BigInt(tenantId) } },
         };
-        const newOffer = await this.repository.create(dataToCreate);
+        const newOffer = await this.repository.create(dataToCreate, publicId);
         return { success: true, message: 'Oferta criada com sucesso.', offerId: newOffer.id.toString() };
       } catch (error: any) {
           return { success: false, message: `Falha ao criar oferta: ${error.message}` };

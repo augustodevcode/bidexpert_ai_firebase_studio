@@ -227,31 +227,55 @@ async function main() {
 }
 
 async function cleanupPreviousData() {
-    console.log("DEBUG: Iniciando cleanupPreviousData");
-    const tables = [
-        'themeColors', 'themeSettings', 'lotStagePrice', 'variableIncrementRule', 'sectionBadgeVisibility', 'mentalTriggerSettings',
-        'notificationSettings', 'paymentGatewaySettings', 'biddingSettings', 'mapSettings', 'idMasks',
-        'platformSettings', 'installmentPayment', 'userWin', 'bid', 'userLotMaxBid', 'lotQuestion',
-        'review', 'notification', 'contactMessage', 'subscriber', 'auctionHabilitation', 'assetsOnLots',
-        'userDocument', 'auctionStage', 'lot', 'auction', 'asset', 'directSaleOffer', 'judicialParty',
-        'judicialProcess', 'seller', 'auctioneer', 'report', 'usersOnRoles', 'usersOnTenants', 'user',
-        'vehicleModel', 'vehicleMake', 'subcategory', 'lotCategory', 'judicialBranch',
-        'judicialDistrict', 'court', 'mediaItem', 'documentTemplate', 'documentType', 
-        'dataSource', 'city', 'state'
+    log("Iniciando limpeza completa do banco de dados...", 1);
+
+    // A ordem é crucial para respeitar as constraints de chave estrangeira.
+    // Começamos das tabelas que dependem de outras (muitos-para-um, muitos-para-muitos)
+    // e vamos em direção às tabelas mais fundamentais.
+    
+    const orderedTables = [
+        // Relações Muitos-para-Muitos e dependências fortes
+        'UsersOnRoles', 'UsersOnTenants', 'AssetsOnLots', 'AuctionHabilitation',
+        'LotStagePrice', 'InstallmentPayment', 'Bid', 'UserLotMaxBid',
+        'LotQuestion', 'Review', 'Notification',
+        
+        // Entidades com múltiplas dependências
+        'UserWin', 'Lot', 'AuctionStage', 'Auction', 'Asset', 
+        
+        // Entidades Judiciais
+        'JudicialParty', 'JudicialProcess', 
+        
+        // Configurações e entidades de suporte
+        'VariableIncrementRule', 'SectionBadgeVisibility', 'MentalTriggerSettings',
+        'NotificationSettings', 'PaymentGatewaySettings', 'BiddingSettings', 'MapSettings', 'IdMasks',
+        'ThemeColors', 'ThemeSettings', 'PlatformSettings',
+        
+        // Entidades principais com menos dependências de entrada
+        'DirectSaleOffer', 'Seller', 'Auctioneer', 'Report', 'UserDocument',
+        'MediaItem', 'DocumentTemplate', 'DocumentType', 'DataSource',
+        'VehicleModel', 'VehicleMake', 'Subcategory', 'LotCategory',
+        'JudicialBranch', 'JudicialDistrict', 'Court', 'City', 'State',
+        
+        // Entidades de base
+        'ContactMessage', 'Subscriber', 'PasswordResetToken', 'Role', 'User', 'Tenant'
     ];
 
-    for (const table of tables) {
-        console.log(`DEBUG: Limpando tabela: ${table}`);
-        if (prisma[table]) {
-            await prisma[table].deleteMany({});
+    for (const table of orderedTables) {
+        const model = prisma[table.charAt(0).toLowerCase() + table.slice(1)];
+        if (model && typeof model.deleteMany === 'function') {
+            try {
+                const { count } = await model.deleteMany({});
+                if (count > 0) {
+                    log(`Tabela '${table}' limpa (${count} registros removidos).`, 2);
+                }
+            } catch (e) {
+                log(`Aviso: Não foi possível limpar a tabela '${table}'. Pode já estar vazia ou ter dependências. Erro: ${e.message}`, 2);
+            }
         } else {
-            console.warn(`DEBUG: Modelo prisma.${table} não encontrado para limpeza.`);
+            log(`Aviso: Modelo Prisma para a tabela '${table}' não encontrado. Pulando.`, 2);
         }
     }
-
-    console.log(`DEBUG: Limpando tabela: tenant`);
-    await prisma.tenant.deleteMany({ where: { id: { not: BigInt(1) } } });
-    console.log("DEBUG: Finalizado cleanupPreviousData");
+    log("Limpeza finalizada.", 1);
 }
 
 
@@ -761,7 +785,7 @@ async function seedAuctionsAndLots() {
     for (let i = 0; i < TOTAL_AUCTIONS; i++) {
         const seller = faker.helpers.arrayElement(entityStore.sellers);
         const auctionType = seller.isJudicial ? AuctionType.JUDICIAL : randomEnum(AuctionType);
-        const status = randomEnum(AuctionStatus);
+        const status = i < 5 ? AuctionStatus.ABERTO_PARA_LANCES : randomEnum(AuctionStatus);
         const auctionDate = status === 'EM_BREVE' ? faker.date.soon({ days: 15 }) : faker.date.recent({ days: 10 });
 
         const hasTwoStages = i % 3 === 0; // 1/3 of auctions will have two stages
@@ -789,12 +813,14 @@ async function seedAuctionsAndLots() {
             if (assetsForLot.length === 0) continue;
             
             const evaluationValue = assetsForLot.reduce((sum, a) => sum + (Number(a.evaluationValue) || 0), 0);
+            const lotStatus = status === AuctionStatus.ABERTO_PARA_LANCES ? LotStatus.ABERTO_PARA_LANCES : LotStatus.EM_BREVE;
+
             const lotResult = await services.lot.createLot({
                 title: faker.commerce.productName(),
                 auctionId: auctionResult.auctionId,
                 assetIds: assetsForLot.map(a => a.id.toString()),
                 price: evaluationValue,
-                evaluationValue: evaluationValue,
+                status: lotStatus,
                 type: assetsForLot[0].categoryId?.toString(),
             }, entityStore.tenantId, entityStore.users[0].id.toString());
 
@@ -827,30 +853,38 @@ async function seedAuctionsAndLots() {
 
 async function seedJudicialRelations() {
     const judicialAuctions = entityStore.auctions.filter(a => a.auctionType === 'JUDICIAL');
+    let count = 0;
 
     for (const auction of judicialAuctions) {
         const process = entityStore.judicialProcesses.find(p => p.sellerId === auction.sellerId);
-        if (process) {
-            await prisma.auction.update({
-                where: { id: auction.id },
-                data: {
-                    judicialProcessId: process.id,
-                    courts: { connect: { id: process.courtId! } },
-                    judicialDistricts: { connect: { id: process.districtId! } },
-                    judicialBranches: { connect: { id: process.branchId! } },
-                }
-            });
+        if (process && process.branchId) {
+            const branch = entityStore.judicialBranches.find(b => b.id === process.branchId);
+            if (branch && branch.districtId) {
+                const district = entityStore.judicialDistricts.find(d => d.id === branch.districtId);
+                if (district && district.courtId) {
+                    await prisma.auction.update({
+                        where: { id: auction.id },
+                        data: {
+                            judicialProcessId: process.id,
+                            courts: { connect: { id: district.courtId } },
+                            judicialDistricts: { connect: { id: district.id } },
+                            judicialBranches: { connect: { id: branch.id } },
+                        }
+                    });
 
-            const lotsOfAuction = entityStore.lots.filter(l => l.auctionId === auction.id);
-            for (const lot of lotsOfAuction) {
-                 await prisma.lot.update({
-                    where: { id: lot.id },
-                    data: { judicialProcesses: { connect: { id: process.id } } }
-                });
+                    const lotsOfAuction = entityStore.lots.filter(l => l.auctionId === auction.id);
+                    for (const lot of lotsOfAuction) {
+                        await prisma.lot.update({
+                            where: { id: lot.id },
+                            data: { judicialProcesses: { connect: { id: process.id } } }
+                        });
+                    }
+                    count++;
+                }
             }
         }
     }
-    log(`${judicialAuctions.length} leilões judiciais conectados a processos, tribunais, comarcas e varas.`, 1);
+    log(`${count} leilões judiciais conectados a processos, tribunais, comarcas e varas.`, 1);
 }
 
 async function seedAuctionHabilitations(auctionId: string) {
@@ -1107,7 +1141,7 @@ async function seedPostAuctionInteractions() {
             const lot = await prisma.lot.findUnique({ where: { id: win.lotId } });
             if (lot && user) {
                 await services.review.create({
-                    lotId: win.lotId.toString(), auctionId: lot.auctionId.toString(), userId: win.userId.toString(), authorName: user.fullName!,
+                    lotId: win.lotId.toString(), auctionId: lot.auctionId.toString(), userId: win.userId.toString(), userDisplayName: user.fullName!,
                     rating: faker.number.int({ min: 3, max: 5 }), comment: faker.lorem.paragraph(),
                 });
             }
@@ -1117,11 +1151,12 @@ async function seedPostAuctionInteractions() {
 }
 
 async function seedDirectSaleOffers() {
+    let createdCount = 0;
     for (let i = 0; i < 20; i++) {
         const category = faker.helpers.arrayElement(entityStore.categories);
         const seller = faker.helpers.arrayElement(entityStore.sellers);
 
-        await services.directSaleOffer.createDirectSaleOffer(entityStore.tenantId.toString(), {
+        const result = await services.directSaleOffer.createDirectSaleOffer(entityStore.tenantId.toString(), {
           title: `Venda Direta: ${faker.commerce.productName()}`,
           status: randomEnum(DirectSaleOfferStatus),
           offerType: randomEnum(DirectSaleOfferType),
@@ -1130,8 +1165,14 @@ async function seedDirectSaleOffers() {
           sellerId: seller.id.toString(),
           sellerName: seller.name
         } as any);
+        
+        if (result.success) {
+            createdCount++;
+        } else {
+            log(`Falha ao criar oferta de venda direta: ${result.message}`, 2);
+        }
     }
-    log(`20 ofertas de venda direta criadas.`, 1);
+    log(`${createdCount} ofertas de venda direta criadas.`, 1);
 }
 
 async function seedMiscData() {

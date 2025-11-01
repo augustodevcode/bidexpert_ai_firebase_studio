@@ -13,8 +13,10 @@ export class ReviewRepository {
    * @returns A avaliação criada.
    */
   async create(data: Prisma.ReviewCreateInput) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { lotId, auctionId, userId, ...rest } = data;
     return prisma.review.create({
-      data,
+      data: rest,
     });
   }
 
