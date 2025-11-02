@@ -1,10 +1,10 @@
+
 // src/repositories/lot.repository.ts
 import { prisma } from '@/lib/prisma';
 import type { Lot, LotFormData } from '@/types';
 import type { Prisma } from '@prisma/client';
 
 const NON_PUBLIC_AUCTION_STATUSES: Prisma.AuctionStatus[] = ['RASCUNHO', 'EM_PREPARACAO'];
-
 
 export class LotRepository {
     
@@ -13,21 +13,38 @@ export class LotRepository {
       ...where,
       ...(tenantId && { tenantId: BigInt(tenantId) }),
     };
-    
+
+    // If it's a public call, we need to filter out lots from non-public auctions.
+    // The filtering is now done after fetching, as direct relation filtering was causing issues.
     if (isPublicCall) {
-        finalWhere.auction = {
-            status: { notIn: NON_PUBLIC_AUCTION_STATUSES }
-        }
+        const allLots = await prisma.lot.findMany({
+            where: finalWhere,
+            take: limit, // Apply limit here if possible
+            include: {
+                auction: { // We must include the auction to filter by its status
+                    select: { status: true, title: true }
+                },
+                category: { select: { name: true } },
+                subcategory: { select: { name: true } },
+                seller: { select: { name: true } },
+            },
+            orderBy: { number: 'asc' }
+        });
+        
+        // Filter in the application code
+        return allLots.filter(lot => lot.auction && !NON_PUBLIC_AUCTION_STATUSES.includes(lot.auction.status));
     }
     
+    // For non-public calls (admin view), we fetch everything without status filtering.
     return prisma.lot.findMany({
         where: finalWhere,
         take: limit,
         include: {
             assets: { include: { asset: true } },
-            auction: { select: { title: true, status: true } }, // Incluindo status do leilão
+            auction: { select: { title: true, status: true } },
             category: { select: { name: true } },
             subcategory: { select: { name: true } },
+            seller: { select: { name: true } },
         },
         orderBy: { number: 'asc' }
     });
@@ -50,6 +67,9 @@ export class LotRepository {
       include: {
         assets: { include: { asset: true } },
         auction: true,
+        seller: { select: { name: true } },
+        category: { select: { name: true } },
+        subcategory: { select: { name: true } },
       },
     });
   }
