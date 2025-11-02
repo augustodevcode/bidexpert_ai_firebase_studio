@@ -1,47 +1,8 @@
-E1102 16:59:33.005879   13781 dev.go:79] Failed to load initial config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-I1102 16:59:33.047946   13781 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
-E1102 16:59:43.014360   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 16:59:53.038407   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:03.016635   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:13.029257   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:23.023468   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:33.013299   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:43.022254   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:00:53.021330   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:03.015491   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:13.019261   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:23.026449   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:33.013288   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:43.033321   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:01:53.028309   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:03.013110   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:13.022248   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:23.022239   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:33.016300   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:43.022244   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:02:53.023163   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:03.013492   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:13.022365   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:23.022375   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:33.013715   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:43.014466   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:03:53.013287   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:03.013922   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:13.021230   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:23.022283   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:33.013540   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:43.022231   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:04:53.022349   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:03.013255   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:13.022317   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:23.013179   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:33.013510   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:43.022951   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:05:53.022424   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:03.013100   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:13.022238   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:23.022436   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:33.013588   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:43.022259   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:06:53.022622   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
-E1102 17:07:03.016297   13781 watch.go:31] Failed to load config from "/home/user/studio/dataconnect": location is required in dataconnect.yaml at `/home/user/studio/dataconnect/dataconnect.yaml`
+I1102 17:13:40.173994   17135 load.go:31] Reloading schema and connectors...
+E1102 17:13:40.189503   17135 load.go:63] Could not generate extensions: rpc error: code = NotFound desc = no schema found for service "". No service has a schema.
+E1102 17:13:40.189568   17135 load.go:73] Could not load sources: 
+Errors: .dataconnect/schema/prelude.gql:2:6: Cannot redeclare type AccessLevel.
+I1102 17:13:40.191482   17135 collector.go:107] schema extensions wrote into "/home/user/studio/dataconnect/.dataconnect/schema"
+Generated sources: prelude.gql [73219B] 
+I1102 17:13:40.191549   17135 load.go:74] Finished reloading
+I1102 17:13:40.212332   17135 dev.go:102] Listening on address (HTTP + gRPC): 127.0.0.1:50001
