@@ -11,7 +11,7 @@
 import { DirectSaleOfferService } from '@/services/direct-sale-offer.service';
 import type { DirectSaleOffer, DirectSaleOfferFormData } from '@/types';
 import { revalidatePath } from 'next/cache';
-import { tenantContext } from '@/lib/prisma';
+import { tenantContext } from '@/lib/tenant-context';
 
 const offerService = new DirectSaleOfferService();
 

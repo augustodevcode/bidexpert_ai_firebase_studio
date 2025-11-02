@@ -15,7 +15,7 @@ interface DesignSurfaceProps {
   onElementChange: (id: string, props: Partial<ReportElement>) => void;
 }
 
-const DesignSurface: React.FC<DesignSurfaceProps> = ({ 
+export const DesignSurface: React.FC<DesignSurfaceProps> = ({ 
   elements, 
   onAddElement, 
   onSelectElement, 

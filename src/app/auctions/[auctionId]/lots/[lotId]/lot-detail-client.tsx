@@ -1,3 +1,4 @@
+
 // src/app/auctions/[auctionId]/lots/[lotId]/lot-detail-client.tsx
 /**
  * @fileoverview Componente principal do lado do cliente para a página de detalhes de um lote.
@@ -7,7 +8,7 @@
  * as abas de descrição, especificações, perguntas e avaliações. Ele também
  * renderiza o painel de lances (`BiddingPanel`).
  */
-'use client';
+'use client'; 
 import React from 'react';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
@@ -27,8 +28,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { format, isPast, differenceInSeconds, parseISO, isValid, differenceInDays } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { isPast, differenceInSeconds, parseISO, isValid } from 'date-fns';
 import { addRecentlyViewedId } from '@/lib/recently-viewed-store';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -311,7 +311,7 @@ export default function LotDetailClientContent({
     
     // Check if we should inherit media from a Asset
     if (lot.inheritedMediaFromAssetId && lot.assets && lot.assets.length > 0) {
-        const sourceAsset = lot.assets.find(b => b.id === lot.inheritedMediaFromAssetId);
+        const sourceAsset = lot.assets.find((a: any) => a.id.toString() === lot.inheritedMediaFromAssetId.toString());
         if (sourceAsset) {
             const assetImages = [sourceAsset.imageUrl, ...(sourceAsset.galleryImageUrls || [])]
                 .filter(Boolean) as string[];
@@ -338,7 +338,7 @@ export default function LotDetailClientContent({
   useEffect(() => {
     if (typeof window !== 'undefined') {
         setCurrentUrl(window.location.href);
-        setIsLotFavorite(isLotFavoriteInStorage(lot.id));
+        setIsLotFavorite(isLotFavoriteInStorage(lot.id.toString()));
     }
     
     // Format the date here to avoid hydration mismatch
@@ -347,7 +347,7 @@ export default function LotDetailClientContent({
     }
     
     if (lot?.id) {
-      addRecentlyViewedId(lot.id);
+      addRecentlyViewedId(lot.id.toString());
       setCurrentImageIndex(0);
 
       const fetchData = async () => {
@@ -391,8 +391,8 @@ export default function LotDetailClientContent({
     if (!lot || !lot.id) return;
     const newFavoriteState = !isLotFavorite;
     setIsLotFavorite(newFavoriteState);
-    if (newFavoriteState) addFavoriteLotIdToStorage(lot.id);
-    else removeFavoriteLotIdFromStorage(lot.id);
+    if (newFavoriteState) addFavoriteLotIdToStorage(lot.id.toString());
+    else removeFavoriteLotIdFromStorage(lot.id.toString());
     toast({
       title: newFavoriteState ? "Adicionado aos Favoritos" : "Removido dos Favoritos",
       description: `O lote "${lotTitle}" foi ${newFavoriteState ? 'adicionado à' : 'removido da'} sua lista.`,
@@ -412,7 +412,7 @@ export default function LotDetailClientContent({
 
   const nextImage = () => setCurrentImageIndex((prev) => (gallery.length > 0 ? (prev + 1) % gallery.length : 0));
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + gallery.length) % gallery.length);
-  const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'');
+  const actualLotNumber = lot.number || String(lot.id).replace(/\D/g,'').padStart(3, '0');
   const displayLotPosition = lotIndex !== undefined && lotIndex !== -1 ? lotIndex + 1 : 'N/A';
   const displayTotalLots = totalLotsInAuction || auction.totalLots || 'N/A';
   const handleNewReview = async (rating: number, comment: string) => { return false; };
@@ -455,10 +455,10 @@ export default function LotDetailClientContent({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild><Button variant="outline" size="icon" aria-label="Compartilhar"><Share2 className="h-4 w-4" /></Button></DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-4 w-4" /> X (Twitter)</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-4 w-4" /> Facebook</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-4 w-4" /> WhatsApp</a></DropdownMenuItem>
-                    <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-4 w-4" /> Email</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('x', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><X className="h-3.5 w-3.5" /> X (Twitter)</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('facebook', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><Facebook className="h-3.5 w-3.5" /> Facebook</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('whatsapp', currentUrl, lotTitle)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 cursor-pointer"><MessageSquareText className="h-3.5 w-3.5" /> WhatsApp</a></DropdownMenuItem>
+                    <DropdownMenuItem asChild><a href={getSocialLink('email', currentUrl, lotTitle)} className="flex items-center gap-2 cursor-pointer"><Mail className="h-3.5 w-3.5" /> Email</a></DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <Button variant="outline" size="icon" asChild aria-label="Voltar para o leilão"><Link href={`/auctions/${auction.publicId || auction.id}`}><ArrowLeft className="h-4 w-4" /></Link></Button>

@@ -15,7 +15,7 @@ import { PlusCircle, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import BidExpertSearchResultsFrame from '@/components/BidExpertSearchResultsFrame';
 import { createColumns } from '@/app/admin/judicial-branches/columns';
-import { getPlatformSettings from '@/app/admin/settings/actions';
+import { getPlatformSettings } from '@/app/admin/settings/actions';
 import { getJudicialDistricts } from '@/app/admin/judicial-districts/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import CrudFormContainer from '@/components/admin/CrudFormContainer';

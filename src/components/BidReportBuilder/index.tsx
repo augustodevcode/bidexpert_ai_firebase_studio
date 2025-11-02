@@ -3,7 +3,7 @@
 
 import React, { useState } from 'react';
 import Toolbar from './components/Toolbar';
-import DesignSurface from './components/DesignSurface';
+import { DesignSurface } from './components/DesignSurface';
 import PropertiesPanel from './components/PropertiesPanel';
 import DataSourceManager from './components/DataSourceManager';
 import MediaLibrary from './components/MediaLibrary';

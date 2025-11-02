@@ -148,7 +148,7 @@ export default function QualityAssurancePage() {
       setIsAnalyzing(true);
       toast({ title: "Análise Iniciada", description: "Enviando o log de erro para a IA."});
       try {
-        const result = await analyzeErrorLogAction(testResult.error);
+        const result = await analyzeErrorWithLogsAction(testResult.error);
         if (result.success) {
           setTestResult(prev => ({
             ...prev!,

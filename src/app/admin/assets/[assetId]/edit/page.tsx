@@ -5,14 +5,14 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import type { Asset, AssetFormData, LotCategory, JudicialProcess, SellerProfileInfo, StateInfo, CityInfo } from '@/types';
 import { useToast } from '@/hooks/use-toast';
-import { getAsset, updateAsset, deleteAsset } from '../actions';
+import { getAsset, updateAsset, deleteAsset } from '../../actions';
 import { getLotCategories } from '@/app/admin/categories/actions';
 import { getJudicialProcesses } from '@/app/admin/judicial-processes/actions';
 import { getSellers } from '@/app/admin/sellers/actions';
 import { getStates } from '@/app/admin/states/actions';
 import { getCities } from '@/app/admin/cities/actions';
 import FormPageLayout from '@/components/admin/form-page-layout';
-import AssetForm from '../asset-form';
+import AssetForm from '../../asset-form';
 import { Package } from 'lucide-react';
 
 export default function EditAssetPage() {
